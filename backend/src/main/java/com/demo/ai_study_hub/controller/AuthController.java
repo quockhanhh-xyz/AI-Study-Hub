@@ -39,8 +39,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of(
                 "token", token,
                 "role", user.getRole(),
-                "email", user.getEmail()
-        ));
+                "email", user.getEmail()));
     }
 
     @PostMapping("/logout")
