@@ -1,31 +1,164 @@
-### 1. Table `users`
+# Database Design - AI Study Hub
 
-Lưu trữ thông tin tài khoản người dùng và trạng thái hoạt động trong hệ thống.
+## Database Name
 
-| Column Name | Data Type | Constraints | Description |
-| :--- | :--- | :--- | :--- |
-| `user_id` | INT | PRIMARY KEY, AUTO_INCREMENT, NOT NULL | ID duy nhất, tự động tăng |
-| `email` | VARCHAR(100) | UNIQUE, NOT NULL | Email đăng nhập của người dùng |
-| `password_hash` | VARCHAR(255) | NOT NULL | Mật khẩu (đã được mã hóa/hash) |
-| `full_name` | VARCHAR(255) | NOT NULL | Họ và tên đầy đủ |
-| `role` | VARCHAR(20) | DEFAULT 'USER', NOT NULL | Phân quyền (USER / ADMIN) |
-| `tier` | VARCHAR(20) | DEFAULT 'FREE', NOT NULL | Hạng tài khoản (FREE / PREMIUM) |
-| `status` | VARCHAR(30) | DEFAULT 'INACTIVE', NOT NULL | INACTIVE: Chưa verify OTP, ACTIVE: Đã verify (được login), BLOCKED: Bị admin khóa |
-| `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Thời gian tạo tài khoản |
-| `updated_at` | TIMESTAMP | NULLABLE | Thời gian cập nhật thông tin gần nhất |
+```text
+ai_study_hub
+```
 
-<br>
+---
 
-### 2. Table `otp_codes`
+# Main Tables
 
-Lưu trữ và quản lý các mã OTP dùng để xác thực email đăng ký hoặc lấy lại mật khẩu.
+## 1. Table `users`
 
-| Column Name | Data Type | Constraints | Description |
-| :--- | :--- | :--- | :--- |
-| `otp_id` | INT | PRIMARY KEY, AUTO_INCREMENT, NOT NULL | ID duy nhất, tự động tăng |
-| `user_id` | INT | FOREIGN KEY REFERENCES users(user_id), NOT NULL | Liên kết với ID của người dùng |
-| `otp_code` | VARCHAR(6) | NOT NULL | Mã xác thực OTP (6 chữ số) |
-| `purpose` | VARCHAR(30) | DEFAULT 'REGISTER', NOT NULL | Mục đích sinh mã (REGISTER / RESET_PASSWORD) |
-| `expires_at` | TIMESTAMP | NOT NULL | Thời điểm mã OTP hết hiệu lực |
-| `used` | BOOLEAN | DEFAULT FALSE, NOT NULL | Trạng thái: false (chưa dùng), true (đã dùng) |
-| `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Thời gian tạo mã OTP |
+Stores user account information and account status.
+
+| Column Name     | Data Type    | Constraints                           | Description                                                                                     |
+| :-------------- | :----------- | :------------------------------------ | :---------------------------------------------------------------------------------------------- |
+| `user_id`       | INT          | PRIMARY KEY, AUTO_INCREMENT, NOT NULL | Unique user ID                                                                                  |
+| `email`         | VARCHAR(100) | UNIQUE, NOT NULL                      | User email used for login                                                                       |
+| `password_hash` | VARCHAR(255) | NOT NULL                              | Hashed password                                                                                 |
+| `full_name`     | VARCHAR(255) | NOT NULL                              | User full name                                                                                  |
+| `role`          | VARCHAR(20)  | DEFAULT 'USER', NOT NULL              | User role: USER or ADMIN                                                                        |
+| `tier`          | VARCHAR(20)  | DEFAULT 'FREE', NOT NULL              | Account tier: FREE or PREMIUM                                                                   |
+| `status`        | VARCHAR(30)  | DEFAULT 'INACTIVE', NOT NULL          | INACTIVE: not verified by OTP, ACTIVE: verified and allowed to login, BLOCKED: blocked by admin |
+| `created_at`    | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP             | Account creation time                                                                           |
+| `updated_at`    | TIMESTAMP    | NULLABLE                              | Last update time                                                                                |
+
+### Business Rules
+
+- A newly registered user must have status `INACTIVE`.
+- Only users with status `ACTIVE` can log in.
+- Users with status `BLOCKED` cannot log in or use system features.
+- Passwords must be stored as hashed values, not plain text.
+
+---
+
+## 2. Table `otp_codes`
+
+Stores OTP codes used for email verification.
+
+| Column Name  | Data Type   | Constraints                                     | Description                             |
+| :----------- | :---------- | :---------------------------------------------- | :-------------------------------------- |
+| `otp_id`     | INT         | PRIMARY KEY, AUTO_INCREMENT, NOT NULL           | Unique OTP ID                           |
+| `user_id`    | INT         | FOREIGN KEY REFERENCES users(user_id), NOT NULL | User who owns this OTP                  |
+| `otp_code`   | VARCHAR(6)  | NOT NULL                                        | 6-digit OTP code                        |
+| `purpose`    | VARCHAR(30) | DEFAULT 'REGISTER', NOT NULL                    | OTP purpose: REGISTER or RESET_PASSWORD |
+| `expires_at` | TIMESTAMP   | NOT NULL                                        | OTP expiration time                     |
+| `used`       | BOOLEAN     | DEFAULT FALSE, NOT NULL                         | Whether the OTP has already been used   |
+| `created_at` | TIMESTAMP   | DEFAULT CURRENT_TIMESTAMP                       | OTP creation time                       |
+
+### Business Rules
+
+- OTP code must contain exactly 6 digits.
+- Register OTP must expire after 5 minutes.
+- Used OTP cannot be verified again.
+- A user must become `ACTIVE` after successful register OTP verification.
+- Resend OTP creates a new OTP for an `INACTIVE` user.
+
+---
+
+## 3. Table `documents`
+
+Stores document metadata.
+
+| Column Name   | Data Type    | Description                                        |
+| :------------ | :----------- | :------------------------------------------------- |
+| `id`          | INT          | Primary key                                        |
+| `title`       | VARCHAR(255) | Document title                                     |
+| `description` | TEXT         | Document description                               |
+| `file_name`   | VARCHAR(255) | Original file name                                 |
+| `file_type`   | VARCHAR(50)  | File type such as PDF, DOCX, PPTX, TXT, IMAGE, ZIP |
+| `file_size`   | BIGINT       | File size in bytes                                 |
+| `file_url`    | TEXT         | Firebase Storage file URL                          |
+| `owner_id`    | INT          | References users(user_id)                          |
+| `subject_id`  | INT          | References subjects(id)                            |
+| `folder_id`   | INT          | References folders(id)                             |
+| `created_at`  | TIMESTAMP    | Document upload time                               |
+| `updated_at`  | TIMESTAMP    | Last update time                                   |
+
+---
+
+## 4. Table `folders`
+
+Stores user folders.
+
+| Column Name  | Data Type    | Description               |
+| :----------- | :----------- | :------------------------ |
+| `id`         | INT          | Primary key               |
+| `name`       | VARCHAR(100) | Folder name               |
+| `owner_id`   | INT          | References users(user_id) |
+| `created_at` | TIMESTAMP    | Folder creation time      |
+
+---
+
+## 5. Table `subjects`
+
+Stores subject or category information.
+
+| Column Name   | Data Type    | Description         |
+| :------------ | :----------- | :------------------ |
+| `id`          | INT          | Primary key         |
+| `name`        | VARCHAR(100) | Subject name        |
+| `description` | TEXT         | Subject description |
+
+---
+
+## 6. Table `document_shares`
+
+Stores document sharing permissions.
+
+| Column Name   | Data Type   | Description               |
+| :------------ | :---------- | :------------------------ |
+| `id`          | INT         | Primary key               |
+| `document_id` | INT         | References documents(id)  |
+| `shared_by`   | INT         | References users(user_id) |
+| `shared_to`   | INT         | References users(user_id) |
+| `permission`  | VARCHAR(20) | VIEW or DOWNLOAD          |
+| `created_at`  | TIMESTAMP   | Share creation time       |
+
+---
+
+## 7. Table `ai_usage_limits`
+
+Stores AI usage records.
+
+| Column Name    | Data Type   | Description               |
+| :------------- | :---------- | :------------------------ |
+| `id`           | INT         | Primary key               |
+| `user_id`      | INT         | References users(user_id) |
+| `usage_date`   | DATE        | Usage date                |
+| `feature_type` | VARCHAR(30) | CHAT, QUIZ, FLASHCARD     |
+| `usage_count`  | INT         | Number of uses            |
+
+---
+
+## 8. Table `reports`
+
+Stores user reports for documents.
+
+| Column Name   | Data Type   | Description                 |
+| :------------ | :---------- | :-------------------------- |
+| `id`          | INT         | Primary key                 |
+| `document_id` | INT         | References documents(id)    |
+| `reported_by` | INT         | References users(user_id)   |
+| `reason`      | TEXT        | Report reason               |
+| `status`      | VARCHAR(30) | PENDING, REVIEWED, REJECTED |
+| `created_at`  | TIMESTAMP   | Report creation time        |
+
+---
+
+## 9. Table `system_logs`
+
+Stores important admin or system actions.
+
+| Column Name   | Data Type    | Description                    |
+| :------------ | :----------- | :----------------------------- |
+| `id`          | INT          | Primary key                    |
+| `actor_id`    | INT          | References users(user_id)      |
+| `action`      | VARCHAR(100) | Action name                    |
+| `target_type` | VARCHAR(50)  | USER, DOCUMENT, REPORT, SYSTEM |
+| `target_id`   | INT          | Target object ID               |
+| `reason`      | TEXT         | Action reason                  |
+| `created_at`  | TIMESTAMP    | Action time                    |

@@ -1,54 +1,60 @@
+// Biến toàn cục định nghĩa địa chỉ gốc của Backend API
 const API_BASE_URL = "http://localhost:8080";
 
-/**
- * Shared API request helper.
- * Tất cả các cuộc gọi API từ Frontend bắt buộc phải đi qua hàm này.
- 
- * Backend response format:
- * {
- * success: boolean,
- * message: string,
- * data: object | null
- * }
+/*
+  Shared API request helper.
+  Hàm trung tâm để cấu hình request và xử lý token tự động.
  */
 async function apiRequest(endpoint, options = {}) {
-  try {
-    // Tự động thêm Content-Type là application/json cho mọi request
-    const headers = {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
-    };
+  // Tự động thêm Content-Type mặc định là JSON
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {})
+  };
 
-    // Tự động chuyển object thô thành chuỗi JSON nếu có body truyền vào
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: options.method || "GET",
-      headers: headers,
-      body: options.body ? JSON.stringify(options.body) : undefined
-    });
-
-    // Ép kiểu dữ liệu trả về thành JSON
-    const result = await response.json();
-
-    // Kiểm tra cấu trúc Response từ Backend xem có đúng contract không
-    if (
-      typeof result.success === "undefined" ||
-      typeof result.message === "undefined" ||
-      typeof result.data === "undefined"
-    ) {
-      throw new Error("Invalid API response format. Expected success, message, data.");
-    }
-
-    // Nếu HTTP status không phải 2xx hoặc Backend trả về success: false
-    if (!response.ok || result.success === false) {
-      // In cảnh báo ra tab Console giúp FE dễ debug khi Backend trả lỗi về
-      console.warn("API request failed:", result);
-      throw new Error(result.message || "API request failed.");
-    }
-
-    // Trả về kết quả hoàn chỉnh nếu mọi thứ mượt mà
-    return result;
-  } catch (error) {
-    console.error("API request error:", error);
-    throw error; // Bắn lỗi ra ngoài để các file js khác catch và hiển thị lên UI
+  // Tự động lấy token từ localStorage (nếu có) để đính kèm vào mọi request sau này
+  const token = localStorage.getItem("accessToken");
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
   }
+
+  // Thực hiện gọi fetch tới Backend
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers: headers
+  });
+
+  // Ép kiểu dữ liệu trả về thành JSON
+  const data = await response.json();
+  
+  // Kiểm tra mã lỗi HTTP (ví dụ: 400, 401, 500) hoặc cờ success từ Backend trả về là false
+  if (!response.ok || data.success === false) {
+    // In cảnh báo ra tab Console để các FE khác dễ debug khi Backend báo lỗi về
+    console.warn("API Request Business Error:", data);
+    // Ném lỗi ra ngoài kèm theo message chuẩn từ Backend contract
+    throw new Error(data.message || "API request failed");
+  }
+  // ------------------------------------
+ 
+  return data;
+}
+
+/*
+  Hàm gọi API phương thức GET
+  @param {string} endpoint - Ví dụ: "/api/health"
+ */
+function get(endpoint) {
+  return apiRequest(endpoint, { method: "GET" });
+}
+
+/*
+  Hàm gọi API phương thức POST
+  @param {string} endpoint - Ví dụ: "/api/auth/login"
+  @param {object} body - Object dữ liệu thuần từ form (chưa hóa chuỗi)
+ */
+function post(endpoint, body) {
+  return apiRequest(endpoint, {
+    method: "POST",
+    body: JSON.stringify(body)
+  });
 }
