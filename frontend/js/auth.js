@@ -23,12 +23,15 @@ async function handleRegister(event) {
   const email = getInputValue("registerEmail");
   const password = getInputValue("registerPassword");
 
-  setMessage("registerMessage", "Register API is not implemented in Build 0 yet.");
+  setMessage(
+    "registerMessage",
+    "Register API is not implemented in Build 0 yet.",
+  );
 
   console.log("Register form data:", {
     fullName,
     email,
-    password
+    password,
   });
 
   // Build 1 implementation:
@@ -60,7 +63,7 @@ async function handleVerifyOtp(event) {
 
   console.log("Verify OTP form data:", {
     email,
-    otpCode
+    otpCode,
   });
 
   // Build 1 implementation:
@@ -110,23 +113,45 @@ async function handleLogin(event) {
   const email = getInputValue("loginEmail");
   const password = getInputValue("loginPassword");
 
-  setMessage("loginMessage", "Login API is not implemented in Build 0 yet.");
+  if (!email || !password) {
+    setMessage("loginMessage", "Please enter your email and password.");
+    return;
+  }
 
-  console.log("Login form data:", {
-    email,
-    password
-  });
+  try {
+    setMessage("loginMessage", "Logging in...");
 
-  // Build 1 implementation:
-  // try {
-  //   const result = await apiRequest("/api/auth/login", {
-  //     method: "POST",
-  //     body: { email, password }
-  //   });
-  //   setMessage("loginMessage", "Login success!");
-  // } catch (error) {
-  //   setMessage("loginMessage", `Login failed: ${error.message}`);
-  // }
+    const result = await post("/api/auth/login", {
+      email,
+      password,
+    });
+
+    const user = result.data;
+
+    if (!user || !user.token) {
+      throw new Error("Login response does not contain a valid token.");
+    }
+
+    localStorage.setItem("accessToken", user.token);
+
+    localStorage.setItem(
+      "currentUser",
+      JSON.stringify({
+        userId: user.userId,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+      }),
+    );
+
+    setMessage("loginMessage", result.message || "Login successfully.");
+
+    setTimeout(function () {
+      window.location.href = "dashboard.html";
+    }, 500);
+  } catch (error) {
+    setMessage("loginMessage", error.message);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", function () {
