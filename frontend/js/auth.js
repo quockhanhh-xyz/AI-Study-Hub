@@ -185,7 +185,8 @@
   // ─────────────────────────────────────────────────────────────
 
   function handleLogout() {
-    localStorage.removeItem("user");
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("accessToken");
     window.location.href = "login.html";
   }
 
@@ -194,7 +195,7 @@
   // ─────────────────────────────────────────────────────────────
 
   function checkDashboardAuth() {
-    const user = JSON.parse(localStorage.getItem("user") || "null");
+    const user = JSON.parse(localStorage.getItem("currentUser") || "null");
     if (!user) {
       window.location.href = "login.html";
     }

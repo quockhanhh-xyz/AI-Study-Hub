@@ -60,9 +60,11 @@ public class AuthService {
 
         Map<String, Object> data = new HashMap<>();
         data.put("token", token);
+        data.put("userId", user.getUserId());
         data.put("role", user.getRole());
         data.put("email", user.getEmail());
         data.put("fullName", user.getFullName());
+        data.put("status", user.getStatus());
 
         return data;
     }
