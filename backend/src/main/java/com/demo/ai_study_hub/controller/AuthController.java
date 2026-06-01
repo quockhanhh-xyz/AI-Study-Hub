@@ -1,13 +1,12 @@
 package com.demo.ai_study_hub.controller;
 
 import com.demo.ai_study_hub.config.JwtAuthFilter;
+import com.demo.ai_study_hub.dto.ApiResponse;
 import com.demo.ai_study_hub.dto.LoginRequest;
-import com.demo.ai_study_hub.entity.User;
-import com.demo.ai_study_hub.repository.UserRepository;
-import com.demo.ai_study_hub.service.JwtUtil;
+import com.demo.ai_study_hub.dto.RegisterRequest;
+import com.demo.ai_study_hub.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -17,35 +16,39 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
+    private final AuthService authService;
     private final JwtAuthFilter jwtAuthFilter;
 
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<Object>> register(@RequestBody RegisterRequest request) {
+        try {
+            String result = authService.register(request);
+            ApiResponse<Object> response = new ApiResponse<>(true, result, null);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            ApiResponse<Object> response = new ApiResponse<>(false, e.getMessage(), null);
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest req) {
-        User user = userRepository.findByEmail(req.getEmail())
-                .orElse(null);
-
-        if (user == null || !passwordEncoder.matches(req.getPassword(), user.getPassword())) {
-            return ResponseEntity.status(401).body(Map.of("message", "Email hoặc mật khẩu không đúng"));
+    public ResponseEntity<ApiResponse<Object>> login(@RequestBody LoginRequest request) {
+        try {
+            Map<String, Object> data = authService.login(request);
+            ApiResponse<Object> response = new ApiResponse<>(true, "Đăng nhập thành công", data);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            ApiResponse<Object> response = new ApiResponse<>(false, e.getMessage(), null);
+            return ResponseEntity.badRequest().body(response);
         }
-
-        if (!"ACTIVE".equals(user.getStatus())) {
-            return ResponseEntity.status(403).body(Map.of("message", "Tài khoản chưa được kích hoạt"));
-        }
-
-        String token = jwtUtil.generateToken(user.getEmail());
-        return ResponseEntity.ok(Map.of(
-                "token", token,
-                "role", user.getRole(),
-                "email", user.getEmail()));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<ApiResponse<Object>> logout(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
         jwtAuthFilter.blacklist(token);
-        return ResponseEntity.ok(Map.of("message", "Đăng xuất thành công"));
+
+        ApiResponse<Object> response = new ApiResponse<>(true, "Đăng xuất thành công", null);
+        return ResponseEntity.ok(response);
     }
 }
