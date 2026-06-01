@@ -9,7 +9,7 @@
     const element = document.getElementById(elementId);
     if (!element) return;
     element.textContent = message;
-    element.className = `message message--${type}`;
+    element.className = `helper-text ${type}`;
   }
 
   function getInputValue(inputId) {
@@ -76,10 +76,7 @@
     toggleButtonState(submitBtn, true, "Registering...");
 
     try {
-      await apiRequest("/api/auth/register", {
-        method: "POST",
-        body: { fullName, email, password }
-      });
+      await post("/api/auth/register", { fullName, email, password });
 
       setMessage("registerMessage", "Registration successful! Redirecting to OTP verification...", "success");
 
@@ -124,10 +121,7 @@
     toggleButtonState(submitBtn, true, "Verifying...");
 
     try {
-      await apiRequest("/api/auth/verify-otp", {
-        method: "POST",
-        body: { email, otpCode }
-      });
+      await post("/api/auth/verify-otp", { email, otpCode });
 
       setMessage("otpMessage", "Verification successful! Redirecting to login...", "success");
 
@@ -176,10 +170,7 @@
     setMessage("otpMessage", "Resending OTP code...", "info");
 
     try {
-      await apiRequest("/api/auth/resend-otp", {
-        method: "POST",
-        body: { email }
-      });
+      await post("/api/auth/resend-otp", { email });
 
       setMessage("otpMessage", "OTP code resent! Please check your email.", "success");
       startResendCooldown(resendBtn);
