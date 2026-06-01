@@ -18,6 +18,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final OtpService otpService;
 
     public String register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -30,6 +31,9 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
         userRepository.save(user);
+
+        // Sinh và gửi OTP về email
+        otpService.createAndSendOtp(user);
 
         return "Đăng ký thành công! Vui lòng kiểm tra email để lấy mã OTP.";
     }
