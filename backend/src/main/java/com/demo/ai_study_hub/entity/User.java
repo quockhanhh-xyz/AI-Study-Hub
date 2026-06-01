@@ -3,6 +3,9 @@ package com.demo.ai_study_hub.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -13,25 +16,32 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Integer userId;
 
-    @Column(unique = true, nullable = false, length = 50)
+    @Column(name = "email", unique = true, nullable = false, length = 100)
     private String email;
 
-    @Column(nullable = false, length = 255)
-    private String password;
+    @Column(name = "password_hash", nullable = false, length = 255)
+    private String passwordHash;
 
-    private String fullname;
+    @Column(name = "full_name", nullable = false, length = 255)
+    private String fullName;
 
-    @Column(nullable = false, length = 20)
+    @Column(name = "role", nullable = false, length = 20)
     private String role = "USER";
 
-    @Column(nullable = false, length = 20)
+    @Column(name = "tier", nullable = false, length = 20)
     private String tier = "FREE";
 
-    @Column(nullable = false, length = 20)
+    @Column(name = "status", nullable = false, length = 30)
     private String status = "INACTIVE";
 
-    @Column(updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

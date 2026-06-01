@@ -16,7 +16,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return userRepository.findByEmail(email)
                 .map(user -> org.springframework.security.core.userdetails.User
                         .withUsername(user.getEmail())
-                        .password(user.getPassword())
+                        .password(user.getPasswordHash())
                         .roles(user.getRole())
                         .build())
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy user: " + email));
