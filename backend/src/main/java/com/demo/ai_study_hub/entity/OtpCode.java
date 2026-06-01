@@ -19,10 +19,10 @@ public class OtpCode {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false, length = 6)
+    @Column(name = "otp_code", nullable = false, length = 6)
     private String code;
 
-    @Column(nullable = false)
+    @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiredAt;
 
     @Column(nullable = false, length = 20)
@@ -30,4 +30,8 @@ public class OtpCode {
 
     @Column(nullable = false)
     private boolean used = false;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 }

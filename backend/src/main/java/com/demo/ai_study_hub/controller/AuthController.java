@@ -5,6 +5,7 @@ import com.demo.ai_study_hub.dto.ApiResponse;
 import com.demo.ai_study_hub.dto.LoginRequest;
 import com.demo.ai_study_hub.dto.RegisterRequest;
 import com.demo.ai_study_hub.service.AuthService;
+import com.demo.ai_study_hub.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,8 +23,16 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<Object>> register(@RequestBody RegisterRequest request) {
         try {
-            String result = authService.register(request);
-            ApiResponse<Object> response = new ApiResponse<>(true, result, null);
+            User user = authService.register(request);
+            Map<String, Object> data = Map.of(
+                    "email", user.getEmail(),
+                    "status", user.getStatus()
+            );
+            ApiResponse<Object> response = new ApiResponse<>(
+                    true,
+                    "Register successfully. Please verify OTP sent to your email.",
+                    data
+            );
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             ApiResponse<Object> response = new ApiResponse<>(false, e.getMessage(), null);

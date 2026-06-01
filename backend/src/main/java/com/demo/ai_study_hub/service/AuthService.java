@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,7 +21,8 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final OtpService otpService;
 
-    public String register(RegisterRequest request) {
+    @Transactional
+    public User register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email đã tồn tại trong hệ thống!");
         }
@@ -35,7 +37,7 @@ public class AuthService {
         // Sinh và gửi OTP về email
         otpService.createAndSendOtp(user);
 
-        return "Đăng ký thành công! Vui lòng kiểm tra email để lấy mã OTP.";
+        return user;
     }
 
     public Map<String, Object> login(LoginRequest request) {

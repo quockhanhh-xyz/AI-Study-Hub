@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Random;
+import java.security.SecureRandom;
 
 @Service
 @RequiredArgsConstructor
@@ -15,11 +15,12 @@ public class OtpService {
 
     private final OtpCodeRepository otpCodeRepository;
     private final EmailService emailService;
+    private final SecureRandom secureRandom = new SecureRandom();
 
     // Method cung cấp cho BE1
     public void createAndSendOtp(User user) {
-        // Tạo OTP 6 số
-        String code = String.format("%06d", new Random().nextInt(999999));
+        // Tạo OTP 6 số bảo mật bằng SecureRandom
+        String code = String.format("%06d", secureRandom.nextInt(1000000));
 
         // Lưu vào DB
         OtpCode otp = new OtpCode();
