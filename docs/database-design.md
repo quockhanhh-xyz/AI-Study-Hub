@@ -61,22 +61,31 @@ Stores OTP codes used for email verification.
 
 ## 3. Table `documents`
 
-Stores document metadata.
+Stores uploaded document metadata. The real file is stored in Firebase Storage.
 
-| Column Name   | Data Type    | Description                                        |
-| :------------ | :----------- | :------------------------------------------------- |
-| `id`          | INT          | Primary key                                        |
-| `title`       | VARCHAR(255) | Document title                                     |
-| `description` | TEXT         | Document description                               |
-| `file_name`   | VARCHAR(255) | Original file name                                 |
-| `file_type`   | VARCHAR(50)  | File type such as PDF, DOCX, PPTX, TXT, IMAGE, ZIP |
-| `file_size`   | BIGINT       | File size in bytes                                 |
-| `file_url`    | TEXT         | Firebase Storage file URL                          |
-| `owner_id`    | INT          | References users(user_id)                          |
-| `subject_id`  | INT          | References subjects(id)                            |
-| `folder_id`   | INT          | References folders(id)                             |
-| `created_at`  | TIMESTAMP    | Document upload time                               |
-| `updated_at`  | TIMESTAMP    | Last update time                                   |
+| Column Name    | Data Type    | Constraints                                           | Description                                                     |
+| :------------- | :----------- | :---------------------------------------------------- | :-------------------------------------------------------------- |
+| `document_id`  | INT          | PRIMARY KEY, AUTO_INCREMENT, NOT NULL                 | Unique document ID                                              |
+| `title`        | VARCHAR(255) | NOT NULL                                              | User-facing document title                                      |
+| `description`  | TEXT         | NULLABLE                                              | Optional document description                                   |
+| `file_name`    | VARCHAR(255) | NOT NULL                                              | Original uploaded file name                                     |
+| `file_type`    | VARCHAR(50)  | NOT NULL                                              | File type such as PDF, DOCX, PPTX, TXT, PNG, JPG, JPEG         |
+| `file_size`    | BIGINT       | NOT NULL                                              | File size in bytes                                              |
+| `file_url`     | TEXT         | NOT NULL                                              | Firebase Storage URL used by frontend to open or download file  |
+| `storage_path` | TEXT         | NOT NULL                                              | Firebase Storage object path used by backend for file lifecycle |
+| `owner_id`     | INT          | FOREIGN KEY REFERENCES users(user_id), NOT NULL       | User who owns this document                                     |
+| `created_at`   | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP                             | Document upload time                                            |
+| `updated_at`   | TIMESTAMP    | NULLABLE                                              | Last update time                                                |
+
+### Business Rules
+
+- A document must belong to exactly one user.
+- `owner_id` must be resolved from the authenticated JWT token, not from frontend input.
+- The uploaded file must be validated by the backend before being stored.
+- Allowed file types in Step 2 are PDF, DOCX, PPTX, TXT, PNG, JPG, and JPEG.
+- Maximum file size in Step 2 is 10MB.
+- Firebase Storage stores the real file; MySQL stores metadata only.
+- `subject_id` and `folder_id` are reserved for future steps and are not part of Step 2.
 
 ---
 
@@ -112,7 +121,7 @@ Stores document sharing permissions.
 | Column Name   | Data Type   | Description               |
 | :------------ | :---------- | :------------------------ |
 | `id`          | INT         | Primary key               |
-| `document_id` | INT         | References documents(id)  |
+| `document_id` | INT         | References documents(document_id) |
 | `shared_by`   | INT         | References users(user_id) |
 | `shared_to`   | INT         | References users(user_id) |
 | `permission`  | VARCHAR(20) | VIEW or DOWNLOAD          |
@@ -141,7 +150,7 @@ Stores user reports for documents.
 | Column Name   | Data Type   | Description                 |
 | :------------ | :---------- | :-------------------------- |
 | `id`          | INT         | Primary key                 |
-| `document_id` | INT         | References documents(id)    |
+| `document_id` | INT         | References documents(document_id) |
 | `reported_by` | INT         | References users(user_id)   |
 | `reason`      | TEXT        | Report reason               |
 | `status`      | VARCHAR(30) | PENDING, REVIEWED, REJECTED |

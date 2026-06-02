@@ -324,3 +324,177 @@ Authorization: Bearer sample-token
   "data": null
 }
 ```
+
+---
+
+# 3. Document Upload APIs
+
+These APIs support Step 2: authenticated users upload study documents to Firebase Storage while document metadata is saved in MySQL.
+
+## 3.1. Upload Document API
+
+## POST `/api/documents/upload`
+
+Uploads a document file for the currently authenticated user.
+
+### Headers
+
+```text
+Authorization: Bearer sample-token
+Content-Type: multipart/form-data
+```
+
+### Form Data
+
+| Field         | Type   | Required | Description                         |
+| :------------ | :----- | :------- | :---------------------------------- |
+| `file`        | File   | Yes      | Uploaded study document             |
+| `title`       | String | Yes      | User-facing document title          |
+| `description` | String | No       | Optional document description       |
+
+### Backend Rules
+
+- The backend must resolve the owner from the JWT token.
+- The frontend must not send `ownerId`.
+- The frontend must send upload data with `FormData` and must not manually set `Content-Type`.
+- The backend must validate file type and file size before uploading to Firebase Storage.
+- Allowed file types are PDF, DOCX, PPTX, TXT, PNG, JPG, and JPEG.
+- Maximum file size is 10MB.
+- The real file is stored in Firebase Storage.
+- MySQL stores document metadata only.
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "Document uploaded successfully",
+  "data": {
+    "documentId": 1,
+    "title": "SWR Lecture 1",
+    "description": "Week 1 lecture note",
+    "fileName": "swr-lecture-1.pdf",
+    "fileType": "PDF",
+    "fileSize": 102400,
+    "fileUrl": "https://firebase-storage-url",
+    "storagePath": "documents/user-1/swr-lecture-1.pdf",
+    "createdAt": "2026-06-01T10:00:00"
+  }
+}
+```
+
+### Error Response - Unauthorized
+
+```json
+{
+  "success": false,
+  "message": "Unauthorized",
+  "data": null
+}
+```
+
+### Error Response - Missing File
+
+```json
+{
+  "success": false,
+  "message": "File is required",
+  "data": null
+}
+```
+
+### Error Response - Missing Title
+
+```json
+{
+  "success": false,
+  "message": "Title is required",
+  "data": null
+}
+```
+
+### Error Response - Invalid File Type
+
+```json
+{
+  "success": false,
+  "message": "Invalid file type",
+  "data": null
+}
+```
+
+### Error Response - File Too Large
+
+```json
+{
+  "success": false,
+  "message": "File size exceeds 10MB",
+  "data": null
+}
+```
+
+### Error Response - Firebase Upload Failed
+
+```json
+{
+  "success": false,
+  "message": "Firebase upload failed",
+  "data": null
+}
+```
+
+---
+
+## 3.2. Get My Documents API
+
+## GET `/api/documents/my`
+
+Returns documents owned by the currently authenticated user.
+
+### Headers
+
+```text
+Authorization: Bearer sample-token
+```
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "Documents retrieved successfully",
+  "data": [
+    {
+      "documentId": 1,
+      "title": "SWR Lecture 1",
+      "description": "Week 1 lecture note",
+      "fileName": "swr-lecture-1.pdf",
+      "fileType": "PDF",
+      "fileSize": 102400,
+      "fileUrl": "https://firebase-storage-url",
+      "storagePath": "documents/user-1/swr-lecture-1.pdf",
+      "createdAt": "2026-06-01T10:00:00"
+    }
+  ]
+}
+```
+
+### Success Response - Empty List
+
+```json
+{
+  "success": true,
+  "message": "Documents retrieved successfully",
+  "data": []
+}
+```
+
+### Error Response - Unauthorized
+
+```json
+{
+  "success": false,
+  "message": "Unauthorized",
+  "data": null
+}
+```
