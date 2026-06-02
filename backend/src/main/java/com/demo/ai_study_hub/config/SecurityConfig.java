@@ -28,6 +28,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/me", "/api/auth/logout").authenticated() // Yêu cầu token cho me & logout
                         .requestMatchers("/api/auth/**").permitAll() // Cho phép Đăng nhập/Đăng ký
                         .requestMatchers("/api/health").permitAll()  // <--- BẠN HÃY THÊM DÒNG NÀY VÀO ĐÂY
                         .anyRequest().authenticated() // Các đường dẫn khác bắt buộc phải có Token

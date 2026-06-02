@@ -60,4 +60,24 @@ public class AuthController {
         ApiResponse<Object> response = new ApiResponse<>(true, "Đăng xuất thành công", null);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<Object>> getMe() {
+        try {
+            User user = authService.getCurrentUser();
+            Map<String, Object> data = Map.of(
+                    "userId", user.getUserId(),
+                    "email", user.getEmail(),
+                    "fullName", user.getFullName(),
+                    "role", user.getRole(),
+                    "tier", user.getTier(),
+                    "status", user.getStatus()
+            );
+            ApiResponse<Object> response = new ApiResponse<>(true, "Lấy thông tin cá nhân thành công", data);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            ApiResponse<Object> response = new ApiResponse<>(false, e.getMessage(), null);
+            return ResponseEntity.status(401).body(response);
+        }
+    }
 }

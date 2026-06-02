@@ -68,4 +68,11 @@ public class AuthService {
 
         return data;
     }
+
+    public User getCurrentUser() {
+        String email = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại!"));
+    }
 }
