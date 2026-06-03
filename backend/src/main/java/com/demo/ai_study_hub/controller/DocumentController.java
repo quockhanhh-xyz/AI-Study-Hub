@@ -29,7 +29,7 @@ public class DocumentController {
             DocumentResponse data = documentService.uploadDocument(file, title, description, principal.getName());
             return ResponseEntity.ok(ApiResponse.success(data, "Document uploaded successfully"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("Upload failed: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
@@ -39,7 +39,7 @@ public class DocumentController {
             List<DocumentResponse> data = documentService.getMyDocuments(principal.getName());
             return ResponseEntity.ok(ApiResponse.success(data, "Documents retrieved successfully"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("Failed to retrieve documents: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 }

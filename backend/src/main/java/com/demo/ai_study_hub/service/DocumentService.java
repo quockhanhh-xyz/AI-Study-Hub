@@ -31,14 +31,19 @@ public class DocumentService {
 
         FileUploadResult uploadResult = firebaseStorageService.uploadFile(file, owner.getUserId());
 
+        // Validate URL từ Firebase
+        String url = uploadResult.getFileUrl();
+        if (url == null || url.trim().isEmpty()) {
+            throw new RuntimeException("Failed to generate download URL from Firebase");
+        }
+
         Document doc = new Document();
         doc.setTitle(title);
         doc.setDescription(description);
         doc.setFileName(uploadResult.getFileName());
         doc.setFileType(uploadResult.getFileType());
         doc.setFileSize(uploadResult.getFileSize());
-        String url = uploadResult.getFileUrl();
-        doc.setFileUrl(url != null ? url : "PENDING_URL");
+        doc.setFileUrl(url);
         doc.setStoragePath(uploadResult.getStoragePath());
         doc.setOwner(owner);
 
