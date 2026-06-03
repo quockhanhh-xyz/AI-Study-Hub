@@ -1,16 +1,17 @@
 package com.demo.ai_study_hub.service;
 
 import com.demo.ai_study_hub.dto.FileUploadResult;
-import com.google.cloud.storage.*;
+import com.google.cloud.storage.Bucket;
 import com.google.firebase.cloud.StorageClient;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 @Service
+@ConditionalOnProperty(name = "firebase.enabled", havingValue = "true")
 public class FirebaseStorageService {
 
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -51,21 +52,11 @@ public class FirebaseStorageService {
             Bucket bucket = StorageClient.getInstance().bucket();
             bucket.create(storagePath, file.getBytes(), contentType);
 
-            // Tạo Signed URL có hiệu lực 7 ngày
-            Storage storage = StorageClient.getInstance().bucket().getStorage();
-            BlobId blobId = BlobId.of(bucket.getName(), storagePath);
-            BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
-
-            String fileUrl = storage.signUrl(
-                    blobInfo,
-                    7, TimeUnit.DAYS,
-                    Storage.SignUrlOption.withV4Signature()
-            ).toString();
 
             String fileType = extension.replace(".", "").toUpperCase();
 
             return FileUploadResult.builder()
-                    .fileUrl(fileUrl)
+                    .fileUrl(storagePath)
                     .storagePath(storagePath)
                     .fileName(originalName)
                     .fileType(fileType)
