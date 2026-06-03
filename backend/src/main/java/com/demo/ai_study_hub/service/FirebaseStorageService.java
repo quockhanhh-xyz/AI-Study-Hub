@@ -1,19 +1,19 @@
 package com.demo.ai_study_hub.service;
 
 import com.demo.ai_study_hub.dto.FileUploadResult;
-import com.google.cloud.storage.Blob;
-import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.*;
 import com.google.firebase.cloud.StorageClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class FirebaseStorageService {
 
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
     private static final List<String> ALLOWED_TYPES = List.of(
             "application/pdf",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -25,33 +25,42 @@ public class FirebaseStorageService {
     );
 
     public FileUploadResult uploadFile(MultipartFile file, Integer userId) {
-        // Validate không rỗng
         if (file == null || file.isEmpty()) {
             throw new RuntimeException("File is required");
         }
 
-        // Validate file size
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new RuntimeException("File size exceeds 10MB");
         }
 
-        // Validate file type
         String contentType = file.getContentType();
         if (!ALLOWED_TYPES.contains(contentType)) {
             throw new RuntimeException("Invalid file type");
         }
 
+        String originalName = file.getOriginalFilename();
+        if (originalName == null || !originalName.contains(".")) {
+            throw new RuntimeException("Invalid file name");
+        }
+
         try {
-            String originalName = file.getOriginalFilename();
             String extension = originalName.substring(originalName.lastIndexOf("."));
             String uniqueName = UUID.randomUUID() + extension;
             String storagePath = "documents/user-" + userId + "/" + uniqueName;
 
             Bucket bucket = StorageClient.getInstance().bucket();
-            Blob blob = bucket.create(storagePath, file.getBytes(), contentType);
+            bucket.create(storagePath, file.getBytes(), contentType);
 
-            String fileUrl = "https://storage.googleapis.com/" +
-                    bucket.getName() + "/" + storagePath;
+            // Tạo Signed URL có hiệu lực 7 ngày
+            Storage storage = StorageClient.getInstance().bucket().getStorage();
+            BlobId blobId = BlobId.of(bucket.getName(), storagePath);
+            BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
+
+            String fileUrl = storage.signUrl(
+                    blobInfo,
+                    7, TimeUnit.DAYS,
+                    Storage.SignUrlOption.withV4Signature()
+            ).toString();
 
             String fileType = extension.replace(".", "").toUpperCase();
 
