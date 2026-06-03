@@ -6,17 +6,17 @@ if (!token) {
 }
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
-const uploadForm      = document.getElementById("uploadForm");
-const titleInput      = document.getElementById("title");
-const descInput       = document.getElementById("description");
-const fileInput       = document.getElementById("file");
-const dropZone        = document.getElementById("dropZone");
-const dropZoneText    = document.getElementById("dropZoneText");
-const submitBtn       = document.getElementById("submitBtn");
-const uploadMessage   = document.getElementById("uploadMessage");
-const uploadProgress  = document.getElementById("uploadProgress");
-const progressFill    = document.getElementById("progressFill");
-const progressText    = document.getElementById("progressText");
+const uploadForm = document.getElementById("uploadForm");
+const titleInput = document.getElementById("title");
+const descInput = document.getElementById("description");
+const fileInput = document.getElementById("file");
+const dropZone = document.getElementById("dropZone");
+const dropZoneText = document.getElementById("dropZoneText");
+const submitBtn = document.getElementById("submitBtn");
+const uploadMessage = document.getElementById("uploadMessage");
+const uploadProgress = document.getElementById("uploadProgress");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const ALLOWED_TYPES = [
@@ -61,6 +61,11 @@ function updateDropZone(file) {
 
 function validateFile(file) {
   if (!file) return "Vui lòng chọn file.";
+
+  if (file.size === 0) {
+    return "File tài liệu không được rỗng (0 bytes).";
+  }
+
   if (!ALLOWED_TYPES.includes(file.type)) {
     return "Loại file không hợp lệ. Chỉ chấp nhận: PDF, DOCX, PPTX, TXT, PNG, JPG, JPEG.";
   }
