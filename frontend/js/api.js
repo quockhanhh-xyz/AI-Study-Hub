@@ -6,11 +6,20 @@ const API_BASE_URL = "http://localhost:8080";
   Hàm trung tâm để cấu hình request và xử lý token tự động.
  */
 async function apiRequest(endpoint, options = {}) {
-  // Tự động thêm Content-Type mặc định là JSON
+  // Kiểm tra xem dữ liệu gửi lên có phải là file (FormData) không
+  const isFormData = options.body instanceof FormData;
+
+  // Khởi tạo headers ban đầu
   const headers = {
-    "Content-Type": "application/json",
     ...(options.headers || {})
   };
+
+  // CƠ CHẾ TỰ ĐỘNG: 
+  // - Nếu KHÔNG PHẢI FormData -> Mới tự động thêm Content-Type mặc định là JSON
+  // - Nếu LÀ FormData -> TUYỆT ĐỐI không thêm, để trình duyệt tự sinh boundary quản lý file
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
 
   // Tự động lấy token từ localStorage (nếu có) để đính kèm vào mọi request sau này
   const token = localStorage.getItem("accessToken");
@@ -50,11 +59,15 @@ function get(endpoint) {
 /*
   Hàm gọi API phương thức POST
   @param {string} endpoint - Ví dụ: "/api/auth/login"
-  @param {object} body - Object dữ liệu thuần từ form (chưa hóa chuỗi)
+  @param {object|FormData} body - Object dữ liệu thường HOẶC cục FormData chứa file
  */
 function post(endpoint, body) {
+  // Kiểm tra body truyền vào hàm post này có phải là FormData không
+  const isFormData = body instanceof FormData;
+  
   return apiRequest(endpoint, {
     method: "POST",
-    body: JSON.stringify(body)
+    // Nếu là FormData thì giữ nguyên, nếu là object thường thì mới hóa chuỗi JSON.stringify
+    body: isFormData ? body : JSON.stringify(body)
   });
 }
