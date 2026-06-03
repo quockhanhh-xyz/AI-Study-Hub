@@ -9,10 +9,8 @@
   @returns {Promise} Trả về cấu trúc ApiResponse chuẩn từ Backend (success, message, data)
  */
 function uploadDocument(formData) {
-  return apiRequest("/api/documents/upload", {
-    method: "POST",
-    body: formData // Truyền trực tiếp cục formData chứa file lên, api.js sẽ tự biết để né không ép JSON
-  });
+  // Dùng trực tiếp hàm post helper
+  return post("/api/documents/upload", formData);
 }
 
 /*
