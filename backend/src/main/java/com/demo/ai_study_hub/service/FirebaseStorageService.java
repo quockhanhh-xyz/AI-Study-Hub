@@ -3,7 +3,7 @@ package com.demo.ai_study_hub.service;
 import com.demo.ai_study_hub.dto.FileUploadResult;
 import com.google.cloud.storage.Bucket;
 import com.google.firebase.cloud.StorageClient;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,8 +11,10 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-@ConditionalOnProperty(name = "firebase.enabled", havingValue = "true")
 public class FirebaseStorageService {
+
+    @Value("${firebase.enabled:false}")
+    private boolean firebaseEnabled;
 
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
     private static final List<String> ALLOWED_TYPES = List.of(
@@ -26,6 +28,10 @@ public class FirebaseStorageService {
     );
 
     public FileUploadResult uploadFile(MultipartFile file, Integer userId) {
+        if (!firebaseEnabled) {
+            throw new RuntimeException("Firebase is not enabled. Set FIREBASE_ENABLED=true to use file upload.");
+        }
+
         if (file == null || file.isEmpty()) {
             throw new RuntimeException("File is required");
         }
@@ -52,11 +58,11 @@ public class FirebaseStorageService {
             Bucket bucket = StorageClient.getInstance().bucket();
             bucket.create(storagePath, file.getBytes(), contentType);
 
-
             String fileType = extension.replace(".", "").toUpperCase();
 
+
             return FileUploadResult.builder()
-                    .fileUrl(storagePath)
+                    .fileUrl(null)
                     .storagePath(storagePath)
                     .fileName(originalName)
                     .fileType(fileType)
