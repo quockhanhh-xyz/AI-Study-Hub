@@ -350,3 +350,157 @@ input.success {
     font-size: 14px;
     color: var(--muted);
 }
+
+/* ===== DOCUMENT DASHBOARD ===== */
+.document-panel {
+    margin-top: 16px;
+}
+
+.section-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.section-header h2 {
+    text-align: left;
+    margin: 0 0 4px;
+}
+
+.section-header p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.upload-link-btn {
+    width: auto;
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.document-state,
+.empty-state {
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 28px;
+    text-align: center;
+    color: var(--muted);
+    background: #f8fafc;
+}
+
+.document-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+}
+
+.document-status {
+    max-width: none;
+    margin: 0;
+}
+
+.empty-title {
+    margin-bottom: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.empty-state p {
+    margin: 0 auto 20px;
+    max-width: 420px;
+}
+
+.empty-action {
+    width: auto;
+}
+
+.document-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.document-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 220px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--white);
+}
+
+.document-card-header {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    align-items: start;
+}
+
+.document-card h3 {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.document-type-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    height: 28px;
+    padding: 0 8px;
+    border-radius: 6px;
+    background: #eff6ff;
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.document-description {
+    flex: 1;
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.document-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.document-actions {
+    margin-top: auto;
+}
+
+.document-open-btn {
+    width: 100%;
+}
+
+.document-open-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .section-header {
+        flex-direction: column;
+    }
+
+    .upload-link-btn,
+    .empty-action {
+        width: 100%;
+    }
+}

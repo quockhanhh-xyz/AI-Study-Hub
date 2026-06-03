@@ -19,6 +19,7 @@
                 <a href="dashboard.html" class="nav-link active">Dashboard</a>
             </nav>
         </aside>
+
         <main class="main-content">
             <section class="page-header">
                 <h1>Dashboard</h1>
@@ -37,28 +38,46 @@
                         <div class="stat-value" id="chatCount">-</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Joined</div>
+                        <div class="stat-label">Account Tier</div>
                         <div class="stat-value" id="joinDate">-</div>
                     </div>
                 </div>
             </section>
 
-            <section class="card coming-soon">
-                <div class="coming-soon-icon">🚀</div>
-                <div class="coming-soon-title">Features coming soon</div>
-                <div class="coming-soon-desc">AI Chat and document features will appear here.</div>
+            <section class="card document-panel">
+                <div class="section-header">
+                    <div>
+                        <h2>My Documents</h2>
+                        <p>Files you have uploaded to AI Study Hub.</p>
+                    </div>
+                    <a href="upload.html" class="btn btn-primary upload-link-btn">Upload Document</a>
+                </div>
+
+                <div id="documentLoader" class="document-state">
+                    Loading documents...
+                </div>
+
+                <div id="documentErrorMessage" class="status-box status-error document-status" style="display: none;"></div>
+
+                <div id="documentGrid" class="document-grid" style="display: none;"></div>
+
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <div class="empty-title">No documents yet</div>
+                    <p>Upload your first study document to keep everything in one place.</p>
+                    <a href="upload.html" class="btn btn-secondary empty-action">Upload your first document</a>
+                </div>
             </section>
 
             <div class="logout-container">
                 <button type="button" id="logoutBtn" class="btn btn-secondary logout-btn">
-                    🚪 Logout
+                    Logout
                 </button>
             </div>
         </main>
     </div>
 
     <script src="js/api.js"></script>
-    <script src="js/auth.js"></script>
+    <script src="js/document-api.js"></script>
     <script src="js/dashboard.js"></script>
 </body>
 
