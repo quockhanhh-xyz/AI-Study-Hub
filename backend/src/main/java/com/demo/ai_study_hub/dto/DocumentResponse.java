@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 public class DocumentResponse {
     private Integer documentId;
     private String title;
+    private String description;
     private String fileName;
     private String fileType;
     private Long fileSize;
