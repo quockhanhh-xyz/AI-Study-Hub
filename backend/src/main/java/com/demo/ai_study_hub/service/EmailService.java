@@ -1,6 +1,7 @@
 package com.demo.ai_study_hub.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -11,8 +12,16 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
+    // Tự động lấy email cấu hình từ file application.properties điền vào đây
+    @Value("${spring.mail.username}")
+    private String fromEmail;
+
     public void sendOtpEmail(String toEmail, String otpCode) {
         SimpleMailMessage message = new SimpleMailMessage();
+        
+        // Thay thế chuỗi viết cứng cũ bằng biến fromEmail đã được tiêm (inject) ở trên
+        message.setFrom(fromEmail); 
+        
         message.setTo(toEmail);
         message.setSubject("AI Study Hub - Mã xác thực OTP");
         message.setText(

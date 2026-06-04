@@ -7,8 +7,8 @@ import com.demo.ai_study_hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,10 +27,21 @@ public class AuthService {
             throw new RuntimeException("Email đã tồn tại trong hệ thống!");
         }
 
+        // ================= FIX P1: VALIDATE PASSWORD POLICY =================
+        String password = request.getPassword();
+        if (password == null || password.length() < 8) {
+            throw new RuntimeException("Mật khẩu phải có độ dài tối thiểu 8 ký tự!");
+        }
+        // Biểu thức chính quy: Kiểm tra chứa ít nhất 1 chữ cái và 1 chữ số
+        if (!password.matches(".*[a-zA-Z].*") || !password.matches(".*\\d.*")) {
+            throw new RuntimeException("Mật khẩu phải chứa ít nhất 1 chữ cái và 1 chữ số!");
+        }
+        // ====================================================================
+
         User user = new User();
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setPasswordHash(passwordEncoder.encode(password));
 
         userRepository.save(user);
 
@@ -48,13 +59,18 @@ public class AuthService {
             throw new RuntimeException("Sai mật khẩu!");
         }
 
-        if ("INACTIVE".equals(user.getStatus())) {
-            throw new RuntimeException("Tài khoản chưa xác thực OTP!");
+        // ================= FIX P1: LOGIN STATUS CHECK (TỔNG QUÁT) =================
+        // Thay vì check từng trạng thái xấu, ta đổi tư duy: Không phải ACTIVE thì block hết
+        if (!"ACTIVE".equals(user.getStatus())) {
+            if ("INACTIVE".equals(user.getStatus())) {
+                throw new RuntimeException("Please verify your email before login");
+            } else if ("BLOCKED".equals(user.getStatus())) {
+                throw new RuntimeException("Your account has been blocked");
+            } else {
+                throw new RuntimeException("Account is not active");
+            }
         }
-
-        if ("BLOCKED".equals(user.getStatus())) {
-            throw new RuntimeException("Tài khoản đã bị admin khóa!");
-        }
+        // ==========================================================================
 
         String token = jwtUtil.generateToken(user.getEmail());
 
