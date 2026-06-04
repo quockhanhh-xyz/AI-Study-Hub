@@ -12,8 +12,8 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    // Tự động lấy email cấu hình từ file application.properties điền vào đây
-    @Value("${spring.mail.username}")
+    // Đã thêm giá trị mặc định fallback bằng dấu hai chấm : để chạy test không bị crash
+    @Value("${spring.mail.username:}")
     private String fromEmail;
 
     public void sendOtpEmail(String toEmail, String otpCode) {

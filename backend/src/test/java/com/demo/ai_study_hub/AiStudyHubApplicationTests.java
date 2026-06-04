@@ -8,6 +8,6 @@ class AiStudyHubApplicationTests {
 
     @Test
     void contextLoads() {
+        // Kiểm tra khởi động cấu hình môi trường hệ thống
     }
-
 }

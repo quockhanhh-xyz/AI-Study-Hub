@@ -27,21 +27,13 @@ public class AuthService {
             throw new RuntimeException("Email đã tồn tại trong hệ thống!");
         }
 
-        // ================= FIX P1: VALIDATE PASSWORD POLICY =================
-        String password = request.getPassword();
-        if (password == null || password.length() < 8) {
-            throw new RuntimeException("Mật khẩu phải có độ dài tối thiểu 8 ký tự!");
-        }
-        // Biểu thức chính quy: Kiểm tra chứa ít nhất 1 chữ cái và 1 chữ số
-        if (!password.matches(".*[a-zA-Z].*") || !password.matches(".*\\d.*")) {
-            throw new RuntimeException("Mật khẩu phải chứa ít nhất 1 chữ cái và 1 chữ số!");
-        }
-        // ====================================================================
+        //  Đã xóa hoàn toàn đoạn validate password bằng tiếng Việt tại đây 
+        // Logic chính sách mật khẩu (Password Policy) sẽ do PR #21 quản lý tập trung để tránh xung đột hệ thống.
 
         User user = new User();
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
-        user.setPasswordHash(passwordEncoder.encode(password));
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
         userRepository.save(user);
 
@@ -59,7 +51,7 @@ public class AuthService {
             throw new RuntimeException("Sai mật khẩu!");
         }
 
-        // ================= FIX P1: LOGIN STATUS CHECK (TỔNG QUÁT) =================
+        //  FIX P1: LOGIN STATUS CHECK (TỔNG QUÁT) 
         // Thay vì check từng trạng thái xấu, ta đổi tư duy: Không phải ACTIVE thì block hết
         if (!"ACTIVE".equals(user.getStatus())) {
             if ("INACTIVE".equals(user.getStatus())) {
@@ -70,7 +62,6 @@ public class AuthService {
                 throw new RuntimeException("Account is not active");
             }
         }
-        // ==========================================================================
 
         String token = jwtUtil.generateToken(user.getEmail());
 
