@@ -19,7 +19,7 @@ public class DocumentService {
 
     private final DocumentRepository documentRepository;
     private final UserRepository userRepository;
-    private final FirebaseStorageService firebaseStorageService;
+    private final CloudinaryStorageService cloudinaryStorageService;
 
     public DocumentResponse uploadDocument(MultipartFile file, String title, String description, String email) {
         if (title == null || title.trim().isEmpty()) {
@@ -29,22 +29,21 @@ public class DocumentService {
         User owner = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        FileUploadResult uploadResult = firebaseStorageService.uploadFile(file, owner.getUserId());
+        FileUploadResult uploadResult = cloudinaryStorageService.uploadFile(file, owner.getUserId());
 
-        // Validate URL từ Firebase
         String url = uploadResult.getFileUrl();
         if (url == null || url.trim().isEmpty()) {
-            throw new RuntimeException("Failed to generate download URL from Firebase");
+            throw new RuntimeException("Failed to upload file to Cloudinary");
         }
 
         Document doc = new Document();
         doc.setTitle(title);
         doc.setDescription(description);
-        doc.setFileName(uploadResult.getFileName());
+        doc.setFileName(uploadResult.getOriginalFileName());
         doc.setFileType(uploadResult.getFileType());
         doc.setFileSize(uploadResult.getFileSize());
         doc.setFileUrl(url);
-        doc.setStoragePath(uploadResult.getStoragePath());
+        doc.setStoragePath(uploadResult.getPublicId());
         doc.setOwner(owner);
 
         Document savedDoc = documentRepository.save(doc);
