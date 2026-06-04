@@ -10,10 +10,11 @@ public class DocumentResponse {
     private Integer documentId;
     private String title;
     private String description;
-    private String fileName;
+    private String originalFileName;
     private String fileType;
     private Long fileSize;
     private String fileUrl;
-    private String storagePath;
+    private String publicId;
+    private String uploadedBy;
     private LocalDateTime createdAt;
 }
