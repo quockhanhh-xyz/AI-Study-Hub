@@ -376,8 +376,8 @@ Authorization: Bearer sample-token
     "originalFileName": "swr-lecture-1.pdf",
     "fileType": "PDF",
     "fileSize": 102400,
-    "fileUrl": "https://res.cloudinary.com/demo/image/upload/v123456/ai-study-hub/documents/1/swr-lecture-1.png",
-    "publicId": "ai-study-hub/documents/1/swr-lecture-1",
+    "fileUrl": "https://res.cloudinary.com/demo/raw/upload/v123456/ai-study-hub/documents/1/swr-lecture-1.pdf",
+    "publicId": "ai-study-hub/documents/1/swr-lecture-1.pdf",
     "uploadedBy": "user@gmail.com",
     "createdAt": "2026-06-01T10:00:00"
   }
@@ -472,8 +472,8 @@ Authorization: Bearer sample-token
       "originalFileName": "swr-lecture-1.pdf",
       "fileType": "PDF",
       "fileSize": 102400,
-      "fileUrl": "https://res.cloudinary.com/demo/image/upload/v123456/ai-study-hub/documents/1/swr-lecture-1.png",
-      "publicId": "ai-study-hub/documents/1/swr-lecture-1",
+      "fileUrl": "https://res.cloudinary.com/demo/raw/upload/v123456/ai-study-hub/documents/1/swr-lecture-1.pdf",
+      "publicId": "ai-study-hub/documents/1/swr-lecture-1.pdf",
       "uploadedBy": "user@gmail.com",
       "createdAt": "2026-06-01T10:00:00"
     }
@@ -499,4 +499,4 @@ Authorization: Bearer sample-token
   "message": "Unauthorized",
   "data": null
 }
-}```
+```
