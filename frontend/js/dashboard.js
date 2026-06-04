@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     fileBadge.textContent = getFileLabel(documentItem.fileType);
 
     const title = document.createElement("h3");
-    title.textContent = documentItem.title || documentItem.fileName || "Untitled document";
+    title.textContent = documentItem.title || documentItem.originalFileName || "Untitled document";
 
     header.append(fileBadge, title);
 
