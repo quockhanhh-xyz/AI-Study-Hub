@@ -1,35 +1,46 @@
 package com.demo.ai_study_hub.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.demo.ai_study_hub.dto.FileUploadResult;
-import com.google.cloud.storage.Bucket;
-import com.google.firebase.cloud.StorageClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
-public class FirebaseStorageService {
+public class CloudinaryStorageService {
 
-    @Value("${firebase.enabled:false}")
-    private boolean firebaseEnabled;
+    private final Optional<Cloudinary> cloudinary;
+
+    @Value("${cloudinary.enabled:false}")
+    private boolean cloudinaryEnabled;
 
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
     private static final List<String> ALLOWED_TYPES = List.of(
             "application/pdf",
+            "application/msword",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-powerpoint",
             "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             "text/plain",
             "image/png",
             "image/jpg",
             "image/jpeg"
     );
 
+    public CloudinaryStorageService(Optional<Cloudinary> cloudinary) {
+        this.cloudinary = cloudinary;
+    }
+
     public FileUploadResult uploadFile(MultipartFile file, Integer userId) {
-        if (!firebaseEnabled) {
-            throw new RuntimeException("Firebase is not enabled. Set FIREBASE_ENABLED=true to use file upload.");
+        if (!cloudinaryEnabled) {
+            throw new RuntimeException("Cloudinary is not enabled. Set CLOUDINARY_ENABLED=true to use file upload.");
         }
 
         if (file == null || file.isEmpty()) {
@@ -52,39 +63,31 @@ public class FirebaseStorageService {
 
         try {
             String extension = originalName.substring(originalName.lastIndexOf("."));
-            String uniqueName = UUID.randomUUID() + extension;
-            String storagePath = "documents/user-" + userId + "/" + uniqueName;
-            Bucket bucket = StorageClient.getInstance().bucket();
+            String fileType = extension.replace(".", "").toUpperCase();
 
-            String downloadToken = UUID.randomUUID().toString();
-
-            com.google.cloud.storage.BlobId blobId = com.google.cloud.storage.BlobId.of(bucket.getName(), storagePath);
-            com.google.cloud.storage.BlobInfo blobInfo = com.google.cloud.storage.BlobInfo.newBuilder(blobId)
-                    .setContentType(contentType)
-                    .setMetadata(java.util.Map.of("firebaseStorageDownloadTokens", downloadToken))
-                    .build();
-
-            bucket.getStorage().create(blobInfo, file.getBytes());
-
-            String fileUrl = String.format(
-                    "https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media&token=%s",
-                    bucket.getName(),
-                    java.net.URLEncoder.encode(storagePath, java.nio.charset.StandardCharsets.UTF_8),
-                    downloadToken
+            Map uploadResult = cloudinary.get().uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", "ai-study-hub/documents/" + userId,
+                            "resource_type", "auto",
+                            "use_filename", true,
+                            "unique_filename", true
+                    )
             );
 
-            String fileType = extension.replace(".", "").toUpperCase();
+            String fileUrl = (String) uploadResult.get("secure_url");
+            String publicId = (String) uploadResult.get("public_id");
 
             return FileUploadResult.builder()
                     .fileUrl(fileUrl)
-                    .storagePath(storagePath)
-                    .fileName(originalName)
+                    .publicId(publicId)
+                    .originalFileName(originalName)
                     .fileType(fileType)
                     .fileSize(file.getSize())
                     .build();
 
         } catch (Exception e) {
-            throw new RuntimeException("Firebase upload failed: " + e.getMessage());
+            throw new RuntimeException("Cloudinary upload failed: " + e.getMessage());
         }
     }
 }
