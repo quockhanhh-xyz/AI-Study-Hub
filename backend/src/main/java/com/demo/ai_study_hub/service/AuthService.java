@@ -23,21 +23,21 @@ public class AuthService {
 
     @Transactional
     public User register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email đã tồn tại trong hệ thống!");
+        String password = request.getPassword();
+        if (password == null || !password.matches("^(?=.*[A-Za-z])(?=.*\\d).{8,}$")) {
+            throw new RuntimeException(
+                    "Password must be at least 8 characters, including at least 1 letter and 1 number.");
         }
+    }
 
-        User user = new User();
-        user.setFullName(request.getFullName());
-        user.setEmail(request.getEmail());
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+    User user = new User();user.setFullName(request.getFullName());user.setEmail(request.getEmail());user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
-        userRepository.save(user);
+    userRepository.save(user);
 
-        // Sinh và gửi OTP về email
-        otpService.createAndSendOtp(user);
+    // Sinh và gửi OTP về email
+    otpService.createAndSendOtp(user);
 
-        return user;
+    return user;
     }
 
     public Map<String, Object> login(LoginRequest request) {
