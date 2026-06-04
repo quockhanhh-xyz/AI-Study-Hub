@@ -25,7 +25,7 @@ public class Document {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "original_file_name", nullable = false, length = 255)
+    @Column(name = "file_name", nullable = false, length = 255)
     private String originalFileName;
 
     @Column(name = "file_type", nullable = false, length = 50)
@@ -37,7 +37,7 @@ public class Document {
     @Column(name = "file_url", nullable = false, columnDefinition = "TEXT")
     private String fileUrl;
 
-    @Column(name = "public_id", nullable = false, length = 255)
+    @Column(name = "storage_path", nullable = false, columnDefinition = "TEXT")
     private String publicId;
 
     @ManyToOne(fetch = FetchType.LAZY)
