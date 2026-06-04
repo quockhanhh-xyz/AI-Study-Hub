@@ -33,17 +33,17 @@ public class DocumentService {
 
         String url = uploadResult.getFileUrl();
         if (url == null || url.trim().isEmpty()) {
-            throw new RuntimeException("Failed to upload file to Cloudinary");
+            throw new RuntimeException("Failed to generate download URL from Cloudinary");
         }
 
         Document doc = new Document();
         doc.setTitle(title);
         doc.setDescription(description);
-        doc.setFileName(uploadResult.getOriginalFileName());
+        doc.setOriginalFileName(uploadResult.getOriginalFileName());
         doc.setFileType(uploadResult.getFileType());
         doc.setFileSize(uploadResult.getFileSize());
         doc.setFileUrl(url);
-        doc.setStoragePath(uploadResult.getPublicId());
+        doc.setPublicId(uploadResult.getPublicId());
         doc.setOwner(owner);
 
         Document savedDoc = documentRepository.save(doc);
@@ -66,11 +66,12 @@ public class DocumentService {
                 .documentId(doc.getDocumentId())
                 .title(doc.getTitle())
                 .description(doc.getDescription())
-                .fileName(doc.getFileName())
+                .originalFileName(doc.getOriginalFileName())
                 .fileType(doc.getFileType())
                 .fileSize(doc.getFileSize())
                 .fileUrl(doc.getFileUrl())
-                .storagePath(doc.getStoragePath())
+                .publicId(doc.getPublicId())
+                .uploadedBy(doc.getOwner().getEmail())
                 .createdAt(doc.getCreatedAt())
                 .build();
     }
