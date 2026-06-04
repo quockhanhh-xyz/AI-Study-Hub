@@ -329,7 +329,7 @@ Authorization: Bearer sample-token
 
 # 3. Document Upload APIs
 
-These APIs support Step 2: authenticated users upload study documents to Firebase Storage while document metadata is saved in MySQL.
+These APIs support Step 2: authenticated users upload study documents to Cloudinary Storage while document metadata is saved in MySQL.
 
 ## 3.1. Upload Document API
 
@@ -341,10 +341,10 @@ Uploads a document file for the currently authenticated user.
 
 ```text
 Authorization: Bearer sample-token
-Content-Type: multipart/form-data
 ```
+*(Note: Do not manually set `Content-Type` header when sending `FormData` in JavaScript; let the browser automatically generate the header with boundary.)*
 
-### Form Data
+### Form Data (FormData)
 
 | Field         | Type   | Required | Description                         |
 | :------------ | :----- | :------- | :---------------------------------- |
@@ -352,16 +352,16 @@ Content-Type: multipart/form-data
 | `title`       | String | Yes      | User-facing document title          |
 | `description` | String | No       | Optional document description       |
 
-### Backend Rules
+### Backend & Frontend Integration Rules
 
-- The backend must resolve the owner from the JWT token.
-- The frontend must not send `ownerId`.
-- The frontend must send upload data with `FormData` and must not manually set `Content-Type`.
-- The backend must validate file type and file size before uploading to Firebase Storage.
-- Allowed file types are PDF, DOCX, PPTX, TXT, PNG, JPG, and JPEG.
-- Maximum file size is 10MB.
-- The real file is stored in Firebase Storage.
-- MySQL stores document metadata only.
+- **Owner Resolution**: The backend must resolve the owner from the JWT token / security session. The frontend must **not** send `ownerId` or `userId`.
+- **Content-Type Header**: The frontend must send upload data with `FormData` and must **not** manually set `Content-Type` headers in JavaScript (allowing the browser to calculate the multipart boundary).
+- **Validation**: The backend must validate the file type and file size before uploading to Cloudinary.
+- **Allowed File Types**: `pdf`, `doc`, `docx`, `ppt`, `pptx`, `xls`, `xlsx`, `txt`, `jpg`, `jpeg`, `png` (case-insensitive).
+- **Maximum File Size**: **10MB** (10,485,760 bytes).
+- **Storage Target**: The real file is stored in Cloudinary Storage.
+- **Metadata Storage**: MySQL stores document metadata only.
+- **Secrets Management**: Under NO circumstances should any Cloudinary API Key, Secret, or credentials be pushed to Git or exposed to the frontend.
 
 ### Success Response
 
@@ -373,17 +373,18 @@ Content-Type: multipart/form-data
     "documentId": 1,
     "title": "SWR Lecture 1",
     "description": "Week 1 lecture note",
-    "fileName": "swr-lecture-1.pdf",
+    "originalFileName": "swr-lecture-1.pdf",
     "fileType": "PDF",
     "fileSize": 102400,
-    "fileUrl": "https://firebase-storage-url",
-    "storagePath": "documents/user-1/swr-lecture-1.pdf",
+    "fileUrl": "https://res.cloudinary.com/demo/image/upload/v123456/ai-study-hub/documents/1/swr-lecture-1.png",
+    "publicId": "ai-study-hub/documents/1/swr-lecture-1",
+    "uploadedBy": "user@gmail.com",
     "createdAt": "2026-06-01T10:00:00"
   }
 }
 ```
 
-### Error Response - Unauthorized
+### Error Response - Unauthorized (401)
 
 ```json
 {
@@ -393,7 +394,7 @@ Content-Type: multipart/form-data
 }
 ```
 
-### Error Response - Missing File
+### Error Response - Missing File (400)
 
 ```json
 {
@@ -403,7 +404,7 @@ Content-Type: multipart/form-data
 }
 ```
 
-### Error Response - Missing Title
+### Error Response - Missing Title (400)
 
 ```json
 {
@@ -413,7 +414,7 @@ Content-Type: multipart/form-data
 }
 ```
 
-### Error Response - Invalid File Type
+### Error Response - Invalid File Type (400)
 
 ```json
 {
@@ -423,7 +424,7 @@ Content-Type: multipart/form-data
 }
 ```
 
-### Error Response - File Too Large
+### Error Response - File Too Large (400)
 
 ```json
 {
@@ -433,12 +434,12 @@ Content-Type: multipart/form-data
 }
 ```
 
-### Error Response - Firebase Upload Failed
+### Error Response - Cloudinary Upload Failed (500)
 
 ```json
 {
   "success": false,
-  "message": "Firebase upload failed",
+  "message": "Cloudinary upload failed: [details]",
   "data": null
 }
 ```
@@ -468,11 +469,12 @@ Authorization: Bearer sample-token
       "documentId": 1,
       "title": "SWR Lecture 1",
       "description": "Week 1 lecture note",
-      "fileName": "swr-lecture-1.pdf",
+      "originalFileName": "swr-lecture-1.pdf",
       "fileType": "PDF",
       "fileSize": 102400,
-      "fileUrl": "https://firebase-storage-url",
-      "storagePath": "documents/user-1/swr-lecture-1.pdf",
+      "fileUrl": "https://res.cloudinary.com/demo/image/upload/v123456/ai-study-hub/documents/1/swr-lecture-1.png",
+      "publicId": "ai-study-hub/documents/1/swr-lecture-1",
+      "uploadedBy": "user@gmail.com",
       "createdAt": "2026-06-01T10:00:00"
     }
   ]
@@ -489,7 +491,7 @@ Authorization: Bearer sample-token
 }
 ```
 
-### Error Response - Unauthorized
+### Error Response - Unauthorized (401)
 
 ```json
 {
@@ -497,4 +499,4 @@ Authorization: Bearer sample-token
   "message": "Unauthorized",
   "data": null
 }
-```
+}```

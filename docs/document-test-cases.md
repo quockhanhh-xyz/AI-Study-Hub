@@ -1,14 +1,14 @@
-# Document Upload Test Cases - Step 2
+# Document Upload Test Cases - Step 2 (Cloudinary Storage)
 
 ## Scope
 
-Step 2 covers document upload through backend, Firebase Storage persistence, MySQL metadata persistence, and dashboard document listing for the authenticated user.
+Step 2 covers document upload through backend, Cloudinary Storage persistence, MySQL metadata persistence, and dashboard document listing for the authenticated user.
 
 In scope:
 
 - `POST /api/documents/upload`
 - `GET /api/documents/my`
-- Firebase Storage upload
+- Cloudinary Storage upload
 - MySQL document metadata
 - Authenticated ownership by JWT token
 
@@ -25,9 +25,9 @@ Out of scope:
 ## Common Preconditions
 
 - Backend is running at `http://localhost:8080`.
-- Frontend is running through Live Server.
+- Frontend is running through Live Server at `http://localhost:5500`.
 - MySQL database `ai_study_hub` exists.
-- Firebase Storage is configured for backend.
+- Cloudinary accounts are configured for the backend.
 - A verified user account exists and can log in.
 - Login returns an `accessToken`.
 - Requests to protected APIs use:
@@ -50,16 +50,27 @@ Precondition:
 Steps:
 
 1. Send `POST /api/documents/upload`.
-2. Use `multipart/form-data`.
+2. Use `multipart/form-data` format using `FormData`.
 3. Include `file`, `title`, and optional `description`.
+4. *Do not manually set the `Content-Type` header (let the browser generate the multipart boundary).*
 
 Expected Result:
 
 - Response status is `200 OK`.
 - Response has `success=true`.
-- Response `data` includes `documentId`, `fileUrl`, and `storagePath`.
-- File exists in Firebase Storage.
-- Metadata exists in MySQL table `documents`.
+- Response `data` includes:
+  - `documentId`
+  - `title`
+  - `description`
+  - `originalFileName`
+  - `fileType`
+  - `fileSize`
+  - `fileUrl` (Cloudinary secure_url)
+  - `publicId` (Cloudinary public_id)
+  - `uploadedBy` (Owner email)
+  - `createdAt`
+- File exists in Cloudinary Storage.
+- Metadata exists in MySQL table `documents` matching these DTO fields.
 
 Status:
 
@@ -82,9 +93,9 @@ Steps:
 
 Expected Result:
 
-- Response status is `401 Unauthorized` or `403 Forbidden`.
+- Response status is `401 Unauthorized` (intercepted by Custom `JwtAuthenticationEntryPoint`).
 - Document is not saved in MySQL.
-- File is not uploaded to Firebase Storage.
+- File is not uploaded to Cloudinary Storage.
 
 Status:
 
@@ -166,7 +177,7 @@ Expected Result:
 - Response status is `400 Bad Request`.
 - Response has `success=false`.
 - No metadata is saved.
-- File is not uploaded to Firebase Storage.
+- File is not uploaded to Cloudinary Storage.
 
 Status:
 
@@ -194,7 +205,7 @@ Expected Result:
 - Response has `success=false`.
 - Message is `File size exceeds 10MB`.
 - No metadata is saved.
-- File is not uploaded to Firebase Storage.
+- File is not uploaded to Cloudinary Storage.
 
 Status:
 
@@ -222,7 +233,7 @@ Expected Result:
 - Response has `success=false`.
 - Message is `Invalid file type`.
 - No metadata is saved.
-- File is not uploaded to Firebase Storage.
+- File is not uploaded to Cloudinary Storage.
 
 Status:
 
@@ -237,7 +248,7 @@ Not Run
 Precondition:
 
 - User is logged in.
-- Valid files are available for PDF, DOCX, PPTX, TXT, PNG, JPG, and JPEG.
+- Valid files are available for PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, JPG, JPEG, and PNG.
 
 Steps:
 
@@ -248,6 +259,7 @@ Expected Result:
 - Each allowed file type uploads successfully.
 - Each response has `success=true`.
 - Metadata is saved correctly for each document.
+- Cloudinary handles resource type appropriately (`raw` for documents/text, `image` for images).
 
 Status:
 
@@ -275,7 +287,17 @@ Expected Result:
 - Response status is `200 OK`.
 - Response has `success=true`.
 - Response `data` is an array.
-- Each item includes `documentId`, `title`, `fileName`, `fileType`, `fileSize`, `fileUrl`, and `createdAt`.
+- Each item includes:
+  - `documentId`
+  - `title`
+  - `description`
+  - `originalFileName`
+  - `fileType`
+  - `fileSize`
+  - `fileUrl`
+  - `publicId`
+  - `uploadedBy`
+  - `createdAt`
 
 Status:
 
@@ -351,7 +373,7 @@ Steps:
 
 Expected Result:
 
-- Response status is `401 Unauthorized` or `403 Forbidden`.
+- Response status is `401 Unauthorized` (intercepted by Custom `JwtAuthenticationEntryPoint`).
 - No document data is returned.
 
 Status:
@@ -364,11 +386,13 @@ Not Run
 
 ## Integration Checklist
 
-- File appears in Firebase Storage after successful upload.
+- File appears in Cloudinary Storage after successful upload.
 - Metadata appears in MySQL table `documents` after successful upload.
-- `owner_id` is the authenticated user ID.
-- Frontend does not send `ownerId`.
+- `owner_id` is the authenticated user ID resolved on the backend.
+- Frontend does not send `ownerId` or `userId`.
 - Response format always uses `success`, `message`, and `data`.
 - JSON fields use camelCase.
-- No Firebase service account key is pushed to GitHub.
-- No `.env` or `application-local.properties` file is pushed to GitHub.
+- No Cloudinary credentials (cloud name, API key, API secret) are pushed to GitHub.
+- No `.env` or local configuration properties file is pushed to GitHub.
+- Config defaults prevent the application from crashing if Cloudinary environment variables are missing at startup.
+- The application remains clean of any Firebase Storage dependencies in the Step 2 flow.
