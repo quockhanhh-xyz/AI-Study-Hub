@@ -61,30 +61,30 @@ Stores OTP codes used for email verification.
 
 ## 3. Table `documents`
 
-Stores uploaded document metadata. The real file is stored in Firebase Storage.
+Stores uploaded document metadata. The real file is stored in Cloudinary Storage.
 
-| Column Name    | Data Type    | Constraints                                           | Description                                                     |
-| :------------- | :----------- | :---------------------------------------------------- | :-------------------------------------------------------------- |
-| `document_id`  | INT          | PRIMARY KEY, AUTO_INCREMENT, NOT NULL                 | Unique document ID                                              |
-| `title`        | VARCHAR(255) | NOT NULL                                              | User-facing document title                                      |
-| `description`  | TEXT         | NULLABLE                                              | Optional document description                                   |
-| `file_name`    | VARCHAR(255) | NOT NULL                                              | Original uploaded file name                                     |
-| `file_type`    | VARCHAR(50)  | NOT NULL                                              | File type such as PDF, DOCX, PPTX, TXT, PNG, JPG, JPEG         |
-| `file_size`    | BIGINT       | NOT NULL                                              | File size in bytes                                              |
-| `file_url`     | TEXT         | NOT NULL                                              | Firebase Storage URL used by frontend to open or download file  |
-| `storage_path` | TEXT         | NOT NULL                                              | Firebase Storage object path used by backend for file lifecycle |
-| `owner_id`     | INT          | FOREIGN KEY REFERENCES users(user_id), NOT NULL       | User who owns this document                                     |
-| `created_at`   | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP                             | Document upload time                                            |
-| `updated_at`   | TIMESTAMP    | NULLABLE                                              | Last update time                                                |
+| Column Name    | Data Type    | Constraints                                           | Description                                                            |
+| :------------- | :----------- | :---------------------------------------------------- | :--------------------------------------------------------------------- |
+| `document_id`  | INT          | PRIMARY KEY, AUTO_INCREMENT, NOT NULL                 | Unique document ID                                                     |
+| `title`        | VARCHAR(255) | NOT NULL                                              | User-facing document title                                             |
+| `description`  | TEXT         | NULLABLE                                              | Optional document description                                          |
+| `file_name`    | VARCHAR(255) | NOT NULL                                              | Original uploaded file name (mapped to `originalFileName` in DTO)      |
+| `file_type`    | VARCHAR(50)  | NOT NULL                                              | File type such as PDF, DOCX, PPTX, TXT, PNG, JPG, JPEG                 |
+| `file_size`    | BIGINT       | NOT NULL                                              | File size in bytes                                                     |
+| `file_url`     | TEXT         | NOT NULL                                              | Cloudinary secure URL used by frontend to open or download file        |
+| `storage_path` | TEXT         | NOT NULL                                              | Cloudinary public ID (mapped to `publicId` in DTO)                     |
+| `owner_id`     | INT          | FOREIGN KEY REFERENCES users(user_id), NOT NULL       | User who owns this document                                            |
+| `created_at`   | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP                             | Document upload time                                                   |
+| `updated_at`   | TIMESTAMP    | NULLABLE                                              | Last update time                                                       |
 
 ### Business Rules
 
 - A document must belong to exactly one user.
-- `owner_id` must be resolved from the authenticated JWT token, not from frontend input.
+- `owner_id` must be resolved from the authenticated JWT token / security session, not from frontend input.
 - The uploaded file must be validated by the backend before being stored.
-- Allowed file types in Step 2 are PDF, DOCX, PPTX, TXT, PNG, JPG, and JPEG.
-- Maximum file size in Step 2 is 10MB.
-- Firebase Storage stores the real file; MySQL stores metadata only.
+- Allowed file types in Step 2 are: `pdf`, `doc`, `docx`, `ppt`, `pptx`, `xls`, `xlsx`, `txt`, `jpg`, `jpeg`, `png` (case-insensitive).
+- Maximum file size in Step 2 is 10MB (10,485,760 bytes).
+- Cloudinary Storage stores the real file; MySQL stores metadata only.
 - `subject_id` and `folder_id` are reserved for future steps and are not part of Step 2.
 
 ---

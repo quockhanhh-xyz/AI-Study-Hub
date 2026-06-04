@@ -29,7 +29,7 @@ public class DocumentService {
         User owner = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        FileUploadResult uploadResult = cloudinaryStorageService.uploadFile(file);
+        FileUploadResult uploadResult = cloudinaryStorageService.uploadFile(file, owner.getUserId());
 
         String url = uploadResult.getFileUrl();
         if (url == null || url.trim().isEmpty()) {
