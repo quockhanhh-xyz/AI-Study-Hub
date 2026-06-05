@@ -1,21 +1,16 @@
-/*
-  FE3 — Document API Helper
-  File phụ trách quản lý toàn bộ các yêu cầu gọi API liên quan đến tài liệu (Document).
- */
 
-/*
-  Hàm 1: Tải tài liệu lên hệ thống (Sử dụng Multipart/Form-Data)
-  @param {FormData} formData - Đối tượng chứa dữ liệu gửi lên gồm: file, title, description
-  @returns {Promise} Trả về cấu trúc ApiResponse chuẩn từ Backend (success, message, data)
+/**
+ * Hàm upload tài liệu nhận vào 1 tham số duy nhất là đối tượng FormData đã đúc sẵn từ UI
+ * Khớp 100% với dòng 186 trong file upload.js cũ
+ * @param {FormData} formData - Đối tượng FormData chứa file, title, description
  */
 function uploadDocument(formData) {
-  // Dùng trực tiếp hàm post helper
+  // Truyền thẳng cục formData vào hàm post của api.js
   return post("/api/documents/upload", formData);
 }
 
-/*
- Hàm 2: Lấy danh sách tài liệu cá nhân của người dùng hiện tại
-  @returns {Promise} Trả về danh sách các document metadata của riêng user đang đăng nhập
+/**
+ * Hàm lấy danh sách tài liệu cá nhân của người dùng hiện tại
  */
 function getMyDocuments() {
   return get("/api/documents/my");
