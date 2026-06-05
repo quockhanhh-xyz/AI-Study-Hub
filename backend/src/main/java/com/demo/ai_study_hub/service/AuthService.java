@@ -29,7 +29,7 @@ public class AuthService {
         String password = request.getPassword();
         if (password == null || !password.matches("^(?=.*[A-Za-z])(?=.*\\d).{8,}$")) {
             throw new RuntimeException(
-                "Password must be at least 8 characters, including at least 1 letter and 1 number.");
+                    "Password must be at least 8 characters, including at least 1 letter and 1 number.");
         }
 
         User user = new User();
@@ -49,12 +49,14 @@ public class AuthService {
             throw new RuntimeException("Invalid email or password.");
         }
 
-        if ("INACTIVE".equals(user.getStatus())) {
-            throw new RuntimeException("Please verify your email before login.");
-        }
-
-        if ("BLOCKED".equals(user.getStatus())) {
-            throw new RuntimeException("Your account has been blocked.");
+        if (!"ACTIVE".equals(user.getStatus())) {
+            if ("INACTIVE".equals(user.getStatus())) {
+                throw new RuntimeException("Please verify your email before login.");
+            } else if ("BLOCKED".equals(user.getStatus())) {
+                throw new RuntimeException("Your account has been blocked.");
+            } else {
+                throw new RuntimeException("Account is not active.");
+            }
         }
 
         String token = jwtUtil.generateToken(user.getEmail());
