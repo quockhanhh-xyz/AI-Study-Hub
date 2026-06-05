@@ -64,12 +64,13 @@ public class CloudinaryStorageService {
         try {
             String extension = originalName.substring(originalName.lastIndexOf("."));
             String fileType = extension.replace(".", "").toUpperCase();
+            String resourceType = contentType.startsWith("image/") ? "image" : "raw";
 
             Map uploadResult = cloudinary.get().uploader().upload(
                     file.getBytes(),
                     ObjectUtils.asMap(
                             "folder", "ai-study-hub/documents/" + userId,
-                            "resource_type", "auto",
+                            "resource_type", resourceType,
                             "use_filename", true,
                             "unique_filename", true
                     )
