@@ -64,24 +64,37 @@ public class CloudinaryStorageService {
         try {
             String extension = originalName.substring(originalName.lastIndexOf("."));
             String fileType = extension.replace(".", "").toUpperCase();
-            String resourceType = contentType.startsWith("image/") ? "image" : "raw";
+            
+            // PDF and Images are uploaded as "image" type so that they can be viewed inline in the browser.
+            // Other document types (DOCX, XLSX, PPTX, TXT...) use "raw" type.
+            String resourceType = (contentType.startsWith("image/") || contentType.equals("application/pdf")) 
+                    ? "image" : "raw";
+
+            // Create a unique public_id and sanitize original base name
+            String baseName = originalName.substring(0, originalName.lastIndexOf("."));
+            String cleanBaseName = baseName.replaceAll("[^a-zA-Z0-9-_]", "_");
+            String publicId = cleanBaseName + "_" + System.currentTimeMillis();
+
+            // For raw files, Cloudinary requires the extension to be in the public_id to preserve it on download.
+            if ("raw".equals(resourceType)) {
+                publicId += extension;
+            }
 
             Map uploadResult = cloudinary.get().uploader().upload(
                     file.getBytes(),
                     ObjectUtils.asMap(
                             "folder", "ai-study-hub/documents/" + userId,
                             "resource_type", resourceType,
-                            "use_filename", true,
-                            "unique_filename", true
+                            "public_id", publicId
                     )
             );
 
             String fileUrl = (String) uploadResult.get("secure_url");
-            String publicId = (String) uploadResult.get("public_id");
+            String responsePublicId = (String) uploadResult.get("public_id");
 
             return FileUploadResult.builder()
                     .fileUrl(fileUrl)
-                    .publicId(publicId)
+                    .publicId(responsePublicId)
                     .originalFileName(originalName)
                     .fileType(fileType)
                     .fileSize(file.getSize())
