@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,6 +32,9 @@ public class AuthService {
             throw new RuntimeException(
                     "Password must be at least 8 characters, including at least 1 letter and 1 number.");
         }
+
+        //  Đã xóa hoàn toàn đoạn validate password bằng tiếng Việt tại đây 
+        // Logic chính sách mật khẩu (Password Policy) sẽ do PR #21 quản lý tập trung để tránh xung đột hệ thống.
 
         User user = new User();
         user.setFullName(request.getFullName());
