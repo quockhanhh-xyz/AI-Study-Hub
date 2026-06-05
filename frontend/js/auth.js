@@ -67,8 +67,13 @@
       return;
     }
 
-    if (password.length < 6) {
-      setMessage("registerMessage", "Password must be at least 6 characters.", "error");
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      setMessage(
+        "registerMessage",
+        "Password must be at least 8 characters, including at least 1 letter and 1 number.",
+        "error"
+      );
       return;
     }
 
