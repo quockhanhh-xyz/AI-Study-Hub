@@ -19,7 +19,7 @@ public class DocumentService {
 
     private final DocumentRepository documentRepository;
     private final UserRepository userRepository;
-    private final FirebaseStorageService firebaseStorageService;
+    private final CloudinaryStorageService cloudinaryStorageService;
 
     public DocumentResponse uploadDocument(MultipartFile file, String title, String description, String email) {
         if (title == null || title.trim().isEmpty()) {
@@ -29,22 +29,21 @@ public class DocumentService {
         User owner = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        FileUploadResult uploadResult = firebaseStorageService.uploadFile(file, owner.getUserId());
+        FileUploadResult uploadResult = cloudinaryStorageService.uploadFile(file, owner.getUserId());
 
-        // Validate URL từ Firebase
         String url = uploadResult.getFileUrl();
         if (url == null || url.trim().isEmpty()) {
-            throw new RuntimeException("Failed to generate download URL from Firebase");
+            throw new RuntimeException("Failed to generate download URL from Cloudinary");
         }
 
         Document doc = new Document();
         doc.setTitle(title);
         doc.setDescription(description);
-        doc.setFileName(uploadResult.getFileName());
+        doc.setOriginalFileName(uploadResult.getOriginalFileName());
         doc.setFileType(uploadResult.getFileType());
         doc.setFileSize(uploadResult.getFileSize());
         doc.setFileUrl(url);
-        doc.setStoragePath(uploadResult.getStoragePath());
+        doc.setPublicId(uploadResult.getPublicId());
         doc.setOwner(owner);
 
         Document savedDoc = documentRepository.save(doc);
@@ -67,11 +66,12 @@ public class DocumentService {
                 .documentId(doc.getDocumentId())
                 .title(doc.getTitle())
                 .description(doc.getDescription())
-                .fileName(doc.getFileName())
+                .originalFileName(doc.getOriginalFileName())
                 .fileType(doc.getFileType())
                 .fileSize(doc.getFileSize())
                 .fileUrl(doc.getFileUrl())
-                .storagePath(doc.getStoragePath())
+                .publicId(doc.getPublicId())
+                .uploadedBy(doc.getOwner().getEmail())
                 .createdAt(doc.getCreatedAt())
                 .build();
     }
