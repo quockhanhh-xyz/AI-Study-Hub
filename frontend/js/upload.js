@@ -21,8 +21,12 @@ const progressText = document.getElementById("progressText");
 // ── Constants ─────────────────────────────────────────────────────────────────
 const ALLOWED_TYPES = [
   "application/pdf",
+  "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-powerpoint",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "text/plain",
   "image/png",
   "image/jpeg"
@@ -54,23 +58,23 @@ function updateDropZone(file) {
     dropZoneText.innerHTML = `📄 <strong>${file.name}</strong><br/><small>${formatFileSize(file.size)}</small>`;
     dropZone.classList.add("has-file");
   } else {
-    dropZoneText.innerHTML = `Chọn file hoặc kéo thả vào đây<br/><small>(PDF, DOCX, PPTX, TXT, PNG, JPG — tối đa 10MB)</small>`;
+    dropZoneText.innerHTML = `Drag & drop or click to select a file<br/><small>(PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG — max 10MB)</small>`;
     dropZone.classList.remove("has-file");
   }
 }
 
 function validateFile(file) {
-  if (!file) return "Vui lòng chọn file.";
+  if (!file) return "Please select a file.";
 
   if (file.size === 0) {
-    return "File tài liệu không được rỗng (0 bytes).";
+    return "File is empty (0 bytes). Please select a valid file.";
   }
 
   if (!ALLOWED_TYPES.includes(file.type)) {
-    return "Loại file không hợp lệ. Chỉ chấp nhận: PDF, DOCX, PPTX, TXT, PNG, JPG, JPEG.";
+    return "Invalid file type. Only accepts: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG, JPEG.";
   }
   if (file.size > MAX_SIZE_BYTES) {
-    return `File quá lớn (${formatFileSize(file.size)}). Tối đa 10MB.`;
+    return `File is too large (${formatFileSize(file.size)}). Maximum size is 10MB.`;
   }
   return null;
 }
@@ -79,7 +83,7 @@ function validateFile(file) {
 function showProgress() {
   uploadProgress.style.display = "block";
   progressFill.style.width = "0%";
-  progressText.textContent = "Đang tải lên...";
+  progressText.textContent = "Uploading...";
 
   // Tăng dần đến 90% để tạo cảm giác progress, 100% sẽ set khi done
   let pct = 0;
@@ -90,7 +94,7 @@ function showProgress() {
       clearInterval(interval);
     }
     progressFill.style.width = pct + "%";
-    progressText.textContent = `Đang tải lên: ${Math.round(pct)}%`;
+    progressText.textContent = `Uploading: ${Math.round(pct)}%`;
   }, 300);
 
   return interval;
@@ -99,7 +103,7 @@ function showProgress() {
 function completeProgress(interval) {
   clearInterval(interval);
   progressFill.style.width = "100%";
-  progressText.textContent = "Hoàn thành: 100%";
+  progressText.textContent = "Complete: 100%";
 }
 
 function hideProgress() {
@@ -160,7 +164,7 @@ uploadForm.addEventListener("submit", async (e) => {
 
   // Client-side validation
   if (!title) {
-    showMessage("Tiêu đề không được để trống.", "error");
+    showMessage("Title is required.", "error");
     titleInput.focus();
     return;
   }
@@ -179,13 +183,13 @@ uploadForm.addEventListener("submit", async (e) => {
 
   // Loading state
   submitBtn.disabled = true;
-  submitBtn.textContent = "Đang upload...";
+  submitBtn.textContent = "Uploading...";
   const progressInterval = showProgress();
 
   try {
     const result = await uploadDocument(formData);
     completeProgress(progressInterval);
-    showMessage(`✅ Upload thành công: "${result.data.title}"`, "success");
+    showMessage(`✅ Upload successful: "${result.data.title}"`, "success");
 
     // Reset form
     uploadForm.reset();
@@ -203,6 +207,6 @@ uploadForm.addEventListener("submit", async (e) => {
 
   } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = "Upload tài liệu";
+    submitBtn.textContent = "Upload document";
   }
 });
