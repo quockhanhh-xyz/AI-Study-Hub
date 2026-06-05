@@ -84,7 +84,9 @@
             box-sizing: border-box;
         }
 
-        textarea::placeholder { color: #94a3b8; }
+        textarea::placeholder {
+            color: #94a3b8;
+        }
 
         textarea:focus {
             outline: none;
@@ -116,7 +118,9 @@
             margin-bottom: 24px;
         }
 
-        .back-link:hover { color: var(--primary); }
+        .back-link:hover {
+            color: var(--primary);
+        }
 
         /* ── Progress bar ──────────────────────────────────────────────────── */
         .progress-container {
@@ -166,7 +170,7 @@
 
             <section class="page-header">
                 <h1>Upload Document</h1>
-                <p>Tải tài liệu học tập của bạn lên để lưu trữ và sử dụng sau.</p>
+                <p>Upload your study documents to store and access later.</p>
             </section>
 
             <div class="card">
@@ -174,49 +178,36 @@
 
                     <!-- Title -->
                     <div class="form-group">
-                        <label for="title">Tiêu đề <span style="color:var(--danger)">*</span></label>
-                        <input
-                            type="text"
-                            id="title"
-                            name="title"
-                            placeholder="VD: SWR Lecture 1 - Week 1 Notes"
-                            required
-                            autocomplete="off"
-                        />
+                        <label for="title">Title <span style="color:var(--danger)">*</span></label>
+                        <input type="text" id="title" name="title" placeholder="VD: SWR Lecture 1 - Week 1 Notes"
+                            required autocomplete="off" />
                     </div>
 
                     <!-- Description -->
                     <div class="form-group">
-                        <label for="description">Mô tả <span style="color:var(--muted); font-weight:400;">(tuỳ chọn)</span></label>
-                        <textarea
-                            id="description"
-                            name="description"
-                            placeholder="VD: Tóm tắt bài giảng tuần 1 môn SWR..."
-                        ></textarea>
+                        <label for="description">Description <span
+                                style="color:var(--muted); font-weight:400;">(optional)</span></label>
+                        <textarea id="description" name="description"
+                            placeholder="E.g: Summary of Week 1 SWR lecture..."></textarea>
                     </div>
 
                     <!-- File upload -->
                     <div class="form-group">
-                        <label for="file">File tài liệu <span style="color:var(--danger)">*</span></label>
+                        <label for="file">Document File <span style="color:var(--danger)">*</span></label>
                         <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-describedby="fileHint">
-                            <input
-                                type="file"
-                                id="file"
-                                name="file"
-                                accept=".pdf,.docx,.pptx,.txt,.png,.jpg,.jpeg"
-                                required
-                                aria-describedby="fileHint"
-                            />
+                            <input type="file" id="file" name="file"
+                                accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.png,.jpg,.jpeg" required
+                                aria-describedby="fileHint" />
                             <div class="drop-zone-content" id="dropZoneContent">
                                 <div class="drop-zone-icon">📂</div>
                                 <span class="drop-zone-text" id="dropZoneText">
-                                    Chọn file hoặc kéo thả vào đây<br/>
-                                    <small>(PDF, DOCX, PPTX, TXT, PNG, JPG — tối đa 10MB)</small>
+                                    Drag & drop or click to select a file<br />
+                                    <small>(PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG — max 10MB)</small>
                                 </span>
                             </div>
                         </div>
                         <p id="fileHint" class="file-hint">
-                            Định dạng: PDF, DOCX, PPTX, TXT, PNG, JPG, JPEG &nbsp;|&nbsp; Tối đa: 10MB
+                            Supported formats: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG, JPEG &nbsp;|&nbsp; Max: 10MB
                         </p>
                     </div>
 
@@ -225,7 +216,7 @@
                         <div class="progress-bar">
                             <div id="progressFill" class="progress-fill"></div>
                         </div>
-                        <span id="progressText" class="progress-text">Đang tải lên...</span>
+                        <span id="progressText" class="progress-text">Uploading...</span>
                     </div>
 
                     <!-- Status message -->
@@ -233,7 +224,7 @@
 
                     <!-- Submit -->
                     <button type="submit" id="submitBtn" class="btn btn-primary">
-                        Upload tài liệu
+                        Upload document
                     </button>
 
                 </form>
