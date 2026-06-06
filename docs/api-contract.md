@@ -450,13 +450,21 @@ Authorization: Bearer sample-token
 
 ## GET `/api/documents/my`
 
-Returns documents owned by the currently authenticated user.
+Returns documents owned by the currently authenticated user, with optional search and filter parameters. Only documents with `status = 'ACTIVE'` are returned.
 
 ### Headers
 
 ```text
 Authorization: Bearer sample-token
 ```
+
+### Query Parameters
+
+| Parameter   | Type    | Required | Description                                                            |
+| :---------- | :------ | :------- | :--------------------------------------------------------------------- |
+| `keyword`   | String  | No       | Filter by title or originalFileName (case-insensitive substring match) |
+| `subjectId` | Integer | No       | Filter by subject ID                                                   |
+| `fileType`  | String  | No       | Filter by file extension type (e.g., PDF, DOCX)                        |
 
 ### Success Response
 
@@ -474,6 +482,7 @@ Authorization: Bearer sample-token
       "fileSize": 102400,
       "fileUrl": "https://res.cloudinary.com/demo/raw/upload/v123456/ai-study-hub/documents/1/swr-lecture-1.pdf",
       "publicId": "ai-study-hub/documents/1/swr-lecture-1.pdf",
+      "subjectId": 1,
       "uploadedBy": "user@gmail.com",
       "createdAt": "2026-06-01T10:00:00"
     }
@@ -496,7 +505,236 @@ Authorization: Bearer sample-token
 ```json
 {
   "success": false,
-  "message": "Unauthorized",
+  "message": "Tài khoản chưa đăng nhập hoặc phiên làm việc đã hết hạn!",
+  "data": null
+}
+```
+
+---
+
+# 4. Subject Management APIs (Step 3)
+
+These APIs support retrieving subject master data.
+
+## 4.1. Get All Subjects API
+
+## GET `/api/subjects`
+
+Returns all active subjects.
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "Subjects retrieved successfully",
+  "data": [
+    {
+      "subjectId": 1,
+      "subjectCode": "SWP391",
+      "subjectName": "Software Project",
+      "description": "Software project management and development course"
+    },
+    {
+      "subjectId": 2,
+      "subjectCode": "SWT301",
+      "subjectName": "Software Testing",
+      "description": "Software verification and testing course"
+    }
+  ]
+}
+```
+
+---
+
+# 5. Document Management APIs (Step 3)
+
+These APIs manage documents after upload. Access is strictly restricted to the owner of the document.
+
+## 5.1. Get Document Detail API
+
+## GET `/api/documents/{id}`
+
+Returns detailed information for a specific document owned by the authenticated user.
+
+### Headers
+
+```text
+Authorization: Bearer sample-token
+```
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "Document retrieved successfully",
+  "data": {
+    "documentId": 1,
+    "title": "SWR Lecture 1",
+    "description": "Week 1 lecture note",
+    "originalFileName": "swr-lecture-1.pdf",
+    "fileType": "PDF",
+    "fileSize": 102400,
+    "fileUrl": "https://res.cloudinary.com/demo/raw/upload/v123456/ai-study-hub/documents/1/swr-lecture-1.pdf",
+    "publicId": "ai-study-hub/documents/1/swr-lecture-1.pdf",
+    "subjectId": 1,
+    "uploadedBy": "user@gmail.com",
+    "createdAt": "2026-06-01T10:00:00"
+  }
+}
+```
+
+### Error Response - Unauthorized (401)
+
+```json
+{
+  "success": false,
+  "message": "Tài khoản chưa đăng nhập hoặc phiên làm việc đã hết hạn!",
+  "data": null
+}
+```
+
+### Error Response - Forbidden (403)
+
+If the document exists but belongs to another user:
+
+```json
+{
+  "success": false,
+  "message": "Bạn không có quyền truy cập tài liệu này",
+  "data": null
+}
+```
+
+### Error Response - Not Found (404)
+
+If the document does not exist or has been soft-deleted:
+
+```json
+{
+  "success": false,
+  "message": "Không tìm thấy tài liệu",
+  "data": null
+}
+```
+
+---
+
+## 5.2. Update Document Metadata API
+
+## PUT `/api/documents/{id}`
+
+Updates the title, description, and subject of a specific document owned by the authenticated user.
+
+### Headers
+
+```text
+Authorization: Bearer sample-token
+```
+
+### Request Body
+
+```json
+{
+  "title": "New Document Title",
+  "description": "Updated document description",
+  "subjectId": 2
+}
+```
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "Document updated successfully",
+  "data": {
+    "documentId": 1,
+    "title": "New Document Title",
+    "description": "Updated document description",
+    "originalFileName": "swr-lecture-1.pdf",
+    "fileType": "PDF",
+    "fileSize": 102400,
+    "fileUrl": "https://res.cloudinary.com/demo/raw/upload/v123456/ai-study-hub/documents/1/swr-lecture-1.pdf",
+    "publicId": "ai-study-hub/documents/1/swr-lecture-1.pdf",
+    "subjectId": 2,
+    "uploadedBy": "user@gmail.com",
+    "createdAt": "2026-06-01T10:00:00"
+  }
+}
+```
+
+### Error Response - Validation Failed (400)
+
+```json
+{
+  "success": false,
+  "message": "Title is required",
+  "data": null
+}
+```
+
+### Error Response - Forbidden (403)
+
+```json
+{
+  "success": false,
+  "message": "Bạn không có quyền chỉnh sửa tài liệu này",
+  "data": null
+}
+```
+
+### Error Response - Not Found (404)
+
+```json
+{
+  "success": false,
+  "message": "Không tìm thấy tài liệu",
+  "data": null
+}
+```
+
+---
+
+## 5.3. Delete Document API
+
+## DELETE `/api/documents/{id}`
+
+Soft-deletes a specific document owned by the authenticated user.
+
+### Headers
+
+```text
+Authorization: Bearer sample-token
+```
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "Document deleted successfully",
+  "data": null
+}
+```
+
+### Error Response - Forbidden (403)
+
+```json
+{
+  "success": false,
+  "message": "Bạn không có quyền xóa tài liệu này",
+  "data": null
+}
+```
+
+### Error Response - Not Found (404)
+
+```json
+{
+  "success": false,
+  "message": "Không tìm thấy tài liệu",
   "data": null
 }
 ```

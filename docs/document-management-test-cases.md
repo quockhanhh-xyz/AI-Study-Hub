@@ -1,0 +1,176 @@
+# Document Management & Subject Organization Test Cases - Step 3
+
+This document defines the functional test cases for Step 3: Document Management & Subject Organization.
+
+## Preconditions
+
+- Backend is running at `http://localhost:8080`.
+- MySQL database has seeded subjects:
+  - ID 1: `SWP391`
+  - ID 2: `SWT301`
+- Two users exist:
+  - **User A**: `usera@test.com` (owns document with ID `101`)
+  - **User B**: `userb@test.com` (owns document with ID `102`)
+
+---
+
+## Subject Retrieval Test Cases
+
+### TC-SUB-001 - Get Active Subjects Successfully
+- **Precondition:** User is logged in.
+- **Steps:**
+  1. Send `GET /api/subjects` with User A's token.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - Response `data` is a list of active subjects containing `subjectId`, `subjectCode`, `subjectName`, and `description`.
+- **Status:** `Not Run`
+
+---
+
+## Document List, Search & Filter Test Cases
+
+### TC-DOC-013 - Get My Documents Without Filtering
+- **Precondition:** User A is logged in. User A has documents in the database.
+- **Steps:**
+  1. Send `GET /api/documents/my` with User A's token.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - Response `data` lists all active documents owned by User A.
+- **Status:** `Not Run`
+
+### TC-DOC-014 - Search My Documents by Keyword
+- **Precondition:** User A has documents titled "SWR Lecture 1" and "Database Lab".
+- **Steps:**
+  1. Send `GET /api/documents/my?keyword=lecture` with User A's token.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - Response `data` only lists the document "SWR Lecture 1".
+- **Status:** `Not Run`
+
+### TC-DOC-015 - Filter My Documents by Subject
+- **Precondition:** User A has one document under Subject ID `1` and one under Subject ID `2`.
+- **Steps:**
+  1. Send `GET /api/documents/my?subjectId=1` with User A's token.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - Response `data` only lists the document under Subject ID `1`.
+- **Status:** `Not Run`
+
+### TC-DOC-016 - Filter My Documents by File Type
+- **Precondition:** User A has a PDF document and a DOCX document.
+- **Steps:**
+  1. Send `GET /api/documents/my?fileType=PDF` with User A's token.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - Response `data` only lists the PDF document.
+- **Status:** `Not Run`
+
+---
+
+## Document Detail Test Cases
+
+### TC-DOC-017 - Get Document Detail Successfully
+- **Precondition:** User A is logged in and owns document ID `101`.
+- **Steps:**
+  1. Send `GET /api/documents/101` with User A's token.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - Response `data` includes all metadata of document `101`.
+- **Status:** `Not Run`
+
+### TC-DOC-018 - Get Document Detail of Another User (403 or 404)
+- **Precondition:** User B is logged in. Document ID `101` is owned by User A.
+- **Steps:**
+  1. Send `GET /api/documents/101` with User B's token.
+- **Expected Result:**
+  - Status code: `403 Forbidden` (or `404 Not Found` to hide existence).
+  - Response `success` is `false`.
+  - Message states: "Bạn không có quyền truy cập tài liệu này" or "Không tìm thấy tài liệu".
+- **Status:** `Not Run`
+
+---
+
+## Document Update Test Cases
+
+### TC-DOC-019 - Update Document Metadata Successfully
+- **Precondition:** User A is logged in and owns document ID `101`.
+- **Steps:**
+  1. Send `PUT /api/documents/101` with User A's token.
+  2. Request Body:
+     ```json
+     {
+       "title": "Updated Lecture 1",
+       "description": "Updated Description",
+       "subjectId": 2
+     }
+     ```
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - MySQL database shows updated title, description, and subject ID for document `101`.
+- **Status:** `Not Run`
+
+### TC-DOC-020 - Update Document Owned by Another User (Forbidden)
+- **Precondition:** User B is logged in. Document ID `101` is owned by User A.
+- **Steps:**
+  1. Send `PUT /api/documents/101` with User B's token.
+  2. Request Body:
+     ```json
+     {
+       "title": "Hack Title"
+     }
+     ```
+- **Expected Result:**
+  - Status code: `403 Forbidden` (or `404 Not Found`).
+  - Response `success` is `false`.
+  - MySQL database metadata for document `101` is NOT changed.
+- **Status:** `Not Run`
+
+---
+
+## Document Deletion Test Cases
+
+### TC-DOC-021 - Delete Document Successfully
+- **Precondition:** User A is logged in and owns document ID `101`.
+- **Steps:**
+  1. Send `DELETE /api/documents/101` with User A's token.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - MySQL database has document `101` status updated to `DELETED` (soft delete).
+  - Subsequent requests to `GET /api/documents/my` or `GET /api/documents/101` do NOT return document `101`.
+- **Status:** `Not Run`
+
+### TC-DOC-022 - Delete Document Owned by Another User (Forbidden)
+- **Precondition:** User B is logged in. Document ID `101` is owned by User A.
+- **Steps:**
+  1. Send `DELETE /api/documents/101` with User B's token.
+- **Expected Result:**
+  - Status code: `403 Forbidden` (or `404 Not Found`).
+  - Response `success` is `false`.
+  - MySQL database document `101` status remains `ACTIVE`.
+- **Status:** `Not Run`
+
+---
+
+## Authorization Security Test Cases
+
+### TC-SEC-001 - Call APIs Without Logging In (Unauthorized)
+- **Precondition:** No `Authorization` header is provided.
+- **Steps:**
+  1. Send `GET /api/subjects`.
+  2. Send `GET /api/documents/my`.
+  3. Send `GET /api/documents/101`.
+  4. Send `PUT /api/documents/101`.
+  5. Send `DELETE /api/documents/101`.
+- **Expected Result:**
+  - Each request returns status code: `401 Unauthorized`.
+  - Response `success` is `false`.
+  - Response `message` matches: "Tài khoản chưa đăng nhập hoặc phiên làm việc đã hết hạn!".
+- **Status:** `Not Run`
