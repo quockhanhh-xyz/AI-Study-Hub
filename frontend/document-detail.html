@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document Detail - AI Study Hub</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        /* ===== DOCUMENT DETAIL PAGE ===== */
+        .detail-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            max-width: 720px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Back link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            padding: 6px 0;
+        }
+
+        .back-link:hover {
+            color: var(--primary);
+        }
+
+        .back-link::before {
+            content: "←";
+            font-size: 16px;
+        }
+
+        /* File type badge (reuse from dashboard) */
+        .document-type-badge {
+            display: inline-block;
+            background: #eff6ff;
+            color: var(--primary);
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        /* Detail header inside card */
+        .detail-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .detail-title {
+            margin: 0 0 6px;
+            font-size: 22px;
+            font-weight: 700;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        .detail-filename {
+            color: var(--muted);
+            font-size: 13px;
+            margin: 0;
+        }
+
+        /* Meta grid */
+        .detail-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .detail-meta-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .detail-meta-item {
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+        }
+
+        .detail-meta-label {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .detail-meta-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            word-break: break-word;
+        }
+
+        /* Description block */
+        .detail-description {
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-size: 15px;
+            color: var(--text);
+            line-height: 1.6;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            min-height: 48px;
+        }
+
+        .detail-description.muted {
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        /* Action buttons row */
+        .detail-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .detail-actions .btn {
+            width: auto;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .btn-danger {
+            background-color: #fef2f2;
+            color: var(--danger);
+            border: 1px solid #fecaca;
+        }
+
+        .btn-danger:hover {
+            background-color: #fee2e2;
+        }
+
+        .btn-danger:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ===== EDIT FORM ===== */
+        .edit-section {
+            display: none;
+            margin-top: 4px;
+        }
+
+        .edit-section.visible {
+            display: block;
+        }
+
+        .edit-section .card {
+            margin: 0;
+        }
+
+        .edit-section h2 {
+            margin-top: 0;
+            font-size: 18px;
+            text-align: left;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            color: var(--text);
+            background: #fff;
+            resize: vertical;
+            min-height: 90px;
+            transition: all 0.2s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            color: var(--text);
+            background: #fff;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            transition: all 0.2s ease;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .edit-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .edit-actions .btn {
+            width: auto;
+            flex: 1;
+        }
+
+        /* ===== STATUS MESSAGES ===== */
+        .page-message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            display: none;
+        }
+
+        .page-message.success {
+            background: #ecfdf5;
+            color: var(--success);
+            border: 1px solid #d1fae5;
+            display: block;
+        }
+
+        .page-message.error {
+            background: #fef2f2;
+            color: var(--danger);
+            border: 1px solid #fee2e2;
+            display: block;
+        }
+
+        /* ===== LOADING / ERROR STATE ===== */
+        .detail-loader {
+            text-align: center;
+            padding: 48px 0;
+            color: var(--muted);
+            font-size: 15px;
+        }
+
+        /* ===== CONFIRM MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.visible {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+        }
+
+        .modal-box h3 {
+            margin: 0 0 10px;
+            font-size: 18px;
+            color: var(--text);
+        }
+
+        .modal-box p {
+            margin: 0 0 24px;
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-actions .btn {
+            width: auto;
+            flex: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="login.html" class="nav-link">Login</a>
+                <a href="register.html" class="nav-link">Register</a>
+                <a href="dashboard.html" class="nav-link active">Dashboard</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+
+            <!-- Back link -->
+            <a href="dashboard.html" class="back-link">Back to Dashboard</a>
+
+            <!-- Initial loader (shown while fetching) -->
+            <div id="detailLoader" class="detail-loader">Loading document...</div>
+
+            <!-- Main content (hidden until loaded) -->
+            <div id="detailContent" class="detail-layout" style="display: none;">
+
+                <!-- Page-level status message (update / delete feedback) -->
+                <div id="pageMessage" class="page-message"></div>
+
+                <!-- ── DOCUMENT INFO CARD ── -->
+                <div class="card" style="margin: 0;">
+                    <div class="detail-header">
+                        <div>
+                            <span id="detailFileType" class="document-type-badge">FILE</span>
+                        </div>
+                        <div style="flex: 1;">
+                            <h2 id="detailTitle" class="detail-title">—</h2>
+                            <p id="detailFileName" class="detail-filename">—</p>
+                        </div>
+                    </div>
+
+                    <!-- Meta grid -->
+                    <div class="detail-meta-grid">
+                        <div class="detail-meta-item">
+                            <div class="detail-meta-label">File Size</div>
+                            <div id="detailFileSize" class="detail-meta-value">—</div>
+                        </div>
+                        <div class="detail-meta-item">
+                            <div class="detail-meta-label">Uploaded</div>
+                            <div id="detailCreatedAt" class="detail-meta-value">—</div>
+                        </div>
+                        <div class="detail-meta-item">
+                            <div class="detail-meta-label">Subject</div>
+                            <div id="detailSubject" class="detail-meta-value">—</div>
+                        </div>
+                        <div class="detail-meta-item">
+                            <div class="detail-meta-label">Uploaded By</div>
+                            <div id="detailUploadedBy" class="detail-meta-value">—</div>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="detail-meta-label" style="margin-bottom: 8px;">Description</div>
+                    <div id="detailDescription" class="detail-description muted">No description provided.</div>
+
+                    <!-- Action buttons -->
+                    <div class="detail-actions">
+                        <button type="button" id="openFileBtn" class="btn btn-primary" style="display: none;">
+                            Open File
+                        </button>
+                        <button type="button" id="downloadFileBtn" class="btn btn-secondary" style="display: none;">
+                            Download
+                        </button>
+                        <button type="button" id="toggleEditBtn" class="btn btn-secondary">
+                            Edit Metadata
+                        </button>
+                        <button type="button" id="deleteBtn" class="btn btn-danger">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ── EDIT METADATA FORM ── -->
+                <div id="editSection" class="edit-section">
+                    <div class="card" style="margin: 0;">
+                        <h2>Edit Metadata</h2>
+
+                        <div id="editMessage" class="page-message" style="margin-bottom: 16px;"></div>
+
+                        <div class="form-group">
+                            <label for="editTitle">Title <span style="color: var(--danger);">*</span></label>
+                            <input type="text" id="editTitle" placeholder="Document title" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editDescription">Description</label>
+                            <textarea id="editDescription" placeholder="Optional description"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editSubject">Subject</label>
+                            <select id="editSubject">
+                                <option value="">— No subject —</option>
+                            </select>
+                        </div>
+
+                        <div class="edit-actions">
+                            <button type="button" id="saveEditBtn" class="btn btn-primary">Save Changes</button>
+                            <button type="button" id="cancelEditBtn" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /detailContent -->
+
+        </main>
+    </div>
+
+    <!-- ── DELETE CONFIRM MODAL ── -->
+    <div id="deleteModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-box">
+            <h3 id="modalTitle">Delete Document</h3>
+            <p>Are you sure you want to delete this document? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button type="button" id="confirmDeleteBtn" class="btn btn-danger">Yes, Delete</button>
+                <button type="button" id="cancelDeleteBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/document-api.js"></script>
+    <script src="js/document-detail.js"></script>
+</body>
+
+</html>

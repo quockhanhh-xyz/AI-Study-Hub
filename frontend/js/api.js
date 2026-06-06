@@ -30,7 +30,7 @@ async function apiRequest(endpoint, options = {}) {
   // Thực hiện gọi fetch tới Backend
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
-    headers: headers
+    headers
   });
 
   // Ép kiểu dữ liệu trả về thành JSON
@@ -70,4 +70,24 @@ function post(endpoint, body) {
     // Nếu là FormData thì giữ nguyên, nếu là object thường thì mới hóa chuỗi JSON.stringify
     body: isFormData ? body : JSON.stringify(body)
   });
+}
+
+/**
+ * HTTP PUT
+ * @param {string} endpoint
+ * @param {Object} body
+ */
+function put(endpoint, body) {
+    return apiRequest(endpoint, {
+        method: "PUT",
+        body: JSON.stringify(body)
+    });
+}
+ 
+/**
+ * HTTP DELETE
+ * @param {string} endpoint
+ */
+function del(endpoint) {
+    return apiRequest(endpoint, { method: "DELETE" });
 }
