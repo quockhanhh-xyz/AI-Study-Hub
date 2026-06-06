@@ -27,6 +27,12 @@ document.addEventListener("DOMContentLoaded", async function () {
   const documentGrid = document.getElementById("documentGrid");
   const emptyState = document.getElementById("emptyState");
 
+  // Filter UI Elements
+  const searchInput = document.getElementById("searchInput");
+  const subjectFilter = document.getElementById("subjectFilter");
+  const fileTypeFilter = document.getElementById("fileTypeFilter");
+  const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+
   if (chatCountElement) chatCountElement.textContent = "0";
   if (joinDateElement) joinDateElement.textContent = currentUser.tier || "FREE";
 
@@ -77,7 +83,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     fileBadge.textContent = getFileLabel(documentItem.fileType);
 
     const title = document.createElement("h3");
-    title.textContent = documentItem.title || documentItem.originalFileName || "Untitled document";
+    const titleLink = document.createElement("a");
+    titleLink.href = `document-detail.html?id=${documentItem.documentId}`;
+    titleLink.textContent = documentItem.title || documentItem.originalFileName || "Untitled document";
+    titleLink.style.color = "inherit";
+    title.appendChild(titleLink);
 
     header.append(fileBadge, title);
 
@@ -92,38 +102,92 @@ document.addEventListener("DOMContentLoaded", async function () {
       createMetaItem("Uploaded", formatDate(documentItem.createdAt))
     );
 
+    if (documentItem.subjectCode) {
+      const subjectBadge = document.createElement("div");
+      subjectBadge.className = "document-card-subject";
+      subjectBadge.textContent = `${documentItem.subjectCode} - ${documentItem.subjectName}`;
+      meta.append(subjectBadge);
+    }
+
     const actions = document.createElement("div");
     actions.className = "document-actions";
+
+    const detailButton = document.createElement("a");
+    detailButton.href = `document-detail.html?id=${documentItem.documentId}`;
+    detailButton.className = "btn btn-primary document-detail-btn";
+    detailButton.textContent = "View Details";
 
     const openButton = document.createElement("button");
     openButton.type = "button";
     openButton.className = "btn btn-secondary document-open-btn";
     openButton.textContent = "Open File";
     openButton.disabled = !documentItem.fileUrl;
-    openButton.addEventListener("click", function () {
+    openButton.addEventListener("click", function (e) {
+      e.preventDefault();
       if (documentItem.fileUrl) {
         window.open(documentItem.fileUrl, "_blank", "noopener");
       }
     });
 
-    actions.append(openButton);
+    actions.append(detailButton, openButton);
     card.append(header, description, meta, actions);
 
     return card;
   }
 
+  async function loadSubjects() {
+    try {
+      const result = await getSubjects();
+      const subjects = Array.isArray(result.data) ? result.data : [];
+      if (subjectFilter) {
+        subjectFilter.innerHTML = '<option value="">All Subjects</option>';
+        subjects.forEach(function (subject) {
+          const option = document.createElement("option");
+          option.value = subject.subjectId;
+          option.textContent = `${subject.subjectCode} - ${subject.subjectName}`;
+          subjectFilter.appendChild(option);
+        });
+      }
+    } catch (error) {
+      console.warn("Failed to load subjects:", error);
+    }
+  }
+
   async function loadDocuments() {
     setDocumentsLoading();
 
+    const params = {
+      keyword: searchInput ? searchInput.value.trim() : "",
+      subjectId: subjectFilter ? subjectFilter.value : "",
+      fileType: fileTypeFilter ? fileTypeFilter.value : ""
+    };
+
     try {
-      const result = await getMyDocuments();
+      const result = await searchDocuments(params);
       const documents = Array.isArray(result.data) ? result.data : [];
 
       if (docCountElement) docCountElement.textContent = String(documents.length);
       if (documentLoader) documentLoader.style.display = "none";
 
       if (documents.length === 0) {
-        if (emptyState) emptyState.style.display = "block";
+        if (documentGrid) documentGrid.style.display = "none";
+        if (emptyState) {
+          emptyState.style.display = "block";
+          const isFiltering = params.keyword || params.subjectId || params.fileType;
+          const emptyTitle = emptyState.querySelector(".empty-title");
+          const emptyDesc = emptyState.querySelector("p");
+          const emptyAction = emptyState.querySelector(".empty-action");
+
+          if (isFiltering) {
+            if (emptyTitle) emptyTitle.textContent = "No matching documents";
+            if (emptyDesc) emptyDesc.textContent = "Try adjusting your search keywords or filters.";
+            if (emptyAction) emptyAction.style.display = "none";
+          } else {
+            if (emptyTitle) emptyTitle.textContent = "No documents yet";
+            if (emptyDesc) emptyDesc.textContent = "Upload your first study document to keep everything in one place.";
+            if (emptyAction) emptyAction.style.display = "inline-flex";
+          }
+        }
         return;
       }
 
@@ -144,7 +208,37 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  // Load subject options first
+  await loadSubjects();
+
+  // Load documents
   await loadDocuments();
+
+  // Bind filter events
+  let searchTimeout;
+  if (searchInput) {
+    searchInput.addEventListener("input", function () {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(loadDocuments, 300);
+    });
+  }
+
+  if (subjectFilter) {
+    subjectFilter.addEventListener("change", loadDocuments);
+  }
+
+  if (fileTypeFilter) {
+    fileTypeFilter.addEventListener("change", loadDocuments);
+  }
+
+  if (clearFiltersBtn) {
+    clearFiltersBtn.addEventListener("click", function () {
+      if (searchInput) searchInput.value = "";
+      if (subjectFilter) subjectFilter.value = "";
+      if (fileTypeFilter) fileTypeFilter.value = "";
+      loadDocuments();
+    });
+  }
 
   const logoutBtn = document.getElementById("logoutBtn");
   if (logoutBtn) {
