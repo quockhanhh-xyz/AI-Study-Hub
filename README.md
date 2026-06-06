@@ -10,7 +10,7 @@
 
 **📂 Document Management & Cloud Storage**
 
-* **Upload & Organize:** Support PDF, DOCX, PPTX, TXT, Images, and ZIP. Files are stored securely on **Firebase Storage**, while metadata (title, size, subject) sits in **MySQL**.
+* **Upload & Organize:** Support PDF, DOCX, PPTX, TXT, Images, and ZIP. Files are stored securely on **Cloudinary Storage**, while metadata (title, size, subject) sits in **MySQL**.
 * **Search & Filter:** Find materials instantly by keyword, subject, folder, or file type.
 * **Sharing:** Share specific documents with registered peers via access permissions.
 
@@ -39,7 +39,7 @@
 | **Frontend** | HTML, CSS, JavaScript | VS Code (Live Server: `http://127.0.0.1:5500`) |
 | **Backend** | Java Spring Boot | IntelliJ IDEA (Port: `http://localhost:8080`) |
 | **Database** | MySQL | Spring Data JPA |
-| **Integrations** | Firebase Storage, OpenAI / Claude API | RESTful APIs, Fetch API |
+| **Integrations** | Cloudinary Storage, OpenAI / Claude API | RESTful APIs, Fetch API |
 
 ---
 
@@ -94,7 +94,7 @@ ai-study-hub/
 
 ### Data Flow
 
-`User Action` ➔ `Frontend JS` ➔ `Fetch API` ➔ `Spring Boot REST API` ➔ `MySQL / Firebase / AI API` ➔ `JSON Response` ➔ `UI Update`.
+`User Action` ➔ `Frontend JS` ➔ `Fetch API` ➔ `Spring Boot REST API` ➔ `MySQL / Cloudinary / AI API` ➔ `JSON Response` ➔ `UI Update`.
 
 ---
 
