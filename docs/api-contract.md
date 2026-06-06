@@ -459,6 +459,18 @@ Authorization: Bearer sample-token
 }
 ```
 
+### Error Response - Subject Not Found (404)
+
+If `subjectId` is provided but does not exist in the database or is inactive:
+
+```json
+{
+  "success": false,
+  "message": "Subject not found",
+  "data": null
+}
+```
+
 ---
 
 ## 3.2. Get My Documents API
@@ -728,6 +740,18 @@ Authorization: Bearer sample-token
 {
   "success": false,
   "message": "Không tìm thấy tài liệu",
+  "data": null
+}
+```
+
+### Error Response - Subject Not Found (404)
+
+If `subjectId` is provided but does not exist in the database or is inactive:
+
+```json
+{
+  "success": false,
+  "message": "Subject not found",
   "data": null
 }
 ```

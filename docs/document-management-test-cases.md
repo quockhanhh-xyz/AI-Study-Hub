@@ -135,6 +135,25 @@ This document defines the functional test cases for Step 3: Document Management 
   - MySQL database metadata for document `101` is NOT changed.
 - **Status:** `Not Run`
 
+### TC-DOC-020a - Update Document with Non-existent or Inactive Subject ID (404 Not Found)
+- **Precondition:** User A is logged in and owns document ID `101`. Subject ID `999` does not exist in the database (or is inactive).
+- **Steps:**
+  1. Send `PUT /api/documents/101` with User A's token.
+  2. Request Body:
+     ```json
+     {
+       "title": "Updated Title",
+       "description": "Updated Description",
+       "subjectId": 999
+     }
+     ```
+- **Expected Result:**
+  - Status code: `404 Not Found`.
+  - Response `success` is `false`.
+  - Message states: "Subject not found".
+  - MySQL database document `101` metadata is NOT updated.
+- **Status:** `Not Run`
+
 ---
 
 ## Document Deletion Test Cases
@@ -169,7 +188,14 @@ This document defines the functional test cases for Step 3: Document Management 
 - **Precondition:** User A is logged in. Document ID `999` does not exist in the database.
 - **Steps:**
   1. Send `GET /api/documents/999` with User A's token.
-  2. Send `PUT /api/documents/999` with User A's token.
+  2. Send `PUT /api/documents/999` with User A's token and request body:
+     ```json
+     {
+       "title": "Updated Title",
+       "description": "Updated Description",
+       "subjectId": 1
+     }
+     ```
   3. Send `DELETE /api/documents/999` with User A's token.
 - **Expected Result:**
   - Each request returns status code: `404 Not Found`.
@@ -192,6 +218,19 @@ This document defines the functional test cases for Step 3: Document Management 
   - Response `success` is `true`.
   - Response `data` includes: `subjectId`=1, `subjectCode`="SWP391", `subjectName`="Software Project".
   - MySQL database document record has `subject_id` set to `1`.
+- **Status:** `Not Run`
+
+### TC-DOC-024a - Upload Document with Non-existent or Inactive Subject ID (404 Not Found)
+- **Precondition:** User A is logged in. Subject ID `999` does not exist in the database (or is inactive).
+- **Steps:**
+  1. Send `POST /api/documents/upload` with User A's token.
+  2. Format: `multipart/form-data`.
+  3. Include `file` (valid), `title`="SWR Lecture 1", `description`="Week 1 note", and `subjectId`=999.
+- **Expected Result:**
+  - Status code: `404 Not Found`.
+  - Response `success` is `false`.
+  - Message states: "Subject not found".
+  - MySQL database document record is NOT created and Cloudinary file is NOT uploaded.
 - **Status:** `Not Run`
 
 ---
