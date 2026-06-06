@@ -84,14 +84,14 @@ This document defines the functional test cases for Step 3: Document Management 
   - Response `data` includes all metadata of document `101`.
 - **Status:** `Not Run`
 
-### TC-DOC-018 - Get Document Detail of Another User (403 or 404)
+### TC-DOC-018 - Get Document Detail of Another User (403 Forbidden)
 - **Precondition:** User B is logged in. Document ID `101` is owned by User A.
 - **Steps:**
   1. Send `GET /api/documents/101` with User B's token.
 - **Expected Result:**
-  - Status code: `403 Forbidden` (or `404 Not Found` to hide existence).
+  - Status code: `403 Forbidden`.
   - Response `success` is `false`.
-  - Message states: "Bạn không có quyền truy cập tài liệu này" or "Không tìm thấy tài liệu".
+  - Message states: "Bạn không có quyền truy cập tài liệu này".
 - **Status:** `Not Run`
 
 ---
@@ -123,12 +123,15 @@ This document defines the functional test cases for Step 3: Document Management 
   2. Request Body:
      ```json
      {
-       "title": "Hack Title"
+       "title": "Hack Title",
+       "description": "Hack Description",
+       "subjectId": 2
      }
      ```
 - **Expected Result:**
-  - Status code: `403 Forbidden` (or `404 Not Found`).
+  - Status code: `403 Forbidden`.
   - Response `success` is `false`.
+  - Message states: "Bạn không có quyền chỉnh sửa tài liệu này".
   - MySQL database metadata for document `101` is NOT changed.
 - **Status:** `Not Run`
 
@@ -152,9 +155,43 @@ This document defines the functional test cases for Step 3: Document Management 
 - **Steps:**
   1. Send `DELETE /api/documents/101` with User B's token.
 - **Expected Result:**
-  - Status code: `403 Forbidden` (or `404 Not Found`).
+  - Status code: `403 Forbidden`.
   - Response `success` is `false`.
+  - Message states: "Bạn không có quyền xóa tài liệu này".
   - MySQL database document `101` status remains `ACTIVE`.
+- **Status:** `Not Run`
+
+---
+
+## Document Not Found Test Cases
+
+### TC-DOC-023 - Access Non-existent Document (404 Not Found)
+- **Precondition:** User A is logged in. Document ID `999` does not exist in the database.
+- **Steps:**
+  1. Send `GET /api/documents/999` with User A's token.
+  2. Send `PUT /api/documents/999` with User A's token.
+  3. Send `DELETE /api/documents/999` with User A's token.
+- **Expected Result:**
+  - Each request returns status code: `404 Not Found`.
+  - Response `success` is `false`.
+  - Message states: "Không tìm thấy tài liệu".
+- **Status:** `Not Run`
+
+---
+
+## Document Upload with Subject Test Cases
+
+### TC-DOC-024 - Upload Document With Subject ID Successfully
+- **Precondition:** User A is logged in. Subject ID `1` exists in the database.
+- **Steps:**
+  1. Send `POST /api/documents/upload` with User A's token.
+  2. Format: `multipart/form-data`.
+  3. Include `file` (valid), `title`="SWR Lecture 1", `description`="Week 1 note", and `subjectId`=1.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - Response `data` includes: `subjectId`=1, `subjectCode`="SWP391", `subjectName`="Software Project".
+  - MySQL database document record has `subject_id` set to `1`.
 - **Status:** `Not Run`
 
 ---

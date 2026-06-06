@@ -346,11 +346,12 @@ Authorization: Bearer sample-token
 
 ### Form Data (FormData)
 
-| Field         | Type   | Required | Description                         |
-| :------------ | :----- | :------- | :---------------------------------- |
-| `file`        | File   | Yes      | Uploaded study document             |
-| `title`       | String | Yes      | User-facing document title          |
-| `description` | String | No       | Optional document description       |
+| Field         | Type    | Required | Description                                                            |
+| :------------ | :------ | :------- | :--------------------------------------------------------------------- |
+| `file`        | File    | Yes      | Uploaded study document                                                |
+| `title`       | String  | Yes      | User-facing document title                                             |
+| `description` | String  | No       | Optional document description                                          |
+| `subjectId`   | Integer | No       | Optional Subject ID to assign to the document (added in Step 3)        |
 
 ### Backend & Frontend Integration Rules
 
@@ -362,6 +363,17 @@ Authorization: Bearer sample-token
 - **Storage Target**: The real file is stored in Cloudinary Storage.
 - **Metadata Storage**: MySQL stores document metadata only.
 - **Secrets Management**: Under NO circumstances should any Cloudinary API Key, Secret, or credentials be pushed to Git or exposed to the frontend.
+- **Subject Code & Name Integration (Step 3)**: Any API that returns document data (upload, get my documents, get detail, update) must include the following subject DTO fields in `data`:
+  - `subjectId` (Integer, nullable)
+  - `subjectCode` (String, nullable)
+  - `subjectName` (String, nullable)
+- **HTTP Status Codes (Step 3)**: Backend must use precise RESTful HTTP status codes:
+  - `200 OK` for successful actions.
+  - `400 Bad Request` for validation failures (e.g. missing title).
+  - `401 Unauthorized` for missing/expired token.
+  - `403 Forbidden` for ownership violations (user attempting to read/write another user's document).
+  - `404 Not Found` for non-existent or soft-deleted documents.
+  - Controller endpoints must NOT catch all exceptions and simplify them into a generic `400 Bad Request` (`ResponseEntity.badRequest()`).
 
 ### Success Response
 
@@ -378,6 +390,9 @@ Authorization: Bearer sample-token
     "fileSize": 102400,
     "fileUrl": "https://res.cloudinary.com/demo/raw/upload/v123456/ai-study-hub/documents/1/swr-lecture-1.pdf",
     "publicId": "ai-study-hub/documents/1/swr-lecture-1.pdf",
+    "subjectId": 1,
+    "subjectCode": "SWP391",
+    "subjectName": "Software Project",
     "uploadedBy": "user@gmail.com",
     "createdAt": "2026-06-01T10:00:00"
   }
@@ -389,7 +404,7 @@ Authorization: Bearer sample-token
 ```json
 {
   "success": false,
-  "message": "Unauthorized",
+  "message": "Tài khoản chưa đăng nhập hoặc phiên làm việc đã hết hạn!",
   "data": null
 }
 ```
@@ -483,6 +498,8 @@ Authorization: Bearer sample-token
       "fileUrl": "https://res.cloudinary.com/demo/raw/upload/v123456/ai-study-hub/documents/1/swr-lecture-1.pdf",
       "publicId": "ai-study-hub/documents/1/swr-lecture-1.pdf",
       "subjectId": 1,
+      "subjectCode": "SWP391",
+      "subjectName": "Software Project",
       "uploadedBy": "user@gmail.com",
       "createdAt": "2026-06-01T10:00:00"
     }
@@ -522,6 +539,12 @@ These APIs support retrieving subject master data.
 
 Returns all active subjects.
 
+### Headers
+
+```text
+Authorization: Bearer sample-token
+```
+
 ### Success Response
 
 ```json
@@ -542,6 +565,16 @@ Returns all active subjects.
       "description": "Software verification and testing course"
     }
   ]
+}
+```
+
+### Error Response - Unauthorized (401)
+
+```json
+{
+  "success": false,
+  "message": "Tài khoản chưa đăng nhập hoặc phiên làm việc đã hết hạn!",
+  "data": null
 }
 ```
 
@@ -579,6 +612,8 @@ Authorization: Bearer sample-token
     "fileUrl": "https://res.cloudinary.com/demo/raw/upload/v123456/ai-study-hub/documents/1/swr-lecture-1.pdf",
     "publicId": "ai-study-hub/documents/1/swr-lecture-1.pdf",
     "subjectId": 1,
+    "subjectCode": "SWP391",
+    "subjectName": "Software Project",
     "uploadedBy": "user@gmail.com",
     "createdAt": "2026-06-01T10:00:00"
   }
@@ -659,6 +694,8 @@ Authorization: Bearer sample-token
     "fileUrl": "https://res.cloudinary.com/demo/raw/upload/v123456/ai-study-hub/documents/1/swr-lecture-1.pdf",
     "publicId": "ai-study-hub/documents/1/swr-lecture-1.pdf",
     "subjectId": 2,
+    "subjectCode": "SWT301",
+    "subjectName": "Software Testing",
     "uploadedBy": "user@gmail.com",
     "createdAt": "2026-06-01T10:00:00"
   }
