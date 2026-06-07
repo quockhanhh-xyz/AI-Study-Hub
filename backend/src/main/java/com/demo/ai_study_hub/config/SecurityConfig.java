@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/me", "/api/auth/logout").authenticated() // Yeu cau token cho me & logout
                         .requestMatchers("/api/auth/**").permitAll() // Cho phep Dang nhap/Dang ky
+                        .requestMatchers("/api/subjects").permitAll()
                         .requestMatchers("/api/health").permitAll()  // Cho phep kiem tra trang thai server
                         .anyRequest().authenticated() // Cac duong dan khac bat buoc phai co Token
                 )

@@ -104,4 +104,16 @@ public class CloudinaryStorageService {
             throw new RuntimeException("Cloudinary upload failed: " + e.getMessage());
         }
     }
+    public boolean deleteFile(String publicId) {
+        if (!cloudinaryEnabled) {
+            return false;
+        }
+        try {
+            Map result = cloudinary.get().uploader().destroy(publicId, ObjectUtils.emptyMap());
+            return "ok".equals(result.get("result"));
+        } catch (Exception e) {
+            // Không crash app nếu xóa Cloudinary lỗi
+            return false;
+        }
+    }
 }
