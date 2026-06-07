@@ -109,7 +109,21 @@ public class CloudinaryStorageService {
             return false;
         }
         try {
-            Map result = cloudinary.get().uploader().destroy(publicId, ObjectUtils.emptyMap());
+            // Detect resource_type dựa vào extension
+            String resourceType = "raw";
+            if (publicId != null) {
+                String lower = publicId.toLowerCase();
+                if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")
+                        || lower.endsWith(".png") || lower.endsWith(".gif")
+                        || lower.endsWith(".webp")) {
+                    resourceType = "image";
+                }
+            }
+
+            Map result = cloudinary.get().uploader().destroy(
+                    publicId,
+                    ObjectUtils.asMap("resource_type", resourceType)
+            );
             return "ok".equals(result.get("result"));
         } catch (Exception e) {
             // Không crash app nếu xóa Cloudinary lỗi
