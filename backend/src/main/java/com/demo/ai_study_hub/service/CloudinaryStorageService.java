@@ -67,17 +67,12 @@ public class CloudinaryStorageService {
             
             // PDF and Images are uploaded as "image" type so that they can be viewed inline in the browser.
             // Other document types (DOCX, XLSX, PPTX, TXT...) use "raw" type.
-            String resourceType = (contentType.startsWith("image/") || contentType.equals("application/pdf")) 
-                    ? "image" : "raw";
-
-            // Create a unique public_id and sanitize original base name
-            String baseName = originalName.substring(0, originalName.lastIndexOf("."));
-            String cleanBaseName = baseName.replaceAll("[^a-zA-Z0-9-_]", "_");
-            String publicId = cleanBaseName + "_" + System.currentTimeMillis();
-
-            // For raw files, Cloudinary requires the extension to be in the public_id to preserve it on download.
-            if ("raw".equals(resourceType)) {
-                publicId += extension;
+            String resourceType;
+            String lowerContentType = contentType.toLowerCase();
+            if (lowerContentType.startsWith("image/")) {
+                resourceType = "image";
+            } else {
+                resourceType = "raw";
             }
 
             Map uploadResult = cloudinary.get().uploader().upload(
@@ -85,7 +80,8 @@ public class CloudinaryStorageService {
                     ObjectUtils.asMap(
                             "folder", "ai-study-hub/documents/" + userId,
                             "resource_type", resourceType,
-                            "public_id", publicId
+                            "use_filename", true,
+                            "unique_filename", true
                     )
             );
 
@@ -104,20 +100,21 @@ public class CloudinaryStorageService {
             throw new RuntimeException("Cloudinary upload failed: " + e.getMessage());
         }
     }
-    public boolean deleteFile(String publicId) {
+    public boolean deleteFile(String publicId, String fileType) {
         if (!cloudinaryEnabled) {
             return false;
         }
         try {
-            // Detect resource_type dựa vào extension
-            String resourceType = "raw";
-            if (publicId != null) {
-                String lower = publicId.toLowerCase();
-                if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")
-                        || lower.endsWith(".png") || lower.endsWith(".gif")
-                        || lower.endsWith(".webp")) {
+            String resourceType;
+            if (fileType != null) {
+                String lower = fileType.toLowerCase();
+                if (lower.equals("jpg") || lower.equals("jpeg") || lower.equals("png")) {
                     resourceType = "image";
+                } else {
+                    resourceType = "raw";
                 }
+            } else {
+                resourceType = "raw";
             }
 
             Map result = cloudinary.get().uploader().destroy(
@@ -126,7 +123,6 @@ public class CloudinaryStorageService {
             );
             return "ok".equals(result.get("result"));
         } catch (Exception e) {
-            // Không crash app nếu xóa Cloudinary lỗi
             return false;
         }
     }
