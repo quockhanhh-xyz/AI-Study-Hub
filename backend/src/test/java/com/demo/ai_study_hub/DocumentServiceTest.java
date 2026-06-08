@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
@@ -155,5 +156,20 @@ class DocumentServiceTest {
         assertEquals(1, response.getSubjectId());
         assertEquals("SWP391", response.getSubjectCode());
         assertEquals("Software Project", response.getSubjectName());
+    }
+
+    @Test
+    void uploadDocument_WhenSubjectNotFound_ShouldThrow404AndNotUploadCloudinary() {
+        MultipartFile mockFile = mock(MultipartFile.class);
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(subjectRepository.findById(999)).thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            documentService.uploadDocument(mockFile, "Test Title", "Description", 999, "doantam785@gmail.com");
+        });
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Subject not found", exception.getReason());
+        verify(cloudinaryStorageService, never()).uploadFile(any(), any());
     }
 }
