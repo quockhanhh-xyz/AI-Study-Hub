@@ -91,7 +91,7 @@ This document defines the functional test cases for Step 3: Document Management 
 - **Expected Result:**
   - Status code: `403 Forbidden`.
   - Response `success` is `false`.
-  - Message states: "Bạn không có quyền truy cập tài liệu này".
+  - Message states: "You do not have permission to access this document.".
 - **Status:** `Not Run`
 
 ---
@@ -131,7 +131,7 @@ This document defines the functional test cases for Step 3: Document Management 
 - **Expected Result:**
   - Status code: `403 Forbidden`.
   - Response `success` is `false`.
-  - Message states: "Bạn không có quyền chỉnh sửa tài liệu này".
+  - Message states: "You do not have permission to edit this document.".
   - MySQL database metadata for document `101` is NOT changed.
 - **Status:** `Not Run`
 
@@ -176,7 +176,7 @@ This document defines the functional test cases for Step 3: Document Management 
 - **Expected Result:**
   - Status code: `403 Forbidden`.
   - Response `success` is `false`.
-  - Message states: "Bạn không có quyền xóa tài liệu này".
+  - Message states: "You do not have permission to delete this document.".
   - MySQL database document `101` status remains `ACTIVE`.
 - **Status:** `Not Run`
 
@@ -200,7 +200,7 @@ This document defines the functional test cases for Step 3: Document Management 
 - **Expected Result:**
   - Each request returns status code: `404 Not Found`.
   - Response `success` is `false`.
-  - Message states: "Không tìm thấy tài liệu".
+  - Message states: "Document not found.".
 - **Status:** `Not Run`
 
 ---
@@ -248,5 +248,5 @@ This document defines the functional test cases for Step 3: Document Management 
 - **Expected Result:**
   - Each request returns status code: `401 Unauthorized`.
   - Response `success` is `false`.
-  - Response `message` matches: "Tài khoản chưa đăng nhập hoặc phiên làm việc đã hết hạn!".
+  - Response `message` matches: "Your session has expired. Please log in again.".
 - **Status:** `Not Run`
