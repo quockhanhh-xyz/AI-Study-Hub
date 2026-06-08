@@ -16,11 +16,11 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
     Optional<Document> findByDocumentIdAndOwnerAndStatus(Integer documentId, User owner, String status);
 
-    @Query("SELECT d FROM Document d " +
+    @Query("SELECT d FROM Document d LEFT JOIN d.subject s " +
             "WHERE d.owner = :owner " +
             "AND d.status = 'ACTIVE' " +
             "AND (:keyword IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(d.originalFileName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-            "AND (:subjectId IS NULL OR d.subject.subjectId = :subjectId) " +
+            "AND (:subjectId IS NULL OR s.subjectId = :subjectId) " +
             "AND (:fileType IS NULL OR d.fileType = :fileType) " +
             "ORDER BY d.createdAt DESC")
     List<Document> findMyDocumentsWithFilters(
