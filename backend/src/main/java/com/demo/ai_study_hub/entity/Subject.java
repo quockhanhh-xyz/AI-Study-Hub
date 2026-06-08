@@ -1,36 +1,40 @@
 package com.demo.ai_study_hub.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name = "subjects")
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Subject {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "subject_id")
     private Integer subjectId;
 
-    @Column(name = "subject_code", nullable = false, unique = true, length = 50)
+    @Column(unique = true, nullable = false, length = 50)
     private String subjectCode;
 
-    @Column(name = "subject_name", nullable = false)
+    @Column(nullable = false, length = 255)
     private String subjectName;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "status", nullable = false, length = 30)
+    @Column(nullable = false, length = 30)
     private String status = "ACTIVE";
 
-    @Column(name = "created_at")
+    @Column(nullable = false)
+    @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+
 }
