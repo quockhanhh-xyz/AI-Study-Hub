@@ -404,7 +404,7 @@ Authorization: Bearer sample-token
 ```json
 {
   "success": false,
-  "message": "Tài khoản chưa đăng nhập hoặc phiên làm việc đã hết hạn!",
+  "message": "Your session has expired. Please log in again.",
   "data": null
 }
 ```
@@ -534,7 +534,7 @@ Authorization: Bearer sample-token
 ```json
 {
   "success": false,
-  "message": "Tài khoản chưa đăng nhập hoặc phiên làm việc đã hết hạn!",
+  "message": "Your session has expired. Please log in again.",
   "data": null
 }
 ```
@@ -585,7 +585,7 @@ Authorization: Bearer sample-token
 ```json
 {
   "success": false,
-  "message": "Tài khoản chưa đăng nhập hoặc phiên làm việc đã hết hạn!",
+  "message": "Your session has expired. Please log in again.",
   "data": null
 }
 ```
@@ -637,7 +637,7 @@ Authorization: Bearer sample-token
 ```json
 {
   "success": false,
-  "message": "Tài khoản chưa đăng nhập hoặc phiên làm việc đã hết hạn!",
+  "message": "Your session has expired. Please log in again.",
   "data": null
 }
 ```
@@ -649,7 +649,7 @@ If the document exists but belongs to another user:
 ```json
 {
   "success": false,
-  "message": "Bạn không có quyền truy cập tài liệu này",
+  "message": "You do not have permission to access this document.",
   "data": null
 }
 ```
@@ -661,7 +661,7 @@ If the document does not exist or has been soft-deleted:
 ```json
 {
   "success": false,
-  "message": "Không tìm thấy tài liệu",
+  "message": "Document not found.",
   "data": null
 }
 ```
@@ -729,7 +729,7 @@ Authorization: Bearer sample-token
 ```json
 {
   "success": false,
-  "message": "Bạn không có quyền chỉnh sửa tài liệu này",
+  "message": "You do not have permission to edit this document.",
   "data": null
 }
 ```
@@ -739,7 +739,7 @@ Authorization: Bearer sample-token
 ```json
 {
   "success": false,
-  "message": "Không tìm thấy tài liệu",
+  "message": "Document not found.",
   "data": null
 }
 ```
@@ -785,7 +785,7 @@ Authorization: Bearer sample-token
 ```json
 {
   "success": false,
-  "message": "Bạn không có quyền xóa tài liệu này",
+  "message": "You do not have permission to delete this document.",
   "data": null
 }
 ```
@@ -795,7 +795,7 @@ Authorization: Bearer sample-token
 ```json
 {
   "success": false,
-  "message": "Không tìm thấy tài liệu",
+  "message": "Document not found.",
   "data": null
 }
 ```
