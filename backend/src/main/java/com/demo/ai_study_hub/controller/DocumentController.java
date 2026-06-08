@@ -22,7 +22,13 @@ public class DocumentController {
     private final DocumentService documentService;
 
     @PostMapping(value = "/upload", consumes = {"multipart/form-data"})
-    public ResponseEntity<ApiResponse<DocumentResponse>> uploadDocument(@RequestParam("file") MultipartFile file, @RequestParam("title") String title, @RequestParam(value = "description", required = false) String description, @RequestParam(value = "subjectId", required = false) Integer subjectId, Principal principal) {
+    public ResponseEntity<ApiResponse<DocumentResponse>> uploadDocument(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("title") String title,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "subjectId", required = false) Integer subjectId,
+            Principal principal
+    ) {
         try {
             DocumentResponse data = documentService.uploadDocument(file, title, description, subjectId, principal.getName());
             return ResponseEntity.ok(ApiResponse.success(data, "Document uploaded successfully"));
@@ -34,7 +40,11 @@ public class DocumentController {
     }
 
     @GetMapping("/my")
-    public ResponseEntity<ApiResponse<List<DocumentResponse>>> getMyDocuments(@RequestParam(required = false) String keyword, @RequestParam(required = false) Integer subjectId, @RequestParam(required = false) String fileType, Principal principal) {
+    public ResponseEntity<ApiResponse<List<DocumentResponse>>> getMyDocuments(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer subjectId,
+            @RequestParam(required = false) String fileType,
+            Principal principal) {
         try {
             List<DocumentResponse> data = documentService.getMyDocumentsWithFilters(principal.getName(), keyword, subjectId, fileType);
             return ResponseEntity.ok(ApiResponse.success(data, "Documents retrieved successfully"));
@@ -58,7 +68,10 @@ public class DocumentController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<DocumentResponse>> updateDocument(@PathVariable Integer id, @RequestBody DocumentUpdateDTO dto, Principal principal) {
+    public ResponseEntity<ApiResponse<DocumentResponse>> updateDocument(
+            @PathVariable Integer id,
+            @RequestBody DocumentUpdateDTO dto,
+            Principal principal) {
         try {
             DocumentResponse data = documentService.updateDocument(id, dto, principal.getName());
             return ResponseEntity.ok(ApiResponse.success(data, "Document updated successfully"));
