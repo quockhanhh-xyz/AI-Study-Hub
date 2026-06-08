@@ -3,6 +3,8 @@ package com.demo.ai_study_hub.service;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.demo.ai_study_hub.dto.FileUploadResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,6 +15,8 @@ import java.util.Optional;
 
 @Service
 public class CloudinaryStorageService {
+
+    private static final Logger log = LoggerFactory.getLogger(CloudinaryStorageService.class);
 
     private final Optional<Cloudinary> cloudinary;
 
@@ -64,9 +68,7 @@ public class CloudinaryStorageService {
         try {
             String extension = originalName.substring(originalName.lastIndexOf("."));
             String fileType = extension.replace(".", "").toUpperCase();
-            
-            // PDF and Images are uploaded as "image" type so that they can be viewed inline in the browser.
-            // Other document types (DOCX, XLSX, PPTX, TXT...) use "raw" type.
+
             String resourceType;
             String lowerContentType = contentType.toLowerCase();
             if (lowerContentType.startsWith("image/")) {
@@ -75,13 +77,21 @@ public class CloudinaryStorageService {
                 resourceType = "raw";
             }
 
+            String baseName = originalName.substring(0, originalName.lastIndexOf("."));
+            String cleanBaseName = baseName.replaceAll("[^a-zA-Z0-9-_]", "_");
+            String publicId = cleanBaseName + "_" + System.currentTimeMillis();
+            if ("raw".equals(resourceType)) {
+                publicId += extension;
+            }
+
             Map uploadResult = cloudinary.get().uploader().upload(
                     file.getBytes(),
                     ObjectUtils.asMap(
                             "folder", "ai-study-hub/documents/" + userId,
                             "resource_type", resourceType,
-                            "use_filename", true,
-                            "unique_filename", true
+                            "public_id", publicId,
+                            "unique_filename", false,
+                            "overwrite", false
                     )
             );
 
@@ -100,6 +110,7 @@ public class CloudinaryStorageService {
             throw new RuntimeException("Cloudinary upload failed: " + e.getMessage());
         }
     }
+
     public boolean deleteFile(String publicId, String fileType) {
         if (!cloudinaryEnabled) {
             return false;
@@ -123,6 +134,7 @@ public class CloudinaryStorageService {
             );
             return "ok".equals(result.get("result"));
         } catch (Exception e) {
+            log.warn("Cloudinary deleteFile failed for publicId={}, fileType={}: {}", publicId, fileType, e.getMessage());
             return false;
         }
     }
