@@ -16,6 +16,7 @@ public class DocumentResponse {
     private String title;
     private String description;
     private Integer subjectId;
+    private String subjectCode;
     private String subjectName;
     private String originalFileName;
     private String fileType;
