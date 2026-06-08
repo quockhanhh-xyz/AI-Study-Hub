@@ -33,5 +33,8 @@ public class Subject {
     @CreationTimestamp
     private LocalDateTime createdAt;
 
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+
 
 }
