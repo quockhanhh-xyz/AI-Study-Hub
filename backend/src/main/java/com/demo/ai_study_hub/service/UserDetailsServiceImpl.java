@@ -19,6 +19,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                         .password(user.getPasswordHash())
                         .roles(user.getRole())
                         .build())
-                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy user: " + email));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
     }
 }
