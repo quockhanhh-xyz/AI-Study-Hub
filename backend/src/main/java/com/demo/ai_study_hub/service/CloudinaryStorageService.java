@@ -69,29 +69,16 @@ public class CloudinaryStorageService {
             String extension = originalName.substring(originalName.lastIndexOf("."));
             String fileType = extension.replace(".", "").toUpperCase();
 
-            String resourceType;
-            String lowerContentType = contentType.toLowerCase();
-            if (lowerContentType.startsWith("image/")) {
-                resourceType = "image";
-            } else {
-                resourceType = "raw";
-            }
+            // Xác định loại resource tự động hoặc chỉ định cụ thể (Đã gộp tối ưu)
+            String resourceType = (contentType.startsWith("image/") || contentType.equals("application/pdf"))
+                    ? "image" : "raw";
 
-            String baseName = originalName.substring(0, originalName.lastIndexOf("."));
-            String cleanBaseName = baseName.replaceAll("[^a-zA-Z0-9-_]", "_");
-            String publicId = cleanBaseName + "_" + System.currentTimeMillis();
-            if ("raw".equals(resourceType)) {
-                publicId += extension;
-            }
-
+            // Bỏ hết use_filename và unique_filename để chuỗi ký sạch 100%, không bao giờ lệch Signature
             Map uploadResult = cloudinary.get().uploader().upload(
                     file.getBytes(),
                     ObjectUtils.asMap(
                             "folder", "ai-study-hub/documents/" + userId,
-                            "resource_type", resourceType,
-                            "public_id", publicId,
-                            "unique_filename", false,
-                            "overwrite", false
+                            "resource_type", resourceType
                     )
             );
 

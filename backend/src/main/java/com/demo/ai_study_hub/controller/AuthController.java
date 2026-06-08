@@ -44,7 +44,8 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Object>> login(@RequestBody LoginRequest request) {
         try {
             Map<String, Object> data = authService.login(request);
-            ApiResponse<Object> response = new ApiResponse<>(true, "Đăng nhập thành công", data);
+            
+            ApiResponse<Object> response = new ApiResponse<>(true, "Login successfully", data);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             ApiResponse<Object> response = new ApiResponse<>(false, e.getMessage(), null);
@@ -57,7 +58,8 @@ public class AuthController {
         String token = authHeader.replace("Bearer ", "");
         jwtAuthFilter.blacklist(token);
 
-        ApiResponse<Object> response = new ApiResponse<>(true, "Đăng xuất thành công", null);
+        
+        ApiResponse<Object> response = new ApiResponse<>(true, "Logout successfully", null);
         return ResponseEntity.ok(response);
     }
 
@@ -73,7 +75,8 @@ public class AuthController {
                     "tier", user.getTier(),
                     "status", user.getStatus()
             );
-            ApiResponse<Object> response = new ApiResponse<>(true, "Lấy thông tin cá nhân thành công", data);
+            
+            ApiResponse<Object> response = new ApiResponse<>(true, "Current user retrieved successfully", data);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             ApiResponse<Object> response = new ApiResponse<>(false, e.getMessage(), null);
