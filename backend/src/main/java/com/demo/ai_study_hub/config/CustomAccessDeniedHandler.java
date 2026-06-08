@@ -25,7 +25,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
         Map<String, Object> body = new HashMap<>();
         body.put("success", false);
-        body.put("message", "Bạn không có quyền truy cập vào chức năng này!");
+        body.put("message", "You do not have permission to access this resource!");
         body.put("error", "Forbidden");
 
         ObjectMapper mapper = new ObjectMapper();

@@ -25,7 +25,8 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
         Map<String, Object> body = new HashMap<>();
         body.put("success", false);
-        body.put("message", "Tài khoản chưa đăng nhập hoặc phiên làm việc đã hết hạn!");
+        
+        body.put("message", "Unauthorized! Please login or your session has expired.");
         body.put("error", "Unauthorized");
 
         ObjectMapper mapper = new ObjectMapper();
