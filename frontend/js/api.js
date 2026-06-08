@@ -71,3 +71,23 @@ function post(endpoint, body) {
     body: isFormData ? body : JSON.stringify(body)
   });
 }
+
+/*
+  Hàm gọi API phương thức PUT (Cập nhật dữ liệu)
+  @param {string} endpoint - Ví dụ: "/api/documents/1"
+  @param {object} body - Object dữ liệu chứa thông tin chỉnh sửa
+ */
+function put(endpoint, body) {
+  return apiRequest(endpoint, {
+    method: "PUT",
+    body: JSON.stringify(body)
+  });
+}
+
+/*
+  Hàm gọi API phương thức DELETE (Xóa dữ liệu)
+  @param {string} endpoint - Ví dụ: "/api/documents/1"
+ */
+function del(endpoint) {
+  return apiRequest(endpoint, { method: "DELETE" });
+}
