@@ -2,6 +2,7 @@ package com.demo.ai_study_hub.controller;
 
 import com.demo.ai_study_hub.dto.ApiResponse;
 import com.demo.ai_study_hub.dto.DocumentResponse;
+import com.demo.ai_study_hub.dto.DocumentUpdateDTO;
 import com.demo.ai_study_hub.service.DocumentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -34,10 +35,50 @@ public class DocumentController {
     }
 
     @GetMapping("/my")
-    public ResponseEntity<ApiResponse<List<DocumentResponse>>> getMyDocuments(Principal principal) {
+    public ResponseEntity<ApiResponse<List<DocumentResponse>>> getMyDocuments(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer subjectId,
+            @RequestParam(required = false) String fileType,
+            Principal principal) {
         try {
-            List<DocumentResponse> data = documentService.getMyDocuments(principal.getName());
+            List<DocumentResponse> data = documentService.getMyDocumentsWithFilters(principal.getName(), keyword, subjectId, fileType);
             return ResponseEntity.ok(ApiResponse.success(data, "Documents retrieved successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<DocumentResponse>> getDocumentDetail(
+            @PathVariable Integer id,
+            Principal principal) {
+        try {
+            DocumentResponse data = documentService.getDocumentDetail(id, principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(data, "Document detail retrieved successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<DocumentResponse>> updateDocument(
+            @PathVariable Integer id,
+            @RequestBody DocumentUpdateDTO dto,
+            Principal principal) {
+        try {
+            DocumentResponse data = documentService.updateDocument(id, dto, principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(data, "Document updated successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<String>> deleteDocument(
+            @PathVariable Integer id,
+            Principal principal) {
+        try {
+            documentService.deleteDocument(id, principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(null, "Document deleted successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }

@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
-import com.demo.ai_study_hub.entity.Subject;
 
 @Entity
 @Table(name = "documents")
@@ -41,8 +40,15 @@ public class Document {
     private String publicId;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subject_id")
+    private Subject subject;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", referencedColumnName = "user_id", nullable = false)
     private User owner;
+
+    @Column(name = "status", nullable = false, length = 30)
+    private String status = "ACTIVE";
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -51,11 +57,4 @@ public class Document {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    @ManyToOne
-    @JoinColumn(name = "subject_id")
-    private Subject subject;
-
-    @Column(nullable = false, length = 30)
-    private String status = "ACTIVE";
 }
