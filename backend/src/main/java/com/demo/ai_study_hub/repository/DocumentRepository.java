@@ -8,13 +8,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Integer> {
-    List<Document> findByOwner_UserId(Integer userId);
-
-    Optional<Document> findByDocumentIdAndOwnerAndStatus(Integer documentId, User owner, String status);
 
     @Query("SELECT d FROM Document d LEFT JOIN d.subject s " +
             "WHERE d.owner = :owner " +
