@@ -126,6 +126,22 @@ public class DocumentService {
     }
 
     private DocumentResponse mapToResponse(Document doc) {
-        return DocumentResponse.builder().documentId(doc.getDocumentId()).title(doc.getTitle()).description(doc.getDescription()).subjectId(doc.getSubject() != null ? doc.getSubject().getSubjectId() : null).subjectCode(doc.getSubject() != null ? doc.getSubject().getSubjectCode() : null).subjectName(doc.getSubject() != null ? doc.getSubject().getSubjectName() : null).originalFileName(doc.getOriginalFileName()).fileType(doc.getFileType()).fileSize(doc.getFileSize()).fileUrl(doc.getFileUrl()).publicId(doc.getPublicId()).uploadedBy(doc.getOwner().getEmail()).status(doc.getStatus()).createdAt(doc.getCreatedAt()).updatedAt(doc.getUpdatedAt()).build();
+        return DocumentResponse.builder()
+                .documentId(doc.getDocumentId())
+                .title(doc.getTitle())
+                .description(doc.getDescription())
+                .subjectId(doc.getSubject() != null ? doc.getSubject().getSubjectId() : null)
+                .subjectCode(doc.getSubject() != null ? doc.getSubject().getSubjectCode() : null)
+                .subjectName(doc.getSubject() != null ? doc.getSubject().getSubjectName() : null)
+                .originalFileName(doc.getOriginalFileName())
+                .fileType(doc.getFileType())
+                .fileSize(doc.getFileSize())
+                .fileUrl(doc.getFileUrl())
+                .publicId(doc.getPublicId())
+                .uploadedBy(doc.getOwner().getEmail())
+                .status(doc.getStatus())
+                .createdAt(doc.getCreatedAt())
+                .updatedAt(doc.getUpdatedAt())
+                .build();
     }
 }
