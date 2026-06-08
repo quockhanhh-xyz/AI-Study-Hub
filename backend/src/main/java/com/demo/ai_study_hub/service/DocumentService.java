@@ -33,6 +33,14 @@ public class DocumentService {
 
         User owner = userRepository.findByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
+        Subject subject = null;
+        if (subjectId != null) {
+            subject = subjectRepository.findById(subjectId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
+            if (!"ACTIVE".equals(subject.getStatus())) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found");
+            }
+        }
+
         FileUploadResult uploadResult = cloudinaryStorageService.uploadFile(file, owner.getUserId());
 
         String url = uploadResult.getFileUrl();
@@ -50,14 +58,7 @@ public class DocumentService {
         doc.setPublicId(uploadResult.getPublicId());
         doc.setOwner(owner);
         doc.setStatus("ACTIVE");
-
-        if (subjectId != null) {
-            Subject subject = subjectRepository.findById(subjectId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
-            if (!"ACTIVE".equals(subject.getStatus())) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found");
-            }
-            doc.setSubject(subject);
-        }
+        doc.setSubject(subject);
 
         Document savedDoc = documentRepository.save(doc);
         return mapToResponse(savedDoc);
