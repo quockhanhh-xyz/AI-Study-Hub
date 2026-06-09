@@ -91,7 +91,7 @@ This document defines the functional test cases for Step 3: Document Management 
 - **Expected Result:**
   - Status code: `403 Forbidden`.
   - Response `success` is `false`.
-  - Message states: "You do not have permission to access this document.".
+  - Message states: "Access denied".
 - **Status:** `Not Run`
 
 ---
@@ -131,7 +131,7 @@ This document defines the functional test cases for Step 3: Document Management 
 - **Expected Result:**
   - Status code: `403 Forbidden`.
   - Response `success` is `false`.
-  - Message states: "You do not have permission to edit this document.".
+  - Message states: "Access denied".
   - MySQL database metadata for document `101` is NOT changed.
 - **Status:** `Not Run`
 
@@ -176,7 +176,7 @@ This document defines the functional test cases for Step 3: Document Management 
 - **Expected Result:**
   - Status code: `403 Forbidden`.
   - Response `success` is `false`.
-  - Message states: "You do not have permission to delete this document.".
+  - Message states: "Access denied".
   - MySQL database document `101` status remains `ACTIVE`.
 - **Status:** `Not Run`
 
@@ -200,7 +200,7 @@ This document defines the functional test cases for Step 3: Document Management 
 - **Expected Result:**
   - Each request returns status code: `404 Not Found`.
   - Response `success` is `false`.
-  - Message states: "Document not found.".
+  - Message states: "Document not found".
 - **Status:** `Not Run`
 
 ---

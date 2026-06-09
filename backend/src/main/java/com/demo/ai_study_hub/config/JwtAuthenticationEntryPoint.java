@@ -21,11 +21,11 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
             throws IOException, ServletException {
         
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // Chuẩn mã 401
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
         Map<String, Object> body = new HashMap<>();
         body.put("success", false);
-        body.put("message", "Tài khoản chưa đăng nhập hoặc phiên làm việc đã hết hạn!");
+        body.put("message", "Your session has expired. Please log in again.");
         body.put("error", "Unauthorized");
 
         ObjectMapper mapper = new ObjectMapper();

@@ -12,23 +12,21 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    // Đã thêm giá trị mặc định fallback bằng dấu hai chấm : để chạy test không bị crash
     @Value("${spring.mail.username:}")
     private String fromEmail;
 
     public void sendOtpEmail(String toEmail, String otpCode) {
         SimpleMailMessage message = new SimpleMailMessage();
-        
-        // Thay thế chuỗi viết cứng cũ bằng biến fromEmail đã được tiêm (inject) ở trên
         message.setFrom(fromEmail); 
         
         message.setTo(toEmail);
-        message.setSubject("AI Study Hub - Mã xác thực OTP");
+        message.setSubject("AI Study Hub - OTP Verification Code");
         message.setText(
-                "Xin chào!\n\n" +
-                        "Mã OTP của bạn là: " + otpCode + "\n\n" +
-                        "Mã có hiệu lực trong 5 phút.\n" +
-                        "Vui lòng không chia sẻ mã này với ai.\n\n" +
+                "Hello!\n\n" +
+                        "Your OTP code is: " + otpCode + "\n\n" +
+                        "This code is valid for 5 minutes.\n" +
+                        "Please do not share this code with anyone.\n\n" +
+                        "Best regards,\n" +
                         "AI Study Hub Team"
         );
         mailSender.send(message);
