@@ -3,6 +3,8 @@ package com.demo.ai_study_hub.service;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.demo.ai_study_hub.dto.FileUploadResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,6 +15,8 @@ import java.util.Optional;
 
 @Service
 public class CloudinaryStorageService {
+
+    private static final Logger log = LoggerFactory.getLogger(CloudinaryStorageService.class);
 
     private final Optional<Cloudinary> cloudinary;
 
@@ -64,18 +68,18 @@ public class CloudinaryStorageService {
         try {
             String extension = originalName.substring(originalName.lastIndexOf("."));
             String fileType = extension.replace(".", "").toUpperCase();
-            
-            // PDF and Images are uploaded as "image" type so that they can be viewed inline in the browser.
-            // Other document types (DOCX, XLSX, PPTX, TXT...) use "raw" type.
-            String resourceType = (contentType.startsWith("image/") || contentType.equals("application/pdf")) 
-                    ? "image" : "raw";
 
-            // Create a unique public_id and sanitize original base name
+            String resourceType;
+            String lowerContentType = contentType.toLowerCase();
+            if (lowerContentType.startsWith("image/")) {
+                resourceType = "image";
+            } else {
+                resourceType = "raw";
+            }
+
             String baseName = originalName.substring(0, originalName.lastIndexOf("."));
             String cleanBaseName = baseName.replaceAll("[^a-zA-Z0-9-_]", "_");
             String publicId = cleanBaseName + "_" + System.currentTimeMillis();
-
-            // For raw files, Cloudinary requires the extension to be in the public_id to preserve it on download.
             if ("raw".equals(resourceType)) {
                 publicId += extension;
             }
@@ -85,7 +89,9 @@ public class CloudinaryStorageService {
                     ObjectUtils.asMap(
                             "folder", "ai-study-hub/documents/" + userId,
                             "resource_type", resourceType,
-                            "public_id", publicId
+                            "public_id", publicId,
+                            "unique_filename", false,
+                            "overwrite", false
                     )
             );
 
@@ -102,6 +108,34 @@ public class CloudinaryStorageService {
 
         } catch (Exception e) {
             throw new RuntimeException("Cloudinary upload failed: " + e.getMessage());
+        }
+    }
+
+    public boolean deleteFile(String publicId, String fileType) {
+        if (!cloudinaryEnabled) {
+            return false;
+        }
+        try {
+            String resourceType;
+            if (fileType != null) {
+                String lower = fileType.toLowerCase();
+                if (lower.equals("jpg") || lower.equals("jpeg") || lower.equals("png")) {
+                    resourceType = "image";
+                } else {
+                    resourceType = "raw";
+                }
+            } else {
+                resourceType = "raw";
+            }
+
+            Map result = cloudinary.get().uploader().destroy(
+                    publicId,
+                    ObjectUtils.asMap("resource_type", resourceType)
+            );
+            return "ok".equals(result.get("result"));
+        } catch (Exception e) {
+            log.warn("Cloudinary deleteFile failed for publicId={}, fileType={}: {}", publicId, fileType, e.getMessage());
+            return false;
         }
     }
 }
