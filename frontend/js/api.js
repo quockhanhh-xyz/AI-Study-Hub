@@ -1,46 +1,46 @@
-// Biến toàn cục định nghĩa địa chỉ gốc của Backend API
+// Global variable defining the Backend API base URL
 const API_BASE_URL = "http://localhost:8080";
 
 /*
   Shared API request helper.
-  Hàm trung tâm để cấu hình request và xử lý token tự động.
+  Centralized function to configure requests and handle tokens automatically.
  */
 async function apiRequest(endpoint, options = {}) {
-  // Kiểm tra xem dữ liệu gửi lên có phải là file (FormData) không
+  // Check if the payload is a file object (FormData)
   const isFormData = options.body instanceof FormData;
 
-  // Khởi tạo headers ban đầu
+  // Initialize request headers
   const headers = {
     ...(options.headers || {})
   };
 
-  // CƠ CHẾ TỰ ĐỘNG: 
-  // - Nếu KHÔNG PHẢI FormData -> Mới tự động thêm Content-Type mặc định là JSON
-  // - Nếu LÀ FormData -> TUYỆT ĐỐI không thêm, để trình duyệt tự sinh boundary quản lý file
+  // AUTOMATIC MECHANISM: 
+  // - If NOT FormData -> Automatically append default JSON Content-Type
+  // - If IT IS FormData -> STRICTLY DO NOT append, let the browser auto-generate the boundary for file management
   if (!isFormData) {
     headers["Content-Type"] = "application/json";
   }
 
-  // Tự động lấy token từ localStorage (nếu có) để đính kèm vào mọi request sau này
+  // Automatically retrieve token from localStorage (if exists) to attach to all upcoming requests
   const token = localStorage.getItem("accessToken");
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  // Thực hiện gọi fetch tới Backend
+  // Execute fetch request to Backend
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: headers
   });
 
-  // Ép kiểu dữ liệu trả về thành JSON
+  // Parse response payload as JSON
   const data = await response.json();
   
-  // Kiểm tra mã lỗi HTTP (ví dụ: 400, 401, 500) hoặc cờ success từ Backend trả về là false
+  // Check for HTTP error codes (e.g., 400, 401, 500) or if the success flag from Backend contract is false
   if (!response.ok || data.success === false) {
-    // In cảnh báo ra tab Console để các FE khác dễ debug khi Backend báo lỗi về
+    // Print warning to Console tab to help other FE devs debug when Backend returns an error
     console.warn("API Request Business Error:", data);
-    // Ném lỗi ra ngoài kèm theo message chuẩn từ Backend contract
+    // Throw error containing the standard error message from Backend contract
     throw new Error(data.message || "API request failed");
   }
   // ------------------------------------
@@ -49,33 +49,33 @@ async function apiRequest(endpoint, options = {}) {
 }
 
 /*
-  Hàm gọi API phương thức GET
-  @param {string} endpoint - Ví dụ: "/api/health"
+  API GET request helper
+  @param {string} endpoint - Example: "/api/health"
  */
 function get(endpoint) {
   return apiRequest(endpoint, { method: "GET" });
 }
 
 /*
-  Hàm gọi API phương thức POST
-  @param {string} endpoint - Ví dụ: "/api/auth/login"
-  @param {object|FormData} body - Object dữ liệu thường HOẶC cục FormData chứa file
+  API POST request helper
+  @param {string} endpoint - Example: "/api/auth/login"
+  @param {object|FormData} body - Regular data object OR FormData object containing files
  */
 function post(endpoint, body) {
-  // Kiểm tra body truyền vào hàm post này có phải là FormData không
+  // Check if the body passed into this post helper is FormData
   const isFormData = body instanceof FormData;
   
   return apiRequest(endpoint, {
     method: "POST",
-    // Nếu là FormData thì giữ nguyên, nếu là object thường thì mới hóa chuỗi JSON.stringify
+    // Keep raw if FormData, stringify to JSON if it is a regular object
     body: isFormData ? body : JSON.stringify(body)
   });
 }
 
 /*
-  Hàm gọi API phương thức PUT (Cập nhật dữ liệu)
-  @param {string} endpoint - Ví dụ: "/api/documents/1"
-  @param {object} body - Object dữ liệu chứa thông tin chỉnh sửa
+  API PUT request helper (Update data)
+  @param {string} endpoint - Example: "/api/documents/1"
+  @param {object} body - Data object containing update fields
  */
 function put(endpoint, body) {
   return apiRequest(endpoint, {
@@ -85,8 +85,8 @@ function put(endpoint, body) {
 }
 
 /*
-  Hàm gọi API phương thức DELETE (Xóa dữ liệu)
-  @param {string} endpoint - Ví dụ: "/api/documents/1"
+  API DELETE request helper (Remove data)
+  @param {string} endpoint - Example: "/api/documents/1"
  */
 function del(endpoint) {
   return apiRequest(endpoint, { method: "DELETE" });
