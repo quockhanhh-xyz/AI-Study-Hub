@@ -4,7 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Document Detail – AI Study Hub</title>
+  <meta name="description" content="View and edit detailed information about your uploaded study documents on AI Study Hub." />
   <link rel="stylesheet" href="css/style.css" />
+  <script>
+    if (!localStorage.getItem("accessToken") || !localStorage.getItem("currentUser")) {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("currentUser");
+      window.location.href = "login.html";
+    }
+  </script>
   <style>
     /* ===== DETAIL PAGE SPECIFIC ===== */
     .detail-back-btn {
@@ -311,11 +319,16 @@
   <div class="app-layout">
     <!-- Sidebar -->
     <aside class="sidebar">
-      <div class="logo">AI Study Hub</div>
+      <h2 class="logo">AI Study Hub</h2>
       <nav class="sidebar-nav">
-        <a href="dashboard.html" class="nav-link active">Dashboard</a>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
         <a href="upload.html" class="nav-link">Upload</a>
       </nav>
+      <div style="margin-top: auto; padding-top: 16px;">
+        <button type="button" id="logoutBtn" class="btn btn-secondary logout-btn" style="width: 100%;">
+          Logout
+        </button>
+      </div>
     </aside>
 
     <!-- Main Content -->
@@ -418,11 +431,6 @@
   <!-- Toast -->
   <div id="toast"></div>
 
-    <script>
-    if (!localStorage.getItem('accessToken')) {
-      window.location.href = 'login.html';
-    }
-  </script>
   <script src="js/api.js"></script>
   <script src="js/document-api.js"></script>
   <script src="js/document-detail.js"></script>

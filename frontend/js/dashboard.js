@@ -2,21 +2,18 @@ document.addEventListener("DOMContentLoaded", async function () {
   const userNameElement = document.getElementById("dashboardUserName");
   const currentUserRaw = localStorage.getItem("currentUser");
 
-  if (!currentUserRaw) {
+  let currentUser = {};
+  try {
+    currentUser = JSON.parse(currentUserRaw || "{}");
+  } catch (error) {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("currentUser");
     window.location.href = "login.html";
     return;
   }
 
-  let currentUser;
-  try {
-    currentUser = JSON.parse(currentUserRaw);
-    if (userNameElement) {
-      userNameElement.textContent = `Welcome, ${currentUser.fullName} (${currentUser.role})`;
-    }
-  } catch (error) {
-    localStorage.removeItem("currentUser");
-    window.location.href = "login.html";
-    return;
+  if (userNameElement && currentUser.fullName) {
+    userNameElement.textContent = `Welcome, ${currentUser.fullName} (${currentUser.role})`;
   }
 
   const docCountElement = document.getElementById("docCount");
