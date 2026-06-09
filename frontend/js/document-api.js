@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Uploads a document, accepting a single FormData object constructed from the UI.
  * Matches 100% with line 186 in the old upload.js file.
  * @param {FormData} formData - FormData object containing file, title, description, and subjectId.
@@ -7,14 +7,16 @@ function uploadDocument(formData) {
   // Pass the raw formData object directly into the post helper from api.js
   return post("/api/documents/upload", formData);
 }
-
 /*
  * Retrieves the personal document list of the currently authenticated user.
  */
-function getMyDocuments() {
-  return get("/api/documents/my");
+function getMyDocuments(params = {}) {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== "" && value !== null && value !== undefined)
+  );
+  const queryString = new URLSearchParams(cleanParams).toString();
+  return get(queryString ? `/api/documents/my?${queryString}` : "/api/documents/my");
 }
-
 /*
  * Retrieves the list of all available subjects (Master Data).
  * Used for the Dashboard filter (FE1) and the dropdown menu in the Details page (FE2).
@@ -23,7 +25,6 @@ function getMyDocuments() {
 function getSubjects() {
   return get("/api/subjects");
 }
-
 /*
  * Advanced document search and filtering helper.
  * Serves the Search, Subject, and File Type filters on the Dashboard (FE1).
@@ -31,11 +32,8 @@ function getSubjects() {
  * @returns {Promise} Filtered list of documents matching the criteria.
  */
 function searchDocuments(params) {
-  // Automatically converts the params object into a query string like ?keyword=...&subjectId=...
-  const queryString = new URLSearchParams(params).toString();
-  return get(`/api/documents/search?${queryString}`);
+  return getMyDocuments(params);
 }
-
 /*
  * Retrieves the detailed information of a specific document by its ID.
  * Serves the Document Details view page (FE2).
@@ -45,7 +43,6 @@ function searchDocuments(params) {
 function getDocumentById(id) {
   return get(`/api/documents/${id}`);
 }
-
 /*
  * Updates the metadata (text information) of a document.
  * Serves the edit information feature on the Details page (FE2).
@@ -56,7 +53,6 @@ function getDocumentById(id) {
 function updateDocument(id, data) {
   return put(`/api/documents/${id}`, data);
 }
-
 /*
  * Deletes a document from the system by its ID.
  * Serves the document deletion feature on the Details page (FE2).
@@ -64,5 +60,5 @@ function updateDocument(id, data) {
  * @returns {Promise} Deletion response from the Backend.
  */
 function deleteDocument(id) {
-  return del(`/api/documents/${id}`); // Assuming your api.js helper uses 'del' for the DELETE method
+  return del(`/api/documents/${id}`);
 }

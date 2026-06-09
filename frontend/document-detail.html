@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document Detail – AI Study Hub</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ===== DETAIL PAGE SPECIFIC ===== */
+    .detail-back-btn {
+      width: auto;
+      padding: 10px 20px;
+      margin-bottom: 24px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .detail-back-btn:hover {
+      background: #f1f5f9;
+      color: var(--text);
+    }
+
+    .detail-card {
+      max-width: 720px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .detail-type-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 56px;
+      height: 32px;
+      padding: 0 10px;
+      border-radius: 6px;
+      background: #eff6ff;
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+
+    .detail-title-block h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      line-height: 1.3;
+    }
+
+    .detail-title-block .detail-uploaded-by {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .detail-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .meta-item {
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+
+    .meta-item-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .meta-item-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .detail-description {
+      margin-bottom: 28px;
+    }
+
+    .detail-description label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .detail-description p {
+      margin: 0;
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .detail-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 28px 0;
+    }
+
+    /* ===== EDIT FORM ===== */
+    .edit-section h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 20px;
+      text-align: left;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 90px;
+      transition: all 0.2s ease;
+      background-color: #fff;
+      color: var(--text);
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      background-color: #fff;
+      color: var(--text);
+      transition: all 0.2s ease;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      cursor: pointer;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .edit-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .edit-actions .btn {
+      flex: 1;
+    }
+
+    .btn-danger {
+      background-color: #fef2f2;
+      color: var(--danger);
+      border: 1px solid #fecaca;
+    }
+
+    .btn-danger:hover {
+      background-color: #fee2e2;
+    }
+
+    /* ===== FILE ACTION ===== */
+    .file-action-section {
+      margin-bottom: 28px;
+    }
+
+    .file-action-section .btn {
+      width: auto;
+      padding: 10px 24px;
+      gap: 8px;
+    }
+
+    /* ===== LOADER & ERROR ===== */
+    #detailLoader {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    #detailContent {
+      display: none;
+    }
+
+    /* ===== TOAST ===== */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      padding: 14px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 9999;
+      max-width: 320px;
+    }
+
+    #toast.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #toast.toast-success {
+      background: #ecfdf5;
+      color: var(--success);
+      border: 1px solid #d1fae5;
+    }
+
+    #toast.toast-error {
+      background: #fef2f2;
+      color: var(--danger);
+      border: 1px solid #fecaca;
+    }
+
+    /* ===== CONFIRM MODAL ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-box h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .modal-box p {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .modal-actions .btn {
+      flex: 1;
+    }
+
+    .btn-danger-solid {
+      background-color: var(--danger);
+      color: var(--white);
+    }
+
+    .btn-danger-solid:hover {
+      background-color: #b91c1c;
+    }
+
+    @media (max-width: 768px) {
+      .detail-meta-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .detail-header {
+        flex-direction: column;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">AI Study Hub</div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-link active">Dashboard</a>
+        <a href="upload.html" class="nav-link">Upload</a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <button class="btn detail-back-btn" onclick="window.location.href='dashboard.html'">
+        ← Back to Dashboard
+      </button>
+
+      <!-- Loader / Error state -->
+      <div id="detailLoader">Loading document...</div>
+
+      <!-- Document Content (hidden until loaded) -->
+      <div id="detailContent">
+        <div class="card detail-card">
+          <!-- Header: badge + title -->
+          <div class="detail-header">
+            <span class="detail-type-badge" id="fileTypeBadge">–</span>
+            <div class="detail-title-block">
+              <h1 id="docTitle">–</h1>
+              <span class="detail-uploaded-by" id="docUploadedBy"></span>
+            </div>
+          </div>
+
+          <!-- Meta grid -->
+          <div class="detail-meta-grid">
+            <div class="meta-item">
+              <div class="meta-item-label">Subject</div>
+              <div class="meta-item-value" id="docSubject">–</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-item-label">File size</div>
+              <div class="meta-item-value" id="docFileSize">–</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-item-label">Uploaded</div>
+              <div class="meta-item-value" id="docCreatedAt">–</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="detail-description">
+            <label>Description</label>
+            <p id="docDescription">No description provided.</p>
+          </div>
+
+          <!-- Open file button -->
+          <div class="file-action-section">
+            <a id="openFileBtn" class="btn btn-primary" href="#" target="_blank" rel="noopener noreferrer" style="width:auto;padding:10px 24px;">Open File ↗</a>
+          </div>
+
+          <hr class="detail-divider" />
+
+          <!-- Edit Section -->
+          <div class="edit-section">
+            <h2>Edit Details</h2>
+
+            <div class="form-group">
+              <label for="editTitle">Title <span style="color:var(--danger)">*</span></label>
+              <input type="text" id="editTitle" placeholder="Document title" />
+            </div>
+
+            <div class="form-group">
+              <label for="editDescription">Description</label>
+              <textarea id="editDescription" placeholder="Optional description"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="editSubject">Subject</label>
+              <select id="editSubject">
+                <option value="" disabled selected>Loading subjects...</option>
+                <!-- Fix #4: "No subject" option intentionally omitted -->
+                <!-- Backend does not support null subjectId update yet -->
+              </select>
+            </div>
+
+            <div id="editMessage" class="helper-text" style="min-height:20px;margin-bottom:12px;"></div>
+
+            <div class="edit-actions">
+              <button class="btn btn-primary" id="saveBtn" onclick="handleSave()">Save Changes</button>
+              <button class="btn btn-danger" id="deleteBtn" onclick="showDeleteConfirm()">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Delete Confirm Modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal-box">
+      <h3>Delete document?</h3>
+      <p>This document will be removed from your document list.</p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="hideDeleteConfirm()">Cancel</button>
+        <button class="btn btn-danger-solid" id="confirmDeleteBtn" onclick="handleDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+    <script>
+    if (!localStorage.getItem('accessToken')) {
+      window.location.href = 'login.html';
+    }
+  </script>
+  <script src="js/api.js"></script>
+  <script src="js/document-api.js"></script>
+  <script src="js/document-detail.js"></script>
+</body>
+</html>
+
+
