@@ -1,4 +1,4 @@
-﻿# API Contract - AI Study Hub
+# API Contract - AI Study Hub
 
 ## Base URL
 
@@ -799,4 +799,3 @@ Authorization: Bearer sample-token
   "data": null
 }
 ```
-
