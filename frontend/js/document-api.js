@@ -1,70 +1,68 @@
-
 /*
- * Hàm upload tài liệu nhận vào 1 tham số duy nhất là đối tượng FormData đã đúc sẵn từ UI
- * Khớp 100% với dòng 186 trong file upload.js cũ
- * @param {FormData} formData - Đối tượng FormData chứa file, title, description
+ * Uploads a document, accepting a single FormData object constructed from the UI.
+ * Matches 100% with line 186 in the old upload.js file.
+ * @param {FormData} formData - FormData object containing file, title, description, and subjectId.
  */
 function uploadDocument(formData) {
-  // Truyền thẳng cục formData vào hàm post của api.js
+  // Pass the raw formData object directly into the post helper from api.js
   return post("/api/documents/upload", formData);
 }
 
 /*
- * Hàm lấy danh sách tài liệu cá nhân của người dùng hiện tại
+ * Retrieves the personal document list of the currently authenticated user.
  */
 function getMyDocuments() {
   return get("/api/documents/my");
 }
 
-
 /*
- * Hàm lấy danh sách tất cả môn học (Master Data)
- * Dùng cho bộ lọc ở Dashboard (FE1) và Dropdown ở trang chi tiết (FE2)
- * @returns {Promise} Trả về danh sách môn học từ API contract docs
+ * Retrieves the list of all available subjects (Master Data).
+ * Used for the Dashboard filter (FE1) and the dropdown menu in the Details page (FE2).
+ * @returns {Promise} Returns the list of subjects based on the API contract documentation.
  */
 function getSubjects() {
   return get("/api/subjects");
 }
 
 /*
- * Hàm tìm kiếm và lọc tài liệu nâng cao
- * Phục vụ cho bộ lọc Tìm kiếm, Môn học, Loại file tại Dashboard (FE1)
- * @param {Object} params - Đối tượng chứa các bộ lọc { keyword, subjectId, fileType }
- * @returns {Promise} Danh sách tài liệu đã được lọc theo điều kiện
+ * Advanced document search and filtering helper.
+ * Serves the Search, Subject, and File Type filters on the Dashboard (FE1).
+ * @param {Object} params - Filter object containing { keyword, subjectId, fileType }.
+ * @returns {Promise} Filtered list of documents matching the criteria.
  */
 function searchDocuments(params) {
-  // Tự động chuyển đối tượng params thành query string dạng ?keyword=...&subjectId=...
+  // Automatically converts the params object into a query string like ?keyword=...&subjectId=...
   const queryString = new URLSearchParams(params).toString();
   return get(`/api/documents/search?${queryString}`);
 }
 
 /*
- * Hàm lấy thông tin chi tiết của một tài liệu cụ thể bằng ID
- * Phục vụ cho trang hiển thị chi tiết (FE2)
- * @param {number|string} id - ID của tài liệu cần lấy
- * @returns {Promise} Chi tiết tài liệu (URL file, tiêu đề, mô tả, môn học...)
+ * Retrieves the detailed information of a specific document by its ID.
+ * Serves the Document Details view page (FE2).
+ * @param {number|string} id - The ID of the document to retrieve.
+ * @returns {Promise} Detailed document data (file URL, title, description, subject...).
  */
 function getDocumentById(id) {
   return get(`/api/documents/${id}`);
 }
 
 /*
- * Hàm cập nhật metadata (thông tin chữ) của tài liệu
- * Phục vụ cho tính năng chỉnh sửa thông tin (FE2)
- * @param {number|string} id - ID của tài liệu cần sửa
- * @param {Object} data - Đối tượng chứa thông tin mới { title, description, subjectId }
- * @returns {Promise} Kết quả cập nhật từ Backend
+ * Updates the metadata (text information) of a document.
+ * Serves the edit information feature on the Details page (FE2).
+ * @param {number|string} id - The ID of the document to edit.
+ * @param {Object} data - Object containing new details { title, description, subjectId }.
+ * @returns {Promise} Update response from the Backend.
  */
 function updateDocument(id, data) {
   return put(`/api/documents/${id}`, data);
 }
 
 /*
- * Hàm xóa tài liệu ra khỏi hệ thống theo ID
- * Phục vụ cho tính năng xóa tài liệu (FE2)
- * @param {number|string} id - ID của tài liệu cần xóa
- * @returns {Promise} Kết quả xóa tài liệu từ Backend
+ * Deletes a document from the system by its ID.
+ * Serves the document deletion feature on the Details page (FE2).
+ * @param {number|string} id - The ID of the document to delete.
+ * @returns {Promise} Deletion response from the Backend.
  */
 function deleteDocument(id) {
-  return del(`/api/documents/${id}`); // Giả định helper api.js của bạn dùng tên hàm là 'del' hoặc 'delete' cho phương thức DELETE
+  return del(`/api/documents/${id}`); // Assuming your api.js helper uses 'del' for the DELETE method
 }
