@@ -21,11 +21,11 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
             throws IOException, ServletException {
         
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setStatus(HttpServletResponse.SC_FORBIDDEN); // Trả về mã 403
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 
         Map<String, Object> body = new HashMap<>();
         body.put("success", false);
-        body.put("message", "Bạn không có quyền truy cập vào chức năng này!");
+        body.put("message", "You do not have permission to access this resource.");
         body.put("error", "Forbidden");
 
         ObjectMapper mapper = new ObjectMapper();
