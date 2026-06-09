@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
  * Uploads a document, accepting a single FormData object constructed from the UI.
  * Matches 100% with line 186 in the old upload.js file.
  * @param {FormData} formData - FormData object containing file, title, description, and subjectId.
@@ -16,9 +16,6 @@ function getMyDocuments(params = {}) {
   );
   const queryString = new URLSearchParams(cleanParams).toString();
   return get(queryString ? `/api/documents/my?${queryString}` : "/api/documents/my");
-}`);
-  }
-  return get("/api/documents/my");
 }
 /*
  * Retrieves the list of all available subjects (Master Data).
@@ -65,4 +62,3 @@ function updateDocument(id, data) {
 function deleteDocument(id) {
   return del(`/api/documents/${id}`);
 }
-
