@@ -5,17 +5,20 @@
  * @param {FormData} formData - Đối tượng FormData chứa file, title, description
  */
 function uploadDocument(formData) {
-  // Truyền thẳng cục formData vào hàm post của api.js
+  // Truyền thẳng formData vào hàm post của api.js
   return post("/api/documents/upload", formData);
 }
 
 /*
  * Hàm lấy danh sách tài liệu cá nhân của người dùng hiện tại
  */
-function getMyDocuments() {
+function getMyDocuments(params) {
+  if (params && Object.keys(params).length > 0) {
+    const queryString = new URLSearchParams(params).toString();
+    return get(`/api/documents/my?${queryString}`);
+  }
   return get("/api/documents/my");
 }
-
 
 /*
  * Hàm lấy danh sách tất cả môn học (Master Data)
@@ -33,9 +36,7 @@ function getSubjects() {
  * @returns {Promise} Danh sách tài liệu đã được lọc theo điều kiện
  */
 function searchDocuments(params) {
-  // Tự động chuyển đối tượng params thành query string dạng ?keyword=...&subjectId=...
-  const queryString = new URLSearchParams(params).toString();
-  return get(`/api/documents/search?${queryString}`);
+  return getMyDocuments(params);
 }
 
 /*
