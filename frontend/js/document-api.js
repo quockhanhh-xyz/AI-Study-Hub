@@ -7,6 +7,7 @@ function uploadDocument(formData) {
   // Pass the raw formData object directly into the post helper from api.js
   return post("/api/documents/upload", formData);
 }
+
 /*
  * Retrieves the personal document list of the currently authenticated user.
  */
@@ -17,6 +18,7 @@ function getMyDocuments(params = {}) {
   const queryString = new URLSearchParams(cleanParams).toString();
   return get(queryString ? `/api/documents/my?${queryString}` : "/api/documents/my");
 }
+
 /*
  * Retrieves the list of all available subjects (Master Data).
  * Used for the Dashboard filter (FE1) and the dropdown menu in the Details page (FE2).
@@ -25,15 +27,18 @@ function getMyDocuments(params = {}) {
 function getSubjects() {
   return get("/api/subjects");
 }
+
 /*
  * Advanced document search and filtering helper.
- * Serves the Search, Subject, and File Type filters on the Dashboard (FE1).
+ * Strictly requests the personal documents endpoint for the authenticated user.
+ * Refactored to point exclusively to /api/documents/my via getMyDocuments helper.
  * @param {Object} params - Filter object containing { keyword, subjectId, fileType }.
  * @returns {Promise} Filtered list of documents matching the criteria.
  */
 function searchDocuments(params) {
   return getMyDocuments(params);
 }
+
 /*
  * Retrieves the detailed information of a specific document by its ID.
  * Serves the Document Details view page (FE2).
@@ -43,6 +48,7 @@ function searchDocuments(params) {
 function getDocumentById(id) {
   return get(`/api/documents/${id}`);
 }
+
 /*
  * Updates the metadata (text information) of a document.
  * Serves the edit information feature on the Details page (FE2).
@@ -53,6 +59,7 @@ function getDocumentById(id) {
 function updateDocument(id, data) {
   return put(`/api/documents/${id}`, data);
 }
+
 /*
  * Deletes a document from the system by its ID.
  * Serves the document deletion feature on the Details page (FE2).
