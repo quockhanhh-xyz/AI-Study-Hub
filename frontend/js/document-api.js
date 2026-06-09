@@ -67,5 +67,5 @@ function updateDocument(id, data) {
  * @returns {Promise} Kết quả xóa tài liệu từ Backend
  */
 function deleteDocument(id) {
-  return del(`/api/documents/${id}`); // Giả định helper api.js của bạn dùng tên hàm là 'del' hoặc 'delete' cho phương thức DELETE
+  return del(`/api/documents/${id}`);
 }
