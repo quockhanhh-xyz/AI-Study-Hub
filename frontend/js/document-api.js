@@ -10,10 +10,13 @@ function uploadDocument(formData) {
 /*
  * Retrieves the personal document list of the currently authenticated user.
  */
-function getMyDocuments(params) {
-  if (params && Object.keys(params).length > 0) {
-    const queryString = new URLSearchParams(params).toString();
-    return get(`/api/documents/my?${queryString}`);
+function getMyDocuments(params = {}) {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== "" && value !== null && value !== undefined)
+  );
+  const queryString = new URLSearchParams(cleanParams).toString();
+  return get(queryString ? `/api/documents/my?${queryString}` : "/api/documents/my");
+}`);
   }
   return get("/api/documents/my");
 }
@@ -62,3 +65,4 @@ function updateDocument(id, data) {
 function deleteDocument(id) {
   return del(`/api/documents/${id}`);
 }
+
