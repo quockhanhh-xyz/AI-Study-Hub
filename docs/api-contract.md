@@ -1,4 +1,4 @@
-# API Contract - AI Study Hub
+﻿# API Contract - AI Study Hub
 
 ## Base URL
 
@@ -649,11 +649,7 @@ If the document exists but belongs to another user:
 ```json
 {
   "success": false,
-<<<<<<< HEAD
-  "message": "You do not have permission to access this document.",
-=======
   "message": "Access denied",
->>>>>>> 1689aa037857ef7ffcd3d010dd5b79a72e42255f
   "data": null
 }
 ```
@@ -665,11 +661,7 @@ If the document does not exist or has been soft-deleted:
 ```json
 {
   "success": false,
-<<<<<<< HEAD
-  "message": "Document not found.",
-=======
   "message": "Document not found",
->>>>>>> 1689aa037857ef7ffcd3d010dd5b79a72e42255f
   "data": null
 }
 ```
@@ -807,3 +799,4 @@ Authorization: Bearer sample-token
   "data": null
 }
 ```
+

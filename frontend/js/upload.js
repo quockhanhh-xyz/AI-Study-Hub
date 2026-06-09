@@ -1,4 +1,3 @@
-
 // ── Auth guard ────────────────────────────────────────────────────────────────
 const token = localStorage.getItem("accessToken");
 if (!token) {
@@ -79,13 +78,13 @@ function validateFile(file) {
   return null;
 }
 
-// ── Progress bar (giả lập vì fetch không có progress event) ──────────────────
+// ── Progress bar (Simulated since fetch lacks a native progress event) ─────────
 function showProgress() {
   uploadProgress.style.display = "block";
   progressFill.style.width = "0%";
   progressText.textContent = "Uploading...";
 
-  // Tăng dần đến 90% để tạo cảm giác progress, 100% sẽ set khi done
+  // Increment up to 90% to simulate progress; 100% will be set upon completion
   let pct = 0;
   const interval = setInterval(() => {
     pct += Math.random() * 15;
@@ -118,7 +117,7 @@ fileInput.addEventListener("change", () => {
   hideMessage();
 });
 
-// ── Keyboard accessibility cho drop zone ─────────────────────────────────────
+// ── Keyboard accessibility for drop zone ─────────────────────────────────────
 dropZone.addEventListener("keydown", (e) => {
   if (e.key === "Enter" || e.key === " ") {
     e.preventDefault();
@@ -133,7 +132,7 @@ dropZone.addEventListener("dragover", (e) => {
 });
 
 dropZone.addEventListener("dragleave", (e) => {
-  // Chỉ remove khi rời khỏi drop-zone thật sự (không phải rời child element)
+  // Only remove class when actually leaving the drop-zone (not moving into a child element)
   if (!dropZone.contains(e.relatedTarget)) {
     dropZone.classList.remove("drag-over");
   }
@@ -175,7 +174,7 @@ uploadForm.addEventListener("submit", async (e) => {
     return;
   }
 
-  // Build FormData — không set Content-Type, browser tự xử lý
+  // Build FormData — do not set Content-Type, let the browser handle it
   const formData = new FormData();
   formData.append("file", file);
   formData.append("title", title);
@@ -195,7 +194,7 @@ uploadForm.addEventListener("submit", async (e) => {
     uploadForm.reset();
     updateDropZone(null);
 
-    // Chuyển về dashboard sau 1.5 giây
+    // Redirect to dashboard after 1.5 seconds
     setTimeout(() => {
       window.location.href = "dashboard.html";
     }, 1500);
