@@ -1,8 +1,6 @@
-// ── Auth guard fallback ───────────────────────────────────────────────────────
+// ── Auth guard ────────────────────────────────────────────────────────────────
 const token = localStorage.getItem("accessToken");
-if (!token || !localStorage.getItem("currentUser")) {
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("currentUser");
+if (!token) {
   window.location.href = "login.html";
 }
 
@@ -211,13 +209,3 @@ uploadForm.addEventListener("submit", async (e) => {
     submitBtn.textContent = "Upload document";
   }
 });
-
-// ── Logout logic ─────────────────────────────────────────────────────────────
-const logoutBtn = document.getElementById("logoutBtn");
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", () => {
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("accessToken");
-    window.location.href = "login.html";
-  });
-}

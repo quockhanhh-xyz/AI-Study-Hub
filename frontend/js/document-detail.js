@@ -191,13 +191,3 @@ function formatDate(isoString) {
     const d = new Date(isoString);
     return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
-
-// ── Logout logic ─────────────────────────────────────────────────────────────
-const logoutBtn = document.getElementById("logoutBtn");
-if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-        localStorage.removeItem("currentUser");
-        localStorage.removeItem("accessToken");
-        window.location.href = "login.html";
-    });
-}

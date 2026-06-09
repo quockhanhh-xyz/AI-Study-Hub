@@ -24,6 +24,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   const documentGrid = document.getElementById("documentGrid");
   const emptyState = document.getElementById("emptyState");
 
+  let totalDocuments = null;
+
   // Filter UI Elements
   const searchInput = document.getElementById("searchInput");
   const subjectFilter = document.getElementById("subjectFilter");
@@ -163,7 +165,14 @@ document.addEventListener("DOMContentLoaded", async function () {
       const result = await searchDocuments(params);
       const documents = Array.isArray(result.data) ? result.data : [];
 
-      if (docCountElement) docCountElement.textContent = String(documents.length);
+      const isFiltering = params.keyword || params.subjectId || params.fileType;
+      if (!isFiltering) {
+        totalDocuments = documents.length;
+      }
+
+      if (docCountElement && totalDocuments !== null) {
+        docCountElement.textContent = String(totalDocuments);
+      }
       if (documentLoader) documentLoader.style.display = "none";
 
       if (documents.length === 0) {
