@@ -7,7 +7,7 @@ const NAVIGATION_MENU = [
   { name: "Register", url: "register.html", requiresAuth: false, hideWhenAuth: true },
   { name: "Dashboard", url: "dashboard.html", requiresAuth: true },
   { name: "Upload", url: "upload.html", requiresAuth: true },
-  
+
   /* * Temporarily hidden menus to prevent 404 UX Issues (Will be unlocked in upcoming steps)
    * { name: "Documents", url: "documents.html", requiresAuth: true },
    * { name: "Folders", url: "folders.html", requiresAuth: true },

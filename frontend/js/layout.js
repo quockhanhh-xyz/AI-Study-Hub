@@ -19,14 +19,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /**
  * Restricts unauthenticated access to private core pages.
- * @param {boolean} isAuthenticated 
+ * @param {boolean} isAuthenticated
  */
 function handleAuthGuard(isAuthenticated) {
   const currentPage = getCurrentPageName();
-  
+
   // Find current route configuration from navigation menu dictionary
   const currentRoute = NAVIGATION_MENU.find(item => item.url === currentPage);
-  
+
   // Guard clause: If page requires auth and user is missing credentials, kick to login
   if (currentRoute && currentRoute.requiresAuth && !isAuthenticated) {
     window.location.href = "login.html";
@@ -36,7 +36,7 @@ function handleAuthGuard(isAuthenticated) {
 /**
  * Dynamically updates sidebar layout according to authentication status.
  * Filters out structural hidden components to prevent rendering in views.
- * @param {boolean} isAuthenticated 
+ * @param {boolean} isAuthenticated
  */
 function renderDynamicSidebar(isAuthenticated) {
   const navContainer = document.querySelector(".sidebar-nav");
@@ -80,7 +80,7 @@ function initializeLogoutFlow() {
     if (!logoutBtn) return;
 
     e.preventDefault();
-    
+
     // Clear token session items safely
     localStorage.removeItem("accessToken");
     localStorage.removeItem("currentUser");
