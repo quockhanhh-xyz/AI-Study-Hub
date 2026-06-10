@@ -580,7 +580,6 @@ input.success {
     }
 }
 
-<<<<<<< HEAD
 /* ===== APP NAVBAR (top bar cho các page có auth) ===== */
 .app-navbar {
   display: flex;
@@ -697,7 +696,6 @@ input.success {
     padding: 0 16px;
   }
 }
-=======
 
 /*
    ── APP SHELL SIDEBAR EXTENSIONS (FE3 STANDARDIZED LAYOUT) ──
@@ -774,4 +772,3 @@ input.success {
     }
 }
 
->>>>>>> develop
