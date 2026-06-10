@@ -606,6 +606,27 @@ input.success {
   padding: 24px;
 }
 
+/* ===== AUTH PAGE CONTENT ===== */   
+.auth-container {
+  width: 100%;
+  max-width: 440px;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.auth-title {
+  font-size: 24px;
+  margin: 0 0 6px;
+}
+
+.auth-card-title {
+  margin: 0 0 20px;
+  font-size: 18px;
+}
+
 /*
    ── APP SHELL SIDEBAR EXTENSIONS (FE3 STANDARDIZED LAYOUT) ──
 */
