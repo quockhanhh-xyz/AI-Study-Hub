@@ -606,43 +606,6 @@ input.success {
   padding: 24px;
 }
 
-/* ===== RESPONSIVE SIDEBAR LAYOUT ===== */
-@media (max-width: 640px) {
-  .app-layout {
-    flex-direction: column;
-  }
-
-  .sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    padding: 12px 16px;
-    flex-direction: row;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .logo {
-    margin: 0;
-    font-size: 18px;
-  }
-
-  .sidebar-nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-
-  .main-content {
-    padding: 20px 16px;
-  }
-
-  .app-navbar {
-    padding: 0 16px;
-  }
-}
-
 /*
    ── APP SHELL SIDEBAR EXTENSIONS (FE3 STANDARDIZED LAYOUT) ──
 */
