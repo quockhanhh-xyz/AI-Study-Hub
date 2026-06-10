@@ -84,11 +84,41 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-FLD-005 - Get My Folders Successfully
 - **Precondition:** User A is logged in and owns folder "Math Notes" (ACTIVE) and folder "Old Physics" (DELETED).
 - **Steps:**
-  1. Send `GET /api/folders` with User A's token.
+  1. Send `GET /api/folders/my` with User A's token.
 - **Expected Result:**
   - Status code: `200 OK`.
   - Response `success` is `true`.
   - Response `data` is a list containing only active folders (e.g., "Math Notes" is present, "Old Physics" is NOT present).
+- **Status:** `Not Run`
+
+### TC-FLD-005a - Get Folder Detail Successfully
+- **Precondition:** User A is logged in and owns active Folder ID `1` ("Math Notes").
+- **Steps:**
+  1. Send `GET /api/folders/1` with User A's token.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - Response `data` includes `folderId`=1, `name`="Math Notes", `status`="ACTIVE", and `createdAt`.
+- **Status:** `Not Run`
+
+### TC-FLD-005b - Get Folder Detail Owned by Another User (403 Forbidden)
+- **Precondition:** User B is logged in. Folder ID `1` belongs to User A.
+- **Steps:**
+  1. Send `GET /api/folders/1` with User B's token.
+- **Expected Result:**
+  - Status code: `403 Forbidden`.
+  - Response `success` is `false`.
+  - Message states: "Access denied".
+- **Status:** `Not Run`
+
+### TC-FLD-005c - Get Folder Detail of Non-existent or Soft-deleted Folder (404 Not Found)
+- **Precondition:** User A is logged in. Folder ID `999` does not exist in the database (or is soft-deleted).
+- **Steps:**
+  1. Send `GET /api/folders/999` with User A's token.
+- **Expected Result:**
+  - Status code: `404 Not Found`.
+  - Response `success` is `false`.
+  - Message states: "Folder not found".
 - **Status:** `Not Run`
 
 ### TC-FLD-006 - Update Folder Name Successfully
@@ -139,6 +169,36 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
   - Response `success` is `false`.
   - Message states: "Folder name already exists".
   - Folder ID `1` name remains "Math Notes".
+- **Status:** `Not Run`
+
+---
+
+## Document Upload to Folder Test Cases
+
+### TC-DOC-024b - Upload Document into Non-existent Folder (404 Not Found)
+- **Precondition:** User A is logged in. Folder ID `999` does not exist in the database (or is soft-deleted).
+- **Steps:**
+  1. Send `POST /api/documents/upload` with User A's token.
+  2. Format: `multipart/form-data`.
+  3. Include `file` (valid), `title`="SWR Lecture 1", `description`="Week 1 note", and `folderId`=999.
+- **Expected Result:**
+  - Status code: `404 Not Found`.
+  - Response `success` is `false`.
+  - Message states: "Folder not found".
+  - MySQL database document record is NOT created and Cloudinary file is NOT uploaded.
+- **Status:** `Not Run`
+
+### TC-DOC-024c - Upload Document into Folder Owned by Another User (403 Forbidden)
+- **Precondition:** User A is logged in. Folder ID `2` is owned by User B.
+- **Steps:**
+  1. Send `POST /api/documents/upload` with User A's token.
+  2. Format: `multipart/form-data`.
+  3. Include `file` (valid), `title`="SWR Lecture 1", `description`="Week 1 note", and `folderId`=2.
+- **Expected Result:**
+  - Status code: `403 Forbidden`.
+  - Response `success` is `false`.
+  - Message states: "Access denied".
+  - MySQL database document record is NOT created and Cloudinary file is NOT uploaded.
 - **Status:** `Not Run`
 
 ---
@@ -213,6 +273,23 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
   - MySQL database shows Document ID `101` `folder_id` remains unchanged.
 - **Status:** `Not Run`
 
+### TC-DOC-028a - Move Document to Soft-deleted Folder (404 Not Found)
+- **Precondition:** User A is logged in. User A owns Document ID `101`. Folder ID `1` is owned by User A but has been soft-deleted.
+- **Steps:**
+  1. Send `PUT /api/documents/101/move` with User A's token.
+  2. Request Body:
+     ```json
+     {
+       "folderId": 1
+     }
+     ```
+- **Expected Result:**
+  - Status code: `404 Not Found`.
+  - Response `success` is `false`.
+  - Message states: "Document or folder not found".
+  - MySQL database shows Document ID `101` `folder_id` remains unchanged.
+- **Status:** `Not Run`
+
 ---
 
 ## Soft-delete & Trash Retrieval Test Cases
@@ -226,7 +303,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
   - Response `success` is `true`.
   - MySQL database shows Folder ID `1` status is `'DELETED'` and `deleted_at` has the current timestamp.
   - MySQL database shows Document ID `101` status is `'DELETED'` and `deleted_at` matches Folder ID `1`'s `deleted_at` timestamp.
-  - Standard document and folder listings (`GET /api/documents/my`, `GET /api/folders`) do NOT return Folder ID `1` or Document ID `101`.
+  - Standard document and folder listings (`GET /api/documents/my`, `GET /api/folders/my`) do NOT return Folder ID `1` or Document ID `101`.
 - **Status:** `Not Run`
 
 ### TC-TRSH-001 - Retrieve Trash Items Successfully
@@ -254,6 +331,16 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
   - MySQL database shows Document ID `101` `status` is `'ACTIVE'` and `deleted_at` is `NULL` (restored because its deletion timestamp matched the folder T).
 - **Status:** `Not Run`
 
+### TC-TRSH-002a - Restore Non-existent Folder from Trash (404 Not Found)
+- **Precondition:** User A is logged in. Folder ID `999` does not exist (or is active, not in trash).
+- **Steps:**
+  1. Send `POST /api/trash/folders/999/restore` with User A's token.
+- **Expected Result:**
+  - Status code: `404 Not Found`.
+  - Response `success` is `false`.
+  - Message states: "Folder not found in trash".
+- **Status:** `Not Run`
+
 ### TC-TRSH-003 - Restore Document Individually Successfully
 - **Precondition:** User A owns soft-deleted Document ID `101` (currently in trash). The parent Folder ID `1` is still ACTIVE.
 - **Steps:**
@@ -263,6 +350,16 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
   - Response `success` is `true`.
   - MySQL database shows Document ID `101` `status` is `'ACTIVE'` and `deleted_at` is `NULL`.
   - Document ID `101` remains assigned to Folder ID `1`.
+- **Status:** `Not Run`
+
+### TC-TRSH-003a - Restore Non-existent Document from Trash (404 Not Found)
+- **Precondition:** User A is logged in. Document ID `999` does not exist (or is active, not in trash).
+- **Steps:**
+  1. Send `POST /api/trash/documents/999/restore` with User A's token.
+- **Expected Result:**
+  - Status code: `404 Not Found`.
+  - Response `success` is `false`.
+  - Message states: "Document not found in trash".
 - **Status:** `Not Run`
 
 ### TC-TRSH-004 - Restore Document whose Parent Folder is in Trash (Restored to Root)
@@ -302,6 +399,16 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
   - Cloudinary Storage physical file corresponding to public ID `ai-study-hub/documents/1/math.pdf` is deleted.
 - **Status:** `Not Run`
 
+### TC-TRSH-006a - Permanent Delete Non-existent or Active Document (404 Not Found)
+- **Precondition:** User A is logged in. Document ID `999` does not exist (or is active and has not been soft-deleted).
+- **Steps:**
+  1. Send `DELETE /api/trash/documents/999` with User A's token.
+- **Expected Result:**
+  - Status code: `404 Not Found`.
+  - Response `success` is `false`.
+  - Message states: "Document not found in trash".
+- **Status:** `Not Run`
+
 ### TC-TRSH-007 - Permanent Delete Folder and All Its Contents
 - **Precondition:** User A is logged in. User A has soft-deleted Folder ID `1`. Document ID `101` and Document ID `103` are inside Folder `1`.
 - **Steps:**
@@ -314,6 +421,16 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
   - Their physical files are deleted from Cloudinary Storage using their respective public IDs.
 - **Status:** `Not Run`
 
+### TC-TRSH-007a - Permanent Delete Non-existent or Active Folder (404 Not Found)
+- **Precondition:** User A is logged in. Folder ID `999` does not exist (or is active and has not been soft-deleted).
+- **Steps:**
+  1. Send `DELETE /api/trash/folders/999` with User A's token.
+- **Expected Result:**
+  - Status code: `404 Not Found`.
+  - Response `success` is `false`.
+  - Message states: "Folder not found in trash".
+- **Status:** `Not Run`
+
 ### TC-TRSH-008 - Permanent Delete Folder/Document of Another User (403 Forbidden)
 - **Precondition:** User B is logged in. User A owns soft-deleted Folder ID `1`.
 - **Steps:**
@@ -323,4 +440,37 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
   - Response `success` is `false`.
   - Message states: "Access denied".
   - MySQL database Folder ID `1` remains in trash.
+- **Status:** `Not Run`
+
+---
+
+## Authorization Security Test Cases
+
+### TC-SEC-002 - Call Folder APIs Without Logging In (401 Unauthorized)
+- **Precondition:** No `Authorization` header is provided.
+- **Steps:**
+  1. Send `POST /api/folders` with request body `{"name": "Math Notes"}`.
+  2. Send `GET /api/folders/my`.
+  3. Send `GET /api/folders/1`.
+  4. Send `PUT /api/folders/1` with request body `{"name": "New Name"}`.
+  5. Send `DELETE /api/folders/1`.
+  6. Send `PUT /api/documents/101/move` with request body `{"folderId": 1}`.
+- **Expected Result:**
+  - Each request returns status code: `401 Unauthorized`.
+  - Response `success` is `false`.
+  - Response `message` matches: "Your session has expired. Please log in again.".
+- **Status:** `Not Run`
+
+### TC-SEC-003 - Call Trash/Restore APIs Without Logging In (401 Unauthorized)
+- **Precondition:** No `Authorization` header is provided.
+- **Steps:**
+  1. Send `GET /api/trash`.
+  2. Send `POST /api/trash/folders/1/restore`.
+  3. Send `POST /api/trash/documents/101/restore`.
+  4. Send `DELETE /api/trash/folders/1`.
+  5. Send `DELETE /api/trash/documents/101`.
+- **Expected Result:**
+  - Each request returns status code: `401 Unauthorized`.
+  - Response `success` is `false`.
+  - Response `message` matches: "Your session has expired. Please log in again.".
 - **Status:** `Not Run`

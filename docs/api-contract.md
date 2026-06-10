@@ -476,6 +476,30 @@ If `subjectId` is provided but does not exist in the database or is inactive:
 }
 ```
 
+### Error Response - Folder Not Found (404)
+
+If `folderId` is provided but does not exist in the database or has been soft-deleted:
+
+```json
+{
+  "success": false,
+  "message": "Folder not found",
+  "data": null
+}
+```
+
+### Error Response - Folder Access Denied (403)
+
+If `folderId` is provided but belongs to another user:
+
+```json
+{
+  "success": false,
+  "message": "Access denied",
+  "data": null
+}
+```
+
 ---
 
 ## 3.2. Get My Documents API
@@ -678,6 +702,142 @@ If the document does not exist or has been soft-deleted:
 
 ---
 
+## 5.2. Update Document Metadata API
+
+## PUT `/api/documents/{id}`
+
+Updates the title, description, and subject of a specific document owned by the authenticated user.
+
+### Headers
+
+```text
+Authorization: Bearer sample-token
+```
+
+### Request Body
+
+```json
+{
+  "title": "New Document Title",
+  "description": "Updated document description",
+  "subjectId": 2
+}
+```
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "Document updated successfully",
+  "data": {
+    "documentId": 1,
+    "title": "New Document Title",
+    "description": "Updated document description",
+    "originalFileName": "swr-lecture-1.pdf",
+    "fileType": "PDF",
+    "fileSize": 102400,
+    "fileUrl": "https://res.cloudinary.com/demo/raw/upload/v123456/ai-study-hub/documents/1/swr-lecture-1.pdf",
+    "publicId": "ai-study-hub/documents/1/swr-lecture-1.pdf",
+    "subjectId": 2,
+    "subjectCode": "SWT301",
+    "subjectName": "Software Testing",
+    "folderId": null,
+    "folderName": null,
+    "uploadedBy": "user@gmail.com",
+    "createdAt": "2026-06-01T10:00:00"
+  }
+}
+```
+
+### Error Response - Validation Failed (400)
+
+```json
+{
+  "success": false,
+  "message": "Title is required",
+  "data": null
+}
+```
+
+### Error Response - Forbidden (403)
+
+```json
+{
+  "success": false,
+  "message": "Access denied",
+  "data": null
+}
+```
+
+### Error Response - Not Found (404)
+
+```json
+{
+  "success": false,
+  "message": "Document not found",
+  "data": null
+}
+```
+
+### Error Response - Subject Not Found (404)
+
+If `subjectId` is provided but does not exist in the database or is inactive:
+
+```json
+{
+  "success": false,
+  "message": "Subject not found",
+  "data": null
+}
+```
+
+---
+
+## 5.3. Delete Document API
+
+## DELETE `/api/documents/{id}`
+
+Soft-deletes a specific document owned by the authenticated user.
+
+### Headers
+
+```text
+Authorization: Bearer sample-token
+```
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "Document deleted successfully",
+  "data": null
+}
+```
+
+### Error Response - Forbidden (403)
+
+```json
+{
+  "success": false,
+  "message": "Access denied",
+  "data": null
+}
+```
+
+### Error Response - Not Found (404)
+
+```json
+{
+  "success": false,
+  "message": "Document not found",
+  "data": null
+}
+```
+
+---
+
 # 6. Folder Management APIs (Step 5)
 
 These APIs manage user-defined folders for document organization. Access is restricted to the folder owner.
@@ -728,6 +888,18 @@ Content-Type: application/json
 }
 ```
 
+### Error Response - Duplicate Name (400)
+
+If the user already has an active folder with the same name:
+
+```json
+{
+  "success": false,
+  "message": "Folder name already exists",
+  "data": null
+}
+```
+
 ### Error Response - Unauthorized (401)
 
 ```json
@@ -742,7 +914,7 @@ Content-Type: application/json
 
 ## 6.2. Get My Folders API
 
-## GET `/api/folders`
+## GET `/api/folders/my`
 
 Retrieves all active folders owned by the currently authenticated user. Only folders with `status = 'ACTIVE'` are returned.
 
@@ -771,7 +943,60 @@ Authorization: Bearer sample-token
 
 ---
 
-## 6.3. Update Folder API
+## 6.3. Get Folder Detail API
+
+## GET `/api/folders/{id}`
+
+Retrieves details of a specific folder owned by the authenticated user. Only folders with `status = 'ACTIVE'` can be retrieved.
+
+### Headers
+
+```text
+Authorization: Bearer sample-token
+```
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Folder retrieved successfully",
+  "data": {
+    "folderId": 1,
+    "name": "Math Notes",
+    "status": "ACTIVE",
+    "createdAt": "2026-06-10T10:00:00"
+  }
+}
+```
+
+### Error Response - Forbidden (403)
+
+If the folder belongs to another user:
+
+```json
+{
+  "success": false,
+  "message": "Access denied",
+  "data": null
+}
+```
+
+### Error Response - Not Found (404)
+
+If the folder does not exist or has been soft-deleted:
+
+```json
+{
+  "success": false,
+  "message": "Folder not found",
+  "data": null
+}
+```
+
+---
+
+## 6.4. Update Folder API
 
 ## PUT `/api/folders/{id}`
 
@@ -817,6 +1042,18 @@ Content-Type: application/json
 }
 ```
 
+### Error Response - Duplicate Name (400)
+
+If the user already has an active folder with the new name:
+
+```json
+{
+  "success": false,
+  "message": "Folder name already exists",
+  "data": null
+}
+```
+
 ### Error Response - Forbidden (403)
 
 If the folder belongs to another user:
@@ -843,7 +1080,7 @@ If the folder does not exist or has been soft-deleted:
 
 ---
 
-## 6.4. Delete Folder (Soft-delete) API
+## 6.5. Delete Folder (Soft-delete) API
 
 ## DELETE `/api/folders/{id}`
 
@@ -887,7 +1124,7 @@ Authorization: Bearer sample-token
 
 ---
 
-## 6.5. Move Document to Folder API
+## 6.6. Move Document to Folder API
 
 ## PUT `/api/documents/{id}/move`
 
@@ -1172,143 +1409,6 @@ Authorization: Bearer sample-token
 {
   "success": false,
   "message": "Document not found in trash",
-  "data": null
-}
-```
-
-
----
-
-## 5.2. Update Document Metadata API
-
-## PUT `/api/documents/{id}`
-
-Updates the title, description, and subject of a specific document owned by the authenticated user.
-
-### Headers
-
-```text
-Authorization: Bearer sample-token
-```
-
-### Request Body
-
-```json
-{
-  "title": "New Document Title",
-  "description": "Updated document description",
-  "subjectId": 2
-}
-```
-
-### Success Response
-
-```json
-{
-  "success": true,
-  "message": "Document updated successfully",
-  "data": {
-    "documentId": 1,
-    "title": "New Document Title",
-    "description": "Updated document description",
-    "originalFileName": "swr-lecture-1.pdf",
-    "fileType": "PDF",
-    "fileSize": 102400,
-    "fileUrl": "https://res.cloudinary.com/demo/raw/upload/v123456/ai-study-hub/documents/1/swr-lecture-1.pdf",
-    "publicId": "ai-study-hub/documents/1/swr-lecture-1.pdf",
-    "subjectId": 2,
-    "subjectCode": "SWT301",
-    "subjectName": "Software Testing",
-    "folderId": null,
-    "folderName": null,
-    "uploadedBy": "user@gmail.com",
-    "createdAt": "2026-06-01T10:00:00"
-  }
-}
-```
-
-### Error Response - Validation Failed (400)
-
-```json
-{
-  "success": false,
-  "message": "Title is required",
-  "data": null
-}
-```
-
-### Error Response - Forbidden (403)
-
-```json
-{
-  "success": false,
-  "message": "Access denied",
-  "data": null
-}
-```
-
-### Error Response - Not Found (404)
-
-```json
-{
-  "success": false,
-  "message": "Document not found",
-  "data": null
-}
-```
-
-### Error Response - Subject Not Found (404)
-
-If `subjectId` is provided but does not exist in the database or is inactive:
-
-```json
-{
-  "success": false,
-  "message": "Subject not found",
-  "data": null
-}
-```
-
----
-
-## 5.3. Delete Document API
-
-## DELETE `/api/documents/{id}`
-
-Soft-deletes a specific document owned by the authenticated user.
-
-### Headers
-
-```text
-Authorization: Bearer sample-token
-```
-
-### Success Response
-
-```json
-{
-  "success": true,
-  "message": "Document deleted successfully",
-  "data": null
-}
-```
-
-### Error Response - Forbidden (403)
-
-```json
-{
-  "success": false,
-  "message": "Access denied",
-  "data": null
-}
-```
-
-### Error Response - Not Found (404)
-
-```json
-{
-  "success": false,
-  "message": "Document not found",
   "data": null
 }
 ```
