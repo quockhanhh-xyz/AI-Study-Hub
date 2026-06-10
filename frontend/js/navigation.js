@@ -5,6 +5,7 @@ const NAVIGATION_MENU = [
   { name: "Home", url: "index.html", requiresAuth: false },
   { name: "Login", url: "login.html", requiresAuth: false, hideWhenAuth: true },
   { name: "Register", url: "register.html", requiresAuth: false, hideWhenAuth: true },
+  { name: "Verify OTP", url: "verify-otp.html", requiresAuth: false, hideWhenAuth: true, hidden: true },
   { name: "Dashboard", url: "dashboard.html", requiresAuth: true },
   { name: "Upload", url: "upload.html", requiresAuth: true },
 
