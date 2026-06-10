@@ -2,9 +2,10 @@
  * Application Shell and Authentication Guard Manager.
  */
 document.addEventListener("DOMContentLoaded", () => {
-  // Check if token exists to determine auth status
+  // Sync auth state by checking both token and user object data concurrently
   const token = localStorage.getItem("accessToken");
-  const isAuthenticated = !!token;
+  const currentUserRaw = localStorage.getItem("currentUser");
+  const isAuthenticated = !!token && !!currentUserRaw;
 
   // 1. EXECUTE AUTH GUARD SYSTEM
   handleAuthGuard(isAuthenticated);
@@ -26,7 +27,7 @@ function handleAuthGuard(isAuthenticated) {
   // Find current route configuration from navigation menu dictionary
   const currentRoute = NAVIGATION_MENU.find(item => item.url === currentPage);
   
-  // Guard clause: If page requires auth and user is missing token, kick to login
+  // Guard clause: If page requires auth and user is missing credentials, kick to login
   if (currentRoute && currentRoute.requiresAuth && !isAuthenticated) {
     window.location.href = "login.html";
   }
@@ -34,15 +35,16 @@ function handleAuthGuard(isAuthenticated) {
 
 /**
  * Dynamically updates sidebar layout according to authentication status.
- * Ensures menus like Folders, Trash, and Logout only appear when logged in.
+ * Filters out structural hidden components to prevent rendering in views.
  * @param {boolean} isAuthenticated 
  */
 function renderDynamicSidebar(isAuthenticated) {
   const navContainer = document.querySelector(".sidebar-nav");
   if (!navContainer) return;
 
-  // Filter links based on current authentication state
+  // Filter links based on visibility flags and authentication state
   const visibleMenus = NAVIGATION_MENU.filter(item => {
+    if (item.hidden) return false; // Filter out structural routes like detail pages
     if (item.hideWhenAuth && isAuthenticated) return false;
     if (item.requiresAuth && !isAuthenticated) return false;
     return true;
