@@ -22,7 +22,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
-    // Blacklist lưu token đã logout
+    // Stores JWTs invalidated during logout.
     private final Set<String> tokenBlacklist = new java.util.HashSet<>();
 
     public void blacklist(String token) {

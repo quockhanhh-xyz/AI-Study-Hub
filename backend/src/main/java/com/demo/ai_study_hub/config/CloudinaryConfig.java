@@ -25,7 +25,7 @@ public class CloudinaryConfig {
     @Bean
     public Cloudinary cloudinary() {
         if (!enabled || cloudName.isEmpty() || apiKey.isEmpty() || apiSecret.isEmpty()) {
-            // Trả về Cloudinary rỗng, không crash app
+            // Return a placeholder client so the app can start without Cloudinary credentials.
             return new Cloudinary(Map.of(
                     "cloud_name", "placeholder",
                     "api_key", "placeholder",
