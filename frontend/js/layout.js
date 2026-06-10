@@ -89,3 +89,5 @@ function initializeLogoutFlow() {
     window.location.href = "login.html";
   });
 }
+
+// End of layout component manager file
