@@ -842,6 +842,9 @@ Authorization: Bearer sample-token
 
 These APIs manage user-defined folders for document organization. Access is restricted to the folder owner.
 
+> [!NOTE]
+> All Step 5 APIs (Folders and Trash/Restore) require an `Authorization` header. A missing or expired token returns `401 Unauthorized` with the message: `"Your session has expired. Please log in again."`.
+
 ## 6.1. Create Folder API
 
 ## POST `/api/folders`
