@@ -74,10 +74,12 @@ Stores uploaded document metadata. The real file is stored in Cloudinary Storage
 | `file_url`     | TEXT         | NOT NULL                                              | Cloudinary secure URL used by frontend to open or download file        |
 | `storage_path` | TEXT         | NOT NULL                                              | Cloudinary public ID (mapped to `publicId` in DTO)                     |
 | `owner_id`     | INT          | FOREIGN KEY REFERENCES users(user_id), NOT NULL       | User who owns this document                                            |
-| `subject_id`   | INT          | FOREIGN KEY REFERENCES subjects(subject_id), NULLABLE | Subject this document belongs to (added in Step 3)                     |
-| `status`       | VARCHAR(30)  | DEFAULT 'ACTIVE', NOT NULL                            | Document status: ACTIVE or DELETED (added in Step 3)                   |
+| `subject_id`   | INT          | FOREIGN KEY REFERENCES subjects(subject_id), NULLABLE | Subject this document belongs to                                       |
+| `folder_id`    | INT          | FOREIGN KEY REFERENCES folders(folder_id), NULLABLE   | Folder this document belongs to (added in Step 5)                      |
+| `status`       | VARCHAR(30)  | DEFAULT 'ACTIVE', NOT NULL                            | Document status: ACTIVE or DELETED                                     |
 | `created_at`   | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP                             | Document upload time                                                   |
 | `updated_at`   | TIMESTAMP    | NULLABLE                                              | Last update time                                                       |
+| `deleted_at`   | TIMESTAMP    | NULLABLE                                              | Document deletion time (when soft-deleted)                             |
 
 ### Business Rules
 
@@ -87,9 +89,13 @@ Stores uploaded document metadata. The real file is stored in Cloudinary Storage
 - Allowed file types are: `pdf`, `doc`, `docx`, `ppt`, `pptx`, `xls`, `xlsx`, `txt`, `jpg`, `jpeg`, `png` (case-insensitive).
 - Maximum file size is 10MB (10,485,760 bytes).
 - Cloudinary Storage stores the real file; MySQL stores metadata only.
-- In Step 3, a document can optionally be assigned a `subject_id`.
-- In Step 3, when a document is deleted, it is soft-deleted by changing its `status` to `'DELETED'` in MySQL. Deleted documents must not be returned in lists or detail endpoints.
-- `folder_id` is reserved for future steps and is not part of Step 3.
+- A document can optionally be assigned a `subject_id`.
+- In Step 5, a document can optionally be assigned to a `folder_id`. The folder must belong to the same user.
+- Soft-deletion: When a document is deleted, its `status` is set to `'DELETED'` in MySQL, and `deleted_at` is populated with the current timestamp. Soft-deleted documents must not be returned in standard lists or detail endpoints.
+- Restoration: A soft-deleted document can be restored by resetting `status` to `'ACTIVE'` and `deleted_at` to `null`. If the folder it belonged to was permanently deleted, the document is restored to the root/unassigned level.
+- Permanent deletion: When a document is permanently deleted from the trash:
+  - The database record is deleted from MySQL.
+  - The physical file is deleted from Cloudinary Storage using its `storage_path` (public ID).
 
 ---
 
@@ -97,12 +103,28 @@ Stores uploaded document metadata. The real file is stored in Cloudinary Storage
 
 Stores user folders.
 
-| Column Name  | Data Type    | Description               |
-| :----------- | :----------- | :------------------------ |
-| `id`         | INT          | Primary key               |
-| `name`       | VARCHAR(100) | Folder name               |
-| `owner_id`   | INT          | References users(user_id) |
-| `created_at` | TIMESTAMP    | Folder creation time      |
+| Column Name  | Data Type    | Constraints                                     | Description                                |
+| :----------- | :----------- | :---------------------------------------------- | :----------------------------------------- |
+| `folder_id`  | INT          | PRIMARY KEY, AUTO_INCREMENT, NOT NULL           | Unique folder ID                           |
+| `name`       | VARCHAR(100) | NOT NULL                                        | Folder name                                |
+| `owner_id`   | INT          | FOREIGN KEY REFERENCES users(user_id), NOT NULL | User who owns this folder                  |
+| `status`     | VARCHAR(30)  | DEFAULT 'ACTIVE', NOT NULL                      | Folder status: ACTIVE or DELETED           |
+| `created_at` | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP                       | Folder creation time                       |
+| `updated_at` | TIMESTAMP    | NULLABLE                                        | Last update time                           |
+| `deleted_at` | TIMESTAMP    | NULLABLE                                        | Folder deletion time (when soft-deleted)   |
+
+### Business Rules
+
+- A folder must belong to exactly one user.
+- `owner_id` must be resolved from the authenticated JWT token / security session, not from frontend input.
+- Folder name must be unique per user for ACTIVE folders (i.e. a user cannot have two active folders with the same name). A user can create a folder with the same name as a soft-deleted folder.
+- Soft-deletion: When a folder is deleted, its `status` is set to `'DELETED'` in MySQL, and `deleted_at` is populated with the current timestamp. All active documents inside the folder must automatically be soft-deleted with the same `deleted_at` timestamp.
+- Restoration: A soft-deleted folder can be restored by setting `status` to `'ACTIVE'` and `deleted_at` to `null`. All documents in the trash that were soft-deleted with the same `deleted_at` timestamp are automatically restored to the folder (status set back to `'ACTIVE'`).
+- Permanent deletion: When a folder is permanently deleted:
+  - The folder record is deleted from MySQL.
+  - All documents currently inside the folder (whether ACTIVE or DELETED) are also permanently deleted from MySQL.
+  - Their physical files must be deleted from Cloudinary Storage using their `storage_path` (public ID).
+- MVP: 1-level folders only. No nested folders (a folder cannot contain other folders).
 
 ---
 
