@@ -580,7 +580,7 @@ input.success {
     }
 }
 
-/* ===== APP NAVBAR (top bar cho các page có auth) ===== */
+/* ===== APP NAVBAR (top bar for authenticated pages) ===== */
 .app-navbar {
   display: flex;
   align-items: center;
@@ -607,7 +607,7 @@ input.success {
   align-items: center;
 }
 
-/* ===== BUTTON VARIANTS CÒN THIẾU ===== */
+/* ===== BUTTON VARIANTS ===== */
 .btn-danger {
   background-color: var(--danger);
   color: var(--white);
@@ -623,7 +623,7 @@ input.success {
   font-size: 13px;
 }
 
-/* ===== MESSAGE BOX THỐNG NHẤT ===== */
+/* ===== MESSAGE BOX ===== */
 .msg {
   padding: 12px 16px;
   border-radius: 8px;
@@ -660,7 +660,7 @@ input.success {
   padding: 24px;
 }
 
-/* =====RESPONSIVE CHO SIDEBAR LAYOUT ===== */
+/* ===== RESPONSIVE SIDEBAR LAYOUT ===== */
 @media (max-width: 640px) {
   .app-layout {
     flex-direction: column;
@@ -771,4 +771,3 @@ input.success {
         margin-top: 0;
     }
 }
-
