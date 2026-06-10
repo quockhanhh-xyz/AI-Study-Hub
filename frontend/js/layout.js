@@ -90,4 +90,4 @@ function initializeLogoutFlow() {
   });
 }
 
-// End of layout component manager file
+// End of layout component manager file.
