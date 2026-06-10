@@ -8,6 +8,7 @@
     <meta name="description" content="View your study dashboard, check your document stats, and manage your uploaded files." />
     <link rel="stylesheet" href="css/style.css" />
     <script>
+        // Inline pre-render guard system ensuring synchronized multi-token verification
         if (!localStorage.getItem("accessToken") || !localStorage.getItem("currentUser")) {
             localStorage.removeItem("accessToken");
             localStorage.removeItem("currentUser");
@@ -20,15 +21,7 @@
     <div class="app-layout">
         <aside class="sidebar">
             <h2 class="logo">AI Study Hub</h2>
-            <nav class="sidebar-nav">
-                <a href="dashboard.html" class="nav-link active">Dashboard</a>
-                <a href="upload.html" class="nav-link">Upload</a>
-            </nav>
-            <div style="margin-top: auto; padding-top: 16px;">
-                <button type="button" id="logoutBtn" class="btn btn-secondary logout-btn" style="width: 100%;">
-                    Logout
-                </button>
-            </div>
+            <nav class="sidebar-nav"></nav>
         </aside>
 
         <main class="main-content">
@@ -106,13 +99,15 @@
                     <a href="upload.html" class="btn btn-secondary empty-action">Upload your first document</a>
                 </div>
             </section>
-
-
         </main>
     </div>
 
     <script src="js/api.js"></script>
     <script src="js/document-api.js"></script>
+
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+
     <script src="js/dashboard.js"></script>
 </body>
 
