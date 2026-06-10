@@ -45,3 +45,5 @@ function initializeActiveMenu() {
     }
   });
 }
+
+// End of navigation utility file
