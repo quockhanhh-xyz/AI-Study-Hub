@@ -30,7 +30,7 @@ function getCurrentPageName() {
 }
 
 /**
- * Updates the UI sidebar elements dynamically to highlight the active menu link.
+ * Updates the UI sidebar elements dynamically to highlight the active menu link
  */
 function initializeActiveMenu() {
   const currentPage = getCurrentPageName();
@@ -46,4 +46,4 @@ function initializeActiveMenu() {
   });
 }
 
-// End of navigation utility file
+// End of navigation utility file.
