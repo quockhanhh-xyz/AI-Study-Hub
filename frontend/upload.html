@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Upload Document - AI Study Hub</title>
     <link rel="stylesheet" href="css/style.css" />
+    <script>
+        if (!localStorage.getItem("accessToken") || !localStorage.getItem("currentUser")) {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("currentUser");
+            window.location.href = "login.html";
+        }
+    </script>
     <style>
         /* ── Drop zone ─────────────────────────────────────────────────────── */
         .drop-zone {
@@ -155,12 +162,14 @@
         <aside class="sidebar">
             <h2 class="logo">AI Study Hub</h2>
             <nav class="sidebar-nav">
-                <a href="index.html" class="nav-link">Home</a>
-                <a href="login.html" class="nav-link">Login</a>
-                <a href="register.html" class="nav-link">Register</a>
                 <a href="dashboard.html" class="nav-link">Dashboard</a>
                 <a href="upload.html" class="nav-link active">Upload</a>
             </nav>
+            <div style="margin-top: auto; padding-top: 16px;">
+                <button type="button" id="logoutBtn" class="btn btn-secondary logout-btn" style="width: 100%;">
+                    Logout
+                </button>
+            </div>
         </aside>
 
         <main class="main-content">
@@ -214,7 +223,7 @@
                         <span id="progressText" class="progress-text">Uploading...</span>
                     </div>
 
-                    <div id="uploadMessage" class="status-box" role="alert"></div>
+                    <div id="uploadMessage" class="helper-text" role="alert"></div>
 
                     <button type="submit" id="submitBtn" class="btn btn-primary">
                         Upload document

@@ -1,40 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Verify OTP - AI Study Hub</title>
     <link rel="stylesheet" href="css/style.css" />
 </head>
+
 <body>
-    <div class="app-layout">
-        <aside class="sidebar">
-            <h2 class="logo">AI Study Hub</h2>
-            <nav class="sidebar-nav">
-                <a href="index.html" class="nav-link">Home</a>
-                <a href="login.html" class="nav-link">Login</a>
-                <a href="register.html" class="nav-link">Register</a>
-                <a href="dashboard.html" class="nav-link">Dashboard</a>
-            </nav>
-        </aside>
-        <main class="main-content">
-            <section class="page-header">
-                <h1>Verify Your Email</h1>
+    <div class="auth-shell">
+        <main style="width: 100%; max-width: 440px;">
+            <div class="page-header" style="text-align: center; margin-bottom: 24px;">
+                <h1 style="font-size: 24px; margin: 0 0 6px;">AI Study Hub</h1>
                 <p>OTP has been sent to <strong id="displayEmail"></strong></p>
-            </section>
-            <section class="card form-card">
+            </div>
+            <section class="card form-card" style="max-width: 100%;">
+                <h2 style="margin: 0 0 20px; font-size: 18px;">Verify Your Email</h2>
+                <p id="otpMessage" class="helper-text"></p>
                 <form id="otpForm" novalidate>
                     <div class="form-group">
                         <label for="otp">Enter OTP Code</label>
-                        <input 
-                            type="text" 
-                            id="otp" 
-                            placeholder="6-digit code"
-                            maxlength="6" 
-                            inputmode="numeric" 
-                            autocomplete="one-time-code"
-                            required 
-                        />
+                        <input type="text" id="otp" placeholder="6-digit code" maxlength="6" inputmode="numeric"
+                            autocomplete="one-time-code" required />
                     </div>
                     <button type="submit" class="btn btn-primary" id="verifyBtn">Verify</button>
                     <button type="button" class="btn btn-secondary" id="resendBtn">
@@ -43,7 +31,6 @@
                     <p class="helper-text">
                         <a href="register.html">← Back to Register</a>
                     </p>
-                    <p id="otpMessage" class="helper-text"></p>
                 </form>
             </section>
         </main>
@@ -52,4 +39,5 @@
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
 </body>
+
 </html>
