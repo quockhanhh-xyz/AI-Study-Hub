@@ -7,10 +7,16 @@ const NAVIGATION_MENU = [
   { name: "Register", url: "register.html", requiresAuth: false, hideWhenAuth: true },
   { name: "Dashboard", url: "dashboard.html", requiresAuth: true },
   { name: "Upload", url: "upload.html", requiresAuth: true },
-  { name: "Documents", url: "documents.html", requiresAuth: true },
-  { name: "Folders", url: "folders.html", requiresAuth: true },
-  { name: "Trash", url: "trash.html", requiresAuth: true },
-  { name: "Profile", url: "profile.html", requiresAuth: true }
+  
+  /* * Temporarily hidden menus to prevent 404 UX Issues (Will be unlocked in upcoming steps)
+   * { name: "Documents", url: "documents.html", requiresAuth: true },
+   * { name: "Folders", url: "folders.html", requiresAuth: true },
+   * { name: "Trash", url: "trash.html", requiresAuth: true },
+   * { name: "Profile", url: "profile.html", requiresAuth: true }
+   */
+
+  // Hidden views mapped explicitly for Auth Guard coverage without rendering on the sidebar
+  { name: "Document Detail", url: "document-detail.html", requiresAuth: true, hidden: true }
 ];
 
 /**
