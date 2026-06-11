@@ -47,8 +47,11 @@ public class DocumentService {
         Folder folder = null;
         if (folderId != null) {
             folder = folderRepository.findById(folderId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found"));
-            if (!folder.getOwner().getUserId().equals(owner.getUserId()) || !"ACTIVE".equals(folder.getStatus())) {
+            if (!"ACTIVE".equals(folder.getStatus())) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found");
+            }
+            if (!folder.getOwner().getUserId().equals(owner.getUserId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
             }
         }
 

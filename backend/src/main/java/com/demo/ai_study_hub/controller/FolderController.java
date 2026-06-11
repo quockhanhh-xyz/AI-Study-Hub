@@ -53,7 +53,7 @@ public class FolderController {
             Principal principal) {
         try {
             FolderResponse data = folderService.getFolderDetail(id, principal.getName());
-            return ResponseEntity.ok(ApiResponse.success(data, "Folder detail retrieved successfully"));
+            return ResponseEntity.ok(ApiResponse.success(data, "Folder retrieved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {
@@ -82,7 +82,7 @@ public class FolderController {
             Principal principal) {
         try {
             folderService.deleteFolder(id, principal.getName());
-            return ResponseEntity.ok(ApiResponse.success(null, "Folder deleted successfully"));
+            return ResponseEntity.ok(ApiResponse.success(null, "Folder and its contents deleted successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {

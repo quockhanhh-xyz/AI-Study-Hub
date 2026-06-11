@@ -219,6 +219,6 @@ class FolderControllerTest {
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Folder deleted successfully"));
+                .andExpect(jsonPath("$.message").value("Folder and its contents deleted successfully"));
     }
 }
