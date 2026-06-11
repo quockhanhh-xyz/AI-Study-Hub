@@ -71,7 +71,11 @@ function deleteDocument(id) {
 }
 
 
-/* Step 5
+/* ==========================================================================
+   STEP 5 ADDITIONS: FOLDER INTEGRATION, TRASH & LIFECYCLE MANAGEMENT
+   ========================================================================== */
+
+/*
  * Moves a specific document into a target folder.
  * @param {number|string} documentId - The unique document identifier.
  * @param {number|string} folderId - The target folder identifier destination.
@@ -95,7 +99,7 @@ function getTrash() {
  * @returns {Promise} Server operation response confirmation payload.
  */
 function restoreDocument(id) {
-  return post(`/api/documents/${id}/restore`);
+  return post(`/api/trash/documents/${id}/restore`);
 }
 
 /*
@@ -104,7 +108,7 @@ function restoreDocument(id) {
  * @returns {Promise} Final purge response status confirmation from the database.
  */
 function permanentDeleteDocument(id) {
-  return del(`/api/documents/${id}/permanent`);
+  return del(`/api/trash/documents/${id}`);
 }
 
 // End of dynamic document data system api helpers file.
