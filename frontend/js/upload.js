@@ -47,7 +47,7 @@ async function loadFolderOptions() {
     });
 
   } catch (err) {
-    // Folder dropdown là optional, không block upload nếu load thất bại
+    // Folder dropdown is optional, so upload should not be blocked if loading folders fails.
     console.warn("Could not load folders:", err);
   }
 }
