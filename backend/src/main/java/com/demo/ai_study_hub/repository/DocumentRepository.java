@@ -1,6 +1,7 @@
 package com.demo.ai_study_hub.repository;
 
 import com.demo.ai_study_hub.entity.Document;
+import com.demo.ai_study_hub.entity.Folder;
 import com.demo.ai_study_hub.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,11 +19,17 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
             "AND (:keyword IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(d.originalFileName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "AND (:subjectId IS NULL OR s.subjectId = :subjectId) " +
             "AND (:fileType IS NULL OR d.fileType = :fileType) " +
+            "AND (:folderId IS NULL OR (:folderId = 0 AND d.folder IS NULL) OR (d.folder.folderId = :folderId)) " +
             "ORDER BY d.createdAt DESC")
     List<Document> findMyDocumentsWithFilters(
             @Param("owner") User owner,
             @Param("keyword") String keyword,
             @Param("subjectId") Integer subjectId,
-            @Param("fileType") String fileType
+            @Param("fileType") String fileType,
+            @Param("folderId") Integer folderId
     );
+
+    long countByFolderAndStatus(Folder folder, String status);
+
+    List<Document> findByFolder(Folder folder);
 }

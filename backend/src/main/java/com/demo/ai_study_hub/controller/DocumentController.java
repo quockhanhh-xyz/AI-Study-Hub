@@ -3,6 +3,7 @@ package com.demo.ai_study_hub.controller;
 import com.demo.ai_study_hub.dto.ApiResponse;
 import com.demo.ai_study_hub.dto.DocumentResponse;
 import com.demo.ai_study_hub.dto.DocumentUpdateDTO;
+import com.demo.ai_study_hub.dto.MoveDocumentRequest;
 import com.demo.ai_study_hub.service.DocumentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,10 +28,11 @@ public class DocumentController {
             @RequestParam("title") String title,
             @RequestParam(value = "description", required = false) String description,
             @RequestParam(value = "subjectId", required = false) Integer subjectId,
+            @RequestParam(value = "folderId", required = false) Integer folderId,
             Principal principal
     ) {
         try {
-            DocumentResponse data = documentService.uploadDocument(file, title, description, subjectId, principal.getName());
+            DocumentResponse data = documentService.uploadDocument(file, title, description, subjectId, folderId, principal.getName());
             return ResponseEntity.ok(ApiResponse.success(data, "Document uploaded successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
@@ -44,9 +46,10 @@ public class DocumentController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer subjectId,
             @RequestParam(required = false) String fileType,
+            @RequestParam(required = false) Integer folderId,
             Principal principal) {
         try {
-            List<DocumentResponse> data = documentService.getMyDocumentsWithFilters(principal.getName(), keyword, subjectId, fileType);
+            List<DocumentResponse> data = documentService.getMyDocumentsWithFilters(principal.getName(), keyword, subjectId, fileType, folderId);
             return ResponseEntity.ok(ApiResponse.success(data, "Documents retrieved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
@@ -75,6 +78,21 @@ public class DocumentController {
         try {
             DocumentResponse data = documentService.updateDocument(id, dto, principal.getName());
             return ResponseEntity.ok(ApiResponse.success(data, "Document updated successfully"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}/move")
+    public ResponseEntity<ApiResponse<DocumentResponse>> moveDocument(
+            @PathVariable Integer id,
+            @RequestBody MoveDocumentRequest request,
+            Principal principal) {
+        try {
+            DocumentResponse data = documentService.moveDocument(id, request.getFolderId(), principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(data, "Document moved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {
