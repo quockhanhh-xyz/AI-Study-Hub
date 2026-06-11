@@ -4,9 +4,11 @@ import com.demo.ai_study_hub.dto.DocumentResponse;
 import com.demo.ai_study_hub.dto.DocumentUpdateDTO;
 import com.demo.ai_study_hub.dto.FileUploadResult;
 import com.demo.ai_study_hub.entity.Document;
+import com.demo.ai_study_hub.entity.Folder;
 import com.demo.ai_study_hub.entity.Subject;
 import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.repository.DocumentRepository;
+import com.demo.ai_study_hub.repository.FolderRepository;
 import com.demo.ai_study_hub.repository.SubjectRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class DocumentService {
     private final UserRepository userRepository;
     private final CloudinaryStorageService cloudinaryStorageService;
     private final SubjectRepository subjectRepository;
+    private final FolderRepository folderRepository;
 
     public DocumentResponse uploadDocument(MultipartFile file, String title, String description, Integer subjectId, String email) {
         if (title == null || title.trim().isEmpty()) {
@@ -64,10 +67,46 @@ public class DocumentService {
         return mapToResponse(savedDoc);
     }
 
-    public List<DocumentResponse> getMyDocumentsWithFilters(String email, String keyword, Integer subjectId, String fileType) {
+    public List<DocumentResponse> getMyDocumentsWithFilters(String email, String keyword, Integer subjectId, String fileType, Integer folderId) {
         User owner = userRepository.findByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        return documentRepository.findMyDocumentsWithFilters(owner, keyword, subjectId, fileType).stream().map(this::mapToResponse).collect(Collectors.toList());
+        return documentRepository.findMyDocumentsWithFilters(owner, keyword, subjectId, fileType, folderId)
+                .stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
+    public void moveDocument(Integer documentId, Integer folderId, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        Document doc = documentRepository.findById(documentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+
+        if ("DELETED".equals(doc.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+
+        if (!doc.getOwner().getUserId().equals(user.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        if (folderId == null) {
+            doc.setFolder(null);
+        } else {
+            Folder folder = folderRepository.findById(folderId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found"));
+
+            if (!folder.getOwner().getUserId().equals(user.getUserId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            }
+
+            if (!"ACTIVE".equals(folder.getStatus())) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found");
+            }
+
+            doc.setFolder(folder);
+        }
+
+        documentRepository.save(doc);
     }
 
     public DocumentResponse getDocumentDetail(Integer documentId, String email) {

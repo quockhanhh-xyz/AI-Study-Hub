@@ -44,9 +44,10 @@ public class DocumentController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer subjectId,
             @RequestParam(required = false) String fileType,
+            @RequestParam(required = false) Integer folderId,
             Principal principal) {
         try {
-            List<DocumentResponse> data = documentService.getMyDocumentsWithFilters(principal.getName(), keyword, subjectId, fileType);
+            List<DocumentResponse> data = documentService.getMyDocumentsWithFilters(principal.getName(), keyword, subjectId, fileType, folderId);
             return ResponseEntity.ok(ApiResponse.success(data, "Documents retrieved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
@@ -75,6 +76,21 @@ public class DocumentController {
         try {
             DocumentResponse data = documentService.updateDocument(id, dto, principal.getName());
             return ResponseEntity.ok(ApiResponse.success(data, "Document updated successfully"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}/move")
+    public ResponseEntity<ApiResponse<Void>> moveDocument(
+            @PathVariable Integer id,
+            @RequestParam(required = false) Integer folderId,
+            Principal principal) {
+        try {
+            documentService.moveDocument(id, folderId, principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(null, "Document moved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {
