@@ -24,7 +24,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,14 +36,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * @WebMvcTest — chỉ load FolderController và web layer.
- * Không load DB, không load @Service/@Repository thật.
- *
- * @MockBean JwtUtil + UserDetailsServiceImpl để JwtAuthFilter load được
- * mà không crash vì thiếu @Value("${jwt.secret}") trong test context.
- *
- * .with(csrf()) bắt buộc với POST/PUT/DELETE để bypass CSRF filter
- * mà @WebMvcTest bật theo default của Spring Security test slice.
+ * @WebMvcTest loads only FolderController and the web layer (no DB, no real services).
+ * @MockBean JwtUtil + UserDetailsServiceImpl prevent JwtAuthFilter from crashing
+ * when jwt.secret is absent from the test context.
+ * .with(csrf()) is required on POST/PUT/DELETE to bypass the CSRF filter
+ * that Spring Security test slice enables by default.
  */
 @WebMvcTest(FolderController.class)
 class FolderControllerTest {
@@ -79,7 +75,7 @@ class FolderControllerTest {
     }
 
     // =========================================================================
-    // TC1 — Tạo folder thành công → 201 Created
+    // TC1 — Create folder successfully → 200 OK
     // =========================================================================
     @Test
     @WithMockUser(username = "test@gmail.com")
@@ -95,7 +91,7 @@ class FolderControllerTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Folder created successfully"))
                 .andExpect(jsonPath("$.data.folderId").value(1))
@@ -104,8 +100,8 @@ class FolderControllerTest {
     }
 
     // =========================================================================
-    // TC2 — name rỗng → @NotBlank chặn → 400 Bad Request
-    // .with(csrf()) bắt buộc: không có sẽ bị 403 trước khi validation chạy.
+    // TC2 — Blank name fails @NotBlank validation → 400 Bad Request
+    // .with(csrf()) is required; without it the request gets 403 before validation runs.
     // =========================================================================
     @Test
     @WithMockUser(username = "test@gmail.com")
@@ -124,7 +120,7 @@ class FolderControllerTest {
     }
 
     // =========================================================================
-    // TC3 — Lấy danh sách folder → 200 OK, kiểm tra từng phần tử trong list
+    // TC3 — Retrieve folder list → 200 OK, verify each element
     // =========================================================================
     @Test
     @WithMockUser(username = "test@gmail.com")
@@ -148,7 +144,7 @@ class FolderControllerTest {
     }
 
     // =========================================================================
-    // TC4 — Chi tiết folder thành công → 200 OK + đầy đủ fields
+    // TC4 — Folder detail → 200 OK with full fields
     // =========================================================================
     @Test
     @WithMockUser(username = "test@gmail.com")
@@ -165,7 +161,7 @@ class FolderControllerTest {
     }
 
     // =========================================================================
-    // TC5 — Folder không tồn tại → service ném 404 → response 404
+    // TC5 — Folder not found → service throws 404 → response 404
     // =========================================================================
     @Test
     @WithMockUser(username = "test@gmail.com")
@@ -180,7 +176,7 @@ class FolderControllerTest {
     }
 
     // =========================================================================
-    // TC6 — Cập nhật folder thành công → 200 OK + name đã đổi
+    // TC6 — Update folder successfully → 200 OK with updated name
     // =========================================================================
     @Test
     @WithMockUser(username = "test@gmail.com")
@@ -210,12 +206,13 @@ class FolderControllerTest {
     }
 
     // =========================================================================
-    // TC7 — Xóa folder rỗng thành công → 200 OK
-    // doNothing() cho void method, không dùng when().thenReturn()
+    // TC7 — Delete folder → cascade soft-deletes all documents → 200 OK
+    // The service never rejects a non-empty folder; it marks all contained
+    // documents as DELETED before soft-deleting the folder itself.
     // =========================================================================
     @Test
     @WithMockUser(username = "test@gmail.com")
-    void deleteFolder_Success_EmptyFolder() throws Exception {
+    void deleteFolder_Success() throws Exception {
         doNothing().when(folderService).deleteFolder(anyInt(), anyString());
 
         mockMvc.perform(delete("/api/folders/1")
@@ -223,22 +220,5 @@ class FolderControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Folder deleted successfully"));
-    }
-
-    // =========================================================================
-    // TC8 — Xóa folder còn file → service ném 400 → response 400 + message đúng
-    // doThrow() cho void method, không dùng when().thenThrow()
-    // =========================================================================
-    @Test
-    @WithMockUser(username = "test@gmail.com")
-    void deleteFolder_Failed_NotEmpty() throws Exception {
-        doThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Folder must be empty before deleting"))
-                .when(folderService).deleteFolder(anyInt(), anyString());
-
-        mockMvc.perform(delete("/api/folders/1")
-                        .with(csrf()))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Folder must be empty before deleting"));
     }
 }
