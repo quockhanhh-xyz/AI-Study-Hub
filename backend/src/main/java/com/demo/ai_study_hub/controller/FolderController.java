@@ -27,8 +27,7 @@ public class FolderController {
             Principal principal) {
         try {
             FolderResponse data = folderService.createFolder(request, principal.getName());
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success(data, "Folder created successfully"));
+            return ResponseEntity.ok(ApiResponse.success(data, "Folder created successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {

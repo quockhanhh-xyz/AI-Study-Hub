@@ -6,6 +6,7 @@ import com.demo.ai_study_hub.entity.Document;
 import com.demo.ai_study_hub.entity.Subject;
 import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.repository.DocumentRepository;
+import com.demo.ai_study_hub.repository.FolderRepository;
 import com.demo.ai_study_hub.repository.SubjectRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
 import com.demo.ai_study_hub.service.CloudinaryStorageService;
@@ -36,6 +37,8 @@ class DocumentServiceTest {
     private CloudinaryStorageService cloudinaryStorageService;
     @Mock
     private SubjectRepository subjectRepository;
+    @Mock
+    private FolderRepository folderRepository;
 
     @InjectMocks
     private DocumentService documentService;
@@ -165,7 +168,7 @@ class DocumentServiceTest {
         when(subjectRepository.findById(999)).thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            documentService.uploadDocument(mockFile, "Test Title", "Description", 999, "doantam785@gmail.com");
+            documentService.uploadDocument(mockFile, "Test Title", "Description", 999, null, "doantam785@gmail.com");
         });
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());

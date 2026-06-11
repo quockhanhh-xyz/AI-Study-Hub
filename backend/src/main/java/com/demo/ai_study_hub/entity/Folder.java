@@ -23,7 +23,7 @@ public class Folder {
     @Column(name = "folder_id")
     private Integer folderId;
 
-    @Column(name = "folder_name", nullable = false, length = 255)
+    @Column(name = "name", nullable = false, length = 255)
     private String name;
 
     @Column(name = "description", columnDefinition = "TEXT")

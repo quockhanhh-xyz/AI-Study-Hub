@@ -158,6 +158,7 @@ public class DocumentService {
         Document doc = getValidatedDocument(documentId, owner);
 
         doc.setStatus("DELETED");
+        doc.setDeletedAt(java.time.LocalDateTime.now());
         documentRepository.save(doc);
     }
 

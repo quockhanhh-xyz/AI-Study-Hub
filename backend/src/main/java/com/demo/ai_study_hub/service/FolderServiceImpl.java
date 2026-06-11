@@ -2,6 +2,7 @@ package com.demo.ai_study_hub.service;
 
 import com.demo.ai_study_hub.dto.FolderRequest;
 import com.demo.ai_study_hub.dto.FolderResponse;
+import com.demo.ai_study_hub.entity.Document;
 import com.demo.ai_study_hub.entity.Folder;
 import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.repository.DocumentRepository;
@@ -27,6 +28,10 @@ public class FolderServiceImpl implements FolderService {
     @Override
     public FolderResponse createFolder(FolderRequest request, String email) {
         User owner = getUser(email);
+
+        if (folderRepository.existsByOwnerAndNameAndStatus(owner, request.getName(), "ACTIVE")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Folder name already exists");
+        }
 
         Folder folder = Folder.builder()
                 .name(request.getName())
@@ -59,6 +64,11 @@ public class FolderServiceImpl implements FolderService {
         User owner = getUser(email);
         Folder folder = getValidatedFolder(folderId, owner);
 
+        if (!folder.getName().equals(request.getName()) &&
+                folderRepository.existsByOwnerAndNameAndStatus(owner, request.getName(), "ACTIVE")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Folder name already exists");
+        }
+
         folder.setName(request.getName());
         folder.setDescription(request.getDescription());
 
@@ -70,13 +80,16 @@ public class FolderServiceImpl implements FolderService {
         User owner = getUser(email);
         Folder folder = getValidatedFolder(folderId, owner);
 
-        long activeDocCount = documentRepository.countByFolderAndStatus(folder, "ACTIVE");
-        if (activeDocCount > 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Folder must be empty before deleting");
-        }
+        List<Document> documents = documentRepository.findByFolder(folder);
+        LocalDateTime now = LocalDateTime.now();
+        documents.forEach(doc -> {
+            doc.setStatus("DELETED");
+            doc.setDeletedAt(now);
+        });
+        documentRepository.saveAll(documents);
 
         folder.setStatus("DELETED");
-        folder.setDeletedAt(LocalDateTime.now());
+        folder.setDeletedAt(now);
         folderRepository.save(folder);
     }
 
