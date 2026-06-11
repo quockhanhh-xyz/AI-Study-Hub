@@ -111,4 +111,5 @@ function permanentDeleteDocument(id) {
   return del(`/api/trash/documents/${id}`);
 }
 
-// End of dynamic document data system api helpers file.
+// End of dynamic document data system api helpers file.
+

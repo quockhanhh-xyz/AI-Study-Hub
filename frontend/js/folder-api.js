@@ -67,4 +67,4 @@ function permanentDeleteFolder(id) {
   return del(`/api/trash/folders/${id}`);
 }
 
-// End of folder management API subsystem configurations.
+// End of folder management API subsystem configurations.
