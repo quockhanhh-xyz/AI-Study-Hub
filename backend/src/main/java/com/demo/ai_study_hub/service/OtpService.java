@@ -17,12 +17,9 @@ public class OtpService {
     private final EmailService emailService;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    // Method cung cấp cho BE1
     public void createAndSendOtp(User user) {
-        // Tạo OTP 6 số bảo mật bằng SecureRandom
         String code = String.format("%06d", secureRandom.nextInt(1000000));
 
-        // Lưu vào DB
         OtpCode otp = new OtpCode();
         otp.setUser(user);
         otp.setCode(code);
@@ -31,7 +28,6 @@ public class OtpService {
         otp.setUsed(false);
         otpCodeRepository.save(otp);
 
-        // Gửi email
         emailService.sendOtpEmail(user.getEmail(), code);
     }
 
@@ -43,13 +39,10 @@ public class OtpService {
 
         if (otp == null) return false;
 
-        // Kiểm tra hết hạn
         if (otp.getExpiredAt().isBefore(LocalDateTime.now())) return false;
 
-        // Kiểm tra mã đúng không
         if (!otp.getCode().equals(inputCode)) return false;
 
-        // Đánh dấu đã dùng
         otp.setUsed(true);
         otpCodeRepository.save(otp);
 

@@ -20,8 +20,8 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final CorsConfig corsConfig;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint; // Chốt chặn lỗi 401 (JSON)
-    private final CustomAccessDeniedHandler customAccessDeniedHandler;     // CHÍNH XÁC: Khai báo thêm chốt chặn lỗi 403 (JSON) Vào đây
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -30,15 +30,14 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/me", "/api/auth/logout").authenticated() // Yeu cau token cho me & logout
-                        .requestMatchers("/api/auth/**").permitAll() // Cho phep Dang nhap/Dang ky
-                        .requestMatchers("/api/health").permitAll()  // Cho phep kiem tra trang thai server
-                        .anyRequest().authenticated() // Cac duong dan khac bat buoc phai co Token
+                        .requestMatchers("/api/auth/me", "/api/auth/logout").authenticated()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/health").permitAll()
+                        .anyRequest().authenticated()
                 )
-                // Phân đoạn cấu hình kích hoạt bẫy lỗi bảo mật toàn cục (Cả 401 và 403)
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(jwtAuthenticationEntryPoint) // Bắt lỗi 401 (Chưa đăng nhập)
-                        .accessDeniedHandler(customAccessDeniedHandler)       // CHÍNH XÁC: Bắt thêm lỗi 403 (Sai quyền/Role) vào đây
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler)
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
