@@ -19,6 +19,7 @@ public class TrashResponse {
         private String originalFileName;
         private String fileType;
         private Long fileSize;
+        private Integer folderId;
         private LocalDateTime deletedAt;
     }
 
@@ -26,7 +27,7 @@ public class TrashResponse {
     @Builder
     public static class TrashFolderItem {
         private Integer folderId;
-        private String folderName;
+        private String name;
         private LocalDateTime deletedAt;
     }
 }

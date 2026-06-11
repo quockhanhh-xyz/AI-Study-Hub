@@ -46,6 +46,7 @@ public class TrashService {
                         .originalFileName(d.getOriginalFileName())
                         .fileType(d.getFileType())
                         .fileSize(d.getFileSize())
+                        .folderId(d.getFolder() != null ? d.getFolder().getFolderId() : null)  // ← thêm
                         .deletedAt(d.getDeletedAt())
                         .build())
                 .collect(Collectors.toList());
@@ -55,7 +56,7 @@ public class TrashService {
                 .stream()
                 .map(f -> TrashResponse.TrashFolderItem.builder()
                         .folderId(f.getFolderId())
-                        .folderName(f.getName())
+                        .name(f.getName())
                         .deletedAt(f.getDeletedAt())
                         .build())
                 .collect(Collectors.toList());
