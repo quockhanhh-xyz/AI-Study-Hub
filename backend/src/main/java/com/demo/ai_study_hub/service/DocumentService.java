@@ -29,7 +29,7 @@ public class DocumentService {
     private final SubjectRepository subjectRepository;
     private final FolderRepository folderRepository;
 
-    public DocumentResponse uploadDocument(MultipartFile file, String title, String description, Integer subjectId, String email) {
+    public DocumentResponse uploadDocument(MultipartFile file, String title, String description, Integer subjectId, Integer folderId, String email) {
         if (title == null || title.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Title is required");
         }
@@ -41,6 +41,14 @@ public class DocumentService {
             subject = subjectRepository.findById(subjectId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
             if (!"ACTIVE".equals(subject.getStatus())) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found");
+            }
+        }
+
+        Folder folder = null;
+        if (folderId != null) {
+            folder = folderRepository.findById(folderId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found"));
+            if (!folder.getOwner().getUserId().equals(owner.getUserId()) || !"ACTIVE".equals(folder.getStatus())) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found");
             }
         }
 
@@ -62,6 +70,7 @@ public class DocumentService {
         doc.setOwner(owner);
         doc.setStatus("ACTIVE");
         doc.setSubject(subject);
+        doc.setFolder(folder);
 
         Document savedDoc = documentRepository.save(doc);
         return mapToResponse(savedDoc);
@@ -74,7 +83,7 @@ public class DocumentService {
                 .stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
-    public void moveDocument(Integer documentId, Integer folderId, String email) {
+    public DocumentResponse moveDocument(Integer documentId, Integer folderId, String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
@@ -107,6 +116,7 @@ public class DocumentService {
         }
 
         documentRepository.save(doc);
+        return mapToResponse(doc);
     }
 
     public DocumentResponse getDocumentDetail(Integer documentId, String email) {
@@ -178,6 +188,8 @@ public class DocumentService {
                 .fileSize(doc.getFileSize())
                 .fileUrl(doc.getFileUrl())
                 .publicId(doc.getPublicId())
+                .folderId(doc.getFolder() != null ? doc.getFolder().getFolderId() : null)
+                .folderName(doc.getFolder() != null ? doc.getFolder().getName() : null)
                 .uploadedBy(doc.getOwner().getEmail())
                 .status(doc.getStatus())
                 .createdAt(doc.getCreatedAt())

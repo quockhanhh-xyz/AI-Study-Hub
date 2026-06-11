@@ -3,6 +3,7 @@ package com.demo.ai_study_hub.controller;
 import com.demo.ai_study_hub.dto.ApiResponse;
 import com.demo.ai_study_hub.dto.DocumentResponse;
 import com.demo.ai_study_hub.dto.DocumentUpdateDTO;
+import com.demo.ai_study_hub.dto.MoveDocumentRequest;
 import com.demo.ai_study_hub.service.DocumentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,10 +28,11 @@ public class DocumentController {
             @RequestParam("title") String title,
             @RequestParam(value = "description", required = false) String description,
             @RequestParam(value = "subjectId", required = false) Integer subjectId,
+            @RequestParam(value = "folderId", required = false) Integer folderId,
             Principal principal
     ) {
         try {
-            DocumentResponse data = documentService.uploadDocument(file, title, description, subjectId, principal.getName());
+            DocumentResponse data = documentService.uploadDocument(file, title, description, subjectId, folderId, principal.getName());
             return ResponseEntity.ok(ApiResponse.success(data, "Document uploaded successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
@@ -84,13 +86,13 @@ public class DocumentController {
     }
 
     @PutMapping("/{id}/move")
-    public ResponseEntity<ApiResponse<Void>> moveDocument(
+    public ResponseEntity<ApiResponse<DocumentResponse>> moveDocument(
             @PathVariable Integer id,
-            @RequestParam(required = false) Integer folderId,
+            @RequestBody MoveDocumentRequest request,
             Principal principal) {
         try {
-            documentService.moveDocument(id, folderId, principal.getName());
-            return ResponseEntity.ok(ApiResponse.success(null, "Document moved successfully"));
+            DocumentResponse data = documentService.moveDocument(id, request.getFolderId(), principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(data, "Document moved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {

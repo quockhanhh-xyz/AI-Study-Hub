@@ -23,6 +23,8 @@ public class DocumentResponse {
     private Long fileSize;
     private String fileUrl;
     private String publicId;
+    private Integer folderId;
+    private String folderName;
     private String uploadedBy;
     private String status;
     private LocalDateTime createdAt;

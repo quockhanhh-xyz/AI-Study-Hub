@@ -15,7 +15,7 @@
     <url/>
     <properties>
         <java.version>21</java.version>
-        <lombok.version>1.18.36</lombok.version>
+        <lombok.version>1.18.38</lombok.version>
     </properties>
 
     <dependencies>
@@ -97,11 +97,6 @@
 
     <build>
         <plugins>
-            <!--
-                Lombok 1.18.36 không support Java 26 (TypeTag.UNKNOWN bị remove).
-                Khi Lombok ra bản hỗ trợ Java 26, xóa block này đi là compile được.
-                Hiện tại chạy test qua IntelliJ (IDE tự xử lý annotation processor riêng).
-            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

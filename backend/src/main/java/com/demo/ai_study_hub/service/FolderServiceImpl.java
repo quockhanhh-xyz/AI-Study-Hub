@@ -29,7 +29,7 @@ public class FolderServiceImpl implements FolderService {
         User owner = getUser(email);
 
         Folder folder = Folder.builder()
-                .folderName(request.getFolderName())
+                .name(request.getName())
                 .description(request.getDescription())
                 .owner(owner)
                 .status("ACTIVE")
@@ -59,7 +59,7 @@ public class FolderServiceImpl implements FolderService {
         User owner = getUser(email);
         Folder folder = getValidatedFolder(folderId, owner);
 
-        folder.setFolderName(request.getFolderName());
+        folder.setName(request.getName());
         folder.setDescription(request.getDescription());
 
         return mapToResponse(folderRepository.save(folder));
@@ -105,7 +105,7 @@ public class FolderServiceImpl implements FolderService {
     private FolderResponse mapToResponse(Folder folder) {
         return FolderResponse.builder()
                 .folderId(folder.getFolderId())
-                .folderName(folder.getFolderName())
+                .name(folder.getName())
                 .description(folder.getDescription())
                 .status(folder.getStatus())
                 .createdAt(folder.getCreatedAt())

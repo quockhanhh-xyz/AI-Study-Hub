@@ -24,7 +24,7 @@ public class Folder {
     private Integer folderId;
 
     @Column(name = "folder_name", nullable = false, length = 255)
-    private String folderName;
+    private String name;
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;

@@ -6,8 +6,8 @@ import lombok.Data;
 @Data
 public class FolderRequest {
 
-    @NotBlank(message = "Folder name cannot be empty")
-    private String folderName;
+    @NotBlank(message = "Name cannot be blank")
+    private String name;
 
     private String description;
 }
