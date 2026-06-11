@@ -69,3 +69,47 @@ function updateDocument(id, data) {
 function deleteDocument(id) {
   return del(`/api/documents/${id}`);
 }
+
+
+/* ==========================================================================
+   STEP 5 ADDITIONS: FOLDER INTEGRATION, TRASH & LIFECYCLE MANAGEMENT
+   ========================================================================== */
+
+/*
+ * Moves a specific document into a target folder.
+ * @param {number|string} documentId - The unique document identifier.
+ * @param {number|string} folderId - The target folder identifier destination.
+ * @returns {Promise} Server confirmation metadata response.
+ */
+function moveDocument(documentId, folderId) {
+  return put(`/api/documents/${documentId}/move`, { folderId });
+}
+
+/*
+ * Retrieves the unified list of soft-deleted assets (both folders and documents) inside the trash.
+ * @returns {Promise} List containing deleted folders and independent documents.
+ */
+function getTrash() {
+  return get("/api/trash");
+}
+
+/*
+ * Restores a soft-deleted document from the trash back to the active repository list.
+ * @param {number|string} id - The unique document identifier to restore.
+ * @returns {Promise} Server operation response confirmation payload.
+ */
+function restoreDocument(id) {
+  return post(`/api/trash/documents/${id}/restore`);
+}
+
+/*
+ * Permanently purges a single soft-deleted document out of the file system and DB.
+ * @param {number|string} id - The unique document identifier to eradicate.
+ * @returns {Promise} Final purge response status confirmation from the database.
+ */
+function permanentDeleteDocument(id) {
+  return del(`/api/trash/documents/${id}`);
+}
+
+// End of dynamic document data system api helpers file.
+
