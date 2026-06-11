@@ -112,9 +112,12 @@ public class TrashService {
 
     public void restoreFolder(Integer folderId, String email) {
         User user = getUser(email);
-        Folder folder = folderRepository.findByFolderIdAndOwner(folderId, user)
+        Folder folder = folderRepository.findById(folderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash"));
 
+        if (!folder.getOwner().getUserId().equals(user.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
         if (!"DELETED".equals(folder.getStatus())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash");
         }
@@ -143,9 +146,12 @@ public class TrashService {
 
     public void permanentDeleteFolder(Integer folderId, String email) {
         User user = getUser(email);
-        Folder folder = folderRepository.findByFolderIdAndOwner(folderId, user)
+        Folder folder = folderRepository.findById(folderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash"));
 
+        if (!folder.getOwner().getUserId().equals(user.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
         if (!"DELETED".equals(folder.getStatus())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash");
         }
