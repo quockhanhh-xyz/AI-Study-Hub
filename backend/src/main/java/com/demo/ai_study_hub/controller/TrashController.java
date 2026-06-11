@@ -9,22 +9,23 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/api/trash")
 @RequiredArgsConstructor
 public class TrashController {
 
     private final TrashService trashService;
 
-    @GetMapping("/api/trash")
+    @GetMapping
     public ResponseEntity<ApiResponse<TrashResponse>> getTrash(Authentication auth) {
         TrashResponse trash = trashService.getTrash(auth.getName());
         return ResponseEntity.ok(ApiResponse.<TrashResponse>builder()
                 .success(true)
-                .message("Trash retrieved successfully")
+                .message("Trash items retrieved successfully")
                 .data(trash)
                 .build());
     }
 
-    @PostMapping("/api/documents/{id}/restore")
+    @PostMapping("/documents/{id}/restore")
     public ResponseEntity<ApiResponse<Void>> restoreDocument(@PathVariable Integer id, Authentication auth) {
         trashService.restoreDocument(id, auth.getName());
         return ResponseEntity.ok(ApiResponse.<Void>builder()
@@ -33,7 +34,7 @@ public class TrashController {
                 .build());
     }
 
-    @DeleteMapping("/api/documents/{id}/permanent")
+    @DeleteMapping("/documents/{id}")
     public ResponseEntity<ApiResponse<Void>> permanentDeleteDocument(@PathVariable Integer id, Authentication auth) {
         trashService.permanentDeleteDocument(id, auth.getName());
         return ResponseEntity.ok(ApiResponse.<Void>builder()
@@ -42,21 +43,21 @@ public class TrashController {
                 .build());
     }
 
-    @PostMapping("/api/folders/{id}/restore")
+    @PostMapping("/folders/{id}/restore")
     public ResponseEntity<ApiResponse<Void>> restoreFolder(@PathVariable Integer id, Authentication auth) {
         trashService.restoreFolder(id, auth.getName());
         return ResponseEntity.ok(ApiResponse.<Void>builder()
                 .success(true)
-                .message("Folder restored successfully")
+                .message("Folder and its documents restored successfully")
                 .build());
     }
 
-    @DeleteMapping("/api/folders/{id}/permanent")
+    @DeleteMapping("/folders/{id}")
     public ResponseEntity<ApiResponse<Void>> permanentDeleteFolder(@PathVariable Integer id, Authentication auth) {
         trashService.permanentDeleteFolder(id, auth.getName());
         return ResponseEntity.ok(ApiResponse.<Void>builder()
                 .success(true)
-                .message("Folder permanently deleted")
+                .message("Folder and its documents permanently deleted")
                 .build());
     }
 }
