@@ -10,7 +10,9 @@ import com.demo.ai_study_hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,7 +31,7 @@ public class TrashService {
 
     private User getUser(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
     public TrashResponse getTrash(String email) {
@@ -67,21 +69,17 @@ public class TrashService {
     public void restoreDocument(Integer documentId, String email) {
         User user = getUser(email);
         Document doc = documentRepository.findById(documentId)
-                .orElseThrow(() -> new RuntimeException("Document not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found in trash"));
 
         if (!doc.getOwner().getUserId().equals(user.getUserId())) {
-            throw new RuntimeException("Forbidden");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
         if (!"DELETED".equals(doc.getStatus())) {
-            throw new RuntimeException("Document is not in trash");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found in trash");
         }
 
-
-        if (doc.getFolder() != null) {
-            boolean folderDeleted = "DELETED".equals(doc.getFolder().getStatus());
-            if (folderDeleted) {
-                doc.setFolder(null);
-            }
+        if (doc.getFolder() != null && "DELETED".equals(doc.getFolder().getStatus())) {
+            doc.setFolder(null);
         }
 
         doc.setStatus("ACTIVE");
@@ -92,13 +90,13 @@ public class TrashService {
     public void permanentDeleteDocument(Integer documentId, String email) {
         User user = getUser(email);
         Document doc = documentRepository.findById(documentId)
-                .orElseThrow(() -> new RuntimeException("Document not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found in trash"));
 
         if (!doc.getOwner().getUserId().equals(user.getUserId())) {
-            throw new RuntimeException("Forbidden");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
         if (!"DELETED".equals(doc.getStatus())) {
-            throw new RuntimeException("Document is not in trash");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found in trash");
         }
 
         if (doc.getPublicId() != null) {
@@ -114,12 +112,11 @@ public class TrashService {
     public void restoreFolder(Integer folderId, String email) {
         User user = getUser(email);
         Folder folder = folderRepository.findByFolderIdAndOwner(folderId, user)
-                .orElseThrow(() -> new RuntimeException("Folder not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash"));
 
         if (!"DELETED".equals(folder.getStatus())) {
-            throw new RuntimeException("Folder is not in trash");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash");
         }
-
 
         LocalDateTime folderDeletedAt = folder.getDeletedAt();
         if (folderDeletedAt != null) {
@@ -146,12 +143,11 @@ public class TrashService {
     public void permanentDeleteFolder(Integer folderId, String email) {
         User user = getUser(email);
         Folder folder = folderRepository.findByFolderIdAndOwner(folderId, user)
-                .orElseThrow(() -> new RuntimeException("Folder not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash"));
 
         if (!"DELETED".equals(folder.getStatus())) {
-            throw new RuntimeException("Folder is not in trash");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash");
         }
-
 
         List<Document> allDocs = documentRepository.findByFolder(folder);
         allDocs.forEach(d -> {
