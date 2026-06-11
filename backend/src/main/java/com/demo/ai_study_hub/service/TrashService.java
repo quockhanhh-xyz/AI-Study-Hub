@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -34,6 +35,7 @@ public class TrashService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
+    @Transactional(readOnly = true)
     public TrashResponse getTrash(String email) {
         User user = getUser(email);
 
@@ -67,6 +69,7 @@ public class TrashService {
                 .build();
     }
 
+    @Transactional
     public void restoreDocument(Integer documentId, String email) {
         User user = getUser(email);
         Document doc = documentRepository.findById(documentId)
@@ -88,6 +91,7 @@ public class TrashService {
         documentRepository.save(doc);
     }
 
+    @Transactional
     public void permanentDeleteDocument(Integer documentId, String email) {
         User user = getUser(email);
         Document doc = documentRepository.findById(documentId)
@@ -110,6 +114,7 @@ public class TrashService {
         documentRepository.delete(doc);
     }
 
+    @Transactional
     public void restoreFolder(Integer folderId, String email) {
         User user = getUser(email);
         Folder folder = folderRepository.findById(folderId)
@@ -144,6 +149,7 @@ public class TrashService {
         folderRepository.save(folder);
     }
 
+    @Transactional
     public void permanentDeleteFolder(Integer folderId, String email) {
         User user = getUser(email);
         Folder folder = folderRepository.findById(folderId)
