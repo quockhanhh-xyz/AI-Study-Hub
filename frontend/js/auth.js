@@ -236,27 +236,6 @@
   }
 
   // ─────────────────────────────────────────────────────────────
-  // LOGOUT
-  // ─────────────────────────────────────────────────────────────
-
-  function handleLogout() {
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("accessToken");
-    window.location.href = "login.html";
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // DASHBOARD AUTH GUARD
-  // ─────────────────────────────────────────────────────────────
-
-  function checkDashboardAuth() {
-    const user = JSON.parse(localStorage.getItem("currentUser") || "null");
-    if (!user) {
-      window.location.href = "login.html";
-    }
-  }
-
-  // ─────────────────────────────────────────────────────────────
   // EVENT LISTENERS
   // ─────────────────────────────────────────────────────────────
 
@@ -264,12 +243,6 @@
     const displayEmail = document.getElementById("displayEmail");
     if (displayEmail) {
       displayEmail.textContent = getEmailFromQuery() || "your email";
-    }
-
-    const logoutBtn = document.getElementById("logoutBtn");
-    if (logoutBtn) {
-      checkDashboardAuth();
-      logoutBtn.addEventListener("click", handleLogout);
     }
 
     const registerForm = document.getElementById("registerForm");

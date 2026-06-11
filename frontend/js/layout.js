@@ -30,6 +30,12 @@ function handleAuthGuard(isAuthenticated) {
   // Guard clause: If page requires auth and user is missing credentials, kick to login
   if (currentRoute && currentRoute.requiresAuth && !isAuthenticated) {
     window.location.href = "login.html";
+    return;
+  }
+
+  // Guard clause: If page is only for guests and user is already authenticated, redirect to dashboard
+  if (currentRoute && currentRoute.hideWhenAuth && isAuthenticated) {
+    window.location.href = "dashboard.html";
   }
 }
 

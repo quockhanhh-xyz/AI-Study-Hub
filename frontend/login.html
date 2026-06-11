@@ -8,6 +8,11 @@
     <title>Login - AI Study Hub</title>
 
     <link rel="stylesheet" href="css/style.css" />
+    <script>
+        if (localStorage.getItem("accessToken") && localStorage.getItem("currentUser")) {
+            window.location.href = "dashboard.html";
+        }
+    </script>
 </head>
 
 <body>
@@ -52,6 +57,8 @@
     </div>
 
     <script src="js/api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
     <script src="js/auth.js"></script>
 </body>
 

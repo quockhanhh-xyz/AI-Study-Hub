@@ -207,6 +207,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     } catch (error) {
       if (docCountElement) docCountElement.textContent = "0";
       if (documentLoader) documentLoader.style.display = "none";
+      if (documentGrid) documentGrid.style.display = "none";
+      if (emptyState) emptyState.style.display = "none";
       if (documentErrorMessage) {
         documentErrorMessage.textContent = error.message || "Failed to load documents.";
         documentErrorMessage.style.display = "flex";
@@ -246,12 +248,4 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
 
-  const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", function () {
-      localStorage.removeItem("currentUser");
-      localStorage.removeItem("accessToken");
-      window.location.href = "login.html";
-    });
-  }
 });
