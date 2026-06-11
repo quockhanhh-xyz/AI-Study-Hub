@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Folders - AI Study Hub</title>
+    <meta name="description" content="Organize your study documents into folders." />
+    <link rel="stylesheet" href="css/style.css" />
+    <script>
+        if (!localStorage.getItem("accessToken") || !localStorage.getItem("currentUser")) {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("currentUser");
+            window.location.href = "login.html";
+        }
+    </script>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+
+            <!-- Page Header -->
+            <section class="page-header">
+                <h1>My Folders</h1>
+                <p>Organize your documents into folders for easier access.</p>
+            </section>
+
+            <!-- Folder List Panel -->
+            <section class="card document-panel" id="folderListPanel">
+                <div class="section-header">
+                    <div>
+                        <h2>Folders</h2>
+                        <p>Click a folder to view its documents.</p>
+                    </div>
+                    <button type="button" id="openCreateModalBtn" class="btn btn-primary upload-link-btn">
+                        + New Folder
+                    </button>
+                </div>
+
+                <!-- Loading state -->
+                <div id="folderLoader" class="document-state">
+                    <span>Loading folders...</span>
+                </div>
+
+                <!-- Error state -->
+                <div id="folderError" class="helper-text error document-status" style="display: none;"></div>
+
+                <!-- Folder grid -->
+                <div id="folderGrid" class="folder-grid" style="display: none;"></div>
+
+                <!-- Empty state -->
+                <div id="folderEmptyState" class="empty-state" style="display: none;">
+                    <div class="empty-title">No folders yet</div>
+                    <p>Create your first folder to start organizing your documents.</p>
+                    <button type="button" id="emptyCreateBtn" class="btn btn-secondary empty-action">
+                        Create your first folder
+                    </button>
+                </div>
+            </section>
+
+            <!-- Folder Detail Panel (documents inside a folder) -->
+            <section class="card document-panel" id="folderDetailPanel" style="display: none;">
+                <div class="section-header">
+                    <div>
+                        <h2 id="folderDetailName">Folder</h2>
+                        <p id="folderDetailMeta">Documents inside this folder.</p>
+                    </div>
+                    <button type="button" id="backToFoldersBtn" class="btn btn-secondary upload-link-btn">
+                        ← Back to Folders
+                    </button>
+                </div>
+
+                <!-- Loading state -->
+                <div id="folderDocLoader" class="document-state">
+                    <span>Loading documents...</span>
+                </div>
+
+                <!-- Error state -->
+                <div id="folderDocError" class="helper-text error document-status" style="display: none;"></div>
+
+                <!-- Document grid -->
+                <div id="folderDocGrid" class="document-grid" style="display: none;"></div>
+
+                <!-- Empty state -->
+                <div id="folderDocEmptyState" class="empty-state" style="display: none;">
+                    <div class="empty-title">This folder is empty</div>
+                    <p>No documents have been added to this folder yet.</p>
+                    <a href="upload.html" class="btn btn-secondary empty-action">Upload a document</a>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ── Create Folder Modal ───────────────────────────────────────── -->
+    <div id="createFolderModal" class="modal-overlay" style="display: none;" role="dialog"
+        aria-modal="true" aria-labelledby="createModalTitle">
+        <div class="modal-box">
+            <h3 id="createModalTitle">New Folder</h3>
+            <div class="form-group">
+                <label for="createFolderName">Folder name</label>
+                <input type="text" id="createFolderName" placeholder="e.g. Math Notes" maxlength="100" />
+            </div>
+            <div id="createFolderError" class="helper-text error" style="display: none;"></div>
+            <div class="modal-actions">
+                <button type="button" id="cancelCreateBtn" class="btn btn-secondary">Cancel</button>
+                <button type="button" id="confirmCreateBtn" class="btn btn-primary">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Edit Folder Modal ─────────────────────────────────────────── -->
+    <div id="editFolderModal" class="modal-overlay" style="display: none;" role="dialog"
+        aria-modal="true" aria-labelledby="editModalTitle">
+        <div class="modal-box">
+            <h3 id="editModalTitle">Rename Folder</h3>
+            <div class="form-group">
+                <label for="editFolderName">New name</label>
+                <input type="text" id="editFolderName" placeholder="e.g. Calculus Notes" maxlength="100" />
+            </div>
+            <div id="editFolderError" class="helper-text error" style="display: none;"></div>
+            <div class="modal-actions">
+                <button type="button" id="cancelEditBtn" class="btn btn-secondary">Cancel</button>
+                <button type="button" id="confirmEditBtn" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Delete Confirm Modal ──────────────────────────────────────── -->
+    <div id="deleteFolderModal" class="modal-overlay" style="display: none;" role="dialog"
+        aria-modal="true" aria-labelledby="deleteModalTitle">
+        <div class="modal-box">
+            <h3 id="deleteModalTitle">Delete Folder</h3>
+            <p id="deleteModalDesc" style="color: var(--muted); margin: 0 0 20px;">
+                Are you sure you want to move this folder to trash?
+            </p>
+            <div id="deleteFolderError" class="helper-text error" style="display: none;"></div>
+            <div class="modal-actions">
+                <button type="button" id="cancelDeleteBtn" class="btn btn-secondary">Cancel</button>
+                <button type="button" id="confirmDeleteBtn" class="btn btn-danger">Move to Trash</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/document-api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/folders.js"></script>
+</body>
+
+</html>
