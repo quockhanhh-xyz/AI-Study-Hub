@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trash - AI Study Hub</title>
+    <meta name="description" content="Restore or permanently delete trashed study documents and folders." />
+    <link rel="stylesheet" href="css/style.css" />
+    <script>
+        if (!localStorage.getItem("accessToken") || !localStorage.getItem("currentUser")) {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("currentUser");
+            window.location.href = "login.html";
+        }
+    </script>
+    <style>
+        .trash-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .trash-actions .btn {
+            flex: 1;
+        }
+
+        .trash-section + .trash-section {
+            margin-top: 28px;
+        }
+
+        .trash-modal-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(15, 23, 42, 0.42);
+            z-index: 1000;
+        }
+
+        .trash-modal-overlay.open {
+            display: flex;
+        }
+
+        .trash-modal {
+            width: 100%;
+            max-width: 440px;
+            padding: 28px;
+            border-radius: 8px;
+            background: var(--white);
+            border: 1px solid var(--border);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+        }
+
+        .trash-modal h3 {
+            margin: 0 0 10px;
+        }
+
+        .trash-modal p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .trash-modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .trash-actions,
+            .trash-modal-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <section class="page-header">
+                <h1>Trash</h1>
+                <p>Restore deleted items or permanently remove them from your workspace.</p>
+            </section>
+
+            <section class="card document-panel">
+                <div class="section-header">
+                    <div>
+                        <h2>Deleted Items</h2>
+                        <p>Items in trash cannot be opened or downloaded until restored.</p>
+                    </div>
+                    <a href="dashboard.html" class="btn btn-secondary upload-link-btn">Back to Dashboard</a>
+                </div>
+
+                <div id="trashLoader" class="document-state">
+                    <span>Loading trash...</span>
+                </div>
+
+                <div id="trashError" class="helper-text error document-status" style="display: none;"></div>
+
+                <div id="trashContent" style="display: none;">
+                    <div class="trash-section">
+                        <div class="section-header">
+                            <div>
+                                <h2>Folders</h2>
+                                <p>Deleted folders and their cascaded documents can be restored together.</p>
+                            </div>
+                        </div>
+                        <div id="folderTrashGrid" class="document-grid" style="display: none;"></div>
+                        <div id="folderTrashEmpty" class="empty-state" style="display: none;">
+                            <div class="empty-title">No deleted folders</div>
+                            <p>Deleted folders will appear here.</p>
+                        </div>
+                    </div>
+
+                    <div class="trash-section">
+                        <div class="section-header">
+                            <div>
+                                <h2>Documents</h2>
+                                <p>Deleted documents can be restored or permanently removed.</p>
+                            </div>
+                        </div>
+                        <div id="documentTrashGrid" class="document-grid" style="display: none;"></div>
+                        <div id="documentTrashEmpty" class="empty-state" style="display: none;">
+                            <div class="empty-title">No deleted documents</div>
+                            <p>Deleted documents will appear here.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="trashEmpty" class="empty-state" style="display: none;">
+                    <div class="empty-title">Trash is empty</div>
+                    <p>Deleted folders and documents will appear here.</p>
+                    <a href="dashboard.html" class="btn btn-secondary empty-action">Go to Dashboard</a>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="confirmModal" class="trash-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+        <div class="trash-modal">
+            <h3 id="confirmTitle">Permanently delete item?</h3>
+            <p id="confirmMessage">This action cannot be undone.</p>
+            <div id="confirmError" class="helper-text error" style="display: none; margin-top: 14px;"></div>
+            <div class="trash-modal-actions">
+                <button type="button" id="cancelPermanentDeleteBtn" class="btn btn-secondary">Cancel</button>
+                <button type="button" id="confirmPermanentDeleteBtn" class="btn btn-danger">Delete Permanently</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/document-api.js"></script>
+    <script src="js/folder-api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/trash.js"></script>
+</body>
+
+</html>
