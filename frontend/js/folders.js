@@ -1,468 +1,367 @@
+/**
+ * Folder Management UI controller for AI Study Hub.
+ * Handles folder listing, creation, renaming, deletion, and document browsing per folder.
+ * Relies on folder-api.js and document-api.js helpers — never uses raw fetch directly.
+ */
+
 document.addEventListener("DOMContentLoaded", async function () {
 
-    // ── DOM refs — Folder List Panel ──────────────────────────────────────────
-    const folderListPanel = document.getElementById("folderListPanel");
-    const folderLoader = document.getElementById("folderLoader");
-    const folderError = document.getElementById("folderError");
-    const folderGrid = document.getElementById("folderGrid");
-    const folderEmptyState = document.getElementById("folderEmptyState");
-    const openCreateModalBtn = document.getElementById("openCreateModalBtn");
-    const emptyCreateBtn = document.getElementById("emptyCreateBtn");
+  // ── View containers ────────────────────────────────────────────────────────
+  const folderListView = document.getElementById("folderListView");
+  const folderDocView  = document.getElementById("folderDocView");
 
-    // ── DOM refs — Folder Detail Panel ────────────────────────────────────────
-    const folderDetailPanel = document.getElementById("folderDetailPanel");
-    const folderDetailName = document.getElementById("folderDetailName");
-    const folderDetailMeta = document.getElementById("folderDetailMeta");
-    const backToFoldersBtn = document.getElementById("backToFoldersBtn");
-    const folderDocLoader = document.getElementById("folderDocLoader");
-    const folderDocError = document.getElementById("folderDocError");
-    const folderDocGrid = document.getElementById("folderDocGrid");
-    const folderDocEmptyState = document.getElementById("folderDocEmptyState");
+  // ── Folder list elements ───────────────────────────────────────────────────
+  const folderLoader  = document.getElementById("folderLoader");
+  const folderError   = document.getElementById("folderError");
+  const folderGrid    = document.getElementById("folderGrid");
+  const folderEmpty   = document.getElementById("folderEmpty");
 
-    // ── DOM refs — Create Modal ────────────────────────────────────────────────
-    const createFolderModal = document.getElementById("createFolderModal");
-    const createFolderName = document.getElementById("createFolderName");
-    const createFolderError = document.getElementById("createFolderError");
-    const cancelCreateBtn = document.getElementById("cancelCreateBtn");
-    const confirmCreateBtn = document.getElementById("confirmCreateBtn");
+  // ── Folder document view elements ─────────────────────────────────────────
+  const openFolderName  = document.getElementById("openFolderName");
+  const docLoader       = document.getElementById("docLoader");
+  const docError        = document.getElementById("docError");
+  const docGrid         = document.getElementById("docGrid");
+  const docEmpty        = document.getElementById("docEmpty");
+  const backToFoldersBtn = document.getElementById("backToFoldersBtn");
 
-    // ── DOM refs — Edit Modal ──────────────────────────────────────────────────
-    const editFolderModal = document.getElementById("editFolderModal");
-    const editFolderName = document.getElementById("editFolderName");
-    const editFolderError = document.getElementById("editFolderError");
-    const cancelEditBtn = document.getElementById("cancelEditBtn");
-    const confirmEditBtn = document.getElementById("confirmEditBtn");
+  // ── Buttons ────────────────────────────────────────────────────────────────
+  const createFolderBtn = document.getElementById("createFolderBtn");
+  const emptyCreateBtn  = document.getElementById("emptyCreateBtn");
 
-    // ── DOM refs — Delete Modal ────────────────────────────────────────────────
-    const deleteFolderModal = document.getElementById("deleteFolderModal");
-    const deleteModalDesc = document.getElementById("deleteModalDesc");
-    const deleteFolderError = document.getElementById("deleteFolderError");
-    const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
-    const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+  // ── Create modal ───────────────────────────────────────────────────────────
+  const createModal       = document.getElementById("createModal");
+  const createFolderName  = document.getElementById("createFolderName");
+  const createError       = document.getElementById("createError");
+  const createCancelBtn   = document.getElementById("createCancelBtn");
+  const createConfirmBtn  = document.getElementById("createConfirmBtn");
 
-    // ── State ──────────────────────────────────────────────────────────────────
-    let editingFolderId = null;   // folder currently being edited
-    let deletingFolderId = null;   // folder currently being deleted
-    let currentFolderId = null;   // folder currently being viewed
+  // ── Rename modal ───────────────────────────────────────────────────────────
+  const renameModal       = document.getElementById("renameModal");
+  const renameFolderName  = document.getElementById("renameFolderName");
+  const renameError       = document.getElementById("renameError");
+  const renameCancelBtn   = document.getElementById("renameCancelBtn");
+  const renameConfirmBtn  = document.getElementById("renameConfirmBtn");
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // HELPERS — Modal
-    // ══════════════════════════════════════════════════════════════════════════
+  // ── Delete modal ───────────────────────────────────────────────────────────
+  const deleteModal       = document.getElementById("deleteModal");
+  const deleteError       = document.getElementById("deleteError");
+  const deleteCancelBtn   = document.getElementById("deleteCancelBtn");
+  const deleteConfirmBtn  = document.getElementById("deleteConfirmBtn");
 
-    function openModal(modal) {
-        modal.style.display = "flex";
-    }
+  // ── State ──────────────────────────────────────────────────────────────────
+  let editingFolderId = null;
+  let deletingFolderId = null;
 
-    function closeModal(modal) {
-        modal.style.display = "none";
-    }
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
-    // Close modal when clicking the overlay outside the modal box
-    document.querySelectorAll(".modal-overlay").forEach(function (overlay) {
-        overlay.addEventListener("click", function (e) {
-            if (e.target === overlay) {
-                closeModal(overlay);
-            }
-        });
+  function showFolderList() {
+    folderListView.style.display = "block";
+    folderDocView.style.display  = "none";
+  }
+
+  function showFolderDocView(folderName) {
+    folderListView.style.display = "none";
+    folderDocView.style.display  = "block";
+    openFolderName.textContent   = folderName || "Folder";
+  }
+
+  function openModal(overlay) {
+    overlay.classList.add("open");
+  }
+
+  function closeModal(overlay) {
+    overlay.classList.remove("open");
+  }
+
+  function showError(el, message) {
+    el.textContent  = message;
+    el.style.display = "block";
+  }
+
+  function hideError(el) {
+    el.textContent   = "";
+    el.style.display = "none";
+  }
+
+  // ── Folder list rendering ──────────────────────────────────────────────────
+
+  function createFolderCard(folder) {
+    const card = document.createElement("div");
+    card.className = "folder-card";
+
+    const icon = document.createElement("div");
+    icon.className = "folder-card-icon";
+    icon.textContent = "📁";
+
+    const name = document.createElement("p");
+    name.className = "folder-card-name";
+    name.textContent = folder.name || "Untitled Folder";
+
+    const meta = document.createElement("div");
+    meta.className = "folder-card-meta";
+    meta.textContent = folder.createdAt
+      ? new Date(folder.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" })
+      : "";
+
+    const actions = document.createElement("div");
+    actions.className = "folder-card-actions";
+
+    const openBtn = document.createElement("button");
+    openBtn.type = "button";
+    openBtn.className = "btn btn-primary btn-sm";
+    openBtn.textContent = "Open";
+    openBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      loadFolderDocuments(folder);
     });
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // HELPERS — UI state
-    // ══════════════════════════════════════════════════════════════════════════
-
-    function showFolderLoading() {
-        folderLoader.style.display = "flex";
-        folderGrid.style.display = "none";
-        folderEmptyState.style.display = "none";
-        folderError.style.display = "none";
-    }
-
-    function showFolderError(message) {
-        folderLoader.style.display = "none";
-        folderGrid.style.display = "none";
-        folderEmptyState.style.display = "none";
-        folderError.style.display = "block";
-        folderError.textContent = message;
-    }
-
-    function showFolderDocLoading() {
-        folderDocLoader.style.display = "flex";
-        folderDocGrid.style.display = "none";
-        folderDocEmptyState.style.display = "none";
-        folderDocError.style.display = "none";
-    }
-
-    function showFolderDocError(message) {
-        folderDocLoader.style.display = "none";
-        folderDocGrid.style.display = "none";
-        folderDocEmptyState.style.display = "none";
-        folderDocError.style.display = "block";
-        folderDocError.textContent = message;
-    }
-
-    function showModalError(errorEl, message) {
-        errorEl.style.display = "block";
-        errorEl.textContent = message;
-    }
-
-    function hideModalError(errorEl) {
-        errorEl.style.display = "none";
-        errorEl.textContent = "";
-    }
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // HELPERS — Render
-    // ══════════════════════════════════════════════════════════════════════════
-
-    function formatDate(value) {
-        if (!value) return "-";
-        const date = new Date(value);
-        if (Number.isNaN(date.getTime())) return "-";
-        return date.toLocaleDateString("en-US", {
-            year: "numeric", month: "short", day: "2-digit"
-        });
-    }
-
-    function formatFileSize(bytes) {
-        if (bytes === undefined || bytes === null) return "-";
-        if (bytes < 1024) return `${bytes} B`;
-        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-    }
-
-    /*
-    * Create a folder card for the folder list
-    */
-    function createFolderCard(folder) {
-        const card = document.createElement("article");
-        card.className = "folder-card";
-
-        // Icon + Name
-        const cardMain = document.createElement("div");
-        cardMain.className = "folder-card-main";
-
-        const icon = document.createElement("span");
-        icon.className = "folder-icon";
-        icon.textContent = "📁";
-
-        const name = document.createElement("h3");
-        name.className = "folder-name";
-        name.textContent = folder.name;
-
-        const meta = document.createElement("p");
-        meta.className = "folder-meta";
-        meta.textContent = `Created ${formatDate(folder.createdAt)}`;
-
-        cardMain.append(icon, name, meta);
-
-        // Actions
-        const actions = document.createElement("div");
-        actions.className = "folder-card-actions";
-
-        const openBtn = document.createElement("button");
-        openBtn.type = "button";
-        openBtn.className = "btn btn-primary btn-sm";
-        openBtn.textContent = "Open";
-        openBtn.addEventListener("click", function () {
-            openFolderDetail(folder);
-        });
-
-        const editBtn = document.createElement("button");
-        editBtn.type = "button";
-        editBtn.className = "btn btn-secondary btn-sm";
-        editBtn.textContent = "Rename";
-        editBtn.addEventListener("click", function () {
-            openEditModal(folder);
-        });
-
-        const deleteBtn = document.createElement("button");
-        deleteBtn.type = "button";
-        deleteBtn.className = "btn btn-danger btn-sm";
-        deleteBtn.textContent = "Delete";
-        deleteBtn.addEventListener("click", function () {
-            openDeleteModal(folder);
-        });
-
-        actions.append(openBtn, editBtn, deleteBtn);
-        card.append(cardMain, actions);
-
-        return card;
-    }
-
-    /*
-     * Create a document card for the folder detail view (same style as dashboard)
-     */
-    function createDocumentCard(doc) {
-        const card = document.createElement("article");
-        card.className = "document-card";
-
-        const header = document.createElement("div");
-        header.className = "document-card-header";
-
-        const badge = document.createElement("span");
-        badge.className = "document-type-badge";
-        badge.textContent = (doc.fileType || "FILE").toUpperCase();
-
-        const title = document.createElement("h3");
-        const titleLink = document.createElement("a");
-        titleLink.href = `document-detail.html?id=${doc.documentId}`;
-        titleLink.textContent = doc.title || doc.originalFileName || "Untitled";
-        titleLink.style.color = "inherit";
-        title.appendChild(titleLink);
-
-        header.append(badge, title);
-
-        const description = document.createElement("p");
-        description.className = "document-description";
-        description.textContent = doc.description || "No description provided.";
-
-        const meta = document.createElement("div");
-        meta.className = "document-meta";
-
-        const sizeSpan = document.createElement("span");
-        sizeSpan.textContent = `Size: ${formatFileSize(doc.fileSize)}`;
-
-        const dateSpan = document.createElement("span");
-        dateSpan.textContent = `Uploaded: ${formatDate(doc.createdAt)}`;
-
-        meta.append(sizeSpan, dateSpan);
-
-        const actions = document.createElement("div");
-        actions.className = "document-actions";
-
-        const detailBtn = document.createElement("a");
-        detailBtn.href = `document-detail.html?id=${doc.documentId}`;
-        detailBtn.className = "btn btn-primary document-detail-btn";
-        detailBtn.textContent = "View Details";
-
-        const openBtn = document.createElement("button");
-        openBtn.type = "button";
-        openBtn.className = "btn btn-secondary document-open-btn";
-        openBtn.textContent = "Open File";
-        openBtn.disabled = !doc.fileUrl;
-        openBtn.addEventListener("click", function () {
-            if (doc.fileUrl) window.open(doc.fileUrl, "_blank", "noopener");
-        });
-
-        actions.append(detailBtn, openBtn);
-        card.append(header, description, meta, actions);
-
-        return card;
-    }
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // LOAD — Folder list
-    // ══════════════════════════════════════════════════════════════════════════
-
-    async function loadFolders() {
-        showFolderLoading();
-
-        try {
-            const result = await getMyFolders();
-            const folders = Array.isArray(result.data) ? result.data : [];
-
-            folderLoader.style.display = "none";
-
-            if (folders.length === 0) {
-                folderEmptyState.style.display = "block";
-                return;
-            }
-
-            folderGrid.innerHTML = "";
-            folders.forEach(function (folder) {
-                folderGrid.appendChild(createFolderCard(folder));
-            });
-            folderGrid.style.display = "grid";
-
-        } catch (err) {
-            showFolderError(err.message || "Failed to load folders.");
-        }
-    }
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // LOAD — Documents inside a folder
-    // ══════════════════════════════════════════════════════════════════════════
-
-    async function openFolderDetail(folder) {
-        currentFolderId = folder.folderId;
-
-        // Switch to detail panel
-        folderListPanel.style.display = "none";
-        folderDetailPanel.style.display = "block";
-        folderDetailName.textContent = folder.name;
-        folderDetailMeta.textContent = `Documents inside "${folder.name}".`;
-
-        showFolderDocLoading();
-
-        try {
-            const result = await getDocumentsByFolder(folder.folderId);
-            const documents = Array.isArray(result.data) ? result.data : [];
-
-            folderDocLoader.style.display = "none";
-
-            if (documents.length === 0) {
-                folderDocEmptyState.style.display = "block";
-                return;
-            }
-
-            folderDocGrid.innerHTML = "";
-            documents.forEach(function (doc) {
-                folderDocGrid.appendChild(createDocumentCard(doc));
-            });
-            folderDocGrid.style.display = "grid";
-
-        } catch (err) {
-            showFolderDocError(err.message || "Failed to load documents.");
-        }
-    }
-
-    // Back button
-    backToFoldersBtn.addEventListener("click", function () {
-        currentFolderId = null;
-        folderDetailPanel.style.display = "none";
-        folderListPanel.style.display = "block";
+    const renameBtn = document.createElement("button");
+    renameBtn.type = "button";
+    renameBtn.className = "btn btn-secondary btn-sm";
+    renameBtn.textContent = "Rename";
+    renameBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      openRenameModal(folder);
     });
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // CREATE FOLDER
-    // ══════════════════════════════════════════════════════════════════════════
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "btn btn-danger btn-sm";
+    deleteBtn.textContent = "Delete";
+    deleteBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      openDeleteModal(folder.folderId);
+    });
 
-    function openCreateModal() {
-        createFolderName.value = "";
-        hideModalError(createFolderError);
-        openModal(createFolderModal);
-        createFolderName.focus();
+    actions.append(openBtn, renameBtn, deleteBtn);
+    card.append(icon, name, meta, actions);
+
+    card.addEventListener("click", function () {
+      loadFolderDocuments(folder);
+    });
+
+    return card;
+  }
+
+  async function loadFolders() {
+    folderLoader.style.display = "flex";
+    folderGrid.style.display   = "none";
+    folderEmpty.style.display  = "none";
+    hideError(folderError);
+
+    try {
+      const result  = await getMyFolders();
+      const folders = Array.isArray(result.data) ? result.data : [];
+
+      folderLoader.style.display = "none";
+
+      if (folders.length === 0) {
+        folderEmpty.style.display = "block";
+        return;
+      }
+
+      folderGrid.innerHTML = "";
+      folders.forEach(function (folder) {
+        folderGrid.appendChild(createFolderCard(folder));
+      });
+      folderGrid.style.display = "grid";
+
+    } catch (error) {
+      folderLoader.style.display = "none";
+      showError(folderError, error.message || "Failed to load folders.");
+    }
+  }
+
+  // ── Folder document view ───────────────────────────────────────────────────
+
+  function createDocCard(doc) {
+    const card = document.createElement("article");
+    card.className = "document-card";
+
+    const header = document.createElement("div");
+    header.className = "document-card-header";
+
+    const badge = document.createElement("span");
+    badge.className = "document-type-badge";
+    badge.textContent = (doc.fileType || "FILE").toUpperCase();
+
+    const titleEl = document.createElement("h3");
+    const titleLink = document.createElement("a");
+    titleLink.href = `document-detail.html?id=${doc.documentId}`;
+    titleLink.textContent = doc.title || doc.originalFileName || "Untitled";
+    titleLink.style.color = "inherit";
+    titleEl.appendChild(titleLink);
+
+    header.append(badge, titleEl);
+
+    const desc = document.createElement("p");
+    desc.className = "document-description";
+    desc.textContent = doc.description || "No description provided.";
+
+    const actions = document.createElement("div");
+    actions.className = "document-actions";
+
+    const viewBtn = document.createElement("a");
+    viewBtn.href = `document-detail.html?id=${doc.documentId}`;
+    viewBtn.className = "btn btn-primary document-detail-btn";
+    viewBtn.textContent = "View Details";
+
+    actions.appendChild(viewBtn);
+    card.append(header, desc, actions);
+    return card;
+  }
+
+  async function loadFolderDocuments(folder) {
+    showFolderDocView(folder.name);
+
+    docLoader.style.display = "flex";
+    docGrid.style.display   = "none";
+    docEmpty.style.display  = "none";
+    hideError(docError);
+
+    try {
+      // FIX #1: use getMyDocuments({ folderId }) instead of removed getDocumentsByFolder()
+      const result = await getMyDocuments({ folderId: folder.folderId });
+      const docs   = Array.isArray(result.data) ? result.data : [];
+
+      docLoader.style.display = "none";
+
+      if (docs.length === 0) {
+        docEmpty.style.display = "block";
+        return;
+      }
+
+      docGrid.innerHTML = "";
+      docs.forEach(function (doc) {
+        docGrid.appendChild(createDocCard(doc));
+      });
+      docGrid.style.display = "grid";
+
+    } catch (error) {
+      docLoader.style.display = "none";
+      showError(docError, error.message || "Failed to load documents.");
+    }
+  }
+
+  // ── Create folder ──────────────────────────────────────────────────────────
+
+  function openCreateModal() {
+    createFolderName.value = "";
+    hideError(createError);
+    openModal(createModal);
+    createFolderName.focus();
+  }
+
+  createFolderBtn.addEventListener("click", openCreateModal);
+  emptyCreateBtn.addEventListener("click", openCreateModal);
+  createCancelBtn.addEventListener("click", function () { closeModal(createModal); });
+
+  createConfirmBtn.addEventListener("click", async function () {
+    const name = createFolderName.value.trim();
+    if (!name) {
+      showError(createError, "Folder name is required.");
+      return;
     }
 
-    openCreateModalBtn.addEventListener("click", openCreateModal);
-    emptyCreateBtn.addEventListener("click", openCreateModal);
+    createConfirmBtn.disabled = true;
+    hideError(createError);
 
-    cancelCreateBtn.addEventListener("click", function () {
-        closeModal(createFolderModal);
-    });
+    try {
+      // FIX #2: pass object { name } instead of bare string
+      await createFolder({ name });
+      closeModal(createModal);
+      await loadFolders();
+    } catch (error) {
+      showError(createError, error.message || "Failed to create folder.");
+    } finally {
+      createConfirmBtn.disabled = false;
+    }
+  });
 
-    confirmCreateBtn.addEventListener("click", async function () {
-        const name = createFolderName.value.trim();
+  createFolderName.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") createConfirmBtn.click();
+  });
 
-        if (!name) {
-            showModalError(createFolderError, "Folder name is required.");
-            createFolderName.focus();
-            return;
-        }
+  // ── Rename folder ──────────────────────────────────────────────────────────
 
-        confirmCreateBtn.disabled = true;
-        confirmCreateBtn.textContent = "Creating...";
-        hideModalError(createFolderError);
+  function openRenameModal(folder) {
+    editingFolderId        = folder.folderId;
+    renameFolderName.value = folder.name || "";
+    hideError(renameError);
+    openModal(renameModal);
+    renameFolderName.focus();
+  }
 
-        try {
-            await createFolder(name);
-            closeModal(createFolderModal);
-            await loadFolders();
+  renameCancelBtn.addEventListener("click", function () { closeModal(renameModal); });
 
-        } catch (err) {
-            showModalError(createFolderError, err.message || "Failed to create folder.");
-
-        } finally {
-            confirmCreateBtn.disabled = false;
-            confirmCreateBtn.textContent = "Create";
-        }
-    });
-
-    // Enter key for folder creation input
-    createFolderName.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") confirmCreateBtn.click();
-    });
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // EDIT FOLDER
-    // ══════════════════════════════════════════════════════════════════════════
-
-    function openEditModal(folder) {
-        editingFolderId = folder.folderId;
-        editFolderName.value = folder.name;
-        hideModalError(editFolderError);
-        openModal(editFolderModal);
-        editFolderName.focus();
+  renameConfirmBtn.addEventListener("click", async function () {
+    const name = renameFolderName.value.trim();
+    if (!name) {
+      showError(renameError, "Folder name is required.");
+      return;
     }
 
-    cancelEditBtn.addEventListener("click", function () {
-        closeModal(editFolderModal);
-    });
+    renameConfirmBtn.disabled = true;
+    hideError(renameError);
 
-    confirmEditBtn.addEventListener("click", async function () {
-        const name = editFolderName.value.trim();
-
-        if (!name) {
-            showModalError(editFolderError, "Folder name is required.");
-            editFolderName.focus();
-            return;
-        }
-
-        confirmEditBtn.disabled = true;
-        confirmEditBtn.textContent = "Saving...";
-        hideModalError(editFolderError);
-
-        try {
-            await updateFolder(editingFolderId, name);
-            closeModal(editFolderModal);
-            editingFolderId = null;
-            await loadFolders();
-
-        } catch (err) {
-            showModalError(editFolderError, err.message || "Failed to rename folder.");
-
-        } finally {
-            confirmEditBtn.disabled = false;
-            confirmEditBtn.textContent = "Save";
-        }
-    });
-
-    // Enter key for folder rename input
-    editFolderName.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") confirmEditBtn.click();
-    });
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // DELETE FOLDER
-    // ══════════════════════════════════════════════════════════════════════════
-
-    function openDeleteModal(folder) {
-        deletingFolderId = folder.folderId;
-        deleteModalDesc.textContent =
-            `Move "${folder.name}" to trash? Documents inside will also be moved to trash.`;
-        hideModalError(deleteFolderError);
-        openModal(deleteFolderModal);
+    try {
+      // FIX #3: pass object { name } instead of bare string
+      await updateFolder(editingFolderId, { name });
+      closeModal(renameModal);
+      await loadFolders();
+    } catch (error) {
+      showError(renameError, error.message || "Failed to rename folder.");
+    } finally {
+      renameConfirmBtn.disabled = false;
     }
+  });
 
-    cancelDeleteBtn.addEventListener("click", function () {
-        closeModal(deleteFolderModal);
+  renameFolderName.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") renameConfirmBtn.click();
+  });
+
+  // ── Delete folder ──────────────────────────────────────────────────────────
+
+  function openDeleteModal(folderId) {
+    deletingFolderId = folderId;
+    hideError(deleteError);
+    openModal(deleteModal);
+  }
+
+  deleteCancelBtn.addEventListener("click", function () { closeModal(deleteModal); });
+
+  deleteConfirmBtn.addEventListener("click", async function () {
+    deleteConfirmBtn.disabled = true;
+    hideError(deleteError);
+
+    try {
+      await deleteFolder(deletingFolderId);
+      closeModal(deleteModal);
+      await loadFolders();
+    } catch (error) {
+      // FIX: show backend error message clearly (e.g. folder not empty rejection)
+      showError(deleteError, error.message || "Failed to delete folder.");
+    } finally {
+      deleteConfirmBtn.disabled = false;
+    }
+  });
+
+  // ── Back button ────────────────────────────────────────────────────────────
+
+  backToFoldersBtn.addEventListener("click", function () {
+    showFolderList();
+  });
+
+  // ── Close modals on overlay click ──────────────────────────────────────────
+
+  [createModal, renameModal, deleteModal].forEach(function (overlay) {
+    overlay.addEventListener("click", function (e) {
+      if (e.target === overlay) closeModal(overlay);
     });
+  });
 
-    confirmDeleteBtn.addEventListener("click", async function () {
-        confirmDeleteBtn.disabled = true;
-        confirmDeleteBtn.textContent = "Deleting...";
-        hideModalError(deleteFolderError);
+  // ── Init ───────────────────────────────────────────────────────────────────
 
-        try {
-            await deleteFolder(deletingFolderId);
-            closeModal(deleteFolderModal);
-            deletingFolderId = null;
-            await loadFolders();
-
-        } catch (err) {
-            // Backend reject (e.g., if backend later adds a rule preventing deletion of non-empty folders)
-            showModalError(deleteFolderError, err.message || "Failed to delete folder.");
-
-        } finally {
-            confirmDeleteBtn.disabled = false;
-            confirmDeleteBtn.textContent = "Move to Trash";
-        }
-    });
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // INIT
-    // ══════════════════════════════════════════════════════════════════════════
-
-    await loadFolders();
+  await loadFolders();
 
 });
