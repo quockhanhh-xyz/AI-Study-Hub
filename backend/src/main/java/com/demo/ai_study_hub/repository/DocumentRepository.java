@@ -32,4 +32,5 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     long countByFolderAndStatus(Folder folder, String status);
 
     List<Document> findByFolder(Folder folder);
+    List<Document> findByOwner_UserIdAndStatus(Integer userId, String status);
 }
