@@ -30,6 +30,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const searchInput = document.getElementById("searchInput");
   const subjectFilter = document.getElementById("subjectFilter");
   const fileTypeFilter = document.getElementById("fileTypeFilter");
+  const folderFilter = document.getElementById("folderFilter");
   const clearFiltersBtn = document.getElementById("clearFiltersBtn");
 
   if (chatCountElement) chatCountElement.textContent = "0";
@@ -108,6 +109,20 @@ document.addEventListener("DOMContentLoaded", async function () {
       meta.append(subjectBadge);
     }
 
+    const folderLink = document.createElement("button");
+    folderLink.type = "button";
+    folderLink.className = "btn btn-secondary btn-sm";
+    folderLink.style.width = "auto";
+    folderLink.textContent = documentItem.folderId
+      ? `Folder: ${documentItem.folderName || "Folder"}`
+      : "Root";
+    folderLink.addEventListener("click", function () {
+      if (!folderFilter) return;
+      folderFilter.value = documentItem.folderId ? String(documentItem.folderId) : "0";
+      loadDocuments();
+    });
+    meta.append(folderLink);
+
     const actions = document.createElement("div");
     actions.className = "document-actions";
 
@@ -152,20 +167,47 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  async function loadFolders() {
+    if (!folderFilter) return;
+
+    try {
+      const result = await getMyFolders();
+      const folders = Array.isArray(result.data) ? result.data : [];
+      const currentValue = folderFilter.value;
+
+      folderFilter.innerHTML = `
+        <option value="">All Folders</option>
+        <option value="0">Root Documents</option>
+      `;
+
+      folders.forEach(function (folder) {
+        const option = document.createElement("option");
+        option.value = folder.folderId;
+        option.textContent = folder.name;
+        folderFilter.appendChild(option);
+      });
+
+      folderFilter.value = currentValue;
+    } catch (error) {
+      console.warn("Failed to load folders:", error);
+    }
+  }
+
   async function loadDocuments() {
     setDocumentsLoading();
 
     const params = {
       keyword: searchInput ? searchInput.value.trim() : "",
       subjectId: subjectFilter ? subjectFilter.value : "",
-      fileType: fileTypeFilter ? fileTypeFilter.value : ""
+      fileType: fileTypeFilter ? fileTypeFilter.value : "",
+      folderId: folderFilter ? folderFilter.value : ""
     };
 
     try {
       const result = await searchDocuments(params);
       const documents = Array.isArray(result.data) ? result.data : [];
 
-      const isFiltering = params.keyword || params.subjectId || params.fileType;
+      const isFiltering = params.keyword || params.subjectId || params.fileType || params.folderId;
       if (!isFiltering) {
         totalDocuments = documents.length;
       }
@@ -179,7 +221,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (documentGrid) documentGrid.style.display = "none";
         if (emptyState) {
           emptyState.style.display = "block";
-          const isFiltering = params.keyword || params.subjectId || params.fileType;
+          const isFiltering = params.keyword || params.subjectId || params.fileType || params.folderId;
           const emptyTitle = emptyState.querySelector(".empty-title");
           const emptyDesc = emptyState.querySelector("p");
           const emptyAction = emptyState.querySelector(".empty-action");
@@ -218,6 +260,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // Load subject options first
   await loadSubjects();
+  await loadFolders();
 
   // Load documents
   await loadDocuments();
@@ -239,11 +282,16 @@ document.addEventListener("DOMContentLoaded", async function () {
     fileTypeFilter.addEventListener("change", loadDocuments);
   }
 
+  if (folderFilter) {
+    folderFilter.addEventListener("change", loadDocuments);
+  }
+
   if (clearFiltersBtn) {
     clearFiltersBtn.addEventListener("click", function () {
       if (searchInput) searchInput.value = "";
       if (subjectFilter) subjectFilter.value = "";
       if (fileTypeFilter) fileTypeFilter.value = "";
+      if (folderFilter) folderFilter.value = "";
       loadDocuments();
     });
   }

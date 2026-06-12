@@ -54,7 +54,10 @@
                         <h2>My Documents</h2>
                         <p>Files you have uploaded to AI Study Hub.</p>
                     </div>
-                    <a href="upload.html" class="btn btn-primary upload-link-btn">Upload Document</a>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
+                        <a href="trash.html" class="btn btn-secondary upload-link-btn">Trash</a>
+                        <a href="upload.html" class="btn btn-primary upload-link-btn">Upload Document</a>
+                    </div>
                 </div>
 
                 <div class="filter-bar">
@@ -82,6 +85,12 @@
                             <option value="PNG">PNG</option>
                         </select>
                     </div>
+                    <div class="filter-group">
+                        <select id="folderFilter">
+                            <option value="">All Folders</option>
+                            <option value="0">Root Documents</option>
+                        </select>
+                    </div>
                     <button type="button" id="clearFiltersBtn" class="btn btn-secondary clear-filters-btn">Clear</button>
                 </div>
 
@@ -103,6 +112,7 @@
     </div>
 
     <script src="js/api.js"></script>
+    <script src="js/folder-api.js"></script>
     <script src="js/document-api.js"></script>
 
     <script src="js/navigation.js"></script>

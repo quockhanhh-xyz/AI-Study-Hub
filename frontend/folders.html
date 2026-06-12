@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Folders - AI Study Hub</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <script>
+        if (!localStorage.getItem("accessToken") || !localStorage.getItem("currentUser")) {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("currentUser");
+            window.location.href = "login.html";
+        }
+    </script>
+    <style>
+        /* ── Folder Grid ─────────────────────────────────────────────────── */
+        .folder-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .folder-card {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--white);
+            cursor: pointer;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .folder-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+        }
+
+        .folder-card-icon {
+            font-size: 32px;
+            line-height: 1;
+        }
+
+        .folder-card-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .folder-card-meta {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .folder-card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        /* ── Modal ───────────────────────────────────────────────────────── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 28px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        }
+
+        .modal h3 {
+            margin: 0 0 20px;
+            font-size: 18px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+        }
+
+        /* ── Folder Document View ────────────────────────────────────────── */
+        .folder-view-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .back-btn {
+            width: auto;
+            padding: 8px 14px;
+            font-size: 14px;
+        }
+
+        .folder-view-title {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        /* ── State helpers ───────────────────────────────────────────────── */
+        #folderLoader,
+        #docLoader {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            color: var(--muted);
+            background: #f8fafc;
+        }
+
+        #folderError,
+        #docError {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+
+            <!-- ── FOLDER LIST VIEW ── -->
+            <div id="folderListView">
+                <section class="page-header">
+                    <h1>My Folders</h1>
+                    <p>Organize your documents into folders for easier access.</p>
+                </section>
+
+                <div class="card">
+                    <div class="section-header">
+                        <div>
+                            <h2 style="text-align:left; margin:0 0 4px;">Folders</h2>
+                            <p>Click a folder to view its documents.</p>
+                        </div>
+                        <button type="button" id="createFolderBtn" class="btn btn-primary upload-link-btn">
+                            + New Folder
+                        </button>
+                    </div>
+
+                    <div id="folderLoader">Loading folders...</div>
+
+                    <p id="folderError" class="helper-text error" role="alert"></p>
+
+                    <div id="folderGrid" class="folder-grid" style="display:none;"></div>
+
+                    <div id="folderEmpty" class="empty-state" style="display:none;">
+                        <div class="empty-title">No folders yet</div>
+                        <p>Create your first folder to start organizing your documents.</p>
+                        <button type="button" class="btn btn-secondary empty-action" id="emptyCreateBtn">
+                            Create a folder
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── FOLDER DOCUMENT VIEW ── -->
+            <div id="folderDocView" style="display:none;">
+                <div class="folder-view-header">
+                    <button type="button" class="btn btn-secondary back-btn" id="backToFoldersBtn">← Back</button>
+                    <h2 class="folder-view-title" id="openFolderName">Folder</h2>
+                </div>
+
+                <div class="card">
+                    <div id="docLoader">Loading documents...</div>
+
+                    <p id="docError" class="helper-text error" role="alert"></p>
+
+                    <div id="docGrid" class="document-grid" style="display:none;"></div>
+
+                    <div id="docEmpty" class="empty-state" style="display:none;">
+                        <div class="empty-title">This folder is empty</div>
+                        <p>Move documents into this folder from the Dashboard or Document Detail page.</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ── CREATE FOLDER MODAL ── -->
+    <div class="modal-overlay" id="createModal" role="dialog" aria-modal="true" aria-labelledby="createModalTitle">
+        <div class="modal">
+            <h3 id="createModalTitle">New Folder</h3>
+            <div class="form-group">
+                <label for="createFolderName">Folder name <span style="color:var(--danger)">*</span></label>
+                <input type="text" id="createFolderName" placeholder="E.g: Math Notes" autocomplete="off" />
+            </div>
+            <p id="createError" class="helper-text error" style="display:none; margin-top:8px;"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="createCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="createConfirmBtn">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── RENAME FOLDER MODAL ── -->
+    <div class="modal-overlay" id="renameModal" role="dialog" aria-modal="true" aria-labelledby="renameModalTitle">
+        <div class="modal">
+            <h3 id="renameModalTitle">Rename Folder</h3>
+            <div class="form-group">
+                <label for="renameFolderName">New name <span style="color:var(--danger)">*</span></label>
+                <input type="text" id="renameFolderName" placeholder="E.g: Calculus Notes" autocomplete="off" />
+            </div>
+            <p id="renameError" class="helper-text error" style="display:none; margin-top:8px;"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="renameCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="renameConfirmBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── DELETE FOLDER MODAL ── -->
+    <div class="modal-overlay" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+        <div class="modal">
+            <h3 id="deleteModalTitle">Delete Folder?</h3>
+            <p style="color:var(--muted); margin:0 0 8px;">
+                This folder will be moved to Trash. Documents inside will also be moved to Trash.
+            </p>
+            <p id="deleteError" class="helper-text error" style="display:none; margin-top:8px;"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="deleteCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-danger" id="deleteConfirmBtn">Move to Trash</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/document-api.js"></script>
+    <script src="js/folder-api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/folders.js"></script>
+</body>
+
+</html>
