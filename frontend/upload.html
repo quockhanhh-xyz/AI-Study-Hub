@@ -189,6 +189,14 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="folderSelect">Folder <span style="font-weight: 400; color: var(--muted);">—
+                                Optional</span></label>
+                        <select id="folderSelect">
+                            <option value="">No folder (upload to root)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label for="file">Document File <span style="color:var(--danger)">*</span></label>
                         <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-describedby="fileHint">
                             <input type="file" id="file" name="file"
@@ -227,10 +235,10 @@
     </div>
 
     <script src="js/api.js"></script>
+    <script src="js/folder-api.js"></script>
     <script src="js/document-api.js"></script>
     <script src="js/navigation.js"></script>
     <script src="js/layout.js"></script>
     <script src="js/upload.js"></script>
-</body>
 
 </html>

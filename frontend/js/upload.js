@@ -14,6 +14,7 @@ const dropZoneText = document.getElementById("dropZoneText");
 const submitBtn = document.getElementById("submitBtn");
 const uploadMessage = document.getElementById("uploadMessage");
 const uploadProgress = document.getElementById("uploadProgress");
+const folderSelect = document.getElementById("folderSelect");
 const progressFill = document.getElementById("progressFill");
 const progressText = document.getElementById("progressText");
 
@@ -31,6 +32,25 @@ const ALLOWED_TYPES = [
   "image/jpeg"
 ];
 const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+
+// ── Load folders into dropdown ────────────────────────────────────────────
+async function loadFolderOptions() {
+  try {
+    const result = await getMyFolders();
+    const folders = Array.isArray(result.data) ? result.data : [];
+
+    folders.forEach(function (folder) {
+      const option = document.createElement("option");
+      option.value = folder.folderId;
+      option.textContent = folder.name;
+      folderSelect.appendChild(option);
+    });
+
+  } catch (err) {
+    // Folder dropdown is optional, so upload should not be blocked if loading folders fails.
+    console.warn("Could not load folders:", err);
+  }
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function showMessage(text, type) {
@@ -179,6 +199,7 @@ uploadForm.addEventListener("submit", async (e) => {
   formData.append("file", file);
   formData.append("title", title);
   if (description) formData.append("description", description);
+  if (folderSelect.value) formData.append("folderId", folderSelect.value);
 
   // Loading state
   submitBtn.disabled = true;
@@ -209,3 +230,5 @@ uploadForm.addEventListener("submit", async (e) => {
     submitBtn.textContent = "Upload document";
   }
 });
+
+loadFolderOptions();
