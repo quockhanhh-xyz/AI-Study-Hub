@@ -4,7 +4,6 @@
  * @param {FormData} formData - FormData object containing file, title, description, and subjectId.
  */
 function uploadDocument(formData) {
-  // Pass the raw formData object directly into the post helper from api.js
   return post("/api/documents/upload", formData);
 }
 
@@ -70,7 +69,6 @@ function deleteDocument(id) {
   return del(`/api/documents/${id}`);
 }
 
-
 /* ==========================================================================
    STEP 5 ADDITIONS: FOLDER INTEGRATION, TRASH & LIFECYCLE MANAGEMENT
    ========================================================================== */
@@ -110,6 +108,3 @@ function restoreDocument(id) {
 function permanentDeleteDocument(id) {
   return del(`/api/trash/documents/${id}`);
 }
-
-// End of dynamic document data system api helpers file.
-
