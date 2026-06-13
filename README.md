@@ -84,11 +84,24 @@ ai-study-hub/
 
 
 
-### Frontend Architecture (`127.0.0.1:5500`)
+### Frontend Architecture (127.0.0.1:5500)
 
-* **NO hard-coded API URLs** across files. All requests must route through `frontend/js/api.js`.
-* **UI/UX Guidelines:** * *Primary Color:* `#2563eb` (Blue) | *Background:* `#f8fafc` | *Text:* `#1e293b`.
-* *Styling:* Inter font, 8px border-radius, clean card layouts with consistent spacing.
+- NO hard-coded API URLs across feature files.
+- All requests must route through frontend/js/api.js or shared API helper files.
+- UI/UX Guidelines:
+  - Theme: Dark dashboard interface.
+  - Background: #121212.
+  - Surface/Card: #1e1e1e.
+  - Border: #333333.
+  - Text Main: #e0e0e0.
+  - Text Secondary: #9e9e9e.
+  - Primary: #bb86fc.
+  - Primary Hover: #d0bcff.
+  - Success: #03dac6.
+  - Danger: #cf6679.
+  - Warning: #ffb74d.
+- Styling: Inter font, 8px border-radius, reusable card/grid/table layouts, consistent spacing.
+- No Bootstrap, Tailwind, React, JSP/JSTL, or external UI framework.
 
 
 
