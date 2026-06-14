@@ -38,7 +38,6 @@ public class AuthService {
         return user;
     }
 
-    // Method mới - trả User để Controller tự sinh token và set cookie
     public User loginAndGetUser(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Invalid email or password."));
@@ -60,7 +59,6 @@ public class AuthService {
         return user;
     }
 
-    // Method mới - lấy user theo email từ token
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found."));

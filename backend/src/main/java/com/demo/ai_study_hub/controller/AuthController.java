@@ -1,5 +1,6 @@
 package com.demo.ai_study_hub.controller;
 
+import com.demo.ai_study_hub.config.AuthCookieConstants;
 import com.demo.ai_study_hub.dto.ApiResponse;
 import com.demo.ai_study_hub.dto.LoginRequest;
 import com.demo.ai_study_hub.dto.LoginResponse;
@@ -24,9 +25,6 @@ public class AuthController {
 
     private final AuthService authService;
     private final JwtUtil jwtUtil;
-
-    // Cookie name constant - used in login, logout, filter
-    public static final String COOKIE_NAME = "accessToken";
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<Object>> register(@RequestBody RegisterRequest request) {
@@ -54,10 +52,9 @@ public class AuthController {
             User user = authService.loginAndGetUser(request);
             String token = jwtUtil.generateToken(user.getEmail());
 
-            // Set cookie using ResponseCookie for SameSite support
-            ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, token)
+            ResponseCookie cookie = ResponseCookie.from(AuthCookieConstants.COOKIE_NAME, token)
                     .httpOnly(true)
-                    .secure(false) // Set true when deploying with HTTPS
+                    .secure(AuthCookieConstants.COOKIE_SECURE)
                     .sameSite("Strict")
                     .path("/")
                     .maxAge(jwtUtil.getExpirationMs() / 1000)
@@ -80,10 +77,9 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Object>> logout(HttpServletResponse response) {
-        // Clear cookie with same name/path/sameSite
-        ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, "")
+        ResponseCookie cookie = ResponseCookie.from(AuthCookieConstants.COOKIE_NAME, "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(AuthCookieConstants.COOKIE_SECURE)
                 .sameSite("Strict")
                 .path("/")
                 .maxAge(0)

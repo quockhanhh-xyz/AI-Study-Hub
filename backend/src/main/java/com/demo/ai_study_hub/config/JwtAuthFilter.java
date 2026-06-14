@@ -1,6 +1,5 @@
 package com.demo.ai_study_hub.config;
 
-import com.demo.ai_study_hub.controller.AuthController;
 import com.demo.ai_study_hub.service.JwtUtil;
 import com.demo.ai_study_hub.service.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
@@ -57,7 +56,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private String extractTokenFromCookie(HttpServletRequest request) {
         if (request.getCookies() == null) return null;
         for (Cookie cookie : request.getCookies()) {
-            if (AuthController.COOKIE_NAME.equals(cookie.getName())) {
+            if (AuthCookieConstants.COOKIE_NAME.equals(cookie.getName())) {
                 return cookie.getValue();
             }
         }
