@@ -238,7 +238,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const currentValue = folderFilter.value;
         folderFilter.innerHTML = `
           <option value="">All Folders</option>
-          <option value="0">Root Documents</option>
+          <option value="0">My Documents</option>
         `;
         folders.forEach(function (folder) {
           const option = document.createElement("option");
