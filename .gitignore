@@ -18,9 +18,12 @@ Thumbs.db
 
 # Environment / secret files
 .env
+.env.*
 application-local.properties
 application-secret.properties
-firebase-service-account.json
+*service-account*.json
+*.secret
+*.key
 
 # Node / frontend optional
 node_modules/
