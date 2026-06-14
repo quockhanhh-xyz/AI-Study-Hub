@@ -55,7 +55,7 @@ async function loadFolderOptions() {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function showMessage(text, type) {
   uploadMessage.textContent = text;
-  uploadMessage.className = "status-box";
+  uploadMessage.className = "upload-message status-box";
   if (type === "success") uploadMessage.classList.add("status-success");
   else if (type === "error") uploadMessage.classList.add("status-error");
   else uploadMessage.classList.add("status-checking");
@@ -64,6 +64,7 @@ function showMessage(text, type) {
 
 function hideMessage() {
   uploadMessage.style.display = "none";
+  uploadMessage.className = "upload-message";
 }
 
 function formatFileSize(bytes) {

@@ -8,45 +8,45 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // ── View containers ────────────────────────────────────────────────────────
   const folderListView = document.getElementById("folderListView");
-  const folderDocView  = document.getElementById("folderDocView");
+  const folderDocView = document.getElementById("folderDocView");
 
   // ── Folder list elements ───────────────────────────────────────────────────
-  const folderLoader  = document.getElementById("folderLoader");
-  const folderError   = document.getElementById("folderError");
-  const folderGrid    = document.getElementById("folderGrid");
-  const folderEmpty   = document.getElementById("folderEmpty");
+  const folderLoader = document.getElementById("folderLoader");
+  const folderError = document.getElementById("folderError");
+  const folderGrid = document.getElementById("folderGrid");
+  const folderEmpty = document.getElementById("folderEmpty");
 
   // ── Folder document view elements ─────────────────────────────────────────
-  const openFolderName  = document.getElementById("openFolderName");
-  const docLoader       = document.getElementById("docLoader");
-  const docError        = document.getElementById("docError");
-  const docGrid         = document.getElementById("docGrid");
-  const docEmpty        = document.getElementById("docEmpty");
+  const openFolderName = document.getElementById("openFolderName");
+  const docLoader = document.getElementById("docLoader");
+  const docError = document.getElementById("docError");
+  const docGrid = document.getElementById("docGrid");
+  const docEmpty = document.getElementById("docEmpty");
   const backToFoldersBtn = document.getElementById("backToFoldersBtn");
 
   // ── Buttons ────────────────────────────────────────────────────────────────
   const createFolderBtn = document.getElementById("createFolderBtn");
-  const emptyCreateBtn  = document.getElementById("emptyCreateBtn");
+  const emptyCreateBtn = document.getElementById("emptyCreateBtn");
 
   // ── Create modal ───────────────────────────────────────────────────────────
-  const createModal       = document.getElementById("createModal");
-  const createFolderName  = document.getElementById("createFolderName");
-  const createError       = document.getElementById("createError");
-  const createCancelBtn   = document.getElementById("createCancelBtn");
-  const createConfirmBtn  = document.getElementById("createConfirmBtn");
+  const createModal = document.getElementById("createModal");
+  const createFolderName = document.getElementById("createFolderName");
+  const createError = document.getElementById("createError");
+  const createCancelBtn = document.getElementById("createCancelBtn");
+  const createConfirmBtn = document.getElementById("createConfirmBtn");
 
   // ── Rename modal ───────────────────────────────────────────────────────────
-  const renameModal       = document.getElementById("renameModal");
-  const renameFolderName  = document.getElementById("renameFolderName");
-  const renameError       = document.getElementById("renameError");
-  const renameCancelBtn   = document.getElementById("renameCancelBtn");
-  const renameConfirmBtn  = document.getElementById("renameConfirmBtn");
+  const renameModal = document.getElementById("renameModal");
+  const renameFolderName = document.getElementById("renameFolderName");
+  const renameError = document.getElementById("renameError");
+  const renameCancelBtn = document.getElementById("renameCancelBtn");
+  const renameConfirmBtn = document.getElementById("renameConfirmBtn");
 
   // ── Delete modal ───────────────────────────────────────────────────────────
-  const deleteModal       = document.getElementById("deleteModal");
-  const deleteError       = document.getElementById("deleteError");
-  const deleteCancelBtn   = document.getElementById("deleteCancelBtn");
-  const deleteConfirmBtn  = document.getElementById("deleteConfirmBtn");
+  const deleteModal = document.getElementById("deleteModal");
+  const deleteError = document.getElementById("deleteError");
+  const deleteCancelBtn = document.getElementById("deleteCancelBtn");
+  const deleteConfirmBtn = document.getElementById("deleteConfirmBtn");
 
   // ── State ──────────────────────────────────────────────────────────────────
   let editingFolderId = null;
@@ -56,13 +56,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   function showFolderList() {
     folderListView.style.display = "block";
-    folderDocView.style.display  = "none";
+    folderDocView.style.display = "none";
   }
 
   function showFolderDocView(folderName) {
     folderListView.style.display = "none";
-    folderDocView.style.display  = "block";
-    openFolderName.textContent   = folderName || "Folder";
+    folderDocView.style.display = "block";
+    openFolderName.textContent = folderName || "Folder";
   }
 
   function openModal(overlay) {
@@ -74,12 +74,12 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   function showError(el, message) {
-    el.textContent  = message;
+    el.textContent = message;
     el.style.display = "block";
   }
 
   function hideError(el) {
-    el.textContent   = "";
+    el.textContent = "";
     el.style.display = "none";
   }
 
@@ -90,19 +90,22 @@ document.addEventListener("DOMContentLoaded", async function () {
     card.className = "folder-card";
 
     const icon = document.createElement("div");
-    icon.className = "folder-card-icon";
+    icon.className = "folder-icon";
     icon.textContent = "📁";
 
     const name = document.createElement("p");
-    name.className = "folder-card-name";
+    name.className = "folder-name";
     name.textContent = folder.name || "Untitled Folder";
 
-    const meta = document.createElement("div");
-    meta.className = "folder-card-meta";
+    const meta = document.createElement("p");
+    meta.className = "folder-meta";
     meta.textContent = folder.createdAt
       ? new Date(folder.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" })
       : "";
 
+    const main = document.createElement("div");
+    main.className = "folder-card-main";
+    main.append(icon, name, meta);
     const actions = document.createElement("div");
     actions.className = "folder-card-actions";
 
@@ -134,7 +137,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     actions.append(openBtn, renameBtn, deleteBtn);
-    card.append(icon, name, meta, actions);
+    card.append(main, actions);
 
     card.addEventListener("click", function () {
       loadFolderDocuments(folder);
@@ -145,12 +148,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   async function loadFolders() {
     folderLoader.style.display = "flex";
-    folderGrid.style.display   = "none";
-    folderEmpty.style.display  = "none";
+    folderGrid.style.display = "none";
+    folderEmpty.style.display = "none";
     hideError(folderError);
 
     try {
-      const result  = await getMyFolders();
+      const result = await getMyFolders();
       const folders = Array.isArray(result.data) ? result.data : [];
 
       folderLoader.style.display = "none";
@@ -215,14 +218,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     showFolderDocView(folder.name);
 
     docLoader.style.display = "flex";
-    docGrid.style.display   = "none";
-    docEmpty.style.display  = "none";
+    docGrid.style.display = "none";
+    docEmpty.style.display = "none";
     hideError(docError);
 
     try {
       // FIX #1: use getMyDocuments({ folderId }) instead of removed getDocumentsByFolder()
       const result = await getMyDocuments({ folderId: folder.folderId });
-      const docs   = Array.isArray(result.data) ? result.data : [];
+      const docs = Array.isArray(result.data) ? result.data : [];
 
       docLoader.style.display = "none";
 
@@ -285,7 +288,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   // ── Rename folder ──────────────────────────────────────────────────────────
 
   function openRenameModal(folder) {
-    editingFolderId        = folder.folderId;
+    editingFolderId = folder.folderId;
     renameFolderName.value = folder.name || "";
     hideError(renameError);
     openModal(renameModal);
