@@ -192,7 +192,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const titleLink = document.createElement("a");
     titleLink.href = `document-detail.html?id=${doc.documentId}`;
     titleLink.textContent = doc.title || doc.originalFileName || "Untitled";
-    titleLink.style.color = "inherit";
+    titleLink.className = "document-title-link";
     titleEl.appendChild(titleLink);
 
     header.append(badge, titleEl);

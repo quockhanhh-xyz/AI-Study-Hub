@@ -1422,3 +1422,7 @@ textarea.success {
     gap: 12px;
   }
 }
+/* Document title link — inherits card text color */
+.document-title-link {
+  color: inherit;
+}

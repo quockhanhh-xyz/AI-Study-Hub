@@ -101,6 +101,7 @@ function validateFile(file) {
 
 // ── Progress bar (Simulated since fetch lacks a native progress event) ─────────
 function showProgress() {
+  uploadProgress.removeAttribute("aria-hidden");
   uploadProgress.style.display = "block";
   progressFill.style.width = "0%";
   progressText.textContent = "Uploading...";
@@ -127,6 +128,7 @@ function completeProgress(interval) {
 }
 
 function hideProgress() {
+  uploadProgress.setAttribute("aria-hidden", "true");
   uploadProgress.style.display = "none";
   progressFill.style.width = "0%";
 }
@@ -228,7 +230,7 @@ uploadForm.addEventListener("submit", async (e) => {
 
   } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = "Upload document";
+    submitBtn.textContent = "Upload Document";
   }
 });
 
