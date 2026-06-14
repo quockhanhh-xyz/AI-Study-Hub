@@ -219,7 +219,7 @@
           userId: user.userId,
           fullName: user.fullName,
           email: user.email,
-          role: user.role,
+          role: user.role
         })
       );
 

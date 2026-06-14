@@ -24,20 +24,20 @@ async function checkAuthenticationStatus() {
   if (!currentRoute) return false;
 
   try {
-    // Call the session endpoint. The api.js will automatically handle 401 if it fails on protected pages.
-    const result = await get("/api/auth/me");
-    
+    // Explicitly bypass global interceptor redirect to let layout component manage traffic independently
+    const result = await get("/api/auth/me", { skipUnauthorizedRedirect: true });
+
     // If successful, backfill or keep currentUser info active for UI layout
     if (result && result.data) {
       localStorage.setItem("currentUser", JSON.stringify(result.data));
     }
-    
+
     // Guard clause: If page is only for guests (like login.html) and user session is active -> Kick to dashboard
     if (currentRoute.hideWhenAuth) {
       window.location.href = "dashboard.html";
       return true;
     }
-    
+
     return true;
   } catch (error) {
     // If endpoint fails, user session is unauthenticated or expired
@@ -47,7 +47,7 @@ async function checkAuthenticationStatus() {
     if (currentRoute.requiresAuth) {
       window.location.href = "login.html";
     }
-    
+
     return false;
   }
 }
@@ -74,7 +74,7 @@ function renderDynamicSidebar(isAuthenticated) {
     .map(item => `<a href="${item.url}" class="nav-link">${item.name}</a>`)
     .join("");
 
-   // Append a dedicated Logout link if user is fully logged in
+  // Append a dedicated Logout link if user is fully logged in
   if (isAuthenticated) {
     const logoutContainer = document.createElement("div");
     logoutContainer.className = "sidebar-footer";

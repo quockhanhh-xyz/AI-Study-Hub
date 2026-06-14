@@ -7,14 +7,6 @@
     <title>Dashboard - AI Study Hub</title>
     <meta name="description" content="View your study dashboard, check your document stats, and manage your uploaded files." />
     <link rel="stylesheet" href="css/style.css" />
-    <script>
-        // Inline pre-render guard system ensuring synchronized multi-token verification
-        if (!localStorage.getItem("accessToken") || !localStorage.getItem("currentUser")) {
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("currentUser");
-            window.location.href = "login.html";
-        }
-    </script>
 </head>
 
 <body>
