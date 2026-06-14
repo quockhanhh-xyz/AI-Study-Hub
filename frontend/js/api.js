@@ -16,27 +16,29 @@ async function apiRequest(endpoint, options = {}) {
 
   // AUTOMATIC MECHANISM: 
   // - If NOT FormData -> Automatically append default JSON Content-Type
-  // - If IT IS FormData -> STRICTLY DO NOT append, let the browser auto-generate the boundary for file management
   if (!isFormData) {
     headers["Content-Type"] = "application/json";
   }
 
-  // Automatically retrieve token from localStorage (if exists) to attach to all upcoming requests
-  const token = localStorage.getItem("accessToken");
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  // Execute fetch request to Backend
+  // Execute fetch request to Backend with credentials included for Cookie management
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
-    headers: headers
+    headers: headers,
+    credentials: "include" // Mandatory for HttpOnly Cookie authentication flow
   });
+
+  // Handle explicit HTTP 401 Unauthorized globally by redirecting to login page
+  if (response.status === 401) {
+    console.warn("Session expired or invalid (HTTP 401). Redirecting to login...");
+    window.location.href = "login.html";
+    // Block further execution by throwing a temporary exception
+    throw new Error("Unauthorized - Session expired");
+  }
 
   // Parse response payload as JSON
   const data = await response.json();
   
-  // Check for HTTP error codes (e.g., 400, 401, 500) or if the success flag from Backend contract is false
+  // Check for other HTTP error codes or if the success flag from Backend contract is false
   if (!response.ok || data.success === false) {
     // Print warning to Console tab to help other FE devs debug when Backend returns an error
     console.warn("API Request Business Error:", data);
@@ -47,7 +49,6 @@ async function apiRequest(endpoint, options = {}) {
  
   return data;
 }
-
 /*
   API GET request helper
   @param {string} endpoint - Example: "/api/health"
