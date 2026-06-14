@@ -9,16 +9,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
     private final OtpService otpService;
 
     @Transactional
@@ -42,7 +38,8 @@ public class AuthService {
         return user;
     }
 
-    public Map<String, Object> login(LoginRequest request) {
+    // Method mới - trả User để Controller tự sinh token và set cookie
+    public User loginAndGetUser(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Invalid email or password."));
 
@@ -60,16 +57,13 @@ public class AuthService {
             }
         }
 
-        String token = jwtUtil.generateToken(user.getEmail());
+        return user;
+    }
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("token", token);
-        data.put("userId", user.getUserId());
-        data.put("role", user.getRole());
-        data.put("email", user.getEmail());
-        data.put("fullName", user.getFullName());
-        data.put("status", user.getStatus());
-        return data;
+    // Method mới - lấy user theo email từ token
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found."));
     }
 
     public User getCurrentUser() {
