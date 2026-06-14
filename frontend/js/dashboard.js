@@ -233,7 +233,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       const result = await getMyFolders();
       const folders = Array.isArray(result.data) ? result.data : [];
-      
+
       if (folderFilter) {
         const currentValue = folderFilter.value;
         folderFilter.innerHTML = `
