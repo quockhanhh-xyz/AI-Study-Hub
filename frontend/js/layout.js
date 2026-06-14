@@ -61,7 +61,7 @@ function renderDynamicSidebar(isAuthenticated) {
     .map(item => `<a href="${item.url}" class="nav-link">${item.name}</a>`)
     .join("");
 
-  // Append a dedicated Logout link if user is fully logged in
+   // Append a dedicated Logout link if user is fully logged in
   if (isAuthenticated) {
     const logoutContainer = document.createElement("div");
     logoutContainer.className = "sidebar-footer";
