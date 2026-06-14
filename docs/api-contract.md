@@ -1,5 +1,8 @@
 # API Contract - AI Study Hub
 
+> [!IMPORTANT]
+> This is the target authentication contract for the upcoming security implementation. Currently, the active code operates using local storage and Bearer headers, but all endpoints documented below have been updated to reflect the final target architecture employing HttpOnly Cookies.
+
 ## Base URL
 
 ```text
@@ -381,11 +384,9 @@ These APIs support Step 2: authenticated users upload study documents to Cloudin
 
 Uploads a document file for the currently authenticated user.
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-```
+- Cookie: `accessToken=jwt-token-value-here`
 *(Note: Do not manually set `Content-Type` header when sending `FormData` in JavaScript; let the browser automatically generate the header with boundary.)*
 
 ### Form Data (FormData)
@@ -552,11 +553,9 @@ If `folderId` is provided but belongs to another user:
 
 Returns documents owned by the currently authenticated user, with optional search and filter parameters. Only documents with `status = 'ACTIVE'` are returned.
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-```
+- Cookie: `accessToken=jwt-token-value-here`
 
 ### Query Parameters
 
@@ -627,11 +626,9 @@ These APIs support retrieving subject master data.
 
 Returns all active subjects.
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-```
+- Cookie: `accessToken=jwt-token-value-here`
 
 ### Success Response
 
@@ -678,11 +675,9 @@ These APIs manage documents after upload. Access is strictly restricted to the o
 
 Returns detailed information for a specific document owned by the authenticated user.
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-```
+- Cookie: `accessToken=jwt-token-value-here`
 
 ### Success Response
 
@@ -752,11 +747,9 @@ If the document does not exist or has been soft-deleted:
 
 Updates the title, description, and subject of a specific document owned by the authenticated user.
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-```
+- Cookie: `accessToken=jwt-token-value-here`
 
 ### Request Body
 
@@ -844,11 +837,9 @@ If `subjectId` is provided but does not exist in the database or is inactive:
 
 Soft-deletes a specific document owned by the authenticated user.
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-```
+- Cookie: `accessToken=jwt-token-value-here`
 
 ### Success Response
 
@@ -887,7 +878,7 @@ Authorization: Bearer sample-token
 These APIs manage user-defined folders for document organization. Access is restricted to the folder owner.
 
 > [!NOTE]
-> All Step 5 APIs (Folders and Trash/Restore) require an `Authorization` header. A missing or expired token returns `401 Unauthorized` with the message: `"Your session has expired. Please log in again."`.
+> All Folder and Trash/Restore APIs require cookie-based authentication. A missing or expired accessToken cookie returns `401 Unauthorized` with the message: `"Your session has expired. Please log in again."`.
 
 ## 6.1. Create Folder API
 
@@ -895,12 +886,10 @@ These APIs manage user-defined folders for document organization. Access is rest
 
 Creates a new folder for the currently authenticated user.
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-Content-Type: application/json
-```
+- Cookie: `accessToken=jwt-token-value-here`
+- Content-Type: `application/json`
 
 ### Request Body
 
@@ -965,11 +954,9 @@ If the user already has an active folder with the same name:
 
 Retrieves all active folders owned by the currently authenticated user. Only folders with `status = 'ACTIVE'` are returned.
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-```
+- Cookie: `accessToken=jwt-token-value-here`
 
 ### Success Response (200 OK)
 
@@ -996,11 +983,9 @@ Authorization: Bearer sample-token
 
 Retrieves details of a specific folder owned by the authenticated user. Only folders with `status = 'ACTIVE'` can be retrieved.
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-```
+- Cookie: `accessToken=jwt-token-value-here`
 
 ### Success Response (200 OK)
 
@@ -1049,12 +1034,10 @@ If the folder does not exist or has been soft-deleted:
 
 Updates the name of a specific folder owned by the authenticated user.
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-Content-Type: application/json
-```
+- Cookie: `accessToken=jwt-token-value-here`
+- Content-Type: `application/json`
 
 ### Request Body
 
@@ -1133,11 +1116,9 @@ If the folder does not exist or has been soft-deleted:
 
 Soft-deletes a folder owned by the authenticated user. This changes its `status` to `'DELETED'` in MySQL and records `deletedAt`. All active documents inside this folder are automatically soft-deleted with the same timestamp.
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-```
+- Cookie: `accessToken=jwt-token-value-here`
 
 ### Success Response (200 OK)
 
@@ -1177,12 +1158,10 @@ Authorization: Bearer sample-token
 
 Moves a document to a specified folder. Both the document and the target folder must be owned by the authenticated user.
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-Content-Type: application/json
-```
+- Cookie: `accessToken=jwt-token-value-here`
+- Content-Type: `application/json`
 
 ### Request Body
 
@@ -1244,11 +1223,9 @@ These APIs manage soft-deleted documents and folders.
 
 Retrieves all soft-deleted folders and documents owned by the currently authenticated user (`status = 'DELETED'`).
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-```
+- Cookie: `accessToken=jwt-token-value-here`
 
 ### Success Response (200 OK)
 
@@ -1287,11 +1264,9 @@ Authorization: Bearer sample-token
 
 Restores a soft-deleted folder. This sets the folder's `status` back to `'ACTIVE'` and resets `deletedAt` to `null`. All documents inside this folder that were soft-deleted as part of the folder deletion (sharing the same `deletedAt` timestamp) are also restored to `'ACTIVE'`.
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-```
+- Cookie: `accessToken=jwt-token-value-here`
 
 ### Success Response (200 OK)
 
@@ -1334,11 +1309,9 @@ If the folder does not exist or is not in the trash:
 Restores a soft-deleted document. This sets the document's `status` back to `'ACTIVE'` and resets `deletedAt` to `null`.
 *(Note: If the document belonged to a folder that has since been permanently deleted, the document is restored to the root/unassigned level. If the folder is still in the trash, the document is restored to the root unless the folder itself is restored.)*
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-```
+- Cookie: `accessToken=jwt-token-value-here`
 
 ### Success Response (200 OK)
 
@@ -1380,11 +1353,9 @@ If the document does not exist or is not in the trash:
 
 Permanently deletes a folder from the database. All documents contained within this folder (whether in active or deleted status) are also permanently deleted from the database, and their physical files are deleted from Cloudinary.
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-```
+- Cookie: `accessToken=jwt-token-value-here`
 
 ### Success Response (200 OK)
 
@@ -1424,11 +1395,9 @@ Authorization: Bearer sample-token
 
 Permanently deletes a document from the database and removes the associated file from Cloudinary Storage using its `publicId`.
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-```
+- Cookie: `accessToken=jwt-token-value-here`
 
 ### Success Response (200 OK)
 

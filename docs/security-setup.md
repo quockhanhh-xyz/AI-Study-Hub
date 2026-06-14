@@ -2,6 +2,9 @@
 
 This document details the security architecture, environment variable requirements, and configuration instructions for the AI Study Hub codebase.
 
+> [!NOTE]
+> This guide describes the target authentication architecture. Currently, the active application code uses Bearer headers and localStorage, while the target design defined here utilizes HttpOnly Cookies. This setup document outlines the properties and variables needed for both configurations.
+
 ---
 
 ## 1. Security Architecture Overview

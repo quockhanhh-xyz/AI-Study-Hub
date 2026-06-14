@@ -69,9 +69,9 @@ This document specifies the security test cases designed to verify the implement
 | Item | Details |
 | :--- | :--- |
 | **Objective** | Verify that general resources (documents and folders) are protected against unauthenticated requests. |
-| **API Endpoints** | `GET /api/documents` and `GET /api/folders` |
+| **API Endpoints** | `GET /api/documents/my` and `GET /api/folders/my` |
 | **Cookies** | Clear all session cookies. |
-| **Steps** | 1. Submit a GET request to the documents library list endpoint.<br>2. Submit a GET request to the folders retrieval endpoint. |
+| **Steps** | 1. Submit a GET request to the user's documents library list endpoint (`/api/documents/my`).<br>2. Submit a GET request to the user's folders retrieval endpoint (`/api/folders/my`). |
 | **Expected Results**| - Both requests receive a `401 Unauthorized` status response. |
 
 ---
