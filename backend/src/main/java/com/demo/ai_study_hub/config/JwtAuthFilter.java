@@ -1,5 +1,6 @@
 package com.demo.ai_study_hub.config;
 
+import com.demo.ai_study_hub.controller.AuthController;
 import com.demo.ai_study_hub.service.JwtUtil;
 import com.demo.ai_study_hub.service.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
@@ -31,7 +32,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = extractTokenFromCookie(request);
 
-        // Fallback: đọc từ Authorization header nếu không có cookie
+        // Transitional compatibility: fallback to Bearer header
+        // Will be removed after FE cookie auth migration is complete
         if (token == null) {
             String authHeader = request.getHeader("Authorization");
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -55,7 +57,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private String extractTokenFromCookie(HttpServletRequest request) {
         if (request.getCookies() == null) return null;
         for (Cookie cookie : request.getCookies()) {
-            if ("AUTH_TOKEN".equals(cookie.getName())) {
+            if (AuthController.COOKIE_NAME.equals(cookie.getName())) {
                 return cookie.getValue();
             }
         }

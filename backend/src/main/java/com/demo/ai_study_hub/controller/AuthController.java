@@ -7,9 +7,10 @@ import com.demo.ai_study_hub.dto.RegisterRequest;
 import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.service.AuthService;
 import com.demo.ai_study_hub.service.JwtUtil;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,9 @@ public class AuthController {
 
     private final AuthService authService;
     private final JwtUtil jwtUtil;
+
+    // Cookie name constant - used in login, logout, filter
+    public static final String COOKIE_NAME = "accessToken";
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<Object>> register(@RequestBody RegisterRequest request) {
@@ -50,13 +54,15 @@ public class AuthController {
             User user = authService.loginAndGetUser(request);
             String token = jwtUtil.generateToken(user.getEmail());
 
-            // Set HttpOnly Cookie
-            Cookie cookie = new Cookie("AUTH_TOKEN", token);
-            cookie.setHttpOnly(true);
-            cookie.setPath("/");
-            cookie.setMaxAge((int) (jwtUtil.getExpirationMs() / 1000));
-            // cookie.setSecure(true); // Bật khi deploy HTTPS
-            response.addCookie(cookie);
+            // Set cookie using ResponseCookie for SameSite support
+            ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, token)
+                    .httpOnly(true)
+                    .secure(false) // Set true when deploying with HTTPS
+                    .sameSite("Strict")
+                    .path("/")
+                    .maxAge(jwtUtil.getExpirationMs() / 1000)
+                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
             LoginResponse loginResponse = LoginResponse.builder()
                     .userId(user.getUserId())
@@ -74,12 +80,15 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Object>> logout(HttpServletResponse response) {
-        // Clear cookie
-        Cookie cookie = new Cookie("AUTH_TOKEN", "");
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0); // Xóa cookie ngay lập tức
-        response.addCookie(cookie);
+        // Clear cookie with same name/path/sameSite
+        ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(0)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
         return ResponseEntity.ok(new ApiResponse<>(true, "Logout successfully", null));
     }
