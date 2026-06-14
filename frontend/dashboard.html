@@ -25,51 +25,76 @@
         </aside>
 
         <main class="main-content">
-            <section class="page-header">
-                <h1>Dashboard</h1>
-                <p id="dashboardUserName">Welcome back! Here's your study overview.</p>
-            </section>
-
-            <section class="card">
-                <h2 style="text-align: left; margin-top: 0;">My Stats</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">My Documents</div>
-                        <div class="stat-value" id="docCount">-</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">AI Conversations</div>
-                        <div class="stat-value" id="chatCount">-</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Account Tier</div>
-                        <div class="stat-value" id="joinDate">-</div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="card document-panel">
-                <div class="section-header">
+            <section class="page-header" style="max-width: none; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin: 0 auto; width: 100%;">
                     <div>
-                        <h2>My Documents</h2>
-                        <p>Files you have uploaded to AI Study Hub.</p>
+                        <h1 style="margin: 0; text-align: left;">Dashboard</h1>
+                        <p id="dashboardUserName" style="margin: 4px 0 0 0; color: var(--muted); text-align: left;">Welcome back! Here's your study overview.</p>
                     </div>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
-                        <a href="trash.html" class="btn btn-secondary upload-link-btn">Trash</a>
-                        <a href="upload.html" class="btn btn-primary upload-link-btn">Upload Document</a>
+                    <div style="width: 100%; max-width: 400px;">
+                        <input type="text" id="searchInput" placeholder="🔍 Search documents by title or keyword..." style="border-radius: 12px;" />
+                    </div>
+                </div>
+            </section>
+
+            <section class="grid-container" style="margin-bottom: 32px;">
+                <div class="stat-card">
+                    <div class="stat-label">My Documents</div>
+                    <div class="stat-value" id="docCount">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">AI Conversations</div>
+                    <div class="stat-value" id="chatCount">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Account Tier</div>
+                    <div class="stat-value" id="joinDate">-</div>
+                </div>
+            </section>
+
+            <section class="folders-section" style="margin-bottom: 32px; width: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <h2 style="margin: 0; font-size: 20px; font-weight: 700; text-align: left;">Folder Directories</h2>
+                        <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px; text-align: left;">Browse and filter documents by folder.</p>
+                    </div>
+                    <a href="folders.html" class="btn btn-secondary btn-sm" style="width: auto;">Manage Folders</a>
+                </div>
+                
+                <div id="folderLoader" class="empty-state" style="border: none; background: transparent; padding: 24px 0;">
+                    <span>Loading folders...</span>
+                </div>
+                
+                <div id="folderErrorMessage" class="status-box status-error" style="display: none; margin-bottom: 16px;"></div>
+
+                <div id="folderGrid" class="grid-container" style="display: none;"></div>
+                
+                <div id="folderEmptyState" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">📁</div>
+                    <p style="margin: 0 0 16px 0;">No folders created yet.</p>
+                    <a href="folders.html" class="btn btn-secondary btn-sm" style="width: auto;">Create folder</a>
+                </div>
+            </section>
+
+            <section class="card document-panel" style="max-width: none; margin: 0; width: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <h2 style="margin: 0; font-size: 20px; font-weight: 700; text-align: left;">Recent Documents</h2>
+                        <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px; text-align: left;">Your learning materials and files.</p>
+                    </div>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <a href="trash.html" class="btn btn-secondary" style="width: auto;">Trash</a>
+                        <a href="upload.html" class="btn btn-primary" style="width: auto;">Upload Document</a>
                     </div>
                 </div>
 
-                <div class="filter-bar">
-                    <div class="filter-group">
-                        <input type="text" id="searchInput" placeholder="Search by title or filename..." />
-                    </div>
-                    <div class="filter-group">
+                <div class="toolbar">
+                    <div class="filter-group" style="flex: 1; min-width: 150px;">
                         <select id="subjectFilter">
                             <option value="">All Subjects</option>
                         </select>
                     </div>
-                    <div class="filter-group">
+                    <div class="filter-group" style="flex: 1; min-width: 150px;">
                         <select id="fileTypeFilter">
                             <option value="">All File Types</option>
                             <option value="PDF">PDF</option>
@@ -85,27 +110,28 @@
                             <option value="PNG">PNG</option>
                         </select>
                     </div>
-                    <div class="filter-group">
+                    <div class="filter-group" style="flex: 1; min-width: 150px;">
                         <select id="folderFilter">
                             <option value="">All Folders</option>
                             <option value="0">Root Documents</option>
                         </select>
                     </div>
-                    <button type="button" id="clearFiltersBtn" class="btn btn-secondary clear-filters-btn">Clear</button>
+                    <button type="button" id="clearFiltersBtn" class="btn btn-secondary" style="width: auto;">Clear Filters</button>
                 </div>
 
-                <div id="documentLoader" class="document-state">
+                <div id="documentLoader" class="empty-state" style="border: none; background: transparent; padding: 48px 0;">
                     <span>Loading documents...</span>
                 </div>
 
-                <div id="documentErrorMessage" class="helper-text error document-status" style="display: none;"></div>
+                <div id="documentErrorMessage" class="status-box status-error" style="display: none; margin-bottom: 24px;"></div>
 
-                <div id="documentGrid" class="document-grid" style="display: none;"></div>
+                <div id="documentGrid" class="grid-container" style="display: none;"></div>
 
                 <div id="emptyState" class="empty-state" style="display: none;">
-                    <div class="empty-title">No documents yet</div>
-                    <p>Upload your first study document to keep everything in one place.</p>
-                    <a href="upload.html" class="btn btn-secondary empty-action">Upload your first document</a>
+                    <div class="empty-state-icon">📄</div>
+                    <div class="empty-title" style="font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 8px;">No matching documents</div>
+                    <p style="margin: 0 0 20px 0; color: var(--muted);">Upload your first study document or try adjusting your search filters.</p>
+                    <a href="upload.html" class="btn btn-primary empty-action" style="width: auto;">Upload document</a>
                 </div>
             </section>
         </main>

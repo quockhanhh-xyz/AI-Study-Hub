@@ -71,6 +71,58 @@ document.addEventListener("DOMContentLoaded", async function () {
     return item;
   }
 
+  function createFolderCard(folder) {
+    const card = document.createElement("div");
+    card.className = "folder-card";
+    card.style.cursor = "pointer";
+
+    const main = document.createElement("div");
+    main.className = "folder-card-main";
+
+    const icon = document.createElement("div");
+    icon.className = "folder-icon";
+    icon.textContent = "📁";
+
+    const name = document.createElement("p");
+    name.className = "folder-name";
+    name.textContent = folder.name || "Untitled Folder";
+
+    const meta = document.createElement("p");
+    meta.className = "folder-meta";
+    meta.textContent = folder.createdAt
+      ? new Date(folder.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" })
+      : "";
+
+    main.append(icon, name, meta);
+
+    const actions = document.createElement("div");
+    actions.className = "folder-card-actions";
+
+    const openBtn = document.createElement("button");
+    openBtn.type = "button";
+    openBtn.className = "btn btn-primary btn-sm";
+    openBtn.textContent = "Browse Files";
+    openBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (folderFilter) {
+        folderFilter.value = String(folder.folderId);
+        loadDocuments();
+      }
+    });
+
+    actions.append(openBtn);
+    card.append(main, actions);
+
+    card.addEventListener("click", function () {
+      if (folderFilter) {
+        folderFilter.value = String(folder.folderId);
+        loadDocuments();
+      }
+    });
+
+    return card;
+  }
+
   function createDocumentCard(documentItem) {
     const card = document.createElement("article");
     card.className = "document-card";
@@ -112,11 +164,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     const folderLink = document.createElement("button");
     folderLink.type = "button";
     folderLink.className = "btn btn-secondary btn-sm";
-    folderLink.style.width = "auto";
     folderLink.textContent = documentItem.folderId
       ? `Folder: ${documentItem.folderName || "Folder"}`
       : "Root";
-    folderLink.addEventListener("click", function () {
+    folderLink.addEventListener("click", function (e) {
+      e.stopPropagation();
       if (!folderFilter) return;
       folderFilter.value = documentItem.folderId ? String(documentItem.folderId) : "0";
       loadDocuments();
@@ -168,27 +220,57 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   async function loadFolders() {
-    if (!folderFilter) return;
+    const folderGrid = document.getElementById("folderGrid");
+    const folderLoader = document.getElementById("folderLoader");
+    const folderErrorMessage = document.getElementById("folderErrorMessage");
+    const folderEmptyState = document.getElementById("folderEmptyState");
+
+    if (folderLoader) folderLoader.style.display = "flex";
+    if (folderGrid) folderGrid.style.display = "none";
+    if (folderEmptyState) folderEmptyState.style.display = "none";
+    if (folderErrorMessage) folderErrorMessage.style.display = "none";
 
     try {
       const result = await getMyFolders();
       const folders = Array.isArray(result.data) ? result.data : [];
-      const currentValue = folderFilter.value;
+      
+      if (folderFilter) {
+        const currentValue = folderFilter.value;
+        folderFilter.innerHTML = `
+          <option value="">All Folders</option>
+          <option value="0">Root Documents</option>
+        `;
+        folders.forEach(function (folder) {
+          const option = document.createElement("option");
+          option.value = folder.folderId;
+          option.textContent = folder.name;
+          folderFilter.appendChild(option);
+        });
+        folderFilter.value = currentValue;
+      }
 
-      folderFilter.innerHTML = `
-        <option value="">All Folders</option>
-        <option value="0">Root Documents</option>
-      `;
+      if (folderLoader) folderLoader.style.display = "none";
 
-      folders.forEach(function (folder) {
-        const option = document.createElement("option");
-        option.value = folder.folderId;
-        option.textContent = folder.name;
-        folderFilter.appendChild(option);
-      });
-
-      folderFilter.value = currentValue;
+      if (folders.length === 0) {
+        if (folderEmptyState) folderEmptyState.style.display = "flex";
+        if (folderGrid) folderGrid.style.display = "none";
+      } else {
+        if (folderGrid) {
+          folderGrid.innerHTML = "";
+          folders.forEach(function (folder) {
+            folderGrid.appendChild(createFolderCard(folder));
+          });
+          folderGrid.style.display = "grid";
+        }
+      }
     } catch (error) {
+      if (folderLoader) folderLoader.style.display = "none";
+      if (folderGrid) folderGrid.style.display = "none";
+      if (folderEmptyState) folderEmptyState.style.display = "none";
+      if (folderErrorMessage) {
+        folderErrorMessage.textContent = error.message || "Failed to load folders.";
+        folderErrorMessage.style.display = "block";
+      }
       console.warn("Failed to load folders:", error);
     }
   }
