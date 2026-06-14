@@ -227,7 +227,7 @@ Sends a new OTP to the user's email if the account exists and has not been verif
 
 ## POST `/api/auth/login`
 
-Logs in a user account. Only users with status `ACTIVE` can log in.
+Logs in a user account. Only users with status `ACTIVE` can log in. Sets a secure `HttpOnly` cookie in the HTTP headers.
 
 ### Request Body
 
@@ -238,7 +238,16 @@ Logs in a user account. Only users with status `ACTIVE` can log in.
 }
 ```
 
-### Success Response
+### Success Response Headers
+
+```http
+Set-Cookie: accessToken=jwt-token-value-here; Path=/; HttpOnly; SameSite=Strict; Secure
+```
+*(Note: The `Secure` flag is enabled in production environments.)*
+
+### Success Response Body
+
+*(Note: The JWT token is NOT returned in the response body for security against XSS attacks.)*
 
 ```json
 {
@@ -249,8 +258,7 @@ Logs in a user account. Only users with status `ACTIVE` can log in.
     "fullName": "Nguyen Van A",
     "email": "user@gmail.com",
     "role": "USER",
-    "status": "ACTIVE",
-    "token": "sample-token"
+    "status": "ACTIVE"
   }
 }
 ```
@@ -291,13 +299,12 @@ Logs in a user account. Only users with status `ACTIVE` can log in.
 
 ## GET `/api/auth/me`
 
-Returns the current logged-in user's information.
+Returns the current logged-in user's information. No authentication headers are required; the browser automatically sends the HttpOnly `accessToken` cookie.
 
-### Headers
+### Request Headers
 
-```text
-Authorization: Bearer sample-token
-```
+- Cookie: `accessToken=jwt-token-value-here`
+- *(Note: No `Authorization` header is sent. Cross-origin requests must be sent with credentials/cookies enabled.)*
 
 ### Success Response
 
@@ -324,6 +331,43 @@ Authorization: Bearer sample-token
   "data": null
 }
 ```
+
+---
+
+## 2.6. Logout API
+
+## POST `/api/auth/logout`
+
+Logs out the user by clearing the session and invalidating the `accessToken` cookie.
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response Headers
+
+```http
+Set-Cookie: accessToken=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict; Secure
+```
+
+### Success Response Body
+
+```json
+{
+  "success": true,
+  "message": "Logout successfully",
+  "data": null
+}
+```
+
+---
+
+## Authentication Integration Rules (XSS/CSRF Prevention)
+
+- **HttpOnly Cookie**: The JWT token MUST be stored in a cookie named `accessToken`. It MUST be configured as `HttpOnly`, preventing client-side scripts from reading the token (mitigating XSS).
+- **LocalStorage & SessionStorage Prohibition**: Under no circumstances should the frontend store the authentication token in `localStorage`, `sessionStorage`, or custom JavaScript memory caches.
+- **Credential Propagation**: The frontend must send all fetch requests to protected backend APIs with the option `credentials: "include"` (or configure Axios / XMLHttpRequest to send credentials/cookies).
+- **SameSite Config**: The cookie MUST carry `SameSite=Strict` to defend against Cross-Site Request Forgery (CSRF).
 
 ---
 
