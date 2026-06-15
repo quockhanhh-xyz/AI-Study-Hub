@@ -17,7 +17,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-FLD-001 - Create Folder Successfully
 - **Precondition:** User A is logged in.
 - **Steps:**
-  1. Send `POST /api/folders` with User A's token.
+  1. Send `POST /api/folders` with User A's session.
   2. Request Body:
      ```json
      {
@@ -34,7 +34,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-FLD-002 - Create Folder with Empty Name (400 Bad Request)
 - **Precondition:** User A is logged in.
 - **Steps:**
-  1. Send `POST /api/folders` with User A's token.
+  1. Send `POST /api/folders` with User A's session.
   2. Request Body:
      ```json
      {
@@ -88,7 +88,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-FLD-005 - Get My Folders Successfully
 - **Precondition:** User A is logged in and owns folder "Math Notes" (ACTIVE) and folder "Old Physics" (DELETED).
 - **Steps:**
-  1. Send `GET /api/folders/my` with User A's token.
+  1. Send `GET /api/folders/my` with User A's session.
 - **Expected Result:**
   - Status code: `200 OK`.
   - Response `success` is `true`.
@@ -98,7 +98,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-FLD-005a - Get Folder Detail Successfully
 - **Precondition:** User A is logged in and owns active Folder ID `1` ("Math Notes").
 - **Steps:**
-  1. Send `GET /api/folders/1` with User A's token.
+  1. Send `GET /api/folders/1` with User A's session.
 - **Expected Result:**
   - Status code: `200 OK`.
   - Response `success` is `true`.
@@ -108,7 +108,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-FLD-005b - Get Folder Detail Owned by Another User (403 Forbidden)
 - **Precondition:** User B is logged in. Folder ID `1` belongs to User A.
 - **Steps:**
-  1. Send `GET /api/folders/1` with User B's token.
+  1. Send `GET /api/folders/1` with User B's session.
 - **Expected Result:**
   - Status code: `403 Forbidden`.
   - Response `success` is `false`.
@@ -118,7 +118,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-FLD-005c - Get Folder Detail of Non-existent or Soft-deleted Folder (404 Not Found)
 - **Precondition:** User A is logged in. Folder ID `999` does not exist in the database (or is soft-deleted).
 - **Steps:**
-  1. Send `GET /api/folders/999` with User A's token.
+  1. Send `GET /api/folders/999` with User A's session.
 - **Expected Result:**
   - Status code: `404 Not Found`.
   - Response `success` is `false`.
@@ -128,7 +128,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-FLD-006 - Update Folder Name Successfully
 - **Precondition:** User A is logged in and owns active Folder ID `1` ("Math Notes").
 - **Steps:**
-  1. Send `PUT /api/folders/1` with User A's token.
+  1. Send `PUT /api/folders/1` with User A's session.
   2. Request Body:
      ```json
      {
@@ -144,7 +144,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-FLD-007 - Update Folder Owned by Another User (403 Forbidden)
 - **Precondition:** User B is logged in. Folder ID `1` belongs to User A.
 - **Steps:**
-  1. Send `PUT /api/folders/1` with User B's token.
+  1. Send `PUT /api/folders/1` with User B's session.
   2. Request Body:
      ```json
      {
@@ -183,7 +183,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-DOC-024b - Upload Document into Non-existent Folder (404 Not Found)
 - **Precondition:** User A is logged in. Folder ID `999` does not exist in the database (or is soft-deleted).
 - **Steps:**
-  1. Send `POST /api/documents/upload` with User A's token.
+  1. Send `POST /api/documents/upload` with User A's session.
   2. Format: `multipart/form-data`.
   3. Include `file` (valid), `title`="SWR Lecture 1", `description`="Week 1 note", and `folderId`=999.
 - **Expected Result:**
@@ -196,7 +196,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-DOC-024c - Upload Document into Folder Owned by Another User (403 Forbidden)
 - **Precondition:** User A is logged in. Folder ID `2` is owned by User B.
 - **Steps:**
-  1. Send `POST /api/documents/upload` with User A's token.
+  1. Send `POST /api/documents/upload` with User A's session.
   2. Format: `multipart/form-data`.
   3. Include `file` (valid), `title`="SWR Lecture 1", `description`="Week 1 note", and `folderId`=2.
 - **Expected Result:**
@@ -213,7 +213,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-DOC-025 - Move Document to Folder Successfully
 - **Precondition:** User A is logged in. User A owns active Document ID `101` and active Folder ID `1` ("Math Notes").
 - **Steps:**
-  1. Send `PUT /api/documents/101/move` with User A's token.
+  1. Send `PUT /api/documents/101/move` with User A's session.
   2. Request Body:
      ```json
      {
@@ -230,7 +230,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-DOC-026 - Move Document to Root (Null Folder) Successfully
 - **Precondition:** User A is logged in. Document ID `101` is currently inside Folder ID `1`.
 - **Steps:**
-  1. Send `PUT /api/documents/101/move` with User A's token.
+  1. Send `PUT /api/documents/101/move` with User A's session.
   2. Request Body:
      ```json
      {
@@ -247,7 +247,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-DOC-027 - Move Document of Another User (403 Forbidden)
 - **Precondition:** User B is logged in. Document ID `101` is owned by User A. User B owns Folder ID `2`.
 - **Steps:**
-  1. Send `PUT /api/documents/101/move` with User B's token.
+  1. Send `PUT /api/documents/101/move` with User B's session.
   2. Request Body:
      ```json
      {
@@ -264,7 +264,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-DOC-028 - Move Document to Folder Owned by Another User (403 Forbidden)
 - **Precondition:** User A is logged in. Document ID `101` is owned by User A. Folder ID `2` is owned by User B.
 - **Steps:**
-  1. Send `PUT /api/documents/101/move` with User A's token.
+  1. Send `PUT /api/documents/101/move` with User A's session.
   2. Request Body:
      ```json
      {
@@ -281,7 +281,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-DOC-028a - Move Document to Soft-deleted Folder (404 Not Found)
 - **Precondition:** User A is logged in. User A owns Document ID `101`. Folder ID `1` is owned by User A but has been soft-deleted.
 - **Steps:**
-  1. Send `PUT /api/documents/101/move` with User A's token.
+  1. Send `PUT /api/documents/101/move` with User A's session.
   2. Request Body:
      ```json
      {
@@ -354,7 +354,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-TRSH-002a - Restore Non-existent Folder from Trash (404 Not Found)
 - **Precondition:** User A is logged in. Folder ID `999` does not exist (or is active, not in trash).
 - **Steps:**
-  1. Send `POST /api/trash/folders/999/restore` with User A's token.
+  1. Send `POST /api/trash/folders/999/restore` with User A's session.
 - **Expected Result:**
   - Status code: `404 Not Found`.
   - Response `success` is `false`.
@@ -364,7 +364,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-TRSH-003 - Restore Document Individually Successfully
 - **Precondition:** User A owns soft-deleted Document ID `101` (currently in trash). The parent Folder ID `1` is still ACTIVE.
 - **Steps:**
-  1. Send `POST /api/trash/documents/101/restore` with User A's token.
+  1. Send `POST /api/trash/documents/101/restore` with User A's session.
 - **Expected Result:**
   - Status code: `200 OK`.
   - Response `success` is `true`.
@@ -375,7 +375,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-TRSH-003a - Restore Non-existent Document from Trash (404 Not Found)
 - **Precondition:** User A is logged in. Document ID `999` does not exist (or is active, not in trash).
 - **Steps:**
-  1. Send `POST /api/trash/documents/999/restore` with User A's token.
+  1. Send `POST /api/trash/documents/999/restore` with User A's session.
 - **Expected Result:**
   - Status code: `404 Not Found`.
   - Response `success` is `false`.
@@ -385,7 +385,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-TRSH-004 - Restore Document whose Parent Folder is in Trash (Restored to Root)
 - **Precondition:** User A has soft-deleted Folder ID `1` and Document ID `101` (inside Folder `1`). The folder is NOT yet restored.
 - **Steps:**
-  1. Send `POST /api/trash/documents/101/restore` with User A's token.
+  1. Send `POST /api/trash/documents/101/restore` with User A's session.
 - **Expected Result:**
   - Status code: `200 OK`.
   - Response `success` is `true`.
@@ -396,7 +396,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-TRSH-005 - Restore Folder/Document of Another User (403 Forbidden)
 - **Precondition:** User B is logged in. User A owns soft-deleted Folder ID `1`.
 - **Steps:**
-  1. Send `POST /api/trash/folders/1/restore` with User B's token.
+  1. Send `POST /api/trash/folders/1/restore` with User B's session.
 - **Expected Result:**
   - Status code: `403 Forbidden`.
   - Response `success` is `false`.
@@ -411,7 +411,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-TRSH-006 - Permanent Delete Document (Cloudinary Cleanup)
 - **Precondition:** User A is logged in. User A has a soft-deleted Document ID `101` in trash with Cloudinary public ID `ai-study-hub/documents/1/math.pdf`.
 - **Steps:**
-  1. Send `DELETE /api/trash/documents/101` with User A's token.
+  1. Send `DELETE /api/trash/documents/101` with User A's session.
 - **Expected Result:**
   - Status code: `200 OK`.
   - Response `success` is `true`.
@@ -422,7 +422,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-TRSH-006a - Permanent Delete Non-existent or Active Document (404 Not Found)
 - **Precondition:** User A is logged in. Document ID `999` does not exist (or is active and has not been soft-deleted).
 - **Steps:**
-  1. Send `DELETE /api/trash/documents/999` with User A's token.
+  1. Send `DELETE /api/trash/documents/999` with User A's session.
 - **Expected Result:**
   - Status code: `404 Not Found`.
   - Response `success` is `false`.
@@ -443,7 +443,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-TRSH-007a - Permanent Delete Non-existent or Active Folder (404 Not Found)
 - **Precondition:** User A is logged in. Folder ID `999` does not exist (or is active and has not been soft-deleted).
 - **Steps:**
-  1. Send `DELETE /api/trash/folders/999` with User A's token.
+  1. Send `DELETE /api/trash/folders/999` with User A's session.
 - **Expected Result:**
   - Status code: `404 Not Found`.
   - Response `success` is `false`.
@@ -453,7 +453,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ### TC-TRSH-008 - Permanent Delete Folder/Document of Another User (403 Forbidden)
 - **Precondition:** User B is logged in. User A owns soft-deleted Folder ID `1`.
 - **Steps:**
-  1. Send `DELETE /api/trash/folders/1` with User B's token.
+  1. Send `DELETE /api/trash/folders/1` with User B's session.
 - **Expected Result:**
   - Status code: `403 Forbidden`.
   - Response `success` is `false`.

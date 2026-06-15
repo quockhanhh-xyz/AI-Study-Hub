@@ -10,7 +10,7 @@ In scope:
 - `GET /api/documents/my`
 - Cloudinary Storage upload
 - MySQL document metadata
-- Authenticated ownership by JWT token
+- Authenticated ownership by HttpOnly cookie session
 
 Out of scope:
 
