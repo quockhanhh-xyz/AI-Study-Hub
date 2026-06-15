@@ -48,37 +48,41 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
   - MySQL database record is NOT created.
 - **Status:** `Not Run`
 
-### TC-FLD-003 - Create Folder with Duplicate Name (400 Bad Request)
-- **Precondition:** User A is logged in and already owns an active folder named "Math Notes".
+### TC-FLD-003 - Create Folder with Duplicate Name (409 Conflict)
+- **Precondition:** User A is logged in and already owns an active folder named "Math Notes" at root level.
 - **Steps:**
-  1. Send `POST /api/folders` with User A's token.
+  1. Send `POST /api/folders` with User A's session.
   2. Request Body:
      ```json
      {
-       "name": "Math Notes"
+       "folderName": "Math Notes",
+       "description": "Duplicated folder",
+       "parentFolderId": null
      }
      ```
 - **Expected Result:**
-  - Status code: `400 Bad Request`.
+  - Status code: `409 Conflict`.
   - Response `success` is `false`.
-  - Response `message` states: "Folder name already exists".
+  - Response `message` states: "A folder with the same name already exists in this location.".
   - MySQL database record is NOT created.
 - **Status:** `Not Run`
 
 ### TC-FLD-004 - Create Folder with Duplicate Name of a Soft-Deleted Folder (Success)
-- **Precondition:** User A is logged in. User A has a soft-deleted folder (`status = 'DELETED'`) named "Old Physics".
+- **Precondition:** User A is logged in. User A has a soft-deleted folder (`status = 'DELETED'`) named "Old Physics" at root level.
 - **Steps:**
-  1. Send `POST /api/folders` with User A's token.
+  1. Send `POST /api/folders` with User A's session.
   2. Request Body:
      ```json
      {
-       "name": "Old Physics"
+       "folderName": "Old Physics",
+       "description": "New active folder with old name",
+       "parentFolderId": null
      }
      ```
 - **Expected Result:**
   - Status code: `200 OK`.
   - Response `success` is `true`.
-  - MySQL database contains two folders with the name "Old Physics" for User A: one `'ACTIVE'` (new) and one `'DELETED'`.
+  - MySQL database contains two folders with the name "Old Physics" for User A under root: one `'ACTIVE'` (new) and one `'DELETED'`.
 - **Status:** `Not Run`
 
 ### TC-FLD-005 - Get My Folders Successfully
@@ -154,20 +158,21 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
   - MySQL database folder name remains unchanged.
 - **Status:** `Not Run`
 
-### TC-FLD-008 - Update Folder to a Name That Already Exists (400 Bad Request)
-- **Precondition:** User A is logged in. User A owns Folder ID `1` ("Math Notes") and another active Folder ID `3` ("Chemistry").
+### TC-FLD-008 - Update Folder to a Name That Already Exists (409 Conflict)
+- **Precondition:** User A is logged in. User A owns Folder ID `1` ("Math Notes") and another active Folder ID `3` ("Chemistry") under root level.
 - **Steps:**
-  1. Send `PUT /api/folders/1` with User A's token.
+  1. Send `PUT /api/folders/1` with User A's session.
   2. Request Body:
      ```json
      {
-       "name": "Chemistry"
+       "folderName": "Chemistry",
+       "description": "Renaming to existing folder name"
      }
      ```
 - **Expected Result:**
-  - Status code: `400 Bad Request`.
+  - Status code: `409 Conflict`.
   - Response `success` is `false`.
-  - Message states: "Folder name already exists".
+  - Message states: "A folder with the same name already exists in this location.".
   - Folder ID `1` name remains "Math Notes".
 - **Status:** `Not Run`
 
@@ -294,26 +299,41 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 
 ## Soft-delete & Trash Retrieval Test Cases
 
-### TC-FLD-009 - Soft-delete Folder and Check Cascade Soft-delete of Documents
+### TC-FLD-009 - Soft-delete Non-empty Folder Fails (400 Bad Request)
 - **Precondition:** User A is logged in. User A owns Folder ID `1` ("Math Notes") and Document ID `101` which has `folder_id = 1` and `status = 'ACTIVE'`.
 - **Steps:**
-  1. Send `DELETE /api/folders/1` with User A's token.
+  1. Send `DELETE /api/folders/1` with User A's session.
 - **Expected Result:**
-  - Status code: `200 OK`.
-  - Response `success` is `true`.
-  - MySQL database shows Folder ID `1` status is `'DELETED'` and `deleted_at` has the current timestamp.
-  - MySQL database shows Document ID `101` status is `'DELETED'` and `deleted_at` matches Folder ID `1`'s `deleted_at` timestamp.
-  - Standard document and folder listings (`GET /api/documents/my`, `GET /api/folders/my`) do NOT return Folder ID `1` or Document ID `101`.
+  - Status code: `400 Bad Request`.
+  - Response `success` is `false`.
+  - Response `message` states: "Folder must be empty before deleting.".
+  - MySQL database Folder ID `1` status remains `'ACTIVE'`.
+  - MySQL database Document ID `101` status remains `'ACTIVE'`.
 - **Status:** `Not Run`
 
-### TC-TRSH-001 - Retrieve Trash Items Successfully
-- **Precondition:** User A has soft-deleted Folder ID `1` and soft-deleted Document ID `101` (inside Folder `1`).
+---
+
+### TC-FLD-009a - Soft-delete Empty Folder Successfully
+- **Precondition:** User A is logged in. User A owns Folder ID `3` ("Chemistry") which has no active documents and no active subfolders inside it.
 - **Steps:**
-  1. Send `GET /api/trash` with User A's token.
+  1. Send `DELETE /api/folders/3` with User A's session.
 - **Expected Result:**
   - Status code: `200 OK`.
   - Response `success` is `true`.
-  - Response `data` lists Folder ID `1` under `"folders"` and Document ID `101` under `"documents"`.
+  - Response `message` is "Folder deleted successfully".
+  - MySQL database shows Folder ID `3` status is `'DELETED'` and `deleted_at` has the current timestamp.
+- **Status:** `Not Run`
+
+---
+
+### TC-TRSH-001 - Retrieve Trash Items Successfully
+- **Precondition:** User A has soft-deleted Folder ID `3` (empty folder).
+- **Steps:**
+  1. Send `GET /api/trash` with User A's session.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - Response `data` lists Folder ID `3` under `"folders"`.
 - **Status:** `Not Run`
 
 ---
@@ -321,14 +341,14 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ## Restore Test Cases
 
 ### TC-TRSH-002 - Restore Folder Successfully
-- **Precondition:** User A has soft-deleted Folder ID `1` (`deleted_at` = T) and Document ID `101` (inside Folder `1` with `deleted_at` = T).
+- **Precondition:** User A has soft-deleted Folder ID `3` (empty folder).
 - **Steps:**
-  1. Send `POST /api/trash/folders/1/restore` with User A's token.
+  1. Send `POST /api/trash/folders/3/restore` with User A's session.
 - **Expected Result:**
   - Status code: `200 OK`.
   - Response `success` is `true`.
-  - MySQL database shows Folder ID `1` `status` is `'ACTIVE'` and `deleted_at` is `NULL`.
-  - MySQL database shows Document ID `101` `status` is `'ACTIVE'` and `deleted_at` is `NULL` (restored because its deletion timestamp matched the folder T).
+  - Response `message` is "Folder restored successfully".
+  - MySQL database shows Folder ID `3` `status` is `'ACTIVE'` and `deleted_at` is `NULL`.
 - **Status:** `Not Run`
 
 ### TC-TRSH-002a - Restore Non-existent Folder from Trash (404 Not Found)
@@ -409,16 +429,15 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
   - Message states: "Document not found in trash".
 - **Status:** `Not Run`
 
-### TC-TRSH-007 - Permanent Delete Folder and All Its Contents
-- **Precondition:** User A is logged in. User A has soft-deleted Folder ID `1`. Document ID `101` and Document ID `103` are inside Folder `1`.
+### TC-TRSH-007 - Permanent Delete Empty Folder
+- **Precondition:** User A is logged in. User A has soft-deleted Folder ID `3` (empty folder).
 - **Steps:**
-  1. Send `DELETE /api/trash/folders/1` with User A's token.
+  1. Send `DELETE /api/trash/folders/3` with User A's session.
 - **Expected Result:**
   - Status code: `200 OK`.
   - Response `success` is `true`.
-  - MySQL database has record for Folder ID `1` completely removed.
-  - MySQL database has records for both Document ID `101` and `103` completely removed (hard deleted).
-  - Their physical files are deleted from Cloudinary Storage using their respective public IDs.
+  - Response `message` is "Folder permanently deleted".
+  - MySQL database has record for Folder ID `3` completely removed.
 - **Status:** `Not Run`
 
 ### TC-TRSH-007a - Permanent Delete Non-existent or Active Folder (404 Not Found)

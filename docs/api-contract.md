@@ -508,7 +508,7 @@ If a document with the same name and file size already exists in the same target
 ```json
 {
   "success": false,
-  "message": "A document with the same name and file size already exists in this folder",
+  "message": "A file with the same name and file size already exists in this folder.",
   "data": null
 }
 ```
@@ -952,14 +952,14 @@ Creates a new folder for the currently authenticated user.
 }
 ```
 
-### Error Response - Duplicate Name (400)
+### Error Response - Duplicate Name (409 Conflict)
 
 If the user already has an active folder with the same name under the same parent folder (or at root level):
 
 ```json
 {
   "success": false,
-  "message": "Folder name already exists under this path",
+  "message": "A folder with the same name already exists in this location.",
   "data": null
 }
 ```
@@ -1023,6 +1023,8 @@ Retrieves active folders owned by the currently authenticated user. Only folders
 ## GET `/api/folders/{id}`
 
 Retrieves details of a specific folder owned by the authenticated user. Only folders with `status = 'ACTIVE'` can be retrieved.
+
+*(Note: To construct the breadcrumb path on the frontend, the frontend can recursively fetch the folder details using `GET /api/folders/{id}` to traverse parent folders via `parentFolderId` until `parentFolderId` is `null` representing the root level.)*
 
 ### Request Headers
 
@@ -1118,14 +1120,14 @@ Updates the name and description of a specific folder owned by the authenticated
 }
 ```
 
-### Error Response - Duplicate Name (400)
+### Error Response - Duplicate Name (409 Conflict)
 
 If the user already has an active folder with the new name under the same parent folder (or at root level):
 
 ```json
 {
   "success": false,
-  "message": "Folder name already exists under this path",
+  "message": "A folder with the same name already exists in this location.",
   "data": null
 }
 ```
@@ -1160,7 +1162,7 @@ If the folder does not exist or has been soft-deleted:
 
 ## DELETE `/api/folders/{id}`
 
-Soft-deletes a folder owned by the authenticated user. This changes its `status` to `'DELETED'` in MySQL and records `deletedAt`. All active documents inside this folder are automatically soft-deleted with the same timestamp.
+Soft-deletes an empty folder owned by the authenticated user. This changes its `status` to `'DELETED'` in MySQL and records `deletedAt`. If the folder is not empty (i.e., contains active documents or active subfolders), the backend must reject the deletion request.
 
 ### Request Headers
 
@@ -1171,7 +1173,19 @@ Soft-deletes a folder owned by the authenticated user. This changes its `status`
 ```json
 {
   "success": true,
-  "message": "Folder and its contents deleted successfully",
+  "message": "Folder deleted successfully",
+  "data": null
+}
+```
+
+### Error Response - Folder Not Empty (400)
+
+If the folder contains active documents or active subfolders:
+
+```json
+{
+  "success": false,
+  "message": "Folder must be empty before deleting.",
   "data": null
 }
 ```
@@ -1310,7 +1324,7 @@ Retrieves all soft-deleted folders and documents owned by the currently authenti
 
 ## POST `/api/trash/folders/{id}/restore`
 
-Restores a soft-deleted folder. This sets the folder's `status` back to `'ACTIVE'` and resets `deletedAt` to `null`. All documents inside this folder that were soft-deleted as part of the folder deletion (sharing the same `deletedAt` timestamp) are also restored to `'ACTIVE'`.
+Restores a soft-deleted empty folder. This sets the folder's `status` back to `'ACTIVE'` and resets `deletedAt` to `null`.
 
 ### Request Headers
 
@@ -1321,7 +1335,7 @@ Restores a soft-deleted folder. This sets the folder's `status` back to `'ACTIVE
 ```json
 {
   "success": true,
-  "message": "Folder and its documents restored successfully",
+  "message": "Folder restored successfully",
   "data": null
 }
 ```
@@ -1399,7 +1413,7 @@ If the document does not exist or is not in the trash:
 
 ## DELETE `/api/trash/folders/{id}`
 
-Permanently deletes a folder from the database. All documents contained within this folder (whether in active or deleted status) are also permanently deleted from the database, and their physical files are deleted from Cloudinary.
+Permanently deletes a soft-deleted empty folder from the database.
 
 ### Request Headers
 
@@ -1410,7 +1424,7 @@ Permanently deletes a folder from the database. All documents contained within t
 ```json
 {
   "success": true,
-  "message": "Folder and its documents permanently deleted",
+  "message": "Folder permanently deleted",
   "data": null
 }
 ```

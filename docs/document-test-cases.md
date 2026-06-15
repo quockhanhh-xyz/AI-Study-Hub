@@ -404,7 +404,7 @@ Not Run
 - **Expected Result:**
   - Status code: `409 Conflict`.
   - Response `success` is `false`.
-  - Message states: "A document with the same name and file size already exists in this folder".
+  - Message states: "A file with the same name and file size already exists in this folder.".
   - Backend does NOT invoke Cloudinary upload.
   - No new record is inserted into the database.
 - **Status:** `Not Run`
@@ -419,7 +419,7 @@ Not Run
 - **Expected Result:**
   - Status code: `409 Conflict`.
   - Response `success` is `false`.
-  - Message states: "A document with the same name and file size already exists in this folder".
+  - Message states: "A file with the same name and file size already exists in this folder.".
   - Backend does NOT invoke Cloudinary upload.
   - No new record is inserted into the database.
 - **Status:** `Not Run`
