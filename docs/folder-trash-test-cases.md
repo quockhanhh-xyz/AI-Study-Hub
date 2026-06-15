@@ -8,7 +8,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 - Two users exist and are verified:
   - **User A**: `usera@test.com` (owns Folder ID `1` named "Math Notes", and active Document ID `101` inside Folder `1`)
   - **User B**: `userb@test.com` (owns Folder ID `2` named "Calculus Notes", and active Document ID `102` inside Folder `2`)
-- The JWT tokens for User A and User B are generated and active.
+- User A and User B have active browser sessions with their respective `accessToken` HttpOnly cookies set.
 
 ---
 
@@ -447,12 +447,12 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ## Authorization Security Test Cases
 
 ### TC-SEC-002 - Call Folder APIs Without Logging In (401 Unauthorized)
-- **Precondition:** No `Authorization` header is provided.
+- **Precondition:** No active session (the `accessToken` cookie is missing or invalid).
 - **Steps:**
-  1. Send `POST /api/folders` with request body `{"name": "Math Notes"}`.
+  1. Send `POST /api/folders` with request body `{"folderName": "Math Notes"}`.
   2. Send `GET /api/folders/my`.
   3. Send `GET /api/folders/1`.
-  4. Send `PUT /api/folders/1` with request body `{"name": "New Name"}`.
+  4. Send `PUT /api/folders/1` with request body `{"folderName": "New Name"}`.
   5. Send `DELETE /api/folders/1`.
   6. Send `PUT /api/documents/101/move` with request body `{"folderId": 1}`.
 - **Expected Result:**
@@ -462,7 +462,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 - **Status:** `Not Run`
 
 ### TC-SEC-003 - Call Trash/Restore APIs Without Logging In (401 Unauthorized)
-- **Precondition:** No `Authorization` header is provided.
+- **Precondition:** No active session (the `accessToken` cookie is missing or invalid).
 - **Steps:**
   1. Send `GET /api/trash`.
   2. Send `POST /api/trash/folders/1/restore`.
@@ -473,4 +473,127 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
   - Each request returns status code: `401 Unauthorized`.
   - Response `success` is `false`.
   - Response `message` matches: "Your session has expired. Please log in again.".
+- **Status:** `Not Run`
+
+---
+
+## Nested Folders and Subfolders Test Cases
+
+### TC-FLD-013 - Create Root Folder Successfully
+- **Precondition:** User A is logged in. No folder with folderName "SWT301" exists at User A's root level.
+- **Steps:**
+  1. Send `POST /api/folders` with User A's session.
+  2. Request Body:
+     ```json
+     {
+       "folderName": "SWT301",
+       "description": "Software Testing",
+       "parentFolderId": null
+     }
+     ```
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - Response `data` contains a new `folderId`, `folderName`="SWT301", `parentFolderId`=null, and `status`="ACTIVE".
+  - MySQL database contains a folder record with `name`="SWT301", `parent_folder_id` = NULL, and `owner_id` of User A.
+- **Status:** `Not Run`
+
+---
+
+### TC-FLD-014 - Create Subfolder Successfully
+- **Precondition:** User A is logged in. User A owns Folder ID `1` ("Math Notes"). No folder with folderName "Week 1" exists under Folder ID `1`.
+- **Steps:**
+  1. Send `POST /api/folders` with User A's session.
+  2. Request Body:
+     ```json
+     {
+       "folderName": "Week 1",
+       "description": "Lecture documents",
+       "parentFolderId": 1
+     }
+     ```
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - Response `data` contains a new `folderId`, `folderName`="Week 1", `parentFolderId`=1, and `status`="ACTIVE".
+  - MySQL database contains a folder record with `name`="Week 1", `parent_folder_id` = 1, and `owner_id` of User A.
+- **Status:** `Not Run`
+
+---
+
+### TC-FLD-015 - Create Subfolder in a Folder Owned by Another User (403 Forbidden / 404 Not Found)
+- **Precondition:** User A is logged in. Folder ID `2` is owned by User B.
+- **Steps:**
+  1. Send `POST /api/folders` with User A's session.
+  2. Request Body:
+     ```json
+     {
+       "folderName": "Week 2",
+       "description": "Attacking folder",
+       "parentFolderId": 2
+     }
+     ```
+- **Expected Result:**
+  - Status code: `403 Forbidden` or `404 Not Found`.
+  - Response `success` is `false`.
+  - Message states: "Access denied" or "Folder not found".
+  - MySQL database record is NOT created.
+- **Status:** `Not Run`
+
+---
+
+### TC-FLD-016 - Get Root Folders Successfully
+- **Precondition:** User A is logged in. User A has root folders (Folder ID `1` "Math Notes") and subfolders (Folder ID `3` "Week 1" which has `parentFolderId = 1`).
+- **Steps:**
+  1. Send `GET /api/folders/my` with User A's session (do not pass any query parameters, or pass `parentFolderId` as empty/null).
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - Response `data` list contains Folder ID `1` ("Math Notes"), but does NOT contain Folder ID `3` ("Week 1").
+- **Status:** `Not Run`
+
+---
+
+### TC-FLD-017 - Get Subfolders by parentFolderId Successfully
+- **Precondition:** User A is logged in. User A has root folders (Folder ID `1` "Math Notes") and subfolders (Folder ID `3` "Week 1" under Folder ID `1`).
+- **Steps:**
+  1. Send `GET /api/folders/my?parentFolderId=1` with User A's session.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - Response `data` list contains Folder ID `3` ("Week 1"), but does NOT contain Folder ID `1` ("Math Notes").
+- **Status:** `Not Run`
+
+---
+
+### TC-FLD-018 - User Cannot View Subfolders of Another User
+- **Precondition:** User A is logged in. Folder ID `2` is owned by User B.
+- **Steps:**
+  1. Send `GET /api/folders/my?parentFolderId=2` with User A's session.
+- **Expected Result:**
+  - Status code: `403 Forbidden` or `404 Not Found`.
+  - Response `success` is `false`.
+  - Message states: "Access denied" or "Folder not found".
+- **Status:** `Not Run`
+
+---
+
+### TC-FLD-019 - Browse Files UI Navigates to the Correct Folder View
+- **Precondition:** User is logged in and is viewing the files dashboard.
+- **Steps:**
+  1. Click on a folder card in the Browse Files grid view.
+  2. Verify the browser navigates to or renders the contents of the selected folder (e.g., updates the folder path indicator and filters the displayed items using the selected folder's ID).
+- **Expected Result:**
+  - UI updates the toolbar path / folder location.
+  - The documents list displays only the active documents and subfolders belonging to the clicked folder.
+- **Status:** `Not Run`
+
+---
+
+### TC-FLD-020 - Root Folders Display as "My Documents" on the UI
+- **Precondition:** User is logged in and has navigated to the main files dashboard (root level view).
+- **Steps:**
+  1. View the breadcrumb path or current directory title on the UI toolbar.
+- **Expected Result:**
+  - The UI displays the directory name or path header as "My Documents" (even though technically the database/API represents this level as a `null` parent folder ID).
 - **Status:** `Not Run`

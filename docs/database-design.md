@@ -108,6 +108,7 @@ Stores user folders.
 | `folder_id`  | INT          | PRIMARY KEY, AUTO_INCREMENT, NOT NULL           | Unique folder ID                           |
 | `name`       | VARCHAR(100) | NOT NULL                                        | Folder name                                |
 | `owner_id`   | INT          | FOREIGN KEY REFERENCES users(user_id), NOT NULL | User who owns this folder                  |
+| `parent_folder_id` | INT    | FOREIGN KEY REFERENCES folders(folder_id), NULLABLE | Parent folder ID (NULL for root level)  |
 | `status`     | VARCHAR(30)  | DEFAULT 'ACTIVE', NOT NULL                      | Folder status: ACTIVE or DELETED           |
 | `created_at` | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP                       | Folder creation time                       |
 | `updated_at` | TIMESTAMP    | NULLABLE                                        | Last update time                           |
@@ -117,14 +118,15 @@ Stores user folders.
 
 - A folder must belong to exactly one user.
 - `owner_id` must be resolved from the authenticated JWT token / security session, not from frontend input.
-- Folder name must be unique per user for ACTIVE folders (i.e. a user cannot have two active folders with the same name). A user can create a folder with the same name as a soft-deleted folder.
-- Soft-deletion: When a folder is deleted, its `status` is set to `'DELETED'` in MySQL, and `deleted_at` is populated with the current timestamp. All active documents inside the folder must automatically be soft-deleted with the same `deleted_at` timestamp.
-- Restoration: A soft-deleted folder can be restored by setting `status` to `'ACTIVE'` and `deleted_at` to `null`. All documents in the trash that were soft-deleted with the same `deleted_at` timestamp are automatically restored to the folder (status set back to `'ACTIVE'`).
+- Folder name must be unique per user under the same parent folder for ACTIVE folders (i.e. a user cannot have two active folders with the same name inside the same parent folder). A user can create a folder with the same name as a soft-deleted folder.
+- Root level folders have `parent_folder_id = NULL`. In the frontend UI, this root level is displayed as `"My Documents"`.
+- Nested folders: Folders can contain other subfolders through `parent_folder_id`.
+- Soft-deletion: When a folder is deleted, its `status` is set to `'DELETED'` in MySQL, and `deleted_at` is populated with the current timestamp. All nested child subfolders and documents inside the folder must recursively be soft-deleted with the same `deleted_at` timestamp.
+- Restoration: A soft-deleted folder can be restored by setting `status` to `'ACTIVE'` and `deleted_at` to `null`. All documents and nested subfolders in the trash that were soft-deleted with the same `deleted_at` timestamp are recursively restored to `'ACTIVE'` status.
 - Permanent deletion: When a folder is permanently deleted:
   - The folder record is deleted from MySQL.
-  - All documents currently inside the folder (whether ACTIVE or DELETED) are also permanently deleted from MySQL.
+  - All nested subfolders and documents currently inside the folder (recursively) are also permanently deleted from MySQL.
   - Their physical files must be deleted from Cloudinary Storage using their `storage_path` (public ID).
-- MVP: 1-level folders only. No nested folders (a folder cannot contain other folders).
 
 ---
 
