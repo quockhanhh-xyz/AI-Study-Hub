@@ -28,6 +28,8 @@ const ALLOWED_TYPES = [
 const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
 // ── Load folders into dropdown ────────────────────────────────────────────
+// Populates the folder <select> with the user's folders from the API.
+// Upload is not blocked if this fails — folder selection is optional.
 async function loadFolderOptions() {
   try {
     const result = await getMyFolders();
@@ -169,6 +171,21 @@ dropZone.addEventListener("drop", (e) => {
   }
 });
 
+// ── Error message resolver ────────────────────────────────────────────────────
+function resolveUploadError(err) {
+  const msg = (err.message || "").toLowerCase();
+  const isDuplicate =
+    msg.includes("duplicate") ||
+    msg.includes("already exists") ||
+    msg.includes("file already");
+
+  if (isDuplicate) {
+    return "This file already exists in the selected folder. Please rename the file, choose a different folder, or upload a different file.";
+  }
+
+  return err.message || "Upload failed. Please try again.";
+}
+
 // ── Form submit ───────────────────────────────────────────────────────────────
 uploadForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -221,7 +238,7 @@ uploadForm.addEventListener("submit", async (e) => {
   } catch (err) {
     clearInterval(progressInterval);
     hideProgress();
-    showMessage(err.message, "error");
+    showMessage(resolveUploadError(err), "error");
 
   } finally {
     submitBtn.disabled = false;

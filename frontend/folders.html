@@ -21,7 +21,7 @@
             <div id="folderListView">
                 <section class="page-header">
                     <h1>My Folders</h1>
-                    <p>Organize your documents into folders for easier access.</p>
+                    <nav class="breadcrumb" id="breadcrumb" aria-label="Folder navigation"></nav>
                 </section>
 
                 <div class="card dashboard-panel">
@@ -55,10 +55,6 @@
 
             <!-- ── FOLDER DOCUMENT VIEW ── -->
             <div id="folderDocView" class="folder-doc-view">
-                <div class="folder-view-header">
-                    <button type="button" class="btn btn-secondary btn-sm" id="backToFoldersBtn">← Back</button>
-                    <h2 class="folder-view-title" id="openFolderName">Folder</h2>
-                </div>
 
                 <div class="card dashboard-panel">
                     <div id="docLoader" class="document-state">
