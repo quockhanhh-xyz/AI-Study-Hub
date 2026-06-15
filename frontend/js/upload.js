@@ -49,7 +49,7 @@ async function loadFolderOptions() {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function showMessage(text, type) {
   uploadMessage.textContent = text;
-  uploadMessage.className = "status-box";
+  uploadMessage.className = "upload-message status-box";
   if (type === "success") uploadMessage.classList.add("status-success");
   else if (type === "error") uploadMessage.classList.add("status-error");
   else uploadMessage.classList.add("status-checking");
@@ -58,6 +58,7 @@ function showMessage(text, type) {
 
 function hideMessage() {
   uploadMessage.style.display = "none";
+  uploadMessage.className = "upload-message";
 }
 
 function formatFileSize(bytes) {
@@ -95,6 +96,7 @@ function validateFile(file) {
 
 // ── Progress bar (Simulated since fetch lacks a native progress event) ─────────
 function showProgress() {
+  uploadProgress.removeAttribute("aria-hidden");
   uploadProgress.style.display = "block";
   progressFill.style.width = "0%";
   progressText.textContent = "Uploading...";
@@ -121,6 +123,7 @@ function completeProgress(interval) {
 }
 
 function hideProgress() {
+  uploadProgress.setAttribute("aria-hidden", "true");
   uploadProgress.style.display = "none";
   progressFill.style.width = "0%";
 }
@@ -222,7 +225,7 @@ uploadForm.addEventListener("submit", async (e) => {
 
   } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = "Upload document";
+    submitBtn.textContent = "Upload Document";
   }
 });
 

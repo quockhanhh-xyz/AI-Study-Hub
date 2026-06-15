@@ -6,148 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Upload Document - AI Study Hub</title>
     <link rel="stylesheet" href="css/style.css" />
-    <style>
-        /* ── Drop zone ─────────────────────────────────────────────────────── */
-        .drop-zone {
-            border: 2px dashed var(--border);
-            border-radius: 8px;
-            padding: 32px 16px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            background: var(--background);
-            position: relative;
-        }
-
-        .drop-zone:hover,
-        .drop-zone.drag-over {
-            border-color: var(--primary);
-            background: #eff6ff;
-        }
-
-        /* Hidden file input covering the entire drop-zone to trigger upload anywhere on click */
-        .drop-zone input[type="file"] {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            cursor: pointer;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-
-        /* Internal content of the drop-zone, pointer-events: none prevents blocking the input element */
-        .drop-zone-content {
-            pointer-events: none;
-        }
-
-        .drop-zone-icon {
-            font-size: 36px;
-            margin-bottom: 10px;
-        }
-
-        .drop-zone-text {
-            display: block;
-            font-size: 14px;
-            color: var(--muted);
-            line-height: 1.6;
-        }
-
-        .drop-zone-text small {
-            font-size: 12px;
-        }
-
-        /* State when a file is selected */
-        .drop-zone.has-file {
-            border-color: var(--success);
-            background: #f0fdf4;
-        }
-
-        .drop-zone.has-file .drop-zone-text {
-            color: var(--text);
-            font-weight: 500;
-        }
-
-        /* Textarea */
-        textarea {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 15px;
-            font-family: inherit;
-            resize: vertical;
-            min-height: 80px;
-            transition: all 0.2s ease;
-            background: #fff;
-            color: var(--text);
-            box-sizing: border-box;
-        }
-
-        textarea::placeholder {
-            color: #94a3b8;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        /* Upload message */
-        #uploadMessage {
-            display: none;
-            margin-top: 16px;
-        }
-
-        /* File hint */
-        .file-hint {
-            font-size: 12px;
-            color: var(--muted);
-            margin-top: 6px;
-        }
-
-        /* Back link */
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--muted);
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 24px;
-        }
-
-        .back-link:hover {
-            color: var(--primary);
-        }
-
-        /* ── Progress bar ──────────────────────────────────────────────────── */
-        .progress-container {
-            margin-top: 16px;
-        }
-
-        .progress-bar {
-            height: 8px;
-            background: var(--border);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: var(--primary);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .progress-text {
-            display: block;
-            font-size: 13px;
-            color: var(--muted);
-            margin-top: 6px;
-        }
-    </style>
 </head>
 
 <body>
@@ -169,28 +27,26 @@
                 <form id="uploadForm" novalidate>
 
                     <div class="form-group">
-                        <label for="title">Title <span style="color:var(--danger)">*</span></label>
+                        <label for="title">Title <span class="label-required">*</span></label>
                         <input type="text" id="title" name="title" placeholder="E.g: SWR Lecture 1 - Week 1 Notes"
                             required autocomplete="off" />
                     </div>
 
                     <div class="form-group">
-                        <label for="description">Description <span
-                                style="color:var(--muted); font-weight:400;">(optional)</span></label>
+                        <label for="description">Description <span class="label-optional">(optional)</span></label>
                         <textarea id="description" name="description"
                             placeholder="E.g: Summary of Week 1 SWR lecture..."></textarea>
                     </div>
 
                     <div class="form-group">
-                        <label for="folderSelect">Folder <span style="font-weight: 400; color: var(--muted);">—
-                                Optional</span></label>
+                        <label for="folderSelect">Folder <span class="label-optional">— Optional</span></label>
                         <select id="folderSelect">
                             <option value="">No folder (upload to root)</option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label for="file">Document File <span style="color:var(--danger)">*</span></label>
+                        <label for="file">Document File <span class="label-required">*</span></label>
                         <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-describedby="fileHint">
                             <input type="file" id="file" name="file"
                                 accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.png,.jpg,.jpeg" required
@@ -209,17 +65,17 @@
                         </p>
                     </div>
 
-                    <div id="uploadProgress" class="progress-container" style="display:none;">
+                    <div id="uploadProgress" class="progress-container" aria-hidden="true">
                         <div class="progress-bar">
                             <div id="progressFill" class="progress-fill"></div>
                         </div>
                         <span id="progressText" class="progress-text">Uploading...</span>
                     </div>
 
-                    <div id="uploadMessage" class="helper-text" role="alert"></div>
+                    <div id="uploadMessage" class="upload-message" role="alert"></div>
 
                     <button type="submit" id="submitBtn" class="btn btn-primary">
-                        Upload document
+                        Upload Document
                     </button>
 
                 </form>

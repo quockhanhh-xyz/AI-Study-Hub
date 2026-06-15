@@ -7,70 +7,6 @@
     <title>Trash - AI Study Hub</title>
     <meta name="description" content="Restore or permanently delete trashed study documents and folders." />
     <link rel="stylesheet" href="css/style.css" />
-    
-    <style>
-        .trash-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .trash-actions .btn {
-            flex: 1;
-        }
-
-        .trash-section + .trash-section {
-            margin-top: 28px;
-        }
-
-        .trash-modal-overlay {
-            position: fixed;
-            inset: 0;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-            background: rgba(15, 23, 42, 0.42);
-            z-index: 1000;
-        }
-
-        .trash-modal-overlay.open {
-            display: flex;
-        }
-
-        .trash-modal {
-            width: 100%;
-            max-width: 440px;
-            padding: 28px;
-            border-radius: 8px;
-            background: var(--white);
-            border: 1px solid var(--border);
-            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
-        }
-
-        .trash-modal h3 {
-            margin: 0 0 10px;
-        }
-
-        .trash-modal p {
-            margin: 0;
-            color: var(--muted);
-            line-height: 1.5;
-        }
-
-        .trash-modal-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 24px;
-        }
-
-        @media (max-width: 768px) {
-            .trash-actions,
-            .trash-modal-actions {
-                flex-direction: column;
-            }
-        }
-    </style>
 </head>
 
 <body>
@@ -99,53 +35,57 @@
                     <span>Loading trash...</span>
                 </div>
 
-                <div id="trashError" class="helper-text error document-status" style="display: none;"></div>
+                <div id="trashError" class="status-box status-error document-status" role="alert" aria-live="polite">
+                </div>
 
-                <div id="trashContent" style="display: none;">
+                <div id="trashContent" class="trash-content">
                     <div class="trash-section">
-                        <div class="section-header">
-                            <div>
-                                <h2>Folders</h2>
-                                <p>Deleted folders and their cascaded documents can be restored together.</p>
-                            </div>
+                        <div class="trash-section-header">
+                            <h3 class="trash-section-title">
+                                <span class="trash-section-icon">📁</span> Folders
+                            </h3>
+                            <p class="section-subtitle">Deleted folders and their cascaded documents can be restored
+                                together.</p>
                         </div>
-                        <div id="folderTrashGrid" class="document-grid" style="display: none;"></div>
-                        <div id="folderTrashEmpty" class="empty-state" style="display: none;">
+                        <div id="folderTrashGrid" class="document-grid"></div>
+                        <div id="folderTrashEmpty" class="empty-state">
                             <div class="empty-title">No deleted folders</div>
                             <p>Deleted folders will appear here.</p>
                         </div>
                     </div>
 
                     <div class="trash-section">
-                        <div class="section-header">
-                            <div>
-                                <h2>Documents</h2>
-                                <p>Deleted documents can be restored or permanently removed.</p>
-                            </div>
+                        <div class="trash-section-header">
+                            <h3 class="trash-section-title">
+                                <span class="trash-section-icon">📄</span> Documents
+                            </h3>
+                            <p class="section-subtitle">Deleted documents can be restored or permanently removed.</p>
                         </div>
-                        <div id="documentTrashGrid" class="document-grid" style="display: none;"></div>
-                        <div id="documentTrashEmpty" class="empty-state" style="display: none;">
+                        <div id="documentTrashGrid" class="document-grid"></div>
+                        <div id="documentTrashEmpty" class="empty-state">
                             <div class="empty-title">No deleted documents</div>
                             <p>Deleted documents will appear here.</p>
                         </div>
                     </div>
                 </div>
 
-                <div id="trashEmpty" class="empty-state" style="display: none;">
+                <div id="trashEmpty" class="empty-state">
+                    <div class="coming-soon-icon">🗑️</div>
                     <div class="empty-title">Trash is empty</div>
                     <p>Deleted folders and documents will appear here.</p>
                     <a href="dashboard.html" class="btn btn-secondary empty-action">Go to Dashboard</a>
                 </div>
+
             </section>
         </main>
     </div>
 
-    <div id="confirmModal" class="trash-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
-        <div class="trash-modal">
-            <h3 id="confirmTitle">Permanently delete item?</h3>
-            <p id="confirmMessage">This action cannot be undone.</p>
-            <div id="confirmError" class="helper-text error" style="display: none; margin-top: 14px;"></div>
-            <div class="trash-modal-actions">
+    <div id="confirmModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+        <div class="modal-box">
+            <h3 id="confirmTitle" class="modal-title-danger">Permanently delete item?</h3>
+            <p id="confirmMessage" class="modal-warning-text">This action cannot be undone.</p>
+            <div id="confirmError" class="modal-error" role="alert" aria-live="polite"></div>
+            <div class="modal-actions">
                 <button type="button" id="cancelPermanentDeleteBtn" class="btn btn-secondary">Cancel</button>
                 <button type="button" id="confirmPermanentDeleteBtn" class="btn btn-danger">Delete Permanently</button>
             </div>
