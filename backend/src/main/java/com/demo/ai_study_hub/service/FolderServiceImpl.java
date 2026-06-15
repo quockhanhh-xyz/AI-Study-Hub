@@ -29,6 +29,16 @@ public class FolderServiceImpl implements FolderService {
     public FolderResponse createFolder(FolderRequest request, String email) {
         User owner = getUser(email);
 
+        Folder parentFolder = null;
+        if (request.getParentFolderId() != null) {
+            parentFolder = folderRepository.findByFolderIdAndOwner(request.getParentFolderId(), owner)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parent folder not found"));
+
+            if (!"ACTIVE".equals(parentFolder.getStatus())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parent folder is not active");
+            }
+        }
+
         if (folderRepository.existsByOwnerAndNameAndStatus(owner, request.getName(), "ACTIVE")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Folder name already exists");
         }
@@ -37,6 +47,7 @@ public class FolderServiceImpl implements FolderService {
                 .name(request.getName())
                 .description(request.getDescription())
                 .owner(owner)
+                .parentFolder(parentFolder)
                 .status("ACTIVE")
                 .build();
 
@@ -44,10 +55,24 @@ public class FolderServiceImpl implements FolderService {
     }
 
     @Override
-    public List<FolderResponse> getMyFolders(String email) {
+    public List<FolderResponse> getMyFolders(Integer parentFolderId, String email) {
         User owner = getUser(email);
 
-        return folderRepository.findByOwnerAndStatusOrderByCreatedAtDesc(owner, "ACTIVE")
+        if (parentFolderId == null) {
+            // Return root folders
+            return folderRepository
+                    .findByOwnerAndStatusAndParentFolderIsNull(owner, "ACTIVE")
+                    .stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        }
+
+        // Return subfolders
+        Folder parentFolder = folderRepository.findByFolderIdAndOwner(parentFolderId, owner)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found"));
+
+        return folderRepository
+                .findByOwnerAndStatusAndParentFolder(owner, "ACTIVE", parentFolder)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -80,17 +105,56 @@ public class FolderServiceImpl implements FolderService {
         User owner = getUser(email);
         Folder folder = getValidatedFolder(folderId, owner);
 
-        List<Document> documents = documentRepository.findByFolder(folder);
-        LocalDateTime now = LocalDateTime.now();
-        documents.forEach(doc -> {
-            doc.setStatus("DELETED");
-            doc.setDeletedAt(now);
-        });
-        documentRepository.saveAll(documents);
+        // Check no active documents inside
+        long activeDocs = documentRepository.countByFolderAndStatus(folder, "ACTIVE");
+        if (activeDocs > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Folder must be empty before deleting.");
+        }
 
+        // Check no active subfolders inside
+        long activeSubfolders = folderRepository.countByParentFolderAndStatus(folder, "ACTIVE");
+        if (activeSubfolders > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Folder must be empty before deleting.");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
         folder.setStatus("DELETED");
         folder.setDeletedAt(now);
         folderRepository.save(folder);
+    }
+
+    @Override
+    public void restoreFolder(Integer folderId, String email) {
+        User owner = getUser(email);
+        Folder folder = folderRepository.findByFolderIdAndOwner(folderId, owner)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash"));
+
+        if (!"DELETED".equals(folder.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash");
+        }
+
+        // If parent folder was deleted, restore to My Documents (root)
+        if (folder.getParentFolder() != null &&
+                "DELETED".equals(folder.getParentFolder().getStatus())) {
+            folder.setParentFolder(null);
+        }
+
+        folder.setStatus("ACTIVE");
+        folder.setDeletedAt(null);
+        folderRepository.save(folder);
+    }
+
+    @Override
+    public void permanentDeleteFolder(Integer folderId, String email) {
+        User owner = getUser(email);
+        Folder folder = folderRepository.findByFolderIdAndOwner(folderId, owner)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash"));
+
+        if (!"DELETED".equals(folder.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash");
+        }
+
+        folderRepository.delete(folder);
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
@@ -120,6 +184,7 @@ public class FolderServiceImpl implements FolderService {
                 .folderId(folder.getFolderId())
                 .name(folder.getName())
                 .description(folder.getDescription())
+                .parentFolderId(folder.getParentFolder() != null ? folder.getParentFolder().getFolderId() : null)
                 .status(folder.getStatus())
                 .createdAt(folder.getCreatedAt())
                 .updatedAt(folder.getUpdatedAt())

@@ -16,4 +16,16 @@ public interface FolderRepository extends JpaRepository<Folder, Integer> {
     Optional<Folder> findByFolderIdAndOwner(Integer folderId, User owner);
 
     boolean existsByOwnerAndNameAndStatus(User owner, String name, String status);
+
+    // Get root folders
+    List<Folder> findByOwnerAndStatusAndParentFolderIsNull(User owner, String status);
+
+    // Get subfolders by parent
+    List<Folder> findByOwnerAndStatusAndParentFolder(User owner, String status, Folder parentFolder);
+
+    // Check active subfolders exist
+    boolean existsByParentFolderAndStatus(Folder parentFolder, String status);
+
+    // Count active subfolders
+    long countByParentFolderAndStatus(Folder parentFolder, String status);
 }

@@ -10,4 +10,6 @@ public class FolderRequest {
     private String name;
 
     private String description;
+
+    private Integer parentFolderId;
 }
