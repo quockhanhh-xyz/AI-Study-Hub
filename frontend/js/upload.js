@@ -1,9 +1,3 @@
-// ── Auth guard ────────────────────────────────────────────────────────────────
-const token = localStorage.getItem("accessToken");
-if (!token) {
-  window.location.href = "login.html";
-}
-
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const uploadForm = document.getElementById("uploadForm");
 const titleInput = document.getElementById("title");
@@ -75,14 +69,15 @@ function formatFileSize(bytes) {
 
 function updateDropZone(file) {
   if (file) {
-    dropZoneText.innerHTML = `📄 <strong>${file.name}</strong><br/><small>${formatFileSize(file.size)}</small>`;
+    dropZoneText.innerHTML = `<strong>${file.name}</strong><br/><small>${formatFileSize(file.size)}</small>`;
     dropZone.classList.add("has-file");
   } else {
-    dropZoneText.innerHTML = `Drag & drop or click to select a file<br/><small>(PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG — max 10MB)</small>`;
+    dropZoneText.innerHTML = `Drag and drop or click to select a file<br/><small>(PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG - max 10MB)</small>`;
     dropZone.classList.remove("has-file");
   }
 }
 
+// ── Validation ────────────────────────────────────────────────────────────────
 function validateFile(file) {
   if (!file) return "Please select a file.";
 
@@ -148,7 +143,7 @@ dropZone.addEventListener("keydown", (e) => {
   }
 });
 
-// ── Drag & Drop ───────────────────────────────────────────────────────────────
+// ── Drag and Drop ─────────────────────────────────────────────────────────────
 dropZone.addEventListener("dragover", (e) => {
   e.preventDefault();
   dropZone.classList.add("drag-over");
@@ -197,7 +192,7 @@ uploadForm.addEventListener("submit", async (e) => {
     return;
   }
 
-  // Build FormData — do not set Content-Type, let the browser handle it
+  // Build FormData - do not set Content-Type, let the browser handle it
   const formData = new FormData();
   formData.append("file", file);
   formData.append("title", title);
@@ -212,7 +207,7 @@ uploadForm.addEventListener("submit", async (e) => {
   try {
     const result = await uploadDocument(formData);
     completeProgress(progressInterval);
-    showMessage(`✅ Upload successful: "${result.data.title}"`, "success");
+    showMessage(`Upload successful: "${result.data.title}"`, "success");
 
     // Reset form
     uploadForm.reset();
@@ -226,7 +221,7 @@ uploadForm.addEventListener("submit", async (e) => {
   } catch (err) {
     clearInterval(progressInterval);
     hideProgress();
-    showMessage(`❌ ${err.message}`, "error");
+    showMessage(err.message, "error");
 
   } finally {
     submitBtn.disabled = false;

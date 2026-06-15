@@ -208,18 +208,18 @@
       const result = await post("/api/auth/login", { email, password });
       const user = result.data;
 
-      if (!user || !user.token) {
-        throw new Error("Login response does not contain a valid token.");
+      if (!user) {
+        throw new Error("Login response payload data is missing.");
       }
 
-      localStorage.setItem("accessToken", user.token);
+      // Explicitly store user metadata for UI consumption, strictly excluding token details
       localStorage.setItem(
         "currentUser",
         JSON.stringify({
           userId: user.userId,
           fullName: user.fullName,
           email: user.email,
-          role: user.role,
+          role: user.role
         })
       );
 
