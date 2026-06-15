@@ -84,35 +84,7 @@ public class FolderController {
             Principal principal) {
         try {
             folderService.deleteFolder(id, principal.getName());
-            return ResponseEntity.ok(ApiResponse.success(null, "Folder and its contents deleted successfully"));
-        } catch (ResponseStatusException e) {
-            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
-        }
-    }
-
-    @PostMapping("/{id}/restore")
-    public ResponseEntity<ApiResponse<Void>> restoreFolder(
-            @PathVariable Integer id,
-            Principal principal) {
-        try {
-            folderService.restoreFolder(id, principal.getName());
-            return ResponseEntity.ok(ApiResponse.success(null, "Folder restored successfully"));
-        } catch (ResponseStatusException e) {
-            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
-        }
-    }
-
-    @DeleteMapping("/{id}/permanent")
-    public ResponseEntity<ApiResponse<Void>> permanentDeleteFolder(
-            @PathVariable Integer id,
-            Principal principal) {
-        try {
-            folderService.permanentDeleteFolder(id, principal.getName());
-            return ResponseEntity.ok(ApiResponse.success(null, "Folder permanently deleted"));
+            return ResponseEntity.ok(ApiResponse.success(null, "Folder deleted successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {
