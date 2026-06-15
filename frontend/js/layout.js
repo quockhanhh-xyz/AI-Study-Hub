@@ -1,14 +1,9 @@
 /**
- * Application Shell and Authentication Guard Manager.
+ * Application Shell and Authentication Guard Manager (Cookie Auth Flow Mode).
  */
-document.addEventListener("DOMContentLoaded", () => {
-  // Sync auth state by checking both token and user object data concurrently
-  const token = localStorage.getItem("accessToken");
-  const currentUserRaw = localStorage.getItem("currentUser");
-  const isAuthenticated = !!token && !!currentUserRaw;
-
-  // 1. EXECUTE AUTH GUARD SYSTEM
-  handleAuthGuard(isAuthenticated);
+document.addEventListener("DOMContentLoaded", async () => {
+  // 1. EXECUTE AUTH GUARD SYSTEM BY CALLING /api/auth/me ENDPOINT
+  const isAuthenticated = await checkAuthenticationStatus();
 
   // 2. REFINE SIDEBAR MENU BASED ON AUTH STATUS
   renderDynamicSidebar(isAuthenticated);
@@ -18,24 +13,42 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /**
- * Restricts unauthenticated access to private core pages.
- * @param {boolean} isAuthenticated
+ * Validates session status dynamically against the backend security context.
+ * @returns {Promise<boolean>}
  */
-function handleAuthGuard(isAuthenticated) {
+async function checkAuthenticationStatus() {
   const currentPage = getCurrentPageName();
-
-  // Find current route configuration from navigation menu dictionary
   const currentRoute = NAVIGATION_MENU.find(item => item.url === currentPage);
 
-  // Guard clause: If page requires auth and user is missing credentials, kick to login
-  if (currentRoute && currentRoute.requiresAuth && !isAuthenticated) {
-    window.location.href = "login.html";
-    return;
-  }
+  // Optimistic skip: If the page doesn't care about auth configuration, return current state directly
+  if (!currentRoute) return false;
 
-  // Guard clause: If page is only for guests and user is already authenticated, redirect to dashboard
-  if (currentRoute && currentRoute.hideWhenAuth && isAuthenticated) {
-    window.location.href = "dashboard.html";
+  try {
+    // Explicitly bypass global interceptor redirect to let layout component manage traffic independently
+    const result = await get("/api/auth/me", { skipUnauthorizedRedirect: true });
+
+    // If successful, backfill or keep currentUser info active for UI layout
+    if (result && result.data) {
+      localStorage.setItem("currentUser", JSON.stringify(result.data));
+    }
+
+    // Guard clause: If page is only for guests (like login.html) and user session is active -> Kick to dashboard
+    if (currentRoute.hideWhenAuth) {
+      window.location.href = "dashboard.html";
+      return true;
+    }
+
+    return true;
+  } catch (error) {
+    // If endpoint fails, user session is unauthenticated or expired
+    localStorage.removeItem("currentUser");
+
+    // Guard clause: If page explicitly requires auth and validation failed -> Kick to login
+    if (currentRoute.requiresAuth) {
+      window.location.href = "login.html";
+    }
+
+    return false;
   }
 }
 
@@ -61,7 +74,7 @@ function renderDynamicSidebar(isAuthenticated) {
     .map(item => `<a href="${item.url}" class="nav-link">${item.name}</a>`)
     .join("");
 
-   // Append a dedicated Logout link if user is fully logged in
+  // Append a dedicated Logout link if user is fully logged in
   if (isAuthenticated) {
     const logoutContainer = document.createElement("div");
     logoutContainer.className = "sidebar-footer";
@@ -77,22 +90,28 @@ function renderDynamicSidebar(isAuthenticated) {
 }
 
 /**
- * Coordinates token clearing, storage reset, and graceful redirection on logout action.
+ * Coordinates backend session removal, storage reset, and graceful redirection on logout action.
  */
 function initializeLogoutFlow() {
-  // Use event delegation on body or look directly since it's dynamically added
-  document.body.addEventListener("click", (e) => {
+  // Use event delegation on body since layout links are appended dynamically
+  document.body.addEventListener("click", async (e) => {
     const logoutBtn = e.target.closest("#sidebarLogoutBtn");
     if (!logoutBtn) return;
 
     e.preventDefault();
 
-    // Clear token session items safely
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("currentUser");
+    try {
+      // Trigger API sign-out to instruct backend to clear HttpOnly auth session cookies
+      await post("/api/auth/logout");
+    } catch (error) {
+      console.warn("Backend logout session cleanup failed, performing client fallback...", error);
+    } finally {
+      // Clear remaining metadata objects from storage catalog safely
+      localStorage.removeItem("currentUser");
 
-    // Gracefully kick the user back to the entry gateway login screen
-    window.location.href = "login.html";
+      // Gracefully kick the user back to the entry gateway login screen
+      window.location.href = "login.html";
+    }
   });
 }
 

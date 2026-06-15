@@ -10,7 +10,7 @@ In scope:
 - `GET /api/documents/my`
 - Cloudinary Storage upload
 - MySQL document metadata
-- Authenticated ownership by JWT token
+- Authenticated ownership by HttpOnly cookie session
 
 Out of scope:
 
@@ -29,12 +29,8 @@ Out of scope:
 - MySQL database `ai_study_hub` exists.
 - Cloudinary accounts are configured for the backend.
 - A verified user account exists and can log in.
-- Login returns an `accessToken`.
-- Requests to protected APIs use:
-
-```text
-Authorization: Bearer <accessToken>
-```
+- Login sets a secure `HttpOnly` cookie named `accessToken`.
+- Requests to protected APIs automatically include the cookie (browser handles credentials propagation via `credentials: "include"`).
 
 ---
 
@@ -84,7 +80,7 @@ Not Run
 
 Precondition:
 
-- No `Authorization` header is sent.
+- No active session (the `accessToken` cookie is missing or invalid).
 
 Steps:
 
@@ -365,7 +361,7 @@ Not Run
 
 Precondition:
 
-- No `Authorization` header is sent.
+- No active session (the `accessToken` cookie is missing or invalid).
 
 Steps:
 
@@ -381,6 +377,94 @@ Status:
 ```text
 Not Run
 ```
+
+---
+
+## Duplicate Upload and Folder Test Cases
+
+### TC-DOC-029 - Upload New File to My Documents Successfully
+- **Precondition:** User is logged in. No document with name "sample.pdf" and the same file size exists in the root folder for this user.
+- **Steps:**
+  1. Send `POST /api/documents/upload`.
+  2. Multipart Form Data includes: `file` (sample.pdf, size 50000 bytes), `title`="Sample PDF", `folderId`=null (or omitted).
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - File is uploaded to Cloudinary.
+  - Metadata is saved in MySQL with `folder_id = NULL` and `status = 'ACTIVE'`.
+- **Status:** `Not Run`
+
+---
+
+### TC-DOC-030 - Upload Duplicate File in My Documents (409 Conflict)
+- **Precondition:** User is logged in. An active document with original file name "sample.pdf" and size 50000 bytes already exists in the root folder for this user.
+- **Steps:**
+  1. Send `POST /api/documents/upload`.
+  2. Multipart Form Data includes: `file` (sample.pdf, size 50000 bytes), `title`="Sample PDF Duplicate", `folderId`=null (or omitted).
+- **Expected Result:**
+  - Status code: `409 Conflict`.
+  - Response `success` is `false`.
+  - Message states: "A file with the same name and file size already exists in this folder.".
+  - Backend does NOT invoke Cloudinary upload.
+  - No new record is inserted into the database.
+- **Status:** `Not Run`
+
+---
+
+### TC-DOC-031 - Upload Duplicate File in the Same Folder (409 Conflict)
+- **Precondition:** User is logged in. Folder ID `1` exists and is owned by the user. An active document with original file name "lecture1.docx" and size 120000 bytes already exists in Folder ID `1`.
+- **Steps:**
+  1. Send `POST /api/documents/upload`.
+  2. Multipart Form Data includes: `file` (lecture1.docx, size 120000 bytes), `title`="Lecture 1 Duplicate", `folderId`=1.
+- **Expected Result:**
+  - Status code: `409 Conflict`.
+  - Response `success` is `false`.
+  - Message states: "A file with the same name and file size already exists in this folder.".
+  - Backend does NOT invoke Cloudinary upload.
+  - No new record is inserted into the database.
+- **Status:** `Not Run`
+
+---
+
+### TC-DOC-032 - Upload Same File Name to Different Folders (Success)
+- **Precondition:** User is logged in. Folder ID `1` and Folder ID `2` exist and are owned by the user. An active document with original file name "homework.docx" and size 80000 bytes exists in Folder ID `1`. No document with that name/size exists in Folder ID `2`.
+- **Steps:**
+  1. Send `POST /api/documents/upload`.
+  2. Multipart Form Data includes: `file` (homework.docx, size 80000 bytes), `title`="Homework in Folder 2", `folderId`=2.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - File is uploaded to Cloudinary.
+  - Metadata is saved in MySQL under Folder ID `2`.
+- **Status:** `Not Run`
+
+---
+
+### TC-DOC-033 - Upload Same File Name but with Different File Size (Success)
+- **Precondition:** User is logged in. An active document with original file name "homework.docx" and size 80000 bytes exists in the root folder. No document with name "homework.docx" and size 95000 bytes exists in the root folder.
+- **Steps:**
+  1. Send `POST /api/documents/upload`.
+  2. Multipart Form Data includes: `file` (homework.docx, size 95000 bytes), `title`="Updated Homework", `folderId`=null.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - File is uploaded to Cloudinary.
+  - Metadata is saved in MySQL.
+- **Status:** `Not Run`
+
+---
+
+### TC-DOC-034 - Upload Previously Deleted File (Success)
+- **Precondition:** User is logged in. A document with original file name "deleted_note.pdf" and size 35000 bytes exists in the root folder but has `status = 'DELETED'` (is in trash).
+- **Steps:**
+  1. Send `POST /api/documents/upload`.
+  2. Multipart Form Data includes: `file` (deleted_note.pdf, size 35000 bytes), `title`="New Note", `folderId`=null.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - File is uploaded to Cloudinary.
+  - A new active document record is successfully saved in MySQL.
+- **Status:** `Not Run`
 
 ---
 

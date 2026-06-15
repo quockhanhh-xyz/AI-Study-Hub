@@ -6,7 +6,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   try {
     currentUser = JSON.parse(currentUserRaw || "{}");
   } catch (error) {
-    localStorage.removeItem("accessToken");
     localStorage.removeItem("currentUser");
     window.location.href = "login.html";
     return;
@@ -377,5 +376,4 @@ document.addEventListener("DOMContentLoaded", async function () {
       loadDocuments();
     });
   }
-
 });
