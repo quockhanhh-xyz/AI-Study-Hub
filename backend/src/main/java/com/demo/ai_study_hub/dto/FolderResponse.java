@@ -14,8 +14,9 @@ import java.time.LocalDateTime;
 public class FolderResponse {
 
     private Integer folderId;
-    private String name;
+    private String folderName;
     private String description;
+    private Integer parentFolderId;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
