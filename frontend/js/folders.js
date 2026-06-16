@@ -303,7 +303,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // Loads documents inside the current folder and shows the doc view panel.
   async function loadFolderDocuments() {
-    folderListView.style.display = "none";
     folderDocView.style.display = "block";
 
     docLoader.style.display = "flex";

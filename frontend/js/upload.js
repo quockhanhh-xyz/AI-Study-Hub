@@ -27,32 +27,35 @@ const ALLOWED_TYPES = [
 ];
 const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
-// ── Load folders into dropdown ────────────────────────────────────────────
-// Populates the folder <select> with a flat list showing hierarchy via "Parent / Child" labels.
+// Populates the folder <select> with all folders including subfolders.
+// Calls getMyFolders() recursively per parent to build a full tree.
 // Upload is not blocked if this fails — folder selection is optional.
 async function loadFolderOptions() {
   try {
-    const result = await getMyFolders();
-    const folders = Array.isArray(result.data) ? result.data : [];
+    // Load root folders first
+    const rootResult = await getMyFolders(null);
+    const rootFolders = Array.isArray(rootResult.data) ? rootResult.data : [];
 
-    // Build a map for quick parent name lookup
-    const folderMap = {};
-    folders.forEach(function (f) {
-      folderMap[f.folderId] = f;
-    });
-
-    // Build display label: if folder has a parent, show "Parent / Child"
-    folders.forEach(function (folder) {
+    for (const folder of rootFolders) {
       const option = document.createElement("option");
       option.value = folder.folderId;
-
-      const parent = folder.parentFolderId ? folderMap[folder.parentFolderId] : null;
-      option.textContent = parent
-        ? `${parent.folderName} / ${folder.folderName}`
-        : folder.folderName;
-
+      option.textContent = folder.folderName;
       folderSelect.appendChild(option);
-    });
+
+      // Load subfolders of this root folder
+      try {
+        const subResult = await getMyFolders(folder.folderId);
+        const subFolders = Array.isArray(subResult.data) ? subResult.data : [];
+        subFolders.forEach(function (sub) {
+          const subOption = document.createElement("option");
+          subOption.value = sub.folderId;
+          subOption.textContent = `${folder.folderName} / ${sub.folderName}`;
+          folderSelect.appendChild(subOption);
+        });
+      } catch (e) {
+        // Skip if subfolder load fails
+      }
+    }
 
   } catch (err) {
     console.warn("Could not load folders:", err);
