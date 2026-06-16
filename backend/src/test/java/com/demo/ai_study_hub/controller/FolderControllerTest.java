@@ -207,9 +207,9 @@ class FolderControllerTest {
     }
 
     // =========================================================================
-    // TC7 — Delete folder → cascade soft-deletes all documents → 200 OK
-    // The service never rejects a non-empty folder; it marks all contained
-    // documents as DELETED before soft-deleting the folder itself.
+    // TC7 — Delete empty folder → 200 OK
+    // The service requires the folder to be empty (no active documents or
+    // subfolders) before soft-deleting it.
     // =========================================================================
     @Test
     @WithMockUser(username = "test@gmail.com")

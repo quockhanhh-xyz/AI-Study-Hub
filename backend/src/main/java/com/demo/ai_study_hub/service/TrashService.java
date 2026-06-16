@@ -23,6 +23,7 @@ public class TrashService {
     private final DocumentRepository documentRepository;
     private final FolderRepository folderRepository;
     private final UserRepository userRepository;
+    private final CloudinaryStorageService cloudinaryStorageService;
 
     private User getUser(String email) {
         return userRepository.findByEmail(email)
@@ -51,7 +52,9 @@ public class TrashService {
         List<TrashResponse.TrashFolderItem> folderItems = deletedFolders.stream()
                 .map(f -> TrashResponse.TrashFolderItem.builder()
                         .folderId(f.getFolderId())
-                        .name(f.getName())
+                        .folderName(f.getName())
+                        .description(f.getDescription())
+                        .parentFolderId(f.getParentFolder() != null ? f.getParentFolder().getFolderId() : null)
                         .deletedAt(f.getDeletedAt())
                         .build())
                 .collect(Collectors.toList());
@@ -79,7 +82,18 @@ public class TrashService {
 
     @Transactional
     public void permanentDeleteDocument(Integer docId, String email) {
+        User user = getUser(email);
 
+        Document doc = documentRepository.findById(docId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found in trash"));
+
+        if (!doc.getOwner().getUserId().equals(user.getUserId()) || !"DELETED".equals(doc.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found in trash");
+        }
+
+        cloudinaryStorageService.deleteFile(doc.getPublicId(), doc.getFileType());
+
+        documentRepository.delete(doc);
     }
 
     @Transactional
