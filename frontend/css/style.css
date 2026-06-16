@@ -137,6 +137,7 @@ a {
 }
 
 .dashboard-header,
+.trash-header,
 #folderListView .page-header {
   max-width: none;
   margin: 0 0 32px 0;
@@ -935,6 +936,12 @@ textarea.success {
   border-color: var(--primary);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(168, 85, 247, 0.1);
+}
+
+.folder-card.active {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.25) !important;
+  background: rgba(168, 85, 247, 0.05) !important;
 }
 
 

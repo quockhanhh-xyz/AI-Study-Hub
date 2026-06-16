@@ -35,6 +35,34 @@ document.addEventListener("DOMContentLoaded", async function () {
   if (folderCountElement) folderCountElement.textContent = "0";
   if (joinDateElement) joinDateElement.textContent = currentUser.tier || "FREE";
 
+  function activateFolderCard(folderId) {
+    document.querySelectorAll(".folder-card").forEach(c => c.classList.remove("active"));
+    if (folderId) {
+      const card = document.querySelector(`.folder-card[data-folder-id="${folderId}"]`);
+      if (card) {
+        card.classList.add("active");
+      }
+    }
+  }
+
+  function updateDocSub(folderName) {
+    const docPanelSubtitle = document.getElementById("docPanelSubtitle");
+    if (docPanelSubtitle) {
+      if (folderName) {
+        docPanelSubtitle.textContent = `Showing files in: ${folderName}`;
+      } else {
+        docPanelSubtitle.textContent = "Your learning materials and files.";
+      }
+    }
+  }
+
+  function scrollToDocs() {
+    const docPanel = document.querySelector(".document-panel");
+    if (docPanel) {
+      docPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
   function setDocumentsLoading() {
     if (documentLoader) documentLoader.style.display = "flex";
     if (documentGrid) documentGrid.style.display = "none";
@@ -74,6 +102,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const card = document.createElement("div");
     card.className = "folder-card";
     card.style.cursor = "pointer";
+    card.dataset.folderId = folder.folderId;
 
     const main = document.createElement("div");
     main.className = "folder-card-main";
@@ -101,21 +130,27 @@ document.addEventListener("DOMContentLoaded", async function () {
     openBtn.type = "button";
     openBtn.className = "btn btn-primary btn-sm";
     openBtn.textContent = "Browse Files";
-    openBtn.addEventListener("click", function (e) {
+    openBtn.addEventListener("click", async function (e) {
       e.stopPropagation();
       if (folderFilter) {
         folderFilter.value = String(folder.folderId);
-        loadDocuments();
+        await loadDocuments();
+        activateFolderCard(folder.folderId);
+        updateDocSub(folder.folderName);
+        scrollToDocs();
       }
     });
 
     actions.append(openBtn);
     card.append(main, actions);
 
-    card.addEventListener("click", function () {
+    card.addEventListener("click", async function () {
       if (folderFilter) {
         folderFilter.value = String(folder.folderId);
-        loadDocuments();
+        await loadDocuments();
+        activateFolderCard(folder.folderId);
+        updateDocSub(folder.folderName);
+        scrollToDocs();
       }
     });
 
@@ -166,11 +201,19 @@ document.addEventListener("DOMContentLoaded", async function () {
     folderLink.textContent = documentItem.folderId
       ? `Folder: ${documentItem.folderName || "Folder"}`
       : "My Documents";
-    folderLink.addEventListener("click", function (e) {
+    folderLink.addEventListener("click", async function (e) {
       e.stopPropagation();
       if (!folderFilter) return;
       folderFilter.value = documentItem.folderId ? String(documentItem.folderId) : "0";
-      loadDocuments();
+      await loadDocuments();
+      if (documentItem.folderId) {
+        activateFolderCard(documentItem.folderId);
+        updateDocSub(documentItem.folderName);
+      } else {
+        activateFolderCard(null);
+        updateDocSub("My Documents");
+      }
+      scrollToDocs();
     });
     meta.append(folderLink);
 
@@ -264,6 +307,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             folderGrid.appendChild(createFolderCard(folder));
           });
           folderGrid.style.display = "grid";
+          if (folderFilter && folderFilter.value) {
+            activateFolderCard(folderFilter.value);
+          }
         }
       }
     } catch (error) {
@@ -371,16 +417,33 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   if (folderFilter) {
-    folderFilter.addEventListener("change", loadDocuments);
+    folderFilter.addEventListener("change", async function () {
+      await loadDocuments();
+      const folderId = folderFilter.value;
+      if (folderId && folderId !== "0") {
+        const selectedOption = folderFilter.options[folderFilter.selectedIndex];
+        const folderName = selectedOption ? selectedOption.textContent : "Folder";
+        activateFolderCard(folderId);
+        updateDocSub(folderName);
+      } else if (folderId === "0") {
+        activateFolderCard(null);
+        updateDocSub("My Documents");
+      } else {
+        activateFolderCard(null);
+        updateDocSub(null);
+      }
+    });
   }
 
   if (clearFiltersBtn) {
-    clearFiltersBtn.addEventListener("click", function () {
+    clearFiltersBtn.addEventListener("click", async function () {
       if (searchInput) searchInput.value = "";
       if (subjectFilter) subjectFilter.value = "";
       if (fileTypeFilter) fileTypeFilter.value = "";
       if (folderFilter) folderFilter.value = "";
-      loadDocuments();
+      await loadDocuments();
+      activateFolderCard(null);
+      updateDocSub(null);
     });
   }
 });
