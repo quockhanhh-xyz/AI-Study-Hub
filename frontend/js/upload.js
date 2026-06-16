@@ -1,4 +1,4 @@
-// ── DOM refs ──────────────────────────────────────────────────────────────────
+// DOM refs
 const uploadForm = document.getElementById("uploadForm");
 const titleInput = document.getElementById("title");
 const descInput = document.getElementById("description");
@@ -12,7 +12,7 @@ const folderSelect = document.getElementById("folderSelect");
 const progressFill = document.getElementById("progressFill");
 const progressText = document.getElementById("progressText");
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+// Constants
 const ALLOWED_TYPES = [
   "application/pdf",
   "application/msword",
@@ -27,42 +27,40 @@ const ALLOWED_TYPES = [
 ];
 const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
-// Populates the folder <select> with all folders including subfolders.
-// Calls getMyFolders() recursively per parent to build a full tree.
-// Upload is not blocked if this fails — folder selection is optional.
+// Populates the folder select with all folder levels.
+// Upload is not blocked if folder loading fails because folder selection is optional.
 async function loadFolderOptions() {
-  try {
-    // Load root folders first
-    const rootResult = await getMyFolders(null);
-    const rootFolders = Array.isArray(rootResult.data) ? rootResult.data : [];
+  const visitedFolderIds = new Set();
 
-    for (const folder of rootFolders) {
+  async function appendFolderOptions(parentFolderId, pathPrefix) {
+    const result = await getMyFolders(parentFolderId);
+    const folders = Array.isArray(result.data) ? result.data : [];
+
+    for (const folder of folders) {
+      if (visitedFolderIds.has(folder.folderId)) {
+        continue;
+      }
+
+      visitedFolderIds.add(folder.folderId);
+
+      const label = pathPrefix ? `${pathPrefix} / ${folder.folderName}` : folder.folderName;
       const option = document.createElement("option");
       option.value = folder.folderId;
-      option.textContent = folder.folderName;
+      option.textContent = label;
       folderSelect.appendChild(option);
 
-      // Load subfolders of this root folder
-      try {
-        const subResult = await getMyFolders(folder.folderId);
-        const subFolders = Array.isArray(subResult.data) ? subResult.data : [];
-        subFolders.forEach(function (sub) {
-          const subOption = document.createElement("option");
-          subOption.value = sub.folderId;
-          subOption.textContent = `${folder.folderName} / ${sub.folderName}`;
-          folderSelect.appendChild(subOption);
-        });
-      } catch (e) {
-        // Skip if subfolder load fails
-      }
+      await appendFolderOptions(folder.folderId, label);
     }
+  }
 
+  try {
+    await appendFolderOptions(null, "");
   } catch (err) {
     console.warn("Could not load folders:", err);
   }
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 function showMessage(text, type) {
   uploadMessage.textContent = text;
   uploadMessage.className = "upload-message status-box";
@@ -93,7 +91,7 @@ function updateDropZone(file) {
   }
 }
 
-// ── Validation ────────────────────────────────────────────────────────────────
+// Validation
 function validateFile(file) {
   if (!file) return "Please select a file.";
 
@@ -110,7 +108,7 @@ function validateFile(file) {
   return null;
 }
 
-// ── Progress bar (Simulated since fetch lacks a native progress event) ─────────
+// Progress bar simulated because fetch has no native upload progress event.
 function showProgress() {
   uploadProgress.removeAttribute("aria-hidden");
   uploadProgress.style.display = "block";
@@ -144,14 +142,14 @@ function hideProgress() {
   progressFill.style.width = "0%";
 }
 
-// ── File input change ─────────────────────────────────────────────────────────
+// File input change
 fileInput.addEventListener("change", () => {
   const file = fileInput.files[0] || null;
   updateDropZone(file);
   hideMessage();
 });
 
-// ── Keyboard accessibility for drop zone ─────────────────────────────────────
+// Keyboard accessibility for drop zone
 dropZone.addEventListener("keydown", (e) => {
   if (e.key === "Enter" || e.key === " ") {
     e.preventDefault();
@@ -159,7 +157,7 @@ dropZone.addEventListener("keydown", (e) => {
   }
 });
 
-// ── Drag and Drop ─────────────────────────────────────────────────────────────
+// Drag and drop
 dropZone.addEventListener("dragover", (e) => {
   e.preventDefault();
   dropZone.classList.add("drag-over");
@@ -185,7 +183,7 @@ dropZone.addEventListener("drop", (e) => {
   }
 });
 
-// ── Error message resolver ────────────────────────────────────────────────────
+// Error message resolver
 function resolveUploadError(err) {
   const msg = (err.message || "").toLowerCase();
   const isDuplicate =
@@ -200,7 +198,7 @@ function resolveUploadError(err) {
   return err.message || "Upload failed. Please try again.";
 }
 
-// ── Form submit ───────────────────────────────────────────────────────────────
+// Form submit
 uploadForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   hideMessage();

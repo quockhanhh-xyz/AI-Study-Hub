@@ -2,55 +2,55 @@
  * Folder Management UI controller for AI Study Hub.
  * Supports URL-based subfolder navigation via ?parentFolderId=
  * Handles breadcrumb, folder listing, creation, renaming, deletion, and document browsing.
- * Relies on folder-api.js and document-api.js — never uses raw fetch directly.
+ * Relies on folder-api.js and document-api.js; never uses raw fetch directly.
  */
 
 document.addEventListener("DOMContentLoaded", async function () {
 
-  // ── View containers ──────────────────────────────────────────────────────────
+  // View containers
   const folderListView = document.getElementById("folderListView");
   const folderDocView = document.getElementById("folderDocView");
 
-  // ── Folder list elements ─────────────────────────────────────────────────────
+  // Folder list elements
   const folderLoader = document.getElementById("folderLoader");
   const folderError = document.getElementById("folderError");
   const folderGrid = document.getElementById("folderGrid");
   const folderEmpty = document.getElementById("folderEmpty");
 
-  // ── Folder document view elements ────────────────────────────────────────────
+  // Folder document view elements
   const docLoader = document.getElementById("docLoader");
   const docError = document.getElementById("docError");
   const docGrid = document.getElementById("docGrid");
   const docEmpty = document.getElementById("docEmpty");
 
-  // ── Breadcrumb ───────────────────────────────────────────────────────────────
+  // Breadcrumb
   const breadcrumb = document.getElementById("breadcrumb");
 
-  // ── Buttons ──────────────────────────────────────────────────────────────────
+  // Buttons
   const createFolderBtn = document.getElementById("createFolderBtn");
   const emptyCreateBtn = document.getElementById("emptyCreateBtn");
 
-  // ── Create modal ─────────────────────────────────────────────────────────────
+  // Create modal
   const createModal = document.getElementById("createModal");
   const createFolderName = document.getElementById("createFolderName");
   const createError = document.getElementById("createError");
   const createCancelBtn = document.getElementById("createCancelBtn");
   const createConfirmBtn = document.getElementById("createConfirmBtn");
 
-  // ── Rename modal ─────────────────────────────────────────────────────────────
+  // Rename modal
   const renameModal = document.getElementById("renameModal");
   const renameFolderName = document.getElementById("renameFolderName");
   const renameError = document.getElementById("renameError");
   const renameCancelBtn = document.getElementById("renameCancelBtn");
   const renameConfirmBtn = document.getElementById("renameConfirmBtn");
 
-  // ── Delete modal ─────────────────────────────────────────────────────────────
+  // Delete modal
   const deleteModal = document.getElementById("deleteModal");
   const deleteError = document.getElementById("deleteError");
   const deleteCancelBtn = document.getElementById("deleteCancelBtn");
   const deleteConfirmBtn = document.getElementById("deleteConfirmBtn");
 
-  // ── State ────────────────────────────────────────────────────────────────────
+  // State
   let editingFolderId = null;
   let deletingFolderId = null;
 
@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   // The current parentFolderId being viewed. null = My Documents (root).
   const currentParentFolderId = getParentFolderIdFromUrl();
 
-  // ── URL helpers ──────────────────────────────────────────────────────────────
+  // URL helpers
 
   // Reads ?parentFolderId= from the current URL. Returns null if not present.
   function getParentFolderIdFromUrl() {
@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.location.href = `folders.html?parentFolderId=${folderId}`;
   }
 
-  // ── Breadcrumb ───────────────────────────────────────────────────────────────
+  // Breadcrumb helpers
 
   // Builds and renders the breadcrumb trail for the current folder.
   // My Documents is always the first crumb; subsequent crumbs come from
@@ -138,7 +138,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
 
-  // ── Modal helpers ────────────────────────────────────────────────────────────
+  // Modal helpers
 
   function openModal(overlay) { overlay.classList.add("open"); }
   function closeModal(overlay) { overlay.classList.remove("open"); }
@@ -153,7 +153,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     el.style.display = "none";
   }
 
-  // ── Folder list rendering ────────────────────────────────────────────────────
+  // Folder list rendering
 
   function createFolderCard(folder) {
     const card = document.createElement("div");
@@ -180,7 +180,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const actions = document.createElement("div");
     actions.className = "folder-card-actions";
 
-    // Open button — navigates into the folder via URL.
+    // Open button navigates into the folder via URL.
     const openBtn = document.createElement("button");
     openBtn.type = "button";
     openBtn.className = "btn btn-primary btn-sm";
@@ -190,7 +190,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       navigateToFolder(folder.folderId, folder.folderName);
     });
 
-    // Browse Files button — also opens the folder (same as Open).
+    // Browse Files button also opens the folder.
     const browseBtn = document.createElement("button");
     browseBtn.type = "button";
     browseBtn.className = "btn btn-secondary btn-sm";
@@ -262,7 +262,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
-  // ── Document view (inside a folder) ─────────────────────────────────────────
+  // Document view inside a folder
 
   function createDocCard(doc) {
     const card = document.createElement("article");
@@ -333,7 +333,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
-  // ── Create folder ────────────────────────────────────────────────────────────
+  // Create folder
 
   function openCreateModal() {
     createFolderName.value = "";
@@ -372,7 +372,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (e.key === "Enter") createConfirmBtn.click();
   });
 
-  // ── Rename folder ────────────────────────────────────────────────────────────
+  // Rename folder
 
   function openRenameModal(folder) {
     editingFolderId = folder.folderId;
@@ -409,7 +409,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (e.key === "Enter") renameConfirmBtn.click();
   });
 
-  // ── Delete folder ────────────────────────────────────────────────────────────
+  // Delete folder
 
   function openDeleteModal(folderId) {
     deletingFolderId = folderId;
@@ -434,7 +434,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   });
 
-  // ── Close modals on overlay click ────────────────────────────────────────────
+  // Close modals on overlay click
 
   [createModal, renameModal, deleteModal].forEach(function (overlay) {
     overlay.addEventListener("click", function (e) {
@@ -442,10 +442,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   });
 
-  // ── Init ─────────────────────────────────────────────────────────────────────
+  // Init
   // Build breadcrumb first, then decide what to show based on the URL.
-  // - No parentFolderId in URL → show folder grid (My Documents root).
-  // - parentFolderId present → show documents inside that folder.
+  // - No parentFolderId in URL: show folder grid (My Documents root).
+  // - parentFolderId present: show documents inside that folder.
 
   await buildBreadcrumb();
   await loadFolders();
