@@ -2,7 +2,6 @@ package com.demo.ai_study_hub.service;
 
 import com.demo.ai_study_hub.dto.FolderRequest;
 import com.demo.ai_study_hub.dto.FolderResponse;
-import com.demo.ai_study_hub.entity.Document;
 import com.demo.ai_study_hub.entity.Folder;
 import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.repository.DocumentRepository;
@@ -11,6 +10,7 @@ import com.demo.ai_study_hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -26,17 +26,31 @@ public class FolderServiceImpl implements FolderService {
     private final DocumentRepository documentRepository;
 
     @Override
+    @Transactional
     public FolderResponse createFolder(FolderRequest request, String email) {
         User owner = getUser(email);
 
-        if (folderRepository.existsByOwnerAndNameAndStatus(owner, request.getName(), "ACTIVE")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Folder name already exists");
+        Folder parentFolder = null;
+        if (request.getParentFolderId() != null) {
+            parentFolder = folderRepository.findByFolderIdAndOwner(request.getParentFolderId(), owner)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parent folder not found"));
+            if (!"ACTIVE".equals(parentFolder.getStatus())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create subfolder in a deleted folder");
+            }
+        }
+
+        boolean exists = folderRepository.existsByOwnerAndNameAndParentFolderAndStatus(
+                owner, request.getFolderName(), parentFolder, "ACTIVE");
+        if (exists) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A folder with the same name already exists in this location.");
         }
 
         Folder folder = Folder.builder()
-                .name(request.getName())
+                .name(request.getFolderName())
                 .description(request.getDescription())
                 .owner(owner)
+                .parentFolder(parentFolder)
                 .status("ACTIVE")
                 .build();
 
@@ -44,56 +58,67 @@ public class FolderServiceImpl implements FolderService {
     }
 
     @Override
-    public List<FolderResponse> getMyFolders(String email) {
+    @Transactional(readOnly = true)
+    public List<FolderResponse> getMyFolders(Integer parentFolderId, String email) {
         User owner = getUser(email);
 
-        return folderRepository.findByOwnerAndStatusOrderByCreatedAtDesc(owner, "ACTIVE")
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        if (parentFolderId != null) {
+            Folder parentFolder = folderRepository.findByFolderIdAndOwner(parentFolderId, owner)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parent folder not found"));
+            if (!"ACTIVE".equals(parentFolder.getStatus())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parent folder is deleted");
+            }
+            return folderRepository.findByOwnerAndStatusAndParentFolder(owner, "ACTIVE", parentFolder)
+                    .stream().map(this::mapToResponse).collect(Collectors.toList());
+        }
+
+        return folderRepository.findByOwnerAndStatusAndParentFolderIsNull(owner, "ACTIVE")
+                .stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public FolderResponse getFolderDetail(Integer folderId, String email) {
         User owner = getUser(email);
         return mapToResponse(getValidatedFolder(folderId, owner));
     }
 
     @Override
+    @Transactional
     public FolderResponse updateFolder(Integer folderId, FolderRequest request, String email) {
         User owner = getUser(email);
         Folder folder = getValidatedFolder(folderId, owner);
 
-        if (!folder.getName().equals(request.getName()) &&
-                folderRepository.existsByOwnerAndNameAndStatus(owner, request.getName(), "ACTIVE")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Folder name already exists");
+        boolean exists = folderRepository.existsByOwnerAndNameAndParentFolderAndStatus(
+                owner, request.getFolderName(), folder.getParentFolder(), "ACTIVE");
+        if (exists && !folder.getName().equals(request.getFolderName())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A folder with the same name already exists in this location.");
         }
 
-        folder.setName(request.getName());
+        folder.setName(request.getFolderName());
         folder.setDescription(request.getDescription());
-
         return mapToResponse(folderRepository.save(folder));
     }
 
     @Override
+    @Transactional
     public void deleteFolder(Integer folderId, String email) {
         User owner = getUser(email);
         Folder folder = getValidatedFolder(folderId, owner);
 
-        List<Document> documents = documentRepository.findByFolder(folder);
-        LocalDateTime now = LocalDateTime.now();
-        documents.forEach(doc -> {
-            doc.setStatus("DELETED");
-            doc.setDeletedAt(now);
-        });
-        documentRepository.saveAll(documents);
+        long activeDocs = documentRepository.countByFolderAndStatus(folder, "ACTIVE");
+        long activeSubFolders = folderRepository.countByParentFolderAndStatus(folder, "ACTIVE");
+        if (activeDocs > 0 || activeSubFolders > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Folder must be empty before deleting.");
+        }
 
         folder.setStatus("DELETED");
-        folder.setDeletedAt(now);
+        folder.setDeletedAt(LocalDateTime.now());
         folderRepository.save(folder);
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
 
     private User getUser(String email) {
         return userRepository.findByEmail(email)
@@ -118,8 +143,10 @@ public class FolderServiceImpl implements FolderService {
     private FolderResponse mapToResponse(Folder folder) {
         return FolderResponse.builder()
                 .folderId(folder.getFolderId())
-                .name(folder.getName())
+                .folderName(folder.getName())
                 .description(folder.getDescription())
+                .parentFolderId(folder.getParentFolder() != null
+                        ? folder.getParentFolder().getFolderId() : null)
                 .status(folder.getStatus())
                 .createdAt(folder.getCreatedAt())
                 .updatedAt(folder.getUpdatedAt())
