@@ -6,7 +6,7 @@
 
 /**
  * Creates a new folder for the currently authenticated user.
- *{ folderName: "Math Notes", description: "", parentFolderId: null }
+ * @param {Object} data - Folder details, e.g., { folderName: "Math Notes", description: "", parentFolderId: null }.
  * @returns {Promise<Object>} The created folder object metadata from the server.
  */
 function createFolder(data) {
