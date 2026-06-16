@@ -15,9 +15,14 @@ function createFolder(data) {
 
 /**
  * Retrieves all active (non-trashed) folders belonging to the current user.
+ * Optionally filters by parentFolderId to return only immediate subfolders.
+ * @param {number|null} parentFolderId - Parent folder ID to filter by, or null for root.
  * @returns {Promise<Array>} List of the user's active folder objects.
  */
-function getMyFolders() {
+function getMyFolders(parentFolderId) {
+  if (parentFolderId !== undefined && parentFolderId !== null) {
+    return get(`/api/folders/my?parentFolderId=${parentFolderId}`);
+  }
   return get("/api/folders/my");
 }
 
@@ -67,4 +72,5 @@ function permanentDeleteFolder(id) {
   return del(`/api/trash/folders/${id}`);
 }
 
-// End of folder management API subsystem configurations.
+// End of folder management API subsystem configurations.
+

@@ -88,13 +88,22 @@ document.addEventListener("DOMContentLoaded", async function () {
     breadcrumbTrail = [{ folderId: null, name: "My Documents" }];
 
     if (currentParentFolderId) {
-      try {
-        const result = await getFolderById(currentParentFolderId);
-        const folder = result.data;
-        breadcrumbTrail.push({ folderId: folder.folderId, name: folder.name });
-      } catch (e) {
-        // If the folder cannot be resolved, fall back to root silently.
+      // Build full path by walking up the parent chain
+      const chain = [];
+      let folderId = currentParentFolderId;
+
+      while (folderId) {
+        try {
+          const result = await getFolderById(folderId);
+          const folder = result.data;
+          chain.unshift({ folderId: folder.folderId, name: folder.folderName });
+          folderId = folder.parentFolderId || null;
+        } catch (e) {
+          break;
+        }
       }
+
+      breadcrumbTrail = [{ folderId: null, name: "My Documents" }, ...chain];
     }
 
     renderBreadcrumb();
@@ -156,7 +165,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const name = document.createElement("p");
     name.className = "folder-name";
-    name.textContent = folder.name || "Untitled Folder";
+    name.textContent = folder.folderName || "Untitled Folder";
 
     const meta = document.createElement("p");
     meta.className = "folder-meta";
@@ -178,7 +187,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     openBtn.textContent = "Open";
     openBtn.addEventListener("click", function (e) {
       e.stopPropagation();
-      navigateToFolder(folder.folderId, folder.name);
+      navigateToFolder(folder.folderId, folder.folderName);
     });
 
     // Browse Files button — also opens the folder (same as Open).
@@ -188,7 +197,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     browseBtn.textContent = "Browse Files";
     browseBtn.addEventListener("click", function (e) {
       e.stopPropagation();
-      navigateToFolder(folder.folderId, folder.name);
+      navigateToFolder(folder.folderId, folder.folderName);
     });
 
     const renameBtn = document.createElement("button");
@@ -214,7 +223,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Clicking the card itself also opens the folder.
     card.addEventListener("click", function () {
-      navigateToFolder(folder.folderId, folder.name);
+      navigateToFolder(folder.folderId, folder.folderName);
     });
 
     return card;
@@ -224,7 +233,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   // When at root (parentFolderId = null), shows all root-level folders.
   async function loadFolders() {
     folderListView.style.display = "block";
-    folderDocView.style.display = "none";
 
     folderLoader.style.display = "flex";
     folderGrid.style.display = "none";
@@ -232,14 +240,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     hideError(folderError);
 
     try {
-      const result = await getMyFolders();
-      const allFolders = Array.isArray(result.data) ? result.data : [];
-
-      // Filter to only show folders belonging to the current level.
-      // API returns flat list, so we filter by parentFolderId client-side.
-      const folders = allFolders.filter(function (f) {
-        return (f.parentFolderId ?? null) === currentParentFolderId;
-      });
+      const result = await getMyFolders(currentParentFolderId);
+      const folders = Array.isArray(result.data) ? result.data : [];
 
       folderLoader.style.display = "none";
 
@@ -357,7 +359,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     try {
       // Pass parentFolderId so the new folder is created under the current level.
-      await createFolder({ name, parentFolderId: currentParentFolderId });
+      await createFolder({ folderName: name, parentFolderId: currentParentFolderId });
       closeModal(createModal);
       await loadFolders();
     } catch (error) {
@@ -375,7 +377,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   function openRenameModal(folder) {
     editingFolderId = folder.folderId;
-    renameFolderName.value = folder.name || "";
+    renameFolderName.value = folder.folderName || "";
     hideError(renameError);
     openModal(renameModal);
     renameFolderName.focus();
@@ -394,7 +396,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     hideError(renameError);
 
     try {
-      await updateFolder(editingFolderId, { name });
+      await updateFolder(editingFolderId, { folderName: name });
       closeModal(renameModal);
       await loadFolders();
     } catch (error) {
@@ -447,11 +449,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   // - parentFolderId present → show documents inside that folder.
 
   await buildBreadcrumb();
-
+  await loadFolders();
   if (currentParentFolderId) {
     await loadFolderDocuments();
-  } else {
-    await loadFolders();
   }
-
 });

@@ -28,22 +28,33 @@ const ALLOWED_TYPES = [
 const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
 // ── Load folders into dropdown ────────────────────────────────────────────
-// Populates the folder <select> with the user's folders from the API.
+// Populates the folder <select> with a flat list showing hierarchy via "Parent / Child" labels.
 // Upload is not blocked if this fails — folder selection is optional.
 async function loadFolderOptions() {
   try {
     const result = await getMyFolders();
     const folders = Array.isArray(result.data) ? result.data : [];
 
+    // Build a map for quick parent name lookup
+    const folderMap = {};
+    folders.forEach(function (f) {
+      folderMap[f.folderId] = f;
+    });
+
+    // Build display label: if folder has a parent, show "Parent / Child"
     folders.forEach(function (folder) {
       const option = document.createElement("option");
       option.value = folder.folderId;
-      option.textContent = folder.name;
+
+      const parent = folder.parentFolderId ? folderMap[folder.parentFolderId] : null;
+      option.textContent = parent
+        ? `${parent.folderName} / ${folder.folderName}`
+        : folder.folderName;
+
       folderSelect.appendChild(option);
     });
 
   } catch (err) {
-    // Folder dropdown is optional, so upload should not be blocked if loading folders fails.
     console.warn("Could not load folders:", err);
   }
 }
