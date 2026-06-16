@@ -415,12 +415,14 @@ Uploads a document file for the currently authenticated user.
   - `subjectName` (String, nullable)
   - `folderId` (Integer, nullable)
   - `folderName` (String, nullable)
+- **Duplicate File Check**: Prior to initiating the upload to Cloudinary, the backend must query the MySQL database to check if a duplicate document already exists. A duplicate is identified if an existing document shares the same `owner_id` (current user), `folder_id` (nullable, where null represents the root level/unassigned "My Documents"), `originalFileName` (file name), and `fileSize` (in bytes), with `status = 'ACTIVE'`. If a duplicate is found, the backend aborts the process (no Cloudinary file upload occurs) and returns `409 Conflict`.
 - **HTTP Status Codes (Step 3)**: Backend must use precise RESTful HTTP status codes:
   - `200 OK` for successful actions.
   - `400 Bad Request` for validation failures (e.g. missing title).
   - `401 Unauthorized` for missing/expired token.
   - `403 Forbidden` for ownership violations (user attempting to read/write another user's document).
   - `404 Not Found` for non-existent or soft-deleted documents.
+  - `409 Conflict` for duplicate file uploads.
   - Controller endpoints must NOT catch all exceptions and simplify them into a generic `400 Bad Request` (`ResponseEntity.badRequest()`).
 
 ### Success Response
@@ -495,6 +497,18 @@ Uploads a document file for the currently authenticated user.
 {
   "success": false,
   "message": "File size exceeds 10MB",
+  "data": null
+}
+```
+
+### Error Response - Duplicate Document (409)
+
+If a document with the same name and file size already exists in the same target folder (or root folder):
+
+```json
+{
+  "success": false,
+  "message": "A file with the same name and file size already exists in this folder.",
   "data": null
 }
 ```
@@ -891,11 +905,23 @@ Creates a new folder for the currently authenticated user.
 - Cookie: `accessToken=jwt-token-value-here`
 - Content-Type: `application/json`
 
-### Request Body
+### Request Body (Subfolder)
 
 ```json
 {
-  "name": "Math Notes"
+  "folderName": "Week 1",
+  "description": "Lecture documents",
+  "parentFolderId": 1
+}
+```
+
+### Request Body (Root Folder)
+
+```json
+{
+  "folderName": "SWT301",
+  "description": "Software Testing",
+  "parentFolderId": null
 }
 ```
 
@@ -907,7 +933,9 @@ Creates a new folder for the currently authenticated user.
   "message": "Folder created successfully",
   "data": {
     "folderId": 1,
-    "name": "Math Notes",
+    "folderName": "Week 1",
+    "description": "Lecture documents",
+    "parentFolderId": 1,
     "status": "ACTIVE",
     "createdAt": "2026-06-10T10:00:00"
   }
@@ -924,14 +952,14 @@ Creates a new folder for the currently authenticated user.
 }
 ```
 
-### Error Response - Duplicate Name (400)
+### Error Response - Duplicate Name (409 Conflict)
 
-If the user already has an active folder with the same name:
+If the user already has an active folder with the same name under the same parent folder (or at root level):
 
 ```json
 {
   "success": false,
-  "message": "Folder name already exists",
+  "message": "A folder with the same name already exists in this location.",
   "data": null
 }
 ```
@@ -952,11 +980,22 @@ If the user already has an active folder with the same name:
 
 ## GET `/api/folders/my`
 
-Retrieves all active folders owned by the currently authenticated user. Only folders with `status = 'ACTIVE'` are returned.
+Retrieves active folders owned by the currently authenticated user. Only folders with `status = 'ACTIVE'` are returned.
 
 ### Request Headers
 
 - Cookie: `accessToken=jwt-token-value-here`
+
+### Query Parameters
+
+| Parameter        | Type    | Required | Description                                                                                                                                                 |
+| :--------------- | :------ | :------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `parentFolderId` | Integer | No       | If empty or not provided, returns folders at the root level (`parentFolderId = null`). If provided, returns the immediate subfolders of the given folder. |
+
+### Access Rules
+
+- Users can only view folders they own.
+- If a user passes a `parentFolderId` belonging to another user, the backend must return `403 Forbidden` or `404 Not Found` (to avoid leaking existence).
 
 ### Success Response (200 OK)
 
@@ -967,7 +1006,9 @@ Retrieves all active folders owned by the currently authenticated user. Only fol
   "data": [
     {
       "folderId": 1,
-      "name": "Math Notes",
+      "folderName": "Math Notes",
+      "description": "Calculus and Algebra notes",
+      "parentFolderId": null,
       "status": "ACTIVE",
       "createdAt": "2026-06-10T10:00:00"
     }
@@ -983,6 +1024,8 @@ Retrieves all active folders owned by the currently authenticated user. Only fol
 
 Retrieves details of a specific folder owned by the authenticated user. Only folders with `status = 'ACTIVE'` can be retrieved.
 
+*(Note: To construct the breadcrumb path on the frontend, the frontend can recursively fetch the folder details using `GET /api/folders/{id}` to traverse parent folders via `parentFolderId` until `parentFolderId` is `null` representing the root level.)*
+
 ### Request Headers
 
 - Cookie: `accessToken=jwt-token-value-here`
@@ -995,7 +1038,9 @@ Retrieves details of a specific folder owned by the authenticated user. Only fol
   "message": "Folder retrieved successfully",
   "data": {
     "folderId": 1,
-    "name": "Math Notes",
+    "folderName": "Math Notes",
+    "description": "Calculus and Algebra notes",
+    "parentFolderId": null,
     "status": "ACTIVE",
     "createdAt": "2026-06-10T10:00:00"
   }
@@ -1032,7 +1077,7 @@ If the folder does not exist or has been soft-deleted:
 
 ## PUT `/api/folders/{id}`
 
-Updates the name of a specific folder owned by the authenticated user.
+Updates the name and description of a specific folder owned by the authenticated user.
 
 ### Request Headers
 
@@ -1043,7 +1088,8 @@ Updates the name of a specific folder owned by the authenticated user.
 
 ```json
 {
-  "name": "Calculus Notes"
+  "folderName": "Calculus Notes",
+  "description": "Advanced Calculus notes"
 }
 ```
 
@@ -1055,7 +1101,9 @@ Updates the name of a specific folder owned by the authenticated user.
   "message": "Folder updated successfully",
   "data": {
     "folderId": 1,
-    "name": "Calculus Notes",
+    "folderName": "Calculus Notes",
+    "description": "Advanced Calculus notes",
+    "parentFolderId": null,
     "status": "ACTIVE",
     "createdAt": "2026-06-10T10:00:00"
   }
@@ -1072,14 +1120,14 @@ Updates the name of a specific folder owned by the authenticated user.
 }
 ```
 
-### Error Response - Duplicate Name (400)
+### Error Response - Duplicate Name (409 Conflict)
 
-If the user already has an active folder with the new name:
+If the user already has an active folder with the new name under the same parent folder (or at root level):
 
 ```json
 {
   "success": false,
-  "message": "Folder name already exists",
+  "message": "A folder with the same name already exists in this location.",
   "data": null
 }
 ```
@@ -1114,7 +1162,7 @@ If the folder does not exist or has been soft-deleted:
 
 ## DELETE `/api/folders/{id}`
 
-Soft-deletes a folder owned by the authenticated user. This changes its `status` to `'DELETED'` in MySQL and records `deletedAt`. All active documents inside this folder are automatically soft-deleted with the same timestamp.
+Soft-deletes an empty folder owned by the authenticated user. This changes its `status` to `'DELETED'` in MySQL and records `deletedAt`. If the folder is not empty (i.e., contains active documents or active subfolders), the backend must reject the deletion request.
 
 ### Request Headers
 
@@ -1125,7 +1173,19 @@ Soft-deletes a folder owned by the authenticated user. This changes its `status`
 ```json
 {
   "success": true,
-  "message": "Folder and its contents deleted successfully",
+  "message": "Folder deleted successfully",
+  "data": null
+}
+```
+
+### Error Response - Folder Not Empty (400)
+
+If the folder contains active documents or active subfolders:
+
+```json
+{
+  "success": false,
+  "message": "Folder must be empty before deleting.",
   "data": null
 }
 ```
@@ -1237,7 +1297,9 @@ Retrieves all soft-deleted folders and documents owned by the currently authenti
     "folders": [
       {
         "folderId": 1,
-        "name": "Math Notes",
+        "folderName": "Math Notes",
+        "description": "Calculus and Algebra notes",
+        "parentFolderId": null,
         "deletedAt": "2026-06-10T10:05:00"
       }
     ],
@@ -1262,7 +1324,7 @@ Retrieves all soft-deleted folders and documents owned by the currently authenti
 
 ## POST `/api/trash/folders/{id}/restore`
 
-Restores a soft-deleted folder. This sets the folder's `status` back to `'ACTIVE'` and resets `deletedAt` to `null`. All documents inside this folder that were soft-deleted as part of the folder deletion (sharing the same `deletedAt` timestamp) are also restored to `'ACTIVE'`.
+Restores a soft-deleted empty folder. This sets the folder's `status` back to `'ACTIVE'` and resets `deletedAt` to `null`.
 
 ### Request Headers
 
@@ -1273,7 +1335,7 @@ Restores a soft-deleted folder. This sets the folder's `status` back to `'ACTIVE
 ```json
 {
   "success": true,
-  "message": "Folder and its documents restored successfully",
+  "message": "Folder restored successfully",
   "data": null
 }
 ```
@@ -1351,7 +1413,7 @@ If the document does not exist or is not in the trash:
 
 ## DELETE `/api/trash/folders/{id}`
 
-Permanently deletes a folder from the database. All documents contained within this folder (whether in active or deleted status) are also permanently deleted from the database, and their physical files are deleted from Cloudinary.
+Permanently deletes a soft-deleted empty folder from the database.
 
 ### Request Headers
 
@@ -1362,7 +1424,7 @@ Permanently deletes a folder from the database. All documents contained within t
 ```json
 {
   "success": true,
-  "message": "Folder and its documents permanently deleted",
+  "message": "Folder permanently deleted",
   "data": null
 }
 ```
