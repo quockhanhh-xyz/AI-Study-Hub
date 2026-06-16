@@ -17,10 +17,4 @@ public interface FolderService {
 
     void deleteFolder(Integer folderId, String email);
 
-<<<<<<< HEAD
-    void restoreFolder(Integer folderId, String email);
-
-    void permanentDeleteFolder(Integer folderId, String email);
-=======
->>>>>>> b92d84c (fix: duplicate doc check, folder empty-delete, trash messages and contract alignment)
 }
