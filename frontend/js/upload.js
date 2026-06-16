@@ -1,4 +1,4 @@
-// ── DOM refs ──────────────────────────────────────────────────────────────────
+// DOM refs
 const uploadForm = document.getElementById("uploadForm");
 const titleInput = document.getElementById("title");
 const descInput = document.getElementById("description");
@@ -12,7 +12,7 @@ const folderSelect = document.getElementById("folderSelect");
 const progressFill = document.getElementById("progressFill");
 const progressText = document.getElementById("progressText");
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+// Constants
 const ALLOWED_TYPES = [
   "application/pdf",
   "application/msword",
@@ -27,26 +27,40 @@ const ALLOWED_TYPES = [
 ];
 const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
-// ── Load folders into dropdown ────────────────────────────────────────────
+// Populates the folder select with all folder levels.
+// Upload is not blocked if folder loading fails because folder selection is optional.
 async function loadFolderOptions() {
-  try {
-    const result = await getMyFolders();
+  const visitedFolderIds = new Set();
+
+  async function appendFolderOptions(parentFolderId, pathPrefix) {
+    const result = await getMyFolders(parentFolderId);
     const folders = Array.isArray(result.data) ? result.data : [];
 
-    folders.forEach(function (folder) {
+    for (const folder of folders) {
+      if (visitedFolderIds.has(folder.folderId)) {
+        continue;
+      }
+
+      visitedFolderIds.add(folder.folderId);
+
+      const label = pathPrefix ? `${pathPrefix} / ${folder.folderName}` : folder.folderName;
       const option = document.createElement("option");
       option.value = folder.folderId;
-      option.textContent = folder.name;
+      option.textContent = label;
       folderSelect.appendChild(option);
-    });
 
+      await appendFolderOptions(folder.folderId, label);
+    }
+  }
+
+  try {
+    await appendFolderOptions(null, "");
   } catch (err) {
-    // Folder dropdown is optional, so upload should not be blocked if loading folders fails.
     console.warn("Could not load folders:", err);
   }
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 function showMessage(text, type) {
   uploadMessage.textContent = text;
   uploadMessage.className = "upload-message status-box";
@@ -77,7 +91,7 @@ function updateDropZone(file) {
   }
 }
 
-// ── Validation ────────────────────────────────────────────────────────────────
+// Validation
 function validateFile(file) {
   if (!file) return "Please select a file.";
 
@@ -94,7 +108,7 @@ function validateFile(file) {
   return null;
 }
 
-// ── Progress bar (Simulated since fetch lacks a native progress event) ─────────
+// Progress bar simulated because fetch has no native upload progress event.
 function showProgress() {
   uploadProgress.removeAttribute("aria-hidden");
   uploadProgress.style.display = "block";
@@ -128,14 +142,14 @@ function hideProgress() {
   progressFill.style.width = "0%";
 }
 
-// ── File input change ─────────────────────────────────────────────────────────
+// File input change
 fileInput.addEventListener("change", () => {
   const file = fileInput.files[0] || null;
   updateDropZone(file);
   hideMessage();
 });
 
-// ── Keyboard accessibility for drop zone ─────────────────────────────────────
+// Keyboard accessibility for drop zone
 dropZone.addEventListener("keydown", (e) => {
   if (e.key === "Enter" || e.key === " ") {
     e.preventDefault();
@@ -143,7 +157,7 @@ dropZone.addEventListener("keydown", (e) => {
   }
 });
 
-// ── Drag and Drop ─────────────────────────────────────────────────────────────
+// Drag and drop
 dropZone.addEventListener("dragover", (e) => {
   e.preventDefault();
   dropZone.classList.add("drag-over");
@@ -169,7 +183,22 @@ dropZone.addEventListener("drop", (e) => {
   }
 });
 
-// ── Form submit ───────────────────────────────────────────────────────────────
+// Error message resolver
+function resolveUploadError(err) {
+  const msg = (err.message || "").toLowerCase();
+  const isDuplicate =
+    msg.includes("duplicate") ||
+    msg.includes("already exists") ||
+    msg.includes("file already");
+
+  if (isDuplicate) {
+    return "This file already exists in the selected folder. Please rename the file, choose a different folder, or upload a different file.";
+  }
+
+  return err.message || "Upload failed. Please try again.";
+}
+
+// Form submit
 uploadForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   hideMessage();
@@ -221,7 +250,7 @@ uploadForm.addEventListener("submit", async (e) => {
   } catch (err) {
     clearInterval(progressInterval);
     hideProgress();
-    showMessage(err.message, "error");
+    showMessage(resolveUploadError(err), "error");
 
   } finally {
     submitBtn.disabled = false;
