@@ -27,7 +27,9 @@ public class TrashResponse {
     @Builder
     public static class TrashFolderItem {
         private Integer folderId;
-        private String name;
+        private String folderName;
+        private String description;
+        private Integer parentFolderId;
         private LocalDateTime deletedAt;
     }
 }

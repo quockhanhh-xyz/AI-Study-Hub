@@ -27,6 +27,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -66,7 +67,7 @@ class FolderControllerTest {
     void setUp() {
         sampleResponse = FolderResponse.builder()
                 .folderId(1)
-                .name("Test Folder")
+                .folderName("Test Folder")
                 .description("Test description")
                 .status("ACTIVE")
                 .createdAt(LocalDateTime.now())
@@ -84,7 +85,7 @@ class FolderControllerTest {
                 .thenReturn(sampleResponse);
 
         FolderRequest body = new FolderRequest();
-        body.setName("Test Folder");
+        body.setFolderName("Test Folder");
         body.setDescription("Test description");
 
         mockMvc.perform(post("/api/folders")
@@ -95,7 +96,7 @@ class FolderControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Folder created successfully"))
                 .andExpect(jsonPath("$.data.folderId").value(1))
-                .andExpect(jsonPath("$.data.name").value("Test Folder"))
+                .andExpect(jsonPath("$.data.folderName").value("Test Folder")) // FIX: name -> folderName
                 .andExpect(jsonPath("$.data.status").value("ACTIVE"));
     }
 
@@ -107,7 +108,7 @@ class FolderControllerTest {
     @WithMockUser(username = "test@gmail.com")
     void createFolder_Failed_NameEmpty() throws Exception {
         FolderRequest badBody = new FolderRequest();
-        badBody.setName("");
+        badBody.setFolderName("");
         badBody.setDescription("Some description");
 
         mockMvc.perform(post("/api/folders")
@@ -127,20 +128,20 @@ class FolderControllerTest {
     void getMyFolders_Success() throws Exception {
         FolderResponse second = FolderResponse.builder()
                 .folderId(2)
-                .name("Exam Notes")
+                .folderName("Exam Notes")
                 .status("ACTIVE")
                 .build();
 
-        when(folderService.getMyFolders(anyString()))
+        when(folderService.getMyFolders(isNull(), anyString()))
                 .thenReturn(List.of(sampleResponse, second));
 
         mockMvc.perform(get("/api/folders/my"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].folderId").value(1))
-                .andExpect(jsonPath("$.data[0].name").value("Test Folder"))
+                .andExpect(jsonPath("$.data[0].folderName").value("Test Folder")) // FIX: name -> folderName
                 .andExpect(jsonPath("$.data[1].folderId").value(2))
-                .andExpect(jsonPath("$.data[1].name").value("Exam Notes"));
+                .andExpect(jsonPath("$.data[1].folderName").value("Exam Notes")); // FIX: name -> folderName
     }
 
     // =========================================================================
@@ -156,7 +157,7 @@ class FolderControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.folderId").value(1))
-                .andExpect(jsonPath("$.data.name").value("Test Folder"))
+                .andExpect(jsonPath("$.data.folderName").value("Test Folder")) // FIX: name -> folderName
                 .andExpect(jsonPath("$.data.status").value("ACTIVE"));
     }
 
@@ -183,7 +184,7 @@ class FolderControllerTest {
     void updateFolder_Success() throws Exception {
         FolderResponse updated = FolderResponse.builder()
                 .folderId(1)
-                .name("Updated Name")
+                .folderName("Updated Name")
                 .description("Updated description")
                 .status("ACTIVE")
                 .build();
@@ -192,7 +193,7 @@ class FolderControllerTest {
                 .thenReturn(updated);
 
         FolderRequest body = new FolderRequest();
-        body.setName("Updated Name");
+        body.setFolderName("Updated Name");
         body.setDescription("Updated description");
 
         mockMvc.perform(put("/api/folders/1")
@@ -202,13 +203,13 @@ class FolderControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Folder updated successfully"))
-                .andExpect(jsonPath("$.data.name").value("Updated Name"));
+                .andExpect(jsonPath("$.data.folderName").value("Updated Name")); // FIX: name -> folderName
     }
 
     // =========================================================================
-    // TC7 — Delete folder → cascade soft-deletes all documents → 200 OK
-    // The service never rejects a non-empty folder; it marks all contained
-    // documents as DELETED before soft-deleting the folder itself.
+    // TC7 — Delete empty folder → 200 OK
+    // The service requires the folder to be empty (no active documents or
+    // subfolders) before soft-deleting it.
     // =========================================================================
     @Test
     @WithMockUser(username = "test@gmail.com")
@@ -219,6 +220,6 @@ class FolderControllerTest {
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Folder and its contents deleted successfully"));
+                .andExpect(jsonPath("$.message").value("Folder deleted successfully"));
     }
 }

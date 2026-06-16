@@ -175,4 +175,24 @@ class DocumentServiceTest {
         assertEquals("Subject not found", exception.getReason());
         verify(cloudinaryStorageService, never()).uploadFile(any(), any());
     }
+
+    @Test
+    void uploadDocument_WhenDuplicateFile_ShouldThrow409AndNotUploadCloudinary() {
+        MultipartFile mockFile = mock(MultipartFile.class);
+        when(mockFile.getOriginalFilename()).thenReturn("TailieuHot.pdf");
+        when(mockFile.getSize()).thenReturn(102400L);
+
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(subjectRepository.findById(1)).thenReturn(Optional.of(mockSubject));
+        when(documentRepository.existsDuplicate(mockOwner, "TailieuHot.pdf", 102400L, null)).thenReturn(true);
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            documentService.uploadDocument(mockFile, "Test Title", "Description", 1, null, "doantam785@gmail.com");
+        });
+
+        assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
+        assertEquals("A file with the same name and file size already exists in this folder.", exception.getReason());
+        verify(cloudinaryStorageService, never()).uploadFile(any(), any());
+    }
+
 }

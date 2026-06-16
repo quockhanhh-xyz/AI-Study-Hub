@@ -9,11 +9,12 @@ public interface FolderService {
 
     FolderResponse createFolder(FolderRequest request, String email);
 
-    List<FolderResponse> getMyFolders(String email);
+    List<FolderResponse> getMyFolders(Integer parentFolderId, String email);
 
     FolderResponse getFolderDetail(Integer folderId, String email);
 
     FolderResponse updateFolder(Integer folderId, FolderRequest request, String email);
 
     void deleteFolder(Integer folderId, String email);
+
 }

@@ -36,9 +36,11 @@ public class FolderController {
     }
 
     @GetMapping("/my")
-    public ResponseEntity<ApiResponse<List<FolderResponse>>> getMyFolders(Principal principal) {
+    public ResponseEntity<ApiResponse<List<FolderResponse>>> getMyFolders(
+            @RequestParam(required = false) Integer parentFolderId,
+            Principal principal) {
         try {
-            List<FolderResponse> data = folderService.getMyFolders(principal.getName());
+            List<FolderResponse> data = folderService.getMyFolders(parentFolderId, principal.getName());
             return ResponseEntity.ok(ApiResponse.success(data, "Folders retrieved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
@@ -82,7 +84,7 @@ public class FolderController {
             Principal principal) {
         try {
             folderService.deleteFolder(id, principal.getName());
-            return ResponseEntity.ok(ApiResponse.success(null, "Folder and its contents deleted successfully"));
+            return ResponseEntity.ok(ApiResponse.success(null, "Folder deleted successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {
