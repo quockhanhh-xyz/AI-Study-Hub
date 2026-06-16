@@ -112,7 +112,7 @@ public class FolderServiceImpl implements FolderService {
         User owner = getUser(email);
         Folder folder = getValidatedFolder(folderId, owner);
 
-        // Khớp với nghiệp vụ mới: Chỉ cho phép xóa thư mục rỗng
+
         long activeDocs = documentRepository.countByFolderAndStatus(folder, "ACTIVE");
         long activeSubFolders = folderRepository.countByParentFolderAndStatus(folder, "ACTIVE");
         if (activeDocs > 0 || activeSubFolders > 0) {
@@ -127,13 +127,13 @@ public class FolderServiceImpl implements FolderService {
     @Override
     @Transactional
     public void restoreFolder(Integer folderId, String email) {
-        // Ủy nhiệm toàn quyền xử lý khôi phục qua cho TrashService theo Contract
+
     }
 
     @Override
     @Transactional
     public void permanentDeleteFolder(Integer folderId, String email) {
-        // Ủy nhiệm toàn quyền xử lý xóa vĩnh viễn qua cho TrashService theo Contract
+
     }
 
     private User getUser(String email) {

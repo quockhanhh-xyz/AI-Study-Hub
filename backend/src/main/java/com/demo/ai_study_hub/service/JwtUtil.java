@@ -16,7 +16,7 @@ public class JwtUtil {
     private String secret;
 
     @Value("${jwt.expiration-ms:86400000}")
-    private long expirationMs; // Mặc định 1 ngày
+    private long expirationMs;
 
     private SecretKey getKey() {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
