@@ -1,4 +1,5 @@
 // document-detail.js – FE2: Document Detail & Edit Page
+// Standardized UI styles and theme configurations.
 
 // Fix #3: showFatalError queries DOM directly to avoid ReferenceError
 // when detailLoader variable is not yet declared
