@@ -33,9 +33,8 @@ function getSubjects() {
  * @param {Object} params - Search and filter parameters.
  * @returns {Promise} Filtered list of documents.
  */
-function searchDocuments(params = {}) {
-  const query = new URLSearchParams(params).toString();
-  return get(query ? `/api/documents/my?${query}` : "/api/documents/my");
+function searchDocuments(params) {
+  return getMyDocuments(params);
 }
 
 /*

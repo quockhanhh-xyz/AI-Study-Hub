@@ -6,7 +6,7 @@
 
 /**
  * Creates a new folder for the currently authenticated user.
- * @param {Object} data - Folder details, e.g., { name: "Math Notes" }
+ *{ folderName: "Math Notes", description: "", parentFolderId: null }
  * @returns {Promise<Object>} The created folder object metadata from the server.
  */
 function createFolder(data) {
@@ -40,7 +40,7 @@ function getFolderById(id) {
 /**
  * Updates an existing folder's properties (e.g., changing its name).
  * @param {string|number} id - The unique folder identifier.
- * @param {Object} data - Patched fields, e.g., { name: "Calculus Notes" }
+ * @param {Object} data - Patched fields, e.g., { folderName: "Calculus Notes" }
  * @returns {Promise<Object>} The updated folder object state.
  */
 function updateFolder(id, data) {
@@ -66,7 +66,7 @@ function restoreFolder(id) {
 }
 
 /**
- * Permanently purges a folder and its references out of the database layer.
+ * Permanently deletes an empty folder from the trash.
  * @param {string|number} id - The unique folder identifier to destroy.
  * @returns {Promise<Object>} Final server purge confirmation response status.
  */
