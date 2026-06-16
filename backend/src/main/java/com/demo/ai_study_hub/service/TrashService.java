@@ -91,7 +91,11 @@ public class TrashService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found in trash");
         }
 
-        cloudinaryStorageService.deleteFile(doc.getPublicId(), doc.getFileType());
+        boolean deleted = cloudinaryStorageService.deleteFile(doc.getPublicId(), doc.getFileType());
+        if (!deleted) {
+
+        }
+        documentRepository.delete(doc);
 
         documentRepository.delete(doc);
     }

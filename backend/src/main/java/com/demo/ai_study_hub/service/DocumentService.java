@@ -55,6 +55,17 @@ public class DocumentService {
             }
         }
 
+        boolean isDuplicate = documentRepository.existsDuplicate(
+                owner,
+                file.getOriginalFilename(),
+                file.getSize(),
+                folderId
+        );
+        if (isDuplicate) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A file with the same name and file size already exists in this folder.");
+        }
+
         FileUploadResult uploadResult = cloudinaryStorageService.uploadFile(file, owner.getUserId());
 
         String url = uploadResult.getFileUrl();

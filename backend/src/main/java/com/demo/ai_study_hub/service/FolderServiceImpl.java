@@ -34,17 +34,16 @@ public class FolderServiceImpl implements FolderService {
         if (request.getParentFolderId() != null) {
             parentFolder = folderRepository.findByFolderIdAndOwner(request.getParentFolderId(), owner)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parent folder not found"));
-
             if (!"ACTIVE".equals(parentFolder.getStatus())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create subfolder in a deleted folder");
             }
         }
 
-
         boolean exists = folderRepository.existsByOwnerAndNameAndParentFolderAndStatus(
                 owner, request.getFolderName(), parentFolder, "ACTIVE");
         if (exists) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "A folder with this name already exists in this location");
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A folder with the same name already exists in this location.");
         }
 
         Folder folder = Folder.builder()
@@ -66,12 +65,9 @@ public class FolderServiceImpl implements FolderService {
         if (parentFolderId != null) {
             Folder parentFolder = folderRepository.findByFolderIdAndOwner(parentFolderId, owner)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parent folder not found"));
-
-
             if (!"ACTIVE".equals(parentFolder.getStatus())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parent folder is deleted");
             }
-
             return folderRepository.findByOwnerAndStatusAndParentFolder(owner, "ACTIVE", parentFolder)
                     .stream().map(this::mapToResponse).collect(Collectors.toList());
         }
@@ -84,8 +80,7 @@ public class FolderServiceImpl implements FolderService {
     @Transactional(readOnly = true)
     public FolderResponse getFolderDetail(Integer folderId, String email) {
         User owner = getUser(email);
-        Folder folder = getValidatedFolder(folderId, owner);
-        return mapToResponse(folder);
+        return mapToResponse(getValidatedFolder(folderId, owner));
     }
 
     @Override
@@ -94,11 +89,11 @@ public class FolderServiceImpl implements FolderService {
         User owner = getUser(email);
         Folder folder = getValidatedFolder(folderId, owner);
 
-
         boolean exists = folderRepository.existsByOwnerAndNameAndParentFolderAndStatus(
                 owner, request.getFolderName(), folder.getParentFolder(), "ACTIVE");
         if (exists && !folder.getName().equals(request.getFolderName())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "A folder with this name already exists in this location");
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A folder with the same name already exists in this location.");
         }
 
         folder.setName(request.getFolderName());
@@ -112,11 +107,11 @@ public class FolderServiceImpl implements FolderService {
         User owner = getUser(email);
         Folder folder = getValidatedFolder(folderId, owner);
 
-
         long activeDocs = documentRepository.countByFolderAndStatus(folder, "ACTIVE");
         long activeSubFolders = folderRepository.countByParentFolderAndStatus(folder, "ACTIVE");
         if (activeDocs > 0 || activeSubFolders > 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Folder must be empty before deleting.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Folder must be empty before deleting.");
         }
 
         folder.setStatus("DELETED");
@@ -124,17 +119,6 @@ public class FolderServiceImpl implements FolderService {
         folderRepository.save(folder);
     }
 
-    @Override
-    @Transactional
-    public void restoreFolder(Integer folderId, String email) {
-
-    }
-
-    @Override
-    @Transactional
-    public void permanentDeleteFolder(Integer folderId, String email) {
-
-    }
 
     private User getUser(String email) {
         return userRepository.findByEmail(email)
@@ -161,7 +145,8 @@ public class FolderServiceImpl implements FolderService {
                 .folderId(folder.getFolderId())
                 .folderName(folder.getName())
                 .description(folder.getDescription())
-                .parentFolderId(folder.getParentFolder() != null ? folder.getParentFolder().getFolderId() : null)
+                .parentFolderId(folder.getParentFolder() != null
+                        ? folder.getParentFolder().getFolderId() : null)
                 .status(folder.getStatus())
                 .createdAt(folder.getCreatedAt())
                 .updatedAt(folder.getUpdatedAt())
