@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   const docCountElement = document.getElementById("docCount");
-  const chatCountElement = document.getElementById("chatCount");
+  const folderCountElement = document.getElementById("folderCount");
   const joinDateElement = document.getElementById("joinDate");
   const documentLoader = document.getElementById("documentLoader");
   const documentErrorMessage = document.getElementById("documentErrorMessage");
@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const folderFilter = document.getElementById("folderFilter");
   const clearFiltersBtn = document.getElementById("clearFiltersBtn");
 
-  if (chatCountElement) chatCountElement.textContent = "0";
+  if (folderCountElement) folderCountElement.textContent = "0";
   if (joinDateElement) joinDateElement.textContent = currentUser.tier || "FREE";
 
   function setDocumentsLoading() {
@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const name = document.createElement("p");
     name.className = "folder-name";
-    name.textContent = folder.name || "Untitled Folder";
+    name.textContent = folder.folderName || "Untitled Folder";
 
     const meta = document.createElement("p");
     meta.className = "folder-meta";
@@ -165,7 +165,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     folderLink.className = "btn btn-secondary btn-sm";
     folderLink.textContent = documentItem.folderId
       ? `Folder: ${documentItem.folderName || "Folder"}`
-      : "Root";
+      : "My Documents";
     folderLink.addEventListener("click", function (e) {
       e.stopPropagation();
       if (!folderFilter) return;
@@ -233,6 +233,10 @@ document.addEventListener("DOMContentLoaded", async function () {
       const result = await getMyFolders();
       const folders = Array.isArray(result.data) ? result.data : [];
 
+      if (folderCountElement) {
+        folderCountElement.textContent = String(folders.length);
+      }
+
       if (folderFilter) {
         const currentValue = folderFilter.value;
         folderFilter.innerHTML = `
@@ -242,7 +246,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         folders.forEach(function (folder) {
           const option = document.createElement("option");
           option.value = folder.folderId;
-          option.textContent = folder.name;
+          option.textContent = folder.folderName;
           folderFilter.appendChild(option);
         });
         folderFilter.value = currentValue;
@@ -263,6 +267,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
       }
     } catch (error) {
+      if (folderCountElement) {
+        folderCountElement.textContent = "0";
+      }
       if (folderLoader) folderLoader.style.display = "none";
       if (folderGrid) folderGrid.style.display = "none";
       if (folderEmptyState) folderEmptyState.style.display = "none";
