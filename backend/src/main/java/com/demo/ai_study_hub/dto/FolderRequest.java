@@ -7,7 +7,9 @@ import lombok.Data;
 public class FolderRequest {
 
     @NotBlank(message = "Folder name is required")
-    private String name;
+    private String folderName;
 
     private String description;
+
+    private Integer parentFolderId;
 }

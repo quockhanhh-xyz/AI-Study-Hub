@@ -33,6 +33,10 @@ public class Folder {
     @JoinColumn(name = "owner_id", referencedColumnName = "user_id", nullable = false)
     private User owner;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_folder_id")
+    private Folder parentFolder;
+
     @Column(name = "status", nullable = false, length = 30)
     @Builder.Default
     private String status = "ACTIVE";

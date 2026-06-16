@@ -8,22 +8,17 @@ import com.demo.ai_study_hub.repository.DocumentRepository;
 import com.demo.ai_study_hub.repository.FolderRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class TrashService {
-
-    private static final Logger log = LoggerFactory.getLogger(TrashService.class);
 
     private final DocumentRepository documentRepository;
     private final FolderRepository folderRepository;
@@ -39,9 +34,10 @@ public class TrashService {
     public TrashResponse getTrash(String email) {
         User user = getUser(email);
 
-        List<TrashResponse.TrashDocumentItem> documents = documentRepository
-                .findByOwner_UserIdAndStatus(user.getUserId(), "DELETED")
-                .stream()
+        List<Document> deletedDocs = documentRepository.findByOwner_UserIdAndStatus(user.getUserId(), "DELETED");
+        List<Folder> deletedFolders = folderRepository.findByOwnerAndStatusOrderByCreatedAtDesc(user, "DELETED");
+
+        List<TrashResponse.TrashDocumentItem> docItems = deletedDocs.stream()
                 .map(d -> TrashResponse.TrashDocumentItem.builder()
                         .documentId(d.getDocumentId())
                         .title(d.getTitle())
@@ -53,37 +49,30 @@ public class TrashService {
                         .build())
                 .collect(Collectors.toList());
 
-        List<TrashResponse.TrashFolderItem> folders = folderRepository
-                .findByOwnerAndStatusOrderByCreatedAtDesc(user, "DELETED")
-                .stream()
+        List<TrashResponse.TrashFolderItem> folderItems = deletedFolders.stream()
                 .map(f -> TrashResponse.TrashFolderItem.builder()
                         .folderId(f.getFolderId())
-                        .name(f.getName())
+                        .folderName(f.getName())
+                        .description(f.getDescription())
+                        .parentFolderId(f.getParentFolder() != null ? f.getParentFolder().getFolderId() : null)
                         .deletedAt(f.getDeletedAt())
                         .build())
                 .collect(Collectors.toList());
 
         return TrashResponse.builder()
-                .documents(documents)
-                .folders(folders)
+                .documents(docItems)
+                .folders(folderItems)
                 .build();
     }
 
     @Transactional
-    public void restoreDocument(Integer documentId, String email) {
+    public void restoreDocument(Integer docId, String email) {
         User user = getUser(email);
-        Document doc = documentRepository.findById(documentId)
+        Document doc = documentRepository.findById(docId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found in trash"));
 
-        if (!doc.getOwner().getUserId().equals(user.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
-        }
-        if (!"DELETED".equals(doc.getStatus())) {
+        if (!doc.getOwner().getUserId().equals(user.getUserId()) || !"DELETED".equals(doc.getStatus())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found in trash");
-        }
-
-        if (doc.getFolder() != null && "DELETED".equals(doc.getFolder().getStatus())) {
-            doc.setFolder(null);
         }
 
         doc.setStatus("ACTIVE");
@@ -92,86 +81,51 @@ public class TrashService {
     }
 
     @Transactional
-    public void permanentDeleteDocument(Integer documentId, String email) {
+    public void permanentDeleteDocument(Integer docId, String email) {
         User user = getUser(email);
-        Document doc = documentRepository.findById(documentId)
+
+        Document doc = documentRepository.findById(docId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found in trash"));
 
-        if (!doc.getOwner().getUserId().equals(user.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
-        }
-        if (!"DELETED".equals(doc.getStatus())) {
+        if (!doc.getOwner().getUserId().equals(user.getUserId()) || !"DELETED".equals(doc.getStatus())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found in trash");
         }
 
-        if (doc.getPublicId() != null) {
-            boolean deleted = cloudinaryStorageService.deleteFile(doc.getPublicId(), doc.getFileType());
-            if (!deleted) {
-                log.warn("Cloudinary delete failed for publicId={}", doc.getPublicId());
-            }
-        }
-
+        cloudinaryStorageService.deleteFile(doc.getPublicId(), doc.getFileType());
         documentRepository.delete(doc);
     }
 
     @Transactional
     public void restoreFolder(Integer folderId, String email) {
         User user = getUser(email);
-        Folder folder = folderRepository.findById(folderId)
+        Folder folder = folderRepository.findByFolderIdAndOwner(folderId, user)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash"));
 
-        if (!folder.getOwner().getUserId().equals(user.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
-        }
         if (!"DELETED".equals(folder.getStatus())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash");
         }
 
-        LocalDateTime folderDeletedAt = folder.getDeletedAt();
-        if (folderDeletedAt != null) {
-            List<Document> docsToRestore = documentRepository
-                    .findByOwner_UserIdAndStatus(user.getUserId(), "DELETED")
-                    .stream()
-                    .filter(d -> d.getFolder() != null
-                            && d.getFolder().getFolderId().equals(folderId)
-                            && folderDeletedAt.equals(d.getDeletedAt()))
-                    .collect(Collectors.toList());
 
-            docsToRestore.forEach(d -> {
-                d.setStatus("ACTIVE");
-                d.setDeletedAt(null);
-                documentRepository.save(d);
-            });
+        if (folder.getParentFolder() != null && "DELETED".equals(folder.getParentFolder().getStatus())) {
+            folder.setParentFolder(null);
         }
 
         folder.setStatus("ACTIVE");
         folder.setDeletedAt(null);
         folderRepository.save(folder);
+
     }
 
     @Transactional
     public void permanentDeleteFolder(Integer folderId, String email) {
         User user = getUser(email);
-        Folder folder = folderRepository.findById(folderId)
+        Folder folder = folderRepository.findByFolderIdAndOwner(folderId, user)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash"));
 
-        if (!folder.getOwner().getUserId().equals(user.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
-        }
         if (!"DELETED".equals(folder.getStatus())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash");
         }
 
-        List<Document> allDocs = documentRepository.findByFolder(folder);
-        allDocs.forEach(d -> {
-            if (d.getPublicId() != null) {
-                boolean deleted = cloudinaryStorageService.deleteFile(d.getPublicId(), d.getFileType());
-                if (!deleted) {
-                    log.warn("Cloudinary delete failed for publicId={}", d.getPublicId());
-                }
-            }
-            documentRepository.delete(d);
-        });
 
         folderRepository.delete(folder);
     }

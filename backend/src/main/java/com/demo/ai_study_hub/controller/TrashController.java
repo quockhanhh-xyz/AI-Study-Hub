@@ -48,7 +48,7 @@ public class TrashController {
         trashService.restoreFolder(id, auth.getName());
         return ResponseEntity.ok(ApiResponse.<Void>builder()
                 .success(true)
-                .message("Folder and its documents restored successfully")
+                .message("Folder restored successfully")
                 .build());
     }
 
@@ -57,7 +57,7 @@ public class TrashController {
         trashService.permanentDeleteFolder(id, auth.getName());
         return ResponseEntity.ok(ApiResponse.<Void>builder()
                 .success(true)
-                .message("Folder and its documents permanently deleted")
+                .message("Folder permanently deleted")
                 .build());
     }
 }
