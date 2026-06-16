@@ -29,13 +29,13 @@ function getSubjects() {
 
 /*
  * Advanced document search and filtering helper.
- * Strictly requests the personal documents endpoint for the authenticated user.
- * Refactored to point exclusively to /api/documents/my via getMyDocuments helper.
- * @param {Object} params - Filter object containing { keyword, subjectId, fileType }.
- * @returns {Promise} Filtered list of documents matching the criteria.
+ * Supports keyword, subjectId, fileType, and folderId query parameters.
+ * @param {Object} params - Search and filter parameters.
+ * @returns {Promise} Filtered list of documents.
  */
-function searchDocuments(params) {
-  return getMyDocuments(params);
+function searchDocuments(params = {}) {
+  const query = new URLSearchParams(params).toString();
+  return get(query ? `/api/documents/my?${query}` : "/api/documents/my");
 }
 
 /*

@@ -13,12 +13,19 @@ function createFolder(data) {
   return post("/api/folders", data);
 }
 
-/**
- * Retrieves all active (non-trashed) folders belonging to the current user.
- * @returns {Promise<Array>} List of the user's active folder objects.
- */
-function getMyFolders() {
-  return get("/api/folders/my");
+function getMyFolders(parentFolderId = null) {
+  const params = new URLSearchParams();
+
+  if (
+    parentFolderId !== null &&
+    parentFolderId !== undefined &&
+    parentFolderId !== ""
+  ) {
+    params.append("parentFolderId", parentFolderId);
+  }
+
+  const query = params.toString();
+  return get(query ? `/api/folders/my?${query}` : "/api/folders/my");
 }
 
 /**
@@ -67,4 +74,5 @@ function permanentDeleteFolder(id) {
   return del(`/api/trash/folders/${id}`);
 }
 
-// End of folder management API subsystem configurations.
+// End of folder management API subsystem configurations.
+
