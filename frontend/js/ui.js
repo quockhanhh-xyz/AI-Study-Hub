@@ -18,15 +18,23 @@ const UIHelper = {
       document.body.appendChild(container);
     }
 
-    // Create individual toast element
+    // Create individual toast wrapper safely
     const toast = document.createElement('div');
     toast.className = `toast-item toast-${type}`;
-    toast.innerHTML = `
-      <span class="toast-message">${message}</span>
-      <span class="toast-close-btn">&times;</span>
-    `;
 
-    // Append to container
+    // Create text element securely to eliminate XSS/UI injection vulnerabilities
+    const textSpan = document.createElement('span');
+    textSpan.className = 'toast-message';
+    textSpan.textContent = message;
+
+    // Create manual close button securely
+    const closeBtn = document.createElement('span');
+    closeBtn.className = 'toast-close-btn';
+    closeBtn.innerHTML = '&times;'; // Safe as static entity representation text
+
+    // Assemble safe DOM tree
+    toast.appendChild(textSpan);
+    toast.appendChild(closeBtn);
     container.appendChild(toast);
 
     // Set up auto-dismiss timer after 4 seconds
@@ -36,7 +44,7 @@ const UIHelper = {
     }, 4000);
 
     // Handle manual close button click
-    toast.querySelector('.toast-close-btn').addEventListener('click', () => {
+    closeBtn.addEventListener('click', () => {
       clearTimeout(dismissTimeout);
       toast.remove();
     });
@@ -53,25 +61,46 @@ const UIHelper = {
    */
   confirmAction({ title = 'Confirm Action', message = 'Are you sure?', confirmText = 'Confirm', danger = false }) {
     return new Promise((resolve) => {
-      // Create modal wrapper elements dynamically
+      // Create modal wrapper overlays dynamically
       const overlay = document.createElement('div');
       overlay.className = 'confirm-modal-overlay';
 
       const modal = document.createElement('div');
       modal.className = 'confirm-modal-box';
-      modal.innerHTML = `
-        <div class="confirm-modal-header">
-          <h3>${title}</h3>
-        </div>
-        <div class="confirm-modal-body">
-          <p>${message}</p>
-        </div>
-        <div class="confirm-modal-actions">
-          <button class="confirm-btn-cancel">Cancel</button>
-          <button class="${danger ? 'confirm-btn-danger' : 'confirm-btn-primary'}">${confirmText}</button>
-        </div>
-      `;
 
+      // 1. Header Section
+      const headerDiv = document.createElement('div');
+      headerDiv.className = 'confirm-modal-header';
+      const titleElement = document.createElement('h3');
+      titleElement.textContent = title;
+      headerDiv.appendChild(titleElement);
+
+      // 2. Body Description Section
+      const bodyDiv = document.createElement('div');
+      bodyDiv.className = 'confirm-modal-body';
+      const messageElement = document.createElement('p');
+      messageElement.textContent = message;
+      bodyDiv.appendChild(messageElement);
+
+      // 3. Action Buttons Section
+      const actionsDiv = document.createElement('div');
+      actionsDiv.className = 'confirm-modal-actions';
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'confirm-btn-cancel';
+      cancelBtn.textContent = 'Cancel';
+
+      const actionBtn = document.createElement('button');
+      actionBtn.className = danger ? 'confirm-btn-danger' : 'confirm-btn-primary';
+      actionBtn.textContent = confirmText;
+
+      actionsDiv.appendChild(cancelBtn);
+      actionsDiv.appendChild(actionBtn);
+
+      // Assemble safe Modal DOM Tree
+      modal.appendChild(headerDiv);
+      modal.appendChild(bodyDiv);
+      modal.appendChild(actionsDiv);
       overlay.appendChild(modal);
       document.body.appendChild(overlay);
 
@@ -81,9 +110,9 @@ const UIHelper = {
         resolve(result);
       };
 
-      // Wire up click listeners
-      modal.querySelector('.confirm-btn-cancel').addEventListener('click', () => closeModal(false));
-      modal.querySelector(`.${danger ? 'confirm-btn-danger' : 'confirm-btn-primary'}`).addEventListener('click', () => closeModal(true));
+      // Wire up secure click listeners
+      cancelBtn.addEventListener('click', () => closeModal(false));
+      actionBtn.addEventListener('click', () => closeModal(true));
       
       // Close on backdrop overlay click
       overlay.addEventListener('click', (e) => {
@@ -102,15 +131,23 @@ const UIHelper = {
     if (!button) return;
 
     if (isLoading) {
-      // Cache the original inner content text to restore it later
+      // Cache the original inner content text or elements to restore it perfectly later
       button.setAttribute('data-original-text', button.innerHTML);
       button.disabled = true;
-      button.innerHTML = `<span class="spinner-inline"></span> ${loadingText}`;
+
+      // Build loading elements programmatically without clearing natively bound child structures unsafely
+      button.innerHTML = '';
+      const spinner = document.createElement('span');
+      spinner.className = 'spinner-inline';
+      
+      const textNode = document.createTextNode(` ${loadingText}`);
+      button.appendChild(spinner);
+      button.appendChild(textNode);
     } else {
       // Revert button state back to original cached properties
       const originalText = button.getAttribute('data-original-text');
       button.disabled = false;
-      if (originalText) {
+      if (originalText !== null) {
         button.innerHTML = originalText;
         button.removeAttribute('data-original-text');
       }
@@ -131,7 +168,7 @@ const UIHelper = {
     if (message) {
       const errorDiv = document.createElement('div');
       errorDiv.className = 'inline-error-message';
-      errorDiv.innerText = message;
+      errorDiv.textContent = message;
       container.appendChild(errorDiv);
     }
   },
@@ -149,5 +186,12 @@ const UIHelper = {
   }
 };
 
-// Bind to window context to guarantee global access across feature scripts
+// Expose individual helper functions directly to window scope to fulfill checklist prerequisites
+window.showToast = UIHelper.showToast;
+window.confirmAction = UIHelper.confirmAction;
+window.setButtonLoading = UIHelper.setButtonLoading;
+window.showInlineError = UIHelper.showInlineError;
+window.clearInlineError = UIHelper.clearInlineError;
+
+// Also preserve the namespace export to guarantee zero breaking integrations for existing callers
 window.UIHelper = UIHelper;
