@@ -49,7 +49,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 - **Status:** `Not Run`
 
 ### TC-FLD-003 - Create Folder with Duplicate Name (409 Conflict)
-- **Precondition:** User A is logged in and already owns an active folder named "Math Notes" at root level.
+- **Precondition:** User A is logged in and already owns an active folder named "Math Notes" in the top-level My Documents area.
 - **Steps:**
   1. Send `POST /api/folders` with User A's session.
   2. Request Body:
@@ -68,7 +68,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 - **Status:** `Not Run`
 
 ### TC-FLD-004 - Create Folder with Duplicate Name of a Soft-Deleted Folder (Success)
-- **Precondition:** User A is logged in. User A has a soft-deleted folder (`status = 'DELETED'`) named "Old Physics" at root level.
+- **Precondition:** User A is logged in. User A has a soft-deleted folder (`status = 'DELETED'`) named "Old Physics" in the top-level My Documents area.
 - **Steps:**
   1. Send `POST /api/folders` with User A's session.
   2. Request Body:
@@ -82,7 +82,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 - **Expected Result:**
   - Status code: `200 OK`.
   - Response `success` is `true`.
-  - MySQL database contains two folders with the name "Old Physics" for User A under root: one `'ACTIVE'` (new) and one `'DELETED'`.
+  - MySQL database contains two folders with the name "Old Physics" for User A in the top-level My Documents area: one `'ACTIVE'` (new) and one `'DELETED'`.
 - **Status:** `Not Run`
 
 ### TC-FLD-005 - Get My Folders Successfully
@@ -159,7 +159,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 - **Status:** `Not Run`
 
 ### TC-FLD-008 - Update Folder to a Name That Already Exists (409 Conflict)
-- **Precondition:** User A is logged in. User A owns Folder ID `1` ("Math Notes") and another active Folder ID `3` ("Chemistry") under root level.
+- **Precondition:** User A is logged in. User A owns Folder ID `1` ("Math Notes") and another active Folder ID `3` ("Chemistry") in the top-level My Documents area.
 - **Steps:**
   1. Send `PUT /api/folders/1` with User A's session.
   2. Request Body:
@@ -561,8 +561,8 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 
 ---
 
-### TC-FLD-016 - Get Root Folders Successfully
-- **Precondition:** User A is logged in. User A has root folders (Folder ID `1` "Math Notes") and subfolders (Folder ID `3` "Week 1" which has `parentFolderId = 1`).
+### TC-FLD-016 - Get Top-Level Folders Successfully
+- **Precondition:** User A is logged in. User A has top-level folders (Folder ID `1` "Math Notes") and subfolders (Folder ID `3` "Week 1" which has `parentFolderId = 1`).
 - **Steps:**
   1. Send `GET /api/folders/my` with User A's session (do not pass any query parameters, or pass `parentFolderId` as empty/null).
 - **Expected Result:**
@@ -574,7 +574,7 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
 ---
 
 ### TC-FLD-017 - Get Subfolders by parentFolderId Successfully
-- **Precondition:** User A is logged in. User A has root folders (Folder ID `1` "Math Notes") and subfolders (Folder ID `3` "Week 1" under Folder ID `1`).
+- **Precondition:** User A is logged in. User A has top-level folders (Folder ID `1` "Math Notes") and subfolders (Folder ID `3` "Week 1" under Folder ID `1`).
 - **Steps:**
   1. Send `GET /api/folders/my?parentFolderId=1` with User A's session.
 - **Expected Result:**
@@ -615,4 +615,26 @@ This document defines the functional test cases for Step 5: Folder & Trash Manag
   1. View the breadcrumb path or current directory title on the UI toolbar.
 - **Expected Result:**
   - The UI displays the directory name or path header as "My Documents" (even though technically the database/API represents this level as a `null` parent folder ID).
+- **Status:** `Not Run`
+
+---
+
+### TC-FLD-021 - Folder Response Contains fileCount Property
+- **Precondition:** User A is logged in. Folder ID `1` contains exactly 3 active documents.
+- **Steps:**
+  1. Send `GET /api/folders/my` with User A's session.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - The returned Folder DTO for Folder ID `1` has a `fileCount` field with value `3`.
+- **Status:** `Not Run`
+
+---
+
+### TC-FLD-022 - Folder Response Contains subfolderCount Property
+- **Precondition:** User A is logged in. Folder ID `1` has exactly 2 active subfolders.
+- **Steps:**
+  1. Send `GET /api/folders/my` with User A's session.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - The returned Folder DTO for Folder ID `1` has a `subfolderCount` field with value `2`.
 - **Status:** `Not Run`

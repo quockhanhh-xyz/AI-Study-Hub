@@ -466,6 +466,103 @@ Not Run
   - A new active document record is successfully saved in MySQL.
 - **Status:** `Not Run`
 
+### TC-DOC-035 - Upload Document with Subject Successfully
+- **Precondition:** User is logged in. Subject ID `1` exists and is active in the database.
+- **Steps:**
+  1. Send `POST /api/documents/upload` with the user's session.
+  2. Multipart Form Data includes: `file` (notes.pdf), `title`="Math Lecture Notes", `subjectId`=1.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - Response `data` includes `subjectId`=1, `subjectCode` and `subjectName` matching the subject record.
+  - File is uploaded to Cloudinary, and metadata in MySQL has `subject_id` set to 1.
+- **Status:** `Not Run`
+
+---
+
+### TC-DOC-036 - Upload Document Without subjectId (400 Bad Request)
+- **Precondition:** User is logged in.
+- **Steps:**
+  1. Send `POST /api/documents/upload` with the user's session.
+  2. Multipart Form Data includes: `file` (notes.pdf), `title`="Math Lecture Notes" (omit `subjectId`).
+- **Expected Result:**
+  - Status code: `400 Bad Request`.
+  - Response `success` is `false`.
+  - Message states: "Subject ID is required" or similar validation error message.
+  - No database record is created, and no Cloudinary upload occurs.
+- **Status:** `Not Run`
+
+---
+
+### TC-DOC-037 - Document in Subfolder Appears on Dashboard
+- **Precondition:** User is logged in. Folder ID `2` is a subfolder of Folder ID `1`. Document ID `201` exists and is active inside Folder ID `2`.
+- **Steps:**
+  1. Navigate to the main Dashboard (representing the root overview).
+  2. Fetch user documents without folder filter (`GET /api/documents/my` without query parameters).
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response lists Document ID `201` as part of the overall documents list, verifying that files inside subfolders still appear on the general dashboard query.
+- **Status:** `Not Run`
+
+---
+
+### TC-DOC-038 - Filter Documents by Folder with includeSubfolders=true
+- **Precondition:** User is logged in. Folder ID `1` (parent) has subfolder Folder ID `2` (child). Active Document ID `101` is inside Folder `1`. Active Document ID `201` is inside Folder `2`.
+- **Steps:**
+  1. Send `GET /api/documents/my?folderId=1&includeSubfolders=true`.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response lists both Document ID `101` and Document ID `201`.
+- **Status:** `Not Run`
+
+---
+
+### TC-DOC-039 - Duplicate Upload Prevention (409 Conflict)
+- **Precondition:** User is logged in. An active document with file name "intro.pdf" and size 75000 bytes exists in Folder ID `1`.
+- **Steps:**
+  1. Send `POST /api/documents/upload`.
+  2. Include `file` (intro.pdf, size 75000 bytes), `title`="Intro Copy", `subjectId`=1, `folderId`=1.
+- **Expected Result:**
+  - Status code: `409 Conflict`.
+  - Response `success` is `false`.
+  - Response message indicates duplicate document conflict.
+- **Status:** `Not Run`
+
+---
+
+### TC-DOC-040 - Duplicate File Not Uploaded to Cloudinary
+- **Precondition:** User is logged in. An active document with file name "intro.pdf" and size 75000 bytes exists in Folder ID `1`.
+- **Steps:**
+  1. Send `POST /api/documents/upload` with the duplicate file.
+  2. Monitor Cloudinary API calls during backend execution.
+- **Expected Result:**
+  - Response status is `409 Conflict`.
+  - Backend validation aborts immediately upon database match, and no network request to upload files is made to Cloudinary.
+- **Status:** `Not Run`
+
+---
+
+### TC-DOC-041 - Trash Item Access Restriction (Open/Download Disabled)
+- **Precondition:** User is logged in. Document ID `301` has `status = 'DELETED'` (is in trash).
+- **Steps:**
+  1. Navigate to the Trash view page (`trash.html`).
+  2. Attempt to open or download Document ID `301` from the list.
+- **Expected Result:**
+  - The UI does not display any "Open File" or "View Details" buttons/actions for Document ID `301` in the Trash.
+  - Any direct API requests to retrieve the download link or details for Document ID `301` are rejected by the backend.
+- **Status:** `Not Run`
+
+---
+
+### TC-DOC-042 - Root Folder Labeling as "My Documents"
+- **Precondition:** User is logged in and is viewing the main file list dashboard.
+- **Steps:**
+  1. Observe the text label and breadcrumbs for the top-level directory where `folderId = null`.
+- **Expected Result:**
+  - The UI displays the standard label "My Documents".
+  - All technical terms or labels such as "root", "No folder", or "unassigned" are removed.
+- **Status:** `Not Run`
+
 ---
 
 ## Integration Checklist

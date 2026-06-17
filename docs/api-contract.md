@@ -396,8 +396,8 @@ Uploads a document file for the currently authenticated user.
 | `file`        | File    | Yes      | Uploaded study document                                                |
 | `title`       | String  | Yes      | User-facing document title                                             |
 | `description` | String  | No       | Optional document description                                          |
-| `subjectId`   | Integer | No       | Optional Subject ID to assign to the document (added in Step 3)        |
-| `folderId`    | Integer | No       | Optional Folder ID to assign to the document (added in Step 5)         |
+| `subjectId`   | Integer | Yes      | Required Subject ID to assign to the document                          |
+| `folderId`    | Integer | No       | Optional Folder ID to assign to the document. If null or empty, defaults to the top-level My Documents area. |
 
 ### Backend & Frontend Integration Rules
 
@@ -415,7 +415,7 @@ Uploads a document file for the currently authenticated user.
   - `subjectName` (String, nullable)
   - `folderId` (Integer, nullable)
   - `folderName` (String, nullable)
-- **Duplicate File Check**: Prior to initiating the upload to Cloudinary, the backend must query the MySQL database to check if a duplicate document already exists. A duplicate is identified if an existing document shares the same `owner_id` (current user), `folder_id` (nullable, where null represents the root level/unassigned "My Documents"), `originalFileName` (file name), and `fileSize` (in bytes), with `status = 'ACTIVE'`. If a duplicate is found, the backend aborts the process (no Cloudinary file upload occurs) and returns `409 Conflict`.
+- **Duplicate File Check**: Prior to initiating the upload to Cloudinary, the backend must query the MySQL database to check if a duplicate document already exists. A duplicate is identified if an existing document shares the same `owner_id` (current user), `folder_id` (nullable, where null represents the top-level My Documents area), `originalFileName` (file name), and `fileSize` (in bytes), with `status = 'ACTIVE'`. If a duplicate is found, the backend aborts the process (no Cloudinary file upload occurs) and returns `409 Conflict`.
 - **HTTP Status Codes (Step 3)**: Backend must use precise RESTful HTTP status codes:
   - `200 OK` for successful actions.
   - `400 Bad Request` for validation failures (e.g. missing title).
@@ -571,14 +571,21 @@ Returns documents owned by the currently authenticated user, with optional searc
 
 - Cookie: `accessToken=jwt-token-value-here`
 
-### Query Parameters
+#### Query Parameters
 
-| Parameter   | Type    | Required | Description                                                            |
-| :---------- | :------ | :------- | :--------------------------------------------------------------------- |
-| `keyword`   | String  | No       | Filter by title or originalFileName (case-insensitive substring match) |
-| `subjectId` | Integer | No       | Filter by subject ID                                                   |
-| `fileType`  | String  | No       | Filter by file extension type (e.g., PDF, DOCX)                        |
-| `folderId`  | Integer | No       | Filter by folder ID (optional)                                         |
+| Parameter           | Type    | Required | Description                                                            |
+| :------------------ | :------ | :------- | :--------------------------------------------------------------------- |
+| `keyword`           | String  | No       | Filter by title or originalFileName (case-insensitive substring match) |
+| `subjectId`         | Integer | No       | Filter by subject ID                                                   |
+| `fileType`          | String  | No       | Filter by file extension type (e.g., PDF, DOCX)                        |
+| `folderId`          | Integer | No       | Filter by folder ID. If omitted, returns all active documents of the current user. |
+| `includeSubfolders` | Boolean | No       | If true, includes documents from subfolders of the folderId recursively. |
+
+### Access & Query Rules
+
+- **No folderId**: If `folderId` is omitted or empty, the backend returns all ACTIVE documents belonging to the authenticated user.
+- **With folderId**: If `folderId` is provided, the backend returns only ACTIVE documents inside that specific folder.
+- **With folderId & includeSubfolders=true**: If `folderId` is provided and `includeSubfolders` is set to `true`, the backend returns ACTIVE documents from that folder as well as all its subfolders recursively.
 
 ### Success Response
 
@@ -1009,6 +1016,8 @@ Retrieves active folders owned by the currently authenticated user. Only folders
       "folderName": "Math Notes",
       "description": "Calculus and Algebra notes",
       "parentFolderId": null,
+      "fileCount": 5,
+      "subfolderCount": 2,
       "status": "ACTIVE",
       "createdAt": "2026-06-10T10:00:00"
     }
@@ -1041,6 +1050,8 @@ Retrieves details of a specific folder owned by the authenticated user. Only fol
     "folderName": "Math Notes",
     "description": "Calculus and Algebra notes",
     "parentFolderId": null,
+    "fileCount": 5,
+    "subfolderCount": 2,
     "status": "ACTIVE",
     "createdAt": "2026-06-10T10:00:00"
   }
@@ -1490,3 +1501,26 @@ Permanently deletes a document from the database and removes the associated file
   "data": null
 }
 ```
+
+---
+
+# 8. Frontend-Backend Integration Conventions
+
+These rules govern page routing on the frontend and operational behaviors between the client and API:
+
+## 8.1. Folder Page URL Format
+
+- The frontend must route users using the folder ID query parameter exclusively:
+  `folders.html?folderId=<id>`
+- The parameter `parentFolderId` must **never** be used in browser URLs to represent folder details. It is reserved solely as a query parameter for backend REST API calls.
+
+## 8.2. Trash Protection Rules
+
+- Any folder or document that has been soft-deleted (`status = 'DELETED'`) is considered in the trash.
+- Under no circumstances should the frontend or backend allow a user to **view/open** the contents, details, or **download** the actual file of a trashed item until it has been explicitly restored.
+- The UI must hide any "Open File", "View Details", or similar download buttons for items shown in the trash list, and the backend must deny access to fetch details or retrieve the file URL for trashed assets.
+
+## 8.3. Root Folder Terminology
+
+- On the user interface, a `folderId = null` or unassigned folder hierarchy must be consistently labeled **"My Documents"**.
+- Hardcoded technical terms like "root", "no folder", or "unassigned" are deprecated and must not appear in user-facing labels.
