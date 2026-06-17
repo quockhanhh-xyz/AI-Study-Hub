@@ -36,12 +36,13 @@ public class DocumentService {
 
         User owner = userRepository.findByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        Subject subject = null;
-        if (subjectId != null) {
-            subject = subjectRepository.findById(subjectId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
-            if (!"ACTIVE".equals(subject.getStatus())) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found");
-            }
+        if (subjectId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Subject is required");
+        }
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
+        if (!"ACTIVE".equals(subject.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found");
         }
 
         Folder folder = null;

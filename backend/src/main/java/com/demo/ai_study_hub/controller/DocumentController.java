@@ -27,7 +27,7 @@ public class DocumentController {
             @RequestParam("file") MultipartFile file,
             @RequestParam("title") String title,
             @RequestParam(value = "description", required = false) String description,
-            @RequestParam(value = "subjectId", required = false) Integer subjectId,
+            @RequestParam(value = "subjectId", required = true) Integer subjectId,
             @RequestParam(value = "folderId", required = false) Integer folderId,
             Principal principal
     ) {
