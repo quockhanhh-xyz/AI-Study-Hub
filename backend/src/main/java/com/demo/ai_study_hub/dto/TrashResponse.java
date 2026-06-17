@@ -14,6 +14,7 @@ public class TrashResponse {
     @Data
     @Builder
     public static class TrashDocumentItem {
+        @Builder.Default
         private String type = "DOCUMENT";
         private Integer documentId;
         private String title;
@@ -28,6 +29,7 @@ public class TrashResponse {
     @Data
     @Builder
     public static class TrashFolderItem {
+        @Builder.Default
         private String type = "FOLDER";
         private Integer folderId;
         private String folderName;
