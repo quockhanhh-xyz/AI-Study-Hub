@@ -88,7 +88,7 @@ function getTrash() {
  * @returns {Promise} Server operation response confirmation payload.
  */
 function restoreDocument(id) {
-  return post(`/api/trash/documents/${id}/restore`);
+  return put(`/api/trash/documents/${id}/restore`);
 }
 
 /*
@@ -97,5 +97,5 @@ function restoreDocument(id) {
  * @returns {Promise} Final purge response status confirmation from the database.
  */
 function permanentDeleteDocument(id) {
-  return del(`/api/trash/documents/${id}`);
+  return del(`/api/trash/documents/${id}/permanent`);
 }

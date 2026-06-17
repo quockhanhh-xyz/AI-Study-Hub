@@ -79,5 +79,3 @@ function restoreFolder(id) {
 function permanentDeleteFolder(id) {
   return del(`/api/trash/folders/${id}`);
 }
-
-// End of folder management API subsystem configurations.

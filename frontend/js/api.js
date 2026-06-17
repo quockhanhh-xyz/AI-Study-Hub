@@ -62,7 +62,6 @@ async function apiRequest(endpoint, options = {}) {
     error.status = response.status;
     throw error;
   }
-  // ------------------------------------
  
   return data;
 }
