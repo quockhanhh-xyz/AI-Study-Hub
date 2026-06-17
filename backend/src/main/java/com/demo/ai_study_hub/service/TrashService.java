@@ -45,6 +45,7 @@ public class TrashService {
                         .fileType(d.getFileType())
                         .fileSize(d.getFileSize())
                         .folderId(d.getFolder() != null ? d.getFolder().getFolderId() : null)
+                        .originalFolderName(d.getFolder() != null ? d.getFolder().getName() : null)
                         .deletedAt(d.getDeletedAt())
                         .build())
                 .collect(Collectors.toList());
