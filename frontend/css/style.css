@@ -1439,6 +1439,7 @@ textarea.success {
     gap: 12px;
   }
 }
+
 /* Document title link — inherits card text color */
 .document-title-link {
   color: inherit;
@@ -1665,4 +1666,3 @@ textarea.success {
 
 @keyframes spin-loop {
   to { transform: rotate(360deg); }
-}

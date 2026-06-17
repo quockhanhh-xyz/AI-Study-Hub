@@ -66,17 +66,17 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Reads ?parentFolderId= from the current URL. Returns null if not present.
   function getParentFolderIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    const val = params.get("parentFolderId");
+    const val = params.get("folderId") || params.get("parentFolderId");
     return val ? parseInt(val, 10) : null;
   }
 
   // Navigates to a subfolder by updating the URL and reloading.
-  function navigateToFolder(folderId, folderName) {
+  function navigateToFolder(folderId) {
     if (!folderId) {
       window.location.href = "folders.html";
       return;
     }
-    window.location.href = `folders.html?parentFolderId=${folderId}`;
+    window.location.href = `folders.html?folderId=${folderId}`;
   }
 
   // Breadcrumb helpers
@@ -125,7 +125,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       } else {
         const link = document.createElement("a");
         link.className = "breadcrumb-link";
-        link.href = crumb.folderId ? `folders.html?parentFolderId=${crumb.folderId}` : "folders.html";
+        link.href = crumb.folderId ? `folders.html?folderId=${crumb.folderId}` : "folders.html";
         link.textContent = crumb.name;
         breadcrumb.appendChild(link);
 
@@ -158,6 +158,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   function createFolderCard(folder) {
     const card = document.createElement("div");
     card.className = "folder-card";
+    card.style.cursor = "pointer";
 
     const icon = document.createElement("div");
     icon.className = "folder-icon";
@@ -167,11 +168,23 @@ document.addEventListener("DOMContentLoaded", async function () {
     name.className = "folder-name";
     name.textContent = folder.folderName || "Untitled Folder";
 
+    // Show fileCount and subfolderCount if available
     const meta = document.createElement("p");
     meta.className = "folder-meta";
-    meta.textContent = folder.createdAt
-      ? new Date(folder.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" })
-      : "";
+    const parts = [];
+    if (folder.fileCount !== undefined && folder.fileCount !== null) {
+      parts.push(`${folder.fileCount} file${folder.fileCount !== 1 ? "s" : ""}`);
+    }
+    if (folder.subfolderCount !== undefined && folder.subfolderCount !== null) {
+      parts.push(`${folder.subfolderCount} subfolder${folder.subfolderCount !== 1 ? "s" : ""}`);
+    }
+    if (parts.length === 0 && folder.createdAt) {
+      meta.textContent = new Date(folder.createdAt).toLocaleDateString("en-US", {
+        year: "numeric", month: "short", day: "2-digit"
+      });
+    } else {
+      meta.textContent = parts.join(" · ");
+    }
 
     const main = document.createElement("div");
     main.className = "folder-card-main";
@@ -180,32 +193,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     const actions = document.createElement("div");
     actions.className = "folder-card-actions";
 
-    // Open button navigates into the folder via URL.
-    const openBtn = document.createElement("button");
-    openBtn.type = "button";
-    openBtn.className = "btn btn-primary btn-sm";
-    openBtn.textContent = "Open";
-    openBtn.addEventListener("click", function (e) {
-      e.stopPropagation();
-      navigateToFolder(folder.folderId, folder.folderName);
-    });
-
-    // Browse Files button also opens the folder.
-    const browseBtn = document.createElement("button");
-    browseBtn.type = "button";
-    browseBtn.className = "btn btn-secondary btn-sm";
-    browseBtn.textContent = "Browse Files";
-    browseBtn.addEventListener("click", function (e) {
-      e.stopPropagation();
-      navigateToFolder(folder.folderId, folder.folderName);
-    });
-
+    // Browse Files and Open buttons removed — clicking the card is sufficient
     const renameBtn = document.createElement("button");
     renameBtn.type = "button";
     renameBtn.className = "btn btn-secondary btn-sm";
     renameBtn.textContent = "Rename";
     renameBtn.addEventListener("click", function (e) {
-      e.stopPropagation();
+      e.stopPropagation(); // Prevent card click from triggering folder navigation
       openRenameModal(folder);
     });
 
@@ -214,16 +208,16 @@ document.addEventListener("DOMContentLoaded", async function () {
     deleteBtn.className = "btn btn-danger btn-sm";
     deleteBtn.textContent = "Delete";
     deleteBtn.addEventListener("click", function (e) {
-      e.stopPropagation();
+      e.stopPropagation(); // Không mở folder
       openDeleteModal(folder.folderId);
     });
 
-    actions.append(openBtn, browseBtn, renameBtn, deleteBtn);
+    actions.append(renameBtn, deleteBtn);
     card.append(main, actions);
 
-    // Clicking the card itself also opens the folder.
+    // Click toàn card để mở folder
     card.addEventListener("click", function () {
-      navigateToFolder(folder.folderId, folder.folderName);
+      navigateToFolder(folder.folderId);
     });
 
     return card;
