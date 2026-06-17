@@ -102,7 +102,7 @@ public class DocumentService {
             List<Integer> allFolderIds = new ArrayList<>();
             allFolderIds.add(folderId);
             collectSubFolderIds(folderId, allFolderIds);
-            return documentRepository.findByOwnerAndFolderIds(owner, allFolderIds)
+            return documentRepository.findByOwnerAndFolderIds(owner, allFolderIds, keyword, subjectId, fileType)
                     .stream().map(this::mapToResponse).collect(Collectors.toList());
         }
 
