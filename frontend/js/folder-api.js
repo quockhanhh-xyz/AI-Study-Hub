@@ -13,6 +13,12 @@ function createFolder(data) {
   return post("/api/folders", data);
 }
 
+/**
+ * Retrieves the personal active folders list belonging to the current user.
+ * Supports filtering subfolders by providing a parentFolderId.
+ * @param {number|string|null} parentFolderId - Pass null for root (My Documents) or a specific ID for subfolders.
+ * @returns {Promise<Array>} List of folders matching the structural hierarchy.
+ */
 function getMyFolders(parentFolderId = null) {
   const params = new URLSearchParams();
 
@@ -75,4 +81,3 @@ function permanentDeleteFolder(id) {
 }
 
 // End of folder management API subsystem configurations.
-
