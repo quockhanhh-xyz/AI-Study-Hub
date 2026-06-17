@@ -48,15 +48,15 @@ async function apiRequest(endpoint, options = {}) {
     // Handle cases where the backend returns an empty response or non-JSON data
     console.warn("Response is not JSON format");
   }
-  
+
   // Check for other HTTP error codes or if the success flag from Backend contract is false
   if (!response.ok || data.success === false) {
     // Print warning to Console tab to help other FE devs debug when Backend returns an error
     console.warn("API Request Business Error:", data);
-    
+
     // Extract the exact error message from backend (especially for HTTP 409 Conflict)
     const errorMessage = data.message || data.error || "API request failed";
-    
+
     // Create a new error object and attach the HTTP status code for advanced UI handling
     const error = new Error(errorMessage);
     error.status = response.status;

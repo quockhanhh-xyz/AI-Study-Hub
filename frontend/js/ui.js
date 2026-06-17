@@ -113,7 +113,7 @@ const UIHelper = {
       // Wire up secure click listeners
       cancelBtn.addEventListener('click', () => closeModal(false));
       actionBtn.addEventListener('click', () => closeModal(true));
-      
+
       // Close on backdrop overlay click
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) closeModal(false);
@@ -139,7 +139,7 @@ const UIHelper = {
       button.innerHTML = '';
       const spinner = document.createElement('span');
       spinner.className = 'spinner-inline';
-      
+
       const textNode = document.createTextNode(` ${loadingText}`);
       button.appendChild(spinner);
       button.appendChild(textNode);
@@ -161,7 +161,7 @@ const UIHelper = {
    */
   showInlineError(container, message) {
     if (!container) return;
-    
+
     // Purge any existing error message blocks inside the target element boundary
     this.clearInlineError(container);
 
