@@ -64,7 +64,7 @@ public class DocumentService {
         );
         if (isDuplicate) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "A file with the same name and file size already exists in this folder.");
+                    "A file with the same name already exists in this folder.");
         }
 
         FileUploadResult uploadResult = cloudinaryStorageService.uploadFile(file, owner.getUserId());
