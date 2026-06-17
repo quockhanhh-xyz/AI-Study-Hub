@@ -47,9 +47,11 @@ public class DocumentController {
             @RequestParam(required = false) Integer subjectId,
             @RequestParam(required = false) String fileType,
             @RequestParam(required = false) Integer folderId,
+            @RequestParam(required = false) Boolean includeSubfolders,
             Principal principal) {
         try {
-            List<DocumentResponse> data = documentService.getMyDocumentsWithFilters(principal.getName(), keyword, subjectId, fileType, folderId);
+            List<DocumentResponse> data = documentService.getMyDocumentsWithFilters(
+                    principal.getName(), keyword, subjectId, fileType, folderId, includeSubfolders);
             return ResponseEntity.ok(ApiResponse.success(data, "Documents retrieved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));

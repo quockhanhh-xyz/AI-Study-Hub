@@ -42,6 +42,16 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
             @Param("folderId") Integer folderId
     );
 
+    @Query("SELECT d FROM Document d " +
+            "WHERE d.owner = :owner " +
+            "AND d.status = 'ACTIVE' " +
+            "AND d.folder.folderId IN :folderIds " +
+            "ORDER BY d.createdAt DESC")
+    List<Document> findByOwnerAndFolderIds(
+            @Param("owner") User owner,
+            @Param("folderIds") List<Integer> folderIds
+    );
+
     long countByFolderAndStatus(Folder folder, String status);
 
     List<Document> findByFolder(Folder folder);

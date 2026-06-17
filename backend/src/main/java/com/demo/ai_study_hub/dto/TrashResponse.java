@@ -20,6 +20,7 @@ public class TrashResponse {
         private String fileType;
         private Long fileSize;
         private Integer folderId;
+        private String originalFolderName;
         private LocalDateTime deletedAt;
     }
 

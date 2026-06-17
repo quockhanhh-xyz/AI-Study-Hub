@@ -19,7 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
+import java.util.ArrayList;
 @Service
 @RequiredArgsConstructor
 public class DocumentService {
@@ -90,11 +90,31 @@ public class DocumentService {
         return mapToResponse(savedDoc);
     }
 
-    public List<DocumentResponse> getMyDocumentsWithFilters(String email, String keyword, Integer subjectId, String fileType, Integer folderId) {
-        User owner = userRepository.findByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    public List<DocumentResponse> getMyDocumentsWithFilters(
+            String email, String keyword, Integer subjectId,
+            String fileType, Integer folderId, Boolean includeSubfolders) {
+
+        User owner = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (folderId != null && Boolean.TRUE.equals(includeSubfolders)) {
+            List<Integer> allFolderIds = new ArrayList<>();
+            allFolderIds.add(folderId);
+            collectSubFolderIds(folderId, allFolderIds);
+            return documentRepository.findByOwnerAndFolderIds(owner, allFolderIds)
+                    .stream().map(this::mapToResponse).collect(Collectors.toList());
+        }
 
         return documentRepository.findMyDocumentsWithFilters(owner, keyword, subjectId, fileType, folderId)
                 .stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
+    private void collectSubFolderIds(Integer parentId, List<Integer> result) {
+        List<Integer> children = folderRepository.findSubFolderIdsByParentId(parentId);
+        for (Integer childId : children) {
+            result.add(childId);
+            collectSubFolderIds(childId, result);
+        }
     }
 
     public DocumentResponse moveDocument(Integer documentId, Integer folderId, String email) {
