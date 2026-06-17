@@ -304,25 +304,20 @@
 
 <body>
   <div class="app-layout">
-    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="logo">AI Study Hub</div>
       <nav class="sidebar-nav"></nav>
     </aside>
 
-    <!-- Main Content -->
     <main class="main-content">
       <button class="btn detail-back-btn" onclick="window.location.href='dashboard.html'">
         ← Back to Dashboard
       </button>
 
-      <!-- Loader / Error state -->
       <div id="detailLoader">Loading document...</div>
 
-      <!-- Document Content (hidden until loaded) -->
       <div id="detailContent">
         <div class="card detail-card">
-          <!-- Header: badge + title -->
           <div class="detail-header">
             <span class="detail-type-badge" id="fileTypeBadge">–</span>
             <div class="detail-title-block">
@@ -331,7 +326,6 @@
             </div>
           </div>
 
-          <!-- Meta grid -->
           <div class="detail-meta-grid">
             <div class="meta-item">
               <div class="meta-item-label">Subject</div>
@@ -347,13 +341,11 @@
             </div>
           </div>
 
-          <!-- Description -->
           <div class="detail-description">
             <label>Description</label>
             <p id="docDescription">No description provided.</p>
           </div>
 
-          <!-- Open file button -->
           <div class="file-action-section">
             <a id="openFileBtn" class="btn btn-primary" href="#" target="_blank" rel="noopener noreferrer"
               style="width:auto;padding:10px 24px;">Open File ↗</a>
@@ -361,7 +353,6 @@
 
           <hr class="detail-divider" />
 
-          <!-- Edit Section -->
           <div class="edit-section">
             <h2>Edit Details</h2>
 
@@ -379,9 +370,7 @@
               <label for="editSubject">Subject</label>
               <select id="editSubject">
                 <option value="" disabled selected>Loading subjects...</option>
-                <!-- Fix #4: "No subject" option intentionally omitted -->
-                <!-- Backend does not support null subjectId update yet -->
-              </select>
+                </select>
             </div>
 
             <div id="editMessage" class="helper-text" style="min-height:20px;margin-bottom:12px;"></div>
@@ -396,7 +385,6 @@
     </main>
   </div>
 
-  <!-- Delete Confirm Modal -->
   <div class="modal-overlay" id="deleteModal">
     <div class="modal-box">
       <h3>Delete document?</h3>
@@ -408,13 +396,15 @@
     </div>
   </div>
 
-  <!-- Toast -->
   <div id="toast"></div>
 
   <script src="js/api.js"></script>
-  <script src="js/document-api.js"></script>
+  <script src="js/ui.js"></script>
   <script src="js/navigation.js"></script>
   <script src="js/layout.js"></script>
+  <script src="js/subject-api.js"></script>
+  <script src="js/document-api.js"></script>
+
   <script src="js/document-detail.js"></script>
 </body>
 

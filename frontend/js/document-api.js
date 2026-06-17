@@ -1,7 +1,7 @@
 /*
  * Uploads a document, accepting a single FormData object constructed from the UI.
  * Matches 100% with line 186 in the old upload.js file.
- * @param {FormData} formData - FormData object containing file, title, description, and subjectId.
+ * @param {FormData} formData - FormData object containing file, title, description, folderId, and subjectId.
  */
 function uploadDocument(formData) {
   return post("/api/documents/upload", formData);
@@ -9,6 +9,7 @@ function uploadDocument(formData) {
 
 /*
  * Retrieves the personal document list of the currently authenticated user.
+ * Supports standard filters including folderId and includeSubfolders flags.
  */
 function getMyDocuments(params = {}) {
   const cleanParams = Object.fromEntries(
@@ -19,17 +20,8 @@ function getMyDocuments(params = {}) {
 }
 
 /*
- * Retrieves the list of all available subjects (Master Data).
- * Used for the Dashboard filter (FE1) and the dropdown menu in the Details page (FE2).
- * @returns {Promise} Returns the list of subjects based on the API contract documentation.
- */
-function getSubjects() {
-  return get("/api/subjects");
-}
-
-/*
  * Advanced document search and filtering helper.
- * Supports keyword, subjectId, fileType, and folderId query parameters.
+ * Supports keyword, subjectId, fileType, folderId, and includeSubfolders query parameters.
  * @param {Object} params - Search and filter parameters.
  * @returns {Promise} Filtered list of documents.
  */
@@ -69,7 +61,7 @@ function deleteDocument(id) {
 }
 
 /* ==========================================================================
-   STEP 5 ADDITIONS: FOLDER INTEGRATION, TRASH & LIFECYCLE MANAGEMENT
+    STEP 5 ADDITIONS: FOLDER INTEGRATION, TRASH & LIFECYCLE MANAGEMENT
    ========================================================================== */
 
 /*
