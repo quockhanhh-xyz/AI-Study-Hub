@@ -39,18 +39,21 @@ public class TrashService {
 
         List<TrashResponse.TrashDocumentItem> docItems = deletedDocs.stream()
                 .map(d -> TrashResponse.TrashDocumentItem.builder()
+                        .type("DOCUMENT")
                         .documentId(d.getDocumentId())
                         .title(d.getTitle())
                         .originalFileName(d.getOriginalFileName())
                         .fileType(d.getFileType())
                         .fileSize(d.getFileSize())
                         .folderId(d.getFolder() != null ? d.getFolder().getFolderId() : null)
+                        .originalFolderName(d.getFolder() != null ? d.getFolder().getName() : null)
                         .deletedAt(d.getDeletedAt())
                         .build())
                 .collect(Collectors.toList());
 
         List<TrashResponse.TrashFolderItem> folderItems = deletedFolders.stream()
                 .map(f -> TrashResponse.TrashFolderItem.builder()
+                        .type("FOLDER")
                         .folderId(f.getFolderId())
                         .folderName(f.getName())
                         .description(f.getDescription())

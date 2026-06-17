@@ -20,4 +20,6 @@ public class FolderResponse {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Integer fileCount;
+    private Integer subfolderCount;
 }

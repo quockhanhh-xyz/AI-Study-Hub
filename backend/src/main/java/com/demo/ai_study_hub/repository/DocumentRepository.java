@@ -42,6 +42,22 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
             @Param("folderId") Integer folderId
     );
 
+    @Query("SELECT d FROM Document d LEFT JOIN d.subject s " +
+            "WHERE d.owner = :owner " +
+            "AND d.status = 'ACTIVE' " +
+            "AND d.folder.folderId IN :folderIds " +
+            "AND (:keyword IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(d.originalFileName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:subjectId IS NULL OR s.subjectId = :subjectId) " +
+            "AND (:fileType IS NULL OR d.fileType = :fileType) " +
+            "ORDER BY d.createdAt DESC")
+    List<Document> findByOwnerAndFolderIds(
+            @Param("owner") User owner,
+            @Param("folderIds") List<Integer> folderIds,
+            @Param("keyword") String keyword,
+            @Param("subjectId") Integer subjectId,
+            @Param("fileType") String fileType
+    );
+
     long countByFolderAndStatus(Folder folder, String status);
 
     List<Document> findByFolder(Folder folder);

@@ -14,18 +14,23 @@ public class TrashResponse {
     @Data
     @Builder
     public static class TrashDocumentItem {
+        @Builder.Default
+        private String type = "DOCUMENT";
         private Integer documentId;
         private String title;
         private String originalFileName;
         private String fileType;
         private Long fileSize;
         private Integer folderId;
+        private String originalFolderName;
         private LocalDateTime deletedAt;
     }
 
     @Data
     @Builder
     public static class TrashFolderItem {
+        @Builder.Default
+        private String type = "FOLDER";
         private Integer folderId;
         private String folderName;
         private String description;
