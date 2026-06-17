@@ -179,6 +179,20 @@ class DocumentServiceTest {
     }
 
     @Test
+    void uploadDocument_WhenMissingSubject_ShouldThrow400AndNotUploadCloudinary() {
+        MultipartFile mockFile = mock(MultipartFile.class);
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            documentService.uploadDocument(mockFile, "Test Title", "Description", null, null, "doantam785@gmail.com");
+        });
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        assertEquals("Subject is required", exception.getReason());
+        verify(cloudinaryStorageService, never()).uploadFile(any(), any());
+    }
+
+    @Test
     void uploadDocument_WhenDuplicateFile_ShouldThrow409AndNotUploadCloudinary() {
         MultipartFile mockFile = mock(MultipartFile.class);
         when(mockFile.getOriginalFilename()).thenReturn("TailieuHot.pdf");
@@ -193,7 +207,7 @@ class DocumentServiceTest {
         });
 
         assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
-        assertEquals("A file with the same name and file size already exists in this folder.", exception.getReason());
+        assertEquals("A file with the same name already exists in this folder.", exception.getReason());
         verify(cloudinaryStorageService, never()).uploadFile(any(), any());
     }
 
@@ -210,15 +224,16 @@ class DocumentServiceTest {
         mockFolder.setStatus("ACTIVE");
 
         when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(subjectRepository.findById(1)).thenReturn(Optional.of(mockSubject));
         when(folderRepository.findById(5)).thenReturn(Optional.of(mockFolder));
         when(documentRepository.existsDuplicate(mockOwner, "TailieuHot.pdf", 102400L, 5)).thenReturn(true);
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            documentService.uploadDocument(mockFile, "Test Title", "Description", null, 5, "doantam785@gmail.com");
+            documentService.uploadDocument(mockFile, "Test Title", "Description", 1, 5, "doantam785@gmail.com");
         });
 
         assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
-        assertEquals("A file with the same name and file size already exists in this folder.", exception.getReason());
+        assertEquals("A file with the same name already exists in this folder.", exception.getReason());
         verify(cloudinaryStorageService, never()).uploadFile(any(), any());
     }
 
@@ -236,6 +251,7 @@ class DocumentServiceTest {
         when(mockUploadResult.getPublicId()).thenReturn("public-id");
 
         when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(subjectRepository.findById(1)).thenReturn(Optional.of(mockSubject));
         when(documentRepository.existsDuplicate(mockOwner, "TailieuHot.pdf", 204800L, null)).thenReturn(false);
         when(cloudinaryStorageService.uploadFile(mockFile, mockOwner.getUserId())).thenReturn(mockUploadResult);
 
@@ -243,10 +259,11 @@ class DocumentServiceTest {
         savedDoc.setDocumentId(10);
         savedDoc.setTitle("Test Title");
         savedDoc.setOwner(mockOwner);
+        savedDoc.setSubject(mockSubject);
         savedDoc.setStatus("ACTIVE");
         when(documentRepository.save(any(Document.class))).thenReturn(savedDoc);
 
-        DocumentResponse response = documentService.uploadDocument(mockFile, "Test Title", "Description", null, null, "doantam785@gmail.com");
+        DocumentResponse response = documentService.uploadDocument(mockFile, "Test Title", "Description", 1, null, "doantam785@gmail.com");
 
         assertNotNull(response);
         assertEquals(10, response.getDocumentId());
@@ -273,6 +290,7 @@ class DocumentServiceTest {
         when(mockUploadResult.getPublicId()).thenReturn("public-id");
 
         when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(subjectRepository.findById(1)).thenReturn(Optional.of(mockSubject));
         when(folderRepository.findById(5)).thenReturn(Optional.of(mockFolder));
         when(documentRepository.existsDuplicate(mockOwner, "TailieuHot.pdf", 102400L, 5)).thenReturn(false);
         when(cloudinaryStorageService.uploadFile(mockFile, mockOwner.getUserId())).thenReturn(mockUploadResult);
@@ -282,10 +300,11 @@ class DocumentServiceTest {
         savedDoc.setTitle("Test Title");
         savedDoc.setOwner(mockOwner);
         savedDoc.setFolder(mockFolder);
+        savedDoc.setSubject(mockSubject);
         savedDoc.setStatus("ACTIVE");
         when(documentRepository.save(any(Document.class))).thenReturn(savedDoc);
 
-        DocumentResponse response = documentService.uploadDocument(mockFile, "Test Title", "Description", null, 5, "doantam785@gmail.com");
+        DocumentResponse response = documentService.uploadDocument(mockFile, "Test Title", "Description", 1, 5, "doantam785@gmail.com");
 
         assertNotNull(response);
         assertEquals(10, response.getDocumentId());
@@ -306,6 +325,7 @@ class DocumentServiceTest {
         when(mockUploadResult.getPublicId()).thenReturn("public-id");
 
         when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(subjectRepository.findById(1)).thenReturn(Optional.of(mockSubject));
         when(documentRepository.existsDuplicate(mockOwner, "TailieuHot.pdf", 102400L, null)).thenReturn(false);
         when(cloudinaryStorageService.uploadFile(mockFile, mockOwner.getUserId())).thenReturn(mockUploadResult);
 
@@ -313,14 +333,14 @@ class DocumentServiceTest {
         savedDoc.setDocumentId(10);
         savedDoc.setTitle("Test Title");
         savedDoc.setOwner(mockOwner);
+        savedDoc.setSubject(mockSubject);
         savedDoc.setStatus("ACTIVE");
         when(documentRepository.save(any(Document.class))).thenReturn(savedDoc);
 
-        DocumentResponse response = documentService.uploadDocument(mockFile, "Test Title", "Description", null, null, "doantam785@gmail.com");
+        DocumentResponse response = documentService.uploadDocument(mockFile, "Test Title", "Description", 1, null, "doantam785@gmail.com");
 
         assertNotNull(response);
         assertEquals(10, response.getDocumentId());
         verify(cloudinaryStorageService, times(1)).uploadFile(mockFile, mockOwner.getUserId());
     }
-
 }
