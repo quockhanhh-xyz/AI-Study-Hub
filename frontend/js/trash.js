@@ -17,22 +17,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   let pendingPermanentDelete = null;
 
-  function showToast(text, type) {
-    const existing = document.getElementById("toastNotification");
-    if (existing) existing.remove();
-
-    const toast = document.createElement("div");
-    toast.id = "toastNotification";
-    toast.className = "toast-notification toast-" + (type || "info");
-    toast.textContent = text;
-    document.body.appendChild(toast);
-
-    requestAnimationFrame(() => toast.classList.add("toast-visible"));
-    setTimeout(() => {
-      toast.classList.remove("toast-visible");
-      setTimeout(() => toast.remove(), 300);
-    }, 3500);
-  }
 
   function showLoading() {
     trashLoader.style.display = "flex";
@@ -108,7 +92,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       } else {
         await restoreDocument(id);
       }
-      showToast(`${type === "folder" ? "Folder" : "Document"} restored successfully.`, "success");
+      window.showToast(`${type === "folder" ? "Folder" : "Document"} restored successfully.`, "success");
       await loadTrash();
     } catch (error) {
       resetButton(button);
@@ -126,7 +110,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         await permanentDeleteDocument(pendingPermanentDelete.id);
       }
       closePermanentDeleteModal();
-      showToast(`"${pendingPermanentDelete.name}" has been permanently deleted.`, "success");
+      window.showToast(`"${pendingPermanentDelete.name}" has been permanently deleted.`, "success");
       await loadTrash();
     } catch (error) {
       confirmError.textContent = error.message || "Failed to permanently delete item.";
