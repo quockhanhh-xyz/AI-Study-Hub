@@ -38,9 +38,10 @@ public class FolderController {
     @GetMapping("/my")
     public ResponseEntity<ApiResponse<List<FolderResponse>>> getMyFolders(
             @RequestParam(required = false) Integer parentFolderId,
+            @RequestParam(required = false) Boolean all,
             Principal principal) {
         try {
-            List<FolderResponse> data = folderService.getMyFolders(parentFolderId, principal.getName());
+            List<FolderResponse> data = folderService.getMyFolders(parentFolderId, all, principal.getName());
             return ResponseEntity.ok(ApiResponse.success(data, "Folders retrieved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));

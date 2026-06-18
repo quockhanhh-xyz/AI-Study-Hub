@@ -9,7 +9,7 @@ public interface FolderService {
 
     FolderResponse createFolder(FolderRequest request, String email);
 
-    List<FolderResponse> getMyFolders(Integer parentFolderId, String email);
+    List<FolderResponse> getMyFolders(Integer parentFolderId, Boolean all, String email);
 
     FolderResponse getFolderDetail(Integer folderId, String email);
 
