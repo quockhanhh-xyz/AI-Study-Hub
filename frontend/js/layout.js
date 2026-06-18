@@ -69,16 +69,21 @@ function renderDynamicSidebar(isAuthenticated) {
     return true;
   });
 
-  // Re-render links safely inside the container
+  // Re-render links safely inside the container with standardized icon and text wrappers
   navContainer.innerHTML = visibleMenus
-    .map(item => `<a href="${item.url}" class="nav-link">${item.name}</a>`)
+    .map(item => `
+      <a href="${item.url}" class="nav-link">
+        <span class="nav-icon">${item.icon || "📄"}</span>
+        <span class="nav-text">${item.name}</span>
+      </a>
+    `)
     .join("");
 
 // Append a dedicated Logout link if user is fully logged in
   if (isAuthenticated) {
     const sidebar = document.querySelector(".sidebar");
     if (sidebar) {
-      // Loại bỏ footer cũ nếu có để tránh trùng lặp khi re-render
+      // Safely clear out any pre-existing footer to prevent duplicate rendering artifacts
       const oldFooter = sidebar.querySelector(".sidebar-footer");
       if (oldFooter) oldFooter.remove();
 
@@ -88,7 +93,7 @@ function renderDynamicSidebar(isAuthenticated) {
         <hr class="sidebar-divider" />
         <a href="#" id="sidebarLogoutBtn" class="nav-link nav-link-logout">
           <span class="nav-icon">🚪</span>
-          <span class="logout-text">Logout</span>
+          <span class="nav-text">Logout</span>
         </a>
       `;
       sidebar.appendChild(logoutContainer);
@@ -148,6 +153,14 @@ function initializeSidebarCollapse() {
   // Guard clause: Avoid duplicating the toggle button if it already exists
   if (sidebar.querySelector(".sidebar-toggle-btn")) return;
 
+  // Standardize Logo text wrapper for FE3 collapsed layout visibility state rules
+  if (logoContainer && !logoContainer.querySelector(".logo-text")) {
+    const rawText = logoContainer.textContent.replace("☰", "").trim();
+    if (rawText) {
+      logoContainer.innerHTML = `<span class="logo-text">${rawText}</span>`;
+    }
+  }
+
   // 2. Inject a responsive toggle button into the brand layout zone
   const toggleBtn = document.createElement("button");
   toggleBtn.className = "sidebar-toggle-btn";
@@ -178,7 +191,7 @@ function initializeSidebarCollapse() {
   toggleBtn.addEventListener("click", (e) => {
     e.preventDefault();
     sidebar.classList.toggle("collapsed");
-    
+
     // Sync back real-time changes directly into the client cache storage
     const currentCollapsedState = sidebar.classList.contains("collapsed");
     localStorage.setItem("sidebar-collapsed", currentCollapsedState);

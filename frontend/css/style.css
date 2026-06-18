@@ -1109,6 +1109,23 @@ textarea.success {
 }
 
 
+/* ── Generic Modal Class Wrapper Mapping for FE3 Checklist ── */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* Ensure any internal active modal elements reactivate event clicking flows */
+.modal .modal-box,
+.modal .confirm-modal-box {
+  pointer-events: auto;
+}
+
 /* ── Responsive ──────────────────────────────────────── */
 @media (max-width: 768px) {
   .folder-grid {
