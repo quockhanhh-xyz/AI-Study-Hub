@@ -16,7 +16,7 @@
   --border: #eadfdd;
   --shadow: 0 8px 24px rgba(23, 32, 51, 0.08);
 
-  /* Semantic Status Colors (Phân tách rõ với Primary) */
+  /* Semantic Status Colors (Distinct visual separation from primary actions) */
   --danger: #dc2626;
   --danger-light: #fee2e2;
   --danger-text: #b91c1c;
@@ -28,6 +28,11 @@
   --card-bg: var(--surface);
   --text: var(--text-main);
   --muted: var(--text-muted);
+
+  /* ── FE3 Sidebar & Item Theme Legacy Alias Mapping ── */
+  --glass-bg: var(--surface);
+  --glass-border: var(--border);
+  --item-hover: var(--primary-light);
 }
 
 
