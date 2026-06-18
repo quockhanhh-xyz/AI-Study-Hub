@@ -30,12 +30,14 @@ function getCurrentPageName() {
   return page || "index.html";
 }
 
-/**
- * Updates the UI sidebar elements dynamically to highlight the active menu link
- */
 function initializeActiveMenu() {
-  const currentPage = getCurrentPageName();
+  let currentPage = getCurrentPageName();
   const navLinks = document.querySelectorAll(".sidebar-nav .nav-link");
+
+  // FE3 Contextual Mapping: Nếu đang ở trang chi tiết tài liệu, sáng đèn menu Dashboard làm cha
+  if (currentPage === "document-detail.html") {
+    currentPage = "dashboard.html";
+  }
 
   navLinks.forEach(link => {
     const hrefAttr = link.getAttribute("href");
