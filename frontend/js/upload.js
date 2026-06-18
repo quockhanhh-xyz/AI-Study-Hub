@@ -78,24 +78,6 @@ async function loadSubjectOptions() {
 }
 
 // Helpers
-function showToast(text, type) {
-  const existing = document.getElementById("toastNotification");
-  if (existing) existing.remove();
-
-  const toast = document.createElement("div");
-  toast.id = "toastNotification";
-  toast.className = "toast-notification toast-" + (type || "info");
-  toast.textContent = text;
-  document.body.appendChild(toast);
-
-  // Trigger animation
-  requestAnimationFrame(() => toast.classList.add("toast-visible"));
-
-  setTimeout(() => {
-    toast.classList.remove("toast-visible");
-    setTimeout(() => toast.remove(), 300);
-  }, 3500);
-}
 
 function showMessage(text, type) {
   uploadMessage.textContent = text;
@@ -282,7 +264,7 @@ uploadForm.addEventListener("submit", async (e) => {
   try {
     const result = await uploadDocument(formData);
     completeProgress(progressInterval);
-    showToast(`Upload successful: "${result.data.title}"`, "success");
+    window.showToast(`Upload successful: "${result.data.title}"`, "success");
     uploadForm.reset();
     updateDropZone(null);
     setTimeout(() => { window.location.href = "dashboard.html"; }, 1500);
