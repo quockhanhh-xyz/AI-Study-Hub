@@ -466,7 +466,7 @@ textarea.success {
   position: relative;
   overflow: hidden;
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow);
 }
 
 
@@ -1008,7 +1008,7 @@ textarea.success {
   border-radius: 16px;
   background: var(--card-bg);
   transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow);
 }
 
 
@@ -1091,7 +1091,7 @@ textarea.success {
   padding: 32px;
   width: 100%;
   max-width: 440px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow);
 }
 
 
