@@ -208,14 +208,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     deleteBtn.className = "btn btn-danger btn-sm";
     deleteBtn.textContent = "Delete";
     deleteBtn.addEventListener("click", function (e) {
-      e.stopPropagation(); // Không mở folder
+      e.stopPropagation(); //  Prevent card click from triggering folder navigation
       openDeleteModal(folder.folderId);
     });
 
     actions.append(renameBtn, deleteBtn);
     card.append(main, actions);
 
-    // Click toàn card để mở folder
+    // Clicking anywhere on the card navigates into the folder
     card.addEventListener("click", function () {
       navigateToFolder(folder.folderId);
     });
