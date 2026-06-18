@@ -20,7 +20,7 @@
     }
 
     .detail-back-btn:hover {
-      background: #f1f5f9;
+      background: var(--surface-soft);
       color: var(--text);
     }
 
@@ -45,7 +45,7 @@
       height: 32px;
       padding: 0 10px;
       border-radius: 6px;
-      background: #eff6ff;
+      background: var(--primary-light);
       color: var(--primary);
       font-size: 13px;
       font-weight: 700;
@@ -135,14 +135,14 @@
       resize: vertical;
       min-height: 90px;
       transition: all 0.2s ease;
-      background-color: #1c1c1e;
+      background-color: var(--surface);
       color: var(--text);
     }
 
     textarea:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      box-shadow: 0 0 0 3px rgba(255, 88, 88, 0.15);
     }
 
     select {
@@ -152,7 +152,7 @@
       border-radius: 8px;
       font-size: 15px;
       font-family: inherit;
-      background-color: #1c1c1e;
+      background-color: var(--surface);
       color: var(--text);
       transition: all 0.2s ease;
       appearance: none;
@@ -165,7 +165,7 @@
     select:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      box-shadow: 0 0 0 3px rgba(255, 88, 88, 0.15);
     }
 
     .edit-actions {
@@ -250,7 +250,7 @@
     }
 
     .modal-box {
-      background: var(--white);
+      background: var(--surface);
       border-radius: 12px;
       padding: 32px;
       max-width: 400px;
@@ -282,7 +282,7 @@
 
     .btn-danger-solid {
       background-color: var(--danger);
-      color: var(--white);
+      color: #ffffff;
     }
 
     .btn-danger-solid:hover {
@@ -370,7 +370,7 @@
               <label for="editSubject">Subject</label>
               <select id="editSubject">
                 <option value="" disabled selected>Loading subjects...</option>
-                </select>
+              </select>
             </div>
 
             <div id="editMessage" class="helper-text" style="min-height:20px;margin-bottom:12px;"></div>
