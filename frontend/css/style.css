@@ -44,8 +44,6 @@ body {
 }
 
 
-
-
 a {
   text-decoration: none;
   transition: color 0.2s ease;
@@ -1666,3 +1664,4 @@ textarea.success {
 
 @keyframes spin-loop {
   to { transform: rotate(360deg); }
+}
