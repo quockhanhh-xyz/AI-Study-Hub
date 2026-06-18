@@ -272,12 +272,24 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (folderErrorMessage) folderErrorMessage.style.display = "none";
 
     try {
+      // 1. Fetch only root folders for the grid view
       const result = await getMyFolders();
       const folders = Array.isArray(result.data) ? result.data : [];
-      userFolders = folders;
+
+      // 2. Fetch all active folders recursively for stats, cache, and dropdown population
+      let allFolders = folders;
+      try {
+        const allResult = await getMyFolders(null, true);
+        if (allResult && Array.isArray(allResult.data)) {
+          allFolders = allResult.data;
+        }
+      } catch (e) {
+        console.warn("Failed to load recursive folders count:", e);
+      }
+      userFolders = allFolders;
 
       if (folderCountElement) {
-        folderCountElement.textContent = String(folders.length);
+        folderCountElement.textContent = String(allFolders.length);
       }
 
       if (folderFilter) {
@@ -286,7 +298,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           <option value="">All Folders</option>
           <option value="0">My Documents</option>
         `;
-        folders.forEach(function (folder) {
+        allFolders.forEach(function (folder) {
           const option = document.createElement("option");
           option.value = folder.folderId;
           option.textContent = folder.folderName;

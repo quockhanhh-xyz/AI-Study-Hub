@@ -19,7 +19,7 @@ function createFolder(data) {
  * @param {number|string|null} parentFolderId - Pass null for root (My Documents) or a specific ID for subfolders.
  * @returns {Promise<Array>} List of folders matching the structural hierarchy.
  */
-function getMyFolders(parentFolderId = null) {
+function getMyFolders(parentFolderId = null, all = false) {
   const params = new URLSearchParams();
 
   if (
@@ -28,6 +28,10 @@ function getMyFolders(parentFolderId = null) {
     parentFolderId !== ""
   ) {
     params.append("parentFolderId", parentFolderId);
+  }
+
+  if (all) {
+    params.append("all", "true");
   }
 
   const query = params.toString();

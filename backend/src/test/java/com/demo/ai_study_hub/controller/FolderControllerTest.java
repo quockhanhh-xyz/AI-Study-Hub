@@ -132,7 +132,7 @@ class FolderControllerTest {
                 .status("ACTIVE")
                 .build();
 
-        when(folderService.getMyFolders(isNull(), anyString()))
+        when(folderService.getMyFolders(isNull(), any(), anyString()))
                 .thenReturn(List.of(sampleResponse, second));
 
         mockMvc.perform(get("/api/folders/my"))

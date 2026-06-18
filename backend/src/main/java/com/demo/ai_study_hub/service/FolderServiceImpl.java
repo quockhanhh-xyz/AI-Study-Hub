@@ -59,8 +59,13 @@ public class FolderServiceImpl implements FolderService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FolderResponse> getMyFolders(Integer parentFolderId, String email) {
+    public List<FolderResponse> getMyFolders(Integer parentFolderId, Boolean all, String email) {
         User owner = getUser(email);
+
+        if (Boolean.TRUE.equals(all)) {
+            return folderRepository.findByOwnerAndStatusOrderByCreatedAtDesc(owner, "ACTIVE")
+                    .stream().map(this::mapToResponse).collect(Collectors.toList());
+        }
 
         if (parentFolderId != null) {
             Folder parentFolder = folderRepository.findByFolderIdAndOwner(parentFolderId, owner)
