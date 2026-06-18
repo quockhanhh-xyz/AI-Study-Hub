@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", async function () {
+ocument.addEventListener("DOMContentLoaded", async function () {
   const userNameElement = document.getElementById("dashboardUserName");
   const currentUserRaw = localStorage.getItem("currentUser");
 
@@ -489,5 +489,97 @@ document.addEventListener("DOMContentLoaded", async function () {
       activateFolderCard(null);
       updateDocSub(null);
     });
+  }
+
+  // Quick Actions: Create Folder Modal
+  const quickCreateFolderBtn = document.getElementById("quickCreateFolderBtn");
+  const createFolderModal = document.getElementById("createFolderModal");
+  const createFolderCancelBtn = document.getElementById("createFolderCancelBtn");
+  const createFolderConfirmBtn = document.getElementById("createFolderConfirmBtn");
+  const createFolderNameInput = document.getElementById("createFolderName");
+  const createFolderError = document.getElementById("createFolderError");
+
+  if (quickCreateFolderBtn && createFolderModal) {
+    quickCreateFolderBtn.addEventListener("click", function () {
+      if (createFolderNameInput) createFolderNameInput.value = "";
+      if (createFolderError) {
+        createFolderError.style.display = "none";
+        createFolderError.textContent = "";
+      }
+      createFolderModal.classList.add("open");
+      if (createFolderNameInput) createFolderNameInput.focus();
+    });
+  }
+
+  function closeCreateFolderModal() {
+    if (createFolderModal) {
+      createFolderModal.classList.remove("open");
+    }
+  }
+
+  if (createFolderCancelBtn) {
+    createFolderCancelBtn.addEventListener("click", closeCreateFolderModal);
+  }
+
+  if (createFolderModal) {
+    createFolderModal.addEventListener("click", function (e) {
+      if (e.target === createFolderModal) {
+        closeCreateFolderModal();
+      }
+    });
+  }
+
+  if (createFolderConfirmBtn) {
+    createFolderConfirmBtn.addEventListener("click", async function () {
+      if (!createFolderNameInput) return;
+      const name = createFolderNameInput.value.trim();
+      if (!name) {
+        if (createFolderError) {
+          createFolderError.textContent = "Folder name is required.";
+          createFolderError.style.display = "block";
+        }
+        return;
+      }
+
+      if (typeof window.setButtonLoading === "function") {
+        window.setButtonLoading(createFolderConfirmBtn, true, "Creating...");
+      } else {
+        createFolderConfirmBtn.disabled = true;
+      }
+
+      if (createFolderError) {
+        createFolderError.style.display = "none";
+      }
+
+      try {
+        await createFolder({ folderName: name, parentFolderId: null });
+        closeCreateFolderModal();
+        if (typeof window.showToast === "function") {
+          window.showToast("Folder created successfully!", "success");
+        }
+        // Refresh folders grid and stats
+        await loadFolders();
+        await loadDocuments();
+      } catch (error) {
+        if (createFolderError) {
+          createFolderError.textContent = error.message || "Failed to create folder.";
+          createFolderError.style.display = "block";
+        }
+      } finally {
+        if (typeof window.setButtonLoading === "function") {
+          window.setButtonLoading(createFolderConfirmBtn, false);
+        } else {
+          createFolderConfirmBtn.disabled = false;
+        }
+      }
+    });
+
+    if (createFolderNameInput) {
+      createFolderNameInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          createFolderConfirmBtn.click();
+        }
+      });
+    }
   }
 });

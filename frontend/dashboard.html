@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -43,6 +43,44 @@
                 <div class="stat-card">
                     <div class="stat-label">Account Tier</div>
                     <div class="stat-value" id="joinDate">-</div>
+                </div>
+            </section>
+
+            <section class="quick-actions-section dashboard-section">
+                <div class="dashboard-section-header">
+                    <div>
+                        <h2>Quick Actions</h2>
+                        <p>Perform common study and file management tasks.</p>
+                    </div>
+                </div>
+                <div class="quick-actions-grid">
+                    <a href="upload.html" class="quick-action-card">
+                        <div class="quick-action-icon-wrapper upload-wrapper">
+                            <span class="quick-action-icon">📤</span>
+                        </div>
+                        <div class="quick-action-info">
+                            <h3>Upload Document</h3>
+                            <p>Add study guides, PDFs, or slides</p>
+                        </div>
+                    </a>
+                    <button type="button" id="quickCreateFolderBtn" class="quick-action-card">
+                        <div class="quick-action-icon-wrapper folder-wrapper">
+                            <span class="quick-action-icon">📁</span>
+                        </div>
+                        <div class="quick-action-info">
+                            <h3>Create Folder</h3>
+                            <p>Organize documents by subject</p>
+                        </div>
+                    </button>
+                    <a href="trash.html" class="quick-action-card">
+                        <div class="quick-action-icon-wrapper trash-wrapper">
+                            <span class="quick-action-icon">🗑️</span>
+                        </div>
+                        <div class="quick-action-info">
+                            <h3>View Trash</h3>
+                            <p>Restore or delete discarded files</p>
+                        </div>
+                    </a>
                 </div>
             </section>
 
@@ -132,6 +170,21 @@
                 </div>
             </section>
         </main>
+    </div>
+    <!-- ── CREATE FOLDER MODAL ── -->
+    <div class="modal-overlay" id="createFolderModal" role="dialog" aria-modal="true" aria-labelledby="createFolderModalTitle">
+        <div class="modal-box">
+            <h3 id="createFolderModalTitle">New Folder</h3>
+            <div class="form-group">
+                <label for="createFolderName">Folder name <span class="label-required">*</span></label>
+                <input type="text" id="createFolderName" placeholder="E.g: Math Notes" autocomplete="off" />
+            </div>
+            <p id="createFolderError" class="modal-error" role="alert" aria-live="polite" style="display: none; color: var(--danger); font-size: 14px; margin-top: 10px;"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="createFolderCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="createFolderConfirmBtn">Create</button>
+            </div>
+        </div>
     </div>
 
     <script src="js/api.js"></script>
