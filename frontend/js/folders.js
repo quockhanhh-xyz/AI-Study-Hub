@@ -28,7 +28,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // Buttons
   const createFolderBtn = document.getElementById("createFolderBtn");
-  const emptyCreateBtn = document.getElementById("emptyCreateBtn");
 
   // Create modal
   const createModal = document.getElementById("createModal");
@@ -337,7 +336,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   createFolderBtn.addEventListener("click", openCreateModal);
-  emptyCreateBtn.addEventListener("click", openCreateModal);
   createCancelBtn.addEventListener("click", function () { closeModal(createModal); });
 
   createConfirmBtn.addEventListener("click", async function () {
