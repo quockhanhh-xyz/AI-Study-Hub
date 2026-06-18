@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const emptyState = document.getElementById("emptyState");
 
   let totalDocuments = null;
+  let userFolders = [];
 
   // Filter UI Elements
   const searchInput = document.getElementById("searchInput");
@@ -61,6 +62,25 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (docPanel) {
       docPanel.scrollIntoView({ behavior: "smooth", block: "start" });
     }
+  }
+
+  function buildFolderPath(folderId) {
+    if (!folderId) {
+      return "My Documents";
+    }
+    const path = [];
+    let currentId = folderId;
+    let iterations = 0;
+    while (currentId && iterations < 100) {
+      const folder = userFolders.find(f => f.folderId === currentId);
+      if (!folder) {
+        break;
+      }
+      path.unshift(folder.folderName);
+      currentId = folder.parentFolderId;
+      iterations++;
+    }
+    return ["My Documents", ...path].join(" / ");
   }
 
   function setDocumentsLoading() {
@@ -115,43 +135,30 @@ document.addEventListener("DOMContentLoaded", async function () {
     name.className = "folder-name";
     name.textContent = folder.folderName || "Untitled Folder";
 
+    // Show fileCount and subfolderCount if available
+    const stats = document.createElement("p");
+    stats.className = "folder-meta";
+    stats.style.fontWeight = "500";
+    const parts = [];
+    if (folder.fileCount !== undefined && folder.fileCount !== null) {
+      parts.push(`${folder.fileCount} file${folder.fileCount !== 1 ? "s" : ""}`);
+    }
+    if (folder.subfolderCount !== undefined && folder.subfolderCount !== null) {
+      parts.push(`${folder.subfolderCount} subfolder${folder.subfolderCount !== 1 ? "s" : ""}`);
+    }
+    stats.textContent = parts.length > 0 ? parts.join(" · ") : "0 files · 0 subfolders";
+
     const meta = document.createElement("p");
     meta.className = "folder-meta";
     meta.textContent = folder.createdAt
-      ? new Date(folder.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" })
+      ? `Created: ${new Date(folder.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" })}`
       : "";
 
-    main.append(icon, name, meta);
+    main.append(icon, name, stats, meta);
+    card.append(main);
 
-    const actions = document.createElement("div");
-    actions.className = "folder-card-actions";
-
-    const openBtn = document.createElement("button");
-    openBtn.type = "button";
-    openBtn.className = "btn btn-primary btn-sm";
-    openBtn.textContent = "Browse Files";
-    openBtn.addEventListener("click", async function (e) {
-      e.stopPropagation();
-      if (folderFilter) {
-        folderFilter.value = String(folder.folderId);
-        await loadDocuments();
-        activateFolderCard(folder.folderId);
-        updateDocSub(folder.folderName);
-        scrollToDocs();
-      }
-    });
-
-    actions.append(openBtn);
-    card.append(main, actions);
-
-    card.addEventListener("click", async function () {
-      if (folderFilter) {
-        folderFilter.value = String(folder.folderId);
-        await loadDocuments();
-        activateFolderCard(folder.folderId);
-        updateDocSub(folder.folderName);
-        scrollToDocs();
-      }
+    card.addEventListener("click", function () {
+      window.location.href = `folders.html?folderId=${folder.folderId}`;
     });
 
     return card;
@@ -197,23 +204,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const folderLink = document.createElement("button");
     folderLink.type = "button";
-    folderLink.className = "btn btn-secondary btn-sm";
-    folderLink.textContent = documentItem.folderId
-      ? `Folder: ${documentItem.folderName || "Folder"}`
-      : "My Documents";
-    folderLink.addEventListener("click", async function (e) {
+    folderLink.className = "document-folder-path";
+    folderLink.textContent = "📁 " + buildFolderPath(documentItem.folderId);
+    folderLink.addEventListener("click", function (e) {
       e.stopPropagation();
-      if (!folderFilter) return;
-      folderFilter.value = documentItem.folderId ? String(documentItem.folderId) : "0";
-      await loadDocuments();
       if (documentItem.folderId) {
-        activateFolderCard(documentItem.folderId);
-        updateDocSub(documentItem.folderName);
+        window.location.href = `folders.html?folderId=${documentItem.folderId}`;
       } else {
-        activateFolderCard(null);
-        updateDocSub("My Documents");
+        window.location.href = "folders.html";
       }
-      scrollToDocs();
     });
     meta.append(folderLink);
 
@@ -275,6 +274,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       const result = await getMyFolders();
       const folders = Array.isArray(result.data) ? result.data : [];
+      userFolders = folders;
 
       if (folderCountElement) {
         folderCountElement.textContent = String(folders.length);
@@ -327,6 +327,34 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  async function resolveFoldersForDocuments(documents) {
+    const uniqueFolderIds = [...new Set(documents.map(d => d.folderId).filter(Boolean))];
+    for (const folderId of uniqueFolderIds) {
+      let currentId = folderId;
+      let iterations = 0;
+      while (currentId && iterations < 10) {
+        const exists = userFolders.some(f => f.folderId === currentId);
+        if (exists) {
+          break;
+        }
+        try {
+          const result = await getFolderById(currentId);
+          if (result && result.data) {
+            const folder = result.data;
+            userFolders.push(folder);
+            currentId = folder.parentFolderId;
+          } else {
+            break;
+          }
+        } catch (e) {
+          console.warn(`Failed to resolve folder ${currentId}:`, e);
+          break;
+        }
+        iterations++;
+      }
+    }
+  }
+
   async function loadDocuments() {
     setDocumentsLoading();
 
@@ -337,9 +365,14 @@ document.addEventListener("DOMContentLoaded", async function () {
       folderId: folderFilter ? folderFilter.value : ""
     };
 
+    if (params.folderId && params.folderId !== "0") {
+      params.includeSubfolders = true;
+    }
+
     try {
       const result = await searchDocuments(params);
       const documents = Array.isArray(result.data) ? result.data : [];
+      await resolveFoldersForDocuments(documents);
 
       const isFiltering = params.keyword || params.subjectId || params.fileType || params.folderId;
       if (!isFiltering) {
@@ -355,14 +388,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (documentGrid) documentGrid.style.display = "none";
         if (emptyState) {
           emptyState.style.display = "block";
-          const isFiltering = params.keyword || params.subjectId || params.fileType || params.folderId;
           const emptyTitle = emptyState.querySelector(".empty-title");
           const emptyDesc = emptyState.querySelector("p");
           const emptyAction = emptyState.querySelector(".empty-action");
 
           if (isFiltering) {
-            if (emptyTitle) emptyTitle.textContent = "No matching documents";
-            if (emptyDesc) emptyDesc.textContent = "Try adjusting your search keywords or filters.";
+            if (emptyTitle) emptyTitle.textContent = "No documents found.";
+            if (emptyDesc) emptyDesc.textContent = "Try changing your keyword or filters.";
             if (emptyAction) emptyAction.style.display = "none";
           } else {
             if (emptyTitle) emptyTitle.textContent = "No documents yet";
