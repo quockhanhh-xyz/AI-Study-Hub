@@ -151,18 +151,116 @@ Stores subject or category information.
 
 ## 6. Table `document_shares`
 
-Stores document sharing permissions.
+Stores direct document sharing metadata.
 
-| Column Name   | Data Type   | Description               |
-| :------------ | :---------- | :------------------------ |
-| `id`          | INT         | Primary key               |
-| `document_id` | INT         | References documents(document_id) |
-| `shared_by`   | INT         | References users(user_id) |
-| `shared_to`   | INT         | References users(user_id) |
-| `permission`  | VARCHAR(20) | VIEW or DOWNLOAD          |
-| `created_at`  | TIMESTAMP   | Share creation time       |
+| Column Name            | Data Type   | Constraints                                                 | Description                                            |
+| :--------------------- | :---------- | :---------------------------------------------------------- | :----------------------------------------------------- |
+| `share_id`             | INT         | PRIMARY KEY, AUTO_INCREMENT, NOT NULL                       | Unique share ID                                        |
+| `document_id`          | INT         | FOREIGN KEY REFERENCES documents(document_id), NOT NULL     | Document being shared                                  |
+| `shared_by`            | INT         | FOREIGN KEY REFERENCES users(user_id), NOT NULL             | User who shared the document                           |
+| `shared_with_user_id`  | INT         | FOREIGN KEY REFERENCES users(user_id), NOT NULL             | Target user who receives the share                     |
+| `permission`           | VARCHAR(20) | DEFAULT 'VIEW', NOT NULL                                    | Sharing permission: VIEW                               |
+| `status`               | VARCHAR(20) | DEFAULT 'ACTIVE', NOT NULL                                  | Status: ACTIVE or REVOKED                              |
+| `created_at`           | TIMESTAMP   | DEFAULT CURRENT_TIMESTAMP                                   | Creation timestamp                                     |
+| `updated_at`           | TIMESTAMP   | NULLABLE                                                    | Last update timestamp                                  |
 
 ---
+
+## 6.1. Table `study_groups`
+
+Stores user study groups.
+
+| Column Name   | Data Type    | Constraints                                           | Description                                  |
+| :------------ | :----------- | :---------------------------------------------------- | :------------------------------------------- |
+| `group_id`    | INT          | PRIMARY KEY, AUTO_INCREMENT, NOT NULL                 | Unique group ID                              |
+| `group_name`  | VARCHAR(100) | NOT NULL                                              | Group name                                   |
+| `description` | TEXT         | NULLABLE                                              | Optional group description                   |
+| `invite_code` | VARCHAR(50)  | UNIQUE, NOT NULL                                      | Alphanumeric invite code for joining         |
+| `owner_id`    | INT          | FOREIGN KEY REFERENCES users(user_id), NOT NULL       | User who created the group (Owner)           |
+| `status`      | VARCHAR(30)  | DEFAULT 'ACTIVE', NOT NULL                            | Group status: ACTIVE or DELETED              |
+| `created_at`  | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP                             | Group creation time                          |
+| `updated_at`  | TIMESTAMP    | NULLABLE                                              | Last update time                             |
+
+---
+
+## 6.2. Table `study_group_members`
+
+Stores study group memberships.
+
+| Column Name | Data Type   | Constraints                                                 | Description                                     |
+| :---------- | :---------- | :---------------------------------------------------------- | :---------------------------------------------- |
+| `member_id` | INT         | PRIMARY KEY, AUTO_INCREMENT, NOT NULL                       | Unique member record ID                         |
+| `group_id`  | INT         | FOREIGN KEY REFERENCES study_groups(group_id), NOT NULL     | Group association                               |
+| `user_id`   | INT         | FOREIGN KEY REFERENCES users(user_id), NOT NULL             | User member association                         |
+| `role`      | VARCHAR(20) | DEFAULT 'MEMBER', NOT NULL                                  | Role: OWNER or MEMBER                           |
+| `status`    | VARCHAR(30) | DEFAULT 'ACTIVE', NOT NULL                                  | Member status: ACTIVE, REMOVED, or LEFT         |
+| `joined_at` | TIMESTAMP   | DEFAULT CURRENT_TIMESTAMP                                   | Timestamp when member joined                    |
+| `updated_at`| TIMESTAMP   | NULLABLE                                                    | Last update time                                |
+
+---
+
+## 6.3. Table `group_document_shares`
+
+Stores documents shared into study groups.
+
+| Column Name   | Data Type   | Constraints                                                 | Description                                     |
+| :------------ | :---------- | :---------------------------------------------------------- | :---------------------------------------------- |
+| `share_id`    | INT         | PRIMARY KEY, AUTO_INCREMENT, NOT NULL                       | Unique group share ID                           |
+| `document_id` | INT         | FOREIGN KEY REFERENCES documents(document_id), NOT NULL     | Document shared                                 |
+| `group_id`    | INT         | FOREIGN KEY REFERENCES study_groups(group_id), NOT NULL     | Target group receiving share                    |
+| `shared_by`   | INT         | FOREIGN KEY REFERENCES users(user_id), NOT NULL             | Member who shared the document                  |
+| `permission`  | VARCHAR(20) | DEFAULT 'VIEW', NOT NULL                                    | Sharing permission: VIEW                        |
+| `status`      | VARCHAR(20) | DEFAULT 'ACTIVE', NOT NULL                                  | Share status: ACTIVE or REVOKED                 |
+| `created_at`  | TIMESTAMP   | DEFAULT CURRENT_TIMESTAMP                                   | Creation timestamp                              |
+| `updated_at`  | TIMESTAMP   | NULLABLE                                                    | Last update timestamp                           |
+
+---
+
+### Business Rules & Constraints (Step 6A)
+
+#### 1. Group Management & Permissions
+- **Group Creation**: Any registered user with status `ACTIVE` can create a study group. The creator is automatically added as `OWNER` of the group with status `ACTIVE` in `study_group_members`.
+- **Unique Invite Code**: An 8-character unique uppercase alphanumeric invite code is generated automatically by the backend upon group creation.
+- **Group Joining**: Active users join a group using its active `inviteCode`. Users already in the group (status `ACTIVE`) cannot join again. If a user previously left or was removed, their membership record status is reset to `ACTIVE` and role to `MEMBER`.
+- **Group Details**: Only active group members (OWNER or MEMBER) can view group details and member lists.
+- **Edit/Delete Group**: Only the group `OWNER` can edit group metadata or delete the group. Group deletion is a soft delete (`status = 'DELETED'`). Once a group is deleted, its members and shared documents are no longer accessible.
+- **Leave Group**: Active members with the `MEMBER` role can leave the group (membership status set to `LEFT`). The group `OWNER` cannot leave the group in MVP; they must delete the group instead.
+- **Remove Member**: Only the group `OWNER` can remove other members from the group (membership status set to `REMOVED`). The owner cannot remove themselves.
+
+#### 2. Document Sharing & Permissions
+- **Direct Share**: Only the document owner can share their document directly to another user by email.
+  - The document must be `ACTIVE`.
+  - Recipient email must belong to an `ACTIVE` user.
+  - Self-sharing is blocked.
+  - Duplicate active shares are blocked.
+  - Direct share records are soft-revoked by setting `status = 'REVOKED'`.
+- **Group Share**: Only the document owner can share their document into a study group.
+  - The document owner must be an active member (OWNER or MEMBER) of the target group.
+  - The group must be `ACTIVE` (not deleted).
+  - Duplicate active group shares are blocked.
+  - Group share records are soft-revoked by setting `status = 'REVOKED'`.
+- **Revocation Permissions**:
+  - Direct share can only be revoked by the document owner.
+  - Group share can be revoked by either the document owner OR the group owner. Group members cannot revoke other members' documents.
+- **Trash & Soft Delete Impact**:
+  - Trashed/deleted documents (`status = 'DELETED'` or moved to trash) are immediately hidden from "Shared With Me" and group document directories.
+  - Restoring a document will make it visible again under all its active share records.
+  - Deleting a group hides all document shares within that group.
+- **Unique Active Share Recommendation**:
+  To technically enforce duplicate share prevention at the database level while allowing multiple historical `REVOKED` records, partial unique indexes are recommended:
+  - Direct sharing unique constraint: `document_shares(document_id, shared_with_user_id, status)` (enforced when `status = 'ACTIVE'`)
+  - Group sharing unique constraint: `group_document_shares(document_id, group_id, status)` (enforced when `status = 'ACTIVE'`)
+
+#### 3. MVP Exclusions (Step 6A Not Done)
+- **Folder Sharing**: Shared With Me only supports **Documents** in Step 6A. Folder sharing is planned for Step 6B.
+- **Regenerate Invite Code**: Invite codes are static and cannot be regenerated.
+- **Transfer Owner**: Group ownership cannot be transferred to other members.
+- **Group Chat**: Communication features within study groups are excluded from MVP.
+- **Notifications**: In-app or email notifications for new shares or group invites are excluded.
+- **Public Link Sharing**: Only member-specific direct shares and group shares are supported; no public URL sharing is implemented.
+
+---
+
 
 ## 7. Table `ai_usage_limits`
 

@@ -1504,23 +1504,404 @@ Permanently deletes a document from the database and removes the associated file
 
 ---
 
-# 8. Frontend-Backend Integration Conventions
+# 8. Study Group and Sharing APIs (Step 6A)
+
+## 8.1. Create Group API
+## POST `/api/groups`
+Creates a new study group. The creator is automatically added as the `OWNER`.
+- **Request Body**:
+  ```json
+  {
+    "groupName": "Java Developers",
+    "description": "Group for studying Java and Spring Boot"
+  }
+  ```
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Study group created successfully",
+    "data": {
+      "groupId": 1,
+      "groupName": "Java Developers",
+      "description": "Group for studying Java and Spring Boot",
+      "inviteCode": "A1B2C3D4",
+      "ownerId": 5,
+      "status": "ACTIVE",
+      "createdAt": "2026-06-19T13:30:00"
+    }
+  }
+  ```
+
+## 8.2. Get My Groups API
+## GET `/api/groups/my`
+Retrieves all groups that the current user belongs to (either as OWNER or MEMBER).
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Groups retrieved successfully",
+    "data": [
+      {
+        "groupId": 1,
+        "groupName": "Java Developers",
+        "description": "Group for studying Java and Spring Boot",
+        "inviteCode": "A1B2C3D4",
+        "ownerId": 5,
+        "status": "ACTIVE",
+        "role": "OWNER"
+      }
+    ]
+  }
+  ```
+
+## 8.3. Get Group Detail API
+## GET `/api/groups/{id}`
+Retrieves detailed information of a group, including member list. Access is allowed only to active members of the group.
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Group details retrieved successfully",
+    "data": {
+      "groupId": 1,
+      "groupName": "Java Developers",
+      "description": "Group for studying Java and Spring Boot",
+      "inviteCode": "A1B2C3D4",
+      "ownerId": 5,
+      "status": "ACTIVE",
+      "members": [
+        {
+          "memberId": 1,
+          "userId": 5,
+          "email": "owner@gmail.com",
+          "fullName": "Owner Name",
+          "role": "OWNER",
+          "status": "ACTIVE",
+          "joinedAt": "2026-06-19T13:30:00"
+        }
+      ]
+    }
+  }
+  ```
+
+## 8.4. Join Group API
+## POST `/api/groups/join`
+Joins a group using an invite code.
+- **Request Body**:
+  ```json
+  {
+    "inviteCode": "A1B2C3D4"
+  }
+  ```
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Joined group successfully",
+    "data": {
+      "groupId": 1,
+      "groupName": "Java Developers",
+      "role": "MEMBER"
+    }
+  }
+  ```
+
+## 8.5. Leave Group API
+## POST `/api/groups/{id}/leave`
+Leaves a group. Only group members can leave. Owners must delete the group instead.
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Left group successfully",
+    "data": null
+  }
+  ```
+
+## 8.6. Update Group API
+## PUT `/api/groups/{id}`
+Updates group name and description. Only the OWNER is allowed to perform this action.
+- **Request Body**:
+  ```json
+  {
+    "groupName": "Updated Name",
+    "description": "Updated Description"
+  }
+  ```
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Group updated successfully",
+    "data": {
+      "groupId": 1,
+      "groupName": "Updated Name",
+      "description": "Updated Description"
+    }
+  }
+  ```
+
+## 8.7. Delete Group API
+## DELETE `/api/groups/{id}`
+Soft deletes the group (status = DELETED). Only group OWNER is allowed.
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Group deleted successfully",
+    "data": null
+  }
+  ```
+
+## 8.8. Remove Member API
+## DELETE `/api/groups/{id}/members/{userId}`
+Removes a member from the group. Only group OWNER is allowed.
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Member removed successfully",
+    "data": null
+  }
+  ```
+
+## 8.9. Direct Share Document API
+## POST `/api/documents/{id}/shares/users`
+Shares a document directly to another user by email. Only the document owner can share it.
+- **Request Body**:
+  ```json
+  {
+    "email": "recipient@gmail.com"
+  }
+  ```
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Document shared successfully",
+    "data": {
+      "shareId": 1,
+      "documentId": 10,
+      "sharedByEmail": "owner@gmail.com",
+      "sharedWithEmail": "recipient@gmail.com",
+      "permission": "VIEW",
+      "status": "ACTIVE",
+      "createdAt": "2026-06-19T13:40:00"
+    }
+  }
+  ```
+
+## 8.10. Shared With Me API
+## GET `/api/documents/shared-with-me`
+Retrieves all documents shared directly with the current user. Trashed or deleted documents are excluded.
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Shared documents retrieved successfully",
+    "data": [
+      {
+        "shareId": 1,
+        "documentId": 10,
+        "title": "Introduction to AI",
+        "fileType": "pdf",
+        "fileSize": 1024,
+        "fileUrl": "https://res.cloudinary.com/...",
+        "sharedByEmail": "owner@gmail.com",
+        "createdAt": "2026-06-19T13:40:00"
+      }
+    ]
+  }
+  ```
+
+## 8.11. List Direct Share Info API
+## GET `/api/documents/{id}/shares`
+Lists all active direct share records of a document. Only the document owner can view this.
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Share records retrieved successfully",
+    "data": [
+      {
+        "shareId": 1,
+        "sharedWithEmail": "recipient@gmail.com",
+        "permission": "VIEW",
+        "status": "ACTIVE"
+      }
+    ]
+  }
+  ```
+
+## 8.12. Revoke Direct Share API
+## DELETE `/api/document-shares/{shareId}`
+Revokes a direct share (status = REVOKED). Only the document owner can perform this.
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Share revoked successfully",
+    "data": null
+  }
+  ```
+
+## 8.13. Share Document to Group API
+## POST `/api/documents/{id}/shares/groups`
+Shares a document into a study group. Only the document owner can share, and they must be an active member of the group.
+- **Request Body**:
+  ```json
+  {
+    "groupId": 1
+  }
+  ```
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Document shared to group successfully",
+    "data": {
+      "shareId": 1,
+      "documentId": 10,
+      "groupId": 1,
+      "sharedByEmail": "member@gmail.com",
+      "permission": "VIEW",
+      "status": "ACTIVE",
+      "createdAt": "2026-06-19T13:45:00"
+    }
+  }
+  ```
+
+## 8.14. Get Group Documents API
+## GET `/api/groups/{id}/documents`
+Lists documents shared in a group. User must be an active member of the group. Trashed or deleted documents are excluded.
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Group documents retrieved successfully",
+    "data": [
+      {
+        "shareId": 1,
+        "documentId": 10,
+        "title": "Introduction to AI",
+        "fileType": "pdf",
+        "fileSize": 1024,
+        "fileUrl": "https://res.cloudinary.com/...",
+        "sharedByEmail": "member@gmail.com",
+        "createdAt": "2026-06-19T13:45:00"
+      }
+    ]
+  }
+  ```
+
+## 8.15. Revoke Group Share API
+## DELETE `/api/group-document-shares/{shareId}`
+Revokes a group document share (status = REVOKED). Document owner or Group Owner can revoke.
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Group share revoked successfully",
+    "data": null
+  }
+  ```
+
+## 8.16. Scope & Exclusions of Step 6A
+- **Documents Only**: Direct sharing and the `Shared With Me` API only support sharing **Documents** in Step 6A. Folder sharing is completely out of scope and will be introduced in Step 6B.
+- **Regenerate inviteCode**: Re-generating the unique invitation code for a group is not supported in Step 6A.
+- **Transfer Group Owner**: Group ownership transfer is not supported. The group creator remains the OWNER permanently, unless the group is deleted.
+- **Group Chat**: Communication features within groups are excluded.
+- **Notifications**: Email or in-app notifications for sharing actions or group actions are excluded.
+- **Public Links**: Shared links accessible by unauthenticated users are not supported. Only authenticated direct shares or group memberships can access shared documents.
+
+## 8.17. Common Error Responses for Sharing & Groups
+
+Below are typical error payloads returned by group management and sharing APIs:
+
+### 400 Bad Request
+- **Self-Sharing**: Attempting to share a document with oneself.
+  ```json
+  {
+    "success": false,
+    "message": "You cannot share a document with yourself",
+    "data": null
+  }
+  ```
+- **Owner Leaving Group**: Attempting to leave a group as the OWNER.
+  ```json
+  {
+    "success": false,
+    "message": "Group owner cannot leave the group. Please delete the group instead.",
+    "data": null
+  }
+  ```
+
+### 403 Forbidden
+- **Unauthorized Share**: Sharing a document that is not owned by the current user.
+  ```json
+  {
+    "success": false,
+    "message": "Only the document owner can share this document",
+    "data": null
+  }
+  ```
+- **Non-member Access**: Tries to view detail/documents of a group without being an active member.
+  ```json
+  {
+    "success": false,
+    "message": "You must be an active member of this group to view group documents",
+    "data": null
+  }
+  ```
+
+### 404 Not Found
+- **Document/Group Trashed or Deleted**: Referencing an item that does not exist or has `status = 'DELETED'`.
+  ```json
+  {
+    "success": false,
+    "message": "Document not found or in trash",
+    "data": null
+  }
+  ```
+
+### 409 Conflict
+- **Duplicate Direct Share**: Share record already exists with status `ACTIVE`.
+  ```json
+  {
+    "success": false,
+    "message": "Document is already shared with this user",
+    "data": null
+  }
+  ```
+- **Duplicate Group Share**: Group document share record already exists with status `ACTIVE`.
+  ```json
+  {
+    "success": false,
+    "message": "Document is already shared in this group",
+    "data": null
+  }
+  ```
+
+---
+
+# 9. Frontend-Backend Integration Conventions
 
 These rules govern page routing on the frontend and operational behaviors between the client and API:
 
-## 8.1. Folder Page URL Format
+## 9.1. Folder Page URL Format
 
 - The frontend must route users using the folder ID query parameter exclusively:
   `folders.html?folderId=<id>`
 - The parameter `parentFolderId` must **never** be used in browser URLs to represent folder details. It is reserved solely as a query parameter for backend REST API calls.
 
-## 8.2. Trash Protection Rules
+## 9.2. Trash Protection Rules
 
 - Any folder or document that has been soft-deleted (`status = 'DELETED'`) is considered in the trash.
 - Under no circumstances should the frontend or backend allow a user to **view/open** the contents, details, or **download** the actual file of a trashed item until it has been explicitly restored.
 - The UI must hide any "Open File", "View Details", or similar download buttons for items shown in the trash list, and the backend must deny access to fetch details or retrieve the file URL for trashed assets.
 
-## 8.3. Root Folder Terminology
+## 9.3. Root Folder Terminology
 
 - On the user interface, a `folderId = null` or unassigned folder hierarchy must be consistently labeled **"My Documents"**.
 - Hardcoded technical terms like "root", "no folder", or "unassigned" are deprecated and must not appear in user-facing labels.
