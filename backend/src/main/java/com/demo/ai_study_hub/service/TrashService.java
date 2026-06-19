@@ -39,6 +39,7 @@ public class TrashService {
 
         List<TrashResponse.TrashDocumentItem> docItems = deletedDocs.stream()
                 .map(d -> TrashResponse.TrashDocumentItem.builder()
+                        .type("DOCUMENT")
                         .documentId(d.getDocumentId())
                         .title(d.getTitle())
                         .originalFileName(d.getOriginalFileName())
@@ -52,6 +53,7 @@ public class TrashService {
 
         List<TrashResponse.TrashFolderItem> folderItems = deletedFolders.stream()
                 .map(f -> TrashResponse.TrashFolderItem.builder()
+                        .type("FOLDER")
                         .folderId(f.getFolderId())
                         .folderName(f.getName())
                         .description(f.getDescription())

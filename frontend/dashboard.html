@@ -5,7 +5,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard - AI Study Hub</title>
-    <meta name="description" content="View your study dashboard, check your document stats, and manage your uploaded files." />
+    <meta name="description"
+        content="View your study dashboard, check your document stats, and manage your uploaded files." />
     <link rel="stylesheet" href="css/style.css" />
 </head>
 
@@ -21,7 +22,8 @@
                 <div class="dashboard-header-content">
                     <div>
                         <h1>Dashboard</h1>
-                        <p id="dashboardUserName" class="dashboard-subtitle">Welcome back! Here's your study overview.</p>
+                        <p id="dashboardUserName" class="dashboard-subtitle">Welcome back! Here's your study overview.
+                        </p>
                     </div>
                     <div class="dashboard-search">
                         <input type="text" id="searchInput" placeholder="🔍 Search documents by title or keyword..." />
@@ -44,11 +46,49 @@
                 </div>
             </section>
 
+            <section class="quick-actions-section dashboard-section">
+                <div class="dashboard-section-header">
+                    <div>
+                        <h2>Quick Actions</h2>
+                        <p>Perform common study and file management tasks.</p>
+                    </div>
+                </div>
+                <div class="quick-actions-grid">
+                    <a href="upload.html" class="quick-action-card">
+                        <div class="quick-action-icon-wrapper upload-wrapper">
+                            <span class="quick-action-icon">📤</span>
+                        </div>
+                        <div class="quick-action-info">
+                            <h3>Upload Document</h3>
+                            <p>Add study guides, PDFs, or slides</p>
+                        </div>
+                    </a>
+                    <button type="button" id="quickCreateFolderBtn" class="quick-action-card">
+                        <div class="quick-action-icon-wrapper folder-wrapper">
+                            <span class="quick-action-icon">📁</span>
+                        </div>
+                        <div class="quick-action-info">
+                            <h3>Create Folder</h3>
+                            <p>Organize documents by subject</p>
+                        </div>
+                    </button>
+                    <a href="trash.html" class="quick-action-card">
+                        <div class="quick-action-icon-wrapper trash-wrapper">
+                            <span class="quick-action-icon">🗑️</span>
+                        </div>
+                        <div class="quick-action-info">
+                            <h3>View Trash</h3>
+                            <p>Restore or delete discarded files</p>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
             <section class="folders-section dashboard-section">
                 <div class="dashboard-section-header">
                     <div>
                         <h2>Folder Directories</h2>
-                        <p>Browse and filter documents by folder.</p>
+                        <p>Manage and navigate your study folders.</p>
                     </div>
                     <a href="folders.html" class="btn btn-secondary btn-sm">Manage Folders</a>
                 </div>
@@ -57,7 +97,8 @@
                     <span>Loading folders...</span>
                 </div>
 
-                <div id="folderErrorMessage" class="status-box status-error dashboard-error-box" style="display: none;"></div>
+                <div id="folderErrorMessage" class="status-box status-error dashboard-error-box" style="display: none;">
+                </div>
 
                 <div id="folderGrid" class="grid-container" style="display: none;"></div>
 
@@ -108,14 +149,16 @@
                             <option value="0">My Documents</option>
                         </select>
                     </div>
-                    <button type="button" id="clearFiltersBtn" class="btn btn-secondary clear-filters-btn">Clear Filters</button>
+                    <button type="button" id="clearFiltersBtn" class="btn btn-secondary clear-filters-btn">Clear
+                        Filters</button>
                 </div>
 
                 <div id="documentLoader" class="empty-state dashboard-loader">
                     <span>Loading documents...</span>
                 </div>
 
-                <div id="documentErrorMessage" class="status-box status-error dashboard-document-error" style="display: none;"></div>
+                <div id="documentErrorMessage" class="status-box status-error dashboard-document-error"
+                    style="display: none;"></div>
 
                 <div id="documentGrid" class="grid-container" style="display: none;"></div>
 
@@ -128,14 +171,31 @@
             </section>
         </main>
     </div>
+    <!-- ── CREATE FOLDER MODAL ── -->
+    <div class="modal-overlay" id="createFolderModal" role="dialog" aria-modal="true" aria-labelledby="createFolderModalTitle">
+        <div class="modal-box">
+            <h3 id="createFolderModalTitle">New Folder</h3>
+            <div class="form-group">
+                <label for="createFolderName">Folder name <span class="label-required">*</span></label>
+                <input type="text" id="createFolderName" placeholder="E.g: Math Notes" autocomplete="off" />
+            </div>
+            <p id="createFolderError" class="modal-error" role="alert" aria-live="polite" style="display: none; color: var(--danger); font-size: 14px; margin-top: 10px;"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="createFolderCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="createFolderConfirmBtn">Create</button>
+            </div>
+        </div>
+    </div>
 
     <script src="js/api.js"></script>
-    <script src="js/folder-api.js"></script>
-    <script src="js/document-api.js"></script>
+    <script src="js/ui.js"></script>
 
     <script src="js/navigation.js"></script>
     <script src="js/layout.js"></script>
 
+    <script src="js/folder-api.js"></script>
+    <script src="js/subject-api.js"></script>
+    <script src="js/document-api.js"></script>
     <script src="js/dashboard.js"></script>
 </body>
 

@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   let pendingPermanentDelete = null;
 
+
   function showLoading() {
     trashLoader.style.display = "flex";
     trashError.style.display = "none";
@@ -85,13 +86,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   async function restoreItem(type, id, button) {
     setButtonLoading(button, "Restoring...");
-
     try {
       if (type === "folder") {
         await restoreFolder(id);
       } else {
         await restoreDocument(id);
       }
+      window.showToast(`${type === "folder" ? "Folder" : "Document"} restored successfully.`, "success");
       await loadTrash();
     } catch (error) {
       resetButton(button);
@@ -101,9 +102,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   async function permanentlyDeletePendingItem() {
     if (!pendingPermanentDelete) return;
-
     setButtonLoading(confirmPermanentDeleteBtn, "Deleting...");
-
     try {
       if (pendingPermanentDelete.type === "folder") {
         await permanentDeleteFolder(pendingPermanentDelete.id);
@@ -111,6 +110,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         await permanentDeleteDocument(pendingPermanentDelete.id);
       }
       closePermanentDeleteModal();
+      window.showToast(`"${pendingPermanentDelete.name}" has been permanently deleted.`, "success");
       await loadTrash();
     } catch (error) {
       confirmError.textContent = error.message || "Failed to permanently delete item.";

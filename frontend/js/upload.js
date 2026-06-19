@@ -9,6 +9,8 @@ const submitBtn = document.getElementById("submitBtn");
 const uploadMessage = document.getElementById("uploadMessage");
 const uploadProgress = document.getElementById("uploadProgress");
 const folderSelect = document.getElementById("folderSelect");
+const subjectSelect = document.getElementById("subjectSelect");
+const subjectError = document.getElementById("subjectError");
 const progressFill = document.getElementById("progressFill");
 const progressText = document.getElementById("progressText");
 
@@ -60,7 +62,23 @@ async function loadFolderOptions() {
   }
 }
 
+async function loadSubjectOptions() {
+  try {
+    const result = await getSubjects();
+    const subjects = Array.isArray(result.data) ? result.data : [];
+    subjects.forEach(function (subject) {
+      const option = document.createElement("option");
+      option.value = subject.subjectId;
+      option.textContent = subject.subjectName;
+      subjectSelect.appendChild(option);
+    });
+  } catch (err) {
+    console.warn("Could not load subjects:", err);
+  }
+}
+
 // Helpers
+
 function showMessage(text, type) {
   uploadMessage.textContent = text;
   uploadMessage.className = "upload-message status-box";
@@ -187,14 +205,14 @@ dropZone.addEventListener("drop", (e) => {
 function resolveUploadError(err) {
   const msg = (err.message || "").toLowerCase();
   const isDuplicate =
+    msg.includes("409") ||
     msg.includes("duplicate") ||
     msg.includes("already exists") ||
     msg.includes("file already");
 
   if (isDuplicate) {
-    return "This file already exists in the selected folder. Please rename the file, choose a different folder, or upload a different file.";
+    return "This file already exists in the current folder. Please rename the file, choose a different folder, or upload a different file.";
   }
-
   return err.message || "Upload failed. Please try again.";
 }
 
@@ -215,6 +233,15 @@ uploadForm.addEventListener("submit", async (e) => {
     return;
   }
 
+  const subjectId = subjectSelect.value;
+  if (!subjectId) {
+    subjectError.textContent = "Please select a subject.";
+    subjectError.style.display = "block";
+    subjectSelect.focus();
+    return;
+  }
+  subjectError.style.display = "none";
+
   const fileError = validateFile(file);
   if (fileError) {
     showMessage(fileError, "error");
@@ -227,6 +254,7 @@ uploadForm.addEventListener("submit", async (e) => {
   formData.append("title", title);
   if (description) formData.append("description", description);
   if (folderSelect.value) formData.append("folderId", folderSelect.value);
+  formData.append("subjectId", subjectId);
 
   // Loading state
   submitBtn.disabled = true;
@@ -236,16 +264,10 @@ uploadForm.addEventListener("submit", async (e) => {
   try {
     const result = await uploadDocument(formData);
     completeProgress(progressInterval);
-    showMessage(`Upload successful: "${result.data.title}"`, "success");
-
-    // Reset form
+    window.showToast(`Upload successful: "${result.data.title}"`, "success");
     uploadForm.reset();
     updateDropZone(null);
-
-    // Redirect to dashboard after 1.5 seconds
-    setTimeout(() => {
-      window.location.href = "dashboard.html";
-    }, 1500);
+    setTimeout(() => { window.location.href = "dashboard.html"; }, 1500);
 
   } catch (err) {
     clearInterval(progressInterval);
@@ -259,3 +281,4 @@ uploadForm.addEventListener("submit", async (e) => {
 });
 
 loadFolderOptions();
+loadSubjectOptions();

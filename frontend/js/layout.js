@@ -69,24 +69,42 @@ function renderDynamicSidebar(isAuthenticated) {
     return true;
   });
 
-  // Re-render links safely inside the container
+  // Re-render links safely inside the container with standardized icon and text wrappers
   navContainer.innerHTML = visibleMenus
-    .map(item => `<a href="${item.url}" class="nav-link">${item.name}</a>`)
+    .map(item => `
+      <a href="${item.url}" class="nav-link">
+        <span class="nav-icon">${item.icon || "📄"}</span>
+        <span class="nav-text">${item.name}</span>
+      </a>
+    `)
     .join("");
 
-  // Append a dedicated Logout link if user is fully logged in
+// Append a dedicated Logout link if user is fully logged in
   if (isAuthenticated) {
-    const logoutContainer = document.createElement("div");
-    logoutContainer.className = "sidebar-footer";
-    logoutContainer.innerHTML = `
-      <hr class="sidebar-divider" />
-      <a href="#" id="sidebarLogoutBtn" class="nav-link nav-link-logout">Logout</a>
-    `;
-    navContainer.appendChild(logoutContainer);
+    const sidebar = document.querySelector(".sidebar");
+    if (sidebar) {
+      // Safely clear out any pre-existing footer to prevent duplicate rendering artifacts
+      const oldFooter = sidebar.querySelector(".sidebar-footer");
+      if (oldFooter) oldFooter.remove();
+
+      const logoutContainer = document.createElement("div");
+      logoutContainer.className = "sidebar-footer";
+      logoutContainer.innerHTML = `
+        <hr class="sidebar-divider" />
+        <a href="#" id="sidebarLogoutBtn" class="nav-link nav-link-logout">
+          <span class="nav-icon">🚪</span>
+          <span class="nav-text">Logout</span>
+        </a>
+      `;
+      sidebar.appendChild(logoutContainer);
+    }
   }
 
   // Delegate calculation back to navigation helper to append .active class
   initializeActiveMenu();
+
+  // Initialize FE3 Collapse/Expand functionality
+  initializeSidebarCollapse();
 }
 
 /**
@@ -115,4 +133,68 @@ function initializeLogoutFlow() {
   });
 }
 
+/**
+ * FE3 Standardized Layout - Manages the Sidebar collapse state behavior
+ * Persists layout footprint settings inside local application storage catalog.
+ */
+function initializeSidebarCollapse() {
+  const sidebar = document.querySelector(".sidebar");
+  const logoContainer = document.querySelector(".logo, .sidebar-brand");
+  if (!sidebar) return;
+
+  // 1. Restore persistent footprint state immediately from storage
+  const isCollapsed = localStorage.getItem("sidebar-collapsed") === "true";
+  if (isCollapsed) {
+    sidebar.classList.add("collapsed");
+  } else {
+    sidebar.classList.remove("collapsed");
+  }
+
+  // Guard clause: Avoid duplicating the toggle button if it already exists
+  if (sidebar.querySelector(".sidebar-toggle-btn")) return;
+
+  // Standardize Logo text wrapper for FE3 collapsed layout visibility state rules
+  if (logoContainer && !logoContainer.querySelector(".logo-text")) {
+    const rawText = logoContainer.textContent.replace("☰", "").trim();
+    if (rawText) {
+      logoContainer.innerHTML = `<span class="logo-text">${rawText}</span>`;
+    }
+  }
+
+  // 2. Inject a responsive toggle button into the brand layout zone
+  const toggleBtn = document.createElement("button");
+  toggleBtn.className = "sidebar-toggle-btn";
+  toggleBtn.style.cssText = `
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+  `;
+  toggleBtn.innerHTML = "☰";
+  toggleBtn.setAttribute("aria-label", "Toggle Sidebar Navigation");
+
+  if (logoContainer) {
+    logoContainer.appendChild(toggleBtn);
+  } else {
+    sidebar.insertBefore(toggleBtn, sidebar.firstChild);
+  }
+
+  // Hover feedback state effect for the injected action utility
+  toggleBtn.addEventListener("mouseenter", () => toggleBtn.style.background = "var(--primary-light)");
+  toggleBtn.addEventListener("mouseleave", () => toggleBtn.style.background = "transparent");
+
+  // 3. Attach click event listener to toggle classes and persist in storage
+  toggleBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    sidebar.classList.toggle("collapsed");
+
+    // Sync back real-time changes directly into the client cache storage
+    const currentCollapsedState = sidebar.classList.contains("collapsed");
+    localStorage.setItem("sidebar-collapsed", currentCollapsedState);
+  });
+}
 // End of layout component manager file.
