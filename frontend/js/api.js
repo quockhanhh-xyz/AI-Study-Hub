@@ -40,22 +40,24 @@ async function apiRequest(endpoint, options = {}) {
     throw new Error("Unauthorized - Session expired");
   }
 
-  // Parse response payload as JSON
+  // Parse response payload safely based on content type to capture backend messages completely
   let data = {};
+  let rawText = "";
   try {
-    data = await response.json();
+    rawText = await response.text();
+    data = rawText ? JSON.parse(rawText) : {};
   } catch (e) {
-    // Handle cases where the backend returns an empty response or non-JSON data
-    console.warn("Response is not JSON format");
+    // Fallback if parsing fails but text exists (e.g., plain text error from backend filter)
+    console.warn("Response payload parsing failed, treating as raw text context.");
   }
 
   // Check for other HTTP error codes or if the success flag from Backend contract is false
   if (!response.ok || data.success === false) {
     // Print warning to Console tab to help other FE devs debug when Backend returns an error
-    console.warn("API Request Business Error:", data);
+    console.warn("API Request Business Error:", data || rawText);
 
-    // Extract the exact error message from backend (especially for HTTP 409 Conflict)
-    const errorMessage = data.message || data.error || "API request failed";
+    // Extract the exact error message from backend formats or fallback safely to raw response text
+    const errorMessage = data.message || data.error || rawText || "API request failed";
 
     // Create a new error object and attach the HTTP status code for advanced UI handling
     const error = new Error(errorMessage);
