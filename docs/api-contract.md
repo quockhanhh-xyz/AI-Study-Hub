@@ -1807,6 +1807,14 @@ Revokes a group document share (status = REVOKED). Document owner or Group Owner
   }
   ```
 
+## 9.16. Scope & Exclusions of Step 6A
+- **Documents Only**: Direct sharing and the `Shared With Me` API only support sharing **Documents** in Step 6A. Folder sharing is completely out of scope and will be introduced in Step 6B.
+- **Regenerate inviteCode**: Re-generating the unique invitation code for a group is not supported in Step 6A.
+- **Transfer Group Owner**: Group ownership transfer is not supported. The group creator remains the OWNER permanently, unless the group is deleted.
+- **Group Chat**: Communication features within groups are excluded.
+- **Notifications**: Email or in-app notifications for sharing actions or group actions are excluded.
+- **Public Links**: Shared links accessible by unauthenticated users are not supported. Only authenticated direct shares or group memberships can access shared documents.
+
 ---
 
 # 8. Frontend-Backend Integration Conventions

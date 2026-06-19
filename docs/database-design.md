@@ -216,6 +216,48 @@ Stores documents shared into study groups.
 
 ---
 
+### Business Rules & Constraints (Step 6A)
+
+#### 1. Group Management & Permissions
+- **Group Creation**: Any registered user with status `ACTIVE` can create a study group. The creator is automatically added as `OWNER` of the group with status `ACTIVE` in `study_group_members`.
+- **Unique Invite Code**: An 8-character unique uppercase alphanumeric invite code is generated automatically by the backend upon group creation.
+- **Group Joining**: Active users join a group using its active `inviteCode`. Users already in the group (status `ACTIVE`) cannot join again. If a user previously left or was removed, their membership record status is reset to `ACTIVE` and role to `MEMBER`.
+- **Group Details**: Only active group members (OWNER or MEMBER) can view group details and member lists.
+- **Edit/Delete Group**: Only the group `OWNER` can edit group metadata or delete the group. Group deletion is a soft delete (`status = 'DELETED'`). Once a group is deleted, its members and shared documents are no longer accessible.
+- **Leave Group**: Active members with the `MEMBER` role can leave the group (membership status set to `LEFT`). The group `OWNER` cannot leave the group in MVP; they must delete the group instead.
+- **Remove Member**: Only the group `OWNER` can remove other members from the group (membership status set to `REMOVED`). The owner cannot remove themselves.
+
+#### 2. Document Sharing & Permissions
+- **Direct Share**: Only the document owner can share their document directly to another user by email.
+  - The document must be `ACTIVE`.
+  - Recipient email must belong to an `ACTIVE` user.
+  - Self-sharing is blocked.
+  - Duplicate active shares are blocked.
+  - Direct share records are soft-revoked by setting `status = 'REVOKED'`.
+- **Group Share**: Only the document owner can share their document into a study group.
+  - The document owner must be an active member (OWNER or MEMBER) of the target group.
+  - The group must be `ACTIVE` (not deleted).
+  - Duplicate active group shares are blocked.
+  - Group share records are soft-revoked by setting `status = 'REVOKED'`.
+- **Revocation Permissions**:
+  - Direct share can only be revoked by the document owner.
+  - Group share can be revoked by either the document owner OR the group owner. Group members cannot revoke other members' documents.
+- **Trash & Soft Delete Impact**:
+  - Trashed/deleted documents (`status = 'DELETED'` or moved to trash) are immediately hidden from "Shared With Me" and group document directories.
+  - Restoring a document will make it visible again under all its active share records.
+  - Deleting a group hides all document shares within that group.
+
+#### 3. MVP Exclusions (Step 6A Not Done)
+- **Folder Sharing**: Shared With Me only supports **Documents** in Step 6A. Folder sharing is planned for Step 6B.
+- **Regenerate Invite Code**: Invite codes are static and cannot be regenerated.
+- **Transfer Owner**: Group ownership cannot be transferred to other members.
+- **Group Chat**: Communication features within study groups are excluded from MVP.
+- **Notifications**: In-app or email notifications for new shares or group invites are excluded.
+- **Public Link Sharing**: Only member-specific direct shares and group shares are supported; no public URL sharing is implemented.
+
+---
+
+
 
 ## 7. Table `ai_usage_limits`
 
