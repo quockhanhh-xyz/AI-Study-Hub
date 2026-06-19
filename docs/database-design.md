@@ -151,18 +151,71 @@ Stores subject or category information.
 
 ## 6. Table `document_shares`
 
-Stores document sharing permissions.
+Stores direct document sharing metadata.
 
-| Column Name   | Data Type   | Description               |
-| :------------ | :---------- | :------------------------ |
-| `id`          | INT         | Primary key               |
-| `document_id` | INT         | References documents(document_id) |
-| `shared_by`   | INT         | References users(user_id) |
-| `shared_to`   | INT         | References users(user_id) |
-| `permission`  | VARCHAR(20) | VIEW or DOWNLOAD          |
-| `created_at`  | TIMESTAMP   | Share creation time       |
+| Column Name            | Data Type   | Constraints                                                 | Description                                            |
+| :--------------------- | :---------- | :---------------------------------------------------------- | :----------------------------------------------------- |
+| `share_id`             | INT         | PRIMARY KEY, AUTO_INCREMENT, NOT NULL                       | Unique share ID                                        |
+| `document_id`          | INT         | FOREIGN KEY REFERENCES documents(document_id), NOT NULL     | Document being shared                                  |
+| `shared_by`            | INT         | FOREIGN KEY REFERENCES users(user_id), NOT NULL             | User who shared the document                           |
+| `shared_with_user_id`  | INT         | FOREIGN KEY REFERENCES users(user_id), NOT NULL             | Target user who receives the share                     |
+| `permission`           | VARCHAR(20) | DEFAULT 'VIEW', NOT NULL                                    | Sharing permission: VIEW                               |
+| `status`               | VARCHAR(20) | DEFAULT 'ACTIVE', NOT NULL                                  | Status: ACTIVE or REVOKED                              |
+| `created_at`           | TIMESTAMP   | DEFAULT CURRENT_TIMESTAMP                                   | Creation timestamp                                     |
+| `updated_at`           | TIMESTAMP   | NULLABLE                                                    | Last update timestamp                                  |
 
 ---
+
+## 6.1. Table `study_groups`
+
+Stores user study groups.
+
+| Column Name   | Data Type    | Constraints                                           | Description                                  |
+| :------------ | :----------- | :---------------------------------------------------- | :------------------------------------------- |
+| `group_id`    | INT          | PRIMARY KEY, AUTO_INCREMENT, NOT NULL                 | Unique group ID                              |
+| `group_name`  | VARCHAR(100) | NOT NULL                                              | Group name                                   |
+| `description` | TEXT         | NULLABLE                                              | Optional group description                   |
+| `invite_code` | VARCHAR(50)  | UNIQUE, NOT NULL                                      | Alphanumeric invite code for joining         |
+| `owner_id`    | INT          | FOREIGN KEY REFERENCES users(user_id), NOT NULL       | User who created the group (Owner)           |
+| `status`      | VARCHAR(30)  | DEFAULT 'ACTIVE', NOT NULL                            | Group status: ACTIVE or DELETED              |
+| `created_at`  | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP                             | Group creation time                          |
+| `updated_at`  | TIMESTAMP    | NULLABLE                                              | Last update time                             |
+
+---
+
+## 6.2. Table `study_group_members`
+
+Stores study group memberships.
+
+| Column Name | Data Type   | Constraints                                                 | Description                                     |
+| :---------- | :---------- | :---------------------------------------------------------- | :---------------------------------------------- |
+| `member_id` | INT         | PRIMARY KEY, AUTO_INCREMENT, NOT NULL                       | Unique member record ID                         |
+| `group_id`  | INT         | FOREIGN KEY REFERENCES study_groups(group_id), NOT NULL     | Group association                               |
+| `user_id`   | INT         | FOREIGN KEY REFERENCES users(user_id), NOT NULL             | User member association                         |
+| `role`      | VARCHAR(20) | DEFAULT 'MEMBER', NOT NULL                                  | Role: OWNER or MEMBER                           |
+| `status`    | VARCHAR(30) | DEFAULT 'ACTIVE', NOT NULL                                  | Member status: ACTIVE, REMOVED, or LEFT         |
+| `joined_at` | TIMESTAMP   | DEFAULT CURRENT_TIMESTAMP                                   | Timestamp when member joined                    |
+| `updated_at`| TIMESTAMP   | NULLABLE                                                    | Last update time                                |
+
+---
+
+## 6.3. Table `group_document_shares`
+
+Stores documents shared into study groups.
+
+| Column Name   | Data Type   | Constraints                                                 | Description                                     |
+| :------------ | :---------- | :---------------------------------------------------------- | :---------------------------------------------- |
+| `share_id`    | INT         | PRIMARY KEY, AUTO_INCREMENT, NOT NULL                       | Unique group share ID                           |
+| `document_id` | INT         | FOREIGN KEY REFERENCES documents(document_id), NOT NULL     | Document shared                                 |
+| `group_id`    | INT         | FOREIGN KEY REFERENCES study_groups(group_id), NOT NULL     | Target group receiving share                    |
+| `shared_by`   | INT         | FOREIGN KEY REFERENCES users(user_id), NOT NULL             | Member who shared the document                  |
+| `permission`  | VARCHAR(20) | DEFAULT 'VIEW', NOT NULL                                    | Sharing permission: VIEW                        |
+| `status`      | VARCHAR(20) | DEFAULT 'ACTIVE', NOT NULL                                  | Share status: ACTIVE or REVOKED                 |
+| `created_at`  | TIMESTAMP   | DEFAULT CURRENT_TIMESTAMP                                   | Creation timestamp                              |
+| `updated_at`  | TIMESTAMP   | NULLABLE                                                    | Last update timestamp                           |
+
+---
+
 
 ## 7. Table `ai_usage_limits`
 
