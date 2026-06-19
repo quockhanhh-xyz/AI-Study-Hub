@@ -6,7 +6,7 @@
 
 /**
  * Creates a new study group.
- * @param {Object} data - Example: { name, description }
+ * @param {Object} data - Example: { groupName, description }
  * @returns {Promise<Object>} Created group information.
  */
 function createGroup(data) {
@@ -53,7 +53,7 @@ function leaveGroup(groupId) {
  * Updates group information.
  * Owner permission is required.
  * @param {number|string} groupId - Group identifier.
- * @param {Object} data - Example: { name, description }
+ * @param {Object} data - Example: { groupName, description }.
  * @returns {Promise<Object>} Updated group information.
  */
 function updateGroup(groupId, data) {
