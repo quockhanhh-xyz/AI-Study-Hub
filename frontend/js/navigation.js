@@ -10,6 +10,7 @@ const NAVIGATION_MENU = [
   { name: "Upload", icon: "📤", url: "upload.html", requiresAuth: true },
   { name: "Folders", icon: "📁", url: "folders.html", requiresAuth: true },
   { name: "Study Groups", icon: "👥", url: "groups.html", requiresAuth: true },
+  { name: "Shared With Me", icon: "🤝", url: "shared-with-me.html", requiresAuth: true },
   { name: "Trash", icon: "🗑️", url: "trash.html", requiresAuth: true },
 
   /* * Temporarily hidden menus to prevent 404 UX Issues (Will be unlocked in upcoming steps)

@@ -346,9 +346,26 @@
             <p id="docDescription">No description provided.</p>
           </div>
 
-          <div class="file-action-section">
+          <div class="file-action-section" style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px;">
             <a id="openFileBtn" class="btn btn-primary" href="#" target="_blank" rel="noopener noreferrer"
               style="width:auto;padding:10px 24px;">Open File ↗</a>
+            <button id="shareBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;">Share</button>
+          </div>
+
+          <div id="sharesPanel" class="shares-panel" style="display: none; margin-bottom: 28px;">
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">Document Sharing Management</h3>
+            
+            <div style="margin-bottom: 20px;">
+              <h4 style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Direct User Shares</h4>
+              <div id="directSharesList" class="member-list" style="margin-bottom: 12px;"></div>
+              <p id="noDirectShares" class="helper-text" style="color: var(--muted); display: none;">Not shared with any users directly.</p>
+            </div>
+
+            <div>
+              <h4 style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Group Shares</h4>
+              <div id="groupSharesList" class="member-list" style="margin-bottom: 12px;"></div>
+              <p id="noGroupShares" class="helper-text" style="color: var(--muted); display: none;">Not shared in any groups.</p>
+            </div>
           </div>
 
           <hr class="detail-divider" />
@@ -396,6 +413,47 @@
     </div>
   </div>
 
+  <!-- ── SHARE MODAL ── -->
+  <div class="modal-overlay" id="shareModal" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
+    <div class="modal-box" style="max-width: 450px;">
+      <h3 id="shareModalTitle">Share Document</h3>
+      
+      <!-- Tab Navigation -->
+      <div class="tab-header" style="display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px;">
+        <button type="button" class="tab-btn active" id="tabUserBtn" style="flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600; cursor: pointer;">Share with User</button>
+        <button type="button" class="tab-btn" id="tabGroupBtn" style="flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-weight: 600; cursor: pointer;">Share with Group</button>
+      </div>
+
+      <!-- Tab Content 1: User -->
+      <div id="tabUserContent">
+        <div class="form-group">
+          <label for="shareUserEmail">Recipient Email <span class="label-required">*</span></label>
+          <input type="email" id="shareUserEmail" placeholder="E.g: student@gmail.com" autocomplete="off" />
+        </div>
+        <p id="shareUserError" class="modal-error" role="alert" aria-live="polite" style="color: var(--danger); font-size: 13px; display: none; margin-bottom: 16px;"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="shareUserCancelBtn">Cancel</button>
+          <button type="button" class="btn btn-primary" id="shareUserConfirmBtn">Share</button>
+        </div>
+      </div>
+
+      <!-- Tab Content 2: Group -->
+      <div id="tabGroupContent" style="display: none;">
+        <div class="form-group">
+          <label for="shareGroupSelect">Select Study Group <span class="label-required">*</span></label>
+          <select id="shareGroupSelect">
+            <option value="" disabled selected>Loading groups...</option>
+          </select>
+        </div>
+        <p id="shareGroupError" class="modal-error" role="alert" aria-live="polite" style="color: var(--danger); font-size: 13px; display: none; margin-bottom: 16px;"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="shareGroupCancelBtn">Cancel</button>
+          <button type="button" class="btn btn-primary" id="shareGroupConfirmBtn">Share to Group</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="toast"></div>
 
   <script src="js/api.js"></script>
@@ -404,6 +462,8 @@
   <script src="js/layout.js"></script>
   <script src="js/subject-api.js"></script>
   <script src="js/document-api.js"></script>
+  <script src="js/group-api.js"></script>
+  <script src="js/share-api.js"></script>
 
   <script src="js/document-detail.js"></script>
 </body>

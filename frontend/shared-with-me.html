@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shared With Me - AI Study Hub</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <section class="page-header">
+                <h1>Shared With Me</h1>
+            </section>
+
+            <div class="card dashboard-panel">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Shared Documents</h2>
+                        <p>Documents shared directly with you by other users.</p>
+                    </div>
+                </div>
+
+                <div id="sharedLoader" class="document-state">
+                    <span>Loading shared documents...</span>
+                </div>
+
+                <p id="sharedError" class="helper-text error" role="alert"></p>
+
+                <div id="sharedGrid" class="document-grid"></div>
+
+                <div id="sharedEmpty" class="empty-state">
+                    <div class="empty-title">No shared documents</div>
+                    <p>When other users share documents directly with you, they will appear here.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/share-api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/shared-with-me.js"></script>
+</body>
+
+</html>
