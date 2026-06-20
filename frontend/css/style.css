@@ -544,6 +544,41 @@ textarea.success {
   font-size: 14px;
 }
 
+.header-actions {
+  display: flex;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+
+.member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+
+.member-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+
+.member-row-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+
+.member-row-name {
+  font-weight: 600;
+}
 
 .upload-link-btn {
   width: auto !important;
@@ -595,9 +630,11 @@ textarea.success {
   0% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-8px);
   }
+
   100% {
     transform: translateY(0);
   }

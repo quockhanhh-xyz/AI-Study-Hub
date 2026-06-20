@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Study Groups - AI Study Hub</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+
+            <section class="page-header">
+                <h1>My Study Groups</h1>
+            </section>
+
+            <div class="card dashboard-panel">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Groups</h2>
+                        <p>Click a group to view members and shared documents.</p>
+                    </div>
+                    <div class="header-actions">
+                        <button type="button" id="joinGroupBtn" class="btn btn-secondary">
+                            Join Group
+                        </button>
+                        <button type="button" id="createGroupBtn" class="btn btn-primary upload-link-btn">
+                            + New Group
+                        </button>
+                    </div>
+                </div>
+
+                <div id="groupLoader" class="document-state">
+                    <span>Loading groups...</span>
+                </div>
+
+                <p id="groupError" class="helper-text error" role="alert"></p>
+
+                <div id="groupGrid" class="folder-grid"></div>
+
+                <div id="groupEmpty" class="empty-state">
+                    <div class="empty-title">No study groups yet</div>
+                    <p>Create your first group or join one using an invite code. Use the buttons above.</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ── CREATE GROUP MODAL ── -->
+    <div class="modal-overlay" id="createModal" role="dialog" aria-modal="true" aria-labelledby="createModalTitle">
+        <div class="modal-box">
+            <h3 id="createModalTitle">New Study Group</h3>
+            <div class="form-group">
+                <label for="createGroupName">Group name <span class="label-required">*</span></label>
+                <input type="text" id="createGroupName" placeholder="E.g: Calculus Study Group" autocomplete="off" />
+            </div>
+            <div class="form-group">
+                <label for="createGroupDescription">Description</label>
+                <input type="text" id="createGroupDescription" placeholder="Optional description" autocomplete="off" />
+            </div>
+            <p id="createError" class="modal-error" role="alert" aria-live="polite"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="createCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="createConfirmBtn">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── JOIN GROUP MODAL ── -->
+    <div class="modal-overlay" id="joinModal" role="dialog" aria-modal="true" aria-labelledby="joinModalTitle">
+        <div class="modal-box">
+            <h3 id="joinModalTitle">Join Study Group</h3>
+            <div class="form-group">
+                <label for="joinInviteCode">Invite code <span class="label-required">*</span></label>
+                <input type="text" id="joinInviteCode" placeholder="E.g: ABCD1234" autocomplete="off" />
+            </div>
+            <p id="joinError" class="modal-error" role="alert" aria-live="polite"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="joinCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="joinConfirmBtn">Join</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/group-api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/groups.js"></script>
+</body>
+
+</html>

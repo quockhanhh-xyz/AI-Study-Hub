@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Group Detail - AI Study Hub</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+
+            <section class="page-header">
+                <h1><a href="groups.html" class="breadcrumb-link">My Study Groups</a> / <span id="groupNameHeader">Group</span></h1>
+            </section>
+
+            <div id="detailLoader" class="document-state">
+                <span>Loading group...</span>
+            </div>
+
+            <p id="detailError" class="helper-text error" role="alert"></p>
+
+            <div id="groupDetailContent" style="display:none;">
+
+                <!-- ── GROUP INFO PANEL ── -->
+                <div class="card dashboard-panel">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title" id="groupNameTitle">Group Name</h2>
+                            <p id="groupDescription">Description</p>
+                            <p class="helper-text">
+                                Invite code: <strong id="groupInviteCode">-</strong>
+                                &nbsp;·&nbsp;
+                                Your role: <span id="groupMyRole" class="badge badge-primary">-</span>
+                            </p>
+                        </div>
+                        <div class="header-actions">
+                            <button type="button" id="editGroupBtn" class="btn btn-secondary" style="display:none;">Edit</button>
+                            <button type="button" id="leaveGroupBtn" class="btn btn-secondary" style="display:none;">Leave Group</button>
+                            <button type="button" id="deleteGroupBtn" class="btn btn-danger" style="display:none;">Delete Group</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── MEMBER LIST PANEL ── -->
+                <div class="card dashboard-panel">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">Members</h2>
+                            <p>People who belong to this study group.</p>
+                        </div>
+                    </div>
+                    <div id="memberList" class="member-list"></div>
+                </div>
+
+                <!-- ── GROUP DOCUMENTS PANEL ── -->
+                <div class="card dashboard-panel">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">Shared Documents</h2>
+                            <p>Documents shared into this group.</p>
+                        </div>
+                    </div>
+
+                    <div id="docLoader" class="document-state">
+                        <span>Loading documents...</span>
+                    </div>
+
+                    <p id="docError" class="helper-text error" role="alert"></p>
+
+                    <div id="docGrid" class="document-grid"></div>
+
+                    <div id="docEmpty" class="empty-state">
+                        <div class="empty-title">No documents shared yet</div>
+                        <p>Members can share their own documents into this group from the Document Detail page.</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ── EDIT GROUP MODAL ── -->
+    <div class="modal-overlay" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+        <div class="modal-box">
+            <h3 id="editModalTitle">Edit Group</h3>
+            <div class="form-group">
+                <label for="editGroupName">Group name <span class="label-required">*</span></label>
+                <input type="text" id="editGroupName" autocomplete="off" />
+            </div>
+            <div class="form-group">
+                <label for="editGroupDescription">Description</label>
+                <input type="text" id="editGroupDescription" autocomplete="off" />
+            </div>
+            <p id="editError" class="modal-error" role="alert" aria-live="polite"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="editCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="editConfirmBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── DELETE GROUP MODAL ── -->
+    <div class="modal-overlay" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+        <div class="modal-box">
+            <h3 id="deleteModalTitle" class="modal-title-danger">Delete Group?</h3>
+            <p class="modal-warning-text">
+                This will delete the group for all members. Group documents will no longer be visible to anyone.
+            </p>
+            <p id="deleteError" class="modal-error" role="alert" aria-live="polite"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="deleteCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-danger" id="deleteConfirmBtn">Delete Group</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/group-api.js"></script>
+    <script src="js/share-api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/group-detail.js"></script>
+</body>
+
+</html>
