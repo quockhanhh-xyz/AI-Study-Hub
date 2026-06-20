@@ -190,19 +190,25 @@ document.addEventListener("DOMContentLoaded", async function () {
     const actions = document.createElement("div");
     actions.className = "document-actions";
 
-    // Open: view the document detail (read-only — no edit/delete of the original document here)
-    const viewBtn = document.createElement("a");
-    viewBtn.href = `document-detail.html?id=${doc.documentId}`;
-    viewBtn.className = "btn btn-primary document-detail-btn";
-    viewBtn.textContent = "Open";
-    actions.appendChild(viewBtn);
-
-    // Download, if backend provides a direct file URL
+    // Open: opens the actual file in a new tab using the fileUrl already
+    // returned by GET /api/groups/{id}/documents. We intentionally do NOT
+    // link to document-detail.html here, because that page calls
+    // GET /api/documents/{id}, which is owner-only and would return 403
+    // for group members who are not the document owner.
     if (doc.fileUrl) {
+      const viewBtn = document.createElement("a");
+      viewBtn.href = doc.fileUrl;
+      viewBtn.target = "_blank";
+      viewBtn.rel = "noopener noreferrer";
+      viewBtn.className = "btn btn-primary document-detail-btn";
+      viewBtn.textContent = "Open";
+      actions.appendChild(viewBtn);
+
       const downloadBtn = document.createElement("a");
       downloadBtn.href = doc.fileUrl;
       downloadBtn.target = "_blank";
       downloadBtn.rel = "noopener noreferrer";
+      downloadBtn.download = doc.title || doc.documentId;
       downloadBtn.className = "btn btn-secondary";
       downloadBtn.textContent = "Download";
       actions.appendChild(downloadBtn);
