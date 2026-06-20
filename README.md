@@ -121,3 +121,23 @@ We strictly follow a feature-branch workflow to maintain a stable codebase.
 * **Rule:** All merges to `develop` require a **Pull Request (PR)** reviewed by the Leader.
 
 ---
+
+## 💻 6. LAN Testing Setup
+
+For team collaboration and testing features (such as sharing documents or chat) locally across devices in the same Local Area Network (LAN):
+
+### 1. Frontend Configuration
+The frontend automatically resolves the server hostname dynamically (`window.location.hostname`). Anyone accessing the frontend will hit the backend running on the host machine.
+- If using VS Code **Live Server**, bind it to all network interfaces (`0.0.0.0`) by creating or updating `.vscode/settings.json`:
+  ```json
+  {
+    "liveServer.settings.host": "0.0.0.0",
+    "liveServer.settings.port": 5500
+  }
+  ```
+
+### 2. Backend & Network Configuration
+- Ensure your OS firewall allows incoming connections on ports **8080** (Spring Boot Backend) and **5500** (Live Server).
+- The backend CORS configuration is configured to allow pattern matching for standard local area subnets (`http://192.168.*.*:5500`).
+- Ensure the `COOKIE_SECURE` environment variable is either unset or set to `false` so that cookies can be stored and sent over non-HTTPS connections.
+- Share your local IPv4 address (e.g., `192.168.1.10`) with team members. They can access the app at `http://<your-ip>:5500/login.html`.
