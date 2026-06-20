@@ -17,6 +17,7 @@ public class GroupDetailResponse {
     private String groupName;
     private String description;
     private String inviteCode;
+    private Integer ownerId;
     private String status;
     private String currentUserRole;
     private List<GroupMemberItem> members;
@@ -28,10 +29,12 @@ public class GroupDetailResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class GroupMemberItem {
+        private Integer memberId;
         private Integer userId;
         private String fullName;
         private String email;
         private String role;
+        private String status;
         private LocalDateTime joinedAt;
     }
 }

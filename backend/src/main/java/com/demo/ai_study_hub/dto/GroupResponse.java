@@ -16,6 +16,7 @@ public class GroupResponse {
     private String groupName;
     private String description;
     private String inviteCode;
+    private Integer ownerId;
     private String role;
     private String status;
     private LocalDateTime createdAt;

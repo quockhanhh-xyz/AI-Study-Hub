@@ -78,10 +78,12 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
         List<GroupDetailResponse.GroupMemberItem> memberItems = activeMembers.stream()
                 .map(m -> GroupDetailResponse.GroupMemberItem.builder()
+                        .memberId(m.getMemberId())
                         .userId(m.getUser().getUserId())
                         .fullName(m.getUser().getFullName())
                         .email(m.getUser().getEmail())
                         .role(m.getRole())
+                        .status(m.getStatus())
                         .joinedAt(m.getJoinedAt())
                         .build())
                 .collect(Collectors.toList());
@@ -91,6 +93,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .groupName(group.getGroupName())
                 .description(group.getDescription())
                 .inviteCode(group.getInviteCode())
+                .ownerId(group.getOwner().getUserId())
                 .status(group.getStatus())
                 .currentUserRole(currentMembership.getRole())
                 .members(memberItems)
@@ -248,6 +251,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .groupName(group.getGroupName())
                 .description(group.getDescription())
                 .inviteCode(group.getInviteCode())
+                .ownerId(group.getOwner().getUserId())
                 .role(role)
                 .status(group.getStatus())
                 .createdAt(group.getCreatedAt())
