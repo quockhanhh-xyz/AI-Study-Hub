@@ -25,7 +25,7 @@ public class StudyGroupController {
             Principal principal) {
         try {
             GroupResponse data = studyGroupService.createGroup(request, principal.getName());
-            return ResponseEntity.ok(ApiResponse.success(data, "Group created successfully"));
+            return ResponseEntity.ok(ApiResponse.success(data, "Study group created successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {
@@ -51,7 +51,7 @@ public class StudyGroupController {
             Principal principal) {
         try {
             GroupDetailResponse data = studyGroupService.getGroupDetail(id, principal.getName());
-            return ResponseEntity.ok(ApiResponse.success(data, "Group detail retrieved successfully"));
+            return ResponseEntity.ok(ApiResponse.success(data, "Group details retrieved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {
