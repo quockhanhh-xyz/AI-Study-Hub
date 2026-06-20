@@ -1715,22 +1715,47 @@ Retrieves all documents shared directly with the current user. Trashed or delete
   }
   ```
 
-## 8.11. List Direct Share Info API
+## 8.11. List Document Share Info API
 ## GET `/api/documents/{id}/shares`
-Lists all active direct share records of a document. Only the document owner can view this.
+Lists all active direct user shares and group shares of a document. Only the document owner can view this.
 - **Success Response (200 OK)**:
   ```json
   {
     "success": true,
     "message": "Share records retrieved successfully",
-    "data": [
-      {
-        "shareId": 1,
-        "sharedWithEmail": "recipient@gmail.com",
-        "permission": "VIEW",
-        "status": "ACTIVE"
-      }
-    ]
+    "data": {
+      "userShares": [
+        {
+          "shareId": 1,
+          "documentId": 10,
+          "title": "Introduction to AI",
+          "fileType": "pdf",
+          "fileSize": 1024,
+          "fileUrl": "https://res.cloudinary.com/...",
+          "sharedByEmail": "owner@gmail.com",
+          "sharedWithEmail": "recipient@gmail.com",
+          "permission": "VIEW",
+          "status": "ACTIVE",
+          "createdAt": "2026-06-19T13:40:00"
+        }
+      ],
+      "groupShares": [
+        {
+          "shareId": 1,
+          "documentId": 10,
+          "title": "Introduction to AI",
+          "fileType": "pdf",
+          "fileSize": 1024,
+          "fileUrl": "https://res.cloudinary.com/...",
+          "groupId": 1,
+          "sharedByEmail": "owner@gmail.com",
+          "permission": "VIEW",
+          "status": "ACTIVE",
+          "createdAt": "2026-06-19T13:45:00",
+          "canRevoke": true
+        }
+      ]
+    }
   }
   ```
 
@@ -1788,8 +1813,12 @@ Lists documents shared in a group. User must be an active member of the group. T
         "fileType": "pdf",
         "fileSize": 1024,
         "fileUrl": "https://res.cloudinary.com/...",
+        "groupId": 1,
         "sharedByEmail": "member@gmail.com",
-        "createdAt": "2026-06-19T13:45:00"
+        "permission": "VIEW",
+        "status": "ACTIVE",
+        "createdAt": "2026-06-19T13:45:00",
+        "canRevoke": true
       }
     ]
   }
