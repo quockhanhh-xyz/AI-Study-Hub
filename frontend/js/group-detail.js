@@ -91,7 +91,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   function renderGroupInfo(group) {
     currentGroup = group;
-    myRole = group.role || group.myRole || null;
+    myRole = group.currentUserRole || group.role || group.myRole || null;
 
     groupNameHeader.textContent = group.groupName || "Group";
     groupNameTitle.textContent = group.groupName || "Untitled Group";
