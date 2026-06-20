@@ -1813,8 +1813,12 @@ Lists documents shared in a group. User must be an active member of the group. T
         "fileType": "pdf",
         "fileSize": 1024,
         "fileUrl": "https://res.cloudinary.com/...",
+        "groupId": 1,
         "sharedByEmail": "member@gmail.com",
-        "createdAt": "2026-06-19T13:45:00"
+        "permission": "VIEW",
+        "status": "ACTIVE",
+        "createdAt": "2026-06-19T13:45:00",
+        "canRevoke": true
       }
     ]
   }

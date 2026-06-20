@@ -5,6 +5,7 @@ import com.demo.ai_study_hub.service.SharingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -20,7 +21,7 @@ public class SharingController {
     @PostMapping("/api/documents/{id}/shares/users")
     public ResponseEntity<ApiResponse<DocumentShareResponse>> shareDocumentDirect(
             @PathVariable Integer id,
-            @RequestBody DocumentShareRequest request,
+            @Valid @RequestBody DocumentShareRequest request,
             Principal principal
     ) {
         try {
@@ -78,7 +79,7 @@ public class SharingController {
     @PostMapping("/api/documents/{id}/shares/groups")
     public ResponseEntity<ApiResponse<GroupDocumentShareResponse>> shareDocumentToGroup(
             @PathVariable Integer id,
-            @RequestBody GroupDocumentShareRequest request,
+            @Valid @RequestBody GroupDocumentShareRequest request,
             Principal principal
     ) {
         try {
