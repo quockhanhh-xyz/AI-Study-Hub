@@ -9,6 +9,7 @@ const NAVIGATION_MENU = [
   { name: "Dashboard", icon: "📊", url: "dashboard.html", requiresAuth: true },
   { name: "Upload", icon: "📤", url: "upload.html", requiresAuth: true },
   { name: "Folders", icon: "📁", url: "folders.html", requiresAuth: true },
+  { name: "Study Groups", icon: "👥", url: "groups.html", requiresAuth: true },
   { name: "Trash", icon: "🗑️", url: "trash.html", requiresAuth: true },
 
   /* * Temporarily hidden menus to prevent 404 UX Issues (Will be unlocked in upcoming steps)
@@ -17,7 +18,8 @@ const NAVIGATION_MENU = [
    */
 
   // Hidden views mapped explicitly for Auth Guard coverage without rendering on the sidebar
-  { name: "Document Detail", icon: "ℹ️", url: "document-detail.html", requiresAuth: true, hidden: true }
+  { name: "Document Detail", icon: "ℹ️", url: "document-detail.html", requiresAuth: true, hidden: true },
+  { name: "Group Detail", icon: "👥", url: "group-detail.html", requiresAuth: true, hidden: true }
 ];
 
 /**
@@ -37,6 +39,10 @@ function initializeActiveMenu() {
   // FE3 Contextual Mapping: If current route points to a hidden detail page, force light up its parent anchor
   if (currentPage === "document-detail.html") {
     currentPage = "dashboard.html";
+  }
+
+  if (currentPage === "group-detail.html") {
+    currentPage = "groups.html";
   }
 
   navLinks.forEach(link => {
