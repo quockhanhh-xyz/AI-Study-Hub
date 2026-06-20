@@ -74,14 +74,9 @@ function renderDocument(doc) {
     document.getElementById("editTitle").value = doc.title || "";
     document.getElementById("editDescription").value = doc.description || "";
 
-    // Ownership check using uploadedBy email vs currentUser.email
-    let currentUser = {};
-    try {
-        const raw = localStorage.getItem("currentUser");
-        currentUser = JSON.parse(raw || "{}");
-    } catch (e) {}
-
-    const isOwner = currentUser && currentUser.email === doc.uploadedBy;
+    // Since GET /api/documents/{id} is only accessible by the owner,
+    // a successful load implies the current user is the owner.
+    const isOwner = true;
 
     // Show share controls and management panel only to the owner
     const shareBtn = document.getElementById("shareBtn");
@@ -223,25 +218,25 @@ function formatDate(isoString) {
 function initSharingUI() {
     const shareBtn = document.getElementById("shareBtn");
     const shareModal = document.getElementById("shareModal");
-    
+
     const tabUserBtn = document.getElementById("tabUserBtn");
     const tabGroupBtn = document.getElementById("tabGroupBtn");
     const tabUserContent = document.getElementById("tabUserContent");
     const tabGroupContent = document.getElementById("tabGroupContent");
-    
+
     const shareUserEmail = document.getElementById("shareUserEmail");
     const shareGroupSelect = document.getElementById("shareGroupSelect");
-    
+
     // Tab switching
     tabUserBtn.addEventListener("click", () => {
         tabUserBtn.classList.add("active");
         tabUserBtn.style.borderBottomColor = "var(--primary)";
         tabUserBtn.style.color = "var(--primary)";
-        
+
         tabGroupBtn.classList.remove("active");
         tabGroupBtn.style.borderBottomColor = "transparent";
         tabGroupBtn.style.color = "var(--muted)";
-        
+
         tabUserContent.style.display = "block";
         tabGroupContent.style.display = "none";
     });
@@ -250,11 +245,11 @@ function initSharingUI() {
         tabGroupBtn.classList.add("active");
         tabGroupBtn.style.borderBottomColor = "var(--primary)";
         tabGroupBtn.style.color = "var(--primary)";
-        
+
         tabUserBtn.classList.remove("active");
         tabUserBtn.style.borderBottomColor = "transparent";
         tabUserBtn.style.color = "var(--muted)";
-        
+
         tabGroupContent.style.display = "block";
         tabUserContent.style.display = "none";
     });
@@ -265,7 +260,7 @@ function initSharingUI() {
         document.getElementById("shareUserError").style.display = "none";
         document.getElementById("shareGroupError").style.display = "none";
         shareModal.classList.add("show");
-        
+
         // Populating dropdown groups
         shareGroupSelect.innerHTML = '<option value="" disabled selected>Loading groups...</option>';
         try {
@@ -286,7 +281,7 @@ function initSharingUI() {
                 placeholder.selected = true;
                 placeholder.textContent = "— Select a group —";
                 shareGroupSelect.appendChild(placeholder);
-                
+
                 groups.forEach(g => {
                     const opt = document.createElement("option");
                     opt.value = g.groupId;
@@ -360,18 +355,18 @@ async function loadSharingInfo(docId) {
             getDocumentShares(docId),
             getMyGroups()
         ]);
-        
+
         const groupMap = {};
         if (groupsRes && groupsRes.data) {
             groupsRes.data.forEach(g => {
                 groupMap[g.groupId] = g.groupName;
             });
         }
-        
+
         const info = sharesRes.data || { userShares: [], groupShares: [] };
         const userShares = Array.isArray(info.userShares) ? info.userShares : [];
         const groupShares = Array.isArray(info.groupShares) ? info.groupShares : [];
-        
+
         // Direct shares list
         const directList = document.getElementById("directSharesList");
         const noDirect = document.getElementById("noDirectShares");
@@ -383,32 +378,32 @@ async function loadSharingInfo(docId) {
             userShares.forEach(item => {
                 const row = document.createElement("div");
                 row.className = "member-row";
-                
+
                 const main = document.createElement("div");
                 main.className = "member-row-main";
-                
+
                 const name = document.createElement("span");
                 name.className = "member-row-name";
                 name.textContent = item.sharedWithEmail;
-                
+
                 const badge = document.createElement("span");
                 badge.className = "badge badge-success";
                 badge.textContent = item.status;
-                
+
                 main.append(name, badge);
                 row.appendChild(main);
-                
+
                 const btn = document.createElement("button");
                 btn.type = "button";
                 btn.className = "btn btn-danger btn-sm";
                 btn.textContent = "Revoke";
                 btn.addEventListener("click", () => handleRevokeDirect(item.shareId));
                 row.appendChild(btn);
-                
+
                 directList.appendChild(row);
             });
         }
-        
+
         // Group shares list
         const groupList = document.getElementById("groupSharesList");
         const noGroup = document.getElementById("noGroupShares");
@@ -420,28 +415,28 @@ async function loadSharingInfo(docId) {
             groupShares.forEach(item => {
                 const row = document.createElement("div");
                 row.className = "member-row";
-                
+
                 const main = document.createElement("div");
                 main.className = "member-row-main";
-                
+
                 const name = document.createElement("span");
                 name.className = "member-row-name";
                 name.textContent = groupMap[item.groupId] || `Group (ID: ${item.groupId})`;
-                
+
                 const badge = document.createElement("span");
                 badge.className = "badge badge-success";
                 badge.textContent = item.status;
-                
+
                 main.append(name, badge);
                 row.appendChild(main);
-                
+
                 const btn = document.createElement("button");
                 btn.type = "button";
                 btn.className = "btn btn-danger btn-sm";
                 btn.textContent = "Revoke";
                 btn.addEventListener("click", () => handleRevokeGroup(item.shareId));
                 row.appendChild(btn);
-                
+
                 groupList.appendChild(row);
             });
         }
