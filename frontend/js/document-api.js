@@ -1,3 +1,8 @@
+/**
+ * FE3 Document Management API Helpers (Extended for Step 6A)
+ * Branch: feature/frontend-sharing-group-api-helper
+ */
+
 /*
  * Uploads a document, accepting a single FormData object constructed from the UI.
  * Matches 100% with line 186 in the old upload.js file.
@@ -31,7 +36,7 @@ function searchDocuments(params) {
 
 /*
  * Retrieves the detailed information of a specific document by its ID.
- * Serves the Document Details view page (FE2).
+ * Serves the Document Details view page (FE2) and Share validation contexts (Step 6A).
  * @param {number|string} id - The ID of the document to retrieve.
  * @returns {Promise} Detailed document data (file URL, title, description, subject...).
  */
@@ -51,7 +56,7 @@ function updateDocument(id, data) {
 }
 
 /*
- * Deletes a document from the system by its ID.
+ * Deletes a document from the system by its ID (Soft Delete).
  * Serves the document deletion feature on the Details page (FE2).
  * @param {number|string} id - The ID of the document to delete.
  * @returns {Promise} Deletion response from the Backend.
@@ -84,6 +89,7 @@ function getTrash() {
 
 /*
  * Restores a soft-deleted document from the trash back to the active repository list.
+ * Note: Per Step 6A rules, restoring an active shared record makes it visible again.
  * @param {number|string} id - The unique document identifier to restore.
  * @returns {Promise} Server operation response confirmation payload.
  */

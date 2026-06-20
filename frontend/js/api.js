@@ -14,55 +14,71 @@ async function apiRequest(endpoint, options = {}) {
     ...(options.headers || {})
   };
 
-  // AUTOMATIC MECHANISM: 
-  // - If NOT FormData -> Automatically append default JSON Content-Type
+  // Automatically append JSON content type when request body is not FormData
   if (!isFormData) {
     headers["Content-Type"] = "application/json";
   }
 
-  // Execute fetch request to Backend with credentials included for Cookie management
+  // Execute fetch request with Cookie authentication enabled
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
-    headers: headers,
-    credentials: "include" // Mandatory for HttpOnly Cookie authentication flow
+    headers,
+    credentials: "include"
   });
+
+  // Parse response payload safely to preserve backend error messages
+  let data = {};
+  let rawText = "";
+
+  try {
+    rawText = await response.text();
+    data = rawText ? JSON.parse(rawText) : {};
+  } catch (e) {
+    console.warn("Response payload parsing failed, treating as raw text context.");
+  }
 
   // Handle explicit HTTP 401 Unauthorized
   if (response.status === 401) {
-    // Check if the current request specifically requests to skip global redirection logic
+    // Check whether the caller wants to handle redirect logic manually
     if (options.skipUnauthorizedRedirect === true) {
-      console.log(`Unauthorized (HTTP 401) for ${endpoint} - Handled locally by calling component.`);
+      console.log(
+        `Unauthorized (HTTP 401) for ${endpoint} - Handled locally by calling component.`
+      );
     } else {
-      console.warn("Session expired or invalid (HTTP 401). Executing global redirect to login...");
+      console.warn(
+        "Session expired or invalid (HTTP 401). Executing global redirect to login..."
+      );
       window.location.href = "login.html";
     }
-    // Block further parsing execution and notify the caller
-    throw new Error("Unauthorized - Session expired");
-  }
 
-  // Parse response payload as JSON
-  let data = {};
-  try {
-    data = await response.json();
-  } catch (e) {
-    // Handle cases where the backend returns an empty response or non-JSON data
-    console.warn("Response is not JSON format");
-  }
+    // Preserve backend error message whenever possible
+    const errorMessage =
+      data.message ||
+      data.error ||
+      rawText ||
+      "Unauthorized - Session expired";
 
-  // Check for other HTTP error codes or if the success flag from Backend contract is false
-  if (!response.ok || data.success === false) {
-    // Print warning to Console tab to help other FE devs debug when Backend returns an error
-    console.warn("API Request Business Error:", data);
-
-    // Extract the exact error message from backend (especially for HTTP 409 Conflict)
-    const errorMessage = data.message || data.error || "API request failed";
-
-    // Create a new error object and attach the HTTP status code for advanced UI handling
     const error = new Error(errorMessage);
     error.status = response.status;
     throw error;
   }
- 
+
+  // Handle all other HTTP errors or business failures
+  if (!response.ok || data.success === false) {
+    console.warn("API Request Business Error:", data || rawText);
+
+    // Extract backend error message accurately
+    const errorMessage =
+      data.message ||
+      data.error ||
+      rawText ||
+      "API request failed";
+
+    const error = new Error(errorMessage);
+    error.status = response.status;
+    throw error;
+  }
+
   return data;
 }
 
@@ -72,31 +88,32 @@ async function apiRequest(endpoint, options = {}) {
   @param {object} options - Optional parameters override
  */
 function get(endpoint, options = {}) {
-  return apiRequest(endpoint, { method: "GET", ...options });
+  return apiRequest(endpoint, {
+    method: "GET",
+    ...options
+  });
 }
 
 /*
   API POST request helper
   @param {string} endpoint - Example: "/api/auth/login"
-  @param {object|FormData} body - Regular data object OR FormData object containing files
+  @param {object|FormData} body - Regular object or FormData
   @param {object} options - Optional parameters override
  */
 function post(endpoint, body, options = {}) {
-  // Check if the body passed into this post helper is FormData
   const isFormData = body instanceof FormData;
-  
+
   return apiRequest(endpoint, {
     method: "POST",
-    // Keep raw if FormData, stringify to JSON if it is a regular object
     body: isFormData ? body : JSON.stringify(body),
     ...options
   });
 }
 
 /*
-  API PUT request helper (Update data)
+  API PUT request helper
   @param {string} endpoint - Example: "/api/documents/1"
-  @param {object} body - Data object containing update fields
+  @param {object} body - Updated data object
   @param {object} options - Optional parameters override
  */
 function put(endpoint, body, options = {}) {
@@ -108,10 +125,13 @@ function put(endpoint, body, options = {}) {
 }
 
 /*
-  API DELETE request helper (Remove data)
+  API DELETE request helper
   @param {string} endpoint - Example: "/api/documents/1"
   @param {object} options - Optional parameters override
  */
 function del(endpoint, options = {}) {
-  return apiRequest(endpoint, { method: "DELETE", ...options });
+  return apiRequest(endpoint, {
+    method: "DELETE",
+    ...options
+  });
 }
