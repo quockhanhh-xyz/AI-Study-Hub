@@ -280,3 +280,148 @@ This document defines the functional test cases for Step 6B: Folder Sharing & Sh
   - When the folder is in the trash, User B cannot access it or see its contents.
   - Once restored, access is automatically re-enabled because the `folder_shares` record status remained `'ACTIVE'`.
 - **Status:** `Not Run`
+
+---
+
+### TC-FLD-SHR-021 - Member Shares Folder of Their Own to Group Successfully
+- **Precondition:** User C is logged in and is a member of Group ID `10`. User C owns active Folder ID `4` ("Calculus II").
+- **Steps:**
+  1. Send `POST /api/folders/4/shares/groups` with User C's session.
+  2. Request Body:
+     ```json
+     {
+       "groupId": 10
+     }
+     ```
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - The folder is shared into the group successfully.
+- **Status:** `Not Run`
+
+### TC-FLD-SHR-022 - Non-member Share Folder to Group Fails (403 Forbidden)
+- **Precondition:** User B is logged in and is NOT a member of Group ID `10`. User B owns active Folder ID `2`.
+- **Steps:**
+  1. Send `POST /api/folders/2/shares/groups` with User B's session.
+  2. Request Body:
+     ```json
+     {
+       "groupId": 10
+     }
+     ```
+- **Expected Result:**
+  - Status code: `403 Forbidden`.
+  - Response `success` is `false`.
+  - Message states: "Access denied".
+- **Status:** `Not Run`
+
+### TC-FLD-SHR-023 - Share Folder to Deleted Group Fails (404 Not Found)
+- **Precondition:** User A is logged in and owns Folder ID `1`. Group ID `99` has `status = 'DELETED'`.
+- **Steps:**
+  1. Send `POST /api/folders/1/shares/groups` with User A's session.
+  2. Request Body:
+     ```json
+     {
+       "groupId": 99
+     }
+     ```
+- **Expected Result:**
+  - Status code: `404 Not Found`.
+  - Response `success` is `false`.
+  - Message: "Group not found" or "Group is deleted".
+- **Status:** `Not Run`
+
+### TC-FLD-SHR-024 - Duplicate Active Folder Group Share yields 409 Conflict
+- **Precondition:** Folder ID `1` is already actively shared to Group ID `10`.
+- **Steps:**
+  1. Send `POST /api/folders/1/shares/groups` with User A's session.
+  2. Request Body:
+     ```json
+     {
+       "groupId": 10
+     }
+     ```
+- **Expected Result:**
+  - Status code: `409 Conflict`.
+  - Message: "Folder is already shared in this group".
+- **Status:** `Not Run`
+
+### TC-FLD-SHR-025 - Reactivate Revoked Folder Group Share Successfully
+- **Precondition:** Folder ID `1` was shared to Group ID `10` but the share was previously revoked (`status = 'REVOKED'`).
+- **Steps:**
+  1. Send `POST /api/folders/1/shares/groups` with User A's session.
+  2. Request Body:
+     ```json
+     {
+       "groupId": 10
+     }
+     ```
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - The status of the existing group folder share is updated to `'ACTIVE'`.
+- **Status:** `Not Run`
+
+### TC-FLD-SHR-026 - Non-member is Blocked from GET Group Folders API (403 Forbidden)
+- **Precondition:** User B is logged in and is NOT a member of Group ID `10`.
+- **Steps:**
+  1. Send `GET /api/groups/10/folders` with User B's session.
+- **Expected Result:**
+  - Status code: `403 Forbidden`.
+  - Message states: "Access denied" or "You must be an active member of this group to view group folders".
+- **Status:** `Not Run`
+
+### TC-FLD-SHR-027 - Folder Owner Revokes Their Group Folder Share
+- **Precondition:** User B owns Folder ID `2` and shared it into Group ID `10` (active share ID `8`). User B is a regular member of Group ID `10`.
+- **Steps:**
+  1. Send `DELETE /api/group-folder-shares/8` with User B's session.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - The share is revoked successfully because the caller is the folder owner.
+- **Status:** `Not Run`
+
+### TC-FLD-SHR-028 - Group DELETED Hides Folder Share
+- **Precondition:** Folder ID `1` is shared to Group ID `10`.
+- **Steps:**
+  1. Group ID `10` is soft-deleted by its owner User A (`DELETE /api/groups/10`).
+  2. Send `GET /api/groups/10/folders` with User C's session.
+- **Expected Result:**
+  - Status code: `404 Not Found` or `403 Forbidden`.
+  - Group folders are no longer accessible or returned.
+- **Status:** `Not Run`
+
+### TC-FLD-SHR-029 - Folder Owner GET Folder Shares Successfully
+- **Precondition:** User A owns Folder ID `1`.
+- **Steps:**
+  1. Send `GET /api/folders/1/shares` with User A's session.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Response `success` is `true`.
+  - Returns `userShares` and `groupShares` lists.
+- **Status:** `Not Run`
+
+### TC-FLD-SHR-030 - Non-owner GET Folder Shares Fails (403 Forbidden)
+- **Precondition:** User B is logged in. Folder ID `1` belongs to User A.
+- **Steps:**
+  1. Send `GET /api/folders/1/shares` with User B's session.
+- **Expected Result:**
+  - Status code: `403 Forbidden`.
+  - Message: "Access denied".
+- **Status:** `Not Run`
+
+### TC-FLD-SHR-031 - Folder Owner Revokes Direct Folder Share Successfully
+- **Precondition:** User A owns Folder ID `1` and shared it with User B (share ID `15`).
+- **Steps:**
+  1. Send `DELETE /api/folder-shares/15` with User A's session.
+- **Expected Result:**
+  - Status code: `200 OK`.
+  - Share record status updated to `'REVOKED'` in MySQL.
+- **Status:** `Not Run`
+
+### TC-FLD-SHR-032 - Non-owner Attempting to Revoke Direct Folder Share Fails (403 Forbidden)
+- **Precondition:** User B is logged in (receives direct share ID `15` of Folder ID `1` owned by User A).
+- **Steps:**
+  1. Send `DELETE /api/folder-shares/15` with User B's session.
+- **Expected Result:**
+  - Status code: `403 Forbidden`.
+  - Message: "Access denied".
+- **Status:** `Not Run`

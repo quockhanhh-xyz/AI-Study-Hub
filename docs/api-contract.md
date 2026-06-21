@@ -694,7 +694,11 @@ These APIs manage documents after upload. Access is strictly restricted to the o
 
 ## GET `/api/documents/{id}`
 
-Returns detailed information for a specific document owned by the authenticated user.
+Returns detailed information for a specific document. The request is authorized if:
+- The authenticated user is the owner of the document.
+- The document is actively shared directly with the authenticated user.
+- The document is actively shared with a study group where the authenticated user is an active member.
+- The document is located inside a folder tree that has been shared directly with the authenticated user, or shared with a study group where the authenticated user is an active member.
 
 ### Request Headers
 
@@ -2111,6 +2115,7 @@ Retrieves all root folders shared directly into a study group. Only accessible b
   "message": "Group shared folders retrieved successfully",
   "data": [
     {
+      "shareId": 2,
       "folderId": 5,
       "folderName": "SWP391",
       "description": "Software Project Materials",
@@ -2120,7 +2125,8 @@ Retrieves all root folders shared directly into a study group. Only accessible b
       "sharedByEmail": "usera@gmail.com",
       "permission": "VIEW",
       "status": "ACTIVE",
-      "createdAt": "2026-06-21T14:55:00"
+      "createdAt": "2026-06-21T14:55:00",
+      "canRevoke": true
     }
   ]
 }
