@@ -18,7 +18,8 @@
         <main class="main-content">
 
             <section class="page-header">
-                <h1><a href="groups.html" class="breadcrumb-link">My Study Groups</a> / <span id="groupNameHeader">Group</span></h1>
+                <h1><a href="groups.html" class="breadcrumb-link">My Study Groups</a> / <span
+                        id="groupNameHeader">Group</span></h1>
             </section>
 
             <div id="detailLoader" class="document-state">
@@ -42,9 +43,12 @@
                             </p>
                         </div>
                         <div class="header-actions">
-                            <button type="button" id="editGroupBtn" class="btn btn-secondary" style="display:none;">Edit</button>
-                            <button type="button" id="leaveGroupBtn" class="btn btn-secondary" style="display:none;">Leave Group</button>
-                            <button type="button" id="deleteGroupBtn" class="btn btn-danger" style="display:none;">Delete Group</button>
+                            <button type="button" id="editGroupBtn" class="btn btn-secondary"
+                                style="display:none;">Edit</button>
+                            <button type="button" id="leaveGroupBtn" class="btn btn-secondary"
+                                style="display:none;">Leave Group</button>
+                            <button type="button" id="deleteGroupBtn" class="btn btn-danger"
+                                style="display:none;">Delete Group</button>
                         </div>
                     </div>
                 </div>
@@ -80,6 +84,29 @@
                     <div id="docEmpty" class="empty-state">
                         <div class="empty-title">No documents shared yet</div>
                         <p>Members can share their own documents into this group from the Document Detail page.</p>
+                    </div>
+                </div>
+
+                <!-- ── GROUP FOLDERS PANEL ── -->
+                <div class="card dashboard-panel">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">Shared Folders</h2>
+                            <p>Folders shared into this group.</p>
+                        </div>
+                    </div>
+
+                    <div id="folderLoader" class="document-state">
+                        <span>Loading folders...</span>
+                    </div>
+
+                    <p id="folderError" class="helper-text error" role="alert"></p>
+
+                    <div id="folderGrid" class="folder-grid"></div>
+
+                    <div id="folderEmpty" class="empty-state">
+                        <div class="empty-title">No folders shared yet</div>
+                        <p>Members can share their own folders into this group from the Folders page.</p>
                     </div>
                 </div>
 
