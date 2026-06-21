@@ -216,7 +216,47 @@ Stores documents shared into study groups.
 
 ---
 
-### Business Rules & Constraints (Step 6A)
+## 6.4. Table `folder_shares`
+
+Stores direct folder sharing metadata.
+
+| Column Name           | Data Type   | Constraints                                                 | Description                                            |
+| :-------------------- | :---------- | :---------------------------------------------------------- | :----------------------------------------------------- |
+| `share_id`            | INT         | PRIMARY KEY, AUTO_INCREMENT, NOT NULL                       | Unique share ID                                        |
+| `folder_id`           | INT         | FOREIGN KEY REFERENCES folders(folder_id), NOT NULL         | Folder being shared                                    |
+| `shared_by`           | INT         | FOREIGN KEY REFERENCES users(user_id), NOT NULL             | User who shared the folder                             |
+| `shared_with_user_id` | INT         | FOREIGN KEY REFERENCES users(user_id), NOT NULL             | Target user who receives the shared folder             |
+| `permission`          | VARCHAR(20) | DEFAULT 'VIEW', NOT NULL                                    | Sharing permission: VIEW                               |
+| `status`              | VARCHAR(20) | DEFAULT 'ACTIVE', NOT NULL                                  | Status: ACTIVE or REVOKED                              |
+| `created_at`          | TIMESTAMP   | DEFAULT CURRENT_TIMESTAMP                                   | Creation timestamp                                     |
+| `updated_at`          | TIMESTAMP   | NULLABLE                                                    | Last update timestamp                                  |
+
+### Constraints
+- Unique index: `folder_id` + `shared_with_user_id`
+
+---
+
+## 6.5. Table `group_folder_shares`
+
+Stores folders shared into study groups.
+
+| Column Name  | Data Type   | Constraints                                                 | Description                                     |
+| :----------- | :---------- | :---------------------------------------------------------- | :---------------------------------------------- |
+| `share_id`   | INT         | PRIMARY KEY, AUTO_INCREMENT, NOT NULL                       | Unique group folder share ID                    |
+| `folder_id`  | INT         | FOREIGN KEY REFERENCES folders(folder_id), NOT NULL         | Folder shared                                   |
+| `group_id`   | INT         | FOREIGN KEY REFERENCES study_groups(group_id), NOT NULL     | Target group receiving share                    |
+| `shared_by`  | INT         | FOREIGN KEY REFERENCES users(user_id), NOT NULL             | Member who shared the folder                    |
+| `permission` | VARCHAR(20) | DEFAULT 'VIEW', NOT NULL                                    | Sharing permission: VIEW                        |
+| `status`     | VARCHAR(20) | DEFAULT 'ACTIVE', NOT NULL                                  | Share status: ACTIVE or REVOKED                 |
+| `created_at` | TIMESTAMP   | DEFAULT CURRENT_TIMESTAMP                                   | Creation timestamp                              |
+| `updated_at` | TIMESTAMP   | NULLABLE                                                    | Last update timestamp                           |
+
+### Constraints
+- Unique index: `folder_id` + `group_id`
+
+---
+
+### Business Rules & Constraints (Step 6A & 6B)
 
 #### 1. Group Management & Permissions
 - **Group Creation**: Any registered user with status `ACTIVE` can create a study group. The creator is automatically added as `OWNER` of the group with status `ACTIVE` in `study_group_members`.
@@ -227,7 +267,7 @@ Stores documents shared into study groups.
 - **Leave Group**: Active members with the `MEMBER` role can leave the group (membership status set to `LEFT`). The group `OWNER` cannot leave the group in MVP; they must delete the group instead.
 - **Remove Member**: Only the group `OWNER` can remove other members from the group (membership status set to `REMOVED`). The owner cannot remove themselves.
 
-#### 2. Document Sharing & Permissions
+#### 2. Document Sharing & Permissions (Step 6A)
 - **Direct Share**: Only the document owner can share their document directly to another user by email.
   - The document must be `ACTIVE`.
   - Recipient email must belong to an `ACTIVE` user.
@@ -251,13 +291,48 @@ Stores documents shared into study groups.
   - Direct sharing unique constraint: `document_shares(document_id, shared_with_user_id, status)` (enforced when `status = 'ACTIVE'`)
   - Group sharing unique constraint: `group_document_shares(document_id, group_id, status)` (enforced when `status = 'ACTIVE'`)
 
-#### 3. MVP Exclusions (Step 6A Not Done)
-- **Folder Sharing**: Shared With Me only supports **Documents** in Step 6A. Folder sharing is planned for Step 6B.
+#### 3. Folder Sharing & Permissions (Step 6B)
+- **Direct Folder Sharing**:
+  - Only the folder owner can share their folder directly to another user by email.
+  - The folder must be `ACTIVE`.
+  - Recipient email must belong to an `ACTIVE` user.
+  - Self-sharing is blocked.
+  - Direct folder share is soft-revoked by setting `status = 'REVOKED'`.
+- **Group Folder Sharing**:
+  - Only the folder owner can share their folder into a study group.
+  - Folder must be `ACTIVE`, and the target group must be `ACTIVE` (not deleted).
+  - The folder owner must be an active member (OWNER or MEMBER) of the target group.
+  - Group folder share is soft-revoked by setting `status = 'REVOKED'`.
+- **Duplicate Sharing & Reactivation**:
+  - Attempting to share an actively shared folder to the same user or group yields a `409 Conflict`.
+  - If a sharing record already exists with status `REVOKED`, re-sharing the same folder will reactivate the record (update status to `ACTIVE`) instead of creating a new row.
+- **Recursive Folder Access Rules**:
+  - Sharing a parent folder grants view access recursively to all nested subfolders and active documents within it.
+  - A user is granted access to a folder if:
+    1. The user is the owner of the folder.
+    2. The folder has an active direct share to the user.
+    3. The folder has an active group share to a group where the user is an active member.
+    4. Any ancestor of the folder in the directory tree satisfies condition 2 or 3.
+- **Shared Content Rendering & Directory Scopes**:
+  - **Shared With Me** only lists the root folders that were directly shared with the user (excludes nested subfolders of shared trees to avoid redundancy).
+  - **Group Folders list** only lists the root folders that were directly shared with the group.
+  - GET `/api/folders/{id}/shared-content` returns only the immediate active subfolders and immediate active documents inside the queried folder, enforcing that the current user has access to that folder.
+- **Document Access via Folder Sharing**:
+  - Users are allowed to open or download active documents if they own the document, are directly shared the document, or if the document's current folder is part of an actively shared folder tree.
+  - If a document is moved out of the shared folder tree, access to the document via folder sharing is immediately revoked.
+- **Breadcrumb Rules**:
+  - In shared folder detail views, the breadcrumb trail is dynamically constructed to start from the highest shared root folder (the folder directly shared with the user or group). It will never expose the path leading up to the shared root from the owner's private directory (e.g. hides the owner's root "My Documents").
+- **Revocation Permissions**:
+  - Direct folder shares can only be revoked by the folder owner.
+  - Group folder shares can be revoked by the folder owner OR the target group owner.
+
+#### 4. MVP Exclusions (Remaining Exclusions)
 - **Regenerate Invite Code**: Invite codes are static and cannot be regenerated.
 - **Transfer Owner**: Group ownership cannot be transferred to other members.
 - **Group Chat**: Communication features within study groups are excluded from MVP.
 - **Notifications**: In-app or email notifications for new shares or group invites are excluded.
 - **Public Link Sharing**: Only member-specific direct shares and group shares are supported; no public URL sharing is implemented.
+- **Shared Folder Modification**: Uploading, editing, deleting, or moving items inside folders shared by others is blocked (read-only permissions).
 
 ---
 
