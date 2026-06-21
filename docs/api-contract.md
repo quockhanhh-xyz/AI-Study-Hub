@@ -694,7 +694,11 @@ These APIs manage documents after upload. Access is strictly restricted to the o
 
 ## GET `/api/documents/{id}`
 
-Returns detailed information for a specific document owned by the authenticated user.
+Returns detailed information for a specific document. The request is authorized if:
+- The authenticated user is the owner of the document.
+- The document is actively shared directly with the authenticated user.
+- The document is actively shared with a study group where the authenticated user is an active member.
+- The document is located inside a folder tree that has been shared directly with the authenticated user, or shared with a study group where the authenticated user is an active member.
 
 ### Request Headers
 
@@ -1914,23 +1918,336 @@ Below are typical error payloads returned by group management and sharing APIs:
 
 ---
 
-# 9. Frontend-Backend Integration Conventions
+# 9. Folder Sharing and Sharing UX Completion (Step 6B)
+
+This section details the REST APIs introduced in Step 6B to enable Folder Sharing (direct and group) along with recursive access enforcement.
+
+## 9.1. Direct Share Folder to User API
+
+## POST `/api/folders/{id}/shares/users`
+
+Shares a folder directly with another user using their email address.
+
+### Request Headers
+- Cookie: `accessToken=jwt-token-value-here`
+- Content-Type: `application/json`
+
+### Request Body
+```json
+{
+  "email": "recipient@gmail.com"
+}
+```
+
+### Success Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "Folder shared successfully",
+  "data": {
+    "shareId": 1,
+    "folderId": 5,
+    "folderName": "SWP391",
+    "sharedWithEmail": "recipient@gmail.com",
+    "permission": "VIEW",
+    "status": "ACTIVE",
+    "createdAt": "2026-06-21T14:50:00"
+  }
+}
+```
+
+### Error Response - Duplicate Share (409 Conflict)
+If the folder is already actively shared with this user:
+```json
+{
+  "success": false,
+  "message": "Folder is already shared with this user",
+  "data": null
+}
+```
+
+---
+
+## 9.2. Get Shared With Me Folders API
+
+## GET `/api/folders/shared-with-me`
+
+Retrieves the list of root folders that have been directly shared with the currently authenticated user. Does not return subfolders of shared trees.
+
+### Request Headers
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "Shared folders retrieved successfully",
+  "data": [
+    {
+      "folderId": 5,
+      "folderName": "SWP391",
+      "description": "Software Project Materials",
+      "ownerName": "User A",
+      "ownerEmail": "usera@gmail.com",
+      "sharedByName": "User A",
+      "sharedByEmail": "usera@gmail.com",
+      "permission": "VIEW",
+      "status": "ACTIVE",
+      "createdAt": "2026-06-21T14:50:00"
+    }
+  ]
+}
+```
+
+---
+
+## 9.3. List Folder Share Info API
+
+## GET `/api/folders/{id}/shares`
+
+Retrieves all direct and group shares associated with a folder. Only allowed for the folder owner.
+
+### Request Headers
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "Folder shares retrieved successfully",
+  "data": {
+    "userShares": [
+      {
+        "shareId": 1,
+        "folderId": 5,
+        "sharedWithEmail": "recipient@gmail.com",
+        "permission": "VIEW",
+        "status": "ACTIVE",
+        "createdAt": "2026-06-21T14:50:00"
+      }
+    ],
+    "groupShares": [
+      {
+        "shareId": 2,
+        "folderId": 5,
+        "groupId": 10,
+        "groupName": "SWT301 Group",
+        "permission": "VIEW",
+        "status": "ACTIVE",
+        "createdAt": "2026-06-21T14:55:00"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 9.4. Revoke Direct Folder Share API
+
+## DELETE `/api/folder-shares/{shareId}`
+
+Revokes a direct folder sharing record by changing its status to `REVOKED`. Only allowed for the folder owner.
+
+### Request Headers
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "Folder share revoked successfully",
+  "data": null
+}
+```
+
+---
+
+## 9.5. Share Folder to Group API
+
+## POST `/api/folders/{id}/shares/groups`
+
+Shares a folder to a study group. Only the folder owner, who must be an active member of the group, can perform this action.
+
+### Request Headers
+- Cookie: `accessToken=jwt-token-value-here`
+- Content-Type: `application/json`
+
+### Request Body
+```json
+{
+  "groupId": 10
+}
+```
+
+### Success Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "Folder shared to group successfully",
+  "data": {
+    "shareId": 2,
+    "folderId": 5,
+    "groupId": 10,
+    "groupName": "SWT301 Group",
+    "permission": "VIEW",
+    "status": "ACTIVE",
+    "createdAt": "2026-06-21T14:55:00"
+  }
+}
+```
+
+---
+
+## 9.6. Get Group Folders API
+
+## GET `/api/groups/{id}/folders`
+
+Retrieves all root folders shared directly into a study group. Only accessible by active members of the group.
+
+### Request Headers
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "Group shared folders retrieved successfully",
+  "data": [
+    {
+      "shareId": 2,
+      "folderId": 5,
+      "folderName": "SWP391",
+      "description": "Software Project Materials",
+      "ownerName": "User A",
+      "ownerEmail": "usera@gmail.com",
+      "sharedByName": "User A",
+      "sharedByEmail": "usera@gmail.com",
+      "permission": "VIEW",
+      "status": "ACTIVE",
+      "createdAt": "2026-06-21T14:55:00",
+      "canRevoke": true
+    }
+  ]
+}
+```
+
+---
+
+## 9.7. Revoke Group Folder Share API
+
+## DELETE `/api/group-folder-shares/{shareId}`
+
+Revokes a group folder sharing record by changing its status to `REVOKED`. Allowed for the folder owner OR the group owner.
+
+### Request Headers
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "Group folder share revoked successfully",
+  "data": null
+}
+```
+
+---
+
+## 9.8. Get Shared Folder Content API
+
+## GET `/api/folders/{id}/shared-content`
+
+Retrieves the direct subfolders and documents inside a shared folder that the current user has access to. Enforces recursive parent folder access rules, and returns breadcrumbs starting strictly from the shared root folder.
+
+### Request Headers
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "Shared folder content retrieved successfully",
+  "data": {
+    "breadcrumb": [
+      {
+        "folderId": 5,
+        "folderName": "SWP391"
+      },
+      {
+        "folderId": 6,
+        "folderName": "Lab"
+      }
+    ],
+    "currentFolder": {
+      "folderId": 6,
+      "folderName": "Lab",
+      "ownerName": "User A",
+      "ownerEmail": "usera@gmail.com"
+    },
+    "subfolders": [
+      {
+        "folderId": 7,
+        "folderName": "Week 1",
+        "description": "Week 1 materials",
+        "fileCount": 1,
+        "subfolderCount": 0
+      }
+    ],
+    "documents": [
+      {
+        "documentId": 12,
+        "title": "lab-guidelines.pdf",
+        "description": "Lab description and rules",
+        "fileType": "pdf",
+        "fileSize": 102400,
+        "fileUrl": "http://cloudinary.com/lab-guidelines.pdf",
+        "folderId": 6,
+        "folderName": "Lab",
+        "uploadedBy": "usera@gmail.com",
+        "status": "ACTIVE",
+        "createdAt": "2026-06-21T15:00:00"
+      }
+    ],
+    "permission": "VIEW",
+    "isSharedView": true,
+    "canUpload": false,
+    "canEdit": false,
+    "canDelete": false,
+    "canMove": false
+  }
+}
+```
+
+### Error Response - Access Denied (403 Forbidden)
+If the user does not have access to this folder or any of its ancestors:
+```json
+{
+  "success": false,
+  "message": "Access denied",
+  "data": null
+}
+```
+
+---
+
+# 10. Frontend-Backend Integration Conventions
 
 These rules govern page routing on the frontend and operational behaviors between the client and API:
 
-## 9.1. Folder Page URL Format
+## 10.1. Folder Page URL Format
 
 - The frontend must route users using the folder ID query parameter exclusively:
   `folders.html?folderId=<id>`
 - The parameter `parentFolderId` must **never** be used in browser URLs to represent folder details. It is reserved solely as a query parameter for backend REST API calls.
 
-## 9.2. Trash Protection Rules
+## 10.2. Trash Protection Rules
 
 - Any folder or document that has been soft-deleted (`status = 'DELETED'`) is considered in the trash.
 - Under no circumstances should the frontend or backend allow a user to **view/open** the contents, details, or **download** the actual file of a trashed item until it has been explicitly restored.
 - The UI must hide any "Open File", "View Details", or similar download buttons for items shown in the trash list, and the backend must deny access to fetch details or retrieve the file URL for trashed assets.
 
-## 9.3. Root Folder Terminology
+## 10.3. Root Folder Terminology
 
 - On the user interface, a `folderId = null` or unassigned folder hierarchy must be consistently labeled **"My Documents"**.
 - Hardcoded technical terms like "root", "no folder", or "unassigned" are deprecated and must not appear in user-facing labels.
