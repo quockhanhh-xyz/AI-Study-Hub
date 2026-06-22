@@ -35,6 +35,10 @@ document.addEventListener("DOMContentLoaded", async function () {
   const docError = document.getElementById("docError");
   const docGrid = document.getElementById("docGrid");
   const docEmpty = document.getElementById("docEmpty");
+  const folderLoader = document.getElementById("folderLoader");
+  const folderError = document.getElementById("folderError");
+  const folderGrid = document.getElementById("folderGrid");
+  const folderEmpty = document.getElementById("folderEmpty");
 
   // Edit modal
   const editModal = document.getElementById("editModal");
@@ -275,6 +279,103 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  // Group folders rendering
+
+  function createFolderCard(folder) {
+    const card = document.createElement("div");
+    card.className = "folder-card";
+    card.style.cursor = "pointer";
+
+    const icon = document.createElement("div");
+    icon.className = "folder-icon";
+    icon.textContent = "📁";
+
+    const name = document.createElement("p");
+    name.className = "folder-name";
+    name.textContent = folder.folderName || "Untitled Folder";
+
+    const ownerMeta = document.createElement("p");
+    ownerMeta.className = "folder-meta";
+    ownerMeta.textContent = `Owner: ${folder.ownerName || folder.ownerEmail || "Unknown"}`;
+
+    const sharedByMeta = document.createElement("p");
+    sharedByMeta.className = "folder-meta";
+    sharedByMeta.textContent = `Shared by: ${folder.sharedByName || folder.sharedByEmail || "Unknown"}`;
+
+    const main = document.createElement("div");
+    main.className = "folder-card-main";
+    main.append(icon, name, ownerMeta, sharedByMeta);
+
+    const actions = document.createElement("div");
+    actions.className = "folder-card-actions";
+
+    // Revoke is shown strictly based on backend's canRevoke flag —
+    // never computed locally, mirroring the group documents pattern.
+    if (folder.canRevoke === true) {
+      const revokeBtn = document.createElement("button");
+      revokeBtn.type = "button";
+      revokeBtn.className = "btn btn-danger btn-sm";
+      revokeBtn.textContent = "Revoke";
+      revokeBtn.addEventListener("click", async function (e) {
+        e.stopPropagation(); // Prevent card click from triggering navigation
+        const confirmed = await confirmAction({
+          title: "Revoke Folder?",
+          message: "This folder will no longer be shared with this group.",
+          confirmText: "Revoke",
+          danger: true
+        });
+        if (!confirmed) return;
+
+        try {
+          await revokeGroupFolderShare(folder.shareId);
+          showToast("Folder revoked from group.", "success");
+          await loadGroupFolders();
+        } catch (error) {
+          showToast(error.message || "Failed to revoke folder.", "error");
+        }
+      });
+      actions.appendChild(revokeBtn);
+    }
+
+    card.append(main, actions);
+
+    // Clicking anywhere on the card opens the shared folder detail page.
+    card.addEventListener("click", function () {
+      window.location.href = `shared-folder-detail.html?folderId=${folder.folderId}`;
+    });
+
+    return card;
+  }
+
+  async function loadGroupFolders() {
+    folderLoader.style.display = "flex";
+    folderGrid.style.display = "none";
+    folderEmpty.style.display = "none";
+    hideError(folderError);
+
+    try {
+      const result = await getGroupFolders(groupId);
+      const folders = Array.isArray(result.data) ? result.data : [];
+
+      folderLoader.style.display = "none";
+
+      if (folders.length === 0) {
+        folderEmpty.style.display = "block";
+        return;
+      }
+
+      folderGrid.innerHTML = "";
+      folders.forEach(function (folder) {
+        folderGrid.appendChild(createFolderCard(folder));
+      });
+      folderGrid.style.display = "grid";
+
+    } catch (error) {
+      folderLoader.style.display = "none";
+      showError(folderError, error.message || "Failed to load group folders.");
+    }
+  }
+
   // Load group detail (info + members)
 
   async function loadGroupDetail() {
@@ -390,4 +491,5 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Init
   await loadGroupDetail();
   await loadGroupDocuments();
+  await loadGroupFolders();
 });
