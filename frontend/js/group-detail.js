@@ -294,14 +294,17 @@ document.addEventListener("DOMContentLoaded", async function () {
     name.className = "folder-name";
     name.textContent = folder.folderName || "Untitled Folder";
 
-    const meta = document.createElement("p");
-    meta.className = "folder-meta";
-    const ownerLabel = folder.ownerName || folder.sharedByName || folder.sharedBy || "Unknown owner";
-    meta.textContent = `Owner: ${ownerLabel}`;
+    const ownerMeta = document.createElement("p");
+    ownerMeta.className = "folder-meta";
+    ownerMeta.textContent = `Owner: ${folder.ownerName || folder.ownerEmail || "Unknown"}`;
+
+    const sharedByMeta = document.createElement("p");
+    sharedByMeta.className = "folder-meta";
+    sharedByMeta.textContent = `Shared by: ${folder.sharedByName || folder.sharedByEmail || "Unknown"}`;
 
     const main = document.createElement("div");
     main.className = "folder-card-main";
-    main.append(icon, name, meta);
+    main.append(icon, name, ownerMeta, sharedByMeta);
 
     const actions = document.createElement("div");
     actions.className = "folder-card-actions";
