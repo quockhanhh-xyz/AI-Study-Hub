@@ -95,6 +95,12 @@ document.addEventListener("DOMContentLoaded", async function () {
         try {
           const result = await getFolderById(folderId);
           const folder = result.data;
+          if (folder.folderId === currentParentFolderId) {
+            const pageTitleEl = document.getElementById("folderPageTitle");
+            if (pageTitleEl) {
+              pageTitleEl.textContent = folder.folderName;
+            }
+          }
           chain.unshift({ folderId: folder.folderId, name: folder.folderName });
           folderId = folder.parentFolderId || null;
         } catch (e) {
@@ -103,6 +109,11 @@ document.addEventListener("DOMContentLoaded", async function () {
       }
 
       breadcrumbTrail = [{ folderId: null, name: "My Documents" }, ...chain];
+    } else {
+      const pageTitleEl = document.getElementById("folderPageTitle");
+      if (pageTitleEl) {
+        pageTitleEl.textContent = "My Folders";
+      }
     }
 
     renderBreadcrumb();
@@ -428,10 +439,224 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // Close modals on overlay click
 
-  [createModal, renameModal, deleteModal].forEach(function (overlay) {
-    overlay.addEventListener("click", function (e) {
-      if (e.target === overlay) closeModal(overlay);
-    });
+  const shareFolderModal = document.getElementById("shareFolderModal");
+
+  [createModal, renameModal, deleteModal, shareFolderModal].forEach(function (overlay) {
+    if (overlay) {
+      overlay.addEventListener("click", function (e) {
+        if (e.target === overlay) closeModal(overlay);
+      });
+    }
+  });
+
+  // Folder share modal logic
+  const shareFolderBtn = document.getElementById("shareFolderBtn");
+  const modalTabUserBtn = document.getElementById("modalTabUserBtn");
+  const modalTabGroupBtn = document.getElementById("modalTabGroupBtn");
+  const modalUserPanel = document.getElementById("modalUserPanel");
+  const modalGroupPanel = document.getElementById("modalGroupPanel");
+  const shareUserEmail = document.getElementById("shareUserEmail");
+  const shareUserError = document.getElementById("shareUserError");
+  const shareUserConfirmBtn = document.getElementById("shareUserConfirmBtn");
+  const shareGroupSelect = document.getElementById("shareGroupSelect");
+  const shareGroupError = document.getElementById("shareGroupError");
+  const shareGroupConfirmBtn = document.getElementById("shareGroupConfirmBtn");
+  const shareFolderCloseBtn = document.getElementById("shareFolderCloseBtn");
+
+  let groupsLoaded = false;
+
+  async function loadGroupsDropdown() {
+    if (groupsLoaded) return;
+    try {
+      const result = await getMyGroups();
+      const groups = Array.isArray(result.data) ? result.data : [];
+      shareGroupSelect.innerHTML = '<option value="">-- Choose a Group --</option>';
+      groups.forEach(g => {
+        const opt = document.createElement("option");
+        opt.value = g.groupId;
+        opt.textContent = g.groupName;
+        shareGroupSelect.appendChild(opt);
+      });
+      groupsLoaded = true;
+    } catch (e) {
+      console.error("Failed to load groups for dropdown", e);
+    }
+  }
+
+  async function loadFolderShares() {
+    const sharesLoader = document.getElementById("sharesLoader");
+    const sharesList = document.getElementById("sharesList");
+    const sharesEmpty = document.getElementById("sharesEmpty");
+
+    sharesLoader.style.display = "flex";
+    sharesList.style.display = "none";
+    sharesEmpty.style.display = "none";
+    sharesList.innerHTML = "";
+
+    try {
+      const sharesData = await getFolderShares(currentParentFolderId);
+      const userShares = sharesData.data?.userShares || [];
+      const groupShares = sharesData.data?.groupShares || [];
+
+      sharesLoader.style.display = "none";
+
+      if (userShares.length === 0 && groupShares.length === 0) {
+        sharesEmpty.style.display = "block";
+        return;
+      }
+
+      userShares.forEach(share => {
+        const item = document.createElement("div");
+        item.className = "share-roster-item";
+
+        const info = document.createElement("div");
+        info.className = "share-roster-info";
+        info.innerHTML = `<span class="share-email">${share.sharedWithEmail}</span> <span class="share-type">(User)</span>`;
+
+        const revokeBtn = document.createElement("button");
+        revokeBtn.type = "button";
+        revokeBtn.className = "btn btn-danger btn-sm";
+        revokeBtn.textContent = "Revoke";
+        revokeBtn.addEventListener("click", async () => {
+          revokeBtn.disabled = true;
+          try {
+            await revokeFolderShare(share.shareId);
+            await loadFolderShares();
+          } catch (err) {
+            alert(err.message || "Failed to revoke share.");
+          } finally {
+            revokeBtn.disabled = false;
+          }
+        });
+
+        item.append(info, revokeBtn);
+        sharesList.appendChild(item);
+      });
+
+      groupShares.forEach(share => {
+        const item = document.createElement("div");
+        item.className = "share-roster-item";
+
+        const info = document.createElement("div");
+        info.className = "share-roster-info";
+        info.innerHTML = `<span class="share-email">${share.groupName}</span> <span class="share-type">(Group)</span>`;
+
+        const revokeBtn = document.createElement("button");
+        revokeBtn.type = "button";
+        revokeBtn.className = "btn btn-danger btn-sm";
+        revokeBtn.textContent = "Revoke";
+        revokeBtn.addEventListener("click", async () => {
+          revokeBtn.disabled = true;
+          try {
+            await revokeGroupFolderShare(share.shareId);
+            await loadFolderShares();
+          } catch (err) {
+            alert(err.message || "Failed to revoke group share.");
+          } finally {
+            revokeBtn.disabled = false;
+          }
+        });
+
+        item.append(info, revokeBtn);
+        sharesList.appendChild(item);
+      });
+
+      sharesList.style.display = "flex";
+
+    } catch (error) {
+      sharesLoader.style.display = "none";
+      sharesEmpty.textContent = "Failed to load shares registry.";
+      sharesEmpty.style.display = "block";
+    }
+  }
+
+  if (currentParentFolderId) {
+    if (shareFolderBtn) {
+      shareFolderBtn.style.display = "flex";
+      shareFolderBtn.addEventListener("click", async () => {
+        // Reset modal state
+        hideError(shareUserError);
+        hideError(shareGroupError);
+        shareUserEmail.value = "";
+        shareGroupSelect.value = "";
+
+        // Default Tab: User
+        modalTabUserBtn.click();
+
+        openModal(shareFolderModal);
+
+        // Load active shares and group dropdown options
+        await loadFolderShares();
+        await loadGroupsDropdown();
+      });
+    }
+  }
+
+  // Modal Tab bindings
+  modalTabUserBtn.addEventListener("click", () => {
+    modalTabUserBtn.classList.add("active");
+    modalTabGroupBtn.classList.remove("active");
+    modalUserPanel.style.display = "block";
+    modalGroupPanel.style.display = "none";
+  });
+
+  modalTabGroupBtn.addEventListener("click", () => {
+    modalTabGroupBtn.classList.add("active");
+    modalTabUserBtn.classList.remove("active");
+    modalGroupPanel.style.display = "block";
+    modalUserPanel.style.display = "none";
+  });
+
+  // User share confirm
+  shareUserConfirmBtn.addEventListener("click", async () => {
+    const email = shareUserEmail.value.trim();
+    if (!email) {
+      showError(shareUserError, "User email is required.");
+      return;
+    }
+
+    hideError(shareUserError);
+    shareUserConfirmBtn.disabled = true;
+
+    try {
+      await shareFolderToUser(currentParentFolderId, email);
+      shareUserEmail.value = "";
+      await loadFolderShares();
+    } catch (err) {
+      showError(shareUserError, err.message || "Failed to share folder with user.");
+    } finally {
+      shareUserConfirmBtn.disabled = false;
+    }
+  });
+
+  shareUserEmail.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") shareUserConfirmBtn.click();
+  });
+
+  // Group share confirm
+  shareGroupConfirmBtn.addEventListener("click", async () => {
+    const groupId = shareGroupSelect.value;
+    if (!groupId) {
+      showError(shareGroupError, "Please select a group.");
+      return;
+    }
+
+    hideError(shareGroupError);
+    shareGroupConfirmBtn.disabled = true;
+
+    try {
+      await shareFolderToGroup(currentParentFolderId, groupId);
+      shareGroupSelect.value = "";
+      await loadFolderShares();
+    } catch (err) {
+      showError(shareGroupError, err.message || "Failed to share folder with group.");
+    } finally {
+      shareGroupConfirmBtn.disabled = false;
+    }
+  });
+
+  shareFolderCloseBtn.addEventListener("click", () => {
+    closeModal(shareFolderModal);
   });
 
   // Init

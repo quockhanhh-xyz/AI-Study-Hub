@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shared Folder Detail - AI Study Hub</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <!-- Page Header -->
+            <section class="page-header" style="max-width: none; margin: 0 0 32px 0;">
+                <h1 id="sharedFolderTitle">Shared Folder</h1>
+                <nav class="breadcrumb" id="sharedBreadcrumb" aria-label="Folder navigation"></nav>
+            </section>
+
+            <!-- Subfolders Section -->
+            <div id="sharedSubfoldersSection" class="card dashboard-panel" style="margin-bottom: 24px;">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Subfolders</h2>
+                        <p>Browse directories shared inside this folder.</p>
+                    </div>
+                </div>
+
+                <div id="sharedFolderLoader" class="document-state">
+                    <span>Loading folders...</span>
+                </div>
+
+                <div id="sharedFolderGrid" class="folder-grid"></div>
+
+                <div id="sharedFolderEmpty" class="empty-state" style="display: none;">
+                    <div class="empty-title">No subfolders</div>
+                    <p>There are no subfolders inside this folder.</p>
+                </div>
+            </div>
+
+            <!-- Documents Section -->
+            <div id="sharedDocsSection" class="folder-doc-view" style="display: block;">
+                <div class="card dashboard-panel">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">Documents</h2>
+                            <p>View or download shared documents in this folder.</p>
+                        </div>
+                    </div>
+
+                    <div id="sharedDocLoader" class="document-state">
+                        <span>Loading documents...</span>
+                    </div>
+
+                    <p id="sharedDocError" class="helper-text error" role="alert" style="display: none;"></p>
+
+                    <div id="sharedDocGrid" class="document-grid"></div>
+
+                    <div id="sharedDocEmpty" class="empty-state" style="display: none;">
+                        <div class="empty-title">No documents</div>
+                        <p>There are no documents inside this folder.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/folder-share-api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/shared-folder-detail.js"></script>
+</body>
+
+</html>

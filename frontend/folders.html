@@ -19,9 +19,14 @@
 
             <!-- ── FOLDER LIST VIEW ── -->
             <div id="folderListView">
-                <section class="page-header">
-                    <h1>My Folders</h1>
-                    <nav class="breadcrumb" id="breadcrumb" aria-label="Folder navigation"></nav>
+                <section class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; max-width: none;">
+                    <div>
+                        <h1 id="folderPageTitle">My Folders</h1>
+                        <nav class="breadcrumb" id="breadcrumb" aria-label="Folder navigation"></nav>
+                    </div>
+                    <button type="button" id="shareFolderBtn" class="btn btn-secondary" style="display: none; align-items: center; gap: 6px; padding: 10px 16px;">
+                        🔗 Share Folder
+                    </button>
                 </section>
 
                 <div class="card dashboard-panel">
@@ -121,10 +126,65 @@
         </div>
     </div>
 
+    <!-- ── SHARE FOLDER MODAL ── -->
+    <div class="modal-overlay" id="shareFolderModal" role="dialog" aria-modal="true" aria-labelledby="shareFolderModalTitle">
+        <div class="modal-box modal-box-share">
+            <h3 id="shareFolderModalTitle">Share Folder</h3>
+
+            <!-- Tab Headers -->
+            <div class="tab-header">
+                <button type="button" class="tab-btn active" id="modalTabUserBtn">User</button>
+                <button type="button" class="tab-btn" id="modalTabGroupBtn">Group</button>
+            </div>
+
+            <!-- Tab Content: User Share -->
+            <div id="modalUserPanel">
+                <div class="form-group">
+                    <label for="shareUserEmail">User Email <span class="label-required">*</span></label>
+                    <input type="email" id="shareUserEmail" placeholder="E.g: friend@gmail.com" autocomplete="off" class="modal-form-input" />
+                </div>
+                <p id="shareUserError" class="modal-error-text" role="alert"></p>
+                <button type="button" class="btn btn-primary modal-btn-full" id="shareUserConfirmBtn">Share with User</button>
+            </div>
+
+            <!-- Tab Content: Group Share -->
+            <div id="modalGroupPanel" style="display: none;">
+                <div class="form-group">
+                    <label for="shareGroupSelect">Select Group <span class="label-required">*</span></label>
+                    <select id="shareGroupSelect" class="modal-form-input">
+                        <option value="">-- Choose a Group --</option>
+                    </select>
+                </div>
+                <p id="shareGroupError" class="modal-error-text" role="alert"></p>
+                <button type="button" class="btn btn-primary modal-btn-full" id="shareGroupConfirmBtn">Share to Group</button>
+            </div>
+
+            <hr class="modal-divider" />
+
+            <!-- Active Shares Management -->
+            <h4 class="modal-section-title">Shared with</h4>
+            <div id="sharesLoader" class="document-state" style="display: none; justify-content: center;">
+                <span>Loading shares...</span>
+            </div>
+            <div id="sharesList" class="shares-list-container">
+                <!-- Dynamically filled with shares -->
+            </div>
+            <div id="sharesEmpty" class="share-roster-empty">
+                This folder is not shared with anyone yet.
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary modal-btn-full" id="shareFolderCloseBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/api.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/document-api.js"></script>
     <script src="js/folder-api.js"></script>
+    <script src="js/group-api.js"></script>
+    <script src="js/folder-share-api.js"></script>
     <script src="js/navigation.js"></script>
     <script src="js/layout.js"></script>
     <script src="js/folders.js"></script>
