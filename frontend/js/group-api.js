@@ -89,3 +89,13 @@ function removeGroupMember(groupId, userId) {
 function getGroupDocuments(groupId) {
   return get(`/api/groups/${groupId}/documents`);
 }
+
+/**
+ * Retrieves all folders shared inside a group.
+ * Matches Contract 9.6: GET /api/groups/{id}/folders
+ * @param {number|string} groupId - Group identifier.
+ * @returns {Promise<Object>} List of group shared folders.
+ */
+function getGroupFolders(groupId) {
+  return get(`/api/groups/${groupId}/folders`);
+}
