@@ -1,5 +1,6 @@
 /**
  * Global Navigation configuration definition for AI Study Hub app shell.
+ * Extended in Step 6B to include the shared folder detail view layout.
  */
 const NAVIGATION_MENU = [
   { name: "Home", icon: "🏠", url: "index.html", requiresAuth: false },
@@ -20,7 +21,8 @@ const NAVIGATION_MENU = [
 
   // Hidden views mapped explicitly for Auth Guard coverage without rendering on the sidebar
   { name: "Document Detail", icon: "ℹ️", url: "document-detail.html", requiresAuth: true, hidden: true },
-  { name: "Group Detail", icon: "👥", url: "group-detail.html", requiresAuth: true, hidden: true }
+  { name: "Group Detail", icon: "👥", url: "group-detail.html", requiresAuth: true, hidden: true },
+  { name: "Shared Folder Detail", icon: "📂", url: "shared-folder-detail.html", requiresAuth: true, hidden: true }
 ];
 
 /**
@@ -44,6 +46,10 @@ function initializeActiveMenu() {
 
   if (currentPage === "group-detail.html") {
     currentPage = "groups.html";
+  }
+
+  if (currentPage === "shared-folder-detail.html") {
+    currentPage = "shared-with-me.html";
   }
 
   navLinks.forEach(link => {
