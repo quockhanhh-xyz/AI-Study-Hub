@@ -1,6 +1,7 @@
 package com.demo.ai_study_hub.service;
 
 import com.demo.ai_study_hub.dto.FolderShareResponse;
+import com.demo.ai_study_hub.dto.FolderSharesListResponse;
 import com.demo.ai_study_hub.dto.ShareFolderRequest;
 import com.demo.ai_study_hub.dto.SharedFolderContentResponse;
 
@@ -12,7 +13,7 @@ public interface FolderShareService {
 
     List<FolderShareResponse> getSharedWithMe(String email);
 
-    List<FolderShareResponse> getFolderShares(Integer folderId, String email);
+    FolderSharesListResponse getFolderShares(Integer folderId, String email);
 
     void revokeFolderShare(Integer shareId, String email);
 

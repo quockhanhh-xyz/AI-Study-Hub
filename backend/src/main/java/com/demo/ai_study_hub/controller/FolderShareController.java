@@ -46,11 +46,11 @@ public class FolderShareController {
     }
 
     @GetMapping("/api/folders/{id}/shares")
-    public ResponseEntity<ApiResponse<List<FolderShareResponse>>> getFolderShares(
+    public ResponseEntity<ApiResponse<FolderSharesListResponse>> getFolderShares(
             @PathVariable Integer id,
             Principal principal) {
         try {
-            List<FolderShareResponse> data = folderShareService.getFolderShares(id, principal.getName());
+            FolderSharesListResponse data = folderShareService.getFolderShares(id, principal.getName());
             return ResponseEntity.ok(ApiResponse.success(data, "Folder shares retrieved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));

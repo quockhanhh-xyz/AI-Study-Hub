@@ -64,7 +64,7 @@ public class FolderShareServiceImpl implements FolderShareService {
             share = folderShareRepository.save(newShare);
         }
 
-        return mapToShareResponse(share);
+        return mapToShareResponse(share, owner.getUserId());
     }
 
     @Override
@@ -75,20 +75,25 @@ public class FolderShareServiceImpl implements FolderShareService {
         return folderShareRepository.findBySharedWithUserAndStatus(user, "ACTIVE")
                 .stream()
                 .filter(s -> "ACTIVE".equals(s.getFolder().getStatus()))
-                .map(this::mapToShareResponse)
+                .map(s -> mapToShareResponse(s, user.getUserId()))
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<FolderShareResponse> getFolderShares(Integer folderId, String email) {
+    public FolderSharesListResponse getFolderShares(Integer folderId, String email) {
         User owner = getUser(email);
         Folder folder = getActiveOwnedFolder(folderId, owner);
 
-        return folderShareRepository.findByFolderAndStatus(folder, "ACTIVE")
+        List<FolderShareResponse> userShares = folderShareRepository.findByFolderAndStatus(folder, "ACTIVE")
                 .stream()
-                .map(this::mapToShareResponse)
+                .map(s -> mapToShareResponse(s, owner.getUserId()))
                 .collect(Collectors.toList());
+
+        return FolderSharesListResponse.builder()
+                .userShares(userShares)
+                .groupShares(new ArrayList<>())
+                .build();
     }
 
     @Override
@@ -252,8 +257,10 @@ public class FolderShareServiceImpl implements FolderShareService {
         return folder;
     }
 
-    private FolderShareResponse mapToShareResponse(FolderShare share) {
+    private FolderShareResponse mapToShareResponse(FolderShare share, Integer currentUserId) {
         Folder folder = share.getFolder();
+        boolean canRevoke = folder.getOwner().getUserId().equals(currentUserId);
+
         return FolderShareResponse.builder()
                 .shareId(share.getShareId())
                 .folderId(folder.getFolderId())
@@ -267,7 +274,7 @@ public class FolderShareServiceImpl implements FolderShareService {
                 .permission(share.getPermission())
                 .status(share.getStatus())
                 .createdAt(share.getCreatedAt())
-                .canRevoke(true)
+                .canRevoke(canRevoke)
                 .build();
     }
 
@@ -287,11 +294,18 @@ public class FolderShareServiceImpl implements FolderShareService {
         return DocumentResponse.builder()
                 .documentId(doc.getDocumentId())
                 .title(doc.getTitle())
+                .description(doc.getDescription())
+                .originalFileName(doc.getOriginalFileName())
                 .fileType(doc.getFileType())
                 .fileSize(doc.getFileSize())
                 .fileUrl(doc.getFileUrl())
+                .publicId(doc.getPublicId())
+                .folderId(doc.getFolder() != null ? doc.getFolder().getFolderId() : null)
+                .folderName(doc.getFolder() != null ? doc.getFolder().getName() : null)
+                .uploadedBy(doc.getOwner().getEmail())
                 .status(doc.getStatus())
                 .createdAt(doc.getCreatedAt())
+                .updatedAt(doc.getUpdatedAt())
                 .build();
     }
 }
