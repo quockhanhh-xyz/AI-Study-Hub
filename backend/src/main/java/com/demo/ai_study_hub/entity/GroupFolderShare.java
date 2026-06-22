@@ -9,12 +9,12 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "folder_shares", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"folder_id", "shared_with_user_id"})
+@Table(name = "group_folder_shares", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"folder_id", "group_id"})
 })
 @Data
 @NoArgsConstructor
-public class FolderShare {
+public class GroupFolderShare {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,18 +26,18 @@ public class FolderShare {
     private Folder folder;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shared_by", referencedColumnName = "user_id", nullable = false)
-    private User sharedBy;
+    @JoinColumn(name = "group_id", nullable = false)
+    private StudyGroup group;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shared_with_user_id", referencedColumnName = "user_id", nullable = false)
-    private User sharedWithUser;
+    @JoinColumn(name = "shared_by", referencedColumnName = "user_id", nullable = false)
+    private User sharedBy;
 
     @Column(name = "permission", nullable = false, length = 20)
     private String permission = "VIEW";
 
     @Column(name = "status", nullable = false, length = 30)
-    private String status = "ACTIVE";
+    private String status = "ACTIVE"; // ACTIVE, REVOKED
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
