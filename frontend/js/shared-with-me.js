@@ -1,7 +1,7 @@
 /**
  * Shared With Me UI controller for AI Study Hub.
- * Handles: list direct shared documents.
- * Relies on share-api.js; never uses raw fetch directly.
+ * Handles: list direct shared documents and folders.
+ * Relies on share-api.js and folder-share-api.js; never uses raw fetch directly.
  */
 
 document.addEventListener("DOMContentLoaded", async function () {
@@ -9,6 +9,16 @@ document.addEventListener("DOMContentLoaded", async function () {
   const sharedError = document.getElementById("sharedError");
   const sharedGrid = document.getElementById("sharedGrid");
   const sharedEmpty = document.getElementById("sharedEmpty");
+
+  const folderLoader = document.getElementById("folderLoader");
+  const folderError = document.getElementById("folderError");
+  const folderGrid = document.getElementById("folderGrid");
+  const folderEmpty = document.getElementById("folderEmpty");
+
+  const tabDocsBtn = document.getElementById("tabDocsBtn");
+  const tabFoldersBtn = document.getElementById("tabFoldersBtn");
+  const sharedDocsPanel = document.getElementById("sharedDocsPanel");
+  const sharedFoldersPanel = document.getElementById("sharedFoldersPanel");
 
   function showError(message) {
     sharedError.textContent = message;
@@ -18,6 +28,16 @@ document.addEventListener("DOMContentLoaded", async function () {
   function hideError() {
     sharedError.textContent = "";
     sharedError.style.display = "none";
+  }
+
+  function showFolderError(message) {
+    folderError.textContent = message;
+    folderError.style.display = "block";
+  }
+
+  function hideFolderError() {
+    folderError.textContent = "";
+    folderError.style.display = "none";
   }
 
   function formatFileSize(bytes) {
@@ -86,6 +106,41 @@ document.addEventListener("DOMContentLoaded", async function () {
     return card;
   }
 
+  function createFolderCard(share) {
+    const card = document.createElement("div");
+    card.className = "folder-card";
+    card.style.cursor = "pointer";
+
+    const icon = document.createElement("div");
+    icon.className = "folder-icon";
+    icon.textContent = "📁";
+
+    const name = document.createElement("p");
+    name.className = "folder-name";
+    name.textContent = share.folderName || "Untitled Folder";
+
+    const desc = document.createElement("p");
+    desc.className = "folder-meta";
+    desc.style.fontSize = "12px";
+    desc.style.marginTop = "4px";
+    desc.textContent = `Owner: ${share.ownerName} (${share.ownerEmail})`;
+
+    const meta = document.createElement("p");
+    meta.className = "folder-meta";
+    meta.style.fontSize = "11px";
+    meta.style.marginTop = "4px";
+    meta.style.color = "var(--muted)";
+    meta.textContent = `Shared by: ${share.sharedByName} · Date: ${formatDate(share.createdAt)}`;
+
+    card.append(icon, name, desc, meta);
+
+    card.addEventListener("click", function () {
+      window.location.href = `shared-folder-detail.html?id=${share.folderId}`;
+    });
+
+    return card;
+  }
+
   async function loadSharedDocuments() {
     sharedLoader.style.display = "flex";
     sharedGrid.style.display = "none";
@@ -114,6 +169,59 @@ document.addEventListener("DOMContentLoaded", async function () {
       showError(error.message || "Failed to load shared documents.");
     }
   }
+
+  async function loadSharedFolders() {
+    folderLoader.style.display = "flex";
+    folderGrid.style.display = "none";
+    folderEmpty.style.display = "none";
+    hideFolderError();
+
+    try {
+      const result = await getFoldersSharedWithMe();
+      const shares = Array.isArray(result.data) ? result.data : [];
+
+      folderLoader.style.display = "none";
+
+      if (shares.length === 0) {
+        folderEmpty.style.display = "block";
+        return;
+      }
+
+      folderGrid.innerHTML = "";
+      shares.forEach(function (share) {
+        folderGrid.appendChild(createFolderCard(share));
+      });
+      folderGrid.style.display = "grid";
+
+    } catch (error) {
+      folderLoader.style.display = "none";
+      showFolderError(error.message || "Failed to load shared folders.");
+    }
+  }
+
+  // Tab switching event bindings
+  tabDocsBtn.addEventListener("click", () => {
+    tabDocsBtn.classList.add("active");
+    tabDocsBtn.style.borderBottomColor = "var(--primary)";
+    tabDocsBtn.style.color = "var(--primary)";
+    tabFoldersBtn.classList.remove("active");
+    tabFoldersBtn.style.borderBottomColor = "transparent";
+    tabFoldersBtn.style.color = "var(--muted)";
+    sharedDocsPanel.style.display = "block";
+    sharedFoldersPanel.style.display = "none";
+  });
+
+  tabFoldersBtn.addEventListener("click", async () => {
+    tabFoldersBtn.classList.add("active");
+    tabFoldersBtn.style.borderBottomColor = "var(--primary)";
+    tabFoldersBtn.style.color = "var(--primary)";
+    tabDocsBtn.classList.remove("active");
+    tabDocsBtn.style.borderBottomColor = "transparent";
+    tabDocsBtn.style.color = "var(--muted)";
+    sharedFoldersPanel.style.display = "block";
+    sharedDocsPanel.style.display = "none";
+    await loadSharedFolders();
+  });
 
   await loadSharedDocuments();
 });
