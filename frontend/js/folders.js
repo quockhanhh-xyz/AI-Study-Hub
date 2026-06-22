@@ -507,23 +507,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       userShares.forEach(share => {
         const item = document.createElement("div");
-        item.style.display = "flex";
-        item.style.justifyContent = "space-between";
-        item.style.alignItems = "center";
-        item.style.padding = "8px 12px";
-        item.style.background = "var(--primary-light)";
-        item.style.borderRadius = "8px";
-        item.style.border = "1px solid var(--primary-border)";
+        item.className = "share-roster-item";
 
         const info = document.createElement("div");
-        info.innerHTML = `<span style="font-weight:600; font-size:13px; color:var(--text);">${share.sharedWithEmail}</span> <span style="font-size:11px; color:var(--muted);">(User)</span>`;
+        info.className = "share-roster-info";
+        info.innerHTML = `<span class="share-email">${share.sharedWithEmail}</span> <span class="share-type">(User)</span>`;
 
         const revokeBtn = document.createElement("button");
         revokeBtn.type = "button";
         revokeBtn.className = "btn btn-danger btn-sm";
         revokeBtn.textContent = "Revoke";
-        revokeBtn.style.padding = "4px 8px";
-        revokeBtn.style.fontSize = "11px";
         revokeBtn.addEventListener("click", async () => {
           revokeBtn.disabled = true;
           try {
@@ -542,23 +535,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       groupShares.forEach(share => {
         const item = document.createElement("div");
-        item.style.display = "flex";
-        item.style.justifyContent = "space-between";
-        item.style.alignItems = "center";
-        item.style.padding = "8px 12px";
-        item.style.background = "var(--primary-light)";
-        item.style.borderRadius = "8px";
-        item.style.border = "1px solid var(--primary-border)";
+        item.className = "share-roster-item";
 
         const info = document.createElement("div");
-        info.innerHTML = `<span style="font-weight:600; font-size:13px; color:var(--text);">${share.groupName}</span> <span style="font-size:11px; color:var(--muted);">(Group)</span>`;
+        info.className = "share-roster-info";
+        info.innerHTML = `<span class="share-email">${share.groupName}</span> <span class="share-type">(Group)</span>`;
 
         const revokeBtn = document.createElement("button");
         revokeBtn.type = "button";
         revokeBtn.className = "btn btn-danger btn-sm";
         revokeBtn.textContent = "Revoke";
-        revokeBtn.style.padding = "4px 8px";
-        revokeBtn.style.fontSize = "11px";
         revokeBtn.addEventListener("click", async () => {
           revokeBtn.disabled = true;
           try {
@@ -593,12 +579,12 @@ document.addEventListener("DOMContentLoaded", async function () {
         hideError(shareGroupError);
         shareUserEmail.value = "";
         shareGroupSelect.value = "";
-        
+
         // Default Tab: User
         modalTabUserBtn.click();
-        
+
         openModal(shareFolderModal);
-        
+
         // Load active shares and group dropdown options
         await loadFolderShares();
         await loadGroupsDropdown();
@@ -609,22 +595,14 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Modal Tab bindings
   modalTabUserBtn.addEventListener("click", () => {
     modalTabUserBtn.classList.add("active");
-    modalTabUserBtn.style.borderBottomColor = "var(--primary)";
-    modalTabUserBtn.style.color = "var(--primary)";
     modalTabGroupBtn.classList.remove("active");
-    modalTabGroupBtn.style.borderBottomColor = "transparent";
-    modalTabGroupBtn.style.color = "var(--muted)";
     modalUserPanel.style.display = "block";
     modalGroupPanel.style.display = "none";
   });
 
   modalTabGroupBtn.addEventListener("click", () => {
     modalTabGroupBtn.classList.add("active");
-    modalTabGroupBtn.style.borderBottomColor = "var(--primary)";
-    modalTabGroupBtn.style.color = "var(--primary)";
     modalTabUserBtn.classList.remove("active");
-    modalTabUserBtn.style.borderBottomColor = "transparent";
-    modalTabUserBtn.style.color = "var(--muted)";
     modalGroupPanel.style.display = "block";
     modalUserPanel.style.display = "none";
   });
@@ -636,10 +614,10 @@ document.addEventListener("DOMContentLoaded", async function () {
       showError(shareUserError, "User email is required.");
       return;
     }
-    
+
     hideError(shareUserError);
     shareUserConfirmBtn.disabled = true;
-    
+
     try {
       await shareFolderToUser(currentParentFolderId, email);
       shareUserEmail.value = "";
@@ -662,10 +640,10 @@ document.addEventListener("DOMContentLoaded", async function () {
       showError(shareGroupError, "Please select a group.");
       return;
     }
-    
+
     hideError(shareGroupError);
     shareGroupConfirmBtn.disabled = true;
-    
+
     try {
       await shareFolderToGroup(currentParentFolderId, groupId);
       shareGroupSelect.value = "";

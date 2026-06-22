@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     card.append(icon, name, desc, meta);
 
     card.addEventListener("click", function () {
-      window.location.href = `shared-folder-detail.html?id=${share.folderId}`;
+      window.location.href = `shared-folder-detail.html?folderId=${share.folderId}`;
     });
 
     return card;
@@ -202,22 +202,14 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Tab switching event bindings
   tabDocsBtn.addEventListener("click", () => {
     tabDocsBtn.classList.add("active");
-    tabDocsBtn.style.borderBottomColor = "var(--primary)";
-    tabDocsBtn.style.color = "var(--primary)";
     tabFoldersBtn.classList.remove("active");
-    tabFoldersBtn.style.borderBottomColor = "transparent";
-    tabFoldersBtn.style.color = "var(--muted)";
     sharedDocsPanel.style.display = "block";
     sharedFoldersPanel.style.display = "none";
   });
 
   tabFoldersBtn.addEventListener("click", async () => {
     tabFoldersBtn.classList.add("active");
-    tabFoldersBtn.style.borderBottomColor = "var(--primary)";
-    tabFoldersBtn.style.color = "var(--primary)";
     tabDocsBtn.classList.remove("active");
-    tabDocsBtn.style.borderBottomColor = "transparent";
-    tabDocsBtn.style.color = "var(--muted)";
     sharedFoldersPanel.style.display = "block";
     sharedDocsPanel.style.display = "none";
     await loadSharedFolders();

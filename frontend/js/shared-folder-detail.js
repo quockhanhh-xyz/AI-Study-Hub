@@ -17,10 +17,10 @@ document.addEventListener("DOMContentLoaded", async function () {
   const sharedDocEmpty = document.getElementById("sharedDocEmpty");
   const sharedDocError = document.getElementById("sharedDocError");
 
-  // Read folderId from URL query parameter ?id=
+  // Read folderId from URL query parameter ?folderId= or ?id=
   function getFolderIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    return params.get("id");
+    return params.get("folderId") || params.get("id");
   }
 
   const folderId = getFolderIdFromUrl();
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       } else {
         const link = document.createElement("a");
         link.className = "breadcrumb-link";
-        link.href = `shared-folder-detail.html?id=${crumb.folderId}`;
+        link.href = `shared-folder-detail.html?folderId=${crumb.folderId}`;
         link.textContent = crumb.folderName;
         sharedBreadcrumb.appendChild(link);
 
@@ -104,7 +104,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     card.appendChild(main);
 
     card.addEventListener("click", function () {
-      window.location.href = `shared-folder-detail.html?id=${folder.folderId}`;
+      window.location.href = `shared-folder-detail.html?folderId=${folder.folderId}`;
     });
 
     return card;

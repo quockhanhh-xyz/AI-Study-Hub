@@ -128,53 +128,53 @@
 
     <!-- ── SHARE FOLDER MODAL ── -->
     <div class="modal-overlay" id="shareFolderModal" role="dialog" aria-modal="true" aria-labelledby="shareFolderModalTitle">
-        <div class="modal-box" style="max-width: 500px; padding: 24px;">
+        <div class="modal-box modal-box-share">
             <h3 id="shareFolderModalTitle">Share Folder</h3>
-            
+
             <!-- Tab Headers -->
-            <div class="tab-header" style="display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px;">
-                <button type="button" class="tab-btn active" id="modalTabUserBtn" style="padding: 10px 15px; background: transparent; border: none; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600; cursor: pointer; flex: 1;">User</button>
-                <button type="button" class="tab-btn" id="modalTabGroupBtn" style="padding: 10px 15px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-weight: 600; cursor: pointer; flex: 1;">Group</button>
+            <div class="tab-header">
+                <button type="button" class="tab-btn active" id="modalTabUserBtn">User</button>
+                <button type="button" class="tab-btn" id="modalTabGroupBtn">Group</button>
             </div>
 
             <!-- Tab Content: User Share -->
             <div id="modalUserPanel">
-                <div class="form-group" style="margin-bottom: 16px;">
+                <div class="form-group">
                     <label for="shareUserEmail">User Email <span class="label-required">*</span></label>
-                    <input type="email" id="shareUserEmail" placeholder="E.g: friend@gmail.com" autocomplete="off" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;" />
+                    <input type="email" id="shareUserEmail" placeholder="E.g: friend@gmail.com" autocomplete="off" class="modal-form-input" />
                 </div>
-                <p id="shareUserError" class="modal-error" style="display: none; color: var(--danger-text); margin-bottom: 12px; font-size: 14px;" role="alert"></p>
-                <button type="button" class="btn btn-primary" id="shareUserConfirmBtn" style="width: 100%;">Share with User</button>
+                <p id="shareUserError" class="modal-error-text" role="alert"></p>
+                <button type="button" class="btn btn-primary modal-btn-full" id="shareUserConfirmBtn">Share with User</button>
             </div>
 
             <!-- Tab Content: Group Share -->
             <div id="modalGroupPanel" style="display: none;">
-                <div class="form-group" style="margin-bottom: 16px;">
+                <div class="form-group">
                     <label for="shareGroupSelect">Select Group <span class="label-required">*</span></label>
-                    <select id="shareGroupSelect" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
+                    <select id="shareGroupSelect" class="modal-form-input">
                         <option value="">-- Choose a Group --</option>
                     </select>
                 </div>
-                <p id="shareGroupError" class="modal-error" style="display: none; color: var(--danger-text); margin-bottom: 12px; font-size: 14px;" role="alert"></p>
-                <button type="button" class="btn btn-primary" id="shareGroupConfirmBtn" style="width: 100%;">Share to Group</button>
+                <p id="shareGroupError" class="modal-error-text" role="alert"></p>
+                <button type="button" class="btn btn-primary modal-btn-full" id="shareGroupConfirmBtn">Share to Group</button>
             </div>
 
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 24px 0 16px;" />
+            <hr class="modal-divider" />
 
             <!-- Active Shares Management -->
-            <h4 style="margin: 0 0 12px; font-size: 15px; font-weight: 600;">Shared with</h4>
-            <div id="sharesLoader" class="document-state" style="display: none; justify-content: center; padding: 12px;">
+            <h4 class="modal-section-title">Shared with</h4>
+            <div id="sharesLoader" class="document-state" style="display: none; justify-content: center;">
                 <span>Loading shares...</span>
             </div>
-            <div id="sharesList" style="max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+            <div id="sharesList" class="shares-list-container">
                 <!-- Dynamically filled with shares -->
             </div>
-            <div id="sharesEmpty" style="display: block; text-align: center; color: var(--muted); padding: 12px; font-size: 13px;">
+            <div id="sharesEmpty" class="share-roster-empty">
                 This folder is not shared with anyone yet.
             </div>
 
-            <div class="modal-actions" style="margin-top: 24px;">
-                <button type="button" class="btn btn-secondary" id="shareFolderCloseBtn" style="width: 100%;">Close</button>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary modal-btn-full" id="shareFolderCloseBtn">Close</button>
             </div>
         </div>
     </div>

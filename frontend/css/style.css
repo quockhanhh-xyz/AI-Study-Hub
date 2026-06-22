@@ -2016,3 +2016,139 @@ textarea.success {
     gap: 12px;
   }
 }
+
+/* ── Tabbed Interface ── */
+.tab-header {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+  gap: 12px;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+  color: var(--text);
+}
+
+.tab-btn.active {
+  border-bottom-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Modal Tab Variant */
+.modal-box .tab-header {
+  margin-bottom: 20px;
+}
+
+.modal-box .tab-btn {
+  flex: 1;
+  padding: 10px 15px;
+}
+
+/* ── Share Modal Custom Styles ── */
+.modal-box-share {
+  max-width: 500px;
+  padding: 24px;
+}
+
+.modal-form-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.modal-form-input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.modal-error-text {
+  color: var(--danger-text);
+  margin-bottom: 12px;
+  font-size: 14px;
+  display: none;
+}
+
+.modal-divider {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 24px 0 16px;
+}
+
+.modal-section-title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.modal-btn-full {
+  width: 100%;
+}
+
+/* ── Share Roster Item ── */
+.shares-list-container {
+  max-height: 180px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.share-roster-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--primary-light);
+  border: 1px solid var(--primary-border);
+  border-radius: 8px;
+}
+
+.share-roster-info {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.share-roster-info .share-email {
+  font-weight: 600;
+}
+
+.share-roster-info .share-type {
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: 4px;
+}
+
+.share-roster-empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 12px;
+  font-size: 13px;
+}
+
+/* ── Shared Traversal Page Styles ── */
+.shared-page-header {
+  max-width: none !important;
+  margin: 0 0 32px 0 !important;
+}
+
+.shared-subfolders-card {
+  margin-bottom: 24px;
+}
