@@ -28,6 +28,7 @@ public class DocumentService {
     private final CloudinaryStorageService cloudinaryStorageService;
     private final SubjectRepository subjectRepository;
     private final FolderRepository folderRepository;
+    private final FolderShareService folderShareService;
 
     public DocumentResponse uploadDocument(MultipartFile file, String title, String description, Integer subjectId, Integer folderId, String email) {
         if (title == null || title.trim().isEmpty()) {
@@ -155,9 +156,25 @@ public class DocumentService {
     }
 
     public DocumentResponse getDocumentDetail(Integer documentId, String email) {
-        User owner = userRepository.findByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        Document doc = getValidatedDocument(documentId, owner);
+        Document doc = documentRepository.findById(documentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+
+        if ("DELETED".equals(doc.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+
+        boolean isOwner = doc.getOwner().getUserId().equals(user.getUserId());
+        boolean hasSharedAccess = !isOwner
+                && doc.getFolder() != null
+                && folderShareService.hasAccessToFolder(doc.getFolder().getFolderId(), email);
+
+        if (!isOwner && !hasSharedAccess) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
         return mapToResponse(doc);
     }
 
