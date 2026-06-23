@@ -131,11 +131,19 @@ document.addEventListener("DOMContentLoaded", async function () {
     name.textContent = member.fullName || member.email || "Unknown User";
 
     const roleBadge = document.createElement("span");
-    roleBadge.className = member.role === "OWNER" ? "badge badge-primary" : "badge badge-success";
-    roleBadge.textContent = member.role || "MEMBER";
+    const isMemberOwner = member.role === "OWNER";
+    roleBadge.className = isMemberOwner ? "badge badge-primary" : "badge badge-success";
+    roleBadge.textContent = isMemberOwner ? "👑 OWNER" : "MEMBER";
+
+    const emailLine = document.createElement("span");
+    emailLine.className = "folder-meta";
+    emailLine.textContent = member.email && member.fullName ? member.email : "";
 
     main.append(name, roleBadge);
     row.appendChild(main);
+    if (emailLine.textContent) {
+      row.appendChild(emailLine);
+    }
 
     // Only the OWNER can remove members, and never themselves.
     if (myRole === "OWNER" && member.role !== "OWNER") {
@@ -171,6 +179,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     members.forEach(function (member) {
       memberList.appendChild(createMemberRow(member));
     });
+
+    const memberSectionTitle = document.getElementById("memberSectionTitle");
+    if (memberSectionTitle) {
+      memberSectionTitle.textContent = `Members (${members.length})`;
+    }
   }
 
   // Group documents rendering
