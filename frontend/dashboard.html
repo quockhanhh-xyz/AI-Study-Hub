@@ -26,7 +26,8 @@
                         </p>
                     </div>
                     <div class="dashboard-search">
-                        <input type="text" id="searchInput" placeholder="🔍 Search documents by title or keyword..." />
+                        <input type="text" id="searchInput" placeholder="🔍 Search your documents by title or keyword..." />
+                        <small class="search-scope-note">Searches your documents only (not folders, groups, or shared items).</small>
                     </div>
                 </div>
             </section>
@@ -43,6 +44,11 @@
                 <div class="stat-card">
                     <div class="stat-label">Account Tier</div>
                     <div class="stat-value" id="joinDate">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Usage Remaining</div>
+                    <div class="stat-value">— Demo Only —</div>
+                    <div class="stat-placeholder-note">Placeholder UI — not wired to real backend usage/quota data</div>
                 </div>
             </section>
 
@@ -172,14 +178,16 @@
         </main>
     </div>
     <!-- ── CREATE FOLDER MODAL ── -->
-    <div class="modal-overlay" id="createFolderModal" role="dialog" aria-modal="true" aria-labelledby="createFolderModalTitle">
+    <div class="modal-overlay" id="createFolderModal" role="dialog" aria-modal="true"
+        aria-labelledby="createFolderModalTitle">
         <div class="modal-box">
             <h3 id="createFolderModalTitle">New Folder</h3>
             <div class="form-group">
                 <label for="createFolderName">Folder name <span class="label-required">*</span></label>
                 <input type="text" id="createFolderName" placeholder="E.g: Math Notes" autocomplete="off" />
             </div>
-            <p id="createFolderError" class="modal-error" role="alert" aria-live="polite" style="display: none; color: var(--danger); font-size: 14px; margin-top: 10px;"></p>
+            <p id="createFolderError" class="modal-error" role="alert" aria-live="polite"
+                style="display: none; color: var(--danger); font-size: 14px; margin-top: 10px;"></p>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" id="createFolderCancelBtn">Cancel</button>
                 <button type="button" class="btn btn-primary" id="createFolderConfirmBtn">Create</button>

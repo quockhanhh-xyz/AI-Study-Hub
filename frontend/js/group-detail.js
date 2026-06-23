@@ -131,11 +131,19 @@ document.addEventListener("DOMContentLoaded", async function () {
     name.textContent = member.fullName || member.email || "Unknown User";
 
     const roleBadge = document.createElement("span");
-    roleBadge.className = member.role === "OWNER" ? "badge badge-primary" : "badge badge-success";
-    roleBadge.textContent = member.role || "MEMBER";
+    const isMemberOwner = member.role === "OWNER";
+    roleBadge.className = isMemberOwner ? "badge badge-primary" : "badge badge-success";
+    roleBadge.textContent = isMemberOwner ? "👑 OWNER" : "MEMBER";
+
+    const emailLine = document.createElement("span");
+    emailLine.className = "folder-meta";
+    emailLine.textContent = member.email && member.fullName ? member.email : "";
 
     main.append(name, roleBadge);
     row.appendChild(main);
+    if (emailLine.textContent) {
+      row.appendChild(emailLine);
+    }
 
     // Only the OWNER can remove members, and never themselves.
     if (myRole === "OWNER" && member.role !== "OWNER") {
@@ -146,18 +154,23 @@ document.addEventListener("DOMContentLoaded", async function () {
       removeBtn.addEventListener("click", async function () {
         const confirmed = await confirmAction({
           title: "Remove Member?",
-          message: `Remove ${member.fullName || member.email} from this group?`,
+          message: `Remove ${member.fullName || member.email} from this group? They will immediately lose access to this group's documents and folders.`,
           confirmText: "Remove",
           danger: true
         });
         if (!confirmed) return;
 
+        removeBtn.disabled = true;
+        removeBtn.textContent = "Removing...";
+
         try {
           await removeGroupMember(groupId, member.userId);
-          showToast("Member removed.", "success");
+          showToast(`${member.fullName || member.email} removed from the group.`, "success");
           await loadGroupDetail();
         } catch (error) {
           showToast(error.message || "Failed to remove member.", "error");
+          removeBtn.disabled = false;
+          removeBtn.textContent = "Remove";
         }
       });
       row.appendChild(removeBtn);
@@ -171,6 +184,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     members.forEach(function (member) {
       memberList.appendChild(createMemberRow(member));
     });
+
+    const memberSectionTitle = document.getElementById("memberSectionTitle");
+    if (memberSectionTitle) {
+      memberSectionTitle.textContent = `Members (${members.length})`;
+    }
   }
 
   // Group documents rendering
@@ -265,6 +283,11 @@ document.addEventListener("DOMContentLoaded", async function () {
       const docs = Array.isArray(result.data) ? result.data : [];
 
       docLoader.style.display = "none";
+
+      const docSectionTitle = document.getElementById("docSectionTitle");
+      if (docSectionTitle) {
+        docSectionTitle.textContent = `Shared Documents (${docs.length})`;
+      }
 
       if (docs.length === 0) {
         docEmpty.style.display = "block";
@@ -363,6 +386,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       folderLoader.style.display = "none";
 
+      const folderSectionTitle = document.getElementById("folderSectionTitle");
+      if (folderSectionTitle) {
+        folderSectionTitle.textContent = `Shared Folders (${folders.length})`;
+      }
+
       if (folders.length === 0) {
         folderEmpty.style.display = "block";
         return;
@@ -401,7 +429,13 @@ document.addEventListener("DOMContentLoaded", async function () {
       detailLoader.style.display = "none";
       // Backend blocks users who are not a member of the group (403/404).
       // Show the backend message and do not render the detail panel.
-      showError(detailError, error.message || "You do not have access to this group.");
+      const isAccessDenied = error.status === 403 || error.status === 404;
+      showError(
+        detailError,
+        isAccessDenied
+          ? "🔒 You are not a member of this group, so you cannot view its details, documents, or folders."
+          : (error.message || "You do not have access to this group.")
+      );
     }
   }
 
