@@ -35,6 +35,19 @@ http://localhost:8080
 
 ---
 
+### HTTP Status Code Conventions
+
+The backend APIs follow RESTful HTTP status code conventions:
+- **`200 OK`**: The request succeeded, and the response data contains the result of the operation.
+- **`400 Bad Request`**: Validation failures, malformed syntax, or business logic violations (e.g., self-sharing a document, or attempting to leave a group as the OWNER).
+- **`401 Unauthorized`**: Authentication is required or the session/accessToken cookie has expired.
+- **`403 Forbidden`**: Access is denied. The authenticated user does not have permission to view, edit, delete, or modify the resource (e.g., accessing a folder or document not owned by or shared with the user, or group standard members attempting to revoke another member's document share).
+- **`404 Not Found`**: The requested resource (user, document, folder, or study group) does not exist or has been soft-deleted (`status = 'DELETED'`).
+- **`409 Conflict`**: State conflict. Typically returned when trying to create a duplicate active share record (e.g., sharing a document/folder with a user or group that already has an ACTIVE share).
+- **`500 Internal Server Error`**: An unexpected error occurred on the server (e.g., Cloudinary API issues, database connection errors).
+
+---
+
 # 1. Health Check API
 
 ## GET `/api/health`
@@ -2251,3 +2264,46 @@ These rules govern page routing on the frontend and operational behaviors betwee
 
 - On the user interface, a `folderId = null` or unassigned folder hierarchy must be consistently labeled **"My Documents"**.
 - Hardcoded technical terms like "root", "no folder", or "unassigned" are deprecated and must not appear in user-facing labels.
+
+---
+
+# 11. Sharing Permission Rules (Direct, Group, Folder, Trash, Member Removal)
+
+To ensure secure data isolation and access control, the following permission rules must be strictly enforced on both frontend and backend:
+
+## 11.1. Direct Document & Folder Sharing Rules
+- **Sharing Action**: Only the owner of the document or folder is permitted to share it directly with another user by email.
+- **Recipient Verification**: The recipient user must exist in the database and have an `ACTIVE` status.
+- **Self-Sharing Restriction**: Users cannot share a document or folder with themselves (`400 Bad Request`).
+- **Duplicate Prevention**: Attempting to share a document or folder that is already actively shared with the target user is blocked (`409 Conflict`). If a previous share record exists but has a `REVOKED` status, the backend must reactivate it (update status to `ACTIVE`) instead of inserting a new row.
+
+## 11.2. Group Document & Folder Sharing Rules
+- **Sharing Action**: Only the owner of the document or folder is permitted to share it into a study group.
+- **Membership Requirement**: The owner of the document/folder must be an active member (`OWNER` or `MEMBER` with `status = 'ACTIVE'`) of the target group.
+- **Group Verification**: The target study group must exist and be active (`status = 'ACTIVE'`).
+- **Duplicate Prevention**: Attempting to share a document or folder that is already actively shared in the group is blocked (`409 Conflict`). If a previous group share record exists as `REVOKED`, it will be updated to `ACTIVE` upon re-sharing.
+
+## 11.3. Document & Folder Access Rules
+- A user is authorized to view or download a document or view a folder's contents if any of the following conditions are met:
+  1. The user is the owner of the document or folder.
+  2. The document/folder has an active direct share to this user.
+  3. The document/folder is shared actively with a study group in which the user is an active member.
+  4. (For documents/subfolders) The item is located within a folder tree where an ancestor folder satisfies condition 2 or 3.
+- If none of these conditions are met, the request must fail with `403 Forbidden` ("Access denied").
+- **Read-Only Access**: Users with shared access (direct, group, or inherited through folders) are restricted to read-only actions (open, download, view content). They are blocked from editing metadata, moving, deleting, or permanently deleting the shared resources. Any such requests return `403 Forbidden`.
+
+## 11.4. Revocation Rules
+- **Direct Shares**: A direct share record (for a document or folder) can only be revoked by the owner of that resource.
+- **Group Shares**: A group share record can be revoked by either the owner of the shared resource OR the owner of the study group. Standard group members cannot revoke shares created by other group members.
+- **Action**: Revoking changes the sharing record status from `ACTIVE` to `REVOKED`. The recipient immediately loses access.
+
+## 11.5. Trash, Restore, and Move Impact
+- **Trash Exclusion**: Any document or folder that is soft-deleted (`status = 'DELETED'`) is considered in the trash. Trashed items are immediately excluded from all shared listings, including the "Shared With Me" list, group details, and group shared documents/folders list.
+- **No Access in Trash**: Access to get detail, open, or download a trashed item is denied (`404 Not Found`) until it is explicitly restored.
+- **Restoration**: Restoring an item returns its status to `ACTIVE`. If there are active sharing records associated with the item, it automatically reappears in shared listings.
+- **Move Impact**: Moving a document out of a shared folder tree immediately revokes the inherited permissions. If the document has no direct share or group share, users who previously had access via the shared folder tree will lose access to it immediately.
+
+## 11.6. Group Member Removal/Leaving Impact
+- **Membership Loss**: A user who leaves a group (`status = 'LEFT'`) or is removed by the group owner (`status = 'REMOVED'`) immediately loses access to all documents and folders shared within that group.
+- **Share Revocation**: All active group document shares and group folder shares created by that user inside that specific group must be automatically set to `REVOKED`. This ensures that they cannot continue to share materials into a group they are no longer a part of.
+- **Non-Interference**: Documents or folders shared into the group by other active members are unaffected and remain active.
