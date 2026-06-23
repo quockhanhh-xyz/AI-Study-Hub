@@ -154,18 +154,23 @@ document.addEventListener("DOMContentLoaded", async function () {
       removeBtn.addEventListener("click", async function () {
         const confirmed = await confirmAction({
           title: "Remove Member?",
-          message: `Remove ${member.fullName || member.email} from this group?`,
+          message: `Remove ${member.fullName || member.email} from this group? They will immediately lose access to this group's documents and folders.`,
           confirmText: "Remove",
           danger: true
         });
         if (!confirmed) return;
 
+        removeBtn.disabled = true;
+        removeBtn.textContent = "Removing...";
+
         try {
           await removeGroupMember(groupId, member.userId);
-          showToast("Member removed.", "success");
+          showToast(`${member.fullName || member.email} removed from the group.`, "success");
           await loadGroupDetail();
         } catch (error) {
           showToast(error.message || "Failed to remove member.", "error");
+          removeBtn.disabled = false;
+          removeBtn.textContent = "Remove";
         }
       });
       row.appendChild(removeBtn);
