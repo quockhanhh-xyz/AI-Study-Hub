@@ -21,13 +21,11 @@
                 <h1>Shared With Me</h1>
             </section>
 
-            <!-- Tab Headers -->
             <div class="tab-header">
                 <button type="button" class="tab-btn active" id="tabDocsBtn">Shared Documents</button>
                 <button type="button" class="tab-btn" id="tabFoldersBtn">Shared Folders</button>
             </div>
 
-            <!-- Tab Content 1: Shared Documents -->
             <div id="sharedDocsPanel" class="card dashboard-panel">
                 <div class="section-header">
                     <div>
@@ -36,7 +34,8 @@
                     </div>
                 </div>
 
-                <div id="sharedLoader" class="document-state">
+                <div id="sharedLoader" class="loading-state">
+                    <div class="loading-spinner"></div>
                     <span>Loading shared documents...</span>
                 </div>
 
@@ -69,7 +68,6 @@
                 </div>
             </div>
 
-            <!-- Tab Content 2: Shared Folders -->
             <div id="sharedFoldersPanel" class="card dashboard-panel" style="display: none;">
                 <div class="section-header">
                     <div>
@@ -78,7 +76,8 @@
                     </div>
                 </div>
 
-                <div id="folderLoader" class="document-state">
+                <div id="folderLoader" class="loading-state">
+                    <div class="loading-spinner"></div>
                     <span>Loading shared folders...</span>
                 </div>
 
