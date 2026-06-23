@@ -17,7 +17,6 @@
 
         <main class="main-content">
 
-            <!-- ── FOLDER LIST VIEW ── -->
             <div id="folderListView">
                 <section class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; max-width: none;">
                     <div>
@@ -25,7 +24,13 @@
                         <nav class="breadcrumb" id="breadcrumb" aria-label="Folder navigation"></nav>
                     </div>
                     <button type="button" id="shareFolderBtn" class="btn btn-secondary" style="display: none; align-items: center; gap: 6px; padding: 10px 16px;">
-                        🔗 Share Folder
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 10" id="Link--Streamline-Micro" height="14" width="14">
+                          <desc>Link Streamline Icon: https://streamlinehq.com</desc>
+                          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m2.5 4.502 -0.917 0.92a2.12 2.12 0 0 0 0.002 2.997v0a2.12 2.12 0 0 0 2.999 0l0.917 -0.917" stroke-width="1"></path>
+                          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m7.5 5.502 0.914 -0.912c0.83 -0.828 0.83 -2.172 0.002 -3.001v0a2.121 2.121 0 0 0 -2.999 -0.002l-0.916 0.915" stroke-width="1"></path>
+                          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m3.5 6.502 3 -3" stroke-width="1"></path>
+                        </svg>
+                        Share Folder
                     </button>
                 </section>
 
@@ -35,8 +40,15 @@
                             <h2 class="section-title">Folders</h2>
                             <p>Click a folder to view its documents.</p>
                         </div>
-                        <button type="button" id="createFolderBtn" class="btn btn-primary upload-link-btn">
-                            + New Folder
+                        <button type="button" id="createFolderBtn" class="btn btn-primary upload-link-btn" style="display: inline-flex; align-items: center; gap: 6px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Add-1--Streamline-Core" height="14" width="14">
+                              <desc>Add 1 Streamline Icon: https://streamlinehq.com</desc>
+                              <g id="add-1--expand-cross-buttons-button-more-remove-plus-add-+-mathematics-math">
+                                <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 0.5v13" stroke-width="1"></path>
+                                <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 6.95996h13" stroke-width="1"></path>
+                              </g>
+                            </svg>
+                            New Folder
                         </button>
                     </div>
 
@@ -50,13 +62,11 @@
 
                     <div id="folderEmpty" class="empty-state">
                         <div class="empty-title">No folders yet</div>
-                        <p>Create your first folder to start organizing your documents. Use the <strong>+ New
-                                Folder</strong> button above.</p>
+                        <p>Create your first folder to start organizing your documents. Use the <strong>New Folder</strong> button above.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- ── FOLDER DOCUMENT VIEW ── -->
             <div id="folderDocView" class="folder-doc-view">
 
                 <div class="card dashboard-panel">
@@ -78,7 +88,6 @@
         </main>
     </div>
 
-    <!-- ── CREATE FOLDER MODAL ── -->
     <div class="modal-overlay" id="createModal" role="dialog" aria-modal="true" aria-labelledby="createModalTitle">
         <div class="modal-box">
             <h3 id="createModalTitle">New Folder</h3>
@@ -94,7 +103,6 @@
         </div>
     </div>
 
-    <!-- ── RENAME FOLDER MODAL ── -->
     <div class="modal-overlay" id="renameModal" role="dialog" aria-modal="true" aria-labelledby="renameModalTitle">
         <div class="modal-box">
             <h3 id="renameModalTitle">Rename Folder</h3>
@@ -110,7 +118,6 @@
         </div>
     </div>
 
-    <!-- ── DELETE FOLDER MODAL ── -->
     <div class="modal-overlay" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
         <div class="modal-box">
             <h3 id="deleteModalTitle" class="modal-title-danger">Delete Folder?</h3>
@@ -126,18 +133,15 @@
         </div>
     </div>
 
-    <!-- ── SHARE FOLDER MODAL ── -->
     <div class="modal-overlay" id="shareFolderModal" role="dialog" aria-modal="true" aria-labelledby="shareFolderModalTitle">
         <div class="modal-box modal-box-share">
             <h3 id="shareFolderModalTitle">Share Folder</h3>
 
-            <!-- Tab Headers -->
             <div class="tab-header">
                 <button type="button" class="tab-btn active" id="modalTabUserBtn">User</button>
                 <button type="button" class="tab-btn" id="modalTabGroupBtn">Group</button>
             </div>
 
-            <!-- Tab Content: User Share -->
             <div id="modalUserPanel">
                 <div class="form-group">
                     <label for="shareUserEmail">User Email <span class="label-required">*</span></label>
@@ -147,7 +151,6 @@
                 <button type="button" class="btn btn-primary modal-btn-full" id="shareUserConfirmBtn">Share with User</button>
             </div>
 
-            <!-- Tab Content: Group Share -->
             <div id="modalGroupPanel" style="display: none;">
                 <div class="form-group">
                     <label for="shareGroupSelect">Select Group <span class="label-required">*</span></label>
@@ -161,14 +164,12 @@
 
             <hr class="modal-divider" />
 
-            <!-- Active Shares Management -->
             <h4 class="modal-section-title">Shared with</h4>
             <div id="sharesLoader" class="document-state" style="display: none; justify-content: center;">
                 <span>Loading shares...</span>
             </div>
             <div id="sharesList" class="shares-list-container">
-                <!-- Dynamically filled with shares -->
-            </div>
+                </div>
             <div id="sharesEmpty" class="share-roster-empty">
                 This folder is not shared with anyone yet.
             </div>
