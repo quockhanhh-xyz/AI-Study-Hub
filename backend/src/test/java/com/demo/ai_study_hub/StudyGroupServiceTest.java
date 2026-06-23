@@ -1,12 +1,8 @@
 package com.demo.ai_study_hub;
 
 import com.demo.ai_study_hub.dto.*;
-import com.demo.ai_study_hub.entity.StudyGroup;
-import com.demo.ai_study_hub.entity.StudyGroupMember;
-import com.demo.ai_study_hub.entity.User;
-import com.demo.ai_study_hub.repository.StudyGroupMemberRepository;
-import com.demo.ai_study_hub.repository.StudyGroupRepository;
-import com.demo.ai_study_hub.repository.UserRepository;
+import com.demo.ai_study_hub.entity.*;
+import com.demo.ai_study_hub.repository.*;
 import com.demo.ai_study_hub.service.StudyGroupServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +27,10 @@ class StudyGroupServiceTest {
     private StudyGroupMemberRepository studyGroupMemberRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private GroupDocumentShareRepository groupDocumentShareRepository;
+    @Mock
+    private GroupFolderShareRepository groupFolderShareRepository;
 
     @InjectMocks
     private StudyGroupServiceImpl studyGroupService;
@@ -137,6 +137,89 @@ class StudyGroupServiceTest {
         });
 
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+    }
+
+    @Test
+    void removeMember_WhenOwnerRemovesMember_ShouldRevokeMemberGroupShares() {
+        StudyGroupMember ownerMembership = new StudyGroupMember();
+        ownerMembership.setGroup(group);
+        ownerMembership.setUser(owner);
+        ownerMembership.setRole("OWNER");
+        ownerMembership.setStatus("ACTIVE");
+
+        StudyGroupMember targetMembership = new StudyGroupMember();
+        targetMembership.setGroup(group);
+        targetMembership.setUser(member);
+        targetMembership.setRole("MEMBER");
+        targetMembership.setStatus("ACTIVE");
+
+        GroupDocumentShare mockDocShare = new GroupDocumentShare();
+        mockDocShare.setGroup(group);
+        mockDocShare.setSharedBy(member);
+        mockDocShare.setStatus("ACTIVE");
+
+        GroupFolderShare mockFolderShare = new GroupFolderShare();
+        mockFolderShare.setGroup(group);
+        mockFolderShare.setSharedBy(member);
+        mockFolderShare.setStatus("ACTIVE");
+
+        when(userRepository.findByEmail("owner@gmail.com")).thenReturn(Optional.of(owner));
+        when(studyGroupRepository.findById(1)).thenReturn(Optional.of(group));
+        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(group, owner, "ACTIVE"))
+                .thenReturn(Optional.of(ownerMembership));
+        when(userRepository.findById(2)).thenReturn(Optional.of(member));
+        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(group, member, "ACTIVE"))
+                .thenReturn(Optional.of(targetMembership));
+
+        when(groupDocumentShareRepository.findByGroupAndSharedByAndStatus(group, member, "ACTIVE"))
+                .thenReturn(java.util.List.of(mockDocShare));
+        when(groupFolderShareRepository.findByGroupAndSharedByAndStatus(group, member, "ACTIVE"))
+                .thenReturn(java.util.List.of(mockFolderShare));
+
+        studyGroupService.removeMember(1, 2, "owner@gmail.com");
+
+        assertEquals("REMOVED", targetMembership.getStatus());
+        assertEquals("REVOKED", mockDocShare.getStatus());
+        assertEquals("REVOKED", mockFolderShare.getStatus());
+        verify(groupDocumentShareRepository, times(1)).saveAll(anyList());
+        verify(groupFolderShareRepository, times(1)).saveAll(anyList());
+    }
+
+    @Test
+    void leaveGroup_WhenMemberLeaves_ShouldRevokeMemberGroupShares() {
+        StudyGroupMember memberMembership = new StudyGroupMember();
+        memberMembership.setGroup(group);
+        memberMembership.setUser(member);
+        memberMembership.setRole("MEMBER");
+        memberMembership.setStatus("ACTIVE");
+
+        GroupDocumentShare mockDocShare = new GroupDocumentShare();
+        mockDocShare.setGroup(group);
+        mockDocShare.setSharedBy(member);
+        mockDocShare.setStatus("ACTIVE");
+
+        GroupFolderShare mockFolderShare = new GroupFolderShare();
+        mockFolderShare.setGroup(group);
+        mockFolderShare.setSharedBy(member);
+        mockFolderShare.setStatus("ACTIVE");
+
+        when(userRepository.findByEmail("member@gmail.com")).thenReturn(Optional.of(member));
+        when(studyGroupRepository.findById(1)).thenReturn(Optional.of(group));
+        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(group, member, "ACTIVE"))
+                .thenReturn(Optional.of(memberMembership));
+
+        when(groupDocumentShareRepository.findByGroupAndSharedByAndStatus(group, member, "ACTIVE"))
+                .thenReturn(java.util.List.of(mockDocShare));
+        when(groupFolderShareRepository.findByGroupAndSharedByAndStatus(group, member, "ACTIVE"))
+                .thenReturn(java.util.List.of(mockFolderShare));
+
+        studyGroupService.leaveGroup(1, "member@gmail.com");
+
+        assertEquals("LEFT", memberMembership.getStatus());
+        assertEquals("REVOKED", mockDocShare.getStatus());
+        assertEquals("REVOKED", mockFolderShare.getStatus());
+        verify(groupDocumentShareRepository, times(1)).saveAll(anyList());
+        verify(groupFolderShareRepository, times(1)).saveAll(anyList());
     }
 
     @Test

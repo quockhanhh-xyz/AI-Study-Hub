@@ -3,14 +3,8 @@ package com.demo.ai_study_hub.service;
 import com.demo.ai_study_hub.dto.DocumentResponse;
 import com.demo.ai_study_hub.dto.DocumentUpdateDTO;
 import com.demo.ai_study_hub.dto.FileUploadResult;
-import com.demo.ai_study_hub.entity.Document;
-import com.demo.ai_study_hub.entity.Folder;
-import com.demo.ai_study_hub.entity.Subject;
-import com.demo.ai_study_hub.entity.User;
-import com.demo.ai_study_hub.repository.DocumentRepository;
-import com.demo.ai_study_hub.repository.FolderRepository;
-import com.demo.ai_study_hub.repository.SubjectRepository;
-import com.demo.ai_study_hub.repository.UserRepository;
+import com.demo.ai_study_hub.entity.*;
+import com.demo.ai_study_hub.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -29,6 +23,9 @@ public class DocumentService {
     private final SubjectRepository subjectRepository;
     private final FolderRepository folderRepository;
     private final FolderShareService folderShareService;
+    private final DocumentShareRepository documentShareRepository;
+    private final GroupDocumentShareRepository groupDocumentShareRepository;
+    private final StudyGroupMemberRepository studyGroupMemberRepository;
 
     public DocumentResponse uploadDocument(MultipartFile file, String title, String description, Integer subjectId, Integer folderId, String email) {
         if (title == null || title.trim().isEmpty()) {
@@ -167,9 +164,27 @@ public class DocumentService {
         }
 
         boolean isOwner = doc.getOwner().getUserId().equals(user.getUserId());
-        boolean hasSharedAccess = !isOwner
+
+        boolean isDirectShared = !isOwner && documentShareRepository
+                .findByDocumentAndSharedWithAndStatus(doc, user, "ACTIVE")
+                .isPresent();
+
+        boolean isGroupShared = false;
+        if (!isOwner && !isDirectShared) {
+            List<GroupDocumentShare> activeGroupShares = groupDocumentShareRepository.findByDocumentAndStatus(doc, "ACTIVE");
+            for (GroupDocumentShare groupShare : activeGroupShares) {
+                if (studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupShare.getGroup(), user, "ACTIVE")) {
+                    isGroupShared = true;
+                    break;
+                }
+            }
+        }
+
+        boolean hasFolderAccess = !isOwner && !isDirectShared && !isGroupShared
                 && doc.getFolder() != null
                 && folderShareService.hasAccessToFolder(doc.getFolder().getFolderId(), email);
+
+        boolean hasSharedAccess = isDirectShared || isGroupShared || hasFolderAccess;
 
         if (!isOwner && !hasSharedAccess) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");

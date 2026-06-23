@@ -3,6 +3,7 @@ package com.demo.ai_study_hub.repository;
 import com.demo.ai_study_hub.entity.Folder;
 import com.demo.ai_study_hub.entity.GroupFolderShare;
 import com.demo.ai_study_hub.entity.StudyGroup;
+import com.demo.ai_study_hub.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +18,8 @@ public interface GroupFolderShareRepository extends JpaRepository<GroupFolderSha
     Optional<GroupFolderShare> findByFolderAndGroup(Folder folder, StudyGroup group);
 
     List<GroupFolderShare> findByFolderAndStatus(Folder folder, String status);
+
+    List<GroupFolderShare> findByGroupAndSharedByAndStatus(StudyGroup group, User sharedBy, String status);
 
     @Query("SELECT gfs FROM GroupFolderShare gfs WHERE gfs.group = :group AND gfs.status = 'ACTIVE' AND gfs.folder.status = 'ACTIVE' AND gfs.group.status = 'ACTIVE'")
     List<GroupFolderShare> findActiveSharesForGroup(@Param("group") StudyGroup group);

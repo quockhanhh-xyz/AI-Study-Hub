@@ -3,14 +3,8 @@ package com.demo.ai_study_hub;
 import com.demo.ai_study_hub.dto.DocumentResponse;
 import com.demo.ai_study_hub.dto.DocumentUpdateDTO;
 import com.demo.ai_study_hub.dto.FileUploadResult;
-import com.demo.ai_study_hub.entity.Document;
-import com.demo.ai_study_hub.entity.Folder;
-import com.demo.ai_study_hub.entity.Subject;
-import com.demo.ai_study_hub.entity.User;
-import com.demo.ai_study_hub.repository.DocumentRepository;
-import com.demo.ai_study_hub.repository.FolderRepository;
-import com.demo.ai_study_hub.repository.SubjectRepository;
-import com.demo.ai_study_hub.repository.UserRepository;
+import com.demo.ai_study_hub.entity.*;
+import com.demo.ai_study_hub.repository.*;
 import com.demo.ai_study_hub.service.CloudinaryStorageService;
 import com.demo.ai_study_hub.service.DocumentService;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,6 +36,12 @@ class DocumentServiceTest {
     private SubjectRepository subjectRepository;
     @Mock
     private FolderRepository folderRepository;
+    @Mock
+    private DocumentShareRepository documentShareRepository;
+    @Mock
+    private GroupDocumentShareRepository groupDocumentShareRepository;
+    @Mock
+    private StudyGroupMemberRepository studyGroupMemberRepository;
 
     @InjectMocks
     private DocumentService documentService;
@@ -108,6 +109,90 @@ class DocumentServiceTest {
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
             documentService.getDocumentDetail(4, "hacker@test.com");
+        });
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+        assertEquals("Access denied", exception.getReason());
+    }
+
+    @Test
+    void getDocumentDetail_WhenUserHasDirectShare_ShouldReturnDocument() {
+        User mockRecipient = new User();
+        mockRecipient.setUserId(3);
+        mockRecipient.setEmail("recipient@test.com");
+
+        DocumentShare mockDirectShare = new DocumentShare();
+        mockDirectShare.setDocument(mockDocument);
+        mockDirectShare.setSharedWith(mockRecipient);
+        mockDirectShare.setStatus("ACTIVE");
+
+        when(userRepository.findByEmail("recipient@test.com")).thenReturn(Optional.of(mockRecipient));
+        when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
+        when(documentShareRepository.findByDocumentAndSharedWithAndStatus(mockDocument, mockRecipient, "ACTIVE"))
+                .thenReturn(Optional.of(mockDirectShare));
+
+        DocumentResponse response = documentService.getDocumentDetail(4, "recipient@test.com");
+
+        assertNotNull(response);
+        assertEquals(4, response.getDocumentId());
+    }
+
+    @Test
+    void getDocumentDetail_WhenUserIsActiveGroupMemberAndDocumentSharedInGroup_ShouldReturnDocument() {
+        User mockMember = new User();
+        mockMember.setUserId(4);
+        mockMember.setEmail("member@test.com");
+
+        StudyGroup mockGroup = new StudyGroup();
+        mockGroup.setGroupId(10);
+        mockGroup.setGroupName("Study Group");
+
+        GroupDocumentShare mockGroupShare = new GroupDocumentShare();
+        mockGroupShare.setGroup(mockGroup);
+        mockGroupShare.setDocument(mockDocument);
+        mockGroupShare.setStatus("ACTIVE");
+
+        when(userRepository.findByEmail("member@test.com")).thenReturn(Optional.of(mockMember));
+        when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
+        when(documentShareRepository.findByDocumentAndSharedWithAndStatus(mockDocument, mockMember, "ACTIVE"))
+                .thenReturn(Optional.empty());
+        when(groupDocumentShareRepository.findByDocumentAndStatus(mockDocument, "ACTIVE"))
+                .thenReturn(java.util.List.of(mockGroupShare));
+        when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(mockGroup, mockMember, "ACTIVE"))
+                .thenReturn(true);
+
+        DocumentResponse response = documentService.getDocumentDetail(4, "member@test.com");
+
+        assertNotNull(response);
+        assertEquals(4, response.getDocumentId());
+    }
+
+    @Test
+    void getDocumentDetail_WhenUserIsGroupNonMemberAndDocumentSharedInGroup_ShouldThrow403() {
+        User mockNonMember = new User();
+        mockNonMember.setUserId(5);
+        mockNonMember.setEmail("nonmember@test.com");
+
+        StudyGroup mockGroup = new StudyGroup();
+        mockGroup.setGroupId(10);
+        mockGroup.setGroupName("Study Group");
+
+        GroupDocumentShare mockGroupShare = new GroupDocumentShare();
+        mockGroupShare.setGroup(mockGroup);
+        mockGroupShare.setDocument(mockDocument);
+        mockGroupShare.setStatus("ACTIVE");
+
+        when(userRepository.findByEmail("nonmember@test.com")).thenReturn(Optional.of(mockNonMember));
+        when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
+        when(documentShareRepository.findByDocumentAndSharedWithAndStatus(mockDocument, mockNonMember, "ACTIVE"))
+                .thenReturn(Optional.empty());
+        when(groupDocumentShareRepository.findByDocumentAndStatus(mockDocument, "ACTIVE"))
+                .thenReturn(java.util.List.of(mockGroupShare));
+        when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(mockGroup, mockNonMember, "ACTIVE"))
+                .thenReturn(false);
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            documentService.getDocumentDetail(4, "nonmember@test.com");
         });
 
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
