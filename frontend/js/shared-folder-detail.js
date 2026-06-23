@@ -40,13 +40,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     sharedDocError.style.display = "block";
     sharedFolderLoader.style.display = "none";
     sharedDocLoader.style.display = "none";
+    sharedFolderGrid.style.display = "none";
+    sharedDocGrid.style.display = "none";
   }
 
   function formatFileSize(bytes) {
     if (!bytes) return "–";
     if (bytes < 1024) return bytes + " B";
-    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
-    return (bytes / 1048576).toFixed(1) + " MB";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   }
 
   // Render breadcrumbs starting strictly from the shared root
@@ -158,7 +160,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       downloadBtn.href = doc.fileUrl;
       downloadBtn.target = "_blank";
       downloadBtn.rel = "noopener noreferrer";
-      downloadBtn.download = doc.title || doc.documentId;
+      downloadBtn.download = doc.title || String(doc.documentId);
       downloadBtn.className = "btn btn-secondary";
       downloadBtn.textContent = "Download";
       actions.appendChild(downloadBtn);
@@ -183,7 +185,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       const data = response.data;
 
       // Update current folder details
-      if (data.currentFolder) {
+      if (data.currentFolder && sharedFolderTitle) {
         sharedFolderTitle.textContent = data.currentFolder.folderName;
       }
 

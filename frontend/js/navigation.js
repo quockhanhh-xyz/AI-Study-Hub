@@ -1,6 +1,6 @@
 /**
  * Global Navigation configuration definition for AI Study Hub app shell.
- * Extended in Step 6B to include the shared folder detail view layout.
+ * Extended in Step 6C for polished sidebar mapping representation.
  */
 const NAVIGATION_MENU = [
   { name: "Home", icon: "🏠", url: "index.html", requiresAuth: false },
@@ -9,8 +9,8 @@ const NAVIGATION_MENU = [
   { name: "Verify OTP", icon: "🛡️", url: "verify-otp.html", requiresAuth: false, hideWhenAuth: true, hidden: true },
   { name: "Dashboard", icon: "📊", url: "dashboard.html", requiresAuth: true },
   { name: "Upload", icon: "📤", url: "upload.html", requiresAuth: true },
-  { name: "Folders", icon: "📁", url: "folders.html", requiresAuth: true },
-  { name: "Study Groups", icon: "👥", url: "groups.html", requiresAuth: true },
+  { name: "My Documents", icon: "📁", url: "folders.html", requiresAuth: true },
+  { name: "Groups", icon: "👥", url: "groups.html", requiresAuth: true },
   { name: "Shared With Me", icon: "🤝", url: "shared-with-me.html", requiresAuth: true },
   { name: "Trash", icon: "🗑️", url: "trash.html", requiresAuth: true },
 
