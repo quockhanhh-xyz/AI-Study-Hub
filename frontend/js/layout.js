@@ -83,7 +83,7 @@ function renderDynamicSidebar(isAuthenticated) {
     `)
     .join("");
 
-// Append a dedicated Logout link if user is fully logged in
+  // Append a dedicated Logout link if user is fully logged in
   if (isAuthenticated) {
     const sidebar = document.querySelector(".sidebar");
     if (sidebar) {

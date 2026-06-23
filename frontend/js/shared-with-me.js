@@ -35,6 +35,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     sharedError.style.display = "none";
   }
 
+  // Ensure initial state resets for error elements
+  hideError();
+  if (folderError) {
+    folderError.textContent = "";
+    folderError.style.display = "none";
+  }
+
   function showFolderError(message) {
     folderError.textContent = message;
     folderError.style.display = "block";
@@ -76,7 +83,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const desc = document.createElement("p");
     desc.className = "document-description";
-    desc.textContent = `Shared by: ${doc.sharedByEmail}`;
+    desc.textContent = `Shared by: ${doc.sharedByEmail || "Unknown User"}`;
 
     const meta = document.createElement("p");
     meta.className = "helper-text";
@@ -101,7 +108,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       downloadBtn.href = doc.fileUrl;
       downloadBtn.target = "_blank";
       downloadBtn.rel = "noopener noreferrer";
-      downloadBtn.download = doc.title || doc.documentId;
+      downloadBtn.download = doc.title || String(doc.documentId);
       downloadBtn.className = "btn btn-secondary";
       downloadBtn.textContent = "Download";
       actions.appendChild(downloadBtn);
@@ -128,14 +135,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     desc.className = "folder-meta";
     desc.style.fontSize = "12px";
     desc.style.marginTop = "4px";
-    desc.textContent = `Owner: ${share.ownerName} (${share.ownerEmail})`;
+    desc.textContent = `Owner: ${share.ownerName || "Unknown"} (${share.ownerEmail || "N/A"})`;
 
     const meta = document.createElement("p");
     meta.className = "folder-meta";
     meta.style.fontSize = "11px";
     meta.style.marginTop = "4px";
     meta.style.color = "var(--muted)";
-    meta.textContent = `Shared by: ${share.sharedByName} · Date: ${formatDate(share.createdAt)}`;
+    meta.textContent = `Shared by: ${share.sharedByName || "System"} · Date: ${formatDate(share.createdAt)}`;
 
     card.append(icon, name, desc, meta);
 

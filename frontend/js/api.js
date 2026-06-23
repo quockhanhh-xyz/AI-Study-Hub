@@ -63,7 +63,7 @@ async function apiRequest(endpoint, options = {}) {
       data.message ||
       data.error ||
       rawText ||
-      "Unauthorized - Session expired";
+      "Unauthorized - Session expired. Please log in again.";
 
     const error = new Error(errorMessage);
     error.status = response.status;
@@ -74,12 +74,20 @@ async function apiRequest(endpoint, options = {}) {
   if (!response.ok || data.success === false) {
     console.warn("API Request Business Error:", data || rawText);
 
-    // Extract backend error message accurately
-    const errorMessage =
-      data.message ||
-      data.error ||
-      rawText ||
-      "API request failed";
+    // Extract backend error message accurately, fallback to customized status text if empty
+    let errorMessage = data.message || data.error || rawText;
+
+    if (!errorMessage) {
+      if (response.status === 403) {
+        errorMessage = "Forbidden - You do not have permission to access this resource.";
+      } else if (response.status === 404) {
+        errorMessage = "Not Found - The requested resource does not exist or has been deleted.";
+      } else if (response.status === 409) {
+        errorMessage = "Conflict - Duplicate entry or sharing configuration conflict.";
+      } else {
+        errorMessage = "API request failed";
+      }
+    }
 
     const error = new Error(errorMessage);
     error.status = response.status;
