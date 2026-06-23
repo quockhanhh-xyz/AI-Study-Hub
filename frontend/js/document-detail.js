@@ -19,7 +19,12 @@ const detailContent = document.getElementById("detailContent");
 let currentDocumentId = null;
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+    if (window.authReady) {
+        const isAuthenticated = await window.authReady;
+        if (!isAuthenticated) return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
 

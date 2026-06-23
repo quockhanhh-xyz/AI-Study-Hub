@@ -1,4 +1,9 @@
 document.addEventListener("DOMContentLoaded", async function () {
+  if (window.authReady) {
+    const isAuthenticated = await window.authReady;
+    if (!isAuthenticated) return;
+  }
+
   const userNameElement = document.getElementById("dashboardUserName");
   const currentUserRaw = localStorage.getItem("currentUser");
 

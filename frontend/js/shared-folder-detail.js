@@ -5,6 +5,11 @@
  */
 
 document.addEventListener("DOMContentLoaded", async function () {
+  if (window.authReady) {
+    const isAuthenticated = await window.authReady;
+    if (!isAuthenticated) return;
+  }
+
   const sharedFolderTitle = document.getElementById("sharedFolderTitle");
   const sharedBreadcrumb = document.getElementById("sharedBreadcrumb");
 

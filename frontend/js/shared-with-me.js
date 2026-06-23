@@ -5,6 +5,11 @@
  */
 
 document.addEventListener("DOMContentLoaded", async function () {
+  if (window.authReady) {
+    const isAuthenticated = await window.authReady;
+    if (!isAuthenticated) return;
+  }
+
   const sharedLoader = document.getElementById("sharedLoader");
   const sharedError = document.getElementById("sharedError");
   const sharedGrid = document.getElementById("sharedGrid");

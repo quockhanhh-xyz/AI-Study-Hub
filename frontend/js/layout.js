@@ -1,15 +1,19 @@
 /**
  * Application Shell and Authentication Guard Manager (Cookie Auth Flow Mode).
  */
-document.addEventListener("DOMContentLoaded", async () => {
-  // 1. EXECUTE AUTH GUARD SYSTEM BY CALLING /api/auth/me ENDPOINT
-  const isAuthenticated = await checkAuthenticationStatus();
+window.authReady = new Promise((resolve) => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    // 1. EXECUTE AUTH GUARD SYSTEM BY CALLING /api/auth/me ENDPOINT
+    const isAuthenticated = await checkAuthenticationStatus();
 
-  // 2. REFINE SIDEBAR MENU BASED ON AUTH STATUS
-  renderDynamicSidebar(isAuthenticated);
+    // 2. REFINE SIDEBAR MENU BASED ON AUTH STATUS
+    renderDynamicSidebar(isAuthenticated);
 
-  // 3. ATTACH LOGOUT FLOW LISTENERS
-  initializeLogoutFlow();
+    // 3. ATTACH LOGOUT FLOW LISTENERS
+    initializeLogoutFlow();
+
+    resolve(isAuthenticated);
+  });
 });
 
 /**

@@ -5,6 +5,10 @@
  */
 
 document.addEventListener("DOMContentLoaded", async function () {
+  if (window.authReady) {
+    const isAuthenticated = await window.authReady;
+    if (!isAuthenticated) return;
+  }
 
   // List elements
   const groupLoader = document.getElementById("groupLoader");

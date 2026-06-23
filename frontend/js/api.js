@@ -1,5 +1,12 @@
+if (window.location.hostname === "0.0.0.0") {
+  window.location.replace(
+    `${window.location.protocol}//localhost:${window.location.port}${window.location.pathname}${window.location.search}`
+  );
+}
+
 // Global variable defining the Backend API base URL
-const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:8080`;
+const API_HOST = window.location.hostname === "0.0.0.0" ? "localhost" : window.location.hostname;
+const API_BASE_URL = `${window.location.protocol}//${API_HOST}:8080`;
 
 /*
   Shared API request helper.

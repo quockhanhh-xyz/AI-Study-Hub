@@ -6,6 +6,10 @@
  */
 
 document.addEventListener("DOMContentLoaded", async function () {
+  if (window.authReady) {
+    const isAuthenticated = await window.authReady;
+    if (!isAuthenticated) return;
+  }
 
   // View containers
   const folderListView = document.getElementById("folderListView");
