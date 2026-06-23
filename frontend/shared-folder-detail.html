@@ -30,13 +30,15 @@
                     </div>
                 </div>
 
-                <div id="sharedFolderLoader" class="document-state">
+                <div id="sharedFolderLoader" class="loading-state">
+                    <div class="loading-spinner"></div>
                     <span>Loading folders...</span>
                 </div>
 
                 <div id="sharedFolderGrid" class="folder-grid"></div>
 
                 <div id="sharedFolderEmpty" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">📁</div>
                     <div class="empty-title">No subfolders</div>
                     <p>There are no subfolders inside this folder.</p>
                 </div>
@@ -51,15 +53,21 @@
                         </div>
                     </div>
 
-                    <div id="sharedDocLoader" class="document-state">
+                    <div id="sharedDocLoader" class="loading-state">
+                        <div class="loading-spinner"></div>
                         <span>Loading documents...</span>
                     </div>
 
-                    <p id="sharedDocError" class="helper-text error" role="alert" style="display: none;"></p>
+                    <div id="sharedDocError" class="error-state" style="display: none;">
+                        <div class="error-state-icon">⚠️</div>
+                        <div class="error-state-title">Access Error</div>
+                        <div class="error-state-desc" id="sharedDocErrorMessage"></div>
+                    </div>
 
                     <div id="sharedDocGrid" class="document-grid"></div>
 
                     <div id="sharedDocEmpty" class="empty-state" style="display: none;">
+                        <div class="empty-state-icon">📂</div>
                         <div class="empty-title">No documents</div>
                         <p>There are no documents inside this folder.</p>
                     </div>
