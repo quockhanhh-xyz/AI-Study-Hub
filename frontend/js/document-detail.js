@@ -6,13 +6,26 @@
 function showFatalError(message) {
     const loader = document.getElementById("detailLoader");
     if (loader) {
-        loader.innerHTML = `
-            <div class="error-state" style="margin-top: 48px;">
-                <div class="error-state-icon">⚠️</div>
-                <div class="error-state-title">Access Error</div>
-                <div class="error-state-desc">${message}</div>
-            </div>
-        `;
+        loader.innerHTML = ""; // Clear loader text content safely
+
+        const errorDiv = document.createElement("div");
+        errorDiv.className = "error-state";
+        errorDiv.style.marginTop = "48px";
+
+        const iconDiv = document.createElement("div");
+        iconDiv.className = "error-state-icon";
+        iconDiv.textContent = "⚠️";
+
+        const titleDiv = document.createElement("div");
+        titleDiv.className = "error-state-title";
+        titleDiv.textContent = "Access Error";
+
+        const descDiv = document.createElement("div");
+        descDiv.className = "error-state-desc";
+        descDiv.textContent = message; // Safe textContent assignment
+
+        errorDiv.append(iconDiv, titleDiv, descDiv);
+        loader.appendChild(errorDiv);
     }
 }
 
