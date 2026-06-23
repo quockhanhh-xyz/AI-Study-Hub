@@ -6,8 +6,26 @@
 function showFatalError(message) {
     const loader = document.getElementById("detailLoader");
     if (loader) {
-        loader.textContent = message;
-        loader.style.color = "var(--danger)";
+        loader.innerHTML = ""; // Clear loader text content safely
+
+        const errorDiv = document.createElement("div");
+        errorDiv.className = "error-state";
+        errorDiv.style.marginTop = "48px";
+
+        const iconDiv = document.createElement("div");
+        iconDiv.className = "error-state-icon";
+        iconDiv.textContent = "⚠️";
+
+        const titleDiv = document.createElement("div");
+        titleDiv.className = "error-state-title";
+        titleDiv.textContent = "Access Error";
+
+        const descDiv = document.createElement("div");
+        descDiv.className = "error-state-desc";
+        descDiv.textContent = message; // Safe textContent assignment
+
+        errorDiv.append(iconDiv, titleDiv, descDiv);
+        loader.appendChild(errorDiv);
     }
 }
 
@@ -69,19 +87,36 @@ function renderDocument(doc) {
     document.getElementById("docCreatedAt").textContent = formatDate(doc.createdAt);
 
     const openBtn = document.getElementById("openFileBtn");
+    const downloadBtn = document.getElementById("downloadFileBtn");
     if (doc.fileUrl) {
         openBtn.href = doc.fileUrl;
+        if (downloadBtn) {
+            downloadBtn.href = doc.fileUrl;
+            downloadBtn.download = doc.title || String(doc.documentId);
+            downloadBtn.style.display = "inline-flex";
+        }
     } else {
         openBtn.style.display = "none";
+        if (downloadBtn) {
+            downloadBtn.style.display = "none";
+        }
     }
 
     // Pre-fill edit form
     document.getElementById("editTitle").value = doc.title || "";
     document.getElementById("editDescription").value = doc.description || "";
 
-    // Since GET /api/documents/{id} is only accessible by the owner,
-    // a successful load implies the current user is the owner.
-    const isOwner = true;
+    // Resolve ownership check dynamically
+    const currentUserStr = localStorage.getItem("currentUser");
+    let isOwner = false;
+    if (currentUserStr) {
+        try {
+            const currentUser = JSON.parse(currentUserStr);
+            isOwner = doc.uploadedBy === currentUser.email;
+        } catch (e) {
+            console.error("Failed to parse currentUser from localStorage", e);
+        }
+    }
 
     // Show share controls and management panel only to the owner
     const shareBtn = document.getElementById("shareBtn");
@@ -197,12 +232,18 @@ function showEditMessage(text, type) {
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 function showToast(message, type) {
-    const toast = document.getElementById("toast");
-    toast.textContent = message;
-    toast.className = "show toast-" + type;
-    setTimeout(() => {
-        toast.className = "";
-    }, 3000);
+    if (window.showToast) {
+        window.showToast(message, type);
+    } else {
+        const toast = document.getElementById("toast");
+        if (toast) {
+            toast.textContent = message;
+            toast.className = "show toast-" + type;
+            setTimeout(() => {
+                toast.className = "";
+            }, 3000);
+        }
+    }
 }
 
 // ── Formatters ────────────────────────────────────────────────────────────────

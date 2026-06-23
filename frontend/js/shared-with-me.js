@@ -12,11 +12,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   const sharedLoader = document.getElementById("sharedLoader");
   const sharedError = document.getElementById("sharedError");
+  const sharedErrorMessage = document.getElementById("sharedErrorMessage");
   const sharedGrid = document.getElementById("sharedGrid");
   const sharedEmpty = document.getElementById("sharedEmpty");
 
   const folderLoader = document.getElementById("folderLoader");
   const folderError = document.getElementById("folderError");
+  const folderErrorMessage = document.getElementById("folderErrorMessage");
   const folderGrid = document.getElementById("folderGrid");
   const folderEmpty = document.getElementById("folderEmpty");
 
@@ -26,29 +28,30 @@ document.addEventListener("DOMContentLoaded", async function () {
   const sharedFoldersPanel = document.getElementById("sharedFoldersPanel");
 
   function showError(message) {
-    sharedError.textContent = message;
-    sharedError.style.display = "block";
+    if (sharedErrorMessage) sharedErrorMessage.textContent = message;
+    sharedError.style.display = "flex";
+    sharedGrid.style.display = "none";
+    sharedEmpty.style.display = "none";
   }
 
   function hideError() {
-    sharedError.textContent = "";
     sharedError.style.display = "none";
   }
 
   // Ensure initial state resets for error elements
   hideError();
   if (folderError) {
-    folderError.textContent = "";
     folderError.style.display = "none";
   }
 
   function showFolderError(message) {
-    folderError.textContent = message;
-    folderError.style.display = "block";
+    if (folderErrorMessage) folderErrorMessage.textContent = message;
+    folderError.style.display = "flex";
+    folderGrid.style.display = "none";
+    folderEmpty.style.display = "none";
   }
 
   function hideFolderError() {
-    folderError.textContent = "";
     folderError.style.display = "none";
   }
 
@@ -76,10 +79,16 @@ document.addEventListener("DOMContentLoaded", async function () {
     badge.className = "document-type-badge";
     badge.textContent = (doc.fileType || "FILE").toUpperCase();
 
+    const titleLink = document.createElement("a");
+    titleLink.href = `document-detail.html?id=${doc.documentId}`;
+    titleLink.style.color = "inherit";
+    titleLink.style.textDecoration = "none";
+
     const titleEl = document.createElement("h3");
     titleEl.textContent = doc.title || "Untitled Document";
+    titleLink.appendChild(titleEl);
 
-    header.append(badge, titleEl);
+    header.append(badge, titleLink);
 
     const desc = document.createElement("p");
     desc.className = "document-description";
@@ -95,12 +104,24 @@ document.addEventListener("DOMContentLoaded", async function () {
     const actions = document.createElement("div");
     actions.className = "document-actions";
 
+    const detailsBtn = document.createElement("a");
+    detailsBtn.href = `document-detail.html?id=${doc.documentId}`;
+    detailsBtn.className = "btn btn-secondary document-detail-btn";
+    detailsBtn.style.width = "auto";
+    detailsBtn.style.padding = "6px 12px";
+    detailsBtn.style.fontSize = "13px";
+    detailsBtn.textContent = "Details";
+    actions.appendChild(detailsBtn);
+
     if (doc.fileUrl) {
       const viewBtn = document.createElement("a");
       viewBtn.href = doc.fileUrl;
       viewBtn.target = "_blank";
       viewBtn.rel = "noopener noreferrer";
       viewBtn.className = "btn btn-primary document-detail-btn";
+      viewBtn.style.width = "auto";
+      viewBtn.style.padding = "6px 12px";
+      viewBtn.style.fontSize = "13px";
       viewBtn.textContent = "Open";
       actions.appendChild(viewBtn);
 
@@ -110,6 +131,9 @@ document.addEventListener("DOMContentLoaded", async function () {
       downloadBtn.rel = "noopener noreferrer";
       downloadBtn.download = doc.title || String(doc.documentId);
       downloadBtn.className = "btn btn-secondary";
+      downloadBtn.style.width = "auto";
+      downloadBtn.style.padding = "6px 12px";
+      downloadBtn.style.fontSize = "13px";
       downloadBtn.textContent = "Download";
       actions.appendChild(downloadBtn);
     }

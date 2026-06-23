@@ -2253,3 +2253,57 @@ textarea.success {
   background-color: var(--danger-light) !important;
   color: var(--danger) !important;
 }
+
+/* ── Premium Loading, Empty, and Error States (FE1 Polish) ── */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  color: var(--text-muted);
+  gap: 12px;
+  min-height: 140px;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(255, 88, 88, 0.15);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  animation: spin-loop 0.8s linear infinite;
+}
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background: #fef2f2;
+  border: 1.5px dashed #fecaca;
+  border-radius: 16px;
+  color: var(--danger-text);
+  text-align: center;
+  max-width: 500px;
+  margin: 20px auto;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.02);
+}
+
+.error-state-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.error-state-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.error-state-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
