@@ -1,12 +1,8 @@
 package com.demo.ai_study_hub.service;
 
 import com.demo.ai_study_hub.dto.*;
-import com.demo.ai_study_hub.entity.StudyGroup;
-import com.demo.ai_study_hub.entity.StudyGroupMember;
-import com.demo.ai_study_hub.entity.User;
-import com.demo.ai_study_hub.repository.StudyGroupMemberRepository;
-import com.demo.ai_study_hub.repository.StudyGroupRepository;
-import com.demo.ai_study_hub.repository.UserRepository;
+import com.demo.ai_study_hub.entity.*;
+import com.demo.ai_study_hub.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,6 +20,8 @@ public class StudyGroupServiceImpl implements StudyGroupService {
     private final StudyGroupRepository studyGroupRepository;
     private final StudyGroupMemberRepository studyGroupMemberRepository;
     private final UserRepository userRepository;
+    private final GroupDocumentShareRepository groupDocumentShareRepository;
+    private final GroupFolderShareRepository groupFolderShareRepository;
 
     private static final String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private final SecureRandom random = new SecureRandom();
@@ -153,6 +151,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
         membership.setStatus("LEFT");
         studyGroupMemberRepository.save(membership);
+        revokeGroupSharesForUser(group, user);
     }
 
     @Override
@@ -207,6 +206,23 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
         membership.setStatus("REMOVED");
         studyGroupMemberRepository.save(membership);
+        revokeGroupSharesForUser(group, targetUser);
+    }
+
+    private void revokeGroupSharesForUser(StudyGroup group, User user) {
+        List<GroupDocumentShare> docShares = groupDocumentShareRepository
+                .findByGroupAndSharedByAndStatus(group, user, "ACTIVE");
+        for (GroupDocumentShare share : docShares) {
+            share.setStatus("REVOKED");
+        }
+        groupDocumentShareRepository.saveAll(docShares);
+
+        List<GroupFolderShare> folderShares = groupFolderShareRepository
+                .findByGroupAndSharedByAndStatus(group, user, "ACTIVE");
+        for (GroupFolderShare share : folderShares) {
+            share.setStatus("REVOKED");
+        }
+        groupFolderShareRepository.saveAll(folderShares);
     }
 
     private User getUser(String email) {

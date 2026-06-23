@@ -7,10 +7,7 @@ import com.demo.ai_study_hub.entity.Document;
 import com.demo.ai_study_hub.entity.Folder;
 import com.demo.ai_study_hub.entity.Subject;
 import com.demo.ai_study_hub.entity.User;
-import com.demo.ai_study_hub.repository.DocumentRepository;
-import com.demo.ai_study_hub.repository.FolderRepository;
-import com.demo.ai_study_hub.repository.SubjectRepository;
-import com.demo.ai_study_hub.repository.UserRepository;
+import com.demo.ai_study_hub.repository.*;
 import com.demo.ai_study_hub.service.CloudinaryStorageService;
 import com.demo.ai_study_hub.service.DocumentService;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,6 +39,12 @@ class DocumentServiceTest {
     private SubjectRepository subjectRepository;
     @Mock
     private FolderRepository folderRepository;
+    @Mock
+    private DocumentShareRepository documentShareRepository;
+    @Mock
+    private GroupDocumentShareRepository groupDocumentShareRepository;
+    @Mock
+    private StudyGroupMemberRepository studyGroupMemberRepository;
 
     @InjectMocks
     private DocumentService documentService;
