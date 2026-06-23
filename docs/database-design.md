@@ -264,8 +264,8 @@ Stores folders shared into study groups.
 - **Group Joining**: Active users join a group using its active `inviteCode`. Users already in the group (status `ACTIVE`) cannot join again. If a user previously left or was removed, their membership record status is reset to `ACTIVE` and role to `MEMBER`.
 - **Group Details**: Only active group members (OWNER or MEMBER) can view group details and member lists.
 - **Edit/Delete Group**: Only the group `OWNER` can edit group metadata or delete the group. Group deletion is a soft delete (`status = 'DELETED'`). Once a group is deleted, its members and shared documents are no longer accessible.
-- **Leave Group**: Active members with the `MEMBER` role can leave the group (membership status set to `LEFT`). The group `OWNER` cannot leave the group in MVP; they must delete the group instead.
-- **Remove Member**: Only the group `OWNER` can remove other members from the group (membership status set to `REMOVED`). The owner cannot remove themselves.
+- **Leave Group**: Active members with the `MEMBER` role can leave the group (membership status set to `LEFT`). The group `OWNER` cannot leave the group in MVP; they must delete the group instead. Upon leaving, all active group document shares and folder shares created by the leaving member in this group are set to `REVOKED`.
+- **Remove Member**: Only the group `OWNER` can remove other members from the group (membership status set to `REMOVED`). The owner cannot remove themselves. Upon removal, all active group document shares and folder shares created by the removed member in this group are set to `REVOKED`.
 
 #### 2. Document Sharing & Permissions (Step 6A)
 - **Direct Share**: Only the document owner can share their document directly to another user by email.
@@ -282,6 +282,8 @@ Stores folders shared into study groups.
 - **Revocation Permissions**:
   - Direct share can only be revoked by the document owner.
   - Group share can be revoked by either the document owner OR the group owner. Group members cannot revoke other members' documents.
+- **Read-Only Restrictions**:
+  - Shared users (via direct share, group share, or folder tree inheritance) only have read access to the shared documents. They are strictly prohibited from editing, moving, or deleting these documents.
 - **Trash & Soft Delete Impact**:
   - Trashed/deleted documents (`status = 'DELETED'` or moved to trash) are immediately hidden from "Shared With Me" and group document directories.
   - Restoring a document will make it visible again under all its active share records.
