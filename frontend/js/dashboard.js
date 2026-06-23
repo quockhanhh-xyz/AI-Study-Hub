@@ -39,7 +39,14 @@ document.addEventListener("DOMContentLoaded", async function () {
   const clearFiltersBtn = document.getElementById("clearFiltersBtn");
 
   if (folderCountElement) folderCountElement.textContent = "0";
-  if (joinDateElement) joinDateElement.textContent = currentUser.tier || "FREE";
+
+  // Patched: Apply real color classes to the tier badge based on feedback
+  if (joinDateElement) {
+    const tier = currentUser.tier || "FREE";
+    joinDateElement.textContent = tier;
+    joinDateElement.classList.remove("badge-tier-free", "badge-tier-premium");
+    joinDateElement.classList.add(tier === "PREMIUM" ? "badge-tier-premium" : "badge-tier-free");
+  }
 
   function activateFolderCard(folderId) {
     document.querySelectorAll(".folder-card").forEach(c => c.classList.remove("active"));
