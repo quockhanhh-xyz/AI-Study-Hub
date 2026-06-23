@@ -367,6 +367,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       // Pass parentFolderId so the new folder is created under the current level.
       await createFolder({ folderName: name, parentFolderId: currentParentFolderId });
       closeModal(createModal);
+      showToast("Folder created successfully.", "success");
       await loadFolders();
     } catch (error) {
       showError(createError, error.message || "Failed to create folder.");
@@ -404,6 +405,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       await updateFolder(editingFolderId, { folderName: name });
       closeModal(renameModal);
+      showToast("Folder renamed successfully.", "success");
       await loadFolders();
     } catch (error) {
       showError(renameError, error.message || "Failed to rename folder.");
@@ -433,6 +435,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       await deleteFolder(deletingFolderId);
       closeModal(deleteModal);
+      showToast("Folder moved to trash.", "success");
       await loadFolders();
     } catch (error) {
       showError(deleteError, error.message || "Failed to delete folder.");
@@ -515,7 +518,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const info = document.createElement("div");
         info.className = "share-roster-info";
-        info.innerHTML = `<span class="share-email">${share.sharedWithEmail}</span> <span class="share-type">(User)</span>`;
+
+        const emailSpan = document.createElement("span");
+        emailSpan.className = "share-email";
+        emailSpan.textContent = share.sharedWithEmail;
+
+        const typeSpan = document.createElement("span");
+        typeSpan.className = "share-type";
+        typeSpan.textContent = " (User)";
+
+        info.append(emailSpan, typeSpan);
 
         const revokeBtn = document.createElement("button");
         revokeBtn.type = "button";
@@ -525,9 +537,10 @@ document.addEventListener("DOMContentLoaded", async function () {
           revokeBtn.disabled = true;
           try {
             await revokeFolderShare(share.shareId);
+            showToast("Share revoked.", "success");
             await loadFolderShares();
           } catch (err) {
-            alert(err.message || "Failed to revoke share.");
+            showToast(err.message || "Failed to revoke share.", "error");
           } finally {
             revokeBtn.disabled = false;
           }
@@ -543,7 +556,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const info = document.createElement("div");
         info.className = "share-roster-info";
-        info.innerHTML = `<span class="share-email">${share.groupName}</span> <span class="share-type">(Group)</span>`;
+
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "share-email";
+        nameSpan.textContent = share.groupName;
+
+        const typeSpan = document.createElement("span");
+        typeSpan.className = "share-type";
+        typeSpan.textContent = " (Group)";
+
+        info.append(nameSpan, typeSpan);
 
         const revokeBtn = document.createElement("button");
         revokeBtn.type = "button";
@@ -553,9 +575,10 @@ document.addEventListener("DOMContentLoaded", async function () {
           revokeBtn.disabled = true;
           try {
             await revokeGroupFolderShare(share.shareId);
+            showToast("Group share revoked.", "success");
             await loadFolderShares();
           } catch (err) {
-            alert(err.message || "Failed to revoke group share.");
+            showToast(err.message || "Failed to revoke group share.", "error");
           } finally {
             revokeBtn.disabled = false;
           }
@@ -625,6 +648,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       await shareFolderToUser(currentParentFolderId, email);
       shareUserEmail.value = "";
+      showToast("Folder shared with user.", "success");
       await loadFolderShares();
     } catch (err) {
       showError(shareUserError, err.message || "Failed to share folder with user.");
@@ -651,6 +675,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       await shareFolderToGroup(currentParentFolderId, groupId);
       shareGroupSelect.value = "";
+      showToast("Folder shared with group.", "success");
       await loadFolderShares();
     } catch (err) {
       showError(shareGroupError, err.message || "Failed to share folder with group.");
