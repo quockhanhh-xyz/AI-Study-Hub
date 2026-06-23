@@ -63,9 +63,18 @@ async function loadFolderOptions() {
 }
 
 async function loadSubjectOptions() {
+  const loadingOption = document.createElement("option");
+  loadingOption.value = "";
+  loadingOption.textContent = "Loading subjects...";
+  loadingOption.disabled = true;
+  subjectSelect.appendChild(loadingOption);
+  subjectSelect.disabled = true;
+
   try {
     const result = await getSubjects();
     const subjects = Array.isArray(result.data) ? result.data : [];
+
+    subjectSelect.removeChild(loadingOption);
     subjects.forEach(function (subject) {
       const option = document.createElement("option");
       option.value = subject.subjectId;
@@ -74,6 +83,13 @@ async function loadSubjectOptions() {
     });
   } catch (err) {
     console.warn("Could not load subjects:", err);
+    loadingOption.textContent = "⚠ Failed to load subjects — please refresh the page";
+    if (subjectError) {
+      subjectError.textContent = "Could not load subjects from the server. Please refresh and try again.";
+      subjectError.style.display = "block";
+    }
+  } finally {
+    subjectSelect.disabled = false;
   }
 }
 

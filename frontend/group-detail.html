@@ -27,8 +27,7 @@
                 <span>Loading group...</span>
             </div>
 
-            <p id="detailError" class="helper-text error" role="alert"></p>
-
+            <p id="detailError" class="status-box status-error" role="alert" style="display:none; max-width:600px;"></p>
             <div id="groupDetailContent" style="display:none;">
 
                 <!-- ── GROUP INFO PANEL ── -->
@@ -58,7 +57,7 @@
                 <div class="card dashboard-panel">
                     <div class="section-header">
                         <div>
-                            <h2 class="section-title">Members</h2>
+                            <h2 class="section-title" id="memberSectionTitle">Members</h2>
                             <p>People who belong to this study group.</p>
                         </div>
                     </div>
@@ -69,8 +68,8 @@
                 <div class="card dashboard-panel">
                     <div class="section-header">
                         <div>
-                            <h2 class="section-title">Shared Documents</h2>
-                            <p>Documents shared into this group.</p>
+                            <h2 class="section-title" id="docSectionTitle">Shared Documents</h2>
+                            <p>Documents shared into this group by its members.</p>
                         </div>
                     </div>
 
@@ -92,8 +91,8 @@
                 <div class="card dashboard-panel">
                     <div class="section-header">
                         <div>
-                            <h2 class="section-title">Shared Folders</h2>
-                            <p>Folders shared into this group.</p>
+                            <h2 class="section-title" id="folderSectionTitle">Shared Folders</h2>
+                            <p>Folders shared into this group by its members.</p>
                         </div>
                     </div>
 
