@@ -105,7 +105,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     groupNameTitle.textContent = group.groupName || "Untitled Group";
     groupDescription.textContent = group.description || "No description provided.";
     groupInviteCode.textContent = group.inviteCode || "-";
-    groupMyRole.textContent = myRole || "MEMBER";
+    
+    const displayRole = myRole || "MEMBER";
+    groupMyRole.textContent = displayRole;
+
+    // Apply real color classes to groupMyRole badge based on feedback
+    groupMyRole.classList.remove("badge", "badge-primary", "badge-role-owner", "badge-role-member");
+    groupMyRole.classList.add(displayRole === "OWNER" ? "badge-role-owner" : "badge-role-member");
 
     const isOwner = myRole === "OWNER";
 
@@ -131,7 +137,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     name.textContent = member.fullName || member.email || "Unknown User";
 
     const roleBadge = document.createElement("span");
-    roleBadge.className = member.role === "OWNER" ? "badge badge-primary" : "badge badge-success";
+    // Patched: apply actual CSS classes based on role requirement
+    roleBadge.className = member.role === "OWNER" ? "badge-role-owner" : "badge-role-member";
     roleBadge.textContent = member.role || "MEMBER";
 
     main.append(name, roleBadge);
