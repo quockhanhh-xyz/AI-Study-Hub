@@ -279,6 +279,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       docLoader.style.display = "none";
 
+      const docSectionTitle = document.getElementById("docSectionTitle");
+      if (docSectionTitle) {
+        docSectionTitle.textContent = `Shared Documents (${docs.length})`;
+      }
+
       if (docs.length === 0) {
         docEmpty.style.display = "block";
         return;
@@ -376,6 +381,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       folderLoader.style.display = "none";
 
+      const folderSectionTitle = document.getElementById("folderSectionTitle");
+      if (folderSectionTitle) {
+        folderSectionTitle.textContent = `Shared Folders (${folders.length})`;
+      }
+
       if (folders.length === 0) {
         folderEmpty.style.display = "block";
         return;
@@ -414,7 +424,13 @@ document.addEventListener("DOMContentLoaded", async function () {
       detailLoader.style.display = "none";
       // Backend blocks users who are not a member of the group (403/404).
       // Show the backend message and do not render the detail panel.
-      showError(detailError, error.message || "You do not have access to this group.");
+      const isAccessDenied = error.status === 403 || error.status === 404;
+      showError(
+        detailError,
+        isAccessDenied
+          ? "🔒 You are not a member of this group, so you cannot view its details, documents, or folders."
+          : (error.message || "You do not have access to this group.")
+      );
     }
   }
 
