@@ -16,6 +16,7 @@ const progressText = document.getElementById("progressText");
 
 // Inline "Create new subject" refs
 const newSubjectRow = document.getElementById("newSubjectRow");
+const newSubjectCode = document.getElementById("newSubjectCode");
 const newSubjectName = document.getElementById("newSubjectName");
 const createSubjectBtn = document.getElementById("createSubjectBtn");
 const cancelNewSubjectBtn = document.getElementById("cancelNewSubjectBtn");
@@ -275,8 +276,9 @@ subjectSelect.addEventListener("change", () => {
   if (subjectSelect.value === CREATE_NEW_VALUE) {
     newSubjectRow.style.display = "flex";
     showRowError(newSubjectError, "");
+    newSubjectCode.value = "";
     newSubjectName.value = "";
-    newSubjectName.focus();
+    newSubjectCode.focus();
   } else {
     newSubjectRow.style.display = "none";
     lastSubjectValue = subjectSelect.value;
@@ -291,7 +293,14 @@ cancelNewSubjectBtn.addEventListener("click", () => {
 });
 
 async function handleCreateSubject() {
+  const code = newSubjectCode.value.trim();
   const name = newSubjectName.value.trim();
+
+  if (!code) {
+    showRowError(newSubjectError, "Subject code is required.");
+    newSubjectCode.focus();
+    return;
+  }
   if (!name) {
     showRowError(newSubjectError, "Subject name is required.");
     newSubjectName.focus();
@@ -302,7 +311,7 @@ async function handleCreateSubject() {
   showRowError(newSubjectError, "");
 
   try {
-    const result = await createSubject({ subjectName: name });
+    const result = await createSubject({ subjectCode: code, subjectName: name });
     const created = result && result.data ? result.data : null;
     if (!created || !created.subjectId) {
       throw new Error("Unexpected response while creating the subject.");
@@ -310,7 +319,9 @@ async function handleCreateSubject() {
 
     const option = document.createElement("option");
     option.value = created.subjectId;
-    option.textContent = created.subjectName || name;
+    option.textContent = created.subjectCode
+      ? `${created.subjectCode} - ${created.subjectName}`
+      : (created.subjectName || name);
     subjectSelect.insertBefore(option, subjectSelect.querySelector(`option[value="${CREATE_NEW_VALUE}"]`));
     subjectSelect.value = created.subjectId;
     lastSubjectValue = String(created.subjectId);
@@ -323,7 +334,7 @@ async function handleCreateSubject() {
     const isDuplicate = msg.includes("409") || msg.includes("duplicate") || msg.includes("already exists");
     showRowError(
       newSubjectError,
-      isDuplicate ? "A subject with this name already exists. Please choose it from the list instead." : (err.message || "Failed to create subject.")
+      isDuplicate ? "A subject with this code or name already exists. Please choose it from the list instead." : (err.message || "Failed to create subject.")
     );
   } finally {
     createSubjectBtn.disabled = false;
@@ -337,6 +348,13 @@ newSubjectName.addEventListener("keydown", (e) => {
     handleCreateSubject();
   }
 });
+newSubjectCode.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    handleCreateSubject();
+  }
+});
+
 
 // Folder: toggle inline row when "+ Create new folder…" is chosen.
 folderSelect.addEventListener("change", () => {

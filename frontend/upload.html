@@ -55,12 +55,21 @@
                             <option value="">-- Select a subject --</option>
                         </select>
 
-                        <div id="newSubjectRow" class="inline-create-row" style="display:none;">
-                            <input type="text" id="newSubjectName" placeholder="E.g: Software Architecture"
-                                autocomplete="off" />
-                            <button type="button" id="createSubjectBtn" class="btn btn-secondary btn-sm">Create</button>
-                            <button type="button" id="cancelNewSubjectBtn"
-                                class="btn btn-secondary btn-sm">Cancel</button>
+                        <div id="newSubjectRow" class="inline-create-row"
+                            style="display:none; flex-direction: column; align-items: stretch;">
+                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                <input type="text" id="newSubjectCode" placeholder="Code, e.g: MYSUB" autocomplete="off"
+                                    style="flex:0 0 140px;" />
+                                <input type="text" id="newSubjectName"
+                                    placeholder="Subject name, e.g: Software Architecture" autocomplete="off"
+                                    style="flex:1 1 200px;" />
+                            </div>
+                            <div style="display:flex; gap:8px; margin-top:8px;">
+                                <button type="button" id="createSubjectBtn"
+                                    class="btn btn-secondary btn-sm">Create</button>
+                                <button type="button" id="cancelNewSubjectBtn"
+                                    class="btn btn-secondary btn-sm">Cancel</button>
+                            </div>
                         </div>
                         <p id="newSubjectError" class="helper-text error" role="alert" style="display:none;"></p>
 
