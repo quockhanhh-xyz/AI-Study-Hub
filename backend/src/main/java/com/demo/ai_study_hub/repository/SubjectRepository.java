@@ -1,13 +1,31 @@
 package com.demo.ai_study_hub.repository;
 
 import com.demo.ai_study_hub.entity.Subject;
+import com.demo.ai_study_hub.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
 public interface SubjectRepository extends JpaRepository<Subject, Integer> {
+
     List<Subject> findByStatus(String status);
+
     boolean existsBySubjectCode(String subjectCode);
+
+    @Query("SELECT s FROM Subject s WHERE s.status = 'ACTIVE' " +
+            "AND (s.scope = 'SYSTEM' OR (s.scope = 'USER_CUSTOM' AND s.owner = :owner))")
+    List<Subject> findVisibleSubjects(@Param("owner") User owner);
+
+    @Query("SELECT COUNT(s) > 0 FROM Subject s WHERE s.status = 'ACTIVE' " +
+            "AND (LOWER(s.subjectCode) = LOWER(:code) OR LOWER(s.subjectName) = LOWER(:name)) " +
+            "AND (s.scope = 'SYSTEM' OR (s.scope = 'USER_CUSTOM' AND s.owner = :owner))")
+    boolean existsDuplicateForUser(
+            @Param("code") String code,
+            @Param("name") String name,
+            @Param("owner") User owner
+    );
 }

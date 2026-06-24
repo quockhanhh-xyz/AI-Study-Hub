@@ -10,4 +10,6 @@ public class SubjectResponse {
     private String subjectCode;
     private String subjectName;
     private String description;
+    private String scope;
+    private Integer ownerId;
 }

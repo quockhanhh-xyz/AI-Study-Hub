@@ -428,4 +428,47 @@ class DocumentServiceTest {
         assertEquals(10, response.getDocumentId());
         verify(cloudinaryStorageService, times(1)).uploadFile(mockFile, mockOwner.getUserId());
     }
+
+    @Test
+    void uploadDocument_WhenUsingOtherUsersCustomSubject_ShouldThrow403() {
+        MultipartFile mockFile = mock(MultipartFile.class);
+
+        Subject otherUserCustomSubject = new Subject();
+        otherUserCustomSubject.setSubjectId(99);
+        otherUserCustomSubject.setStatus("ACTIVE");
+        otherUserCustomSubject.setScope("USER_CUSTOM");
+        otherUserCustomSubject.setOwner(mockHacker); // không phải mockOwner
+
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(subjectRepository.findById(99)).thenReturn(Optional.of(otherUserCustomSubject));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            documentService.uploadDocument(mockFile, "Test Title", "Description", 99, null, "doantam785@gmail.com");
+        });
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+        verify(cloudinaryStorageService, never()).uploadFile(any(), any());
+    }
+
+    @Test
+    void updateDocument_WhenUsingOtherUsersCustomSubject_ShouldThrow403() {
+        DocumentUpdateDTO dto = new DocumentUpdateDTO();
+        dto.setSubjectId(99);
+
+        Subject otherUserCustomSubject = new Subject();
+        otherUserCustomSubject.setSubjectId(99);
+        otherUserCustomSubject.setStatus("ACTIVE");
+        otherUserCustomSubject.setScope("USER_CUSTOM");
+        otherUserCustomSubject.setOwner(mockHacker);
+
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
+        when(subjectRepository.findById(99)).thenReturn(Optional.of(otherUserCustomSubject));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            documentService.updateDocument(4, dto, "doantam785@gmail.com");
+        });
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+    }
 }
