@@ -641,11 +641,16 @@ textarea.success {
 }
 
 .empty-state-icon {
-  font-size: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 16px;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.06));
-  animation: icon-float 3s ease-in-out infinite;
-  display: inline-block;
+}
+
+.empty-state-icon svg {
+  width: 48px;
+  height: 48px;
+  color: var(--muted, #94a3b8);
 }
 
 @keyframes icon-float {
@@ -1297,6 +1302,19 @@ textarea.success {
   max-width: 400px;
 }
 
+.dashboard-search {
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
 .search-scope-note {
   display: block;
   margin-top: 6px;
@@ -1432,9 +1450,7 @@ textarea.success {
 }
 
 .drop-zone-icon {
-  font-size: 40px;
   margin-bottom: 12px;
-  line-height: 1;
 }
 
 .drop-zone-text {
