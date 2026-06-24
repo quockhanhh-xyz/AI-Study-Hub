@@ -132,20 +132,25 @@ Stores user folders.
 
 Stores subject or category information.
 
-| Column Name   | Data Type    | Constraints                           | Description                                            |
-| :------------ | :----------- | :------------------------------------ | :----------------------------------------------------- |
-| `subject_id`  | INT          | PRIMARY KEY, AUTO_INCREMENT, NOT NULL | Unique subject ID                                      |
-| `subject_code`| VARCHAR(50)  | UNIQUE, NOT NULL                      | Short code for the subject (e.g., SWP391)              |
-| `subject_name`| VARCHAR(255) | NOT NULL                              | Full subject name (e.g., Software Project)             |
-| `description` | TEXT         | NULLABLE                              | Optional subject description                           |
-| `status`      | VARCHAR(30)  | DEFAULT 'ACTIVE', NOT NULL            | Status: ACTIVE or INACTIVE                             |
-| `created_at`  | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP, NOT NULL   | Subject creation time                                  |
-| `updated_at`  | TIMESTAMP    | NULLABLE                              | Last update time                                       |
+| Column Name   | Data Type    | Constraints                                          | Description                                            |
+| :------------ | :----------- | :---------------------------------------------------- | :----------------------------------------------------- |
+| `subject_id`  | INT          | PRIMARY KEY, AUTO_INCREMENT, NOT NULL                 | Unique subject ID                                      |
+| `subject_code`| VARCHAR(50)  | NOT NULL                                              | Short code for the subject (e.g., SWP391)              |
+| `subject_name`| VARCHAR(255) | NOT NULL                                              | Full subject name (e.g., Software Project)             |
+| `description` | TEXT         | NULLABLE                                              | Optional subject description                           |
+| `status`      | VARCHAR(30)  | DEFAULT 'ACTIVE', NOT NULL                            | Status: ACTIVE or INACTIVE                             |
+| `scope`       | VARCHAR(20)  | DEFAULT 'SYSTEM', NOT NULL                            | Subject scope: SYSTEM or USER_CUSTOM                   |
+| `owner_id`    | INT          | FOREIGN KEY REFERENCES users(user_id), NULLABLE       | Owner of the custom subject. NULL for SYSTEM subjects  |
+| `created_at`  | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP, NOT NULL                   | Subject creation time                                  |
+| `updated_at`  | TIMESTAMP    | NULLABLE                                              | Last update time                                       |
 
 ### Business Rules
 
-- A subject is unique by its `subject_code`.
+- `scope = SYSTEM`: `owner_id` is NULL, visible to all users, seeded by the system.
+- `scope = USER_CUSTOM`: `owner_id` is the creating user's ID, visible only to that owner.
+- A subject's `subject_code` and `subject_name` must not duplicate another subject (SYSTEM or the same user's USER_CUSTOM subjects) — checked at the application level, not by a unique DB constraint, since custom subjects from different users may share the same code/name.
 - Only subjects with status `'ACTIVE'` will be returned by default in the list API.
+- Document upload and update only accept a SYSTEM subject or a USER_CUSTOM subject owned by the current user. Using another user's custom subject is rejected with `403 Forbidden`.
 
 ---
 
