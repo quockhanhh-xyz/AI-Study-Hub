@@ -2400,3 +2400,60 @@ svg {
   color: var(--danger, #dc3545);
   margin-bottom: 8px;
 }
+
+/* ===== STEP 6D: SIMPLIFIED DASHBOARD WIDGETS ===== */
+.quota-progress-container {
+  background-color: var(--primary-light);
+  border-radius: 8px;
+  height: 8px;
+  width: 100%;
+  overflow: hidden;
+  margin-top: 10px;
+  margin-bottom: 6px;
+}
+
+.quota-progress-bar {
+  background-color: var(--primary);
+  height: 100%;
+  width: 0%;
+  transition: width 0.4s ease-out;
+}
+
+.quick-links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+  margin-bottom: 32px;
+}
+
+.quick-link-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 20px;
+  color: var(--text-main);
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(23, 32, 51, 0.03);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.quick-link-card:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(23, 32, 51, 0.06);
+}
+
+.quick-link-card svg {
+  color: var(--primary);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.quick-link-card:hover svg {
+  transform: scale(1.1);
+}
