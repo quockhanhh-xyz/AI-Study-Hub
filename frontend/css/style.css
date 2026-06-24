@@ -419,6 +419,26 @@ textarea.error {
   background-color: rgba(239, 68, 68, 0.1);
 }
 
+/* Step 6D: Inline "Create new subject/folder" row inside the Upload form */
+.inline-create-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.inline-create-row input[type="text"] {
+  flex: 1 1 200px;
+  margin: 0;
+}
+
+.inline-create-row .btn-sm {
+  flex: 0 0 auto;
+  width: auto;
+  padding: 9px 16px;
+}
+
 /* Input success state */
 input.success,
 textarea.success {
