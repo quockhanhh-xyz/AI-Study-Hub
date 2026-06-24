@@ -409,7 +409,7 @@ Uploads a document file for the currently authenticated user.
 | `file`        | File    | Yes      | Uploaded study document                                                |
 | `title`       | String  | Yes      | User-facing document title                                             |
 | `description` | String  | No       | Optional document description                                          |
-| `subjectId`   | Integer | Yes      | Required Subject ID to assign to the document                          |
+| `subjectId`   | Integer | Yes      | Required Subject ID to assign to the document. Must be either a SYSTEM subject or a USER_CUSTOM subject owned by the current user (see Section 4). |
 | `folderId`    | Integer | No       | Optional Folder ID to assign to the document. If null or empty, defaults to the top-level My Documents area. |
 
 ### Backend & Frontend Integration Rules
@@ -428,12 +428,13 @@ Uploads a document file for the currently authenticated user.
   - `subjectName` (String, nullable)
   - `folderId` (Integer, nullable)
   - `folderName` (String, nullable)
+- **Subject Ownership (Step 6D)**: The backend must reject `subjectId` values pointing to a `USER_CUSTOM` subject owned by a different user, returning `403 Forbidden`. The same ownership rule applies when changing `subjectId` via `PUT /api/documents/{id}` (update). `SYSTEM` subjects (`scope = SYSTEM`) may always be used by any authenticated user.
 - **Duplicate File Check**: Prior to initiating the upload to Cloudinary, the backend must query the MySQL database to check if a duplicate document already exists. A duplicate is identified if an existing document shares the same `owner_id` (current user), `folder_id` (nullable, where null represents the top-level My Documents area), `originalFileName` (file name), and `fileSize` (in bytes), with `status = 'ACTIVE'`. If a duplicate is found, the backend aborts the process (no Cloudinary file upload occurs) and returns `409 Conflict`.
 - **HTTP Status Codes (Step 3)**: Backend must use precise RESTful HTTP status codes:
   - `200 OK` for successful actions.
   - `400 Bad Request` for validation failures (e.g. missing title).
   - `401 Unauthorized` for missing/expired token.
-  - `403 Forbidden` for ownership violations (user attempting to read/write another user's document).
+  - `403 Forbidden` for ownership violations (user attempting to read/write another user's document, or using another user's custom subject).
   - `404 Not Found` for non-existent or soft-deleted documents.
   - `409 Conflict` for duplicate file uploads.
   - Controller endpoints must NOT catch all exceptions and simplify them into a generic `400 Bad Request` (`ResponseEntity.badRequest()`).
@@ -650,15 +651,17 @@ Returns documents owned by the currently authenticated user, with optional searc
 
 ---
 
-# 4. Subject Management APIs (Step 3)
+---
 
-These APIs support retrieving subject master data.
+# 4. Subject Management APIs (Step 3 + Step 6D Custom Subjects)
+
+These APIs support retrieving subject master data and creating user-owned custom subjects.
 
 ## 4.1. Get All Subjects API
 
 ## GET `/api/subjects`
 
-Returns all active subjects.
+Returns all active SYSTEM subjects plus the current user's own active USER_CUSTOM subjects. A user never sees another user's custom subjects.
 
 ### Request Headers
 
@@ -675,13 +678,25 @@ Returns all active subjects.
       "subjectId": 1,
       "subjectCode": "SWP391",
       "subjectName": "Software Project",
-      "description": "Software project management and development course"
+      "description": "Software project management and development course",
+      "scope": "SYSTEM",
+      "ownerId": null
     },
     {
       "subjectId": 2,
       "subjectCode": "SWT301",
       "subjectName": "Software Testing",
-      "description": "Software verification and testing course"
+      "description": "Software verification and testing course",
+      "scope": "SYSTEM",
+      "ownerId": null
+    },
+    {
+      "subjectId": 10,
+      "subjectCode": "MYSUB",
+      "subjectName": "My Custom Subject",
+      "description": null,
+      "scope": "USER_CUSTOM",
+      "ownerId": 4
     }
   ]
 }
@@ -693,6 +708,73 @@ Returns all active subjects.
 {
   "success": false,
   "message": "Your session has expired. Please log in again.",
+  "data": null
+}
+```
+
+---
+
+## 4.2. Create Custom Subject API
+
+## POST `/api/subjects/custom`
+
+Creates a new subject owned by the current authenticated user. The subject is only visible to its owner and can be used by that owner when uploading or updating documents.
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Request Body
+
+```json
+{
+  "subjectCode": "MYSUB",
+  "subjectName": "My Custom Subject",
+  "description": "Optional description"
+}
+```
+
+| Field         | Type   | Required | Description                                          |
+| :------------ | :----- | :------- | :---------------------------------------------------- |
+| `subjectCode` | String | Yes      | Trimmed and uppercased by the backend before saving   |
+| `subjectName` | String | Yes      | Trimmed by the backend before saving                  |
+| `description` | String | No       | Trimmed by the backend before saving if provided       |
+
+### Success Response (200)
+
+```json
+{
+  "success": true,
+  "message": "Custom subject created successfully",
+  "data": {
+    "subjectId": 10,
+    "subjectCode": "MYSUB",
+    "subjectName": "My Custom Subject",
+    "description": "Optional description",
+    "scope": "USER_CUSTOM",
+    "ownerId": 4
+  }
+}
+```
+
+### Error Response - Validation Failed (400)
+
+```json
+{
+  "success": false,
+  "message": "Subject code is required",
+  "data": null
+}
+```
+
+### Error Response - Duplicate Subject (409)
+
+Returned if `subjectCode` or `subjectName` already matches any SYSTEM subject, or matches an existing USER_CUSTOM subject owned by the current user.
+
+```json
+{
+  "success": false,
+  "message": "A subject with this code or name already exists",
   "data": null
 }
 ```
