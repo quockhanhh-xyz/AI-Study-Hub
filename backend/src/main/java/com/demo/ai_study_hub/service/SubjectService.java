@@ -35,17 +35,20 @@ public class SubjectService {
     public SubjectResponse createCustomSubject(CreateCustomSubjectRequest request, String email) {
         User user = getUser(email);
 
-        boolean duplicate = subjectRepository.existsDuplicateForUser(
-                request.getSubjectCode(), request.getSubjectName(), user);
+        String code = request.getSubjectCode().trim().toUpperCase();
+        String name = request.getSubjectName().trim();
+        String desc = request.getDescription() != null ? request.getDescription().trim() : null;
+
+        boolean duplicate = subjectRepository.existsDuplicateForUser(code, name, user);
         if (duplicate) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "A subject with this code or name already exists");
         }
 
         Subject subject = new Subject();
-        subject.setSubjectCode(request.getSubjectCode());
-        subject.setSubjectName(request.getSubjectName());
-        subject.setDescription(request.getDescription());
+        subject.setSubjectCode(code);
+        subject.setSubjectName(name);
+        subject.setDescription(desc);
         subject.setStatus("ACTIVE");
         subject.setScope("USER_CUSTOM");
         subject.setOwner(user);
