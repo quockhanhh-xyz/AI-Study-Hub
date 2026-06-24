@@ -102,7 +102,9 @@ async function loadSubjectOptions() {
     subjects.forEach(function (subject) {
       const option = document.createElement("option");
       option.value = subject.subjectId;
-      option.textContent = subject.subjectName;
+      option.textContent = subject.subjectCode
+        ? `${subject.subjectCode} - ${subject.subjectName}`
+        : subject.subjectName;
       subjectSelect.appendChild(option);
     });
 
