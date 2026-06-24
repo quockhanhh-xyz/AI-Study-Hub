@@ -16,7 +16,7 @@ const progressText = document.getElementById("progressText");
 
 // Inline "Create new subject" refs
 const newSubjectRow = document.getElementById("newSubjectRow");
-const newSubjectCode = document.getElementById("newSubjectCode");
+const newSubjectDescription = document.getElementById("newSubjectDescription");
 const newSubjectName = document.getElementById("newSubjectName");
 const createSubjectBtn = document.getElementById("createSubjectBtn");
 const cancelNewSubjectBtn = document.getElementById("cancelNewSubjectBtn");
@@ -280,6 +280,7 @@ subjectSelect.addEventListener("change", () => {
     showRowError(newSubjectError, "");
     newSubjectCode.value = "";
     newSubjectName.value = "";
+    newSubjectDescription.value = "";
     newSubjectCode.focus();
   } else {
     newSubjectRow.style.display = "none";
@@ -313,7 +314,10 @@ async function handleCreateSubject() {
   showRowError(newSubjectError, "");
 
   try {
-    const result = await createSubject({ subjectCode: code, subjectName: name });
+    const description = newSubjectDescription.value.trim();
+    const payload = { subjectCode: code, subjectName: name };
+    if (description) payload.description = description;
+    const result = await createSubject(payload);
     const created = result && result.data ? result.data : null;
     if (!created || !created.subjectId) {
       throw new Error("Unexpected response while creating the subject.");
