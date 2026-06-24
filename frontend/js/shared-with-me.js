@@ -149,7 +149,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const icon = document.createElement("div");
     icon.className = "folder-icon";
-    icon.textContent = "📁";
+    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" aria-hidden="true" focusable="false"><path stroke="currentColor" d="M1.5 10V2.5h5l3 3h11v3m3 0.25V8.5H4.6l-0.15 0.25 -0.234 0.492A28 28 0 0 0 1.5 21.272v0.228h19v-0.128a28 28 0 0 1 2.757 -12.116l0.243 -0.506Z" stroke-width="1"></path></svg>';
 
     const name = document.createElement("p");
     name.className = "folder-name";

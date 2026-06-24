@@ -77,7 +77,7 @@ function renderDynamicSidebar(isAuthenticated) {
   navContainer.innerHTML = visibleMenus
     .map(item => `
       <a href="${item.url}" class="nav-link">
-        <span class="nav-icon">${item.icon || "📄"}</span>
+        <span class="nav-icon">${item.icon || ICON_INFO}</span>
         <span class="nav-text">${item.name}</span>
       </a>
     `)
@@ -96,7 +96,7 @@ function renderDynamicSidebar(isAuthenticated) {
       logoutContainer.innerHTML = `
         <hr class="sidebar-divider" />
         <a href="#" id="sidebarLogoutBtn" class="nav-link nav-link-logout">
-          <span class="nav-icon">🚪</span>
+          <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg></span>
           <span class="nav-text">Logout</span>
         </a>
       `;
@@ -159,7 +159,7 @@ function initializeSidebarCollapse() {
 
   // Standardize Logo text wrapper for FE3 collapsed layout visibility state rules
   if (logoContainer && !logoContainer.querySelector(".logo-text")) {
-    const rawText = logoContainer.textContent.replace("☰", "").trim();
+    const rawText = logoContainer.textContent.trim();
     if (rawText) {
       logoContainer.innerHTML = `<span class="logo-text">${rawText}</span>`;
     }
@@ -178,7 +178,7 @@ function initializeSidebarCollapse() {
     border-radius: 6px;
     transition: background 0.2s;
   `;
-  toggleBtn.innerHTML = "☰";
+  toggleBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18"></path></svg>';
   toggleBtn.setAttribute("aria-label", "Toggle Sidebar Navigation");
 
   if (logoContainer) {

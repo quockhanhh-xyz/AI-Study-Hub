@@ -83,7 +83,7 @@ async function loadSubjectOptions() {
     });
   } catch (err) {
     console.warn("Could not load subjects:", err);
-    loadingOption.textContent = "⚠ Failed to load subjects — please refresh the page";
+    loadingOption.textContent = "Failed to load subjects — please refresh the page";
     if (subjectError) {
       subjectError.textContent = "Could not load subjects from the server. Please refresh and try again.";
       subjectError.style.display = "block";
