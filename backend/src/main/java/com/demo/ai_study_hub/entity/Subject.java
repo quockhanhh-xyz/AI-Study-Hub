@@ -17,7 +17,7 @@ public class Subject {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer subjectId;
 
-    @Column(unique = true, nullable = false, length = 50)
+    @Column(nullable = false, length = 50)
     private String subjectCode;
 
     @Column(nullable = false, length = 255)
@@ -29,12 +29,17 @@ public class Subject {
     @Column(nullable = false, length = 30)
     private String status = "ACTIVE";
 
+    @Column(nullable = false, length = 20)
+    private String scope = "SYSTEM";
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", referencedColumnName = "user_id", nullable = true)
+    private User owner;
+
     @Column(nullable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-
-
 }

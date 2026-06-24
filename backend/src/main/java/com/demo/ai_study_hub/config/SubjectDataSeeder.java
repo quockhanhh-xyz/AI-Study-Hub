@@ -29,6 +29,8 @@ public class SubjectDataSeeder implements CommandLineRunner {
                 subject.setSubjectName(s[1]);
                 subject.setStatus("ACTIVE");
                 subjectRepository.save(subject);
+                subject.setScope("SYSTEM");
+                subject.setOwner(null);
             }
         }
     }

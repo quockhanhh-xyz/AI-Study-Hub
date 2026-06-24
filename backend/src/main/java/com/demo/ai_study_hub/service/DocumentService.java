@@ -43,6 +43,11 @@ public class DocumentService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found");
         }
 
+        if ("USER_CUSTOM".equals(subject.getScope())
+                && (subject.getOwner() == null || !subject.getOwner().getUserId().equals(owner.getUserId()))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this subject");
+        }
+
         Folder folder = null;
         if (folderId != null) {
             folder = folderRepository.findById(folderId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found"));
