@@ -22,8 +22,8 @@ const NAVIGATION_MENU = [
 
   // Authenticated visible main sidebar links
   { name: "Dashboard", icon: ICON_DASHBOARD, url: "dashboard.html", requiresAuth: true },
-  { name: "My Documents", icon: ICON_FOLDER, url: "folders.html", requiresAuth: true },
-  { name: "Folders", icon: ICON_FOLDER, url: "folders.html", requiresAuth: true, hidden: true },
+  { name: "My Documents", icon: ICON_FOLDER, url: "documents.html", requiresAuth: true },
+  { name: "Folders", icon: ICON_FOLDER, url: "folders.html", requiresAuth: true },
   { name: "Shared With Me", icon: ICON_SHARE, url: "shared-with-me.html", requiresAuth: true },
   { name: "Groups", icon: ICON_GROUP, url: "groups.html", requiresAuth: true },
   { name: "Trash", icon: ICON_BIN, url: "trash.html", requiresAuth: true },
@@ -51,7 +51,7 @@ function initializeActiveMenu() {
 
   // Step 6D IA Mapping: Force child sub-views to illuminate their correct parent menu items
   if (currentPage === "upload.html" || currentPage === "document-detail.html") {
-    currentPage = "folders.html";
+    currentPage = "documents.html";
   }
 
   if (currentPage === "group-detail.html") {
