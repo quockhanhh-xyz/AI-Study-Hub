@@ -1,13 +1,21 @@
+/**
+ * Simplified Dashboard Controller (FE1 - Step 6D).
+ * Provides an overview of study statistics, dynamic storage quota,
+ * and lists the 3-5 most recent documents.
+ * All folder hierarchies, document searches/filters, and folder modals
+ * are moved to their respective specialized pages.
+ */
 document.addEventListener("DOMContentLoaded", async function () {
   if (window.authReady) {
     const isAuthenticated = await window.authReady;
     if (!isAuthenticated) return;
   }
 
+  // User details
   const userNameElement = document.getElementById("dashboardUserName");
   const currentUserRaw = localStorage.getItem("currentUser");
-
   let currentUser = {};
+
   try {
     currentUser = JSON.parse(currentUserRaw || "{}");
   } catch (error) {
@@ -20,79 +28,27 @@ document.addEventListener("DOMContentLoaded", async function () {
     userNameElement.textContent = `Welcome, ${currentUser.fullName} (${currentUser.role})`;
   }
 
+  // Stat elements
   const docCountElement = document.getElementById("docCount");
   const folderCountElement = document.getElementById("folderCount");
-  const joinDateElement = document.getElementById("joinDate");
+  const sharedCountElement = document.getElementById("sharedCount");
+  const groupCountElement = document.getElementById("groupCount");
+  const accountTierElement = document.getElementById("accountTier");
+  const usageRemainingElement = document.getElementById("usageRemaining");
+  const usageProgressBar = document.getElementById("usageProgressBar");
+
+  // Document list elements
   const documentLoader = document.getElementById("documentLoader");
   const documentErrorMessage = document.getElementById("documentErrorMessage");
   const documentGrid = document.getElementById("documentGrid");
   const emptyState = document.getElementById("emptyState");
 
-  let totalDocuments = null;
-  let userFolders = [];
-
-  // Filter UI Elements
-  const searchInput = document.getElementById("searchInput");
-  const subjectFilter = document.getElementById("subjectFilter");
-  const fileTypeFilter = document.getElementById("fileTypeFilter");
-  const folderFilter = document.getElementById("folderFilter");
-  const clearFiltersBtn = document.getElementById("clearFiltersBtn");
-
-  if (folderCountElement) folderCountElement.textContent = "0";
-
-  // Patched: Apply real color classes to the tier badge based on feedback
-  if (joinDateElement) {
+  // Account tier styling
+  if (accountTierElement) {
     const tier = currentUser.tier || "FREE";
-    joinDateElement.textContent = tier;
-    joinDateElement.classList.remove("badge-tier-free", "badge-tier-premium");
-    joinDateElement.classList.add(tier === "PREMIUM" ? "badge-tier-premium" : "badge-tier-free");
-  }
-
-  function activateFolderCard(folderId) {
-    document.querySelectorAll(".folder-card").forEach(c => c.classList.remove("active"));
-    if (folderId) {
-      const card = document.querySelector(`.folder-card[data-folder-id="${folderId}"]`);
-      if (card) {
-        card.classList.add("active");
-      }
-    }
-  }
-
-  function updateDocSub(folderName) {
-    const docPanelSubtitle = document.getElementById("docPanelSubtitle");
-    if (docPanelSubtitle) {
-      if (folderName) {
-        docPanelSubtitle.textContent = `Showing files in: ${folderName}`;
-      } else {
-        docPanelSubtitle.textContent = "Your learning materials and files.";
-      }
-    }
-  }
-
-  function scrollToDocs() {
-    const docPanel = document.querySelector(".document-panel");
-    if (docPanel) {
-      docPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }
-
-  function buildFolderPath(folderId) {
-    if (!folderId) {
-      return "My Documents";
-    }
-    const path = [];
-    let currentId = folderId;
-    let iterations = 0;
-    while (currentId && iterations < 100) {
-      const folder = userFolders.find(f => f.folderId === currentId);
-      if (!folder) {
-        break;
-      }
-      path.unshift(folder.folderName);
-      currentId = folder.parentFolderId;
-      iterations++;
-    }
-    return ["My Documents", ...path].join(" / ");
+    accountTierElement.textContent = tier;
+    accountTierElement.classList.remove("badge-tier-free", "badge-tier-premium");
+    accountTierElement.classList.add(tier === "PREMIUM" ? "badge-tier-premium" : "badge-tier-free");
   }
 
   function setDocumentsLoading() {
@@ -128,52 +84,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const item = document.createElement("span");
     item.textContent = `${label}: ${value}`;
     return item;
-  }
-
-  function createFolderCard(folder) {
-    const card = document.createElement("div");
-    card.className = "folder-card";
-    card.style.cursor = "pointer";
-    card.dataset.folderId = folder.folderId;
-
-    const main = document.createElement("div");
-    main.className = "folder-card-main";
-
-    const icon = document.createElement("div");
-    icon.className = "folder-icon";
-    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" aria-hidden="true" focusable="false"><path stroke="currentColor" d="M1.5 10V2.5h5l3 3h11v3m3 0.25V8.5H4.6l-0.15 0.25 -0.234 0.492A28 28 0 0 0 1.5 21.272v0.228h19v-0.128a28 28 0 0 1 2.757 -12.116l0.243 -0.506Z" stroke-width="1"></path></svg>';
-
-    const name = document.createElement("p");
-    name.className = "folder-name";
-    name.textContent = folder.folderName || "Untitled Folder";
-
-    // Show fileCount and subfolderCount if available
-    const stats = document.createElement("p");
-    stats.className = "folder-meta";
-    stats.style.fontWeight = "500";
-    const parts = [];
-    if (folder.fileCount !== undefined && folder.fileCount !== null) {
-      parts.push(`${folder.fileCount} file${folder.fileCount !== 1 ? "s" : ""}`);
-    }
-    if (folder.subfolderCount !== undefined && folder.subfolderCount !== null) {
-      parts.push(`${folder.subfolderCount} subfolder${folder.subfolderCount !== 1 ? "s" : ""}`);
-    }
-    stats.textContent = parts.length > 0 ? parts.join(" · ") : "0 files · 0 subfolders";
-
-    const meta = document.createElement("p");
-    meta.className = "folder-meta";
-    meta.textContent = folder.createdAt
-      ? `Created: ${new Date(folder.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" })}`
-      : "";
-
-    main.append(icon, name, stats, meta);
-    card.append(main);
-
-    card.addEventListener("click", function () {
-      window.location.href = `folders.html?folderId=${folder.folderId}`;
-    });
-
-    return card;
   }
 
   function createDocumentCard(documentItem) {
@@ -214,20 +124,6 @@ document.addEventListener("DOMContentLoaded", async function () {
       meta.append(subjectBadge);
     }
 
-    const folderLink = document.createElement("button");
-    folderLink.type = "button";
-    folderLink.className = "document-folder-path";
-    folderLink.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="14" width="14" aria-hidden="true" focusable="false" style="vertical-align:-2px;"><path stroke="currentColor" d="M1.5 10V2.5h5l3 3h11v3m3 0.25V8.5H4.6l-0.15 0.25 -0.234 0.492A28 28 0 0 0 1.5 21.272v0.228h19v-0.128a28 28 0 0 1 2.757 -12.116l0.243 -0.506Z" stroke-width="1.5"></path></svg> ' + buildFolderPath(documentItem.folderId);
-    folderLink.addEventListener("click", function (e) {
-      e.stopPropagation();
-      if (documentItem.folderId) {
-        window.location.href = `folders.html?folderId=${documentItem.folderId}`;
-      } else {
-        window.location.href = "folders.html";
-      }
-    });
-    meta.append(folderLink);
-
     const actions = document.createElement("div");
     actions.className = "document-actions";
 
@@ -254,344 +150,118 @@ document.addEventListener("DOMContentLoaded", async function () {
     return card;
   }
 
-  async function loadSubjects() {
+  // Dynamic Statistics Loading
+  async function loadOverviewStats(documents) {
+    // 1. Documents Count
+    if (docCountElement) {
+      docCountElement.textContent = String(documents.length);
+    }
+
+    // 2. Folders Count
     try {
-      const result = await getSubjects();
-      const subjects = Array.isArray(result.data) ? result.data : [];
-      if (subjectFilter) {
-        subjectFilter.innerHTML = '<option value="">All Subjects</option>';
-        subjects.forEach(function (subject) {
-          const option = document.createElement("option");
-          option.value = subject.subjectId;
-          option.textContent = `${subject.subjectCode} - ${subject.subjectName}`;
-          subjectFilter.appendChild(option);
-        });
+      const foldersRes = await getMyFolders(null, true);
+      const folders = Array.isArray(foldersRes.data) ? foldersRes.data : [];
+      if (folderCountElement) {
+        folderCountElement.textContent = String(folders.length);
       }
-    } catch (error) {
-      console.warn("Failed to load subjects:", error);
+    } catch (e) {
+      console.warn("Failed to load folders count:", e);
+      if (folderCountElement) folderCountElement.textContent = "0";
     }
-  }
 
-  async function loadFolders() {
-    const folderGrid = document.getElementById("folderGrid");
-    const folderLoader = document.getElementById("folderLoader");
-    const folderErrorMessage = document.getElementById("folderErrorMessage");
-    const folderEmptyState = document.getElementById("folderEmptyState");
-
-    if (folderLoader) folderLoader.style.display = "flex";
-    if (folderGrid) folderGrid.style.display = "none";
-    if (folderEmptyState) folderEmptyState.style.display = "none";
-    if (folderErrorMessage) folderErrorMessage.style.display = "none";
-
+    // 3. Shared Items Count
+    let sharedDocsCount = 0;
+    let sharedFoldersCount = 0;
     try {
-      // 1. Fetch only root folders for the grid view
-      const result = await getMyFolders();
-      const folders = Array.isArray(result.data) ? result.data : [];
+      const sharedDocsRes = await getSharedWithMe();
+      const sharedDocs = Array.isArray(sharedDocsRes.data) ? sharedDocsRes.data : (Array.isArray(sharedDocsRes) ? sharedDocsRes : []);
+      sharedDocsCount = sharedDocs.length;
+    } catch (e) {
+      console.warn("Failed to load shared documents:", e);
+    }
+    try {
+      const sharedFoldersRes = await getFoldersSharedWithMe();
+      const sharedFolders = Array.isArray(sharedFoldersRes.data) ? sharedFoldersRes.data : (Array.isArray(sharedFoldersRes) ? sharedFoldersRes : []);
+      sharedFoldersCount = sharedFolders.length;
+    } catch (e) {
+      console.warn("Failed to load shared folders:", e);
+    }
+    if (sharedCountElement) {
+      sharedCountElement.textContent = String(sharedDocsCount + sharedFoldersCount);
+    }
 
-      // 2. Fetch all active folders recursively for stats, cache, and dropdown population
-      let allFolders = folders;
-      try {
-        const allResult = await getMyFolders(null, true);
-        if (allResult && Array.isArray(allResult.data)) {
-          allFolders = allResult.data;
-        }
-      } catch (e) {
-        console.warn("Failed to load recursive folders count:", e);
+    // 4. Study Groups Count
+    try {
+      const groupsRes = await getMyGroups();
+      const groups = Array.isArray(groupsRes.data) ? groupsRes.data : (Array.isArray(groupsRes) ? groupsRes : []);
+      if (groupCountElement) {
+        groupCountElement.textContent = String(groups.length);
       }
-      userFolders = allFolders;
+    } catch (e) {
+      console.warn("Failed to load study groups count:", e);
+      if (groupCountElement) groupCountElement.textContent = "0";
+    }
 
-      if (folderCountElement) {
-        folderCountElement.textContent = String(allFolders.length);
-      }
+    // 5. Storage Quota Calculation
+    const tier = currentUser.tier || "FREE";
+    const maxQuotaBytes = tier === "PREMIUM" ? 1024 * 1024 * 1024 : 100 * 1024 * 1024; // 1GB or 100MB
+    const totalBytesUsed = documents.reduce((sum, doc) => sum + (doc.fileSize || 0), 0);
 
-      if (folderFilter) {
-        const currentValue = folderFilter.value;
-        folderFilter.innerHTML = `
-          <option value="">All Folders</option>
-          <option value="0">My Documents</option>
-        `;
-        allFolders.forEach(function (folder) {
-          const option = document.createElement("option");
-          option.value = folder.folderId;
-          option.textContent = folder.folderName;
-          folderFilter.appendChild(option);
-        });
-        folderFilter.value = currentValue;
-      }
+    if (usageRemainingElement) {
+      const usedFormatted = formatFileSize(totalBytesUsed);
+      const quotaFormatted = formatFileSize(maxQuotaBytes);
+      usageRemainingElement.textContent = `${usedFormatted} / ${quotaFormatted}`;
+    }
 
-      if (folderLoader) folderLoader.style.display = "none";
-
-      if (folders.length === 0) {
-        if (folderEmptyState) folderEmptyState.style.display = "flex";
-        if (folderGrid) folderGrid.style.display = "none";
-      } else {
-        if (folderGrid) {
-          folderGrid.innerHTML = "";
-          folders.forEach(function (folder) {
-            folderGrid.appendChild(createFolderCard(folder));
-          });
-          folderGrid.style.display = "grid";
-          if (folderFilter && folderFilter.value) {
-            activateFolderCard(folderFilter.value);
-          }
-        }
-      }
-    } catch (error) {
-      if (folderCountElement) {
-        folderCountElement.textContent = "0";
-      }
-      if (folderLoader) folderLoader.style.display = "none";
-      if (folderGrid) folderGrid.style.display = "none";
-      if (folderEmptyState) folderEmptyState.style.display = "none";
-      if (folderErrorMessage) {
-        folderErrorMessage.textContent = error.message || "Failed to load folders.";
-        folderErrorMessage.style.display = "block";
-      }
-      console.warn("Failed to load folders:", error);
+    if (usageProgressBar) {
+      const percentage = Math.min((totalBytesUsed / maxQuotaBytes) * 100, 100);
+      usageProgressBar.style.width = `${percentage}%`;
     }
   }
 
-  async function resolveFoldersForDocuments(documents) {
-    const uniqueFolderIds = [...new Set(documents.map(d => d.folderId).filter(Boolean))];
-    for (const folderId of uniqueFolderIds) {
-      let currentId = folderId;
-      let iterations = 0;
-      while (currentId && iterations < 10) {
-        const exists = userFolders.some(f => f.folderId === currentId);
-        if (exists) {
-          break;
-        }
-        try {
-          const result = await getFolderById(currentId);
-          if (result && result.data) {
-            const folder = result.data;
-            userFolders.push(folder);
-            currentId = folder.parentFolderId;
-          } else {
-            break;
-          }
-        } catch (e) {
-          console.warn(`Failed to resolve folder ${currentId}:`, e);
-          break;
-        }
-        iterations++;
-      }
-    }
-  }
-
-  async function loadDocuments() {
+  // Load and Render Recent Activity
+  async function loadRecentDocuments() {
     setDocumentsLoading();
 
-    const params = {
-      keyword: searchInput ? searchInput.value.trim() : "",
-      subjectId: subjectFilter ? subjectFilter.value : "",
-      fileType: fileTypeFilter ? fileTypeFilter.value : "",
-      folderId: folderFilter ? folderFilter.value : ""
-    };
-
-    if (params.folderId && params.folderId !== "0") {
-      params.includeSubfolders = true;
-    }
-
     try {
-      const result = await searchDocuments(params);
+      // Fetch all owned documents to calculate stats and sort them
+      const result = await searchDocuments({});
       const documents = Array.isArray(result.data) ? result.data : [];
-      await resolveFoldersForDocuments(documents);
 
-      const isFiltering = params.keyword || params.subjectId || params.fileType || params.folderId;
-      if (!isFiltering) {
-        totalDocuments = documents.length;
-      }
+      // Calculate overview statistics
+      await loadOverviewStats(documents);
 
-      if (docCountElement && totalDocuments !== null) {
-        docCountElement.textContent = String(totalDocuments);
-      }
       if (documentLoader) documentLoader.style.display = "none";
 
       if (documents.length === 0) {
         if (documentGrid) documentGrid.style.display = "none";
-        if (emptyState) {
-          emptyState.style.display = "block";
-          const emptyTitle = emptyState.querySelector(".empty-title");
-          const emptyDesc = emptyState.querySelector("p");
-          const emptyAction = emptyState.querySelector(".empty-action");
-
-          if (isFiltering) {
-            if (emptyTitle) emptyTitle.textContent = "No documents found.";
-            if (emptyDesc) emptyDesc.textContent = "Try changing your keyword or filters.";
-            if (emptyAction) emptyAction.style.display = "none";
-          } else {
-            if (emptyTitle) emptyTitle.textContent = "No documents yet";
-            if (emptyDesc) emptyDesc.textContent = "Upload your first study document to keep everything in one place.";
-            if (emptyAction) emptyAction.style.display = "inline-flex";
-          }
-        }
+        if (emptyState) emptyState.style.display = "flex";
         return;
       }
 
+      // Sort by creation date descending, take top 5 items
+      const recentDocs = [...documents]
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5);
+
       if (documentGrid) {
         documentGrid.innerHTML = "";
-        documents.forEach(function (documentItem) {
-          documentGrid.appendChild(createDocumentCard(documentItem));
+        recentDocs.forEach(function (doc) {
+          documentGrid.appendChild(createDocumentCard(doc));
         });
         documentGrid.style.display = "grid";
       }
     } catch (error) {
-      if (docCountElement) docCountElement.textContent = "0";
       if (documentLoader) documentLoader.style.display = "none";
       if (documentGrid) documentGrid.style.display = "none";
       if (emptyState) emptyState.style.display = "none";
       if (documentErrorMessage) {
-        documentErrorMessage.textContent = error.message || "Failed to load documents.";
+        documentErrorMessage.textContent = error.message || "Failed to load recent activity.";
         documentErrorMessage.style.display = "flex";
       }
     }
   }
 
-  // Load subject options first
-  await loadSubjects();
-  await loadFolders();
-
-  // Load documents
-  await loadDocuments();
-
-  // Bind filter events
-  let searchTimeout;
-  if (searchInput) {
-    searchInput.addEventListener("input", function () {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(loadDocuments, 300);
-    });
-  }
-
-  if (subjectFilter) {
-    subjectFilter.addEventListener("change", loadDocuments);
-  }
-
-  if (fileTypeFilter) {
-    fileTypeFilter.addEventListener("change", loadDocuments);
-  }
-
-  if (folderFilter) {
-    folderFilter.addEventListener("change", async function () {
-      await loadDocuments();
-      const folderId = folderFilter.value;
-      if (folderId && folderId !== "0") {
-        const selectedOption = folderFilter.options[folderFilter.selectedIndex];
-        const folderName = selectedOption ? selectedOption.textContent : "Folder";
-        activateFolderCard(folderId);
-        updateDocSub(folderName);
-      } else if (folderId === "0") {
-        activateFolderCard(null);
-        updateDocSub("My Documents");
-      } else {
-        activateFolderCard(null);
-        updateDocSub(null);
-      }
-    });
-  }
-
-  if (clearFiltersBtn) {
-    clearFiltersBtn.addEventListener("click", async function () {
-      if (searchInput) searchInput.value = "";
-      if (subjectFilter) subjectFilter.value = "";
-      if (fileTypeFilter) fileTypeFilter.value = "";
-      if (folderFilter) folderFilter.value = "";
-      await loadDocuments();
-      activateFolderCard(null);
-      updateDocSub(null);
-    });
-  }
-
-  // Quick Actions: Create Folder Modal
-  const quickCreateFolderBtn = document.getElementById("quickCreateFolderBtn");
-  const createFolderModal = document.getElementById("createFolderModal");
-  const createFolderCancelBtn = document.getElementById("createFolderCancelBtn");
-  const createFolderConfirmBtn = document.getElementById("createFolderConfirmBtn");
-  const createFolderNameInput = document.getElementById("createFolderName");
-  const createFolderError = document.getElementById("createFolderError");
-
-  if (quickCreateFolderBtn && createFolderModal) {
-    quickCreateFolderBtn.addEventListener("click", function () {
-      if (createFolderNameInput) createFolderNameInput.value = "";
-      if (createFolderError) {
-        createFolderError.style.display = "none";
-        createFolderError.textContent = "";
-      }
-      createFolderModal.classList.add("open");
-      if (createFolderNameInput) createFolderNameInput.focus();
-    });
-  }
-
-  function closeCreateFolderModal() {
-    if (createFolderModal) {
-      createFolderModal.classList.remove("open");
-    }
-  }
-
-  if (createFolderCancelBtn) {
-    createFolderCancelBtn.addEventListener("click", closeCreateFolderModal);
-  }
-
-  if (createFolderModal) {
-    createFolderModal.addEventListener("click", function (e) {
-      if (e.target === createFolderModal) {
-        closeCreateFolderModal();
-      }
-    });
-  }
-
-  if (createFolderConfirmBtn) {
-    createFolderConfirmBtn.addEventListener("click", async function () {
-      if (!createFolderNameInput) return;
-      const name = createFolderNameInput.value.trim();
-      if (!name) {
-        if (createFolderError) {
-          createFolderError.textContent = "Folder name is required.";
-          createFolderError.style.display = "block";
-        }
-        return;
-      }
-
-      if (typeof window.setButtonLoading === "function") {
-        window.setButtonLoading(createFolderConfirmBtn, true, "Creating...");
-      } else {
-        createFolderConfirmBtn.disabled = true;
-      }
-
-      if (createFolderError) {
-        createFolderError.style.display = "none";
-      }
-
-      try {
-        await createFolder({ folderName: name, parentFolderId: null });
-        closeCreateFolderModal();
-        if (typeof window.showToast === "function") {
-          window.showToast("Folder created successfully!", "success");
-        }
-        // Refresh folders grid and stats
-        await loadFolders();
-        await loadDocuments();
-      } catch (error) {
-        if (createFolderError) {
-          createFolderError.textContent = error.message || "Failed to create folder.";
-          createFolderError.style.display = "block";
-        }
-      } finally {
-        if (typeof window.setButtonLoading === "function") {
-          window.setButtonLoading(createFolderConfirmBtn, false);
-        } else {
-          createFolderConfirmBtn.disabled = false;
-        }
-      }
-    });
-
-    if (createFolderNameInput) {
-      createFolderNameInput.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") {
-          createFolderConfirmBtn.click();
-        }
-      });
-    }
-  }
+  // Initial Execution
+  await loadRecentDocuments();
 });

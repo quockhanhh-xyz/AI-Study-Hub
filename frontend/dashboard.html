@@ -23,22 +23,7 @@
                 <div class="dashboard-header-content">
                     <div>
                         <h1>Dashboard</h1>
-                        <p id="dashboardUserName" class="dashboard-subtitle">Welcome back! Here's your study overview.
-                        </p>
-                    </div>
-                    <div class="dashboard-search">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24"
-                            class="search-icon" aria-hidden="true" focusable="false">
-                            <g id="Search">
-                                <path id="Union" fill="currentColor"
-                                    d="M11 2c4.9706 0 9 4.02944 9 9 0 2.125 -0.7381 4.0766 -1.9697 5.6162l4.1767 4.1768 -1.414 1.414 -4.1768 -4.1767C15.0766 19.2619 13.125 20 11 20c-4.97056 0 -9 -4.0294 -9 -9 0 -4.97056 4.02944 -9 9 -9m0 2c-3.86599 0 -7 3.13401 -7 7 0 3.866 3.13401 7 7 7 3.866 0 7 -3.134 7 -7 0 -3.86599 -3.134 -7 -7 -7"
-                                    stroke-width="1"></path>
-                            </g>
-                        </svg>
-                        <input type="text" id="searchInput" placeholder="Search your documents by title or keyword..."
-                            style="padding-left: 40px;" />
-                        <small class="search-scope-note">Searches your documents only (not folders, groups, or shared
-                            items).</small>
+                        <p id="dashboardUserName" class="dashboard-subtitle">Welcome back! Here's your study overview.</p>
                     </div>
                 </div>
             </section>
@@ -53,112 +38,65 @@
                     <div class="stat-value" id="folderCount">-</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Account Tier</div>
-                    <div class="stat-value" id="joinDate">-</div>
+                    <div class="stat-label">Shared With Me</div>
+                    <div class="stat-value" id="sharedCount">-</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Usage Remaining</div>
-                    <div class="stat-value">— Demo Only —</div>
-                    <div class="stat-placeholder-note">Placeholder UI — not wired to real backend usage/quota data</div>
+                    <div class="stat-label">Study Groups</div>
+                    <div class="stat-value" id="groupCount">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Account Tier</div>
+                    <div class="stat-value" id="accountTier">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Storage Used</div>
+                    <div class="stat-value" id="usageRemaining">-</div>
+                    <div class="quota-progress-container">
+                        <div id="usageProgressBar" class="quota-progress-bar"></div>
+                    </div>
+                    <div class="stat-placeholder-note">Storage quota is configured for demo demonstration only</div>
                 </div>
             </section>
 
-            <section class="quick-actions-section dashboard-section">
+            <section class="dashboard-section">
                 <div class="dashboard-section-header">
                     <div>
-                        <h2>Quick Actions</h2>
-                        <p>Perform common study and file management tasks.</p>
+                        <h2>Quick Navigation</h2>
+                        <p>Access your files, groups, and folders directly.</p>
                     </div>
                 </div>
-                <div class="quick-actions-grid">
-                    <a href="upload.html" class="quick-action-card">
-                        <div class="quick-action-icon-wrapper upload-wrapper">
-                            <span class="quick-action-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24"
-                                    width="24" aria-hidden="true" focusable="false">
-                                    <g id="upload">
-                                        <path id="Union" fill="currentColor"
-                                            d="M6 18h12v-3h2v5H4v-5h2zm11.207 -8.70703L15.793 10.707 13 7.91406V16h-2V7.91406L8.20703 10.707 6.79297 9.29297 12 4.08594z"
-                                            stroke-width="1"></path>
-                                    </g>
-                                </svg>
-                            </span>
-                        </div>
-                        <div class="quick-action-info">
-                            <h3>Upload Document</h3>
-                            <p>Add study guides, PDFs, or slides</p>
-                        </div>
-                    </a>
-                    <button type="button" id="quickCreateFolderBtn" class="quick-action-card">
-                        <div class="quick-action-icon-wrapper folder-wrapper">
-                            <span class="quick-action-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    id="Folder--Streamline-Guidance-Free" height="24" width="24" aria-hidden="true"
-                                    focusable="false">
-                                    <desc>Folder Streamline Icon: https://streamlinehq.com</desc>
-                                    <path stroke="currentColor"
-                                        d="M1.5 10V2.5h5l3 3h11v3m3 0.25V8.5H4.6l-0.15 0.25 -0.234 0.492A28 28 0 0 0 1.5 21.272v0.228h19v-0.128a28 28 0 0 1 2.757 -12.116l0.243 -0.506Z"
-                                        stroke-width="1"></path>
-                                </svg>
-                            </span>
-                        </div>
-                        <div class="quick-action-info">
-                            <h3>Create Folder</h3>
-                            <p>Organize documents by subject</p>
-                        </div>
-                    </button>
-                    <a href="trash.html" class="quick-action-card">
-                        <div class="quick-action-icon-wrapper trash-wrapper">
-                            <span class="quick-action-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    id="Bin--Streamline-Guidance-Free" height="24" width="24" aria-hidden="true"
-                                    focusable="false">
-                                    <desc>Bin Streamline Icon: https://streamlinehq.com</desc>
-                                    <path stroke="currentColor"
-                                        d="M9.5 9v9m5 -9v9m-6 -13.5h-6v0.25l0.24 1.05A70 70 0 0 1 4.5 21.398V22.5h15v-1.102c0 -5.249 0.59 -10.48 1.76 -15.598l0.24 -1.05V4.5h-6m-7 0V4a3.5 3.5 0 1 1 7 0v0.5m-7 0h7"
-                                        stroke-width="1"></path>
-                                </svg>
-                            </span>
-                        </div>
-                        <div class="quick-action-info">
-                            <h3>View Trash</h3>
-                            <p>Restore or delete discarded files</p>
-                        </div>
-                    </a>
-                </div>
-            </section>
-
-            <section class="folders-section dashboard-section">
-                <div class="dashboard-section-header">
-                    <div>
-                        <h2>Folder Directories</h2>
-                        <p>Manage and navigate your study folders.</p>
-                    </div>
-                    <a href="folders.html" class="btn btn-secondary btn-sm">Manage Folders</a>
-                </div>
-
-                <div id="folderLoader" class="empty-state dashboard-loader">
-                    <span>Loading folders...</span>
-                </div>
-
-                <div id="folderErrorMessage" class="status-box status-error dashboard-error-box" style="display: none;">
-                </div>
-
-                <div id="folderGrid" class="grid-container" style="display: none;"></div>
-
-                <div id="folderEmptyState" class="empty-state" style="display: none;">
-                    <div class="empty-state-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                            id="Folder--Streamline-Guidance-Free" height="24" width="24" aria-hidden="true"
-                            focusable="false">
-                            <desc>Folder Streamline Icon: https://streamlinehq.com</desc>
-                            <path stroke="currentColor"
-                                d="M1.5 10V2.5h5l3 3h11v3m3 0.25V8.5H4.6l-0.15 0.25 -0.234 0.492A28 28 0 0 0 1.5 21.272v0.228h19v-0.128a28 28 0 0 1 2.757 -12.116l0.243 -0.506Z"
-                                stroke-width="1"></path>
+                <div class="quick-links-grid">
+                    <a href="documents.html" class="quick-link-card">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" aria-hidden="true" focusable="false">
+                            <path stroke="currentColor" d="M1.5 10V2.5h5l3 3h11v3m3 0.25V8.5H4.6l-0.15 0.25 -0.234 0.492A28 28 0 0 0 1.5 21.272v0.228h19v-0.128a28 28 0 0 1 2.757 -12.116l0.243 -0.506Z" stroke-width="1.5"></path>
                         </svg>
-                    </div>
-                    <p>No folders created yet.</p>
-                    <a href="folders.html" class="btn btn-secondary btn-sm">Create folder</a>
+                        <span>My Documents</span>
+                    </a>
+                    <a href="folders.html" class="quick-link-card">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" aria-hidden="true" focusable="false">
+                            <path stroke="currentColor" d="M1.5 10V2.5h5l3 3h11v3m3 0.25V8.5H4.6l-0.15 0.25 -0.234 0.492A28 28 0 0 0 1.5 21.272v0.228h19v-0.128a28 28 0 0 1 2.757 -12.116l0.243 -0.506Z" stroke-width="1.5"></path>
+                        </svg>
+                        <span>Folders</span>
+                    </a>
+                    <a href="shared-with-me.html" class="quick-link-card">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" aria-hidden="true" focusable="false">
+                            <circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="1.5"></circle>
+                            <circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="1.5"></circle>
+                            <circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="1.5"></circle>
+                            <path stroke="currentColor" stroke-width="1.5" d="M8.6 10.6 15.4 6.4M8.6 13.4l6.8 4.2"></path>
+                        </svg>
+                        <span>Shared With Me</span>
+                    </a>
+                    <a href="groups.html" class="quick-link-card">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" aria-hidden="true" focusable="false">
+                            <path stroke="currentColor" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.5"></circle>
+                            <path stroke="currentColor" d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path stroke="currentColor" d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span>Groups</span>
+                    </a>
                 </div>
             </section>
 
@@ -166,44 +104,8 @@
                 <div class="dashboard-panel-header">
                     <div>
                         <h2>Recent Documents</h2>
-                        <p id="docPanelSubtitle">Your learning materials and files.</p>
+                        <p id="docPanelSubtitle">Your 3-5 latest uploaded materials.</p>
                     </div>
-                    <div class="dashboard-actions">
-                        <a href="trash.html" class="btn btn-secondary upload-link-btn">Trash</a>
-                        <a href="upload.html" class="btn btn-primary upload-link-btn">Upload Document</a>
-                    </div>
-                </div>
-
-                <div class="toolbar">
-                    <div class="filter-group">
-                        <select id="subjectFilter">
-                            <option value="">All Subjects</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <select id="fileTypeFilter">
-                            <option value="">All File Types</option>
-                            <option value="PDF">PDF</option>
-                            <option value="DOC">DOC</option>
-                            <option value="DOCX">DOCX</option>
-                            <option value="PPT">PPT</option>
-                            <option value="PPTX">PPTX</option>
-                            <option value="XLS">XLS</option>
-                            <option value="XLSX">XLSX</option>
-                            <option value="TXT">TXT</option>
-                            <option value="JPG">JPG</option>
-                            <option value="JPEG">JPEG</option>
-                            <option value="PNG">PNG</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <select id="folderFilter">
-                            <option value="">All Folders</option>
-                            <option value="0">My Documents</option>
-                        </select>
-                    </div>
-                    <button type="button" id="clearFiltersBtn" class="btn btn-secondary clear-filters-btn">Clear
-                        Filters</button>
                 </div>
 
                 <div id="documentLoader" class="empty-state dashboard-loader">
@@ -229,28 +131,12 @@
                             </g>
                         </svg>
                     </div>
-                    <div class="empty-title">No matching documents</div>
-                    <p>Upload your first study document or try adjusting your search filters.</p>
-                    <a href="upload.html" class="btn btn-primary empty-action">Upload document</a>
+                    <div class="empty-title">No documents yet</div>
+                    <p>Upload your first study document to keep everything in one place.</p>
+                    <a href="documents.html" class="btn btn-primary empty-action">Go to My Documents</a>
                 </div>
             </section>
         </main>
-    </div>
-    <div class="modal-overlay" id="createFolderModal" role="dialog" aria-modal="true"
-        aria-labelledby="createFolderModalTitle">
-        <div class="modal-box">
-            <h3 id="createFolderModalTitle">New Folder</h3>
-            <div class="form-group">
-                <label for="createFolderName">Folder name <span class="label-required">*</span></label>
-                <input type="text" id="createFolderName" placeholder="E.g: Math Notes" autocomplete="off" />
-            </div>
-            <p id="createFolderError" class="modal-error" role="alert" aria-live="polite"
-                style="display: none; color: var(--danger); font-size: 14px; margin-top: 10px;"></p>
-            <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" id="createFolderCancelBtn">Cancel</button>
-                <button type="button" class="btn btn-primary" id="createFolderConfirmBtn">Create</button>
-            </div>
-        </div>
     </div>
 
     <script src="js/api.js"></script>
@@ -260,8 +146,10 @@
     <script src="js/layout.js"></script>
 
     <script src="js/folder-api.js"></script>
-    <script src="js/subject-api.js"></script>
     <script src="js/document-api.js"></script>
+    <script src="js/group-api.js"></script>
+    <script src="js/share-api.js"></script>
+    <script src="js/folder-share-api.js"></script>
     <script src="js/dashboard.js"></script>
 </body>
 
