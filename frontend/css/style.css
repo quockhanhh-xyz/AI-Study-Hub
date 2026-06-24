@@ -1603,7 +1603,8 @@ textarea.success {
 }
 
 .trash-section-icon {
-  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .trash-actions {
@@ -2308,8 +2309,9 @@ textarea.success {
 }
 
 .error-state-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .error-state-title {
@@ -2322,4 +2324,59 @@ textarea.success {
   font-size: 14px;
   color: var(--text-muted);
   line-height: 1.5;
+}
+
+/* ===== SVG ICON STYLES ===== */
+.btn {
+  gap: 6px;
+}
+
+.btn svg,
+.nav-link svg,
+.breadcrumb-link svg,
+.back-link svg {
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+svg {
+  transition: stroke 0.2s ease, fill 0.2s ease, color 0.2s ease;
+}
+
+.nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-action-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-action-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.trash-section-icon svg {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.drop-zone-icon svg {
+  width: 32px;
+  height: 32px;
+  color: var(--primary, #007bff);
+  margin-bottom: 8px;
+}
+
+.error-state-icon svg {
+  width: 32px;
+  height: 32px;
+  color: var(--danger, #dc3545);
+  margin-bottom: 8px;
 }
