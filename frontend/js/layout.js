@@ -77,7 +77,7 @@ function renderDynamicSidebar(isAuthenticated) {
   navContainer.innerHTML = visibleMenus
     .map(item => `
       <a href="${item.url}" class="nav-link">
-        <span class="nav-icon">${item.icon || "📄"}</span>
+        <span class="nav-icon">${item.icon || ICON_INFO}</span>
         <span class="nav-text">${item.name}</span>
       </a>
     `)
@@ -159,7 +159,7 @@ function initializeSidebarCollapse() {
 
   // Standardize Logo text wrapper for FE3 collapsed layout visibility state rules
   if (logoContainer && !logoContainer.querySelector(".logo-text")) {
-    const rawText = logoContainer.textContent.replace("☰", "").trim();
+    const rawText = logoContainer.textContent.trim();
     if (rawText) {
       logoContainer.innerHTML = `<span class="logo-text">${rawText}</span>`;
     }
