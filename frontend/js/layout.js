@@ -71,10 +71,10 @@ function renderDynamicSidebar(isAuthenticated) {
     if (item.hidden) return false; // Filter out structural routes like detail pages
     if (item.hideWhenAuth && isAuthenticated) return false;
     if (item.requiresAuth && !isAuthenticated) return false;
-    
+
     // Step 6D Security & IA Cleanup: Explicitly deny standard users access to internal technical routes
     if (item.url && (item.url.includes("health") || item.url.includes("api-health"))) return false;
-    
+
     return true;
   });
 

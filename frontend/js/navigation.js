@@ -19,11 +19,11 @@ const NAVIGATION_MENU = [
   { name: "Login", icon: ICON_KEY, url: "login.html", requiresAuth: false, hideWhenAuth: true },
   { name: "Register", icon: ICON_REGISTER, url: "register.html", requiresAuth: false, hideWhenAuth: true },
   { name: "Verify OTP", icon: ICON_SHIELD, url: "verify-otp.html", requiresAuth: false, hideWhenAuth: true, hidden: true },
-  
+
   // Authenticated visible main sidebar links
   { name: "Dashboard", icon: ICON_DASHBOARD, url: "dashboard.html", requiresAuth: true },
-  { name: "My Documents", icon: ICON_FOLDER, url: "documents.html", requiresAuth: true },
-  { name: "Folders", icon: ICON_FOLDER, url: "folders.html", requiresAuth: true },
+  { name: "My Documents", icon: ICON_FOLDER, url: "folders.html", requiresAuth: true },
+  { name: "Folders", icon: ICON_FOLDER, url: "folders.html", requiresAuth: true, hidden: true },
   { name: "Shared With Me", icon: ICON_SHARE, url: "shared-with-me.html", requiresAuth: true },
   { name: "Groups", icon: ICON_GROUP, url: "groups.html", requiresAuth: true },
   { name: "Trash", icon: ICON_BIN, url: "trash.html", requiresAuth: true },
@@ -51,7 +51,7 @@ function initializeActiveMenu() {
 
   // Step 6D IA Mapping: Force child sub-views to illuminate their correct parent menu items
   if (currentPage === "upload.html" || currentPage === "document-detail.html") {
-    currentPage = "documents.html";
+    currentPage = "folders.html";
   }
 
   if (currentPage === "group-detail.html") {

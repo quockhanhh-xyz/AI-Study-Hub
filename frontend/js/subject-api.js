@@ -13,13 +13,13 @@ function getSubjects() {
 }
 
 /**
- * Creates a new subject entry into the system catalog.
- * Added in Step 6D to support on-the-fly subject creation during document uploads.
+ * Creates a new subject entry as a user-owned custom subject.
+ * Updated in Step 6D to match the BE2 endpoint signature for custom subject creations.
  * @param {Object} subjectData - Example: { code: "PRJ301", name: "Java Web Application Development" }
  * @returns {Promise<Object>} Returns backend response payload.
  */
 function createSubject(subjectData) {
-  return post("/api/subjects", subjectData);
+  return post("/api/subjects/custom", subjectData);
 }
 
 // End of subject API helper file.
