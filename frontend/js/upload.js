@@ -16,8 +16,9 @@ const progressText = document.getElementById("progressText");
 
 // Inline "Create new subject" refs
 const newSubjectRow = document.getElementById("newSubjectRow");
-const newSubjectDescription = document.getElementById("newSubjectDescription");
+const newSubjectCode = document.getElementById("newSubjectCode");
 const newSubjectName = document.getElementById("newSubjectName");
+const newSubjectDescription = document.getElementById("newSubjectDescription");
 const createSubjectBtn = document.getElementById("createSubjectBtn");
 const cancelNewSubjectBtn = document.getElementById("cancelNewSubjectBtn");
 const newSubjectError = document.getElementById("newSubjectError");
