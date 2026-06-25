@@ -275,11 +275,11 @@ function showMoveModal() {
 
     getMyFolders(null, true).then(res => {
         const folders = Array.isArray(res.data) ? res.data : [];
-        select.innerHTML = '<option value="">— Root (My Documents) —</option>';
+        select.innerHTML = '<option value="">— My Documents —</option>';
         folders.forEach(f => {
             const opt = document.createElement("option");
             opt.value = f.folderId;
-            opt.textContent = f.name;
+            opt.textContent = f.folderName || "Untitled Folder";
             if (currentDocumentFolderId === f.folderId) {
                 opt.disabled = true;
                 opt.textContent += " (Current)";
