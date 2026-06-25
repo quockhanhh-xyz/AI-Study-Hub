@@ -148,16 +148,17 @@ function initializeLogoutFlow() {
  */
 function initializeSidebarCollapse() {
   const sidebar = document.querySelector(".sidebar");
-  const logoContainer = document.querySelector(".logo, .sidebar-brand");
   if (!sidebar) return;
 
-  // 1. Restore persistent footprint state immediately from storage
+  // 1. Force the collapsed state from storage immediately to avoid interface lag.
   const isCollapsed = localStorage.getItem("sidebar-collapsed") === "true";
   if (isCollapsed) {
     sidebar.classList.add("collapsed");
   } else {
     sidebar.classList.remove("collapsed");
   }
+
+  const logoContainer = document.querySelector(".logo, .sidebar-brand");
 
   // Guard clause: Avoid duplicating the toggle button if it already exists
   if (sidebar.querySelector(".sidebar-toggle-btn")) return;
