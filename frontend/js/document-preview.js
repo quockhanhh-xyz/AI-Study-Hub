@@ -1,9 +1,9 @@
 // document-preview.js – FE2: Only renders the preview, DOES NOT fetch on its own
 // Called from document-detail.js after the document object is available
 
-/** 
- * Renders the preview area based on the received document object. 
- * @param {Object} doc - Document object from the API (already fetched in document-detail.js) 
+/**
+ * Renders the preview area based on the received document object.
+ * @param {Object} doc - Document object from the API (already fetched in document-detail.js)
  */
 function renderDocumentPreview(doc) {
   const container = document.getElementById("previewArea");
