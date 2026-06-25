@@ -295,14 +295,80 @@
       background-color: #b91c1c;
     }
 
-    @media (max-width: 768px) {
-      .detail-meta-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
+    /* ===== PREVIEW AREA ===== */
+    .preview-section {
+      margin-bottom: 28px;
+    }
 
-      .detail-header {
-        flex-direction: column;
-        gap: 10px;
+    .preview-section-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    #previewArea {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--background);
+      min-height: 120px;
+    }
+
+    .preview-iframe {
+      width: 100%;
+      height: 520px;
+      display: block;
+      border: none;
+    }
+
+    .preview-image-wrap {
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 300px;
+      background: var(--background);
+    }
+
+    .preview-image {
+      max-width: 100%;
+      max-height: 480px;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+
+    .preview-fallback {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--muted);
+      gap: 12px;
+    }
+
+    .preview-fallback-icon {
+      color: var(--muted);
+      opacity: 0.5;
+    }
+
+    .preview-fallback-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .preview-fallback-desc {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 768px) {
+      .preview-iframe {
+        height: 320px;
       }
     }
   </style>
@@ -317,9 +383,12 @@
 
     <main class="main-content">
       <button class="btn detail-back-btn" onclick="window.location.href='dashboard.html'">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" id="Right-Angle-Arrow--Streamline-Guidance-Free" height="18" width="18" aria-hidden="true" focusable="false">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+          id="Right-Angle-Arrow--Streamline-Guidance-Free" height="18" width="18" aria-hidden="true" focusable="false">
           <desc>Right Angle Arrow Streamline Icon: https://streamlinehq.com</desc>
-          <path stroke="currentColor" d="M8 24c0 -0.741 -0.733 -1.85 -1.475 -2.78 -0.954 -1.2 -2.094 -2.247 -3.401 -3.046C2.144 17.575 0.956 17 0 17m0 0c0.956 0 2.145 -0.575 3.124 -1.174 1.307 -0.8 2.447 -1.847 3.401 -3.045C7.267 11.85 8 10.74 8 10m-8 7 11.5 0c6.627 0 12 -5.373 12 -12l0 -5" stroke-width="1"></path>
+          <path stroke="currentColor"
+            d="M8 24c0 -0.741 -0.733 -1.85 -1.475 -2.78 -0.954 -1.2 -2.094 -2.247 -3.401 -3.046C2.144 17.575 0.956 17 0 17m0 0c0.956 0 2.145 -0.575 3.124 -1.174 1.307 -0.8 2.447 -1.847 3.401 -3.045C7.267 11.85 8 10.74 8 10m-8 7 11.5 0c6.627 0 12 -5.373 12 -12l0 -5"
+            stroke-width="1"></path>
         </svg>
         Back to Dashboard
       </button>
@@ -356,33 +425,44 @@
             <p id="docDescription">No description provided.</p>
           </div>
 
+          <!-- Preview Area -->
+          <div class="preview-section">
+            <div class="preview-section-label">Preview</div>
+            <div id="previewArea">
+              <div class="preview-fallback">
+                <div class="preview-fallback-desc">Loading preview...</div>
+              </div>
+            </div>
+          </div>
+
           <div class="file-action-section" style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px;">
-            <a id="openFileBtn" class="btn btn-primary" href="#" target="_blank" rel="noopener noreferrer"
-              style="width:auto;padding:10px 24px;">
-              Open File
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" id="Left-Angle-Arrow--Streamline-Guidance-Free" height="18" width="18" aria-hidden="true" focusable="false">
-                <desc>Left Angle Arrow Streamline Icon: https://streamlinehq.com</desc>
-                <path stroke="currentColor" d="M16 0c0 0.742 0.733 1.85 1.475 2.78 0.954 1.2 2.094 2.247 3.401 3.046C21.856 6.425 23.044 7 24 7m0 0c-0.956 0 -2.145 0.575 -3.124 1.174 -1.307 0.8 -2.447 1.847 -3.401 3.045C16.733 12.15 16 13.26 16 14m8 -7H12.5C5.873 7 0.5 12.373 0.5 19v5" stroke-width="1"></path>
-              </svg>
-            </a>
-            <a id="downloadFileBtn" class="btn btn-secondary" href="#" target="_blank" rel="noopener noreferrer" download
-              style="display:none; width:auto; padding:10px 24px;">Download</a>
-            <button id="shareBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;">Share</button>
+            <button id="openFileBtn" class="btn btn-primary" style="display:none; width:auto; padding:10px 24px;">
+              Open File ↗
+            </button>
+            <button id="downloadFileBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;">
+              Download
+            </button>
+            <button id="shareBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;">
+              Share
+            </button>
           </div>
 
           <div id="sharesPanel" class="shares-panel" style="display: none; margin-bottom: 28px;">
             <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">Document Sharing Management</h3>
 
             <div style="margin-bottom: 20px;">
-              <h4 style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Direct User Shares</h4>
+              <h4 style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Direct User Shares
+              </h4>
               <div id="directSharesList" class="member-list" style="margin-bottom: 12px;"></div>
-              <p id="noDirectShares" class="helper-text" style="color: var(--muted); display: none;">Not shared with any users directly.</p>
+              <p id="noDirectShares" class="helper-text" style="color: var(--muted); display: none;">Not shared with any
+                users directly.</p>
             </div>
 
             <div>
               <h4 style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Group Shares</h4>
               <div id="groupSharesList" class="member-list" style="margin-bottom: 12px;"></div>
-              <p id="noGroupShares" class="helper-text" style="color: var(--muted); display: none;">Not shared in any groups.</p>
+              <p id="noGroupShares" class="helper-text" style="color: var(--muted); display: none;">Not shared in any
+                groups.</p>
             </div>
           </div>
 
@@ -436,8 +516,12 @@
       <h3 id="shareModalTitle">Share Document</h3>
 
       <div class="tab-header" style="display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px;">
-        <button type="button" class="tab-btn active" id="tabUserBtn" style="flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600; cursor: pointer;">Share with User</button>
-        <button type="button" class="tab-btn" id="tabGroupBtn" style="flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-weight: 600; cursor: pointer;">Share with Group</button>
+        <button type="button" class="tab-btn active" id="tabUserBtn"
+          style="flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600; cursor: pointer;">Share
+          with User</button>
+        <button type="button" class="tab-btn" id="tabGroupBtn"
+          style="flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-weight: 600; cursor: pointer;">Share
+          with Group</button>
       </div>
 
       <div id="tabUserContent">
@@ -445,7 +529,8 @@
           <label for="shareUserEmail">Recipient Email <span class="label-required">*</span></label>
           <input type="email" id="shareUserEmail" placeholder="E.g: student@gmail.com" autocomplete="off" />
         </div>
-        <p id="shareUserError" class="modal-error" role="alert" aria-live="polite" style="color: var(--danger); font-size: 13px; display: none; margin-bottom: 16px;"></p>
+        <p id="shareUserError" class="modal-error" role="alert" aria-live="polite"
+          style="color: var(--danger); font-size: 13px; display: none; margin-bottom: 16px;"></p>
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" id="shareUserCancelBtn">Cancel</button>
           <button type="button" class="btn btn-primary" id="shareUserConfirmBtn">Share</button>
@@ -459,7 +544,8 @@
             <option value="" disabled selected>Loading groups...</option>
           </select>
         </div>
-        <p id="shareGroupError" class="modal-error" role="alert" aria-live="polite" style="color: var(--danger); font-size: 13px; display: none; margin-bottom: 16px;"></p>
+        <p id="shareGroupError" class="modal-error" role="alert" aria-live="polite"
+          style="color: var(--danger); font-size: 13px; display: none; margin-bottom: 16px;"></p>
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" id="shareGroupCancelBtn">Cancel</button>
           <button type="button" class="btn btn-primary" id="shareGroupConfirmBtn">Share to Group</button>
@@ -479,6 +565,7 @@
   <script src="js/group-api.js"></script>
   <script src="js/share-api.js"></script>
 
+  <script src="js/document-preview.js"></script>
   <script src="js/document-detail.js"></script>
 </body>
 

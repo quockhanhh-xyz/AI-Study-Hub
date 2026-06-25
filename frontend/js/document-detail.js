@@ -76,64 +76,63 @@ async function loadPage(id) {
 
 // ── Render document info ──────────────────────────────────────────────────────
 function renderDocument(doc) {
-    document.getElementById("fileTypeBadge").textContent = doc.fileType || "–";
+    document.getElementById("fileTypeBadge").textContent = (doc.fileType || "–").toUpperCase();
     document.getElementById("docTitle").textContent = doc.title || "–";
-    document.getElementById("docUploadedBy").textContent = "Uploaded by " + (doc.uploadedBy || "–");
+    document.getElementById("docUploadedBy").textContent = "Uploaded by " + (doc.ownerName || doc.uploadedBy || "–");
     document.getElementById("docDescription").textContent = doc.description || "No description provided.";
-    document.getElementById("docSubject").textContent = doc.subjectCode
-        ? `${doc.subjectCode} – ${doc.subjectName}`
-        : "No subject";
+    document.getElementById("docSubject").textContent = doc.subject
+        ? doc.subject
+        : (doc.subjectCode ? `${doc.subjectCode} – ${doc.subjectName}` : "No subject");
     document.getElementById("docFileSize").textContent = formatFileSize(doc.fileSize);
     document.getElementById("docCreatedAt").textContent = formatDate(doc.createdAt);
 
+    // ── Action buttons based on permission flags from backend ──
     const openBtn = document.getElementById("openFileBtn");
     const downloadBtn = document.getElementById("downloadFileBtn");
-    if (doc.fileUrl) {
-        openBtn.href = doc.fileUrl;
-        if (downloadBtn) {
-            downloadBtn.href = doc.fileUrl;
-            downloadBtn.download = doc.title || String(doc.documentId);
-            downloadBtn.style.display = "inline-flex";
-        }
+    const shareBtn = document.getElementById("shareBtn");
+
+    // Open button
+    if (doc.canOpen && doc.fileUrl) {
+        openBtn.style.display = "inline-flex";
+        openBtn.onclick = () => openDocument(doc);
     } else {
         openBtn.style.display = "none";
-        if (downloadBtn) {
-            downloadBtn.style.display = "none";
-        }
     }
 
-    // Pre-fill edit form
-    document.getElementById("editTitle").value = doc.title || "";
-    document.getElementById("editDescription").value = doc.description || "";
-
-    // Resolve ownership check dynamically
-    const currentUserStr = localStorage.getItem("currentUser");
-    let isOwner = false;
-    if (currentUserStr) {
-        try {
-            const currentUser = JSON.parse(currentUserStr);
-            isOwner = doc.uploadedBy === currentUser.email;
-        } catch (e) {
-            console.error("Failed to parse currentUser from localStorage", e);
-        }
+    // Download button
+    if (doc.canDownload) {
+        downloadBtn.style.display = "inline-flex";
+        downloadBtn.onclick = () => downloadDocument(doc);
+    } else {
+        downloadBtn.style.display = "none";
     }
 
-    // Show share controls and management panel only to the owner
-    const shareBtn = document.getElementById("shareBtn");
+    // Share button — only the owner has canShare
     const sharesPanel = document.getElementById("sharesPanel");
-    if (isOwner) {
-        shareBtn.style.display = "inline-block";
+    if (doc.canShare) {
+        shareBtn.style.display = "inline-flex";
         sharesPanel.style.display = "block";
-        loadSharingInfo(doc.documentId);
+        loadSharingInfo(doc.documentId || doc.id);
     } else {
         shareBtn.style.display = "none";
         sharesPanel.style.display = "none";
     }
 
-    // Hide edit and delete options for non-owners
+    // Edit section — only the owner has canEdit
     const editSec = document.querySelector(".edit-section");
     if (editSec) {
-        editSec.style.display = isOwner ? "block" : "none";
+        editSec.style.display = doc.canEdit ? "block" : "none";
+    }
+
+    // Delete button — only the owner has canDelete
+    const deleteBtn = document.getElementById("deleteBtn");
+    if (deleteBtn) {
+        deleteBtn.style.display = doc.canDelete ? "inline-flex" : "none";
+    }
+
+    // ── Call render preview (document-preview.js) ──
+    if (typeof renderDocumentPreview === "function") {
+        renderDocumentPreview(doc);
     }
 }
 
@@ -514,4 +513,25 @@ async function handleRevokeGroup(shareId) {
     } catch (err) {
         showToast(err.message || "Failed to revoke group share.", "error");
     }
+}
+
+// ── Open document in new tab ──────────────────────────────────────────────────
+function openDocument(doc) {
+    if (!doc.fileUrl) {
+        showToast("File URL is not available.", "error");
+        return;
+    }
+    window.open(doc.fileUrl, "_blank", "noopener");
+}
+
+// ── Download document via backend endpoint ────────────────────────────────────
+function downloadDocument(doc) {
+    const id = doc.documentId || doc.id;
+    if (!id) {
+        showToast("Cannot determine document ID.", "error");
+        return;
+    }
+    // Using API_BASE_URL because FE runs on localhost:5500, BE runs on localhost:8080
+    const base = window.API_BASE_URL || "";
+    window.location.href = `${base}/api/documents/${id}/download`;
 }
