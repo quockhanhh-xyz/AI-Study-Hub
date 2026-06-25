@@ -8,9 +8,9 @@ if (window.location.hostname === "0.0.0.0") {
 const API_HOST = window.location.hostname === "0.0.0.0" ? "localhost" : window.location.hostname;
 const API_BASE_URL = `${window.location.protocol}//${API_HOST}:8080`;
 
-/*
-  Shared API request helper.
-  Centralized function to configure requests and handle tokens automatically.
+/**
+ * Shared API request helper.
+ * Centralized function to configure requests and handle tokens automatically.
  */
 async function apiRequest(endpoint, options = {}) {
   // Check if the payload is a file object (FormData)
@@ -79,13 +79,15 @@ async function apiRequest(endpoint, options = {}) {
 
     if (!errorMessage) {
       if (response.status === 403) {
-        errorMessage = "Forbidden - You do not have permission to access this resource.";
+        errorMessage = "Access Denied (HTTP 403): You do not have the required permissions to view, open, or download this document.";
       } else if (response.status === 404) {
-        errorMessage = "Not Found - The requested resource does not exist or has been deleted.";
+        errorMessage = "Resource Not Found (HTTP 404): The requested document does not exist, or has been moved to the trash.";
       } else if (response.status === 409) {
-        errorMessage = "Conflict - Duplicate entry or sharing configuration conflict.";
+        errorMessage = "Conflict (HTTP 409): Duplicate entry or sharing configuration conflict.";
+      } else if (response.status >= 500) {
+        errorMessage = `Internal Server Error (HTTP ${response.status}): The server encountered an error processing this file action. Please try again later.`;
       } else {
-        errorMessage = "API request failed";
+        errorMessage = `API request failed with status code ${response.status}.`;
       }
     }
 
@@ -97,10 +99,10 @@ async function apiRequest(endpoint, options = {}) {
   return data;
 }
 
-/*
-  API GET request helper
-  @param {string} endpoint - Example: "/api/health"
-  @param {object} options - Optional parameters override
+/**
+ * API GET request helper
+ * @param {string} endpoint - Example: "/api/health"
+ * @param {object} options - Optional parameters override
  */
 function get(endpoint, options = {}) {
   return apiRequest(endpoint, {
@@ -109,11 +111,11 @@ function get(endpoint, options = {}) {
   });
 }
 
-/*
-  API POST request helper
-  @param {string} endpoint - Example: "/api/auth/login"
-  @param {object|FormData} body - Regular object or FormData
-  @param {object} options - Optional parameters override
+/**
+ * API POST request helper
+ * @param {string} endpoint - Example: "/api/auth/login"
+ * @param {object|FormData} body - Regular object or FormData
+ * @param {object} options - Optional parameters override
  */
 function post(endpoint, body, options = {}) {
   const isFormData = body instanceof FormData;
@@ -125,11 +127,11 @@ function post(endpoint, body, options = {}) {
   });
 }
 
-/*
-  API PUT request helper
-  @param {string} endpoint - Example: "/api/documents/1"
-  @param {object} body - Updated data object
-  @param {object} options - Optional parameters override
+/**
+ * API PUT request helper
+ * @param {string} endpoint - Example: "/api/documents/1"
+ * @param {object} body - Updated data object
+ * @param {object} options - Optional parameters override
  */
 function put(endpoint, body, options = {}) {
   return apiRequest(endpoint, {
@@ -139,10 +141,10 @@ function put(endpoint, body, options = {}) {
   });
 }
 
-/*
-  API DELETE request helper
-  @param {string} endpoint - Example: "/api/documents/1"
-  @param {object} options - Optional parameters override
+/**
+ * API DELETE request helper
+ * @param {string} endpoint - Example: "/api/documents/1"
+ * @param {object} options - Optional parameters override
  */
 function del(endpoint, options = {}) {
   return apiRequest(endpoint, {
