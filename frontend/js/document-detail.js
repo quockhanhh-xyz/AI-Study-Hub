@@ -522,7 +522,13 @@ async function handleRevokeGroup(shareId) {
 }
 
 // ── Open document in new tab ──────────────────────────────────────────────────
+// NOTE: Will be replaced by FE3's helper after PR #95 is merged.
+// Temporarily used directly to avoid being blocked.
 function openDocument(doc) {
+    if (typeof window.openDocumentHelper === "function") {
+        window.openDocumentHelper(doc);
+        return;
+    }
     if (!doc.fileUrl) {
         showToast("File URL is not available.", "error");
         return;
@@ -531,13 +537,22 @@ function openDocument(doc) {
 }
 
 // ── Download document via backend endpoint ────────────────────────────────────
+// NOTE: Will be replaced by FE3's helper after PR #95 is merged.
 function downloadDocument(doc) {
+    if (typeof window.downloadDocumentHelper === "function") {
+        window.downloadDocumentHelper(doc);
+        return;
+    }
     const id = doc.documentId || doc.id;
     if (!id) {
         showToast("Cannot determine document ID.", "error");
         return;
     }
-    // Using API_BASE_URL because FE runs on localhost:5500, BE runs on localhost:8080
-    const base = window.API_BASE_URL || "";
+    // Read API_BASE_URL from the variable declared in api.js
+    const base = (typeof API_BASE_URL !== "undefined" ? API_BASE_URL : "");
+    if (!base) {
+        showToast("API base URL is not configured.", "error");
+        return;
+    }
     window.location.href = `${base}/api/documents/${id}/download`;
 }
