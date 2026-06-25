@@ -152,19 +152,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     detailButton.className = "btn btn-primary document-detail-btn";
     detailButton.textContent = "View Details";
 
-    const openButton = document.createElement("button");
-    openButton.type = "button";
-    openButton.className = "btn btn-secondary document-open-btn";
-    openButton.textContent = "Open File";
-    openButton.disabled = !documentItem.fileUrl;
-    openButton.addEventListener("click", function (e) {
-      e.preventDefault();
-      if (documentItem.fileUrl) {
-        window.open(documentItem.fileUrl, "_blank", "noopener");
-      }
-    });
-
-    actions.append(detailButton, openButton);
+    actions.append(detailButton);
     card.append(header, description, meta, actions);
 
     return card;
