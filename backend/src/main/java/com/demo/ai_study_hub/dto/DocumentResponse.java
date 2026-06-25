@@ -29,4 +29,12 @@ public class DocumentResponse {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    private Boolean canPreview;
+    private Boolean canOpen;
+    private Boolean canDownload;
+    private Boolean canEdit;
+    private Boolean canDelete;
+    private Boolean canMove;
+    private Boolean canShare;
 }

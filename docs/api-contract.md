@@ -465,6 +465,18 @@ Uploads a document file for the currently authenticated user.
 }
 ```
 
+### Preview Permission Rule
+
+`canPreview` is `true` only when the user has access to the document and the file type is preview-supported by the MVP viewer:
+
+- `PDF`
+- `PNG`
+- `JPG`
+- `JPEG`
+- `TXT`
+
+For unsupported file types such as `DOC`, `DOCX`, `PPT`, `PPTX`, `XLS`, and `XLSX`, the backend returns `canPreview=false` while `canOpen` and `canDownload` may still be `true` for authorized users.
+
 ### Error Response - Unauthorized (401)
 
 ```json
@@ -783,7 +795,7 @@ Returned if `subjectCode` or `subjectName` already matches any SYSTEM subject, o
 
 # 5. Document Management APIs (Step 3)
 
-These APIs manage documents after upload. Access is strictly restricted to the owner of the document.
+These APIs manage documents after upload. Access is restricted to the owner or users with active shared access.
 
 ## 5.1. Get Document Detail API
 
@@ -804,7 +816,7 @@ Returns detailed information for a specific document. The request is authorized 
 ```json
 {
   "success": true,
-  "message": "Document retrieved successfully",
+  "message": "Document detail retrieved successfully",
   "data": {
     "documentId": 1,
     "title": "SWR Lecture 1",
@@ -820,7 +832,15 @@ Returns detailed information for a specific document. The request is authorized 
     "folderId": 1,
     "folderName": "Math Notes",
     "uploadedBy": "user@gmail.com",
-    "createdAt": "2026-06-01T10:00:00"
+    "status": "ACTIVE",
+    "createdAt": "2026-06-01T10:00:00",
+    "canPreview": true,
+    "canOpen": true,
+    "canDownload": true,
+    "canEdit": true,
+    "canDelete": true,
+    "canMove": true,
+    "canShare": true
   }
 }
 ```
@@ -850,6 +870,63 @@ If the document exists but belongs to another user:
 ### Error Response - Not Found (404)
 
 If the document does not exist or has been soft-deleted:
+
+```json
+{
+  "success": false,
+  "message": "Document not found",
+  "data": null
+}
+```
+
+---
+
+## GET `/api/documents/{id}/download`
+
+Downloads the specified document as an attachment after checking access permissions. The request is authorized if:
+- The authenticated user is the owner of the document.
+- The document is actively shared directly with the authenticated user.
+- The document is actively shared with a study group where the authenticated user is an active member.
+- The document is located inside a folder tree that has been shared directly with the authenticated user, or shared with a study group where the authenticated user is an active member.
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response
+
+- Status: `200 OK`
+- Headers:
+  - `Content-Disposition`: `attachment; filename="swr-lecture-1.pdf"`
+  - `Content-Type`: `application/pdf`
+
+The response body contains the file bytes. The frontend must call this backend endpoint for downloads instead of opening the raw `fileUrl`.
+
+### Error Response - Unauthorized (401)
+
+```json
+{
+  "success": false,
+  "message": "Your session has expired. Please log in again.",
+  "data": null
+}
+```
+
+### Error Response - Forbidden (403)
+
+If the user is not authorized, or their share has been revoked:
+
+```json
+{
+  "success": false,
+  "message": "Access denied",
+  "data": null
+}
+```
+
+### Error Response - Not Found (404)
+
+If the document does not exist or has been soft-deleted (status is `DELETED`):
 
 ```json
 {
