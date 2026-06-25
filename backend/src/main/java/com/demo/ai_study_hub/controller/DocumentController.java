@@ -72,6 +72,20 @@ public class DocumentController {
         }
     }
 
+    @GetMapping("/{id}/download")
+    public ResponseEntity<?> downloadDocument(@PathVariable Integer id, Principal principal) {
+        try {
+            String downloadUrl = documentService.getDocumentDownloadUrl(id, principal.getName());
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .header("Location", downloadUrl)
+                    .build();
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<DocumentResponse>> updateDocument(
             @PathVariable Integer id,

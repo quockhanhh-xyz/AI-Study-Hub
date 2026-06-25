@@ -164,6 +164,24 @@ public class DocumentService {
         Document doc = documentRepository.findById(documentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
 
+        validateDocumentAccess(doc, user);
+
+        return mapToResponse(doc, user);
+    }
+
+    public String getDocumentDownloadUrl(Integer documentId, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        Document doc = documentRepository.findById(documentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+
+        validateDocumentAccess(doc, user);
+
+        return doc.getFileUrl();
+    }
+
+    private void validateDocumentAccess(Document doc, User user) {
         if ("DELETED".equals(doc.getStatus())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
@@ -187,15 +205,14 @@ public class DocumentService {
 
         boolean hasFolderAccess = !isOwner && !isDirectShared && !isGroupShared
                 && doc.getFolder() != null
-                && folderShareService.hasAccessToFolder(doc.getFolder().getFolderId(), email);
+                && folderShareService != null
+                && folderShareService.hasAccessToFolder(doc.getFolder().getFolderId(), user.getEmail());
 
         boolean hasSharedAccess = isDirectShared || isGroupShared || hasFolderAccess;
 
         if (!isOwner && !hasSharedAccess) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
-
-        return mapToResponse(doc);
     }
 
     public DocumentResponse updateDocument(Integer documentId, DocumentUpdateDTO dto, String email) {
@@ -253,6 +270,57 @@ public class DocumentService {
     }
 
     private DocumentResponse mapToResponse(Document doc) {
+        return mapToResponse(doc, doc.getOwner());
+    }
+
+    private DocumentResponse mapToResponse(Document doc, User requester) {
+        boolean canPreview = false;
+        boolean canOpen = false;
+        boolean canDownload = false;
+        boolean canEdit = false;
+        boolean canDelete = false;
+        boolean canMove = false;
+        boolean canShare = false;
+
+        if (requester != null) {
+            boolean isOwner = doc.getOwner().getUserId().equals(requester.getUserId());
+            if (isOwner) {
+                canPreview = true;
+                canOpen = true;
+                canDownload = true;
+                canEdit = true;
+                canDelete = true;
+                canMove = true;
+                canShare = true;
+            } else {
+                boolean isDirectShared = documentShareRepository
+                        .findByDocumentAndSharedWithAndStatus(doc, requester, "ACTIVE")
+                        .isPresent();
+
+                boolean isGroupShared = false;
+                if (!isDirectShared) {
+                    List<GroupDocumentShare> activeGroupShares = groupDocumentShareRepository.findByDocumentAndStatus(doc, "ACTIVE");
+                    for (GroupDocumentShare groupShare : activeGroupShares) {
+                        if (studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupShare.getGroup(), requester, "ACTIVE")) {
+                            isGroupShared = true;
+                            break;
+                        }
+                    }
+                }
+
+                boolean hasFolderAccess = !isDirectShared && !isGroupShared
+                        && doc.getFolder() != null
+                        && folderShareService != null
+                        && folderShareService.hasAccessToFolder(doc.getFolder().getFolderId(), requester.getEmail());
+
+                if (isDirectShared || isGroupShared || hasFolderAccess) {
+                    canPreview = true;
+                    canOpen = true;
+                    canDownload = true;
+                }
+            }
+        }
+
         return DocumentResponse.builder()
                 .documentId(doc.getDocumentId())
                 .title(doc.getTitle())
@@ -271,6 +339,13 @@ public class DocumentService {
                 .status(doc.getStatus())
                 .createdAt(doc.getCreatedAt())
                 .updatedAt(doc.getUpdatedAt())
+                .canPreview(canPreview)
+                .canOpen(canOpen)
+                .canDownload(canDownload)
+                .canEdit(canEdit)
+                .canDelete(canDelete)
+                .canMove(canMove)
+                .canShare(canShare)
                 .build();
     }
 }

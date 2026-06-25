@@ -7,6 +7,7 @@ import com.demo.ai_study_hub.entity.*;
 import com.demo.ai_study_hub.repository.*;
 import com.demo.ai_study_hub.service.CloudinaryStorageService;
 import com.demo.ai_study_hub.service.DocumentService;
+import com.demo.ai_study_hub.service.FolderShareService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +43,8 @@ class DocumentServiceTest {
     private GroupDocumentShareRepository groupDocumentShareRepository;
     @Mock
     private StudyGroupMemberRepository studyGroupMemberRepository;
+    @Mock
+    private FolderShareService folderShareService;
 
     @InjectMocks
     private DocumentService documentService;
@@ -470,5 +473,164 @@ class DocumentServiceTest {
         });
 
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+    }
+
+    @Test
+    void getDocumentDetail_ByOwner_ShouldReturnAllPermissionFlagsTrue() {
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
+
+        DocumentResponse response = documentService.getDocumentDetail(4, "doantam785@gmail.com");
+
+        assertNotNull(response);
+        assertTrue(response.getCanPreview());
+        assertTrue(response.getCanOpen());
+        assertTrue(response.getCanDownload());
+        assertTrue(response.getCanEdit());
+        assertTrue(response.getCanDelete());
+        assertTrue(response.getCanMove());
+        assertTrue(response.getCanShare());
+    }
+
+    @Test
+    void getDocumentDetail_BySharedUser_ShouldReturnCorrectPermissionFlags() {
+        User mockRecipient = new User();
+        mockRecipient.setUserId(3);
+        mockRecipient.setEmail("recipient@test.com");
+
+        DocumentShare mockDirectShare = new DocumentShare();
+        mockDirectShare.setDocument(mockDocument);
+        mockDirectShare.setSharedWith(mockRecipient);
+        mockDirectShare.setStatus("ACTIVE");
+
+        when(userRepository.findByEmail("recipient@test.com")).thenReturn(Optional.of(mockRecipient));
+        when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
+        when(documentShareRepository.findByDocumentAndSharedWithAndStatus(mockDocument, mockRecipient, "ACTIVE"))
+                .thenReturn(Optional.of(mockDirectShare));
+
+        DocumentResponse response = documentService.getDocumentDetail(4, "recipient@test.com");
+
+        assertNotNull(response);
+        assertTrue(response.getCanPreview());
+        assertTrue(response.getCanOpen());
+        assertTrue(response.getCanDownload());
+        assertFalse(response.getCanEdit());
+        assertFalse(response.getCanDelete());
+        assertFalse(response.getCanMove());
+        assertFalse(response.getCanShare());
+    }
+
+    @Test
+    void getDocumentDetail_ByFolderSharedUser_ShouldReturnCorrectPermissionFlags() {
+        User mockFolderRecipient = new User();
+        mockFolderRecipient.setUserId(3);
+        mockFolderRecipient.setEmail("recipient@test.com");
+
+        Folder mockFolder = new Folder();
+        mockFolder.setFolderId(100);
+        mockFolder.setName("Shared Folder");
+        mockFolder.setOwner(mockOwner);
+        mockFolder.setStatus("ACTIVE");
+
+        mockDocument.setFolder(mockFolder);
+
+        when(userRepository.findByEmail("recipient@test.com")).thenReturn(Optional.of(mockFolderRecipient));
+        when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
+        when(documentShareRepository.findByDocumentAndSharedWithAndStatus(mockDocument, mockFolderRecipient, "ACTIVE"))
+                .thenReturn(Optional.empty());
+        when(groupDocumentShareRepository.findByDocumentAndStatus(mockDocument, "ACTIVE"))
+                .thenReturn(java.util.List.of());
+        when(folderShareService.hasAccessToFolder(100, "recipient@test.com"))
+                .thenReturn(true);
+
+        DocumentResponse response = documentService.getDocumentDetail(4, "recipient@test.com");
+
+        assertNotNull(response);
+        assertTrue(response.getCanPreview());
+        assertTrue(response.getCanOpen());
+        assertTrue(response.getCanDownload());
+        assertFalse(response.getCanEdit());
+        assertFalse(response.getCanDelete());
+        assertFalse(response.getCanMove());
+        assertFalse(response.getCanShare());
+    }
+
+    @Test
+    void getDocumentDownloadUrl_ByOwner_ShouldReturnCloudinaryUrl() {
+        mockDocument.setFileUrl("https://cloudinary.com/testfile.pdf");
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
+
+        String url = documentService.getDocumentDownloadUrl(4, "doantam785@gmail.com");
+
+        assertEquals("https://cloudinary.com/testfile.pdf", url);
+    }
+
+    @Test
+    void getDocumentDownloadUrl_BySharedUser_ShouldReturnCloudinaryUrl() {
+        mockDocument.setFileUrl("https://cloudinary.com/testfile.pdf");
+        User mockRecipient = new User();
+        mockRecipient.setUserId(3);
+        mockRecipient.setEmail("recipient@test.com");
+
+        DocumentShare mockDirectShare = new DocumentShare();
+        mockDirectShare.setDocument(mockDocument);
+        mockDirectShare.setSharedWith(mockRecipient);
+        mockDirectShare.setStatus("ACTIVE");
+
+        when(userRepository.findByEmail("recipient@test.com")).thenReturn(Optional.of(mockRecipient));
+        when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
+        when(documentShareRepository.findByDocumentAndSharedWithAndStatus(mockDocument, mockRecipient, "ACTIVE"))
+                .thenReturn(Optional.of(mockDirectShare));
+
+        String url = documentService.getDocumentDownloadUrl(4, "recipient@test.com");
+
+        assertEquals("https://cloudinary.com/testfile.pdf", url);
+    }
+
+    @Test
+    void getDocumentDownloadUrl_ByUnauthorizedUser_ShouldThrow403() {
+        when(userRepository.findByEmail("hacker@test.com")).thenReturn(Optional.of(mockHacker));
+        when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            documentService.getDocumentDownloadUrl(4, "hacker@test.com");
+        });
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+        assertEquals("Access denied", exception.getReason());
+    }
+
+    @Test
+    void getDocumentDownloadUrl_WhenDocumentDeleted_ShouldThrow404() {
+        mockDocument.setStatus("DELETED");
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            documentService.getDocumentDownloadUrl(4, "doantam785@gmail.com");
+        });
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Document not found", exception.getReason());
+    }
+
+    @Test
+    void getDocumentDownloadUrl_WhenShareRevoked_ShouldThrow403() {
+        User mockRecipient = new User();
+        mockRecipient.setUserId(3);
+        mockRecipient.setEmail("recipient@test.com");
+
+        when(userRepository.findByEmail("recipient@test.com")).thenReturn(Optional.of(mockRecipient));
+        when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
+        when(documentShareRepository.findByDocumentAndSharedWithAndStatus(mockDocument, mockRecipient, "ACTIVE"))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            documentService.getDocumentDownloadUrl(4, "recipient@test.com");
+        });
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+        assertEquals("Access denied", exception.getReason());
     }
 }
