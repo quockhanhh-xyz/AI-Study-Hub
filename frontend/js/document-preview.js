@@ -20,6 +20,8 @@ function renderDocumentPreview(doc) {
     renderPdfPreview(container, doc.fileUrl);
   } else if (["png", "jpg", "jpeg", "gif", "webp"].includes(fileType)) {
     renderImagePreview(container, doc.fileUrl, doc.title);
+  } else if (fileType === "txt") {
+    renderTxtPreview(container, doc.fileUrl);
   } else {
     renderFallback(container, fileType);
   }
@@ -41,6 +43,17 @@ function renderImagePreview(container, fileUrl, title) {
     <div class="preview-image-wrap">
       <img src="${fileUrl}" alt="${title || 'Document preview'}" class="preview-image" />
     </div>
+  `;
+}
+
+function renderTxtPreview(container, fileUrl) {
+  container.innerHTML = `
+    <iframe
+      src="${fileUrl}"
+      class="preview-iframe"
+      title="Text Preview"
+      frameborder="0"
+    ></iframe>
   `;
 }
 
