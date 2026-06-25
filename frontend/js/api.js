@@ -79,13 +79,13 @@ async function apiRequest(endpoint, options = {}) {
 
     if (!errorMessage) {
       if (response.status === 403) {
-        errorMessage = "Access Denied (HTTP 403): You do not have the required permissions to view, open, or download this document.";
+        errorMessage = "Access Denied (HTTP 403): You do not have permission to access this resource.";
       } else if (response.status === 404) {
-        errorMessage = "Resource Not Found (HTTP 404): The requested document does not exist, or has been moved to the trash.";
+        errorMessage = "Resource Not Found (HTTP 404): The requested resource does not exist or has been removed.";
       } else if (response.status === 409) {
-        errorMessage = "Conflict (HTTP 409): Duplicate entry or sharing configuration conflict.";
+        errorMessage = "Conflict (HTTP 409): Duplicate entry or resource configuration conflict.";
       } else if (response.status >= 500) {
-        errorMessage = `Internal Server Error (HTTP ${response.status}): The server encountered an error processing this file action. Please try again later.`;
+        errorMessage = `Internal Server Error (HTTP ${response.status}): The server encountered an error processing this request. Please try again later.`;
       } else {
         errorMessage = `API request failed with status code ${response.status}.`;
       }
