@@ -1,6 +1,19 @@
 // document-detail.js – FE2: Document Detail & Edit Page
 // Standardized UI styles and theme configurations.
 
+function handleBack() {
+    if (document.referrer && (document.referrer.includes("dashboard.html") ||
+                              document.referrer.includes("documents.html") ||
+                              document.referrer.includes("shared-with-me.html") ||
+                              document.referrer.includes("group-detail.html") ||
+                              document.referrer.includes("shared-folder-detail.html") ||
+                              document.referrer.includes("folders.html"))) {
+        window.location.href = document.referrer;
+    } else {
+        window.location.href = "dashboard.html";
+    }
+}
+
 // Fix #3: showFatalError queries DOM directly to avoid ReferenceError
 // when detailLoader variable is not yet declared
 function showFatalError(message) {
@@ -35,6 +48,7 @@ const detailContent = document.getElementById("detailContent");
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let currentDocumentId = null;
+let currentDocumentFolderId = null;
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
@@ -70,7 +84,13 @@ async function loadPage(id) {
         detailLoader.style.display = "none";
         detailContent.style.display = "block";
     } catch (err) {
-        showFatalError(err.message || "Failed to load document.");
+        if (err.status === 403) {
+            showFatalError("Access Denied (403): You do not have permission to view this document.");
+        } else if (err.status === 404) {
+            showFatalError("Document Not Found (404): The requested document does not exist, has been deleted, or has been revoked.");
+        } else {
+            showFatalError(err.message || "Failed to load document.");
+        }
     }
 }
 
@@ -96,32 +116,50 @@ function renderDocument(doc) {
     const openBtn = document.getElementById("openFileBtn");
     const downloadBtn = document.getElementById("downloadFileBtn");
     const shareBtn = document.getElementById("shareBtn");
+    const moveBtn = document.getElementById("moveBtn");
+
+    currentDocumentFolderId = doc.folderId;
 
     // Open button
-    if (doc.canOpen && doc.fileUrl) {
-        openBtn.style.display = "inline-flex";
-        openBtn.onclick = () => openDocument(doc);
-    } else {
-        openBtn.style.display = "none";
+    if (openBtn) {
+        if (doc.canOpen && doc.fileUrl) {
+            openBtn.style.display = "inline-flex";
+            openBtn.onclick = () => openDocument(doc);
+        } else {
+            openBtn.style.display = "none";
+        }
     }
 
     // Download button
-    if (doc.canDownload) {
-        downloadBtn.style.display = "inline-flex";
-        downloadBtn.onclick = () => downloadDocument(doc);
-    } else {
-        downloadBtn.style.display = "none";
+    if (downloadBtn) {
+        if (doc.canDownload) {
+            downloadBtn.style.display = "inline-flex";
+            downloadBtn.onclick = () => downloadDocument(doc);
+        } else {
+            downloadBtn.style.display = "none";
+        }
+    }
+
+    // Move button
+    if (moveBtn) {
+        if (doc.canMove) {
+            moveBtn.style.display = "inline-flex";
+        } else {
+            moveBtn.style.display = "none";
+        }
     }
 
     // Share button — only the owner has canShare
     const sharesPanel = document.getElementById("sharesPanel");
-    if (doc.canShare) {
-        shareBtn.style.display = "inline-flex";
-        sharesPanel.style.display = "block";
-        loadSharingInfo(doc.documentId || doc.id);
-    } else {
-        shareBtn.style.display = "none";
-        sharesPanel.style.display = "none";
+    if (shareBtn) {
+        if (doc.canShare) {
+            shareBtn.style.display = "inline-flex";
+            if (sharesPanel) sharesPanel.style.display = "block";
+            loadSharingInfo(doc.documentId || doc.id);
+        } else {
+            shareBtn.style.display = "none";
+            if (sharesPanel) sharesPanel.style.display = "none";
+        }
     }
 
     // Edit section — only the owner has canEdit
@@ -225,6 +263,65 @@ async function handleDelete() {
     } finally {
         confirmBtn.disabled = false;
         confirmBtn.textContent = "Delete";
+    }
+}
+
+// ── Move modal ────────────────────────────────────────────────────────────────
+function showMoveModal() {
+    const errorEl = document.getElementById("moveError");
+    if (errorEl) errorEl.style.display = "none";
+    const select = document.getElementById("moveFolderSelect");
+    if (!select) return;
+
+    getMyFolders(null, true).then(res => {
+        const folders = Array.isArray(res.data) ? res.data : [];
+        select.innerHTML = '<option value="">— My Documents —</option>';
+        folders.forEach(f => {
+            const opt = document.createElement("option");
+            opt.value = f.folderId;
+            opt.textContent = f.folderName || "Untitled Folder";
+            if (currentDocumentFolderId === f.folderId) {
+                opt.disabled = true;
+                opt.textContent += " (Current)";
+            }
+            select.appendChild(opt);
+        });
+        document.getElementById("moveModal").classList.add("show");
+    }).catch(err => {
+        showToast(err.message || "Failed to load folders.", "error");
+    });
+}
+
+function hideMoveModal() {
+    document.getElementById("moveModal").classList.remove("show");
+}
+
+async function handleMove() {
+    const select = document.getElementById("moveFolderSelect");
+    if (!select) return;
+    const folderIdVal = select.value ? parseInt(select.value, 10) : null;
+    const confirmBtn = document.getElementById("moveConfirmBtn");
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = "Moving...";
+    }
+
+    try {
+        const res = await moveDocument(currentDocumentId, folderIdVal);
+        hideMoveModal();
+        showToast("Document moved successfully.", "success");
+        renderDocument(res.data);
+    } catch (err) {
+        const errEl = document.getElementById("moveError");
+        if (errEl) {
+            errEl.textContent = err.message || "Failed to move document.";
+            errEl.style.display = "block";
+        }
+    } finally {
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = "Move";
+        }
     }
 }
 
