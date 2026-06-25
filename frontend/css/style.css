@@ -2457,3 +2457,18 @@ svg {
 .quick-link-card:hover svg {
   transform: scale(1.1);
 }
+
+/* ===== TRASH LAYOUT SPACING FIXES ===== */
+#folderTrashGrid, 
+#documentTrashGrid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px; /* Establishes a consistent 20px grid spacing horizontally and vertically between cards */
+  margin-bottom: 24px; /* Creates explicit separation below each distinct trash section */
+}
+
+.trash-actions {
+  display: flex;
+  gap: 10px; /* Applies a 10px spacing threshold between the Restore and Permanent Delete buttons */
+  margin-top: 12px; /* Pushes the action button group safely away from the upper metadata text block */
+}
