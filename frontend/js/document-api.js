@@ -41,7 +41,7 @@ function searchDocuments(params) {
  * Retrieves the detailed information of a specific document by its ID.
  * Serves the Document Details view page (FE2) and Permission validation contexts (Step 7).
  * @param {number|string} id - The ID of the document to retrieve.
- * @returns {Promise<Object>} Detailed document data including permission cờ flags.
+ * @returns {Promise<Object>} Detailed document data including permission flags.
  */
 function getDocumentById(id) {
   return get(`/api/documents/${id}`);
