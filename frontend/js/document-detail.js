@@ -86,6 +86,12 @@ function renderDocument(doc) {
     document.getElementById("docFileSize").textContent = formatFileSize(doc.fileSize);
     document.getElementById("docCreatedAt").textContent = formatDate(doc.createdAt);
 
+    // Pre-fill edit form
+    const editTitle = document.getElementById("editTitle");
+    const editDesc = document.getElementById("editDescription");
+    if (editTitle) editTitle.value = doc.title || "";
+    if (editDesc) editDesc.value = doc.description || "";
+
     // ── Action buttons based on permission flags from backend ──
     const openBtn = document.getElementById("openFileBtn");
     const downloadBtn = document.getElementById("downloadFileBtn");
