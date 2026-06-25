@@ -1,18 +1,27 @@
 package com.demo.ai_study_hub.controller;
 
 import com.demo.ai_study_hub.dto.ApiResponse;
+import com.demo.ai_study_hub.dto.DocumentDownloadInfo;
 import com.demo.ai_study_hub.dto.DocumentResponse;
 import com.demo.ai_study_hub.dto.DocumentUpdateDTO;
 import com.demo.ai_study_hub.dto.MoveDocumentRequest;
 import com.demo.ai_study_hub.service.DocumentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URLConnection;
 import java.security.Principal;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -75,14 +84,32 @@ public class DocumentController {
     @GetMapping("/{id}/download")
     public ResponseEntity<?> downloadDocument(@PathVariable Integer id, Principal principal) {
         try {
-            String downloadUrl = documentService.getDocumentDownloadUrl(id, principal.getName());
-            return ResponseEntity.status(HttpStatus.FOUND)
-                    .header("Location", downloadUrl)
-                    .build();
+            DocumentDownloadInfo downloadInfo = documentService.getDocumentDownloadInfo(id, principal.getName());
+            byte[] fileBytes = downloadRemoteFile(downloadInfo.getFileUrl());
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(downloadInfo.getContentType()))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                            .filename(downloadInfo.getFileName(), StandardCharsets.UTF_8)
+                            .build()
+                            .toString())
+                    .body(fileBytes);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to download file"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    private byte[] downloadRemoteFile(String fileUrl) throws IOException {
+        URLConnection connection = URI.create(fileUrl).toURL().openConnection();
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(30000);
+        try (InputStream inputStream = connection.getInputStream()) {
+            return inputStream.readAllBytes();
         }
     }
 

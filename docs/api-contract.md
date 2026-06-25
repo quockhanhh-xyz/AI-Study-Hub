@@ -465,6 +465,18 @@ Uploads a document file for the currently authenticated user.
 }
 ```
 
+### Preview Permission Rule
+
+`canPreview` is `true` only when the user has access to the document and the file type is preview-supported by the MVP viewer:
+
+- `PDF`
+- `PNG`
+- `JPG`
+- `JPEG`
+- `TXT`
+
+For unsupported file types such as `DOC`, `DOCX`, `PPT`, `PPTX`, `XLS`, and `XLSX`, the backend returns `canPreview=false` while `canOpen` and `canDownload` may still be `true` for authorized users.
+
 ### Error Response - Unauthorized (401)
 
 ```json
@@ -783,7 +795,7 @@ Returned if `subjectCode` or `subjectName` already matches any SYSTEM subject, o
 
 # 5. Document Management APIs (Step 3)
 
-These APIs manage documents after upload. Access is strictly restricted to the owner of the document.
+These APIs manage documents after upload. Access is restricted to the owner or users with active shared access.
 
 ## 5.1. Get Document Detail API
 
@@ -804,7 +816,7 @@ Returns detailed information for a specific document. The request is authorized 
 ```json
 {
   "success": true,
-  "message": "Document retrieved successfully",
+  "message": "Document detail retrieved successfully",
   "data": {
     "documentId": 1,
     "title": "SWR Lecture 1",
@@ -871,7 +883,7 @@ If the document does not exist or has been soft-deleted:
 
 ## GET `/api/documents/{id}/download`
 
-Generates a secure download URL for the specified document and redirects (HTTP 302 Found) the requester to it. The request is authorized if:
+Downloads the specified document as an attachment after checking access permissions. The request is authorized if:
 - The authenticated user is the owner of the document.
 - The document is actively shared directly with the authenticated user.
 - The document is actively shared with a study group where the authenticated user is an active member.
@@ -883,9 +895,12 @@ Generates a secure download URL for the specified document and redirects (HTTP 3
 
 ### Success Response
 
-- Status: `302 Found`
+- Status: `200 OK`
 - Headers:
-  - `Location`: `https://res.cloudinary.com/demo/raw/upload/v123456/ai-study-hub/documents/1/swr-lecture-1.pdf`
+  - `Content-Disposition`: `attachment; filename="swr-lecture-1.pdf"`
+  - `Content-Type`: `application/pdf`
+
+The response body contains the file bytes. The frontend must call this backend endpoint for downloads instead of opening the raw `fileUrl`.
 
 ### Error Response - Unauthorized (401)
 

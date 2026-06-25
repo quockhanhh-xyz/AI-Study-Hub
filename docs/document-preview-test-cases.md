@@ -6,7 +6,7 @@ It includes permission flags mapping in the GET details endpoint and verifying t
 
 In scope:
 - `GET /api/documents/{id}` (Retrieves metadata with 7 permission flags)
-- `GET /api/documents/{id}/download` (Secure file redirection download endpoint)
+- `GET /api/documents/{id}/download` (Secure attachment download endpoint)
 - Dynamic permission flags: `canPreview`, `canOpen`, `canDownload`, `canEdit`, `canDelete`, `canMove`, `canShare`.
 - Restricting downloads on deleted, trash, and revoked shared documents.
 
@@ -142,6 +142,30 @@ Out of scope:
 
 ---
 
+### TC-DOC-PREV-005a - Unsupported File Type Returns Preview False
+**Precondition**:
+- User is logged in as `owner@test.com`.
+- Document (ID: 101) is owned by `owner@test.com`, status `ACTIVE`, and has file type `DOCX`.
+
+**Steps**:
+1. Send `GET /api/documents/101`.
+
+**Expected Result**:
+- Response status is `200 OK`.
+- Response contains `success=true`.
+- Response `data` includes:
+  - `"canPreview": false`
+  - `"canOpen": true`
+  - `"canDownload": true`
+  - `"canEdit": true`
+  - `"canDelete": true`
+  - `"canMove": true`
+  - `"canShare": true`
+
+**Status**: `Not Run`
+
+---
+
 ### TC-DOC-PREV-006 - Download Document by Owner
 **Precondition**:
 - User is logged in as `owner@test.com`.
@@ -151,8 +175,9 @@ Out of scope:
 1. Send `GET /api/documents/100/download`.
 
 **Expected Result**:
-- Response status is `302 Found`.
-- Response header `Location` matches the document's `fileUrl`.
+- Response status is `200 OK`.
+- Response header `Content-Disposition` contains `attachment`.
+- Response body contains the downloaded file bytes.
 
 **Status**: `Not Run`
 
@@ -167,8 +192,9 @@ Out of scope:
 1. Send `GET /api/documents/100/download`.
 
 **Expected Result**:
-- Response status is `302 Found`.
-- Response header `Location` matches the document's `fileUrl`.
+- Response status is `200 OK`.
+- Response header `Content-Disposition` contains `attachment`.
+- Response body contains the downloaded file bytes.
 
 **Status**: `Not Run`
 

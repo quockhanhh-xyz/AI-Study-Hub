@@ -1,5 +1,6 @@
 package com.demo.ai_study_hub.service;
 
+import com.demo.ai_study_hub.dto.DocumentDownloadInfo;
 import com.demo.ai_study_hub.dto.DocumentResponse;
 import com.demo.ai_study_hub.dto.DocumentUpdateDTO;
 import com.demo.ai_study_hub.dto.FileUploadResult;
@@ -170,6 +171,10 @@ public class DocumentService {
     }
 
     public String getDocumentDownloadUrl(Integer documentId, String email) {
+        return getDocumentDownloadInfo(documentId, email).getFileUrl();
+    }
+
+    public DocumentDownloadInfo getDocumentDownloadInfo(Integer documentId, String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
@@ -178,7 +183,11 @@ public class DocumentService {
 
         validateDocumentAccess(doc, user);
 
-        return doc.getFileUrl();
+        return DocumentDownloadInfo.builder()
+                .fileUrl(doc.getFileUrl())
+                .fileName(resolveDownloadFileName(doc))
+                .contentType(resolveContentType(doc))
+                .build();
     }
 
     private void validateDocumentAccess(Document doc, User user) {
@@ -284,8 +293,9 @@ public class DocumentService {
 
         if (requester != null) {
             boolean isOwner = doc.getOwner().getUserId().equals(requester.getUserId());
+            boolean previewSupported = isPreviewSupported(doc);
             if (isOwner) {
-                canPreview = true;
+                canPreview = previewSupported;
                 canOpen = true;
                 canDownload = true;
                 canEdit = true;
@@ -314,7 +324,7 @@ public class DocumentService {
                         && folderShareService.hasAccessToFolder(doc.getFolder().getFolderId(), requester.getEmail());
 
                 if (isDirectShared || isGroupShared || hasFolderAccess) {
-                    canPreview = true;
+                    canPreview = previewSupported;
                     canOpen = true;
                     canDownload = true;
                 }
@@ -347,5 +357,62 @@ public class DocumentService {
                 .canMove(canMove)
                 .canShare(canShare)
                 .build();
+    }
+
+    private boolean isPreviewSupported(Document doc) {
+        String type = normalizeFileType(doc);
+        return "PDF".equals(type)
+                || "PNG".equals(type)
+                || "JPG".equals(type)
+                || "JPEG".equals(type)
+                || "TXT".equals(type);
+    }
+
+    private String resolveDownloadFileName(Document doc) {
+        String originalName = doc.getOriginalFileName();
+        if (originalName != null && !originalName.trim().isEmpty()) {
+            return originalName.trim();
+        }
+        String title = doc.getTitle();
+        if (title != null && !title.trim().isEmpty()) {
+            return title.trim();
+        }
+        return "document-" + doc.getDocumentId();
+    }
+
+    private String resolveContentType(Document doc) {
+        String type = normalizeFileType(doc);
+        return switch (type) {
+            case "PDF" -> "application/pdf";
+            case "PNG" -> "image/png";
+            case "JPG", "JPEG" -> "image/jpeg";
+            case "TXT" -> "text/plain";
+            case "DOC" -> "application/msword";
+            case "DOCX" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            case "PPT" -> "application/vnd.ms-powerpoint";
+            case "PPTX" -> "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+            case "XLS" -> "application/vnd.ms-excel";
+            case "XLSX" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            default -> "application/octet-stream";
+        };
+    }
+
+    private String normalizeFileType(Document doc) {
+        String fileType = doc.getFileType();
+        if (fileType == null || fileType.trim().isEmpty()) {
+            fileType = extractExtension(doc.getOriginalFileName());
+        }
+        return fileType == null ? "" : fileType.trim().replace(".", "").toUpperCase();
+    }
+
+    private String extractExtension(String fileName) {
+        if (fileName == null) {
+            return "";
+        }
+        int lastDot = fileName.lastIndexOf('.');
+        if (lastDot < 0 || lastDot == fileName.length() - 1) {
+            return "";
+        }
+        return fileName.substring(lastDot + 1);
     }
 }

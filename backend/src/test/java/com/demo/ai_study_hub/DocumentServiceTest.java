@@ -1,6 +1,7 @@
 package com.demo.ai_study_hub;
 
 import com.demo.ai_study_hub.dto.DocumentResponse;
+import com.demo.ai_study_hub.dto.DocumentDownloadInfo;
 import com.demo.ai_study_hub.dto.DocumentUpdateDTO;
 import com.demo.ai_study_hub.dto.FileUploadResult;
 import com.demo.ai_study_hub.entity.*;
@@ -73,6 +74,8 @@ class DocumentServiceTest {
         mockDocument = new Document();
         mockDocument.setDocumentId(4);
         mockDocument.setTitle("TailieuHot.pdf");
+        mockDocument.setOriginalFileName("TailieuHot.pdf");
+        mockDocument.setFileType("PDF");
         mockDocument.setStatus("ACTIVE");
         mockDocument.setOwner(mockOwner);
         mockDocument.setSubject(mockSubject);
@@ -561,9 +564,11 @@ class DocumentServiceTest {
         when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
         when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
 
-        String url = documentService.getDocumentDownloadUrl(4, "doantam785@gmail.com");
+        DocumentDownloadInfo info = documentService.getDocumentDownloadInfo(4, "doantam785@gmail.com");
 
-        assertEquals("https://cloudinary.com/testfile.pdf", url);
+        assertEquals("https://cloudinary.com/testfile.pdf", info.getFileUrl());
+        assertEquals("TailieuHot.pdf", info.getFileName());
+        assertEquals("application/pdf", info.getContentType());
     }
 
     @Test
@@ -583,9 +588,11 @@ class DocumentServiceTest {
         when(documentShareRepository.findByDocumentAndSharedWithAndStatus(mockDocument, mockRecipient, "ACTIVE"))
                 .thenReturn(Optional.of(mockDirectShare));
 
-        String url = documentService.getDocumentDownloadUrl(4, "recipient@test.com");
+        DocumentDownloadInfo info = documentService.getDocumentDownloadInfo(4, "recipient@test.com");
 
-        assertEquals("https://cloudinary.com/testfile.pdf", url);
+        assertEquals("https://cloudinary.com/testfile.pdf", info.getFileUrl());
+        assertEquals("TailieuHot.pdf", info.getFileName());
+        assertEquals("application/pdf", info.getContentType());
     }
 
     @Test
@@ -594,7 +601,7 @@ class DocumentServiceTest {
         when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            documentService.getDocumentDownloadUrl(4, "hacker@test.com");
+            documentService.getDocumentDownloadInfo(4, "hacker@test.com");
         });
 
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
@@ -608,7 +615,7 @@ class DocumentServiceTest {
         when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            documentService.getDocumentDownloadUrl(4, "doantam785@gmail.com");
+            documentService.getDocumentDownloadInfo(4, "doantam785@gmail.com");
         });
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
@@ -627,10 +634,65 @@ class DocumentServiceTest {
                 .thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            documentService.getDocumentDownloadUrl(4, "recipient@test.com");
+            documentService.getDocumentDownloadInfo(4, "recipient@test.com");
         });
 
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
         assertEquals("Access denied", exception.getReason());
+    }
+
+    @Test
+    void getDocumentDetail_ByGroupSharedUser_ShouldReturnCorrectPermissionFlags() {
+        User mockGroupMember = new User();
+        mockGroupMember.setUserId(3);
+        mockGroupMember.setEmail("groupmember@test.com");
+
+        StudyGroup mockGroup = new StudyGroup();
+        mockGroup.setGroupId(10);
+        mockGroup.setStatus("ACTIVE");
+
+        GroupDocumentShare mockGroupShare = new GroupDocumentShare();
+        mockGroupShare.setDocument(mockDocument);
+        mockGroupShare.setGroup(mockGroup);
+        mockGroupShare.setStatus("ACTIVE");
+
+        when(userRepository.findByEmail("groupmember@test.com")).thenReturn(Optional.of(mockGroupMember));
+        when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
+        when(documentShareRepository.findByDocumentAndSharedWithAndStatus(mockDocument, mockGroupMember, "ACTIVE"))
+                .thenReturn(Optional.empty());
+        when(groupDocumentShareRepository.findByDocumentAndStatus(mockDocument, "ACTIVE"))
+                .thenReturn(java.util.List.of(mockGroupShare));
+        when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(mockGroup, mockGroupMember, "ACTIVE"))
+                .thenReturn(true);
+
+        DocumentResponse response = documentService.getDocumentDetail(4, "groupmember@test.com");
+
+        assertNotNull(response);
+        assertTrue(response.getCanPreview());
+        assertTrue(response.getCanOpen());
+        assertTrue(response.getCanDownload());
+        assertFalse(response.getCanEdit());
+        assertFalse(response.getCanDelete());
+        assertFalse(response.getCanMove());
+        assertFalse(response.getCanShare());
+    }
+
+    @Test
+    void getDocumentDetail_WhenUnsupportedFileType_ShouldReturnCanPreviewFalse() {
+        mockDocument.setOriginalFileName("lecture.docx");
+        mockDocument.setFileType("DOCX");
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
+
+        DocumentResponse response = documentService.getDocumentDetail(4, "doantam785@gmail.com");
+
+        assertNotNull(response);
+        assertFalse(response.getCanPreview());
+        assertTrue(response.getCanOpen());
+        assertTrue(response.getCanDownload());
+        assertTrue(response.getCanEdit());
+        assertTrue(response.getCanDelete());
+        assertTrue(response.getCanMove());
+        assertTrue(response.getCanShare());
     }
 }
