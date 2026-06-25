@@ -39,11 +39,17 @@ function renderPdfPreview(container, fileUrl) {
 }
 
 function renderImagePreview(container, fileUrl, title) {
-  container.innerHTML = `
-    <div class="preview-image-wrap">
-      <img src="${fileUrl}" alt="${title || 'Document preview'}" class="preview-image" />
-    </div>
-  `;
+  const wrap = document.createElement("div");
+  wrap.className = "preview-image-wrap";
+
+  const img = document.createElement("img");
+  img.src = fileUrl;
+  img.alt = title || "Document preview";
+  img.className = "preview-image";
+
+  wrap.appendChild(img);
+  container.innerHTML = "";
+  container.appendChild(wrap);
 }
 
 function renderTxtPreview(container, fileUrl) {
