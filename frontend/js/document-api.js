@@ -108,9 +108,11 @@ function permanentDeleteDocument(id) {
   return del(`/api/trash/documents/${id}`);
 }
 
-/* 
+/* ==========================================================================
    STEP 7 ADDITIONS: OPEN & DOWNLOAD FLOW ACTION HELPERS
-/*
+   ========================================================================== */
+
+/**
  * Opens a document in a secure new browser tab using its cloud file URL.
  * Strictly adheres to Step 7 specifications regarding tab navigation sandboxing.
  * @param {Object} document - The full document metadata object containing `fileUrl`.
@@ -126,10 +128,12 @@ function openDocument(document) {
 /**
  * Triggers a direct system download packet via the standardized Backend endpoint context.
  * Strictly enforces absolute API_BASE_URL resolution to prevent port mismatch (5500 vs 8080).
- * @param {Object|number|string} documentOrId - The document metadata object containing `id` or the raw document ID.
+ * @param {Object|number|string} documentOrId - The document metadata object containing `documentId` or the raw document ID.
  */
 function downloadDocument(documentOrId) {
-  const id = typeof documentOrId === "object" ? documentOrId.id : documentOrId;
+  const id = typeof documentOrId === "object"
+    ? (documentOrId.documentId || documentOrId.id)
+    : documentOrId;
 
   if (!id) {
     console.error("Download action aborted: Unable to resolve a valid document identifier.");
