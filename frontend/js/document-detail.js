@@ -3,11 +3,11 @@
 
 function handleBack() {
     if (document.referrer && (document.referrer.includes("dashboard.html") ||
-                              document.referrer.includes("documents.html") ||
-                              document.referrer.includes("shared-with-me.html") ||
-                              document.referrer.includes("group-detail.html") ||
-                              document.referrer.includes("shared-folder-detail.html") ||
-                              document.referrer.includes("folders.html"))) {
+        document.referrer.includes("documents.html") ||
+        document.referrer.includes("shared-with-me.html") ||
+        document.referrer.includes("group-detail.html") ||
+        document.referrer.includes("shared-folder-detail.html") ||
+        document.referrer.includes("folders.html"))) {
         window.location.href = document.referrer;
     } else {
         window.location.href = "dashboard.html";
@@ -52,10 +52,9 @@ let currentDocumentFolderId = null;
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
-    if (window.authReady) {
-        const isAuthenticated = await window.authReady;
-        if (!isAuthenticated) return;
-    }
+    const isAuthenticated = window.authReady
+        ? await window.authReady
+        : false;
 
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
@@ -66,20 +65,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     currentDocumentId = id;
-    loadPage(id);
-    initSharingUI();
+
+    const isCommunityView =
+        params.get("from") === "community" ||
+        params.get("mode") === "public";
+
+    loadPage(id, {
+        isAuthenticated,
+        isCommunityView
+    });
+
+    if (isAuthenticated) {
+        initSharingUI();
+    }
 });
 
 // ── Load document detail + subjects in parallel ────────────────────────────
-async function loadPage(id) {
+async function loadPage(id, { isAuthenticated, isCommunityView }) {
     try {
-        const [docRes, subjectsRes] = await Promise.all([
-            getDocumentById(id),
-            getSubjects()
-        ]);
+        let docRes;
+        let subjectsRes = null;
+
+        if (isCommunityView) {
+            docRes = await getPublicDocumentById(id);
+        } else {
+            const results = await Promise.all([
+                getDocumentById(id),
+                getSubjects()
+            ]);
+
+            docRes = results[0];
+            subjectsRes = results[1];
+        }
 
         renderDocument(docRes.data);
-        renderSubjectOptions(subjectsRes.data, docRes.data.subjectId);
+
+        if (!isCommunityView && subjectsRes) {
+            renderSubjectOptions(
+                subjectsRes.data,
+                docRes.data.subjectId
+            );
+        }
 
         detailLoader.style.display = "none";
         detailContent.style.display = "block";
@@ -96,6 +122,10 @@ async function loadPage(id) {
 
 // ── Render document info ──────────────────────────────────────────────────────
 function renderDocument(doc) {
+    const params = new URLSearchParams(window.location.search);
+    const isCommunityView =
+        params.get("from") === "community" ||
+        params.get("mode") === "public";
     document.getElementById("fileTypeBadge").textContent = (doc.fileType || "–").toUpperCase();
     document.getElementById("docTitle").textContent = doc.title || "–";
     document.getElementById("docUploadedBy").textContent = "Uploaded by " + (doc.ownerName || doc.uploadedBy || "–");
@@ -142,7 +172,7 @@ function renderDocument(doc) {
 
     // Move button
     if (moveBtn) {
-        if (doc.canMove) {
+        if (!isCommunityView && doc.canMove) {
             moveBtn.style.display = "inline-flex";
         } else {
             moveBtn.style.display = "none";
@@ -152,7 +182,7 @@ function renderDocument(doc) {
     // Share button — only the owner has canShare
     const sharesPanel = document.getElementById("sharesPanel");
     if (shareBtn) {
-        if (doc.canShare) {
+        if (!isCommunityView && doc.canShare) {
             shareBtn.style.display = "inline-flex";
             if (sharesPanel) sharesPanel.style.display = "block";
             loadSharingInfo(doc.documentId || doc.id);
@@ -165,13 +195,15 @@ function renderDocument(doc) {
     // Edit section — only the owner has canEdit
     const editSec = document.querySelector(".edit-section");
     if (editSec) {
-        editSec.style.display = doc.canEdit ? "block" : "none";
+        editSec.style.display =
+            !isCommunityView && doc.canEdit ? "block" : "none";
     }
 
     // Delete button — only the owner has canDelete
     const deleteBtn = document.getElementById("deleteBtn");
     if (deleteBtn) {
-        deleteBtn.style.display = doc.canDelete ? "inline-flex" : "none";
+        deleteBtn.style.display =
+            !isCommunityView && doc.canDelete ? "inline-flex" : "none";
     }
 
     // ── Call render preview (document-preview.js) ──
