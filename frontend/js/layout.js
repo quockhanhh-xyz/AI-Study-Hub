@@ -151,12 +151,20 @@ function initializeSidebarCollapse() {
   if (!sidebar) return;
 
   // 1. Force the collapsed state from storage immediately to avoid interface lag.
+  //    Apply no-transition FIRST to suppress the expand→collapse flash on page load.
   const isCollapsed = localStorage.getItem("sidebar-collapsed") === "true";
+  sidebar.classList.add("no-transition");
   if (isCollapsed) {
     sidebar.classList.add("collapsed");
   } else {
     sidebar.classList.remove("collapsed");
   }
+  // Re-enable transitions after the initial paint settles (next animation frame)
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      sidebar.classList.remove("no-transition");
+    });
+  });
 
   const logoContainer = document.querySelector(".logo, .sidebar-brand");
 

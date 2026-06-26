@@ -91,10 +91,23 @@ function renderDocument(doc) {
     if (doc.fileUrl) {
         openBtn.href = doc.fileUrl;
         if (downloadBtn) {
-            downloadBtn.href = doc.fileUrl;
-            downloadBtn.download = doc.title || String(doc.documentId);
-            downloadBtn.style.display = "inline-flex";
+    downloadBtn.removeAttribute("href");
+    downloadBtn.style.display = "inline-flex";
+    downloadBtn.addEventListener("click", async () => {
+        try {
+            const response = await fetch(doc.fileUrl);
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = blobUrl;
+            a.download = doc.originalFileName || doc.title || String(doc.documentId);
+            a.click();
+            URL.revokeObjectURL(blobUrl);
+        } catch (err) {
+            window.open(doc.fileUrl, "_blank", "noopener");
         }
+    });
+}
     } else {
         openBtn.style.display = "none";
         if (downloadBtn) {

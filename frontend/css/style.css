@@ -74,6 +74,12 @@ a {
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Suppress transition on initial page load to prevent sidebar flash/jitter */
+.sidebar.no-transition,
+.sidebar.no-transition * {
+  transition: none !important;
+}
+
 /* Classes that handle state collapse. */
 .sidebar.collapsed {
   width: 80px;
@@ -2221,6 +2227,17 @@ textarea.success {
 }
 
 /* ── FE3 Role & Tier Badge Colors (Step 6C) ── */
+.stat-card #accountTier {
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1;
+  display: inline-block;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--primary);
+}
+
 .badge-role-owner {
   background-color: var(--primary-light);
   color: var(--primary);
@@ -2459,6 +2476,16 @@ svg {
 }
 
 /* ===== TRASH LAYOUT SPACING FIXES ===== */
+
+/* Separation between Folders and Documents sections */
+.trash-section {
+  margin-bottom: 32px;
+}
+
+.trash-section:last-child {
+  margin-bottom: 0;
+}
+
 #folderTrashGrid, 
 #documentTrashGrid {
   display: grid !important;
