@@ -78,3 +78,25 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
   - *Expected*: Document `10` (shared by owner User A) is still active and listed in the group.
 - [ ] **Step 4.5**: Log in as User B (removed) and attempt to view Group 5 documents:
   - *Expected*: `403 Forbidden`.
+
+---
+
+## 6. Flow 5: Public Community Library
+
+- [ ] **Step 5.1**: Log in as User A and publish Document `10` (`PUT /api/documents/10/publish`).
+  - *Expected*: Returns `200 OK`, `success: true`. Visibility is updated to `'PUBLIC'` and approvalStatus is `'APPROVED'`.
+- [ ] **Step 5.2**: Perform unauthenticated (Guest) query to community search (`GET /api/documents/public?keyword=Demo`).
+  - *Expected*: Returns `200 OK` listing Document `10`.
+- [ ] **Step 5.3**: Perform unauthenticated (Guest) request to view Document `10` detail (`GET /api/documents/public/10`).
+  - *Expected*: Returns `200 OK`. `viewCount` in response is incremented. `canPreview`, `canOpen`, and `canDownload` are `true`; modification flags (`canEdit`, `canDelete`, `canMove`, `canShare`) are `false`.
+- [ ] **Step 5.4**: Perform unauthenticated (Guest) request to download Document `10` (`GET /api/documents/public/10/download`).
+  - *Expected*: Returns file download stream (or secure redirect), and updates `downloadCount` in database.
+- [ ] **Step 5.5**: Perform unauthenticated (Guest) request to get detail for a private Document (`GET /api/documents/public/11`).
+  - *Expected*: `404 Not Found` or `403 Forbidden` (metadata access denied).
+- [ ] **Step 5.6**: Log in as User A and unpublish Document `10` (`PUT /api/documents/10/unpublish`).
+  - *Expected*: Returns `200 OK`. Visibility is updated to `'PRIVATE'`.
+- [ ] **Step 5.7**: Perform unauthenticated (Guest) request to view Document `10` detail (`GET /api/documents/public/10`).
+  - *Expected*: `404 Not Found` or `403 Forbidden` (access denied).
+- [ ] **Step 5.8**: Log in as User A, publish Document `10` again, then delete it (`DELETE /api/documents/10`).
+- [ ] **Step 5.9**: Perform unauthenticated (Guest) search (`GET /api/documents/public`).
+  - *Expected*: Document `10` is not listed (hidden in trash).

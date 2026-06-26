@@ -155,4 +155,82 @@ public class DocumentController {
         }
     }
 
+    @GetMapping("/public")
+    public ResponseEntity<ApiResponse<List<DocumentResponse>>> getPublicDocuments(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer subjectId,
+            @RequestParam(required = false) String fileType,
+            @RequestParam(required = false) String sort) {
+        try {
+            List<DocumentResponse> data = documentService.getPublicDocuments(keyword, subjectId, fileType, sort);
+            return ResponseEntity.ok(ApiResponse.success(data, "Public documents retrieved successfully"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @GetMapping("/public/{id}")
+    public ResponseEntity<ApiResponse<DocumentResponse>> getPublicDocumentDetail(@PathVariable Integer id) {
+        try {
+            DocumentResponse data = documentService.getPublicDocumentDetail(id);
+            return ResponseEntity.ok(ApiResponse.success(data, "Public document detail retrieved successfully"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @GetMapping("/public/{id}/download")
+    public ResponseEntity<?> downloadPublicDocument(@PathVariable Integer id) {
+        try {
+            DocumentDownloadInfo downloadInfo = documentService.getPublicDocumentDownloadInfo(id);
+            byte[] fileBytes = downloadRemoteFile(downloadInfo.getFileUrl());
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(downloadInfo.getContentType()))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                            .filename(downloadInfo.getFileName(), StandardCharsets.UTF_8)
+                            .build()
+                            .toString())
+                    .body(fileBytes);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to download file"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}/publish")
+    public ResponseEntity<ApiResponse<DocumentResponse>> publishDocument(
+            @PathVariable Integer id,
+            Principal principal) {
+        try {
+            DocumentResponse data = documentService.publishDocument(id, principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(data, "Document published successfully"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}/unpublish")
+    public ResponseEntity<ApiResponse<DocumentResponse>> unpublishDocument(
+            @PathVariable Integer id,
+            Principal principal) {
+        try {
+            DocumentResponse data = documentService.unpublishDocument(id, principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(data, "Document unpublished successfully"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
 }

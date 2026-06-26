@@ -54,6 +54,21 @@ public class Document {
     @Column(name = "status", nullable = false, length = 30)
     private String status = "ACTIVE";
 
+    @Column(name = "visibility", nullable = false, length = 20)
+    private String visibility = "PRIVATE";
+
+    @Column(name = "approval_status", nullable = false, length = 20)
+    private String approvalStatus = "PENDING";
+
+    @Column(name = "published_at")
+    private LocalDateTime publishedAt;
+
+    @Column(name = "view_count", nullable = false)
+    private Integer viewCount = 0;
+
+    @Column(name = "download_count", nullable = false)
+    private Integer downloadCount = 0;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

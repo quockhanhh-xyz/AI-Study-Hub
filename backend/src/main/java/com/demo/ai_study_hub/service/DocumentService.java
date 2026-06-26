@@ -7,6 +7,7 @@ import com.demo.ai_study_hub.dto.FileUploadResult;
 import com.demo.ai_study_hub.entity.*;
 import com.demo.ai_study_hub.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -217,7 +218,9 @@ public class DocumentService {
                 && folderShareService != null
                 && folderShareService.hasAccessToFolder(doc.getFolder().getFolderId(), user.getEmail());
 
-        boolean hasSharedAccess = isDirectShared || isGroupShared || hasFolderAccess;
+        boolean isPublicAndApproved = "PUBLIC".equals(doc.getVisibility()) && "APPROVED".equals(doc.getApprovalStatus());
+
+        boolean hasSharedAccess = isDirectShared || isGroupShared || hasFolderAccess || isPublicAndApproved;
 
         if (!isOwner && !hasSharedAccess) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
@@ -291,9 +294,11 @@ public class DocumentService {
         boolean canMove = false;
         boolean canShare = false;
 
+        boolean previewSupported = isPreviewSupported(doc);
+        boolean isPublicAndApproved = "PUBLIC".equals(doc.getVisibility()) && "APPROVED".equals(doc.getApprovalStatus());
+
         if (requester != null) {
             boolean isOwner = doc.getOwner().getUserId().equals(requester.getUserId());
-            boolean previewSupported = isPreviewSupported(doc);
             if (isOwner) {
                 canPreview = previewSupported;
                 canOpen = true;
@@ -302,6 +307,10 @@ public class DocumentService {
                 canDelete = true;
                 canMove = true;
                 canShare = true;
+            } else if (isPublicAndApproved) {
+                canPreview = previewSupported;
+                canOpen = true;
+                canDownload = true;
             } else {
                 boolean isDirectShared = documentShareRepository
                         .findByDocumentAndSharedWithAndStatus(doc, requester, "ACTIVE")
@@ -329,6 +338,12 @@ public class DocumentService {
                     canDownload = true;
                 }
             }
+        } else {
+            if (isPublicAndApproved) {
+                canPreview = previewSupported;
+                canOpen = true;
+                canDownload = true;
+            }
         }
 
         return DocumentResponse.builder()
@@ -347,6 +362,11 @@ public class DocumentService {
                 .folderName(doc.getFolder() != null ? doc.getFolder().getName() : null)
                 .uploadedBy(doc.getOwner().getEmail())
                 .status(doc.getStatus())
+                .visibility(doc.getVisibility())
+                .approvalStatus(doc.getApprovalStatus())
+                .publishedAt(doc.getPublishedAt())
+                .viewCount(doc.getViewCount())
+                .downloadCount(doc.getDownloadCount())
                 .createdAt(doc.getCreatedAt())
                 .updatedAt(doc.getUpdatedAt())
                 .canPreview(canPreview)
@@ -414,5 +434,105 @@ public class DocumentService {
             return "";
         }
         return fileName.substring(lastDot + 1);
+    }
+
+    public List<DocumentResponse> getPublicDocuments(String keyword, Integer subjectId, String fileType, String sortType) {
+        Sort sort = Sort.by(Sort.Order.desc("publishedAt"), Sort.Order.desc("createdAt"));
+        if ("mostViewed".equalsIgnoreCase(sortType)) {
+            sort = Sort.by(Sort.Order.desc("viewCount"), Sort.Order.desc("publishedAt"));
+        } else if ("mostDownloaded".equalsIgnoreCase(sortType)) {
+            sort = Sort.by(Sort.Order.desc("downloadCount"), Sort.Order.desc("publishedAt"));
+        }
+
+        return documentRepository.findPublicDocumentsWithFilters(keyword, subjectId, fileType, sort)
+                .stream()
+                .map(doc -> mapToResponse(doc, null))
+                .collect(Collectors.toList());
+    }
+
+    public DocumentResponse getPublicDocumentDetail(Integer documentId) {
+        Document doc = documentRepository.findById(documentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+
+        if ("DELETED".equals(doc.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+
+        if (!"PUBLIC".equals(doc.getVisibility()) || !"APPROVED".equals(doc.getApprovalStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+
+        doc.setViewCount((doc.getViewCount() == null ? 0 : doc.getViewCount()) + 1);
+        documentRepository.save(doc);
+
+        return mapToResponse(doc, null);
+    }
+
+    public DocumentDownloadInfo getPublicDocumentDownloadInfo(Integer documentId) {
+        Document doc = documentRepository.findById(documentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+
+        if ("DELETED".equals(doc.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+
+        if (!"PUBLIC".equals(doc.getVisibility()) || !"APPROVED".equals(doc.getApprovalStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+
+        doc.setDownloadCount((doc.getDownloadCount() == null ? 0 : doc.getDownloadCount()) + 1);
+        documentRepository.save(doc);
+
+        return DocumentDownloadInfo.builder()
+                .fileUrl(doc.getFileUrl())
+                .fileName(resolveDownloadFileName(doc))
+                .contentType(resolveContentType(doc))
+                .build();
+    }
+
+    public DocumentResponse publishDocument(Integer documentId, String email) {
+        User owner = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        Document doc = documentRepository.findById(documentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+
+        if ("DELETED".equals(doc.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+
+        if (!doc.getOwner().getUserId().equals(owner.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        doc.setVisibility("PUBLIC");
+        doc.setApprovalStatus("APPROVED");
+        doc.setPublishedAt(java.time.LocalDateTime.now());
+        documentRepository.save(doc);
+
+        return mapToResponse(doc, owner);
+    }
+
+    public DocumentResponse unpublishDocument(Integer documentId, String email) {
+        User owner = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        Document doc = documentRepository.findById(documentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+
+        if ("DELETED".equals(doc.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+
+        if (!doc.getOwner().getUserId().equals(owner.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        doc.setVisibility("PRIVATE");
+        doc.setApprovalStatus("PENDING");
+        doc.setPublishedAt(null);
+        documentRepository.save(doc);
+
+        return mapToResponse(doc, owner);
     }
 }
