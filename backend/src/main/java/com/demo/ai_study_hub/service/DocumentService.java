@@ -293,6 +293,8 @@ public class DocumentService {
         boolean canDelete = false;
         boolean canMove = false;
         boolean canShare = false;
+        boolean canPublish = false;
+        boolean canUnpublish = false;
 
         boolean previewSupported = isPreviewSupported(doc);
         boolean isPublicAndApproved = "PUBLIC".equals(doc.getVisibility()) && "APPROVED".equals(doc.getApprovalStatus());
@@ -307,6 +309,8 @@ public class DocumentService {
                 canDelete = true;
                 canMove = true;
                 canShare = true;
+                canPublish = !"PUBLIC".equals(doc.getVisibility());
+                canUnpublish = "PUBLIC".equals(doc.getVisibility());
             } else if (isPublicAndApproved) {
                 canPreview = previewSupported;
                 canOpen = true;
@@ -376,6 +380,8 @@ public class DocumentService {
                 .canDelete(canDelete)
                 .canMove(canMove)
                 .canShare(canShare)
+                .canPublish(canPublish)
+                .canUnpublish(canUnpublish)
                 .build();
     }
 

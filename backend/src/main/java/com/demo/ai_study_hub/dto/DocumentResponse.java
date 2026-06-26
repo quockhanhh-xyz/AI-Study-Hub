@@ -30,8 +30,8 @@ public class DocumentResponse {
     private String visibility;
     private String approvalStatus;
     private LocalDateTime publishedAt;
-    private Integer viewCount;
-    private Integer downloadCount;
+    private Long viewCount;
+    private Long downloadCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -42,4 +42,6 @@ public class DocumentResponse {
     private Boolean canDelete;
     private Boolean canMove;
     private Boolean canShare;
+    private Boolean canPublish;
+    private Boolean canUnpublish;
 }

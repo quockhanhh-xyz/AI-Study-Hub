@@ -64,10 +64,10 @@ public class Document {
     private LocalDateTime publishedAt;
 
     @Column(name = "view_count", nullable = false)
-    private Integer viewCount = 0;
+    private Long viewCount = 0L;
 
     @Column(name = "download_count", nullable = false)
-    private Integer downloadCount = 0;
+    private Long downloadCount = 0L;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

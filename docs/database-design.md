@@ -64,7 +64,7 @@ Stores OTP codes used for email verification.
 Stores uploaded document metadata. The real file is stored in Cloudinary Storage.
 
 | Column Name    | Data Type    | Constraints                                           | Description                                                            |
-| :------------- | :----------- | :---------------------------------------------------- | :--------------------------------------------------------------------- |
+| :------------- |:-------------| :---------------------------------------------------- | :--------------------------------------------------------------------- |
 | `document_id`  | INT          | PRIMARY KEY, AUTO_INCREMENT, NOT NULL                 | Unique document ID                                                     |
 | `title`        | VARCHAR(255) | NOT NULL                                              | User-facing document title                                             |
 | `description`  | TEXT         | NULLABLE                                              | Optional document description                                          |
@@ -78,10 +78,10 @@ Stores uploaded document metadata. The real file is stored in Cloudinary Storage
 | `folder_id`    | INT          | FOREIGN KEY REFERENCES folders(folder_id), NULLABLE   | Folder this document belongs to (added in Step 5)                      |
 | `status`       | VARCHAR(30)  | DEFAULT 'ACTIVE', NOT NULL                            | Document status: ACTIVE or DELETED                                     |
 | `visibility`   | VARCHAR(20)  | DEFAULT 'PRIVATE', NOT NULL                            | Document visibility: PRIVATE or PUBLIC                                 |
-| `approval_status`| VARCHAR(20) | DEFAULT 'PENDING', NOT NULL                            | Approval status for PUBLIC documents: PENDING, APPROVED, REJECTED      |
+| `approval_status`| VARCHAR(20)  | DEFAULT 'PENDING', NOT NULL                            | Approval status for PUBLIC documents: PENDING, APPROVED, REJECTED      |
 | `published_at` | TIMESTAMP    | NULLABLE                                              | Timestamp when the document was published                              |
-| `view_count`   | INT          | DEFAULT 0, NOT NULL                                    | Total views count for public documents                                 |
-| `download_count`| INT          | DEFAULT 0, NOT NULL                                    | Total downloads count for public documents                             |
+| `view_count`   | BIGINT       | DEFAULT 0, NOT NULL                                    | Number of times the public document detail was viewed                                 |
+| `download_count`| BIGINT       | DEFAULT 0, NOT NULL                                    | Number of times the public document was downloaded                             |
 | `created_at`   | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP                             | Document upload time                                                   |
 | `updated_at`   | TIMESTAMP    | NULLABLE                                              | Last update time                                                       |
 | `deleted_at`   | TIMESTAMP    | NULLABLE                                              | Document deletion time (when soft-deleted)                             |
