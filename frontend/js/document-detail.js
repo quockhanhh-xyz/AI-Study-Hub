@@ -1,6 +1,19 @@
 // document-detail.js – FE2: Document Detail & Edit Page
 // Standardized UI styles and theme configurations.
 
+function handleBack() {
+    if (document.referrer && (document.referrer.includes("dashboard.html") ||
+                              document.referrer.includes("documents.html") ||
+                              document.referrer.includes("shared-with-me.html") ||
+                              document.referrer.includes("group-detail.html") ||
+                              document.referrer.includes("shared-folder-detail.html") ||
+                              document.referrer.includes("folders.html"))) {
+        window.location.href = document.referrer;
+    } else {
+        window.location.href = "dashboard.html";
+    }
+}
+
 // Fix #3: showFatalError queries DOM directly to avoid ReferenceError
 // when detailLoader variable is not yet declared
 function showFatalError(message) {
@@ -35,6 +48,7 @@ const detailContent = document.getElementById("detailContent");
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let currentDocumentId = null;
+let currentDocumentFolderId = null;
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
@@ -70,83 +84,99 @@ async function loadPage(id) {
         detailLoader.style.display = "none";
         detailContent.style.display = "block";
     } catch (err) {
-        showFatalError(err.message || "Failed to load document.");
+        if (err.status === 403) {
+            showFatalError("Access Denied (403): You do not have permission to view this document.");
+        } else if (err.status === 404) {
+            showFatalError("Document Not Found (404): The requested document does not exist, has been deleted, or has been revoked.");
+        } else {
+            showFatalError(err.message || "Failed to load document.");
+        }
     }
 }
 
 // ── Render document info ──────────────────────────────────────────────────────
 function renderDocument(doc) {
-    document.getElementById("fileTypeBadge").textContent = doc.fileType || "–";
+    document.getElementById("fileTypeBadge").textContent = (doc.fileType || "–").toUpperCase();
     document.getElementById("docTitle").textContent = doc.title || "–";
-    document.getElementById("docUploadedBy").textContent = "Uploaded by " + (doc.uploadedBy || "–");
+    document.getElementById("docUploadedBy").textContent = "Uploaded by " + (doc.ownerName || doc.uploadedBy || "–");
     document.getElementById("docDescription").textContent = doc.description || "No description provided.";
-    document.getElementById("docSubject").textContent = doc.subjectCode
-        ? `${doc.subjectCode} – ${doc.subjectName}`
-        : "No subject";
+    document.getElementById("docSubject").textContent = doc.subject
+        ? doc.subject
+        : (doc.subjectCode ? `${doc.subjectCode} – ${doc.subjectName}` : "No subject");
     document.getElementById("docFileSize").textContent = formatFileSize(doc.fileSize);
     document.getElementById("docCreatedAt").textContent = formatDate(doc.createdAt);
 
+    // Pre-fill edit form
+    const editTitle = document.getElementById("editTitle");
+    const editDesc = document.getElementById("editDescription");
+    if (editTitle) editTitle.value = doc.title || "";
+    if (editDesc) editDesc.value = doc.description || "";
+
+    // ── Action buttons based on permission flags from backend ──
     const openBtn = document.getElementById("openFileBtn");
     const downloadBtn = document.getElementById("downloadFileBtn");
-    if (doc.fileUrl) {
-        openBtn.href = doc.fileUrl;
-        if (downloadBtn) {
-    downloadBtn.removeAttribute("href");
-    downloadBtn.style.display = "inline-flex";
-    downloadBtn.addEventListener("click", async () => {
-        try {
-            const response = await fetch(doc.fileUrl);
-            const blob = await response.blob();
-            const blobUrl = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = blobUrl;
-            a.download = doc.originalFileName || doc.title || String(doc.documentId);
-            a.click();
-            URL.revokeObjectURL(blobUrl);
-        } catch (err) {
-            window.open(doc.fileUrl, "_blank", "noopener");
+    const shareBtn = document.getElementById("shareBtn");
+    const moveBtn = document.getElementById("moveBtn");
+
+    currentDocumentFolderId = doc.folderId;
+
+    // Open button
+    if (openBtn) {
+        if (doc.canOpen && doc.fileUrl) {
+            openBtn.style.display = "inline-flex";
+            openBtn.onclick = () => openDocument(doc);
+        } else {
+            openBtn.style.display = "none";
         }
-    });
-}
-    } else {
-        openBtn.style.display = "none";
-        if (downloadBtn) {
+    }
+
+    // Download button
+    if (downloadBtn) {
+        if (doc.canDownload) {
+            downloadBtn.style.display = "inline-flex";
+            downloadBtn.onclick = () => downloadDocument(doc);
+        } else {
             downloadBtn.style.display = "none";
         }
     }
 
-    // Pre-fill edit form
-    document.getElementById("editTitle").value = doc.title || "";
-    document.getElementById("editDescription").value = doc.description || "";
-
-    // Resolve ownership check dynamically
-    const currentUserStr = localStorage.getItem("currentUser");
-    let isOwner = false;
-    if (currentUserStr) {
-        try {
-            const currentUser = JSON.parse(currentUserStr);
-            isOwner = doc.uploadedBy === currentUser.email;
-        } catch (e) {
-            console.error("Failed to parse currentUser from localStorage", e);
+    // Move button
+    if (moveBtn) {
+        if (doc.canMove) {
+            moveBtn.style.display = "inline-flex";
+        } else {
+            moveBtn.style.display = "none";
         }
     }
 
-    // Show share controls and management panel only to the owner
-    const shareBtn = document.getElementById("shareBtn");
+    // Share button — only the owner has canShare
     const sharesPanel = document.getElementById("sharesPanel");
-    if (isOwner) {
-        shareBtn.style.display = "inline-block";
-        sharesPanel.style.display = "block";
-        loadSharingInfo(doc.documentId);
-    } else {
-        shareBtn.style.display = "none";
-        sharesPanel.style.display = "none";
+    if (shareBtn) {
+        if (doc.canShare) {
+            shareBtn.style.display = "inline-flex";
+            if (sharesPanel) sharesPanel.style.display = "block";
+            loadSharingInfo(doc.documentId || doc.id);
+        } else {
+            shareBtn.style.display = "none";
+            if (sharesPanel) sharesPanel.style.display = "none";
+        }
     }
 
-    // Hide edit and delete options for non-owners
+    // Edit section — only the owner has canEdit
     const editSec = document.querySelector(".edit-section");
     if (editSec) {
-        editSec.style.display = isOwner ? "block" : "none";
+        editSec.style.display = doc.canEdit ? "block" : "none";
+    }
+
+    // Delete button — only the owner has canDelete
+    const deleteBtn = document.getElementById("deleteBtn");
+    if (deleteBtn) {
+        deleteBtn.style.display = doc.canDelete ? "inline-flex" : "none";
+    }
+
+    // ── Call render preview (document-preview.js) ──
+    if (typeof renderDocumentPreview === "function") {
+        renderDocumentPreview(doc);
     }
 }
 
@@ -233,6 +263,65 @@ async function handleDelete() {
     } finally {
         confirmBtn.disabled = false;
         confirmBtn.textContent = "Delete";
+    }
+}
+
+// ── Move modal ────────────────────────────────────────────────────────────────
+function showMoveModal() {
+    const errorEl = document.getElementById("moveError");
+    if (errorEl) errorEl.style.display = "none";
+    const select = document.getElementById("moveFolderSelect");
+    if (!select) return;
+
+    getMyFolders(null, true).then(res => {
+        const folders = Array.isArray(res.data) ? res.data : [];
+        select.innerHTML = '<option value="">— My Documents —</option>';
+        folders.forEach(f => {
+            const opt = document.createElement("option");
+            opt.value = f.folderId;
+            opt.textContent = f.folderName || "Untitled Folder";
+            if (currentDocumentFolderId === f.folderId) {
+                opt.disabled = true;
+                opt.textContent += " (Current)";
+            }
+            select.appendChild(opt);
+        });
+        document.getElementById("moveModal").classList.add("show");
+    }).catch(err => {
+        showToast(err.message || "Failed to load folders.", "error");
+    });
+}
+
+function hideMoveModal() {
+    document.getElementById("moveModal").classList.remove("show");
+}
+
+async function handleMove() {
+    const select = document.getElementById("moveFolderSelect");
+    if (!select) return;
+    const folderIdVal = select.value ? parseInt(select.value, 10) : null;
+    const confirmBtn = document.getElementById("moveConfirmBtn");
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = "Moving...";
+    }
+
+    try {
+        const res = await moveDocument(currentDocumentId, folderIdVal);
+        hideMoveModal();
+        showToast("Document moved successfully.", "success");
+        renderDocument(res.data);
+    } catch (err) {
+        const errEl = document.getElementById("moveError");
+        if (errEl) {
+            errEl.textContent = err.message || "Failed to move document.";
+            errEl.style.display = "block";
+        }
+    } finally {
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = "Move";
+        }
     }
 }
 

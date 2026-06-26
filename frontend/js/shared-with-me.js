@@ -106,37 +106,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const detailsBtn = document.createElement("a");
     detailsBtn.href = `document-detail.html?id=${doc.documentId}`;
-    detailsBtn.className = "btn btn-secondary document-detail-btn";
+    detailsBtn.className = "btn btn-primary document-detail-btn";
     detailsBtn.style.width = "auto";
     detailsBtn.style.padding = "6px 12px";
     detailsBtn.style.fontSize = "13px";
-    detailsBtn.textContent = "Details";
+    detailsBtn.textContent = "View Details";
     actions.appendChild(detailsBtn);
-
-    if (doc.fileUrl) {
-      const viewBtn = document.createElement("a");
-      viewBtn.href = doc.fileUrl;
-      viewBtn.target = "_blank";
-      viewBtn.rel = "noopener noreferrer";
-      viewBtn.className = "btn btn-primary document-detail-btn";
-      viewBtn.style.width = "auto";
-      viewBtn.style.padding = "6px 12px";
-      viewBtn.style.fontSize = "13px";
-      viewBtn.textContent = "Open";
-      actions.appendChild(viewBtn);
-
-      const downloadBtn = document.createElement("a");
-      downloadBtn.href = doc.fileUrl;
-      downloadBtn.target = "_blank";
-      downloadBtn.rel = "noopener noreferrer";
-      downloadBtn.download = doc.title || String(doc.documentId);
-      downloadBtn.className = "btn btn-secondary";
-      downloadBtn.style.width = "auto";
-      downloadBtn.style.padding = "6px 12px";
-      downloadBtn.style.fontSize = "13px";
-      downloadBtn.textContent = "Download";
-      actions.appendChild(downloadBtn);
-    }
 
     card.append(header, desc, meta, actions);
     return card;
