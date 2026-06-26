@@ -13,14 +13,26 @@
 async function getPublicDocuments(params = {}) {
   try {
     const queryParts = [];
-    if (params.search) queryParts.push(`search=${encodeURIComponent(params.search)}`);
-    if (params.sortBy) queryParts.push(`sortBy=${encodeURIComponent(params.sortBy)}`);
-    if (params.sortOrder) queryParts.push(`sortOrder=${encodeURIComponent(params.sortOrder)}`);
-    if (params.page) queryParts.push(`page=${encodeURIComponent(params.page)}`);
-    if (params.limit) queryParts.push(`limit=${encodeURIComponent(params.limit)}`);
+    const keyword = params.keyword || params.search;
+
+    if (keyword) {
+      queryParts.push(`keyword=${encodeURIComponent(keyword)}`);
+    }
+
+    if (params.subjectId) {
+      queryParts.push(`subjectId=${encodeURIComponent(params.subjectId)}`);
+    }
+
+    if (params.fileType) {
+      queryParts.push(`fileType=${encodeURIComponent(params.fileType)}`);
+    }
+
+    if (params.sort) {
+      queryParts.push(`sort=${encodeURIComponent(params.sort)}`);
+    }
 
     const queryString = queryParts.length > 0 ? `?${queryParts.join("&")}` : "";
-    
+
     // Explicitly uses global get utility wrapper with bypass redirect flag for custom error processing
     return await get(`/api/documents/public${queryString}`, { skipUnauthorizedRedirect: true });
   } catch (error) {
