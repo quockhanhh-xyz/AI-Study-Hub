@@ -77,6 +77,11 @@ Stores uploaded document metadata. The real file is stored in Cloudinary Storage
 | `subject_id`   | INT          | FOREIGN KEY REFERENCES subjects(subject_id), NULLABLE | Subject this document belongs to                                       |
 | `folder_id`    | INT          | FOREIGN KEY REFERENCES folders(folder_id), NULLABLE   | Folder this document belongs to (added in Step 5)                      |
 | `status`       | VARCHAR(30)  | DEFAULT 'ACTIVE', NOT NULL                            | Document status: ACTIVE or DELETED                                     |
+| `visibility`   | VARCHAR(20)  | DEFAULT 'PRIVATE', NOT NULL                            | Document visibility: PRIVATE or PUBLIC                                 |
+| `approval_status`| VARCHAR(20) | DEFAULT 'PENDING', NOT NULL                            | Approval status for PUBLIC documents: PENDING, APPROVED, REJECTED      |
+| `published_at` | TIMESTAMP    | NULLABLE                                              | Timestamp when the document was published                              |
+| `view_count`   | INT          | DEFAULT 0, NOT NULL                                    | Total views count for public documents                                 |
+| `download_count`| INT          | DEFAULT 0, NOT NULL                                    | Total downloads count for public documents                             |
 | `created_at`   | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP                             | Document upload time                                                   |
 | `updated_at`   | TIMESTAMP    | NULLABLE                                              | Last update time                                                       |
 | `deleted_at`   | TIMESTAMP    | NULLABLE                                              | Document deletion time (when soft-deleted)                             |
@@ -93,6 +98,10 @@ Stores uploaded document metadata. The real file is stored in Cloudinary Storage
 - In Step 5, a document can optionally be assigned to a `folder_id`. The folder must belong to the same user.
 - Soft-deletion: When a document is deleted, its `status` is set to `'DELETED'` in MySQL, and `deleted_at` is populated with the current timestamp. Soft-deleted documents must not be returned in standard lists or detail endpoints.
 - Restoration: A soft-deleted document can be restored by resetting `status` to `'ACTIVE'` and `deleted_at` to `null`. If the folder it belonged to was permanently deleted, the document is restored to the root/unassigned level.
+- Public publishing: When an owner publishes a document, `visibility` transitions to `'PUBLIC'`, `approval_status` is updated to `'APPROVED'` (auto-approved for the current phase), and `published_at` is set to the current timestamp.
+- Unpublishing: When an owner unpublishes a document, `visibility` transitions back to `'PRIVATE'` and `published_at` is cleared to `null`.
+- Guest access: Only documents with `status = 'ACTIVE'`, `visibility = 'PUBLIC'`, and `approval_status = 'APPROVED'` are visible to guest users.
+- Counters: `view_count` increments on successful public document detail fetches. `download_count` increments on successful secure public document downloads.
 - Permanent deletion: When a document is permanently deleted from the trash:
   - The database record is deleted from MySQL.
   - The physical file is deleted from Cloudinary Storage using its `storage_path` (public ID).

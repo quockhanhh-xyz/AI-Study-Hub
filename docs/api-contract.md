@@ -2466,3 +2466,217 @@ To ensure secure data isolation and access control, the following permission rul
 - **Membership Loss**: A user who leaves a group (`status = 'LEFT'`) or is removed by the group owner (`status = 'REMOVED'`) immediately loses access to all documents and folders shared within that group.
 - **Share Revocation**: All active group document shares and group folder shares created by that user inside that specific group must be automatically set to `REVOKED`. This ensures that they cannot continue to share materials into a group they are no longer a part of.
 - **Non-Interference**: Documents or folders shared into the group by other active members are unaffected and remain active.
+
+---
+
+## 11.7. Public Community & Guest Access Rules
+- **Public Visibility**: A document is considered public if `visibility = 'PUBLIC'` and `approvalStatus = 'APPROVED'`. Trashed documents (status `'DELETED'`) are not public even if marked public.
+- **Unauthenticated (Guest) Access**: Guest users (requests without valid credentials) are authorized to search public documents, retrieve public document details, and download public documents. They do not have access to any private documents, folders, trash, or sharing/group functions.
+- **Access Check for Guest details**: Requesting `GET /api/documents/public/{id}` for a document that is private, pending approval, rejected, or trashed returns `404 Not Found` or `403 Forbidden` (metadata is blocked).
+- **Access Check for Guest download**: Requesting `GET /api/documents/public/{id}/download` for a private/trashed document is blocked.
+- **Metadata Restrictions**: Guest views for public documents map only `canPreview` (if supported), `canOpen = true`, and `canDownload = true`. All modification and sharing flags (`canEdit`, `canDelete`, `canMove`, `canShare`) are strictly `false`.
+- **Logged-In Non-Owner**: Logged-in users who do not own a public document have the same read-only access (preview, open, download) without edit/delete/move/share permissions.
+- **Stat Counters**:
+  - `viewCount` increases by 1 upon each successful query of the public detail endpoint (`GET /api/documents/public/{id}`).
+  - `downloadCount` increases by 1 upon each successful request to the secure public download redirect (`GET /api/documents/public/{id}/download`).
+
+---
+
+# 12. Public Community Library APIs
+
+## 12.1. Search/List Public Documents API
+
+## GET `/api/documents/public`
+
+Allows guests and logged-in users to list and search all active public approved documents.
+
+### Request Query Parameters
+
+- `keyword` (String, optional): Case-insensitive match on title or original filename.
+- `subjectId` (Integer, optional): Filters by subject.
+- `fileType` (String, optional): Filters by normalized file type (e.g., `'PDF'`).
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Public documents retrieved successfully",
+  "data": [
+    {
+      "documentId": 25,
+      "title": "Introduction to Physics",
+      "description": "Basic mechanics and thermodynamics.",
+      "subjectId": 2,
+      "subjectCode": "PHY101",
+      "subjectName": "General Physics I",
+      "originalFileName": "physics-101.pdf",
+      "fileType": "pdf",
+      "fileSize": 1048576,
+      "fileUrl": "https://res.cloudinary.com/demo/image/upload/v1/docs/physics-101.pdf",
+      "publicId": "docs/physics-101",
+      "folderId": null,
+      "folderName": null,
+      "uploadedBy": "teacher@gmail.com",
+      "status": "ACTIVE",
+      "visibility": "PUBLIC",
+      "approvalStatus": "APPROVED",
+      "publishedAt": "2026-06-26T10:00:00",
+      "viewCount": 150,
+      "downloadCount": 42,
+      "createdAt": "2026-06-25T15:00:00",
+      "updatedAt": null,
+      "canPreview": true,
+      "canOpen": true,
+      "canDownload": true,
+      "canEdit": false,
+      "canDelete": false,
+      "canMove": false,
+      "canShare": false
+    }
+  ]
+}
+```
+
+---
+
+## 12.2. Get Public Document Detail API
+
+## GET `/api/documents/public/{id}`
+
+Retrieves the metadata of a public approved document. Increments `viewCount` by 1 on success.
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Public document detail retrieved successfully",
+  "data": {
+    "documentId": 25,
+    "title": "Introduction to Physics",
+    "description": "Basic mechanics and thermodynamics.",
+    "subjectId": 2,
+    "subjectCode": "PHY101",
+    "subjectName": "General Physics I",
+    "originalFileName": "physics-101.pdf",
+    "fileType": "pdf",
+    "fileSize": 1048576,
+    "fileUrl": "https://res.cloudinary.com/demo/image/upload/v1/docs/physics-101.pdf",
+    "publicId": "docs/physics-101",
+    "folderId": null,
+    "folderName": null,
+    "uploadedBy": "teacher@gmail.com",
+    "status": "ACTIVE",
+    "visibility": "PUBLIC",
+    "approvalStatus": "APPROVED",
+    "publishedAt": "2026-06-26T10:00:00",
+    "viewCount": 151,
+    "downloadCount": 42,
+    "createdAt": "2026-06-25T15:00:00",
+    "updatedAt": null,
+    "canPreview": true,
+    "canOpen": true,
+    "canDownload": true,
+    "canEdit": false,
+    "canDelete": false,
+    "canMove": false,
+    "canShare": false
+  }
+}
+```
+
+### Error Response - Not Found / Forbidden (404 / 403)
+
+If the document is private, pending, rejected, or trashed:
+
+```json
+{
+  "success": false,
+  "message": "Document not found or access denied",
+  "data": null
+}
+```
+
+---
+
+## 12.3. Secure Public Document Download API
+
+## GET `/api/documents/public/{id}/download`
+
+Downloads the public approved document as an attachment. Increments `downloadCount` on success.
+
+### Success Response (200 OK)
+
+- Status: `200 OK`
+- Headers:
+  - `Content-Disposition`: `attachment; filename="physics-101.pdf"`
+  - `Content-Type`: `application/pdf`
+
+---
+
+## 12.4. Publish Document API
+
+## PUT `/api/documents/{id}/publish`
+
+Allows the owner of a document to publish it to the Public Community Library. Sets visibility to `'PUBLIC'`, approvalStatus to `'APPROVED'`, and updates publishedAt timestamp.
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Document published successfully",
+  "data": {
+    "documentId": 25,
+    "title": "Introduction to Physics",
+    "visibility": "PUBLIC",
+    "approvalStatus": "APPROVED",
+    "publishedAt": "2026-06-26T13:50:00"
+  }
+}
+```
+
+### Error Response - Forbidden (403)
+
+If the user is not the owner:
+
+```json
+{
+  "success": false,
+  "message": "Access denied",
+  "data": null
+}
+```
+
+---
+
+## 12.5. Unpublish Document API
+
+## PUT `/api/documents/{id}/unpublish`
+
+Allows the owner of a document to withdraw it from the public library, resetting visibility to `'PRIVATE'`.
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Document unpublished successfully",
+  "data": {
+    "documentId": 25,
+    "title": "Introduction to Physics",
+    "visibility": "PRIVATE",
+    "approvalStatus": "PENDING",
+    "publishedAt": null
+  }
+}
+```

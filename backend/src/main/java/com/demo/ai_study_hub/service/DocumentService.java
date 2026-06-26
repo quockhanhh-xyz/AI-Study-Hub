@@ -291,9 +291,11 @@ public class DocumentService {
         boolean canMove = false;
         boolean canShare = false;
 
+        boolean previewSupported = isPreviewSupported(doc);
+        boolean isPublicAndApproved = "PUBLIC".equals(doc.getVisibility()) && "APPROVED".equals(doc.getApprovalStatus());
+
         if (requester != null) {
             boolean isOwner = doc.getOwner().getUserId().equals(requester.getUserId());
-            boolean previewSupported = isPreviewSupported(doc);
             if (isOwner) {
                 canPreview = previewSupported;
                 canOpen = true;
@@ -302,6 +304,10 @@ public class DocumentService {
                 canDelete = true;
                 canMove = true;
                 canShare = true;
+            } else if (isPublicAndApproved) {
+                canPreview = previewSupported;
+                canOpen = true;
+                canDownload = true;
             } else {
                 boolean isDirectShared = documentShareRepository
                         .findByDocumentAndSharedWithAndStatus(doc, requester, "ACTIVE")
@@ -329,6 +335,12 @@ public class DocumentService {
                     canDownload = true;
                 }
             }
+        } else {
+            if (isPublicAndApproved) {
+                canPreview = previewSupported;
+                canOpen = true;
+                canDownload = true;
+            }
         }
 
         return DocumentResponse.builder()
@@ -347,6 +359,11 @@ public class DocumentService {
                 .folderName(doc.getFolder() != null ? doc.getFolder().getName() : null)
                 .uploadedBy(doc.getOwner().getEmail())
                 .status(doc.getStatus())
+                .visibility(doc.getVisibility())
+                .approvalStatus(doc.getApprovalStatus())
+                .publishedAt(doc.getPublishedAt())
+                .viewCount(doc.getViewCount())
+                .downloadCount(doc.getDownloadCount())
                 .createdAt(doc.getCreatedAt())
                 .updatedAt(doc.getUpdatedAt())
                 .canPreview(canPreview)
@@ -414,5 +431,98 @@ public class DocumentService {
             return "";
         }
         return fileName.substring(lastDot + 1);
+    }
+
+    public List<DocumentResponse> getPublicDocuments(String keyword, Integer subjectId, String fileType) {
+        return documentRepository.findPublicDocumentsWithFilters(keyword, subjectId, fileType)
+                .stream()
+                .map(doc -> mapToResponse(doc, null))
+                .collect(Collectors.toList());
+    }
+
+    public DocumentResponse getPublicDocumentDetail(Integer documentId) {
+        Document doc = documentRepository.findById(documentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+
+        if ("DELETED".equals(doc.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+
+        if (!"PUBLIC".equals(doc.getVisibility()) || !"APPROVED".equals(doc.getApprovalStatus())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        doc.setViewCount(doc.getViewCount() + 1);
+        documentRepository.save(doc);
+
+        return mapToResponse(doc, null);
+    }
+
+    public DocumentDownloadInfo getPublicDocumentDownloadInfo(Integer documentId) {
+        Document doc = documentRepository.findById(documentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+
+        if ("DELETED".equals(doc.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+
+        if (!"PUBLIC".equals(doc.getVisibility()) || !"APPROVED".equals(doc.getApprovalStatus())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        doc.setDownloadCount(doc.getDownloadCount() + 1);
+        documentRepository.save(doc);
+
+        return DocumentDownloadInfo.builder()
+                .fileUrl(doc.getFileUrl())
+                .fileName(resolveDownloadFileName(doc))
+                .contentType(resolveContentType(doc))
+                .build();
+    }
+
+    public DocumentResponse publishDocument(Integer documentId, String email) {
+        User owner = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        Document doc = documentRepository.findById(documentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+
+        if ("DELETED".equals(doc.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+
+        if (!doc.getOwner().getUserId().equals(owner.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        doc.setVisibility("PUBLIC");
+        doc.setApprovalStatus("APPROVED");
+        doc.setPublishedAt(java.time.LocalDateTime.now());
+        documentRepository.save(doc);
+
+        return mapToResponse(doc, owner);
+    }
+
+    public DocumentResponse unpublishDocument(Integer documentId, String email) {
+        User owner = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        Document doc = documentRepository.findById(documentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+
+        if ("DELETED".equals(doc.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+
+        if (!doc.getOwner().getUserId().equals(owner.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        doc.setVisibility("PRIVATE");
+        doc.setApprovalStatus("PENDING");
+        doc.setPublishedAt(null);
+        documentRepository.save(doc);
+
+        return mapToResponse(doc, owner);
     }
 }

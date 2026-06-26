@@ -27,6 +27,11 @@ public class DocumentResponse {
     private String folderName;
     private String uploadedBy;
     private String status;
+    private String visibility;
+    private String approvalStatus;
+    private LocalDateTime publishedAt;
+    private Integer viewCount;
+    private Integer downloadCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
