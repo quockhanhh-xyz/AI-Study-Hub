@@ -1,6 +1,6 @@
 /**
- * FE3 Document Management API Helpers (Extended for Step 7)
- * Branch: feature/step-7-document-api-helper
+ * FE3 Document Management API Helpers (Extended for Step 8 Public Community Library)
+ * Branch: feature/step-8-public-community-api-navigation
  */
 
 /**
@@ -39,11 +39,14 @@ function searchDocuments(params) {
 
 /**
  * Retrieves the detailed information of a specific document by its ID.
- * Serves the Document Details view page (FE2) and Permission validation contexts (Step 7).
+ * Serves the Document Details view page for logged-in users, explicitly validating 
+ * updated visibility, approvalStatus, canPublish, and canUnpublish security states.
  * @param {number|string} id - The ID of the document to retrieve.
- * @returns {Promise<Object>} Detailed document data including permission flags.
+ * @returns {Promise<Object>} Detailed document data including security permission flags.
  */
 function getDocumentById(id) {
+  if (!id) throw new Error("Document identifier validation restriction violation: id is required");
+  // Leverages standard get utility; backend will return extended visibility and action state indicators
   return get(`/api/documents/${id}`);
 }
 

@@ -1,24 +1,33 @@
 /**
  * Application Shell and Authentication Guard Manager (Cookie Auth Flow Mode).
- * Updated in Step 6D for Frontend IA Navigation Cleanup.
+ * Updated in Step 8 for Public Community Library MVP Integration.
  */
-window.authReady = new Promise((resolve) => {
-  document.addEventListener("DOMContentLoaded", async () => {
-    // 1. EXECUTE AUTH GUARD SYSTEM BY CALLING /api/auth/me ENDPOINT
-    const isAuthenticated = await checkAuthenticationStatus();
 
-    // 2. REFINE SIDEBAR MENU BASED ON AUTH STATUS
-    renderDynamicSidebar(isAuthenticated);
+async function initializeLayout() {
+  // 1. EXECUTE AUTH GUARD SYSTEM BY CALLING /api/auth/me ENDPOINT
+  const isAuthenticated = await checkAuthenticationStatus();
 
-    // 3. ATTACH LOGOUT FLOW LISTENERS
-    initializeLogoutFlow();
+  // 2. REFINE SIDEBAR MENU BASED ON AUTH STATUS
+  renderDynamicSidebar(isAuthenticated);
 
-    resolve(isAuthenticated);
-  });
-});
+  // 3. ATTACH LOGOUT FLOW LISTENERS
+  initializeLogoutFlow();
+
+  return isAuthenticated;
+}
+
+window.authReady =
+  document.readyState === "loading"
+    ? new Promise((resolve) => {
+        document.addEventListener("DOMContentLoaded", async () => {
+          resolve(await initializeLayout());
+        });
+      })
+    : Promise.resolve(initializeLayout());
 
 /**
  * Validates session status dynamically against the backend security context.
+ * Seamlessly allows unauthenticated guest access to public routes without disruptive login redirects.
  * @returns {Promise<boolean>}
  */
 async function checkAuthenticationStatus() {
@@ -48,7 +57,7 @@ async function checkAuthenticationStatus() {
     // If endpoint fails, user session is unauthenticated or expired
     localStorage.removeItem("currentUser");
 
-    // Guard clause: If page explicitly requires auth and validation failed -> Kick to login
+    // Step 8 Security Rule: Only redirect to login screen if the route explicitly demands authentication
     if (currentRoute.requiresAuth) {
       window.location.href = "login.html";
     }
@@ -89,13 +98,13 @@ function renderDynamicSidebar(isAuthenticated) {
     .join("");
 
   // Append a dedicated Logout link if user is fully logged in
-  if (isAuthenticated) {
-    const sidebar = document.querySelector(".sidebar");
-    if (sidebar) {
-      // Safely clear out any pre-existing footer to prevent duplicate rendering artifacts
-      const oldFooter = sidebar.querySelector(".sidebar-footer");
-      if (oldFooter) oldFooter.remove();
+  const sidebar = document.querySelector(".sidebar");
+  if (sidebar) {
+    // Safely clear out any pre-existing footer to prevent duplicate rendering artifacts (for both guest and logged-in states)
+    const oldFooter = sidebar.querySelector(".sidebar-footer");
+    if (oldFooter) oldFooter.remove();
 
+    if (isAuthenticated) {
       const logoutContainer = document.createElement("div");
       logoutContainer.className = "sidebar-footer";
       logoutContainer.innerHTML = `

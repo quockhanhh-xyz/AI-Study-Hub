@@ -21,8 +21,8 @@ async function apiRequest(endpoint, options = {}) {
     ...(options.headers || {})
   };
 
-  // Automatically append JSON content type when request body is not FormData
-  if (!isFormData) {
+  // Automatically append JSON content type when request body exists and is not FormData
+  if (!isFormData && options.body !== undefined) {
     headers["Content-Type"] = "application/json";
   }
 
@@ -122,7 +122,7 @@ function post(endpoint, body, options = {}) {
 
   return apiRequest(endpoint, {
     method: "POST",
-    body: isFormData ? body : JSON.stringify(body),
+    body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined),
     ...options
   });
 }
@@ -134,9 +134,11 @@ function post(endpoint, body, options = {}) {
  * @param {object} options - Optional parameters override
  */
 function put(endpoint, body, options = {}) {
+  const isFormData = body instanceof FormData;
+
   return apiRequest(endpoint, {
     method: "PUT",
-    body: JSON.stringify(body),
+    body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined),
     ...options
   });
 }
