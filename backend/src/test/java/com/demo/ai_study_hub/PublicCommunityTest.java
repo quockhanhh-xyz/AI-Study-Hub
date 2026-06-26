@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -94,10 +95,10 @@ class PublicCommunityTest {
     void getPublicDocuments_ShouldFilterAndMapGuestPermissions() {
         mockDoc.setVisibility("PUBLIC");
         mockDoc.setApprovalStatus("APPROVED");
-        when(documentRepository.findPublicDocumentsWithFilters("physics", null, "PDF"))
+        when(documentRepository.findPublicDocumentsWithFilters(eq("physics"), eq(null), eq("PDF"), any(Sort.class)))
                 .thenReturn(Collections.singletonList(mockDoc));
 
-        List<DocumentResponse> res = documentService.getPublicDocuments("physics", null, "PDF");
+        List<DocumentResponse> res = documentService.getPublicDocuments("physics", null, "PDF", "newest");
 
         assertNotNull(res);
         assertEquals(1, res.size());
@@ -107,6 +108,33 @@ class PublicCommunityTest {
         assertTrue(docRes.getCanDownload());
         assertFalse(docRes.getCanEdit());
         assertFalse(docRes.getCanDelete());
+    }
+
+    @Test
+    void getPublicDocuments_WithDifferentSortTypes_ShouldPassCorrectSortToRepository() {
+        mockDoc.setVisibility("PUBLIC");
+        mockDoc.setApprovalStatus("APPROVED");
+
+        // Test newest/default sort
+        documentService.getPublicDocuments("physics", null, "PDF", "newest");
+        verify(documentRepository).findPublicDocumentsWithFilters(
+                eq("physics"), eq(null), eq("PDF"),
+                eq(Sort.by(Sort.Order.desc("publishedAt"), Sort.Order.desc("createdAt")))
+        );
+
+        // Test mostViewed sort
+        documentService.getPublicDocuments("physics", null, "PDF", "mostViewed");
+        verify(documentRepository).findPublicDocumentsWithFilters(
+                eq("physics"), eq(null), eq("PDF"),
+                eq(Sort.by(Sort.Order.desc("viewCount"), Sort.Order.desc("publishedAt")))
+        );
+
+        // Test mostDownloaded sort
+        documentService.getPublicDocuments("physics", null, "PDF", "mostDownloaded");
+        verify(documentRepository).findPublicDocumentsWithFilters(
+                eq("physics"), eq(null), eq("PDF"),
+                eq(Sort.by(Sort.Order.desc("downloadCount"), Sort.Order.desc("publishedAt")))
+        );
     }
 
     @Test
@@ -126,7 +154,7 @@ class PublicCommunityTest {
     }
 
     @Test
-    void getPublicDocumentDetail_WhenPrivate_ShouldThrowForbidden() {
+    void getPublicDocumentDetail_WhenPrivate_ShouldThrowNotFound() {
         mockDoc.setVisibility("PRIVATE");
         when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
 
@@ -134,7 +162,7 @@ class PublicCommunityTest {
             documentService.getPublicDocumentDetail(10);
         });
 
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
         verify(documentRepository, never()).save(any());
     }
 
@@ -169,7 +197,7 @@ class PublicCommunityTest {
     }
 
     @Test
-    void getPublicDocumentDownloadInfo_WhenPrivate_ShouldThrowForbidden() {
+    void getPublicDocumentDownloadInfo_WhenPrivate_ShouldThrowNotFound() {
         mockDoc.setVisibility("PRIVATE");
         when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
 
@@ -177,7 +205,7 @@ class PublicCommunityTest {
             documentService.getPublicDocumentDownloadInfo(10);
         });
 
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
         verify(documentRepository, never()).save(any());
     }
 }

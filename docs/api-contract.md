@@ -2495,6 +2495,7 @@ Allows guests and logged-in users to list and search all active public approved 
 - `keyword` (String, optional): Case-insensitive match on title or original filename.
 - `subjectId` (Integer, optional): Filters by subject.
 - `fileType` (String, optional): Filters by normalized file type (e.g., `'PDF'`).
+- `sort` (String, optional): Sorting criteria. Allowed values: `newest` (default), `mostViewed`, `mostDownloaded`.
 
 ### Success Response (200 OK)
 

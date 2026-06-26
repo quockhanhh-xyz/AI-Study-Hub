@@ -105,6 +105,13 @@ Stores uploaded document metadata. The real file is stored in Cloudinary Storage
 - Permanent deletion: When a document is permanently deleted from the trash:
   - The database record is deleted from MySQL.
   - The physical file is deleted from Cloudinary Storage using its `storage_path` (public ID).
+- Legacy Data Backfill Migration: To prevent NullPointerExceptions and ensure correct access control values for documents created before this step, execute the following SQL migration:
+  ```sql
+  UPDATE documents SET visibility = 'PRIVATE' WHERE visibility IS NULL;
+  UPDATE documents SET approval_status = 'PENDING' WHERE approval_status IS NULL;
+  UPDATE documents SET view_count = 0 WHERE view_count IS NULL;
+  UPDATE documents SET download_count = 0 WHERE download_count IS NULL;
+  ```
 
 ---
 

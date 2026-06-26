@@ -159,9 +159,10 @@ public class DocumentController {
     public ResponseEntity<ApiResponse<List<DocumentResponse>>> getPublicDocuments(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer subjectId,
-            @RequestParam(required = false) String fileType) {
+            @RequestParam(required = false) String fileType,
+            @RequestParam(required = false) String sort) {
         try {
-            List<DocumentResponse> data = documentService.getPublicDocuments(keyword, subjectId, fileType);
+            List<DocumentResponse> data = documentService.getPublicDocuments(keyword, subjectId, fileType, sort);
             return ResponseEntity.ok(ApiResponse.success(data, "Public documents retrieved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));

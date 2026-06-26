@@ -7,6 +7,7 @@ import com.demo.ai_study_hub.dto.FileUploadResult;
 import com.demo.ai_study_hub.entity.*;
 import com.demo.ai_study_hub.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -167,6 +168,11 @@ public class DocumentService {
 
         validateDocumentAccess(doc, user);
 
+        if ("PUBLIC".equals(doc.getVisibility()) && "APPROVED".equals(doc.getApprovalStatus())) {
+            doc.setViewCount((doc.getViewCount() == null ? 0 : doc.getViewCount()) + 1);
+            documentRepository.save(doc);
+        }
+
         return mapToResponse(doc, user);
     }
 
@@ -182,6 +188,11 @@ public class DocumentService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
 
         validateDocumentAccess(doc, user);
+
+        if ("PUBLIC".equals(doc.getVisibility()) && "APPROVED".equals(doc.getApprovalStatus())) {
+            doc.setDownloadCount((doc.getDownloadCount() == null ? 0 : doc.getDownloadCount()) + 1);
+            documentRepository.save(doc);
+        }
 
         return DocumentDownloadInfo.builder()
                 .fileUrl(doc.getFileUrl())
@@ -217,7 +228,9 @@ public class DocumentService {
                 && folderShareService != null
                 && folderShareService.hasAccessToFolder(doc.getFolder().getFolderId(), user.getEmail());
 
-        boolean hasSharedAccess = isDirectShared || isGroupShared || hasFolderAccess;
+        boolean isPublicAndApproved = "PUBLIC".equals(doc.getVisibility()) && "APPROVED".equals(doc.getApprovalStatus());
+
+        boolean hasSharedAccess = isDirectShared || isGroupShared || hasFolderAccess || isPublicAndApproved;
 
         if (!isOwner && !hasSharedAccess) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
@@ -433,8 +446,15 @@ public class DocumentService {
         return fileName.substring(lastDot + 1);
     }
 
-    public List<DocumentResponse> getPublicDocuments(String keyword, Integer subjectId, String fileType) {
-        return documentRepository.findPublicDocumentsWithFilters(keyword, subjectId, fileType)
+    public List<DocumentResponse> getPublicDocuments(String keyword, Integer subjectId, String fileType, String sortType) {
+        Sort sort = Sort.by(Sort.Order.desc("publishedAt"), Sort.Order.desc("createdAt"));
+        if ("mostViewed".equalsIgnoreCase(sortType)) {
+            sort = Sort.by(Sort.Order.desc("viewCount"), Sort.Order.desc("publishedAt"));
+        } else if ("mostDownloaded".equalsIgnoreCase(sortType)) {
+            sort = Sort.by(Sort.Order.desc("downloadCount"), Sort.Order.desc("publishedAt"));
+        }
+
+        return documentRepository.findPublicDocumentsWithFilters(keyword, subjectId, fileType, sort)
                 .stream()
                 .map(doc -> mapToResponse(doc, null))
                 .collect(Collectors.toList());
@@ -449,10 +469,10 @@ public class DocumentService {
         }
 
         if (!"PUBLIC".equals(doc.getVisibility()) || !"APPROVED".equals(doc.getApprovalStatus())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
 
-        doc.setViewCount(doc.getViewCount() + 1);
+        doc.setViewCount((doc.getViewCount() == null ? 0 : doc.getViewCount()) + 1);
         documentRepository.save(doc);
 
         return mapToResponse(doc, null);
@@ -467,10 +487,10 @@ public class DocumentService {
         }
 
         if (!"PUBLIC".equals(doc.getVisibility()) || !"APPROVED".equals(doc.getApprovalStatus())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
 
-        doc.setDownloadCount(doc.getDownloadCount() + 1);
+        doc.setDownloadCount((doc.getDownloadCount() == null ? 0 : doc.getDownloadCount()) + 1);
         documentRepository.save(doc);
 
         return DocumentDownloadInfo.builder()

@@ -3,6 +3,7 @@ package com.demo.ai_study_hub.repository;
 import com.demo.ai_study_hub.entity.Document;
 import com.demo.ai_study_hub.entity.Folder;
 import com.demo.ai_study_hub.entity.User;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -69,11 +70,11 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
             "AND d.approvalStatus = 'APPROVED' " +
             "AND (:keyword IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(d.originalFileName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "AND (:subjectId IS NULL OR s.subjectId = :subjectId) " +
-            "AND (:fileType IS NULL OR d.fileType = :fileType) " +
-            "ORDER BY d.publishedAt DESC, d.createdAt DESC")
+            "AND (:fileType IS NULL OR d.fileType = :fileType)")
     List<Document> findPublicDocumentsWithFilters(
             @Param("keyword") String keyword,
             @Param("subjectId") Integer subjectId,
-            @Param("fileType") String fileType
+            @Param("fileType") String fileType,
+            Sort sort
     );
 }
