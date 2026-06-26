@@ -168,11 +168,6 @@ public class DocumentService {
 
         validateDocumentAccess(doc, user);
 
-        if ("PUBLIC".equals(doc.getVisibility()) && "APPROVED".equals(doc.getApprovalStatus())) {
-            doc.setViewCount((doc.getViewCount() == null ? 0 : doc.getViewCount()) + 1);
-            documentRepository.save(doc);
-        }
-
         return mapToResponse(doc, user);
     }
 
@@ -188,11 +183,6 @@ public class DocumentService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
 
         validateDocumentAccess(doc, user);
-
-        if ("PUBLIC".equals(doc.getVisibility()) && "APPROVED".equals(doc.getApprovalStatus())) {
-            doc.setDownloadCount((doc.getDownloadCount() == null ? 0 : doc.getDownloadCount()) + 1);
-            documentRepository.save(doc);
-        }
 
         return DocumentDownloadInfo.builder()
                 .fileUrl(doc.getFileUrl())
