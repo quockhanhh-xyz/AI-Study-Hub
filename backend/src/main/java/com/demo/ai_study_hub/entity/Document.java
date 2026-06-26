@@ -55,10 +55,10 @@ public class Document {
     private String status = "ACTIVE";
 
     @Column(name = "visibility", nullable = false, length = 20)
-    private String visibility = "PRIVATE"; // PRIVATE or PUBLIC
+    private String visibility = "PRIVATE";
 
     @Column(name = "approval_status", nullable = false, length = 20)
-    private String approvalStatus = "APPROVED"; // PENDING, APPROVED, REJECTED
+    private String approvalStatus = "PENDING";
 
     @Column(name = "published_at")
     private LocalDateTime publishedAt;
