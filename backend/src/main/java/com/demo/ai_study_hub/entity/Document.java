@@ -55,19 +55,19 @@ public class Document {
     private String status = "ACTIVE";
 
     @Column(name = "visibility", nullable = false, length = 20)
-    private String visibility = "PRIVATE";
+    private String visibility = "PRIVATE"; // PRIVATE or PUBLIC
 
     @Column(name = "approval_status", nullable = false, length = 20)
-    private String approvalStatus = "PENDING";
+    private String approvalStatus = "APPROVED"; // PENDING, APPROVED, REJECTED
 
     @Column(name = "published_at")
     private LocalDateTime publishedAt;
 
     @Column(name = "view_count", nullable = false)
-    private Integer viewCount = 0;
+    private Long viewCount = 0L;
 
     @Column(name = "download_count", nullable = false)
-    private Integer downloadCount = 0;
+    private Long downloadCount = 0L;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

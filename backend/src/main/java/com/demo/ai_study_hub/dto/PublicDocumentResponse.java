@@ -11,29 +11,22 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DocumentResponse {
+public class PublicDocumentResponse {
     private Integer documentId;
     private String title;
     private String description;
-    private Integer subjectId;
-    private String subjectCode;
-    private String subjectName;
     private String originalFileName;
     private String fileType;
     private Long fileSize;
     private String fileUrl;
-    private String publicId;
-    private Integer folderId;
-    private String folderName;
+    private Integer subjectId;
+    private String subjectCode;
+    private String subjectName;
     private String uploadedBy;
-    private String status;
-    private String visibility;
-    private String approvalStatus;
     private LocalDateTime publishedAt;
     private Long viewCount;
     private Long downloadCount;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
     private Boolean canPreview;
     private Boolean canOpen;

@@ -77,4 +77,17 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
             @Param("fileType") String fileType,
             Sort sort
     );
+
+    @Query("SELECT d FROM Document d LEFT JOIN d.subject s " +
+        "WHERE d.visibility = 'PUBLIC' " +
+        "AND d.approvalStatus = 'APPROVED' " +
+        "AND d.status = 'ACTIVE' " +
+        "AND (:keyword IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(d.originalFileName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+        "AND (:subjectId IS NULL OR s.subjectId = :subjectId) " +
+        "AND (:fileType IS NULL OR d.fileType = :fileType)")
+List<Document> findPublicDocuments(
+        @Param("keyword") String keyword,
+        @Param("subjectId") Integer subjectId,
+        @Param("fileType") String fileType
+);
 }

@@ -54,8 +54,8 @@ class PublicCommunityTest {
         mockDoc.setStatus("ACTIVE");
         mockDoc.setVisibility("PRIVATE");
         mockDoc.setApprovalStatus("PENDING");
-        mockDoc.setViewCount(0);
-        mockDoc.setDownloadCount(0);
+        mockDoc.setViewCount(0L);
+        mockDoc.setDownloadCount(0L);
     }
 
     @Test
