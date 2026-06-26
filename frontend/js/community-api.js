@@ -22,7 +22,7 @@ async function getPublicDocuments(params = {}) {
     const queryString = queryParts.length > 0 ? `?${queryParts.join("&")}` : "";
     
     // Explicitly uses global get utility wrapper with bypass redirect flag for custom error processing
-    return await get(`/api/public/documents${queryString}`, { skipUnauthorizedRedirect: true });
+    return await get(`/api/documents/public${queryString}`, { skipUnauthorizedRedirect: true });
   } catch (error) {
     console.error("Failed to retrieve public community documents:", error);
     throw error;
@@ -38,7 +38,7 @@ async function getPublicDocuments(params = {}) {
 async function getPublicDocumentById(id) {
   if (!id) throw new Error("Document ID validation constraint violation: field is mandatory");
   try {
-    return await get(`/api/public/documents/${id}`, { skipUnauthorizedRedirect: true });
+    return await get(`/api/documents/public/${id}`, { skipUnauthorizedRedirect: true });
   } catch (error) {
     console.error(`Failed to fetch public document context metrics for reference registry element ID ${id}:`, error);
     throw error;
