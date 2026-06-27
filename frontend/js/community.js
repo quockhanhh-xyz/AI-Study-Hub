@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Whole card navigates to detail, matching FE2 "Card click flow" requirement.
     card.style.cursor = "pointer";
     card.addEventListener("click", function () {
-      window.location.href = `document-detail.html?id=${doc.documentId}`;
+      window.location.href = `document-detail.html?id=${doc.documentId}&from=community`;
     });
 
     const header = document.createElement("div");
@@ -125,7 +125,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     actions.className = "document-actions";
 
     const detailButton = document.createElement("a");
-    detailButton.href = `document-detail.html?id=${doc.documentId}`;
+    detailButton.href = `document-detail.html?id=${doc.documentId}&from=community`;
     detailButton.className = "btn btn-primary document-detail-btn";
     detailButton.textContent = "View Detail";
     // Prevent the card's own click handler from double-navigating.
