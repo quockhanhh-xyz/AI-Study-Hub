@@ -19,7 +19,6 @@ const NAVIGATION_MENU = [
   { name: "Home", icon: ICON_HOME, url: "index.html", requiresAuth: false, hidden: true },
   { name: "Login", icon: ICON_KEY, url: "login.html", requiresAuth: false, hideWhenAuth: true },
   { name: "Register", icon: ICON_REGISTER, url: "register.html", requiresAuth: false, hideWhenAuth: true },
-  { name: "Community Library", icon: ICON_COMMUNITY, url: "community.html", requiresAuth: false, publicRoute: true },
   { name: "Verify OTP", icon: ICON_SHIELD, url: "verify-otp.html", requiresAuth: false, hideWhenAuth: true, hidden: true },
 
   // Authenticated visible main sidebar links ordered per specification
@@ -27,8 +26,7 @@ const NAVIGATION_MENU = [
   { name: "My Documents", icon: ICON_FOLDER, url: "documents.html", requiresAuth: true },
   
   // Public community library menu - accessible to all, structured elegantly in position 3 for logged-in layout
-  { name: "Community Library", icon: ICON_COMMUNITY, url: "community.html", requiresAuth: false, publicRoute: true, hidden: true },
-
+  { name: "Community Library", icon: ICON_COMMUNITY, url: "community.html", requiresAuth: false, publicRoute: true },
   { name: "Folders", icon: ICON_FOLDER, url: "folders.html", requiresAuth: true },
   { name: "Shared With Me", icon: ICON_SHARE, url: "shared-with-me.html", requiresAuth: true },
   { name: "Groups", icon: ICON_GROUP, url: "groups.html", requiresAuth: true },
