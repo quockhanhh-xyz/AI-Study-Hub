@@ -2,12 +2,6 @@
  * Public Community Library Page Controller (Step 8 - FE2).
  * Handles search, subject/file-type filters, and sort for PUBLIC + APPROVED
  * + ACTIVE + not-in-trash documents. Works for both guest and logged-in users.
- *
- * NOTE: getPublicDocuments() below is a TEMPORARY local helper.
- * FE3 owns the real implementation in frontend/js/community-api.js
- * (per Step 8 task split). Once FE3 merges community-api.js with a
- * function of the same name/signature, DELETE the block marked
- * "TEMP FE3 PLACEHOLDER" below — nothing else in this file needs to change.
  */
 
 document.addEventListener("DOMContentLoaded", async function () {
