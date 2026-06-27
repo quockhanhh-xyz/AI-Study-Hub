@@ -114,10 +114,12 @@ document.addEventListener("DOMContentLoaded", async function () {
       createMetaItem("Downloads", doc.downloadCount ?? 0)
     );
 
-    if (doc.subjectCode) {
+    if (doc.subjectCode || doc.subjectName) {
       const subjectBadge = document.createElement("div");
       subjectBadge.className = "document-card-subject";
-      subjectBadge.textContent = `${doc.subjectCode} - ${doc.subjectName}`;
+      subjectBadge.textContent = doc.subjectCode
+        ? `${doc.subjectCode} - ${doc.subjectName}`
+        : doc.subjectName;
       meta.append(subjectBadge);
     }
 
