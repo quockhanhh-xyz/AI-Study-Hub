@@ -148,7 +148,12 @@ function renderDocument(doc) {
     const docUploadedBy = document.getElementById("docUploadedBy");
     if (docUploadedBy) {
         if (currentIsCommunityView) {
-            docUploadedBy.style.display = "none";
+            if (doc.ownerName) {
+                docUploadedBy.style.display = "inline";
+                docUploadedBy.textContent = "Uploaded by " + doc.ownerName;
+            } else {
+                docUploadedBy.style.display = "none";
+            }
         } else {
             docUploadedBy.style.display = "inline";
             docUploadedBy.textContent = "Uploaded by " + (doc.ownerName || doc.uploadedBy || "–");

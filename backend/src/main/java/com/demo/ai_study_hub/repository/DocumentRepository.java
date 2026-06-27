@@ -5,6 +5,7 @@ import com.demo.ai_study_hub.entity.Folder;
 import com.demo.ai_study_hub.entity.User;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -77,4 +78,8 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
             @Param("fileType") String fileType,
             Sort sort
     );
+
+    @Modifying
+    @Query("UPDATE Document d SET d.downloadCount = COALESCE(d.downloadCount, 0) + 1 WHERE d.documentId = :id")
+    void incrementDownloadCountById(@Param("id") Integer id);
 }

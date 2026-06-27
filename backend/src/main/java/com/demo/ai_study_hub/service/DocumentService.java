@@ -527,10 +527,10 @@ public class DocumentService {
 
     @Transactional
     public void incrementDownloadCount(Integer documentId) {
-        Document doc = documentRepository.findById(documentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
-        doc.setDownloadCount((doc.getDownloadCount() == null ? 0L : doc.getDownloadCount()) + 1);
-        documentRepository.save(doc);
+        if (!documentRepository.existsById(documentId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+        documentRepository.incrementDownloadCountById(documentId);
     }
 
     public DocumentResponse publishDocument(Integer documentId, String email) {

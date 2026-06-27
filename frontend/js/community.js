@@ -94,6 +94,10 @@ document.addEventListener("DOMContentLoaded", async function () {
       createMetaItem("Downloads", doc.downloadCount ?? 0)
     );
 
+    if (doc.ownerName) {
+      meta.append(createMetaItem("By", doc.ownerName));
+    }
+
     if (doc.subjectCode || doc.subjectName) {
       const subjectBadge = document.createElement("div");
       subjectBadge.className = "document-card-subject";
