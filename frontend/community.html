@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Community Library - AI Study Hub</title>
+    <meta name="description" content="Browse, search, and discover public study documents shared by the community." />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <section class="page-header dashboard-header">
+                <div class="dashboard-header-content">
+                    <div>
+                        <h1>Community Library</h1>
+                        <p class="dashboard-subtitle">Discover documents shared publicly by the AI Study Hub community.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Guest CTA banner, shown only when not logged in -->
+            <section id="guestCtaBanner" class="status-box status-info community-guest-banner" style="display:none;">
+                <span>Want to upload and share your own documents?</span>
+                <a href="login.html" class="btn btn-primary btn-sm">Login</a>
+                <a href="register.html" class="btn btn-secondary btn-sm">Register</a>
+            </section>
+
+            <section class="card document-panel dashboard-panel">
+                <div class="dashboard-panel-header">
+                    <div>
+                        <h2>Public Documents</h2>
+                        <p id="communityPanelSubtitle">Documents published by the community.</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-search" style="max-width: none; margin-bottom: 20px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24"
+                        class="search-icon" aria-hidden="true" focusable="false">
+                        <g id="Search">
+                            <path id="Union" fill="currentColor"
+                                d="M11 2c4.9706 0 9 4.02944 9 9 0 2.125 -0.7381 4.0766 -1.9697 5.6162l4.1767 4.1768 -1.414 1.414 -4.1768 -4.1767C15.0766 19.2619 13.125 20 11 20c-4.97056 0 -9 -4.0294 -9 -9 0 -4.97056 4.02944 -9 9 -9m0 2c-3.86599 0 -7 3.13401 -7 7 0 3.866 3.13401 7 7 7 3.866 0 7 -3.134 7 -7 0 -3.86599 -3.134 -7 -7 -7"
+                                stroke-width="1"></path>
+                        </g>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Search public documents by title or keyword..."
+                        style="padding-left: 40px; width: 100%;" />
+                </div>
+
+                <div class="toolbar">
+                    <div class="filter-group">
+                        <select id="subjectFilter">
+                            <option value="">All Subjects</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <select id="fileTypeFilter">
+                            <option value="">All File Types</option>
+                            <option value="PDF">PDF</option>
+                            <option value="DOC">DOC</option>
+                            <option value="DOCX">DOCX</option>
+                            <option value="PPT">PPT</option>
+                            <option value="PPTX">PPTX</option>
+                            <option value="XLS">XLS</option>
+                            <option value="XLSX">XLSX</option>
+                            <option value="TXT">TXT</option>
+                            <option value="JPG">JPG</option>
+                            <option value="JPEG">JPEG</option>
+                            <option value="PNG">PNG</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <select id="sortFilter">
+                            <option value="newest">Newest</option>
+                            <option value="mostViewed">Most Viewed</option>
+                            <option value="mostDownloaded">Most Downloaded</option>
+                        </select>
+                    </div>
+                    <button type="button" id="clearFiltersBtn" class="btn btn-secondary clear-filters-btn">Clear
+                        Filters</button>
+                </div>
+
+                <div id="communityLoader" class="document-state">
+                    <span>Loading public documents...</span>
+                </div>
+
+                <div id="communityErrorMessage" class="status-box status-error dashboard-document-error"
+                    style="display: none;"></div>
+
+                <div id="communityGrid" class="document-grid" style="display: none;"></div>
+
+                <div id="communityEmptyState" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="24" width="24"
+                            aria-hidden="true" focusable="false">
+                            <g>
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12.5 12.5c0 0.2652 -0.1054 0.5196 -0.2929 0.7071s-0.4419 0.2929 -0.7071 0.2929h-9c-0.26522 0 -0.51957 -0.1054 -0.70711 -0.2929C1.60536 13.0196 1.5 12.7652 1.5 12.5v-11c0 -0.26522 0.10536 -0.51957 0.29289 -0.707107C1.98043 0.605357 2.23478 0.5 2.5 0.5H9L12.5 4v8.5Z"
+                                    stroke-width="1"></path>
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                    d="M8.5 0.5v4h4" stroke-width="1"></path>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="empty-title">No public documents found</div>
+                    <p>Try adjusting your search or filters, or check back later.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/subject-api.js"></script>
+    <script src="js/community-api.js"></script>
+    <script src="js/community.js"></script>
+</body>
+
+</html>
