@@ -10,8 +10,6 @@
  * "TEMP FE3 PLACEHOLDER" below — nothing else in this file needs to change.
  */
 
-/* ====================== TEMP FE3 PLACEHOLDER — END ====================== */
-
 document.addEventListener("DOMContentLoaded", async function () {
   // Community page must NOT gate on auth — guest can use it freely.
   // We still let layout.js run (it never redirects here because
@@ -97,7 +95,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const meta = document.createElement("div");
     meta.className = "document-meta";
     meta.append(
-      createMetaItem("Owner", doc.ownerName || "Unknown"),
       createMetaItem("Published", formatDate(doc.publishedAt)),
       createMetaItem("Views", doc.viewCount ?? 0),
       createMetaItem("Downloads", doc.downloadCount ?? 0)
