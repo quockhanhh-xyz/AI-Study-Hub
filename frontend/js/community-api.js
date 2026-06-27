@@ -73,12 +73,6 @@ async function publishDocument(id) {
   }
 }
 
-/**
- * Revokes public access rights for an owned document, transitioning state indexes back to PRIVATE layout.
- * Removes the targeted asset index from the public browse catalog registry instantly.
- * @param {string|number} id - Target internal document sequence tracking identifier.
- * @returns {Promise<Object>} Standard synchronized modification response profile packet.
- */
 async function unpublishDocument(id) {
   if (!id) throw new Error("Document ID identifier validation criteria missing");
   try {
@@ -87,4 +81,17 @@ async function unpublishDocument(id) {
     console.error(`Failed to execute community unpublish action transaction for catalog registry element ID ${id}:`, error);
     throw error;
   }
+}
+
+/**
+ * Downloads a public document without requiring authentication.
+ * @param {string|number} id - Public document identifier.
+ */
+function downloadPublicDocument(id) {
+  if (!id) {
+    console.error("Public download aborted: document identifier is missing.");
+    return;
+  }
+
+  window.location.href = `${API_BASE_URL}/api/documents/public/${id}/download`;
 }

@@ -161,10 +161,18 @@ function renderDocument(doc) {
     }
 
     // Download button
+    // Download button
     if (downloadBtn) {
         if (doc.canDownload) {
             downloadBtn.style.display = "inline-flex";
-            downloadBtn.onclick = () => downloadDocument(doc);
+
+            if (isCommunityView) {
+                downloadBtn.onclick = () =>
+                    downloadPublicDocument(doc.documentId || doc.id);
+            } else {
+                downloadBtn.onclick = () =>
+                    downloadDocument(doc);
+            }
         } else {
             downloadBtn.style.display = "none";
         }

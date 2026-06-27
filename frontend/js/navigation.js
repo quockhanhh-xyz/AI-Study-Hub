@@ -26,7 +26,7 @@ const NAVIGATION_MENU = [
   { name: "My Documents", icon: ICON_FOLDER, url: "documents.html", requiresAuth: true },
   
   // Public community library menu - accessible to all, structured elegantly in position 3 for logged-in layout
-  { name: "Community Library", icon: ICON_COMMUNITY, url: "community.html", requiresAuth: false, publicRoute: true },
+  { name: "Community Library", icon: ICON_COMMUNITY, url: "community.html", requiresAuth: false, publicRoute: true, hidden: true },
 
   { name: "Folders", icon: ICON_FOLDER, url: "folders.html", requiresAuth: true },
   { name: "Shared With Me", icon: ICON_SHARE, url: "shared-with-me.html", requiresAuth: true },
