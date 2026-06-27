@@ -112,4 +112,4 @@ This document contains 18 test cases to verify unauthenticated (guest) access, l
 ### Test Case 18: Download Count Increment
 - **Preconditions**: Document ID `25` is public and approved. Current `downloadCount` is `5`.
 - **Actions**: Call `GET /api/documents/public/25/download` successfully.
-- **Expected Result**: The request redirects to the Cloudinary file URL, and the document record in database updates `downloadCount` to `6`.
+- **Expected Result**: The request streams the file bytes as an attachment response, and the document record in database updates `downloadCount` to `6`.

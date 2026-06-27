@@ -2,6 +2,7 @@ package com.demo.ai_study_hub;
 
 import com.demo.ai_study_hub.dto.DocumentResponse;
 import com.demo.ai_study_hub.dto.DocumentDownloadInfo;
+import com.demo.ai_study_hub.dto.PublicDocumentResponse;
 import com.demo.ai_study_hub.entity.*;
 import com.demo.ai_study_hub.repository.*;
 import com.demo.ai_study_hub.service.DocumentService;
@@ -98,16 +99,14 @@ class PublicCommunityTest {
         when(documentRepository.findPublicDocumentsWithFilters(eq("physics"), eq(null), eq("PDF"), any(Sort.class)))
                 .thenReturn(Collections.singletonList(mockDoc));
 
-        List<DocumentResponse> res = documentService.getPublicDocuments("physics", null, "PDF", "newest");
+        List<PublicDocumentResponse> res = documentService.getPublicDocuments("physics", null, "PDF", "newest");
 
         assertNotNull(res);
         assertEquals(1, res.size());
-        DocumentResponse docRes = res.get(0);
+        PublicDocumentResponse docRes = res.get(0);
         assertTrue(docRes.getCanPreview());
         assertTrue(docRes.getCanOpen());
         assertTrue(docRes.getCanDownload());
-        assertFalse(docRes.getCanEdit());
-        assertFalse(docRes.getCanDelete());
     }
 
     @Test
@@ -144,12 +143,11 @@ class PublicCommunityTest {
         when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
         when(documentRepository.save(any(Document.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        DocumentResponse res = documentService.getPublicDocumentDetail(10);
+        PublicDocumentResponse res = documentService.getPublicDocumentDetail(10);
 
         assertNotNull(res);
         assertEquals(1, mockDoc.getViewCount());
         assertTrue(res.getCanOpen());
-        assertFalse(res.getCanEdit());
         verify(documentRepository, times(1)).save(mockDoc);
     }
 
@@ -182,17 +180,28 @@ class PublicCommunityTest {
     }
 
     @Test
-    void getPublicDocumentDownloadInfo_WhenPublicApproved_ShouldIncrementDownloadCount() {
+    void getPublicDocumentDownloadInfo_WhenPublicApproved_ShouldNotIncrementDownloadCount() {
         mockDoc.setVisibility("PUBLIC");
         mockDoc.setApprovalStatus("APPROVED");
         when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
-        when(documentRepository.save(any(Document.class))).thenAnswer(i -> i.getArguments()[0]);
 
         DocumentDownloadInfo info = documentService.getPublicDocumentDownloadInfo(10);
 
         assertNotNull(info);
-        assertEquals(1, mockDoc.getDownloadCount());
+        assertEquals(0, mockDoc.getDownloadCount());
         assertEquals("https://cloudinary.com/guide.pdf", info.getFileUrl());
+        verify(documentRepository, never()).save(any(Document.class));
+    }
+
+    @Test
+    void incrementDownloadCount_ShouldIncrementSuccessfully() {
+        mockDoc.setDownloadCount(5L);
+        when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
+        when(documentRepository.save(any(Document.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        documentService.incrementDownloadCount(10);
+
+        assertEquals(6L, mockDoc.getDownloadCount());
         verify(documentRepository, times(1)).save(mockDoc);
     }
 

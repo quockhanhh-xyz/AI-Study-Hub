@@ -31,6 +31,16 @@ public class SubjectController {
                 .build());
     }
 
+    @GetMapping("/public")
+    public ResponseEntity<ApiResponse<List<SubjectResponse>>> getPublicSubjects() {
+        List<SubjectResponse> subjects = subjectService.getPublicSubjects();
+        return ResponseEntity.ok(ApiResponse.<List<SubjectResponse>>builder()
+                .success(true)
+                .message("Public subjects retrieved successfully")
+                .data(subjects)
+                .build());
+    }
+
     @PostMapping("/custom")
     public ResponseEntity<ApiResponse<SubjectResponse>> createCustomSubject(
             @Valid @RequestBody CreateCustomSubjectRequest request,

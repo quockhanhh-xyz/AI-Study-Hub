@@ -28,4 +28,12 @@ public interface SubjectRepository extends JpaRepository<Subject, Integer> {
             @Param("name") String name,
             @Param("owner") User owner
     );
+
+    @Query("SELECT DISTINCT s FROM Subject s " +
+           "JOIN Document d ON d.subject = s " +
+           "WHERE s.status = 'ACTIVE' " +
+           "AND d.status = 'ACTIVE' " +
+           "AND d.visibility = 'PUBLIC' " +
+           "AND d.approvalStatus = 'APPROVED'")
+    List<Subject> findPublicSubjectsInUse();
 }

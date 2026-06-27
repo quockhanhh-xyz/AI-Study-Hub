@@ -4,12 +4,14 @@ import com.demo.ai_study_hub.dto.DocumentDownloadInfo;
 import com.demo.ai_study_hub.dto.DocumentResponse;
 import com.demo.ai_study_hub.dto.DocumentUpdateDTO;
 import com.demo.ai_study_hub.dto.FileUploadResult;
+import com.demo.ai_study_hub.dto.PublicDocumentResponse;
 import com.demo.ai_study_hub.entity.*;
 import com.demo.ai_study_hub.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -385,6 +387,36 @@ public class DocumentService {
                 .build();
     }
 
+    private PublicDocumentResponse mapToPublicResponse(Document doc) {
+        boolean previewSupported = isPreviewSupported(doc);
+        boolean isPublicAndApproved = "PUBLIC".equals(doc.getVisibility()) && "APPROVED".equals(doc.getApprovalStatus());
+
+        boolean canPreview = isPublicAndApproved && previewSupported;
+        boolean canOpen = isPublicAndApproved;
+        boolean canDownload = isPublicAndApproved;
+
+        return PublicDocumentResponse.builder()
+                .documentId(doc.getDocumentId())
+                .title(doc.getTitle())
+                .description(doc.getDescription())
+                .subjectId(doc.getSubject() != null ? doc.getSubject().getSubjectId() : null)
+                .subjectCode(doc.getSubject() != null ? doc.getSubject().getSubjectCode() : null)
+                .subjectName(doc.getSubject() != null ? doc.getSubject().getSubjectName() : null)
+                .fileType(doc.getFileType())
+                .fileSize(doc.getFileSize())
+                .visibility(doc.getVisibility())
+                .approvalStatus(doc.getApprovalStatus())
+                .publishedAt(doc.getPublishedAt())
+                .viewCount(doc.getViewCount())
+                .downloadCount(doc.getDownloadCount())
+                .createdAt(doc.getCreatedAt())
+                .ownerName(doc.getOwner() != null ? doc.getOwner().getFullName() : null)
+                .canPreview(canPreview)
+                .canOpen(canOpen)
+                .canDownload(canDownload)
+                .build();
+    }
+
     private boolean isPreviewSupported(Document doc) {
         String type = normalizeFileType(doc);
         return "PDF".equals(type)
@@ -442,7 +474,7 @@ public class DocumentService {
         return fileName.substring(lastDot + 1);
     }
 
-    public List<DocumentResponse> getPublicDocuments(String keyword, Integer subjectId, String fileType, String sortType) {
+    public List<PublicDocumentResponse> getPublicDocuments(String keyword, Integer subjectId, String fileType, String sortType) {
         Sort sort = Sort.by(Sort.Order.desc("publishedAt"), Sort.Order.desc("createdAt"));
         if ("mostViewed".equalsIgnoreCase(sortType)) {
             sort = Sort.by(Sort.Order.desc("viewCount"), Sort.Order.desc("publishedAt"));
@@ -452,11 +484,11 @@ public class DocumentService {
 
         return documentRepository.findPublicDocumentsWithFilters(keyword, subjectId, fileType, sort)
                 .stream()
-                .map(doc -> mapToResponse(doc, null))
+                .map(this::mapToPublicResponse)
                 .collect(Collectors.toList());
     }
 
-    public DocumentResponse getPublicDocumentDetail(Integer documentId) {
+    public PublicDocumentResponse getPublicDocumentDetail(Integer documentId) {
         Document doc = documentRepository.findById(documentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
 
@@ -468,10 +500,10 @@ public class DocumentService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
 
-        doc.setViewCount((doc.getViewCount() == null ? 0 : doc.getViewCount()) + 1);
+        doc.setViewCount((doc.getViewCount() == null ? 0L : doc.getViewCount()) + 1);
         documentRepository.save(doc);
 
-        return mapToResponse(doc, null);
+        return mapToPublicResponse(doc);
     }
 
     public DocumentDownloadInfo getPublicDocumentDownloadInfo(Integer documentId) {
@@ -486,14 +518,19 @@ public class DocumentService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
 
-        doc.setDownloadCount((doc.getDownloadCount() == null ? 0 : doc.getDownloadCount()) + 1);
-        documentRepository.save(doc);
-
         return DocumentDownloadInfo.builder()
                 .fileUrl(doc.getFileUrl())
                 .fileName(resolveDownloadFileName(doc))
                 .contentType(resolveContentType(doc))
                 .build();
+    }
+
+    @Transactional
+    public void incrementDownloadCount(Integer documentId) {
+        Document doc = documentRepository.findById(documentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+        doc.setDownloadCount((doc.getDownloadCount() == null ? 0L : doc.getDownloadCount()) + 1);
+        documentRepository.save(doc);
     }
 
     public DocumentResponse publishDocument(Integer documentId, String email) {
