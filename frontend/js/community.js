@@ -108,7 +108,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const meta = document.createElement("div");
     meta.className = "document-meta";
     meta.append(
-      createMetaItem("Owner", doc.ownerName || doc.uploadedBy || "Unknown"),
+      createMetaItem("Owner", doc.ownerName || "Unknown"),
       createMetaItem("Published", formatDate(doc.publishedAt)),
       createMetaItem("Views", doc.viewCount ?? 0),
       createMetaItem("Downloads", doc.downloadCount ?? 0)
