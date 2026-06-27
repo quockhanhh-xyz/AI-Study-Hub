@@ -10,17 +10,6 @@
  * "TEMP FE3 PLACEHOLDER" below — nothing else in this file needs to change.
  */
 
-/* ===================== TEMP FE3 PLACEHOLDER — START ===================== */
-function getPublicDocuments(params = {}) {
-  const cleanParams = Object.fromEntries(
-    Object.entries(params).filter(([, value]) => value !== "" && value !== null && value !== undefined)
-  );
-  const queryString = new URLSearchParams(cleanParams).toString();
-  return get(
-    queryString ? `/api/documents/public?${queryString}` : "/api/documents/public",
-    { skipUnauthorizedRedirect: true }
-  );
-}
 /* ====================== TEMP FE3 PLACEHOLDER — END ====================== */
 
 document.addEventListener("DOMContentLoaded", async function () {
