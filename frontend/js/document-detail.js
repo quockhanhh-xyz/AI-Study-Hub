@@ -342,7 +342,7 @@ async function handleSave() {
 
         renderDocument(res.data);
         showEditMessage("", "");
-        showToast("Changes saved successfully.", "success");
+        window.showToast("Changes saved successfully.", "success");
     } catch (err) {
         showEditMessage(err.message || "Failed to save changes.", "error");
     } finally {
@@ -369,13 +369,13 @@ async function handleDelete() {
     try {
         await deleteDocument(currentDocumentId);
         hideDeleteConfirm();
-        showToast("Document deleted.", "success");
+        window.showToast("Document deleted.", "success");
         setTimeout(() => {
             window.location.href = "dashboard.html";
         }, 1200);
     } catch (err) {
         hideDeleteConfirm();
-        showToast(err.message || "Failed to delete document.", "error");
+        window.showToast(err.message || "Failed to delete document.", "error");
     } finally {
         confirmBtn.disabled = false;
         confirmBtn.textContent = "Delete";
@@ -390,10 +390,10 @@ async function handlePublish() {
 
     try {
         const res = await publishDocument(currentDocumentId);
-        showToast("Document published successfully.", "success");
         renderDocument(res.data);
+        window.showToast("Document published successfully.", "success");
     } catch (err) {
-        showToast(err.message || "Failed to publish document.", "error");
+        window.showToast(err.message || "Failed to publish document.", "error");
     } finally {
         publishBtn.disabled = false;
         publishBtn.textContent = oldText;
@@ -408,10 +408,10 @@ async function handleUnpublish() {
 
     try {
         const res = await unpublishDocument(currentDocumentId);
-        showToast("Document unpublished successfully.", "success");
         renderDocument(res.data);
+        window.showToast("Document unpublished successfully.", "success");
     } catch (err) {
-        showToast(err.message || "Failed to unpublish document.", "error");
+        window.showToast(err.message || "Failed to unpublish document.", "error");
     } finally {
         unpublishBtn.disabled = false;
         unpublishBtn.textContent = oldText;
@@ -440,7 +440,7 @@ function showMoveModal() {
         });
         document.getElementById("moveModal").classList.add("show");
     }).catch(err => {
-        showToast(err.message || "Failed to load folders.", "error");
+        window.showToast(err.message || "Failed to load folders.", "error");
     });
 }
 
@@ -461,7 +461,7 @@ async function handleMove() {
     try {
         const res = await moveDocument(currentDocumentId, folderIdVal);
         hideMoveModal();
-        showToast("Document moved successfully.", "success");
+        window.showToast("Document moved successfully.", "success");
         renderDocument(res.data);
     } catch (err) {
         const errEl = document.getElementById("moveError");
@@ -482,22 +482,6 @@ function showEditMessage(text, type) {
     const el = document.getElementById("editMessage");
     el.textContent = text;
     el.className = "helper-text" + (type === "error" ? " error" : type === "success" ? " success" : "");
-}
-
-// ── Toast ─────────────────────────────────────────────────────────────────────
-function showToast(message, type) {
-    if (window.showToast) {
-        window.showToast(message, type);
-    } else {
-        const toast = document.getElementById("toast");
-        if (toast) {
-            toast.textContent = message;
-            toast.className = "show toast-" + type;
-            setTimeout(() => {
-                toast.className = "";
-            }, 3000);
-        }
-    }
 }
 
 // ── Formatters ────────────────────────────────────────────────────────────────
@@ -619,7 +603,7 @@ function initSharingUI() {
         try {
             await shareDocumentToUser(currentDocumentId, email);
             shareModal.classList.remove("show");
-            showToast("Document shared successfully.", "success");
+            window.showToast("Document shared successfully.", "success");
             loadSharingInfo(currentDocumentId);
         } catch (err) {
             errorEl.textContent = err.message || "Failed to share document.";
@@ -639,7 +623,7 @@ function initSharingUI() {
         try {
             await shareDocumentToGroup(currentDocumentId, parseInt(groupId, 10));
             shareModal.classList.remove("show");
-            showToast("Document shared to group successfully.", "success");
+            window.showToast("Document shared to group successfully.", "success");
             loadSharingInfo(currentDocumentId);
         } catch (err) {
             errorEl.textContent = err.message || "Failed to share to group.";
@@ -751,10 +735,10 @@ async function handleRevokeDirect(shareId) {
     if (!confirmed) return;
     try {
         await revokeDocumentShare(shareId);
-        showToast("Share revoked successfully.", "success");
+        window.showToast("Share revoked successfully.", "success");
         loadSharingInfo(currentDocumentId);
     } catch (err) {
-        showToast(err.message || "Failed to revoke share.", "error");
+        window.showToast(err.message || "Failed to revoke share.", "error");
     }
 }
 
@@ -763,9 +747,9 @@ async function handleRevokeGroup(shareId) {
     if (!confirmed) return;
     try {
         await revokeGroupDocumentShare(shareId);
-        showToast("Group share revoked successfully.", "success");
+        window.showToast("Group share revoked successfully.", "success");
         loadSharingInfo(currentDocumentId);
     } catch (err) {
-        showToast(err.message || "Failed to revoke group share.", "error");
+        window.showToast(err.message || "Failed to revoke group share.", "error");
     }
 }
