@@ -103,6 +103,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     fileBadge.className = "document-type-badge";
     fileBadge.textContent = getFileLabel(documentItem.fileType);
 
+    const visibilityBadge = document.createElement("span");
+    const vis = documentItem.visibility || "PRIVATE";
+    visibilityBadge.className = "status-badge " + vis.toLowerCase();
+    visibilityBadge.textContent = vis;
+    visibilityBadge.style.marginLeft = "8px";
+    visibilityBadge.style.fontSize = "10px";
+    visibilityBadge.style.height = "20px";
+    visibilityBadge.style.padding = "0 8px";
+
     const title = document.createElement("h3");
     const titleLink = document.createElement("a");
     titleLink.href = `document-detail.html?id=${documentItem.documentId}`;
@@ -110,7 +119,20 @@ document.addEventListener("DOMContentLoaded", async function () {
     titleLink.style.color = "inherit";
     title.appendChild(titleLink);
 
-    header.append(fileBadge, title);
+    header.append(fileBadge, visibilityBadge);
+
+    if (vis === "PUBLIC" && documentItem.approvalStatus) {
+        const approvalBadge = document.createElement("span");
+        approvalBadge.className = "status-badge " + documentItem.approvalStatus.toLowerCase();
+        approvalBadge.textContent = documentItem.approvalStatus;
+        approvalBadge.style.marginLeft = "4px";
+        approvalBadge.style.fontSize = "10px";
+        approvalBadge.style.height = "20px";
+        approvalBadge.style.padding = "0 8px";
+        header.append(approvalBadge);
+    }
+
+    header.append(title);
 
     const description = document.createElement("p");
     description.className = "document-description";

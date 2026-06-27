@@ -406,10 +406,12 @@
 
       <div id="detailContent">
         <div class="card detail-card">
-          <div class="detail-header">
+          <div class="detail-header" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
             <span class="detail-type-badge" id="fileTypeBadge">–</span>
-            <div class="detail-title-block">
-              <h1 id="docTitle">–</h1>
+            <span id="visibilityBadge" class="status-badge" style="display: none;"></span>
+            <span id="approvalBadge" class="status-badge" style="display: none;"></span>
+            <div class="detail-title-block" style="flex-grow: 1; min-width: 200px;">
+              <h1 id="docTitle" style="margin: 0;">–</h1>
               <span class="detail-uploaded-by" id="docUploadedBy"></span>
             </div>
           </div>
@@ -456,6 +458,12 @@
             </button>
             <button id="moveBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;" onclick="showMoveModal()">
               Move
+            </button>
+            <button id="publishBtn" class="btn btn-success" style="display:none; width:auto; padding:10px 24px;">
+              Publish
+            </button>
+            <button id="unpublishBtn" class="btn btn-danger" style="display:none; width:auto; padding:10px 24px;">
+              Unpublish
             </button>
           </div>
 
