@@ -65,6 +65,7 @@ class PublicSecurityIntegrationTest {
                 .subjectName("Introduction to Physics")
                 .fileType("PDF")
                 .fileSize(1024L)
+                .fileUrl("https://cloudinary.com/guide.pdf")
                 .viewCount(10L)
                 .downloadCount(5L)
                 .ownerName("John Doe")
@@ -85,7 +86,7 @@ class PublicSecurityIntegrationTest {
                 .andExpect(jsonPath("$.data[0].uploadedBy").doesNotExist())
                 .andExpect(jsonPath("$.data[0].publicId").doesNotExist())
                 .andExpect(jsonPath("$.data[0].ownerId").doesNotExist())
-                .andExpect(jsonPath("$.data[0].fileUrl").doesNotExist());
+                .andExpect(jsonPath("$.data[0].fileUrl").value("https://cloudinary.com/guide.pdf"));
     }
 
     @Test
@@ -98,6 +99,7 @@ class PublicSecurityIntegrationTest {
                 .subjectName("Introduction to Physics")
                 .fileType("PDF")
                 .fileSize(1024L)
+                .fileUrl("https://cloudinary.com/guide.pdf")
                 .viewCount(11L)
                 .downloadCount(5L)
                 .ownerName("John Doe")
@@ -115,7 +117,7 @@ class PublicSecurityIntegrationTest {
                 .andExpect(jsonPath("$.data.uploadedBy").doesNotExist())
                 .andExpect(jsonPath("$.data.publicId").doesNotExist())
                 .andExpect(jsonPath("$.data.ownerId").doesNotExist())
-                .andExpect(jsonPath("$.data.fileUrl").doesNotExist());
+                .andExpect(jsonPath("$.data.fileUrl").value("https://cloudinary.com/guide.pdf"));
     }
 
     @Test

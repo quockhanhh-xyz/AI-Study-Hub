@@ -404,6 +404,7 @@ public class DocumentService {
                 .subjectName(doc.getSubject() != null ? doc.getSubject().getSubjectName() : null)
                 .fileType(doc.getFileType())
                 .fileSize(doc.getFileSize())
+                .fileUrl(doc.getFileUrl())
                 .visibility(doc.getVisibility())
                 .approvalStatus(doc.getApprovalStatus())
                 .publishedAt(doc.getPublishedAt())

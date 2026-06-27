@@ -20,6 +20,7 @@ public class PublicDocumentResponse {
     private String subjectName;
     private String fileType;
     private Long fileSize;
+    private String fileUrl;
     private String visibility;
     private String approvalStatus;
     private LocalDateTime publishedAt;
