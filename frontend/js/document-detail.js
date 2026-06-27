@@ -16,7 +16,7 @@ function handleBack() {
 
 // Fix #3: showFatalError queries DOM directly to avoid ReferenceError
 // when detailLoader variable is not yet declared
-function showFatalError(message) {
+function showFatalError(message, showLoginButton = false) {
     const loader = document.getElementById("detailLoader");
     if (loader) {
         loader.innerHTML = ""; // Clear loader text content safely
@@ -38,6 +38,19 @@ function showFatalError(message) {
         descDiv.textContent = message; // Safe textContent assignment
 
         errorDiv.append(iconDiv, titleDiv, descDiv);
+
+        if (showLoginButton) {
+            const loginBtn = document.createElement("button");
+            loginBtn.className = "btn btn-primary";
+            loginBtn.style.marginTop = "16px";
+            loginBtn.style.width = "auto";
+            loginBtn.textContent = "Login";
+            loginBtn.onclick = () => {
+                window.location.href = `login.html?redirect=${encodeURIComponent(window.location.href)}`;
+            };
+            errorDiv.appendChild(loginBtn);
+        }
+
         loader.appendChild(errorDiv);
     }
 }
@@ -49,6 +62,7 @@ const detailContent = document.getElementById("detailContent");
 // ── State ─────────────────────────────────────────────────────────────────────
 let currentDocumentId = null;
 let currentDocumentFolderId = null;
+let currentIsCommunityView = false;
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
@@ -66,13 +80,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     currentDocumentId = id;
 
-    const isCommunityView =
+    currentIsCommunityView =
+        !isAuthenticated ||
         params.get("from") === "community" ||
         params.get("mode") === "public";
 
     loadPage(id, {
         isAuthenticated,
-        isCommunityView
+        isCommunityView: currentIsCommunityView
     });
 
     if (isAuthenticated) {
@@ -110,31 +125,66 @@ async function loadPage(id, { isAuthenticated, isCommunityView }) {
         detailLoader.style.display = "none";
         detailContent.style.display = "block";
     } catch (err) {
-        if (err.status === 403) {
-            showFatalError("Access Denied (403): You do not have permission to view this document.");
-        } else if (err.status === 404) {
-            showFatalError("Document Not Found (404): The requested document does not exist, has been deleted, or has been revoked.");
+        if (!isAuthenticated) {
+            showFatalError("This document is private or no longer available.", true);
         } else {
-            showFatalError(err.message || "Failed to load document.");
+            if (err.status === 403) {
+                showFatalError("Access Denied (403): You do not have permission to view this document.");
+            } else if (err.status === 404) {
+                showFatalError("Document Not Found (404): The requested document does not exist, has been deleted, or has been revoked.");
+            } else {
+                showFatalError(err.message || "Failed to load document.");
+            }
         }
     }
 }
 
 // ── Render document info ──────────────────────────────────────────────────────
 function renderDocument(doc) {
-    const params = new URLSearchParams(window.location.search);
-    const isCommunityView =
-        params.get("from") === "community" ||
-        params.get("mode") === "public";
     document.getElementById("fileTypeBadge").textContent = (doc.fileType || "–").toUpperCase();
     document.getElementById("docTitle").textContent = doc.title || "–";
-    document.getElementById("docUploadedBy").textContent = "Uploaded by " + (doc.ownerName || doc.uploadedBy || "–");
+    
+    // Hide email in community view to prevent exposure
+    const docUploadedBy = document.getElementById("docUploadedBy");
+    if (docUploadedBy) {
+        if (currentIsCommunityView) {
+            docUploadedBy.style.display = "none";
+        } else {
+            docUploadedBy.style.display = "inline";
+            docUploadedBy.textContent = "Uploaded by " + (doc.ownerName || doc.uploadedBy || "–");
+        }
+    }
+
     document.getElementById("docDescription").textContent = doc.description || "No description provided.";
     document.getElementById("docSubject").textContent = doc.subject
         ? doc.subject
         : (doc.subjectCode ? `${doc.subjectCode} – ${doc.subjectName}` : "No subject");
     document.getElementById("docFileSize").textContent = formatFileSize(doc.fileSize);
     document.getElementById("docCreatedAt").textContent = formatDate(doc.createdAt);
+
+    // Render visibility and approval badges
+    const visibilityBadge = document.getElementById("visibilityBadge");
+    const approvalBadge = document.getElementById("approvalBadge");
+
+    if (visibilityBadge) {
+        if (doc.visibility) {
+            visibilityBadge.textContent = doc.visibility;
+            visibilityBadge.style.display = "inline-flex";
+            visibilityBadge.className = "status-badge " + doc.visibility.toLowerCase();
+        } else {
+            visibilityBadge.style.display = "none";
+        }
+    }
+
+    if (approvalBadge) {
+        if (doc.visibility === "PUBLIC" && doc.approvalStatus) {
+            approvalBadge.textContent = doc.approvalStatus;
+            approvalBadge.style.display = "inline-flex";
+            approvalBadge.className = "status-badge " + doc.approvalStatus.toLowerCase();
+        } else {
+            approvalBadge.style.display = "none";
+        }
+    }
 
     // Pre-fill edit form
     const editTitle = document.getElementById("editTitle");
@@ -147,6 +197,8 @@ function renderDocument(doc) {
     const downloadBtn = document.getElementById("downloadFileBtn");
     const shareBtn = document.getElementById("shareBtn");
     const moveBtn = document.getElementById("moveBtn");
+    const publishBtn = document.getElementById("publishBtn");
+    const unpublishBtn = document.getElementById("unpublishBtn");
 
     currentDocumentFolderId = doc.folderId;
 
@@ -161,12 +213,11 @@ function renderDocument(doc) {
     }
 
     // Download button
-    // Download button
     if (downloadBtn) {
         if (doc.canDownload) {
             downloadBtn.style.display = "inline-flex";
 
-            if (isCommunityView) {
+            if (currentIsCommunityView) {
                 downloadBtn.onclick = () =>
                     downloadPublicDocument(doc.documentId || doc.id);
             } else {
@@ -180,7 +231,7 @@ function renderDocument(doc) {
 
     // Move button
     if (moveBtn) {
-        if (!isCommunityView && doc.canMove) {
+        if (!currentIsCommunityView && doc.canMove) {
             moveBtn.style.display = "inline-flex";
         } else {
             moveBtn.style.display = "none";
@@ -190,7 +241,7 @@ function renderDocument(doc) {
     // Share button — only the owner has canShare
     const sharesPanel = document.getElementById("sharesPanel");
     if (shareBtn) {
-        if (!isCommunityView && doc.canShare) {
+        if (!currentIsCommunityView && doc.canShare) {
             shareBtn.style.display = "inline-flex";
             if (sharesPanel) sharesPanel.style.display = "block";
             loadSharingInfo(doc.documentId || doc.id);
@@ -204,14 +255,34 @@ function renderDocument(doc) {
     const editSec = document.querySelector(".edit-section");
     if (editSec) {
         editSec.style.display =
-            !isCommunityView && doc.canEdit ? "block" : "none";
+            !currentIsCommunityView && doc.canEdit ? "block" : "none";
     }
 
     // Delete button — only the owner has canDelete
     const deleteBtn = document.getElementById("deleteBtn");
     if (deleteBtn) {
         deleteBtn.style.display =
-            !isCommunityView && doc.canDelete ? "inline-flex" : "none";
+            !currentIsCommunityView && doc.canDelete ? "inline-flex" : "none";
+    }
+
+    // Publish button
+    if (publishBtn) {
+        if (doc.canPublish) {
+            publishBtn.style.display = "inline-flex";
+            publishBtn.onclick = () => handlePublish();
+        } else {
+            publishBtn.style.display = "none";
+        }
+    }
+
+    // Unpublish button
+    if (unpublishBtn) {
+        if (doc.canUnpublish) {
+            unpublishBtn.style.display = "inline-flex";
+            unpublishBtn.onclick = () => handleUnpublish();
+        } else {
+            unpublishBtn.style.display = "none";
+        }
     }
 
     // ── Call render preview (document-preview.js) ──
@@ -303,6 +374,42 @@ async function handleDelete() {
     } finally {
         confirmBtn.disabled = false;
         confirmBtn.textContent = "Delete";
+    }
+}
+
+async function handlePublish() {
+    const publishBtn = document.getElementById("publishBtn");
+    publishBtn.disabled = true;
+    const oldText = publishBtn.textContent;
+    publishBtn.textContent = "Publishing...";
+
+    try {
+        const res = await publishDocument(currentDocumentId);
+        showToast("Document published successfully.", "success");
+        renderDocument(res.data);
+    } catch (err) {
+        showToast(err.message || "Failed to publish document.", "error");
+    } finally {
+        publishBtn.disabled = false;
+        publishBtn.textContent = oldText;
+    }
+}
+
+async function handleUnpublish() {
+    const unpublishBtn = document.getElementById("unpublishBtn");
+    unpublishBtn.disabled = true;
+    const oldText = unpublishBtn.textContent;
+    unpublishBtn.textContent = "Unpublishing...";
+
+    try {
+        const res = await unpublishDocument(currentDocumentId);
+        showToast("Document unpublished successfully.", "success");
+        renderDocument(res.data);
+    } catch (err) {
+        showToast(err.message || "Failed to unpublish document.", "error");
+    } finally {
+        unpublishBtn.disabled = false;
+        unpublishBtn.textContent = oldText;
     }
 }
 

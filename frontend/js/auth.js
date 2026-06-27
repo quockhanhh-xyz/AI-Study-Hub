@@ -226,7 +226,21 @@
       setMessage("loginMessage", result.message || "Login successfully.", "success");
 
       setTimeout(function () {
-        window.location.href = "dashboard.html";
+        let target = "dashboard.html";
+        const redirectValue = new URLSearchParams(window.location.search).get("redirect");
+
+        if (redirectValue) {
+          try {
+            const redirectUrl = new URL(redirectValue, window.location.origin);
+            if (redirectUrl.origin === window.location.origin) {
+              target = redirectUrl.href;
+            }
+          } catch (e) {
+            console.warn("Invalid redirect URL", e);
+          }
+        }
+
+        window.location.href = target;
       }, 500);
     } catch (error) {
       setMessage("loginMessage", error.message, "error");
