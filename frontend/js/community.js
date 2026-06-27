@@ -123,9 +123,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   async function loadSubjects() {
     try {
-      // skipUnauthorizedRedirect: guest must never get bounced to login
-      // just because the subjects endpoint happens to require auth.
-      const result = await getSubjects({ skipUnauthorizedRedirect: true });
+      const result = await getPublicSubjects();
       const subjects = Array.isArray(result.data) ? result.data : [];
       if (subjectFilter) {
         const currentValue = subjectFilter.value;

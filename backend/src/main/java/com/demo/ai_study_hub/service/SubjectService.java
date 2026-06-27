@@ -57,6 +57,20 @@ public class SubjectService {
         return mapToResponse(saved);
     }
 
+    public List<SubjectResponse> getPublicSubjects() {
+        return subjectRepository.findPublicSubjectsInUse()
+                .stream()
+                .map(s -> SubjectResponse.builder()
+                        .subjectId(s.getSubjectId())
+                        .subjectCode(s.getSubjectCode())
+                        .subjectName(s.getSubjectName())
+                        .description(s.getDescription())
+                        .scope(s.getScope())
+                        .ownerId(null)
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     private User getUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));

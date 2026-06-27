@@ -5,6 +5,7 @@ import com.demo.ai_study_hub.dto.DocumentDownloadInfo;
 import com.demo.ai_study_hub.dto.DocumentResponse;
 import com.demo.ai_study_hub.dto.DocumentUpdateDTO;
 import com.demo.ai_study_hub.dto.MoveDocumentRequest;
+import com.demo.ai_study_hub.dto.PublicDocumentResponse;
 import com.demo.ai_study_hub.service.DocumentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ContentDisposition;
@@ -156,13 +157,13 @@ public class DocumentController {
     }
 
     @GetMapping("/public")
-    public ResponseEntity<ApiResponse<List<DocumentResponse>>> getPublicDocuments(
+    public ResponseEntity<ApiResponse<List<PublicDocumentResponse>>> getPublicDocuments(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer subjectId,
             @RequestParam(required = false) String fileType,
             @RequestParam(required = false) String sort) {
         try {
-            List<DocumentResponse> data = documentService.getPublicDocuments(keyword, subjectId, fileType, sort);
+            List<PublicDocumentResponse> data = documentService.getPublicDocuments(keyword, subjectId, fileType, sort);
             return ResponseEntity.ok(ApiResponse.success(data, "Public documents retrieved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
@@ -172,9 +173,9 @@ public class DocumentController {
     }
 
     @GetMapping("/public/{id}")
-    public ResponseEntity<ApiResponse<DocumentResponse>> getPublicDocumentDetail(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<PublicDocumentResponse>> getPublicDocumentDetail(@PathVariable Integer id) {
         try {
-            DocumentResponse data = documentService.getPublicDocumentDetail(id);
+            PublicDocumentResponse data = documentService.getPublicDocumentDetail(id);
             return ResponseEntity.ok(ApiResponse.success(data, "Public document detail retrieved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
@@ -188,6 +189,8 @@ public class DocumentController {
         try {
             DocumentDownloadInfo downloadInfo = documentService.getPublicDocumentDownloadInfo(id);
             byte[] fileBytes = downloadRemoteFile(downloadInfo.getFileUrl());
+
+            documentService.incrementDownloadCount(id);
 
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(downloadInfo.getContentType()))

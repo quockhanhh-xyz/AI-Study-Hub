@@ -95,3 +95,16 @@ function downloadPublicDocument(id) {
 
   window.location.href = `${API_BASE_URL}/api/documents/public/${id}/download`;
 }
+
+/**
+ * Fetches the list of subjects linked to public documents.
+ * @returns {Promise<Object>} List of public subjects.
+ */
+async function getPublicSubjects() {
+  try {
+    return await get("/api/subjects/public", { skipUnauthorizedRedirect: true });
+  } catch (error) {
+    console.error("Failed to retrieve public subjects:", error);
+    throw error;
+  }
+}
