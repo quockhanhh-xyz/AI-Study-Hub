@@ -62,6 +62,7 @@ const detailContent = document.getElementById("detailContent");
 // ── State ─────────────────────────────────────────────────────────────────────
 let currentDocumentId = null;
 let currentDocumentFolderId = null;
+let currentIsCommunityView = false;
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
@@ -79,14 +80,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     currentDocumentId = id;
 
-    const isCommunityView =
+    currentIsCommunityView =
         !isAuthenticated ||
         params.get("from") === "community" ||
         params.get("mode") === "public";
 
     loadPage(id, {
         isAuthenticated,
-        isCommunityView
+        isCommunityView: currentIsCommunityView
     });
 
     if (isAuthenticated) {
@@ -140,19 +141,20 @@ async function loadPage(id, { isAuthenticated, isCommunityView }) {
 
 // ── Render document info ──────────────────────────────────────────────────────
 function renderDocument(doc) {
-    const params = new URLSearchParams(window.location.search);
-    const isCommunityView =
-        !window.authReady || !(async () => await window.authReady)() || 
-        params.get("from") === "community" ||
-        params.get("mode") === "public";
-
-    // Re-resolve isCommunityView synchronously based on url params or auth state
-    const hasAuth = sessionStorage.getItem("token") || localStorage.getItem("token") || document.cookie.includes("token"); 
-    const isComm = isCommunityView || (!doc.canEdit && !doc.canDelete && !doc.canPublish && !doc.canUnpublish);
-
     document.getElementById("fileTypeBadge").textContent = (doc.fileType || "–").toUpperCase();
     document.getElementById("docTitle").textContent = doc.title || "–";
-    document.getElementById("docUploadedBy").textContent = "Uploaded by " + (doc.ownerName || doc.uploadedBy || "–");
+    
+    // Hide email in community view to prevent exposure
+    const docUploadedBy = document.getElementById("docUploadedBy");
+    if (docUploadedBy) {
+        if (currentIsCommunityView) {
+            docUploadedBy.style.display = "none";
+        } else {
+            docUploadedBy.style.display = "inline";
+            docUploadedBy.textContent = "Uploaded by " + (doc.ownerName || doc.uploadedBy || "–");
+        }
+    }
+
     document.getElementById("docDescription").textContent = doc.description || "No description provided.";
     document.getElementById("docSubject").textContent = doc.subject
         ? doc.subject
@@ -215,7 +217,7 @@ function renderDocument(doc) {
         if (doc.canDownload) {
             downloadBtn.style.display = "inline-flex";
 
-            if (isCommunityView) {
+            if (currentIsCommunityView) {
                 downloadBtn.onclick = () =>
                     downloadPublicDocument(doc.documentId || doc.id);
             } else {
@@ -229,7 +231,7 @@ function renderDocument(doc) {
 
     // Move button
     if (moveBtn) {
-        if (!isComm && doc.canMove) {
+        if (!currentIsCommunityView && doc.canMove) {
             moveBtn.style.display = "inline-flex";
         } else {
             moveBtn.style.display = "none";
@@ -239,7 +241,7 @@ function renderDocument(doc) {
     // Share button — only the owner has canShare
     const sharesPanel = document.getElementById("sharesPanel");
     if (shareBtn) {
-        if (!isComm && doc.canShare) {
+        if (!currentIsCommunityView && doc.canShare) {
             shareBtn.style.display = "inline-flex";
             if (sharesPanel) sharesPanel.style.display = "block";
             loadSharingInfo(doc.documentId || doc.id);
@@ -253,14 +255,14 @@ function renderDocument(doc) {
     const editSec = document.querySelector(".edit-section");
     if (editSec) {
         editSec.style.display =
-            !isComm && doc.canEdit ? "block" : "none";
+            !currentIsCommunityView && doc.canEdit ? "block" : "none";
     }
 
     // Delete button — only the owner has canDelete
     const deleteBtn = document.getElementById("deleteBtn");
     if (deleteBtn) {
         deleteBtn.style.display =
-            !isComm && doc.canDelete ? "inline-flex" : "none";
+            !currentIsCommunityView && doc.canDelete ? "inline-flex" : "none";
     }
 
     // Publish button

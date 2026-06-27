@@ -226,7 +226,9 @@
       setMessage("loginMessage", result.message || "Login successfully.", "success");
 
       setTimeout(function () {
-        window.location.href = "dashboard.html";
+        const params = new URLSearchParams(window.location.search);
+        const redirectUrl = params.get("redirect");
+        window.location.href = redirectUrl ? decodeURIComponent(redirectUrl) : "dashboard.html";
       }, 500);
     } catch (error) {
       setMessage("loginMessage", error.message, "error");

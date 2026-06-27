@@ -345,6 +345,24 @@ textarea:focus {
   background-color: #dcd0ce;
 }
 
+.btn-success {
+  background-color: var(--success);
+  color: #ffffff;
+}
+
+.btn-success:hover {
+  background-color: #15803d;
+}
+
+.btn-danger {
+  background-color: var(--danger);
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  background-color: #b91c1c;
+}
+
 
 .status-box {
   padding: 12px 16px;
