@@ -8,8 +8,8 @@
  * Used for the Dashboard filter and the dropdown/modal menus in the Upload page.
  * @returns {Promise<Object>} Returns backend payload with available subjects list.
  */
-function getSubjects() {
-  return get("/api/subjects");
+function getSubjects(options = {}) {
+  return get("/api/subjects", options);
 }
 
 /**
