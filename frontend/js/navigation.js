@@ -19,7 +19,7 @@ const NAVIGATION_MENU = [
   { name: "Home", icon: ICON_HOME, url: "index.html", requiresAuth: false, hidden: true },
   { name: "Login", icon: ICON_KEY, url: "login.html", requiresAuth: false, hideWhenAuth: true },
   { name: "Register", icon: ICON_REGISTER, url: "register.html", requiresAuth: false, hideWhenAuth: true },
-  { name: "Community Library", icon: ICON_FOLDER, url: "community.html", requiresAuth: false },
+  { name: "Community Library", icon: ICON_COMMUNITY, url: "community.html", requiresAuth: false, publicRoute: true },
   { name: "Verify OTP", icon: ICON_SHIELD, url: "verify-otp.html", requiresAuth: false, hideWhenAuth: true, hidden: true },
 
   // Authenticated visible main sidebar links ordered per specification
