@@ -2511,29 +2511,18 @@ Allows guests and logged-in users to list and search all active public approved 
       "subjectId": 2,
       "subjectCode": "PHY101",
       "subjectName": "General Physics I",
-      "originalFileName": "physics-101.pdf",
       "fileType": "pdf",
       "fileSize": 1048576,
-      "fileUrl": "https://res.cloudinary.com/demo/image/upload/v1/docs/physics-101.pdf",
-      "publicId": "docs/physics-101",
-      "folderId": null,
-      "folderName": null,
-      "uploadedBy": "teacher@gmail.com",
-      "status": "ACTIVE",
       "visibility": "PUBLIC",
       "approvalStatus": "APPROVED",
       "publishedAt": "2026-06-26T10:00:00",
       "viewCount": 150,
       "downloadCount": 42,
       "createdAt": "2026-06-25T15:00:00",
-      "updatedAt": null,
+      "ownerName": "John Doe",
       "canPreview": true,
       "canOpen": true,
-      "canDownload": true,
-      "canEdit": false,
-      "canDelete": false,
-      "canMove": false,
-      "canShare": false
+      "canDownload": true
     }
   ]
 }
@@ -2560,29 +2549,18 @@ Retrieves the metadata of a public approved document. Increments `viewCount` by 
     "subjectId": 2,
     "subjectCode": "PHY101",
     "subjectName": "General Physics I",
-    "originalFileName": "physics-101.pdf",
     "fileType": "pdf",
     "fileSize": 1048576,
-    "fileUrl": "https://res.cloudinary.com/demo/image/upload/v1/docs/physics-101.pdf",
-    "publicId": "docs/physics-101",
-    "folderId": null,
-    "folderName": null,
-    "uploadedBy": "teacher@gmail.com",
-    "status": "ACTIVE",
     "visibility": "PUBLIC",
     "approvalStatus": "APPROVED",
     "publishedAt": "2026-06-26T10:00:00",
     "viewCount": 151,
     "downloadCount": 42,
     "createdAt": "2026-06-25T15:00:00",
-    "updatedAt": null,
+    "ownerName": "John Doe",
     "canPreview": true,
     "canOpen": true,
-    "canDownload": true,
-    "canEdit": false,
-    "canDelete": false,
-    "canMove": false,
-    "canShare": false
+    "canDownload": true
   }
 }
 ```
@@ -2679,5 +2657,32 @@ Allows the owner of a document to withdraw it from the public library, resetting
     "approvalStatus": "PENDING",
     "publishedAt": null
   }
+}
+```
+
+---
+
+## 12.6. Get Public Subjects API
+
+## GET `/api/subjects/public`
+
+Allows guests and logged-in users to list all active subjects that are currently associated with at least one public, approved, active document. Specifically excludes creator `ownerId` identifiers for privacy security.
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Public subjects retrieved successfully",
+  "data": [
+    {
+      "subjectId": 2,
+      "subjectCode": "PHY101",
+      "subjectName": "General Physics I",
+      "description": "Basic mechanics and thermodynamics.",
+      "scope": "SYSTEM",
+      "ownerId": null
+    }
+  ]
 }
 ```

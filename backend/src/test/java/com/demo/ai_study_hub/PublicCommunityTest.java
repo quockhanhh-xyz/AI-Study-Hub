@@ -195,14 +195,13 @@ class PublicCommunityTest {
 
     @Test
     void incrementDownloadCount_ShouldIncrementSuccessfully() {
-        mockDoc.setDownloadCount(5L);
-        when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
-        when(documentRepository.save(any(Document.class))).thenAnswer(i -> i.getArguments()[0]);
+        when(documentRepository.existsById(10)).thenReturn(true);
+        doNothing().when(documentRepository).incrementDownloadCountById(10);
 
         documentService.incrementDownloadCount(10);
 
-        assertEquals(6L, mockDoc.getDownloadCount());
-        verify(documentRepository, times(1)).save(mockDoc);
+        verify(documentRepository, times(1)).existsById(10);
+        verify(documentRepository, times(1)).incrementDownloadCountById(10);
     }
 
     @Test
