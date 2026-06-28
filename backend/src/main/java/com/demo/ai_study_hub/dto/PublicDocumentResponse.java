@@ -27,6 +27,10 @@ public class PublicDocumentResponse {
     private Long viewCount;
     private Long downloadCount;
     private LocalDateTime createdAt;
+    /**
+     * @deprecated Use {@link #displayName} instead.
+     */
+    @Deprecated
     private String ownerName;
     private String displayName;
 

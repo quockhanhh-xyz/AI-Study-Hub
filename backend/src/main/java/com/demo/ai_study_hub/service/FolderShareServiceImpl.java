@@ -165,7 +165,7 @@ public class FolderShareServiceImpl implements FolderShareService {
                         .folderId(folder.getFolderId())
                         .folderName(folder.getName())
                         .ownerName(folder.getOwner().getFullName())
-                        .ownerEmail(folder.getOwner().getEmail())
+                        .ownerEmail(isOwner ? folder.getOwner().getEmail() : null)
                         .build();
 
         return SharedFolderContentResponse.builder()
@@ -320,7 +320,8 @@ public class FolderShareServiceImpl implements FolderShareService {
                 .publicId(doc.getPublicId())
                 .folderId(doc.getFolder() != null ? doc.getFolder().getFolderId() : null)
                 .folderName(doc.getFolder() != null ? doc.getFolder().getName() : null)
-                .uploadedBy(doc.getOwner().getEmail())
+                .uploadedBy(null)
+                .uploadedByName(doc.getOwner().getFullName())
                 .status(doc.getStatus())
                 .createdAt(doc.getCreatedAt())
                 .updatedAt(doc.getUpdatedAt())

@@ -478,4 +478,48 @@ class FolderShareServiceTest {
         assertEquals("Folder Owner", responses.get(0).getSharedByName());
         assertEquals("Recipient User", responses.get(0).getSharedWithName());
     }
+
+    @Test
+    void getSharedContent_RecipientPermission_Success() {
+        when(userRepository.findByEmail("recipient@gmail.com")).thenReturn(Optional.of(recipient));
+        when(folderRepository.findById(10)).thenReturn(Optional.of(folder));
+
+        FolderShare share = new FolderShare();
+        share.setShareId(1);
+        share.setFolder(folder);
+        share.setSharedBy(owner);
+        share.setSharedWithUser(recipient);
+        share.setStatus("ACTIVE");
+
+        when(folderShareRepository.findByFolderAndSharedWithUserAndStatus(folder, recipient, "ACTIVE"))
+                .thenReturn(Optional.of(share));
+        when(folderRepository.findByOwnerAndStatusAndParentFolder(owner, "ACTIVE", folder))
+                .thenReturn(Collections.emptyList());
+
+        com.demo.ai_study_hub.entity.Document doc = new com.demo.ai_study_hub.entity.Document();
+        doc.setDocumentId(100);
+        doc.setTitle("Shared Document");
+        doc.setOwner(owner);
+        doc.setStatus("ACTIVE");
+
+        when(documentRepository.findByFolder(folder))
+                .thenReturn(List.of(doc));
+
+        SharedFolderContentResponse res = folderShareService.getSharedContent(10, "recipient@gmail.com");
+
+        assertNotNull(res);
+        assertEquals("VIEW", res.getPermission());
+        assertTrue(res.getIsSharedView());
+        assertFalse(res.getCanUpload());
+        assertFalse(res.getCanEdit());
+        assertFalse(res.getCanDelete());
+        assertFalse(res.getCanMove());
+
+        assertNull(res.getCurrentFolder().getOwnerEmail());
+        assertEquals("Folder Owner", res.getCurrentFolder().getOwnerName());
+
+        assertEquals(1, res.getDocuments().size());
+        assertNull(res.getDocuments().get(0).getUploadedBy());
+        assertEquals("Folder Owner", res.getDocuments().get(0).getUploadedByName());
+    }
 }

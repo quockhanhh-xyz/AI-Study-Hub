@@ -459,7 +459,8 @@ Uploads a document file for the currently authenticated user.
     "subjectName": "Software Project",
     "folderId": null,
     "folderName": null,
-    "uploadedBy": "user@gmail.com",
+    "uploadedBy": null,
+    "uploadedByName": "User A",
     "createdAt": "2026-06-01T10:00:00"
   }
 }
@@ -634,7 +635,8 @@ Returns documents owned by the currently authenticated user, with optional searc
       "subjectName": "Software Project",
       "folderId": 1,
       "folderName": "Math Notes",
-      "uploadedBy": "user@gmail.com",
+      "uploadedBy": null,
+      "uploadedByName": "User A",
       "createdAt": "2026-06-01T10:00:00"
     }
   ]
@@ -864,7 +866,8 @@ Returns detailed information for a specific document. The request is authorized 
     "subjectName": "Software Project",
     "folderId": 1,
     "folderName": "Math Notes",
-    "uploadedBy": "user@gmail.com",
+    "uploadedBy": null,
+    "uploadedByName": "User A",
     "status": "ACTIVE",
     "createdAt": "2026-06-01T10:00:00",
     "canPreview": true,
@@ -1011,7 +1014,8 @@ Updates the title, description, and subject of a specific document owned by the 
     "subjectName": "Software Testing",
     "folderId": null,
     "folderName": null,
-    "uploadedBy": "user@gmail.com",
+    "uploadedBy": null,
+    "uploadedByName": "User A",
     "createdAt": "2026-06-01T10:00:00"
   }
 }
@@ -1779,6 +1783,9 @@ Creates a new study group. The creator is automatically added as the `OWNER`.
       "inviteCode": "A1B2C3D4",
       "ownerId": 5,
       "status": "ACTIVE",
+      "memberCount": 1,
+      "documentCount": 0,
+      "folderCount": 0,
       "createdAt": "2026-06-19T13:30:00"
     }
   }
@@ -1800,7 +1807,10 @@ Retrieves all groups that the current user belongs to (either as OWNER or MEMBER
         "inviteCode": "A1B2C3D4",
         "ownerId": 5,
         "status": "ACTIVE",
-        "role": "OWNER"
+        "role": "OWNER",
+        "memberCount": 3,
+        "documentCount": 2,
+        "folderCount": 1
       }
     ]
   }
@@ -1821,6 +1831,9 @@ Retrieves detailed information of a group, including member list. Access is allo
       "inviteCode": "A1B2C3D4",
       "ownerId": 5,
       "status": "ACTIVE",
+      "memberCount": 1,
+      "documentCount": 0,
+      "folderCount": 0,
       "members": [
         {
           "memberId": 1,
@@ -1853,7 +1866,15 @@ Joins a group using an invite code.
     "data": {
       "groupId": 1,
       "groupName": "Java Developers",
-      "role": "MEMBER"
+      "description": "Group for studying Java and Spring Boot",
+      "inviteCode": "A1B2C3D4",
+      "ownerId": 5,
+      "role": "MEMBER",
+      "status": "ACTIVE",
+      "createdAt": "2026-06-19T13:30:00",
+      "memberCount": null,
+      "documentCount": null,
+      "folderCount": null
     }
   }
   ```
@@ -1888,7 +1909,15 @@ Updates group name and description. Only the OWNER is allowed to perform this ac
     "data": {
       "groupId": 1,
       "groupName": "Updated Name",
-      "description": "Updated Description"
+      "description": "Updated Description",
+      "inviteCode": "A1B2C3D4",
+      "ownerId": 5,
+      "role": "OWNER",
+      "status": "ACTIVE",
+      "createdAt": "2026-06-19T13:30:00",
+      "memberCount": null,
+      "documentCount": null,
+      "folderCount": null
     }
   }
   ```
@@ -2614,6 +2643,7 @@ Allows guests and logged-in users to list and search all active public approved 
       "downloadCount": 42,
       "createdAt": "2026-06-25T15:00:00",
       "ownerName": "John Doe",
+      "displayName": "John Doe",
       "canPreview": true,
       "canOpen": true,
       "canDownload": true
@@ -2621,6 +2651,9 @@ Allows guests and logged-in users to list and search all active public approved 
   ]
 }
 ```
+
+> [!NOTE]
+> `ownerName` is deprecated and will be removed in a future update. The frontend should transition to using `displayName`.
 
 ---
 
@@ -2653,12 +2686,16 @@ Retrieves the metadata of a public approved document. Increments `viewCount` by 
     "downloadCount": 42,
     "createdAt": "2026-06-25T15:00:00",
     "ownerName": "John Doe",
+    "displayName": "John Doe",
     "canPreview": true,
     "canOpen": true,
     "canDownload": true
   }
 }
 ```
+
+> [!NOTE]
+> `ownerName` is deprecated and will be removed in a future update. The frontend should transition to using `displayName`.
 
 ### Error Response - Not Found / Forbidden (404 / 403)
 
