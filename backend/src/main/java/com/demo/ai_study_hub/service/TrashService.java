@@ -203,9 +203,14 @@ public class TrashService {
             }
         }
 
+        java.util.Map<Integer, Integer> depthCache = trashedFolders.stream()
+            .collect(Collectors.toMap(Folder::getFolderId, this::getFolderDepth));
+
         List<Folder> sortedFolders = trashedFolders.stream()
-                .sorted((a, b) -> Integer.compare(getFolderDepth(b), getFolderDepth(a)))
-                .collect(Collectors.toList());
+            .sorted((a, b) -> Integer.compare(
+                depthCache.get(b.getFolderId()),
+                depthCache.get(a.getFolderId())))
+            .collect(Collectors.toList());
 
         for (Folder folder : sortedFolders) {
             try {
