@@ -104,9 +104,31 @@ document.addEventListener("DOMContentLoaded", async function () {
     groupNameHeader.textContent = group.groupName || "Group";
     groupNameTitle.textContent = group.groupName || "Untitled Group";
     groupDescription.textContent = group.description || "No description provided.";
+    
+    // Step 8A Refactor: Thêm tính năng click-to-copy cho mã mời
     groupInviteCode.textContent = group.inviteCode || "-";
+    if (group.inviteCode && group.inviteCode !== "-") {
+      groupInviteCode.style.cursor = "pointer";
+      groupInviteCode.title = "Click to copy invite code";
+      
+      // Xóa listener cũ nếu có bằng cách clone node để tránh rò rỉ bộ nhớ khi re-render
+      const newInviteCode = groupInviteCode.cloneNode(true);
+      groupInviteCode.parentNode.replaceChild(newInviteCode, groupInviteCode);
+      
+      newInviteCode.addEventListener("click", function() {
+        navigator.clipboard.writeText(group.inviteCode);
+        showToast("Invitation code copied to clipboard!", "success");
+      });
+    }
+
     const displayRole = myRole || "MEMBER";
     groupMyRole.textContent = displayRole;
+
+    // Step 8A Refactor: Cập nhật số lượng thành viên lên tiêu đề danh sách
+    const memberSectionTitle = document.getElementById("memberSectionTitle");
+    if (memberSectionTitle && group.members) {
+      memberSectionTitle.textContent = `Members (${group.members.length})`;
+    }
 
     // Apply real color classes to groupMyRole badge based on feedback
     groupMyRole.classList.remove("badge", "badge-primary", "badge-role-owner", "badge-role-member");
