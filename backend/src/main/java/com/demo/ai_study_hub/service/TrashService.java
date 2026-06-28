@@ -132,4 +132,24 @@ public class TrashService {
 
         folderRepository.delete(folder);
     }
+
+    @Transactional
+    public void emptyTrash(String email) {
+        User user = getUser(email);
+        List<Document> deletedDocs = documentRepository.findByOwner_UserIdAndStatus(user.getUserId(), "DELETED");
+        List<Folder> deletedFolders = folderRepository.findByOwnerAndStatusOrderByCreatedAtDesc(user, "DELETED");
+
+        for (Document doc : deletedDocs) {
+            try {
+                cloudinaryStorageService.deleteFile(doc.getPublicId(), doc.getFileType());
+            } catch (Exception e) {
+                // Ignore Cloudinary error during bulk deletion
+            }
+            documentRepository.delete(doc);
+        }
+
+        for (Folder folder : deletedFolders) {
+            folderRepository.delete(folder);
+        }
+    }
 }

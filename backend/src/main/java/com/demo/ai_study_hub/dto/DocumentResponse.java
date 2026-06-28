@@ -26,6 +26,7 @@ public class DocumentResponse {
     private Integer folderId;
     private String folderName;
     private String uploadedBy;
+    private String uploadedByName;
     private String status;
     private String visibility;
     private String approvalStatus;

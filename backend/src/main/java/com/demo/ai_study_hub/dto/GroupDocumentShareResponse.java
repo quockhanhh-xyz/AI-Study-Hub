@@ -19,6 +19,7 @@ public class GroupDocumentShareResponse {
     private Long fileSize;
     private String fileUrl;
     private Integer groupId;
+    private String sharedByName;
     private String sharedByEmail;
     private String permission;
     private String status;

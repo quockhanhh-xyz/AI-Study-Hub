@@ -140,7 +140,7 @@ public class FolderShareServiceImpl implements FolderShareService {
         if (!isOwner) {
             sharedRoot = findSharedAncestor(folder, user);
             if (sharedRoot == null) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this folder");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found");
             }
         }
 
@@ -267,7 +267,7 @@ public class FolderShareServiceImpl implements FolderShareService {
         }
 
         if (!folder.getOwner().getUserId().equals(owner.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the folder owner can perform this action");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found");
         }
 
         return folder;
@@ -340,7 +340,7 @@ public class FolderShareServiceImpl implements FolderShareService {
 
         boolean isMember = studyGroupMemberRepository.existsByGroupAndUserAndStatus(group, owner, "ACTIVE");
         if (!isMember) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
         }
 
         GroupFolderShare existing = groupFolderShareRepository.findByFolderAndGroup(folder, group).orElse(null);
@@ -378,7 +378,7 @@ public class FolderShareServiceImpl implements FolderShareService {
 
         boolean isMember = studyGroupMemberRepository.existsByGroupAndUserAndStatus(group, user, "ACTIVE");
         if (!isMember) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
         }
 
         return groupFolderShareRepository.findActiveSharesForGroup(group)
@@ -422,9 +422,9 @@ public class FolderShareServiceImpl implements FolderShareService {
                 .folderName(folder.getName())
                 .parentFolderId(folder.getParentFolder() != null ? folder.getParentFolder().getFolderId() : null)
                 .ownerName(folder.getOwner().getFullName())
-                .ownerEmail(folder.getOwner().getEmail())
+                .ownerEmail(null)
                 .sharedByName(share.getSharedBy().getFullName())
-                .sharedByEmail(share.getSharedBy().getEmail())
+                .sharedByEmail(null)
                 .groupId(group.getGroupId())
                 .groupName(group.getGroupName())
                 .permission(share.getPermission())

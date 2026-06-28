@@ -105,7 +105,7 @@ class SharingServiceTest {
     }
 
     @Test
-    void shareDocumentDirect_WhenNonOwnerShares_ShouldThrow403() {
+    void shareDocumentDirect_WhenNonOwnerShares_ShouldThrow404() {
         DocumentShareRequest request = new DocumentShareRequest("recipient@gmail.com");
 
         when(userRepository.findByEmail("recipient@gmail.com")).thenReturn(Optional.of(recipient));
@@ -115,8 +115,8 @@ class SharingServiceTest {
             sharingService.shareDocumentDirect(10, request, "recipient@gmail.com");
         });
 
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
-        assertEquals("Only the document owner can share this document", exception.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Document not found", exception.getReason());
     }
 
     @Test
@@ -230,7 +230,7 @@ class SharingServiceTest {
     }
 
     @Test
-    void shareDocumentToGroup_WhenNotGroupMember_ShouldThrow403() {
+    void shareDocumentToGroup_WhenUserNotGroupMember_ShouldThrow404() {
         GroupDocumentShareRequest request = new GroupDocumentShareRequest(5);
 
         when(userRepository.findByEmail("external@gmail.com")).thenReturn(Optional.of(external));
@@ -245,8 +245,8 @@ class SharingServiceTest {
             sharingService.shareDocumentToGroup(10, request, "external@gmail.com");
         });
 
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
-        assertEquals("You must be an active member of the group to share to it", exception.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Group not found", exception.getReason());
     }
 
     @Test
@@ -358,7 +358,7 @@ class SharingServiceTest {
     }
 
     @Test
-    void getDocumentShares_WhenNonOwnerAccesses_ShouldThrow403() {
+    void getDocumentShares_WhenNonOwnerAccesses_ShouldThrow404() {
         when(userRepository.findByEmail("recipient@gmail.com")).thenReturn(Optional.of(recipient));
         when(documentRepository.findById(10)).thenReturn(Optional.of(document));
 
@@ -366,7 +366,7 @@ class SharingServiceTest {
             sharingService.getDocumentShares(10, "recipient@gmail.com");
         });
 
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
-        assertEquals("Only the document owner can view sharing information", exception.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Document not found", exception.getReason());
     }
 }

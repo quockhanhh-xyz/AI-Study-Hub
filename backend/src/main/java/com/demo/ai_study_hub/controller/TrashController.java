@@ -60,4 +60,13 @@ public class TrashController {
                 .message("Folder permanently deleted")
                 .build());
     }
+
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> emptyTrash(Authentication auth) {
+        trashService.emptyTrash(auth.getName());
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .success(true)
+                .message("Trash emptied successfully")
+                .build());
+    }
 }

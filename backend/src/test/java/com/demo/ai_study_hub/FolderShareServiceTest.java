@@ -210,7 +210,7 @@ class FolderShareServiceTest {
     }
 
     @Test
-    void shareFolderToGroup_NonMember_ThrowsForbidden() {
+    void shareFolderToGroup_NonMember_ThrowsNotFound() {
         GroupFolderShareRequest req = new GroupFolderShareRequest(50);
 
         when(userRepository.findByEmail("owner@gmail.com")).thenReturn(Optional.of(owner));
@@ -221,7 +221,8 @@ class FolderShareServiceTest {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> {
             folderShareService.shareFolderToGroup(10, req, "owner@gmail.com");
         });
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Group not found", ex.getReason());
     }
 
     @Test

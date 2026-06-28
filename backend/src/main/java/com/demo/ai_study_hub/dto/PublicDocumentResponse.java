@@ -28,6 +28,7 @@ public class PublicDocumentResponse {
     private Long downloadCount;
     private LocalDateTime createdAt;
     private String ownerName;
+    private String displayName;
 
     private Boolean canPreview;
     private Boolean canOpen;

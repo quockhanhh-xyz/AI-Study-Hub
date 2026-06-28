@@ -109,7 +109,7 @@ class DocumentServiceTest {
     }
 
     @Test
-    void getDocumentDetail_WhenUserIsNotOwner_ShouldThrow403() {
+    void getDocumentDetail_WhenUserIsNotOwner_ShouldThrow404() {
         when(userRepository.findByEmail("hacker@test.com")).thenReturn(Optional.of(mockHacker));
         when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
 
@@ -117,8 +117,8 @@ class DocumentServiceTest {
             documentService.getDocumentDetail(4, "hacker@test.com");
         });
 
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
-        assertEquals("Access denied", exception.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Document not found", exception.getReason());
     }
 
     @Test
@@ -201,8 +201,8 @@ class DocumentServiceTest {
             documentService.getDocumentDetail(4, "nonmember@test.com");
         });
 
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
-        assertEquals("Access denied", exception.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Document not found", exception.getReason());
     }
 
     @Test
@@ -596,7 +596,7 @@ class DocumentServiceTest {
     }
 
     @Test
-    void getDocumentDownloadUrl_ByUnauthorizedUser_ShouldThrow403() {
+    void getDocumentDownloadUrl_ByUnauthorizedUser_ShouldThrow404() {
         when(userRepository.findByEmail("hacker@test.com")).thenReturn(Optional.of(mockHacker));
         when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
 
@@ -604,8 +604,8 @@ class DocumentServiceTest {
             documentService.getDocumentDownloadInfo(4, "hacker@test.com");
         });
 
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
-        assertEquals("Access denied", exception.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Document not found", exception.getReason());
     }
 
     @Test
@@ -623,7 +623,7 @@ class DocumentServiceTest {
     }
 
     @Test
-    void getDocumentDownloadUrl_WhenShareRevoked_ShouldThrow403() {
+    void getDocumentDownloadUrl_WhenShareRevoked_ShouldThrow404() {
         User mockRecipient = new User();
         mockRecipient.setUserId(3);
         mockRecipient.setEmail("recipient@test.com");
@@ -637,8 +637,8 @@ class DocumentServiceTest {
             documentService.getDocumentDownloadInfo(4, "recipient@test.com");
         });
 
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
-        assertEquals("Access denied", exception.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Document not found", exception.getReason());
     }
 
     @Test

@@ -30,7 +30,7 @@ public class SharingServiceImpl implements SharingService {
         Document document = getActiveDocument(documentId);
 
         if (!document.getOwner().getUserId().equals(owner.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the document owner can share this document");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
 
         User recipient = userRepository.findByEmail(request.getEmail())
@@ -88,7 +88,7 @@ public class SharingServiceImpl implements SharingService {
         Document document = getActiveDocument(documentId);
 
         if (!document.getOwner().getUserId().equals(owner.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the document owner can view sharing information");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
 
         List<DocumentShare> activeDirectShares = documentShareRepository.findByDocumentAndStatus(document, "ACTIVE");
@@ -134,7 +134,7 @@ public class SharingServiceImpl implements SharingService {
         Document document = getActiveDocument(documentId);
 
         if (!document.getOwner().getUserId().equals(owner.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the document owner can share this document");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
 
         StudyGroup group = studyGroupRepository.findById(request.getGroupId())
@@ -145,8 +145,8 @@ public class SharingServiceImpl implements SharingService {
         }
 
         studyGroupMemberRepository.findByGroupAndUserAndStatus(group, owner, "ACTIVE")
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "You must be an active member of the group to share to it"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Group not found"));
 
         GroupDocumentShare existing = groupDocumentShareRepository
                 .findByDocumentAndGroupAndStatus(document, group, "ACTIVE")
@@ -188,8 +188,8 @@ public class SharingServiceImpl implements SharingService {
 
         StudyGroupMember currentMembership = studyGroupMemberRepository
                 .findByGroupAndUserAndStatus(group, user, "ACTIVE")
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "You must be an active member of this group to view group documents"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Group not found"));
 
         List<GroupDocumentShare> activeShares = groupDocumentShareRepository.findActiveSharesForGroup(group);
 
@@ -252,6 +252,8 @@ public class SharingServiceImpl implements SharingService {
                 .fileType(share.getDocument().getFileType())
                 .fileSize(share.getDocument().getFileSize())
                 .fileUrl(share.getDocument().getFileUrl())
+                .sharedByName(share.getSharedBy().getFullName())
+                .sharedWithByName(share.getSharedWith().getFullName())
                 .sharedByEmail(share.getSharedBy().getEmail())
                 .sharedWithEmail(share.getSharedWith().getEmail())
                 .permission(share.getPermission())
@@ -269,7 +271,8 @@ public class SharingServiceImpl implements SharingService {
                 .fileSize(share.getDocument().getFileSize())
                 .fileUrl(share.getDocument().getFileUrl())
                 .groupId(share.getGroup().getGroupId())
-                .sharedByEmail(share.getSharedBy().getEmail())
+                .sharedByName(share.getSharedBy().getFullName())
+                .sharedByEmail(null)
                 .permission(share.getPermission())
                 .status(share.getStatus())
                 .createdAt(share.getCreatedAt())

@@ -24,6 +24,10 @@ public class GroupDetailResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private Long memberCount;
+    private Long documentCount;
+    private Long folderCount;
+
     @Data
     @Builder
     @NoArgsConstructor
@@ -32,6 +36,7 @@ public class GroupDetailResponse {
         private Integer memberId;
         private Integer userId;
         private String fullName;
+        private String displayName;
         private String email;
         private String role;
         private String status;

@@ -4,6 +4,8 @@ import com.demo.ai_study_hub.entity.StudyGroup;
 import com.demo.ai_study_hub.entity.StudyGroupMember;
 import com.demo.ai_study_hub.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -21,4 +23,7 @@ public interface StudyGroupMemberRepository extends JpaRepository<StudyGroupMemb
     List<StudyGroupMember> findByUserAndStatus(User user, String status);
 
     boolean existsByGroupAndUserAndStatus(StudyGroup group, User user, String status);
+
+    @Query("SELECT m.group.groupId AS groupId, COUNT(m) AS cnt FROM StudyGroupMember m WHERE m.group.groupId IN :groupIds AND m.status = 'ACTIVE' GROUP BY m.group.groupId")
+    List<Object[]> countActiveMembersByGroupIds(@Param("groupIds") List<Integer> groupIds);
 }

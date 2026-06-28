@@ -793,6 +793,39 @@ Returned if `subjectCode` or `subjectName` already matches any SYSTEM subject, o
 
 ---
 
+## 4.3. Get Public Subjects API
+
+## GET `/api/subjects/public`
+
+Allows guest and authenticated users to fetch only subjects that are currently used by active, public, and approved documents. The response hides the `ownerId` field to protect privacy.
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Public subjects retrieved successfully",
+  "data": [
+    {
+      "subjectId": 1,
+      "subjectCode": "SWP391",
+      "subjectName": "Software Project",
+      "description": "Software project management and development course",
+      "scope": "SYSTEM"
+    },
+    {
+      "subjectId": 10,
+      "subjectCode": "MYSUB",
+      "subjectName": "My Custom Subject",
+      "description": "Custom subject that is used by a public document",
+      "scope": "USER_CUSTOM"
+    }
+  ]
+}
+```
+
+---
+
 # 5. Document Management APIs (Step 3)
 
 These APIs manage documents after upload. Access is restricted to the owner or users with active shared access.
@@ -1680,6 +1713,28 @@ Permanently deletes a document from the database and removes the associated file
 
 ---
 
+## 7.6. Empty Trash API
+
+## DELETE `/api/trash`
+
+Permanently deletes all soft-deleted documents and folders belonging to the authenticated user. This removes all files from Cloudinary and deletes their database records.
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Trash emptied successfully",
+  "data": null
+}
+```
+
+---
+
 # 8. Study Group and Sharing APIs (Step 6A)
 
 ## 8.1. Create Group API
@@ -2423,6 +2478,17 @@ These rules govern page routing on the frontend and operational behaviors betwee
 
 - On the user interface, a `folderId = null` or unassigned folder hierarchy must be consistently labeled **"My Documents"**.
 - Hardcoded technical terms like "root", "no folder", or "unassigned" are deprecated and must not appear in user-facing labels.
+
+## 10.4. Redirect Flows
+
+- **Login Redirect**: The login page accepts a `redirect` query parameter (e.g., `login.html?redirect=dashboard.html`). After successful authentication, the frontend must validate that the redirect target is within the same domain (origin) before performing the redirect to prevent Open Redirect security vulnerabilities. If the origin does not match or if the redirect parameter is omitted, the user is redirected to `dashboard.html` by default.
+- **Register Redirect**: The registration flow requires OTP verification. After a user registers, they are redirected to `otp.html?email=<encoded-email>` to input their OTP. Upon successful verification, they are redirected to `login.html`.
+- **Community Library Redirect**: Guest users browsing the Community page (`community.html`) can view public document listings. Clicking on a document detail redirects them to `document-detail.html?id=<id>&from=community`. When they attempt to preview or download, if the document requires authentication, they must be redirected to `login.html?redirect=document-detail.html?id=<id>&from=community`.
+
+## 10.5. File Type Filtering Conventions
+
+- **Frontend Behavior**: The file type filter panel sends raw formats (`DOC`, `DOCX`, `PPT`, `PPTX`, `PDF`, etc.) in the `fileType` query parameter to filter documents.
+- **Backend Matching**: The backend accepts raw file formats (case-insensitively) and matches them exactly against the database records to filter the results.
 
 ---
 

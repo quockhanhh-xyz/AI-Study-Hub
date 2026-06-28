@@ -35,4 +35,9 @@ public interface GroupFolderShareRepository extends JpaRepository<GroupFolderSha
            "AND sgm.status = 'ACTIVE' " +
            "AND gfs.group.status = 'ACTIVE'")
     boolean hasActiveGroupShareForUser(@Param("folderId") Integer folderId, @Param("userId") Integer userId);
+
+    @Query("SELECT gfs.group.groupId AS groupId, COUNT(gfs) AS cnt FROM GroupFolderShare gfs " +
+           "WHERE gfs.group.groupId IN :groupIds AND gfs.status = 'ACTIVE' AND gfs.folder.status = 'ACTIVE' " +
+           "GROUP BY gfs.group.groupId")
+    List<Object[]> countActiveSharesByGroupIds(@Param("groupIds") List<Integer> groupIds);
 }

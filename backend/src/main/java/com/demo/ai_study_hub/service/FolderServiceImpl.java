@@ -139,7 +139,7 @@ public class FolderServiceImpl implements FolderService {
         }
 
         if (!folder.getOwner().getUserId().equals(owner.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found");
         }
 
         return folder;
