@@ -24,10 +24,10 @@ async function initializeLayout() {
 window.authReady =
   document.readyState === "loading"
     ? new Promise((resolve) => {
-        document.addEventListener("DOMContentLoaded", async () => {
-          resolve(await initializeLayout());
-        });
-      })
+      document.addEventListener("DOMContentLoaded", async () => {
+        resolve(await initializeLayout());
+      });
+    })
     : Promise.resolve(initializeLayout());
 
 
@@ -125,7 +125,7 @@ function renderDynamicSidebar(isAuthenticated) {
       // Preserve or build a minimalist landing container for Guest navigation alternative
       const oldFooter = sidebar.querySelector(".sidebar-footer");
       if (oldFooter) oldFooter.remove();
-     
+
       if (navContainer) {
         navContainer.innerHTML = `
           <a href="community.html" class="nav-link">
@@ -134,7 +134,7 @@ function renderDynamicSidebar(isAuthenticated) {
           </a>
         `;
       }
-     
+
       // Force collapse layout or hide complex control toggles from login interface shell
       const toggleBtn = sidebar.querySelector(".sidebar-toggle-btn");
       if (toggleBtn) toggleBtn.style.display = "none";
