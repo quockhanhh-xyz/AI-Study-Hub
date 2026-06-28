@@ -46,7 +46,11 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         member.setStatus("ACTIVE");
         studyGroupMemberRepository.save(member);
 
-        return mapToGroupResponse(savedGroup, "OWNER");
+        GroupResponse response = mapToGroupResponse(savedGroup, "OWNER");
+        response.setMemberCount(1L);
+        response.setDocumentCount(0L);
+        response.setFolderCount(0L);
+        return response;
     }
 
     @Override

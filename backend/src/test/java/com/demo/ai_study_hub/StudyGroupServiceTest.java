@@ -299,4 +299,28 @@ class StudyGroupServiceTest {
         assertEquals(0L, response.getDocumentCount());
         assertEquals(0L, response.getFolderCount());
     }
+
+    @Test
+    void createGroup_ShouldSetCountsTo100() {
+        CreateGroupRequest request = new CreateGroupRequest();
+        request.setGroupName("Java Devs");
+        request.setDescription("Java description");
+
+        when(userRepository.findByEmail("owner@gmail.com")).thenReturn(Optional.of(owner));
+        when(studyGroupRepository.save(any(StudyGroup.class))).thenAnswer(invocation -> {
+            StudyGroup saved = invocation.getArgument(0);
+            saved.setGroupId(1);
+            return saved;
+        });
+
+        GroupResponse response = studyGroupService.createGroup(request, "owner@gmail.com");
+
+        assertNotNull(response);
+        assertEquals(1L, response.getMemberCount());
+        assertEquals(0L, response.getDocumentCount());
+        assertEquals(0L, response.getFolderCount());
+        assertEquals("OWNER", response.getRole());
+        assertEquals("ACTIVE", response.getStatus());
+        verify(studyGroupMemberRepository, times(1)).save(any(StudyGroupMember.class));
+    }
 }
