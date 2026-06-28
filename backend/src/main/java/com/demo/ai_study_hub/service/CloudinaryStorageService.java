@@ -132,7 +132,8 @@ public class CloudinaryStorageService {
                     publicId,
                     ObjectUtils.asMap("resource_type", resourceType)
             );
-            return "ok".equals(result.get("result"));
+            String resultStatus = String.valueOf(result.get("result"));
+            return "ok".equals(resultStatus) || "not found".equals(resultStatus);
         } catch (Exception e) {
             log.warn("Cloudinary deleteFile failed for publicId={}, fileType={}: {}", publicId, fileType, e.getMessage());
             return false;
