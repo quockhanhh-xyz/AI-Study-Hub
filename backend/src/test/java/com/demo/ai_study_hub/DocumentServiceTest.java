@@ -352,7 +352,7 @@ class DocumentServiceTest {
         savedDoc.setOwner(mockOwner);
         savedDoc.setSubject(mockSubject);
         savedDoc.setStatus("ACTIVE");
-        when(documentRepository.save(any(Document.class))).thenReturn(savedDoc);
+        when(documentRepository.saveAndFlush(any(Document.class))).thenReturn(savedDoc);
 
         DocumentResponse response = documentService.uploadDocument(mockFile, "Test Title", "Description", 1, null, "doantam785@gmail.com");
 
@@ -393,7 +393,7 @@ class DocumentServiceTest {
         savedDoc.setFolder(mockFolder);
         savedDoc.setSubject(mockSubject);
         savedDoc.setStatus("ACTIVE");
-        when(documentRepository.save(any(Document.class))).thenReturn(savedDoc);
+        when(documentRepository.saveAndFlush(any(Document.class))).thenReturn(savedDoc);
 
         DocumentResponse response = documentService.uploadDocument(mockFile, "Test Title", "Description", 1, 5, "doantam785@gmail.com");
 
@@ -426,7 +426,7 @@ class DocumentServiceTest {
         savedDoc.setOwner(mockOwner);
         savedDoc.setSubject(mockSubject);
         savedDoc.setStatus("ACTIVE");
-        when(documentRepository.save(any(Document.class))).thenReturn(savedDoc);
+        when(documentRepository.saveAndFlush(any(Document.class))).thenReturn(savedDoc);
 
         DocumentResponse response = documentService.uploadDocument(mockFile, "Test Title", "Description", 1, null, "doantam785@gmail.com");
 
