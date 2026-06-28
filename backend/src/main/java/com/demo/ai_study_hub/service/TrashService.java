@@ -106,15 +106,20 @@ public class TrashService {
         User user = getUser(email);
 
         Document doc = documentRepository.findById(docId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found in trash"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found in trash"));
 
         if (!doc.getOwner().getUserId().equals(user.getUserId()) || !"DELETED".equals(doc.getStatus())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found in trash");
         }
 
+        boolean deleted = cloudinaryStorageService.deleteFile(doc.getPublicId(), doc.getFileType());
+        if (!deleted) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                "Unable to delete remote file. Please try again.");
+        }
+
         documentShareRepository.deleteByDocument(doc);
         groupDocumentShareRepository.deleteByDocument(doc);
-        cloudinaryStorageService.deleteFile(doc.getPublicId(), doc.getFileType());
         documentRepository.delete(doc);
     }
 
@@ -188,12 +193,12 @@ public class TrashService {
                 });
                 deletedCount++;
             } catch (Exception e) {
-                log.error("Failed to permanently delete document {} during empty trash", doc.getDocumentId(), e);
+                log.error("Database cleanup failed for document {} during empty trash", doc.getDocumentId(), e);
                 failures.add(EmptyTrashResponse.FailureItem.builder()
                     .type("DOCUMENT")
                     .id(doc.getDocumentId())
                     .title(doc.getTitle())
-                    .reason("Failed to delete document: " + e.getMessage())
+                    .reason("Database cleanup failed")
                     .build());
             }
         }
@@ -214,12 +219,12 @@ public class TrashService {
                 });
                 deletedCount++;
             } catch (Exception e) {
-                log.error("Failed to permanently delete folder {} during empty trash", folder.getFolderId(), e);
+                log.error("Database cleanup failed for folder {} during empty trash", folder.getFolderId(), e);
                 failures.add(EmptyTrashResponse.FailureItem.builder()
                     .type("FOLDER")
                     .id(folder.getFolderId())
                     .title(folder.getName())
-                    .reason("Failed to delete folder: " + e.getMessage())
+                    .reason("Database cleanup failed")
                     .build());
             }
         }
@@ -242,12 +247,7 @@ public class TrashService {
     }
 
     private int getFolderDepth(Folder folder) {
-        int depth = 0;
-        Folder current = folder.getParentFolder();
-        while (current != null) {
-            depth++;
-            current = current.getParentFolder();
-        }
-        return depth;
+        Integer depth = folderRepository.findFolderDepth(folder.getFolderId());
+        return depth != null ? depth : 0;
     }
 }
