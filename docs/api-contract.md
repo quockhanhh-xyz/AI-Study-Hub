@@ -1717,7 +1717,15 @@ Permanently deletes a document from the database and removes the associated file
 
 ## DELETE `/api/trash`
 
-Permanently deletes all soft-deleted documents and folders belonging to the authenticated user. This removes all files from Cloudinary and deletes their database records.
+Permanently deletes all soft-deleted documents and folders belonging to the authenticated user.
+
+### Behavior Rules:
+- **Recursive Deletion**: Deletion of folders must clear subfolders and files in a depth-first traversal order (deepest items first) to prevent folder structural orphans.
+- **Foreign Keys**: Association records (such as direct user shares, group document/folder shares, and activity logs) must be handled first.
+- **Failures & Outcomes**:
+  - `outcome = 'SUCCESS'`: All trashed folders and documents (and their remote Cloudinary files) are successfully purged.
+  - `outcome = 'PARTIAL_SUCCESS'`: Some metadata or remote file deletions (e.g., Cloudinary API timeout) failed, but other database records were cleaned.
+  - `outcome = 'FAILED'`: The process aborted or failed entirely.
 
 ### Request Headers
 
@@ -1728,8 +1736,20 @@ Permanently deletes all soft-deleted documents and folders belonging to the auth
 ```json
 {
   "success": true,
-  "message": "Trash emptied successfully",
-  "data": null
+  "message": "Trash cleared",
+  "data": {
+    "outcome": "PARTIAL_SUCCESS",
+    "deletedCount": 5,
+    "failedCount": 1,
+    "failures": [
+      {
+        "type": "DOCUMENT",
+        "id": 12,
+        "title": "Problematic Lecture Notes.pdf",
+        "reason": "Cloudinary delete failed"
+      }
+    ]
+  }
 }
 ```
 
@@ -1939,7 +1959,10 @@ Retrieves all documents shared directly with the current user. Trashed or delete
         "fileType": "pdf",
         "fileSize": 1024,
         "fileUrl": "https://res.cloudinary.com/...",
-        "sharedByEmail": "owner@gmail.com",
+        "sharedByName": "John Owner",
+        "sharedWithName": "Mary Recipient",
+        "sharedByEmail": null,
+        "sharedWithEmail": null,
         "createdAt": "2026-06-19T13:40:00"
       }
     ]
@@ -2020,7 +2043,8 @@ Shares a document into a study group. Only the document owner can share, and the
       "shareId": 1,
       "documentId": 10,
       "groupId": 1,
-      "sharedByEmail": "member@gmail.com",
+      "sharedByName": "Mary Recipient",
+      "sharedByEmail": null,
       "permission": "VIEW",
       "status": "ACTIVE",
       "createdAt": "2026-06-19T13:45:00"
@@ -2045,11 +2069,12 @@ Lists documents shared in a group. User must be an active member of the group. T
         "fileSize": 1024,
         "fileUrl": "https://res.cloudinary.com/...",
         "groupId": 1,
-        "sharedByEmail": "member@gmail.com",
+        "sharedByName": "Mary Recipient",
+        "sharedByEmail": null,
         "permission": "VIEW",
         "status": "ACTIVE",
         "createdAt": "2026-06-19T13:45:00",
-        "canRevoke": true
+        "canRevoke": false
       }
     ]
   }
@@ -2215,9 +2240,10 @@ Retrieves the list of root folders that have been directly shared with the curre
       "folderName": "SWP391",
       "description": "Software Project Materials",
       "ownerName": "User A",
-      "ownerEmail": "usera@gmail.com",
+      "ownerEmail": null,
       "sharedByName": "User A",
-      "sharedByEmail": "usera@gmail.com",
+      "sharedWithName": "Mary Recipient",
+      "sharedByEmail": null,
       "permission": "VIEW",
       "status": "ACTIVE",
       "createdAt": "2026-06-21T14:50:00"
@@ -2347,9 +2373,9 @@ Retrieves all root folders shared directly into a study group. Only accessible b
       "folderName": "SWP391",
       "description": "Software Project Materials",
       "ownerName": "User A",
-      "ownerEmail": "usera@gmail.com",
+      "ownerEmail": null,
       "sharedByName": "User A",
-      "sharedByEmail": "usera@gmail.com",
+      "sharedByEmail": null,
       "permission": "VIEW",
       "status": "ACTIVE",
       "createdAt": "2026-06-21T14:55:00",
@@ -2410,7 +2436,7 @@ Retrieves the direct subfolders and documents inside a shared folder that the cu
       "folderId": 6,
       "folderName": "Lab",
       "ownerName": "User A",
-      "ownerEmail": "usera@gmail.com"
+      "ownerEmail": null
     },
     "subfolders": [
       {
@@ -2431,7 +2457,8 @@ Retrieves the direct subfolders and documents inside a shared folder that the cu
         "fileUrl": "http://cloudinary.com/lab-guidelines.pdf",
         "folderId": 6,
         "folderName": "Lab",
-        "uploadedBy": "usera@gmail.com",
+        "uploadedByName": "User A",
+        "uploadedBy": null,
         "status": "ACTIVE",
         "createdAt": "2026-06-21T15:00:00"
       }
@@ -2446,12 +2473,12 @@ Retrieves the direct subfolders and documents inside a shared folder that the cu
 }
 ```
 
-### Error Response - Access Denied (403 Forbidden)
+### Error Response - Not Found (404)
 If the user does not have access to this folder or any of its ancestors:
 ```json
 {
   "success": false,
-  "message": "Access denied",
+  "message": "Folder not found",
   "data": null
 }
 ```
@@ -2482,7 +2509,7 @@ These rules govern page routing on the frontend and operational behaviors betwee
 ## 10.4. Redirect Flows
 
 - **Login Redirect**: The login page accepts a `redirect` query parameter (e.g., `login.html?redirect=dashboard.html`). After successful authentication, the frontend must validate that the redirect target is within the same domain (origin) before performing the redirect to prevent Open Redirect security vulnerabilities. If the origin does not match or if the redirect parameter is omitted, the user is redirected to `dashboard.html` by default.
-- **Register Redirect**: The registration flow requires OTP verification. After a user registers, they are redirected to `otp.html?email=<encoded-email>` to input their OTP. Upon successful verification, they are redirected to `login.html`.
+- **Register & OTP Redirect Flow**: The registration flow requires OTP verification. After registration, if a redirect parameter was present (e.g., `register.html?redirect=community.html`), the application must pass this parameter to the OTP verification page (`verify-otp.html?email=<encoded-email>&redirect=community.html`). Upon successful OTP verification, the redirect parameter must be passed forward to the login page (`login.html?redirect=community.html`). After successful login, the user is redirected to the initial target page (e.g. `community.html`).
 - **Community Library Redirect**: Guest users browsing the Community page (`community.html`) can view public document listings. Clicking on a document detail redirects them to `document-detail.html?id=<id>&from=community`. When they attempt to preview or download, if the document requires authentication, they must be redirected to `login.html?redirect=document-detail.html?id=<id>&from=community`.
 
 ## 10.5. File Type Filtering Conventions
@@ -2725,32 +2752,5 @@ Allows the owner of a document to withdraw it from the public library, resetting
     "approvalStatus": "PENDING",
     "publishedAt": null
   }
-}
-```
-
----
-
-## 12.6. Get Public Subjects API
-
-## GET `/api/subjects/public`
-
-Allows guests and logged-in users to list all active subjects that are currently associated with at least one public, approved, active document. Specifically excludes creator `ownerId` identifiers for privacy security.
-
-### Success Response (200 OK)
-
-```json
-{
-  "success": true,
-  "message": "Public subjects retrieved successfully",
-  "data": [
-    {
-      "subjectId": 2,
-      "subjectCode": "PHY101",
-      "subjectName": "General Physics I",
-      "description": "Basic mechanics and thermodynamics.",
-      "scope": "SYSTEM",
-      "ownerId": null
-    }
-  ]
 }
 ```

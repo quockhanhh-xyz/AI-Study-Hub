@@ -50,16 +50,19 @@ class SharingServiceTest {
         owner = new User();
         owner.setUserId(1);
         owner.setEmail("owner@gmail.com");
+        owner.setFullName("John Owner");
         owner.setStatus("ACTIVE");
 
         recipient = new User();
         recipient.setUserId(2);
         recipient.setEmail("recipient@gmail.com");
+        recipient.setFullName("Mary Recipient");
         recipient.setStatus("ACTIVE");
 
         external = new User();
         external.setUserId(3);
         external.setEmail("external@gmail.com");
+        external.setFullName("External User");
         external.setStatus("ACTIVE");
 
         document = new Document();
@@ -368,5 +371,28 @@ class SharingServiceTest {
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
         assertEquals("Document not found", exception.getReason());
+    }
+
+    @Test
+    void getSharedWithMe_AsRecipient_ShouldHideEmails() {
+        DocumentShare share = new DocumentShare();
+        share.setShareId(1);
+        share.setDocument(document);
+        share.setSharedBy(owner);
+        share.setSharedWith(recipient);
+        share.setStatus("ACTIVE");
+
+        when(userRepository.findByEmail("recipient@gmail.com")).thenReturn(Optional.of(recipient));
+        when(documentShareRepository.findActiveSharesWithMe(recipient))
+                .thenReturn(List.of(share));
+
+        List<DocumentShareResponse> responses = sharingService.getSharedWithMe("recipient@gmail.com");
+
+        assertNotNull(responses);
+        assertEquals(1, responses.size());
+        assertNull(responses.get(0).getSharedByEmail());
+        assertNull(responses.get(0).getSharedWithEmail());
+        assertEquals("John Owner", responses.get(0).getSharedByName());
+        assertEquals("Mary Recipient", responses.get(0).getSharedWithName());
     }
 }

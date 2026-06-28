@@ -275,7 +275,8 @@ public class FolderShareServiceImpl implements FolderShareService {
 
     private FolderShareResponse mapToShareResponse(FolderShare share, Integer currentUserId) {
         Folder folder = share.getFolder();
-        boolean canRevoke = folder.getOwner().getUserId().equals(currentUserId);
+        boolean isOwner = folder.getOwner().getUserId().equals(currentUserId);
+        boolean canRevoke = isOwner;
 
         return FolderShareResponse.builder()
                 .shareId(share.getShareId())
@@ -283,10 +284,11 @@ public class FolderShareServiceImpl implements FolderShareService {
                 .folderName(folder.getName())
                 .parentFolderId(folder.getParentFolder() != null ? folder.getParentFolder().getFolderId() : null)
                 .ownerName(folder.getOwner().getFullName())
-                .ownerEmail(folder.getOwner().getEmail())
+                .ownerEmail(isOwner ? folder.getOwner().getEmail() : null)
                 .sharedByName(share.getSharedBy().getFullName())
-                .sharedByEmail(share.getSharedBy().getEmail())
-                .sharedWithEmail(share.getSharedWithUser().getEmail())
+                .sharedWithName(share.getSharedWithUser().getFullName())
+                .sharedByEmail(isOwner ? share.getSharedBy().getEmail() : null)
+                .sharedWithEmail(isOwner ? share.getSharedWithUser().getEmail() : null)
                 .permission(share.getPermission())
                 .status(share.getStatus())
                 .createdAt(share.getCreatedAt())

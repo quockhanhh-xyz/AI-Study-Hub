@@ -68,7 +68,7 @@ public class SharingServiceImpl implements SharingService {
         }
 
         DocumentShare saved = documentShareRepository.save(share);
-        return mapToDirectResponse(saved);
+        return mapToDirectResponse(saved, true);
     }
 
     @Override
@@ -77,7 +77,7 @@ public class SharingServiceImpl implements SharingService {
         User user = getUser(email);
         List<DocumentShare> activeShares = documentShareRepository.findActiveSharesWithMe(user);
         return activeShares.stream()
-                .map(this::mapToDirectResponse)
+                .map(share -> mapToDirectResponse(share, false))
                 .collect(Collectors.toList());
     }
 
@@ -95,7 +95,7 @@ public class SharingServiceImpl implements SharingService {
         List<GroupDocumentShare> activeGroupShares = groupDocumentShareRepository.findByDocumentAndStatus(document, "ACTIVE");
 
         List<DocumentShareResponse> directResponses = activeDirectShares.stream()
-                .map(this::mapToDirectResponse)
+                .map(share -> mapToDirectResponse(share, true))
                 .collect(Collectors.toList());
 
         List<GroupDocumentShareResponse> groupResponses = activeGroupShares.stream()
@@ -244,7 +244,7 @@ public class SharingServiceImpl implements SharingService {
         return document;
     }
 
-    private DocumentShareResponse mapToDirectResponse(DocumentShare share) {
+    private DocumentShareResponse mapToDirectResponse(DocumentShare share, boolean isOwnerView) {
         return DocumentShareResponse.builder()
                 .shareId(share.getShareId())
                 .documentId(share.getDocument().getDocumentId())
@@ -253,9 +253,9 @@ public class SharingServiceImpl implements SharingService {
                 .fileSize(share.getDocument().getFileSize())
                 .fileUrl(share.getDocument().getFileUrl())
                 .sharedByName(share.getSharedBy().getFullName())
-                .sharedWithByName(share.getSharedWith().getFullName())
-                .sharedByEmail(share.getSharedBy().getEmail())
-                .sharedWithEmail(share.getSharedWith().getEmail())
+                .sharedWithName(share.getSharedWith().getFullName())
+                .sharedByEmail(isOwnerView ? share.getSharedBy().getEmail() : null)
+                .sharedWithEmail(isOwnerView ? share.getSharedWith().getEmail() : null)
                 .permission(share.getPermission())
                 .status(share.getStatus())
                 .createdAt(share.getCreatedAt())

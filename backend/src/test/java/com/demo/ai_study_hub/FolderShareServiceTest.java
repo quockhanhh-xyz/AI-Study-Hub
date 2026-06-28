@@ -453,4 +453,29 @@ class FolderShareServiceTest {
         assertTrue(res.getCanDelete());
         assertTrue(res.getCanMove());
     }
+
+    @Test
+    void getSharedFoldersWithMe_AsRecipient_ShouldHideEmails() {
+        FolderShare share = new FolderShare();
+        share.setShareId(1);
+        share.setFolder(folder);
+        share.setSharedBy(owner);
+        share.setSharedWithUser(recipient);
+        share.setStatus("ACTIVE");
+
+        when(userRepository.findByEmail("recipient@gmail.com")).thenReturn(Optional.of(recipient));
+        when(folderShareRepository.findBySharedWithUserAndStatus(recipient, "ACTIVE"))
+                .thenReturn(List.of(share));
+
+        List<FolderShareResponse> responses = folderShareService.getSharedWithMe("recipient@gmail.com");
+
+        assertNotNull(responses);
+        assertEquals(1, responses.size());
+        assertNull(responses.get(0).getOwnerEmail());
+        assertNull(responses.get(0).getSharedByEmail());
+        assertNull(responses.get(0).getSharedWithEmail());
+        assertEquals("Folder Owner", responses.get(0).getOwnerName());
+        assertEquals("Folder Owner", responses.get(0).getSharedByName());
+        assertEquals("Recipient User", responses.get(0).getSharedWithName());
+    }
 }

@@ -34,3 +34,4 @@ uploads/
 # Maven wrapper build files if needed
 .mvn/wrapper/maven-wrapper.jar
 .worktrees/
+.codex-tmp/

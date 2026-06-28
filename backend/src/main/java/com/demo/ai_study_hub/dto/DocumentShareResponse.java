@@ -19,7 +19,7 @@ public class DocumentShareResponse {
     private Long fileSize;
     private String fileUrl;
     private String sharedByName;
-    private String sharedWithByName;
+    private String sharedWithName;
     private String sharedByEmail;
     private String sharedWithEmail;
     private String permission;
