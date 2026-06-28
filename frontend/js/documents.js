@@ -122,21 +122,25 @@ document.addEventListener("DOMContentLoaded", async function () {
     header.append(fileBadge, visibilityBadge);
 
     if (vis === "PUBLIC" && documentItem.approvalStatus) {
-        const approvalBadge = document.createElement("span");
-        approvalBadge.className = "status-badge " + documentItem.approvalStatus.toLowerCase();
-        approvalBadge.textContent = documentItem.approvalStatus;
-        approvalBadge.style.marginLeft = "4px";
-        approvalBadge.style.fontSize = "10px";
-        approvalBadge.style.height = "20px";
-        approvalBadge.style.padding = "0 8px";
-        header.append(approvalBadge);
+      const approvalBadge = document.createElement("span");
+      approvalBadge.className = "status-badge " + documentItem.approvalStatus.toLowerCase();
+      approvalBadge.textContent = documentItem.approvalStatus;
+      approvalBadge.style.marginLeft = "4px";
+      approvalBadge.style.fontSize = "10px";
+      approvalBadge.style.height = "20px";
+      approvalBadge.style.padding = "0 8px";
+      header.append(approvalBadge);
     }
 
     header.append(title);
 
     const description = document.createElement("p");
     description.className = "document-description";
-    description.textContent = documentItem.description || "No description provided.";
+    if (documentItem.description) {
+      description.textContent = documentItem.description;
+    } else {
+      description.style.display = "none";
+    }
 
     const meta = document.createElement("div");
     meta.className = "document-meta";

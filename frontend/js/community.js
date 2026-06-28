@@ -15,8 +15,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // Guest CTA banner
   const guestCtaBanner = document.getElementById("guestCtaBanner");
+  const authCtaBanner = document.getElementById("authCtaBanner");
   if (guestCtaBanner) {
     guestCtaBanner.style.display = isAuthenticated ? "none" : "flex";
+  }
+  if (authCtaBanner) {
+    authCtaBanner.style.display = isAuthenticated ? "flex" : "none";
   }
 
   // Filter UI elements
@@ -62,13 +66,10 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   function createCommunityCard(doc) {
-    const card = document.createElement("article");
+    // Use <a> instead of div+click — correct semantics, accessible
+    const card = document.createElement("a");
     card.className = "document-card";
-    // Whole card navigates to detail, matching FE2 "Card click flow" requirement.
-    card.style.cursor = "pointer";
-    card.addEventListener("click", function () {
-      window.location.href = `document-detail.html?id=${doc.documentId}&from=community`;
-    });
+    card.href = `document-detail.html?id=${doc.documentId}&from=community`;
 
     const header = document.createElement("div");
     header.className = "document-card-header";
@@ -81,10 +82,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     title.textContent = doc.title || doc.originalFileName || "Untitled document";
 
     header.append(fileBadge, title);
+    card.append(header);
 
-    const description = document.createElement("p");
-    description.className = "document-description";
-    description.textContent = doc.description || "No description provided.";
+    // Hide if no description
+    if (doc.description) {
+      const description = document.createElement("p");
+      description.className = "document-description";
+      description.textContent = doc.description;
+      card.append(description);
+    }
 
     const meta = document.createElement("div");
     meta.className = "document-meta";
@@ -94,6 +100,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       createMetaItem("Downloads", doc.downloadCount ?? 0)
     );
 
+    // Only use ownerName/displayName — do not display email
     if (doc.ownerName) {
       meta.append(createMetaItem("By", doc.ownerName));
     }
@@ -107,21 +114,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       meta.append(subjectBadge);
     }
 
-    const actions = document.createElement("div");
-    actions.className = "document-actions";
-
-    const detailButton = document.createElement("a");
-    detailButton.href = `document-detail.html?id=${doc.documentId}&from=community`;
-    detailButton.className = "btn btn-primary document-detail-btn";
-    detailButton.textContent = "View Detail";
-    // Prevent the card's own click handler from double-navigating.
-    detailButton.addEventListener("click", function (e) {
-      e.stopPropagation();
-    });
-
-    actions.append(detailButton);
-    card.append(header, description, meta, actions);
-
+    card.append(meta);
     return card;
   }
 

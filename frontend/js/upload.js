@@ -33,6 +33,8 @@ const newFolderError = document.getElementById("newFolderError");
 const CREATE_NEW_VALUE = "__new__";
 let lastSubjectValue = "";
 let lastFolderValue = "";
+let retainedSubjectId = "";
+let retainedFolderId = "";
 
 // Constants
 const ALLOWED_TYPES = [
@@ -151,9 +153,29 @@ function updateDropZone(file) {
   if (file) {
     dropZoneText.innerHTML = `<strong>${file.name}</strong><br/><small>${formatFileSize(file.size)}</small>`;
     dropZone.classList.add("has-file");
+    // Show Remove/Change File button
+    let removeBtn = document.getElementById("removeFileBtn");
+    if (!removeBtn) {
+      removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.id = "removeFileBtn";
+      removeBtn.className = "btn btn-secondary";
+      removeBtn.style.marginTop = "8px";
+      removeBtn.textContent = "Remove / Change File";
+      removeBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        fileInput.value = "";
+        updateDropZone(null);
+        hideMessage();
+      });
+      dropZone.parentNode.insertBefore(removeBtn, dropZone.nextSibling);
+    }
+    removeBtn.style.display = "inline-flex";
   } else {
     dropZoneText.innerHTML = `Drag and drop or click to select a file<br/><small>(PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG - max 10MB)</small>`;
     dropZone.classList.remove("has-file");
+    const removeBtn = document.getElementById("removeFileBtn");
+    if (removeBtn) removeBtn.style.display = "none";
   }
 }
 
@@ -332,6 +354,7 @@ async function handleCreateSubject() {
     subjectSelect.insertBefore(option, subjectSelect.querySelector(`option[value="${CREATE_NEW_VALUE}"]`));
     subjectSelect.value = created.subjectId;
     lastSubjectValue = String(created.subjectId);
+    retainedSubjectId = String(created.subjectId);
 
     newSubjectRow.style.display = "none";
     subjectError.style.display = "none";
@@ -406,6 +429,7 @@ async function handleCreateFolder() {
     folderSelect.insertBefore(option, folderSelect.querySelector(`option[value="${CREATE_NEW_VALUE}"]`));
     folderSelect.value = created.folderId;
     lastFolderValue = String(created.folderId);
+    retainedFolderId = String(created.folderId);
 
     newFolderRow.style.display = "none";
     window.showToast(`Folder "${option.textContent}" created and selected.`, "success");
@@ -489,6 +513,9 @@ uploadForm.addEventListener("submit", async (e) => {
     const result = await uploadDocument(formData);
     completeProgress(progressInterval);
     window.showToast(`Upload successful: "${result.data.title}"`, "success");
+    // Reset everything only if successful
+    retainedSubjectId = "";
+    retainedFolderId = "";
     uploadForm.reset();
     updateDropZone(null);
     newSubjectRow.style.display = "none";
@@ -498,6 +525,7 @@ uploadForm.addEventListener("submit", async (e) => {
   } catch (err) {
     clearInterval(progressInterval);
     hideProgress();
+    // Keep the file + subject + folder intact so the user does not need to retry and select again
     showMessage(resolveUploadError(err), "error");
 
   } finally {

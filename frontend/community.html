@@ -31,8 +31,13 @@
             <!-- Guest CTA banner, shown only when not logged in -->
             <section id="guestCtaBanner" class="status-box status-info community-guest-banner" style="display:none;">
                 <span>Want to upload and share your own documents?</span>
-                <a href="login.html" class="btn btn-primary btn-sm">Login</a>
-                <a href="register.html" class="btn btn-secondary btn-sm">Register</a>
+                <a href="login.html?redirect=community.html" class="btn btn-primary btn-sm">Login</a>
+                <a href="register.html?redirect=community.html" class="btn btn-secondary btn-sm">Register</a>
+            </section>
+
+            <section id="authCtaBanner" class="status-box status-info community-guest-banner" style="display:none;">
+                <span>Share your study materials with the community.</span>
+                <a href="upload.html" class="btn btn-primary btn-sm">Upload a document</a>
             </section>
 
             <section class="card document-panel dashboard-panel">
@@ -65,17 +70,26 @@
                     <div class="filter-group">
                         <select id="fileTypeFilter">
                             <option value="">All File Types</option>
-                            <option value="PDF">PDF</option>
-                            <option value="DOC">DOC</option>
-                            <option value="DOCX">DOCX</option>
-                            <option value="PPT">PPT</option>
-                            <option value="PPTX">PPTX</option>
-                            <option value="XLS">XLS</option>
-                            <option value="XLSX">XLSX</option>
-                            <option value="TXT">TXT</option>
-                            <option value="JPG">JPG</option>
-                            <option value="JPEG">JPEG</option>
-                            <option value="PNG">PNG</option>
+                            <optgroup label="PDF Documents">
+                                <option value="PDF">PDF</option>
+                            </optgroup>
+                            <optgroup label="Word Documents">
+                                <option value="DOC">DOC</option>
+                                <option value="DOCX">DOCX</option>
+                            </optgroup>
+                            <optgroup label="Presentations">
+                                <option value="PPT">PPT</option>
+                                <option value="PPTX">PPTX</option>
+                            </optgroup>
+                            <optgroup label="Spreadsheets">
+                                <option value="XLS">XLS</option>
+                                <option value="XLSX">XLSX</option>
+                            </optgroup>
+                            <optgroup label="Images">
+                                <option value="JPG">JPG</option>
+                                <option value="JPEG">JPEG</option>
+                                <option value="PNG">PNG</option>
+                            </optgroup>
                         </select>
                     </div>
                     <div class="filter-group">
