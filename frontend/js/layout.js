@@ -27,7 +27,7 @@ window.authReady =
 
 /**
  * Validates session status dynamically against the backend security context.
- * Seamlessly allows unauthenticated guest access to public routes without disruptive login redirects.
+ * Enhanced in Step 8A to enforce secure multi-stage query parameter dynamic redirection.
  * @returns {Promise<boolean>}
  */
 async function checkAuthenticationStatus() {
@@ -46,9 +46,32 @@ async function checkAuthenticationStatus() {
       localStorage.setItem("currentUser", JSON.stringify(result.data));
     }
 
-    // Guard clause: If page is only for guests (like login.html) and user session is active -> Kick to dashboard
+    // Guard clause: If page is only for guests (like login.html) and user session is active -> Kick to target destination
     if (currentRoute.hideWhenAuth) {
-      window.location.href = "dashboard.html";
+      const urlParams = new URLSearchParams(window.location.search);
+      let redirectUrl = urlParams.get("redirect");
+
+      // Step 8A Redirection Hardening Rule: Prevent open redirect vulnerabilities to external hostnames
+      if (redirectUrl) {
+        try {
+          // If it looks like an absolute external URL or attempts to break path constraints, strip it
+          if (redirectUrl.startsWith("http://") || redirectUrl.startsWith("https://") || redirectUrl.startsWith("//")) {
+            const targetUrl = new URL(redirectUrl, window.location.origin);
+            if (targetUrl.origin !== window.location.origin) {
+              console.warn("Malicious or mismatched open-redirect origin detected. Fallback applied.");
+              redirectUrl = "dashboard.html";
+            } else {
+              redirectUrl = targetUrl.pathname + targetUrl.search;
+            }
+          }
+        } catch (e) {
+          redirectUrl = "dashboard.html";
+        }
+      } else {
+        redirectUrl = "dashboard.html";
+      }
+
+      window.location.href = redirectUrl;
       return true;
     }
 
@@ -59,7 +82,9 @@ async function checkAuthenticationStatus() {
 
     // Step 8 Security Rule: Only redirect to login screen if the route explicitly demands authentication
     if (currentRoute.requiresAuth) {
-      window.location.href = "login.html";
+      // Step 8A Trace Parameter Tracking: Back-propagate the current intent route state to preserve post-auth redirection
+      const currentQuery = window.location.search ? window.location.search : "";
+      window.location.href = `login.html?redirect=${encodeURIComponent(currentPage + currentQuery)}`;
     }
 
     return false;
@@ -68,11 +93,38 @@ async function checkAuthenticationStatus() {
 
 /**
  * Dynamically updates sidebar layout according to authentication status.
- * Filters out structural hidden components to prevent rendering in views.
+ * Step 8A Optimization: Completely strips structural sidebar layouts inside Guest Auth pages.
  * @param {boolean} isAuthenticated
  */
 function renderDynamicSidebar(isAuthenticated) {
+  const sidebar = document.querySelector(".sidebar");
   const navContainer = document.querySelector(".sidebar-nav");
+  const currentPage = getCurrentPageName();
+  const currentRoute = NAVIGATION_MENU.find(item => item.url === currentPage);
+
+  // Step 8A Guest Auth Pages Navigation Constraint Rule
+  if (!isAuthenticated && currentRoute && currentRoute.hideWhenAuth) {
+    if (sidebar) {
+      // Preserve or build a minimalist landing container for Guest navigation alternative
+      const oldFooter = sidebar.querySelector(".sidebar-footer");
+      if (oldFooter) oldFooter.remove();
+      
+      if (navContainer) {
+        navContainer.innerHTML = `
+          <a href="community.html" class="nav-link">
+            <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg></span>
+            <span class="nav-text" style="font-weight: 500;">Browse Community Library</span>
+          </a>
+        `;
+      }
+      
+      // Force collapse layout or hide complex control toggles from login interface shell
+      const toggleBtn = sidebar.querySelector(".sidebar-toggle-btn");
+      if (toggleBtn) toggleBtn.style.display = "none";
+    }
+    return;
+  }
+
   if (!navContainer) return;
 
   // Filter links based on visibility flags, authentication state, and health/admin restrictions
@@ -98,7 +150,6 @@ function renderDynamicSidebar(isAuthenticated) {
     .join("");
 
   // Append a dedicated Logout link if user is fully logged in
-  const sidebar = document.querySelector(".sidebar");
   if (sidebar) {
     // Safely clear out any pre-existing footer to prevent duplicate rendering artifacts (for both guest and logged-in states)
     const oldFooter = sidebar.querySelector(".sidebar-footer");
