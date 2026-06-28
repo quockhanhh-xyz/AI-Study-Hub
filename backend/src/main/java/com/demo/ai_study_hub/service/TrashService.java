@@ -1,18 +1,26 @@
 package com.demo.ai_study_hub.service;
 
+import com.demo.ai_study_hub.dto.EmptyTrashResponse;
 import com.demo.ai_study_hub.dto.TrashResponse;
 import com.demo.ai_study_hub.entity.Document;
 import com.demo.ai_study_hub.entity.Folder;
 import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.repository.DocumentRepository;
+import com.demo.ai_study_hub.repository.DocumentShareRepository;
 import com.demo.ai_study_hub.repository.FolderRepository;
+import com.demo.ai_study_hub.repository.FolderShareRepository;
+import com.demo.ai_study_hub.repository.GroupDocumentShareRepository;
+import com.demo.ai_study_hub.repository.GroupFolderShareRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,10 +28,16 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TrashService {
 
+    private static final Logger log = LoggerFactory.getLogger(TrashService.class);
+
     private final DocumentRepository documentRepository;
     private final FolderRepository folderRepository;
     private final UserRepository userRepository;
     private final CloudinaryStorageService cloudinaryStorageService;
+    private final FolderShareRepository folderShareRepository;
+    private final GroupFolderShareRepository groupFolderShareRepository;
+    private final DocumentShareRepository documentShareRepository;
+    private final GroupDocumentShareRepository groupDocumentShareRepository;
 
     private User getUser(String email) {
         return userRepository.findByEmail(email)
@@ -94,6 +108,8 @@ public class TrashService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found in trash");
         }
 
+        documentShareRepository.deleteByDocument(doc);
+        groupDocumentShareRepository.deleteByDocument(doc);
         cloudinaryStorageService.deleteFile(doc.getPublicId(), doc.getFileType());
         documentRepository.delete(doc);
     }
@@ -108,7 +124,6 @@ public class TrashService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash");
         }
 
-
         if (folder.getParentFolder() != null && "DELETED".equals(folder.getParentFolder().getStatus())) {
             folder.setParentFolder(null);
         }
@@ -116,7 +131,6 @@ public class TrashService {
         folder.setStatus("ACTIVE");
         folder.setDeletedAt(null);
         folderRepository.save(folder);
-
     }
 
     @Transactional
@@ -129,7 +143,88 @@ public class TrashService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash");
         }
 
-
+        folderShareRepository.deleteByFolder(folder);
+        groupFolderShareRepository.deleteByFolder(folder);
         folderRepository.delete(folder);
+    }
+
+    @Transactional
+    public EmptyTrashResponse emptyTrash(String email) {
+        User user = getUser(email);
+
+        List<Document> trashedDocs = documentRepository.findByOwner_UserIdAndStatus(user.getUserId(), "DELETED");
+        List<Folder> trashedFolders = folderRepository.findByOwnerAndStatusOrderByCreatedAtDesc(user, "DELETED");
+
+        int deletedCount = 0;
+        List<EmptyTrashResponse.FailureItem> failures = new ArrayList<>();
+
+        for (Document doc : trashedDocs) {
+            try {
+                documentShareRepository.deleteByDocument(doc);
+                groupDocumentShareRepository.deleteByDocument(doc);
+
+                boolean cloudinaryDeleted = cloudinaryStorageService.deleteFile(doc.getPublicId(), doc.getFileType());
+                if (!cloudinaryDeleted) {
+                    log.warn("Cloudinary file deletion failed during empty trash. publicId={}", doc.getPublicId());
+                }
+
+                documentRepository.delete(doc);
+                deletedCount++;
+            } catch (Exception e) {
+                log.error("Failed to permanently delete document {} during empty trash", doc.getDocumentId(), e);
+                failures.add(EmptyTrashResponse.FailureItem.builder()
+                        .type("DOCUMENT")
+                        .id(doc.getDocumentId())
+                        .message("Failed to delete document: " + e.getMessage())
+                        .build());
+            }
+        }
+
+        List<Folder> sortedFolders = trashedFolders.stream()
+                .sorted((a, b) -> Integer.compare(getFolderDepth(b), getFolderDepth(a)))
+                .collect(Collectors.toList());
+
+        for (Folder folder : sortedFolders) {
+            try {
+                folderShareRepository.deleteByFolder(folder);
+                groupFolderShareRepository.deleteByFolder(folder);
+
+                folderRepository.delete(folder);
+                deletedCount++;
+            } catch (Exception e) {
+                log.error("Failed to permanently delete folder {} during empty trash", folder.getFolderId(), e);
+                failures.add(EmptyTrashResponse.FailureItem.builder()
+                        .type("FOLDER")
+                        .id(folder.getFolderId())
+                        .message("Failed to delete folder: " + e.getMessage())
+                        .build());
+            }
+        }
+
+        String outcome;
+        if (failures.isEmpty()) {
+            outcome = "SUCCESS";
+        } else if (deletedCount > 0) {
+            outcome = "PARTIAL_SUCCESS";
+        } else {
+            outcome = "FAILED";
+        }
+
+        return EmptyTrashResponse.builder()
+                .outcome(outcome)
+                .deletedCount(deletedCount)
+                .failedCount(failures.size())
+                .failures(failures)
+                .build();
+    }
+
+    private int getFolderDepth(Folder folder) {
+        int depth = 0;
+        Folder current = folder.getParentFolder();
+        while (current != null) {
+            depth++;
+            current = current.getParentFolder();
+        }
+        return depth;
     }
 }

@@ -7,6 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import com.demo.ai_study_hub.dto.EmptyTrashResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/trash")
@@ -59,5 +62,20 @@ public class TrashController {
                 .success(true)
                 .message("Folder permanently deleted")
                 .build());
+    }
+
+    @DeleteMapping("/empty")
+    public ResponseEntity<ApiResponse<EmptyTrashResponse>> emptyTrash(Authentication auth) {
+        try {
+            EmptyTrashResponse data = trashService.emptyTrash(auth.getName());
+            String message = "SUCCESS".equals(data.getOutcome())
+                ? "Trash emptied successfully"
+                : "Trash cleanup completed with some failures";
+            return ResponseEntity.ok(ApiResponse.success(data, message));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
     }
 }
