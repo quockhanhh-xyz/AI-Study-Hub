@@ -29,4 +29,12 @@ public interface FolderRepository extends JpaRepository<Folder, Integer> {
 
     @Query("SELECT f.folderId FROM Folder f WHERE f.parentFolder.folderId = :parentId AND f.status = 'ACTIVE'")
     List<Integer> findSubFolderIdsByParentId(@Param("parentId") Integer parentId);
+
+    @Query(value = "WITH RECURSIVE ancestor_chain AS ( " +
+        "  SELECT folder_id, parent_folder_id, 0 AS depth FROM folders WHERE folder_id = :folderId " +
+        "  UNION ALL " +
+        "  SELECT f.folder_id, f.parent_folder_id, ac.depth + 1 FROM folders f " +
+        "  JOIN ancestor_chain ac ON f.folder_id = ac.parent_folder_id " +
+        ") SELECT MAX(depth) FROM ancestor_chain", nativeQuery = true)
+    Integer findFolderDepth(@Param("folderId") Integer folderId);
 }

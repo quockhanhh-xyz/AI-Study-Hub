@@ -7,6 +7,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import com.demo.ai_study_hub.dto.EmptyTrashResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/trash")
@@ -14,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class TrashController {
 
     private final TrashService trashService;
+    private static final Logger log = LoggerFactory.getLogger(TrashController.class);
 
     @GetMapping
     public ResponseEntity<ApiResponse<TrashResponse>> getTrash(Authentication auth) {
@@ -59,5 +65,19 @@ public class TrashController {
                 .success(true)
                 .message("Folder permanently deleted")
                 .build());
+    }
+
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<EmptyTrashResponse>> emptyTrash(Authentication auth) {
+        try {
+            EmptyTrashResponse data = trashService.emptyTrash(auth.getName());
+            return ResponseEntity.ok(ApiResponse.success(data, "Trash cleared"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            log.error("Failed to empty trash", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Unable to clear trash. Please try again."));
+        }
     }
 }

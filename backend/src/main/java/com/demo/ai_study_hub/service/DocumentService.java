@@ -21,6 +21,7 @@ import java.util.ArrayList;
 @Service
 @RequiredArgsConstructor
 public class DocumentService {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DocumentService.class);
     private final DocumentRepository documentRepository;
     private final UserRepository userRepository;
     private final CloudinaryStorageService cloudinaryStorageService;
@@ -42,13 +43,13 @@ public class DocumentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Subject is required");
         }
         Subject subject = subjectRepository.findById(subjectId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
         if (!"ACTIVE".equals(subject.getStatus())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found");
         }
 
         if ("USER_CUSTOM".equals(subject.getScope())
-                && (subject.getOwner() == null || !subject.getOwner().getUserId().equals(owner.getUserId()))) {
+            && (subject.getOwner() == null || !subject.getOwner().getUserId().equals(owner.getUserId()))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this subject");
         }
 
@@ -64,21 +65,32 @@ public class DocumentService {
         }
 
         boolean isDuplicate = documentRepository.existsDuplicate(
-                owner,
-                file.getOriginalFilename(),
-                file.getSize(),
-                folderId
+            owner,
+            file.getOriginalFilename(),
+            file.getSize(),
+            folderId
         );
         if (isDuplicate) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "A file with the same name already exists in this folder.");
+                "A file with the same name already exists in this folder.");
         }
 
-        FileUploadResult uploadResult = cloudinaryStorageService.uploadFile(file, owner.getUserId());
+        FileUploadResult uploadResult;
+        try {
+            uploadResult = cloudinaryStorageService.uploadFile(file, owner.getUserId());
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Cloudinary upload failed or timed out", e);
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                "Cloudinary upload failed or timed out. Please try again.");
+        }
 
         String url = uploadResult.getFileUrl();
-        if (url == null || url.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to generate download URL from Cloudinary");
+        String publicId = uploadResult.getPublicId();
+        String fileTypeForCleanup = uploadResult.getFileType();
+        if (url == null || url.trim().isEmpty() || publicId == null || publicId.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to generate file URL or storage ID from Cloudinary");
         }
 
         Document doc = new Document();
@@ -94,7 +106,19 @@ public class DocumentService {
         doc.setSubject(subject);
         doc.setFolder(folder);
 
-        Document savedDoc = documentRepository.save(doc);
+        Document savedDoc;
+        try {
+            savedDoc = documentRepository.saveAndFlush(doc);
+        } catch (Exception persistenceException) {
+            log.error("Failed to persist document metadata, rolling back Cloudinary upload. publicId={}", publicId, persistenceException);
+            boolean cleaned = cloudinaryStorageService.deleteFile(publicId, fileTypeForCleanup);
+            if (!cleaned) {
+                log.warn("Cloudinary cleanup failed for orphaned file. publicId={}", publicId);
+            }
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                "Failed to save document metadata. Upload has been rolled back.");
+        }
+
         return mapToResponse(savedDoc);
     }
 
