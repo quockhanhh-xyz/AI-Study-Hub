@@ -89,8 +89,8 @@ public class DocumentService {
         String url = uploadResult.getFileUrl();
         String publicId = uploadResult.getPublicId();
         String fileTypeForCleanup = uploadResult.getFileType();
-        if (url == null || url.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to generate download URL from Cloudinary");
+        if (url == null || url.trim().isEmpty() || publicId == null || publicId.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to generate file URL or storage ID from Cloudinary");
         }
 
         Document doc = new Document();
