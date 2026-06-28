@@ -35,10 +35,31 @@ document.addEventListener("DOMContentLoaded", async function () {
   const joinCancelBtn = document.getElementById("joinCancelBtn");
   const joinConfirmBtn = document.getElementById("joinConfirmBtn");
 
-  // Modal helpers
+  // Accessibility Focus tracking element footprint cache container
+  let lastActiveElement = null;
 
-  function openModal(overlay) { overlay.classList.add("open"); }
-  function closeModal(overlay) { overlay.classList.remove("open"); }
+  function openModal(overlay) {
+    lastActiveElement = document.activeElement;
+    overlay.classList.add("open");
+    
+    // Accessibility dialog configurations enforcement attributes
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    
+    // Focus Trap initial capture configuration
+    const focusableInputs = overlay.querySelectorAll('input, select, textarea, button, [tabindex="0"]');
+    if (focusableInputs.length > 0) {
+      setTimeout(() => focusableInputs[0].focus(), 50);
+    }
+  }
+
+  function closeModal(overlay) {
+    overlay.classList.remove("open");
+    // Accessibility Rule: Focus Return mechanism execution pass
+    if (lastActiveElement && typeof lastActiveElement.focus === "function") {
+      lastActiveElement.focus();
+    }
+  }
 
   function showError(el, message) {
     el.textContent = message;
@@ -50,6 +71,19 @@ document.addEventListener("DOMContentLoaded", async function () {
     el.style.display = "none";
   }
 
+  // Global Keyboard Navigation Escape key capture routing pipeline
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      const createModal = document.getElementById("createModal");
+      const joinModal = document.getElementById("joinModal");
+      [createModal, joinModal].forEach(overlay => {
+        if (overlay && overlay.classList.contains("open")) {
+          closeModal(overlay);
+        }
+      });
+    }
+  });
+
   // Group list rendering
 
   function navigateToGroup(groupId) {
@@ -57,9 +91,12 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   function createGroupCard(group) {
-    const card = document.createElement("div");
+    // Step 8A Rule: Use anchor elements <a> for navigable structural resource components
+    const card = document.createElement("a");
     card.className = "folder-card";
-    card.style.cursor = "pointer";
+    card.href = `group-detail.html?id=${group.groupId}`;
+    card.style.textDecoration = "none";
+    card.style.color = "inherit";
 
     const icon = document.createElement("div");
     icon.className = "folder-icon";
@@ -71,9 +108,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const meta = document.createElement("p");
     meta.className = "folder-meta";
-    // API GET /api/groups/my only returns: groupId, groupName, description,
-    // inviteCode, ownerId, status, role — there is no memberCount field.
-    meta.textContent = group.role || "";
+    // Standarize roles visibility mappings safely
+    meta.textContent = group.role ? group.role.toUpperCase() : "MEMBER";
 
     const main = document.createElement("div");
     main.className = "folder-card-main";
@@ -81,8 +117,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     card.appendChild(main);
 
-    card.addEventListener("click", function () {
-      navigateToGroup(group.groupId);
+    // Prevent full reload block if open modifier keys are combined
+    card.addEventListener("click", function (e) {
+      if (!e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        navigateToGroup(group.groupId);
+      }
     });
 
     return card;
