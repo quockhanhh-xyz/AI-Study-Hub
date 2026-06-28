@@ -434,8 +434,8 @@ Uploads a document file for the currently authenticated user.
   - `200 OK` for successful actions.
   - `400 Bad Request` for validation failures (e.g. missing title).
   - `401 Unauthorized` for missing/expired token.
-  - `403 Forbidden` for ownership violations (user attempting to read/write another user's document, or using another user's custom subject).
-  - `404 Not Found` for non-existent or soft-deleted documents.
+  - `403 Forbidden` for subject ownership violations (using another user's custom subject) and folder access denial during upload (`folderId` belongs to another user).
+  - `404 Not Found` for non-existent or soft-deleted documents, AND for document ownership violations (Step 8A privacy hardening: accessing, updating, moving, deleting, publishing, or unpublishing another user's document returns `404 Not Found` instead of `403 Forbidden`, to avoid confirming the document's existence to unauthorized users).
   - `409 Conflict` for duplicate file uploads.
   - Controller endpoints must NOT catch all exceptions and simplify them into a generic `400 Bad Request` (`ResponseEntity.badRequest()`).
 
