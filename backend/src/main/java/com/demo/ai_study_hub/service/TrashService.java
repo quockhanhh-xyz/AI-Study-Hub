@@ -17,7 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
@@ -38,6 +41,7 @@ public class TrashService {
     private final GroupFolderShareRepository groupFolderShareRepository;
     private final DocumentShareRepository documentShareRepository;
     private final GroupDocumentShareRepository groupDocumentShareRepository;
+    private final PlatformTransactionManager transactionManager;
 
     private User getUser(String email) {
         return userRepository.findByEmail(email)
@@ -148,7 +152,6 @@ public class TrashService {
         folderRepository.delete(folder);
     }
 
-    @Transactional
     public EmptyTrashResponse emptyTrash(String email) {
         User user = getUser(email);
 
@@ -158,17 +161,30 @@ public class TrashService {
         int deletedCount = 0;
         List<EmptyTrashResponse.FailureItem> failures = new ArrayList<>();
 
+        TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
+        txTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+
         for (Document doc : trashedDocs) {
+            boolean cloudinaryDeleted = cloudinaryStorageService.deleteFile(doc.getPublicId(), doc.getFileType());
+            if (!cloudinaryDeleted) {
+                log.warn("Cloudinary file deletion failed during empty trash. publicId={}", doc.getPublicId());
+                failures.add(EmptyTrashResponse.FailureItem.builder()
+                        .type("DOCUMENT")
+                        .id(doc.getDocumentId())
+                        .message("Cloudinary deletion failed")
+                        .build());
+                continue;
+            }
+
             try {
-                documentShareRepository.deleteByDocument(doc);
-                groupDocumentShareRepository.deleteByDocument(doc);
-
-                boolean cloudinaryDeleted = cloudinaryStorageService.deleteFile(doc.getPublicId(), doc.getFileType());
-                if (!cloudinaryDeleted) {
-                    log.warn("Cloudinary file deletion failed during empty trash. publicId={}", doc.getPublicId());
-                }
-
-                documentRepository.delete(doc);
+                Integer docId = doc.getDocumentId();
+                txTemplate.executeWithoutResult(status -> {
+                    Document managedDoc = documentRepository.findById(docId).orElseThrow();
+                    documentShareRepository.deleteByDocument(managedDoc);
+                    groupDocumentShareRepository.deleteByDocument(managedDoc);
+                    documentRepository.delete(managedDoc);
+                    documentRepository.flush();
+                });
                 deletedCount++;
             } catch (Exception e) {
                 log.error("Failed to permanently delete document {} during empty trash", doc.getDocumentId(), e);
@@ -186,10 +202,14 @@ public class TrashService {
 
         for (Folder folder : sortedFolders) {
             try {
-                folderShareRepository.deleteByFolder(folder);
-                groupFolderShareRepository.deleteByFolder(folder);
-
-                folderRepository.delete(folder);
+                Integer folderId = folder.getFolderId();
+                txTemplate.executeWithoutResult(status -> {
+                    Folder managedFolder = folderRepository.findById(folderId).orElseThrow();
+                    folderShareRepository.deleteByFolder(managedFolder);
+                    groupFolderShareRepository.deleteByFolder(managedFolder);
+                    folderRepository.delete(managedFolder);
+                    folderRepository.flush();
+                });
                 deletedCount++;
             } catch (Exception e) {
                 log.error("Failed to permanently delete folder {} during empty trash", folder.getFolderId(), e);
