@@ -61,6 +61,36 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  function setupFocusTrap(modal) {
+    modal.addEventListener("keydown", function (e) {
+      if (e.key !== "Tab") return;
+
+      const focusableElements = modal.querySelectorAll(
+        'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex="0"], [contenteditable]'
+      );
+
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          e.preventDefault();
+        }
+      }
+    });
+  }
+
+  setupFocusTrap(createModal);
+  setupFocusTrap(joinModal);
+
   function showError(el, message) {
     el.textContent = message;
     el.style.display = "block";
@@ -109,7 +139,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     const meta = document.createElement("p");
     meta.className = "folder-meta";
     // Standarize roles visibility mappings safely
-    meta.textContent = group.role ? group.role.toUpperCase() : "MEMBER";
+    const roleText = group.role ? group.role.toUpperCase() : "MEMBER";
+    const memberCount = group.memberCount ?? 0;
+    const docCount = group.documentCount ?? 0;
+    const folderCount = group.folderCount ?? 0;
+    meta.innerHTML = `Role: <strong>${roleText}</strong> &middot; Members: ${memberCount} &middot; Docs: ${docCount} &middot; Folders: ${folderCount}`;
 
     const main = document.createElement("div");
     main.className = "folder-card-main";

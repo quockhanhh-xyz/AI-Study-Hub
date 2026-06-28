@@ -2581,3 +2581,16 @@ svg {
   color: #991b1b;
   border: 1px solid #fecaca;
 }
+
+/* Enforce Full-Width layout on Trash panel */
+.trash-panel {
+  max-width: none !important;
+  margin: 0 !important;
+  width: 100%;
+}
+
+/* Accessibility: Focus visible outline logic */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

@@ -60,30 +60,22 @@ async function checkAuthenticationStatus() {
     if (currentRoute.hideWhenAuth) {
       const urlParams = new URLSearchParams(window.location.search);
       let redirectUrl = urlParams.get("redirect");
+      let target = "dashboard.html";
 
-
-      // Step 8A Redirection Hardening Rule: Prevent open redirect vulnerabilities to external hostnames
       if (redirectUrl) {
         try {
-          // If it looks like an absolute external URL or attempts to break path constraints, strip it
-          if (redirectUrl.startsWith("http://") || redirectUrl.startsWith("https://") || redirectUrl.startsWith("//")) {
-            const targetUrl = new URL(redirectUrl, window.location.origin);
-            if (targetUrl.origin !== window.location.origin) {
-              console.warn("Malicious or mismatched open-redirect origin detected. Fallback applied.");
-              redirectUrl = "dashboard.html";
-            } else {
-              redirectUrl = targetUrl.pathname + targetUrl.search;
-            }
+          const parsed = new URL(redirectUrl, window.location.href);
+          if (parsed.origin === window.location.origin && (parsed.protocol === "http:" || parsed.protocol === "https:")) {
+            target = parsed.pathname + parsed.search + parsed.hash;
+          } else {
+            console.warn("Mismatched open-redirect origin or protocol detected in layout.");
           }
         } catch (e) {
-          redirectUrl = "dashboard.html";
+          console.warn("Malicious or mismatched open-redirect origin detected. Fallback applied.", e);
         }
-      } else {
-        redirectUrl = "dashboard.html";
       }
 
-
-      window.location.href = redirectUrl;
+      window.location.href = target;
       return true;
     }
 

@@ -36,9 +36,10 @@
                             <h2 class="section-title" id="groupNameTitle">Group Name</h2>
                             <p id="groupDescription">Description</p>
                             <p class="helper-text">
-                                Invite code: <strong id="groupInviteCode">-</strong>
+                                Invite code: <strong id="groupInviteCode" tabindex="0" role="button" aria-label="Group invite code, press enter or space to copy">-</strong>
                                 <span style="margin: 0 8px; color: var(--text-muted);">•</span>
                                 Your role: <span id="groupMyRole" class="badge badge-primary">-</span>
+                                <span id="groupCounts" style="color: var(--text-muted); margin-left: 8px;"></span>
                             </p>
                         </div>
                         <div class="header-actions">
@@ -144,7 +145,7 @@
                         <div class="empty-title">No folders shared yet</div>
                         <p>Members can share their own folders into this group from the Folders page.</p>
                         <div style="margin-top: 12px;">
-                            <a href="documents.html" class="btn btn-secondary btn-sm">Share a Folder</a>
+                            <a href="folders.html" class="btn btn-secondary btn-sm">Share a Folder</a>
                         </div>
                     </div>
                 </div>

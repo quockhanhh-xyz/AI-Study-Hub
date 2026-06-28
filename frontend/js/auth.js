@@ -240,15 +240,11 @@
 
         if (redirectValue) {
           try {
-            // Support both relative path configurations and absolute host checks safely
-            if (redirectValue.startsWith("http://") || redirectValue.startsWith("https://") || redirectValue.startsWith("//")) {
-              const redirectUrl = new URL(redirectValue, window.location.origin);
-              if (redirectUrl.origin === window.location.origin) {
-                target = redirectUrl.pathname + redirectUrl.search;
-              }
+            const parsed = new URL(redirectValue, window.location.href);
+            if (parsed.origin === window.location.origin && (parsed.protocol === "http:" || parsed.protocol === "https:")) {
+              target = parsed.pathname + parsed.search + parsed.hash;
             } else {
-              // It is already a safe relative link pattern
-              target = redirectValue;
+              console.warn("Mismatched open-redirect origin or protocol detected.");
             }
           } catch (e) {
             console.warn("Invalid redirect origin context detected, falling back to dashboard.", e);

@@ -61,6 +61,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   // State
   let currentGroup = null;
   let myRole = null; // "OWNER" | "MEMBER"
+  let lastActiveElement = null;
 
   // URL helper
 
@@ -71,8 +72,50 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // Modal helpers
 
-  function openModal(overlay) { overlay.classList.add("open"); }
-  function closeModal(overlay) { overlay.classList.remove("open"); }
+  function openModal(overlay) {
+    lastActiveElement = document.activeElement;
+    overlay.classList.add("open");
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    const focusable = overlay.querySelectorAll('input, select, textarea, button, [tabindex="0"]');
+    if (focusable.length > 0) {
+      setTimeout(() => focusable[0].focus(), 50);
+    }
+  }
+
+  function closeModal(overlay) {
+    overlay.classList.remove("open");
+    if (lastActiveElement && typeof lastActiveElement.focus === "function") {
+      lastActiveElement.focus();
+    }
+  }
+
+  function setupFocusTrap(modal) {
+    modal.addEventListener("keydown", function (e) {
+      if (e.key !== "Tab") return;
+
+      const focusableElements = modal.querySelectorAll(
+        'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex="0"], [contenteditable]'
+      );
+
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          e.preventDefault();
+        }
+      }
+    });
+  }
 
   function showError(el, message) {
     el.textContent = message;
@@ -119,15 +162,32 @@ document.addEventListener("DOMContentLoaded", async function () {
         navigator.clipboard.writeText(group.inviteCode);
         showToast("Invitation code copied to clipboard!", "success");
       });
+
+      newInviteCode.addEventListener("keydown", function(e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          navigator.clipboard.writeText(group.inviteCode);
+          showToast("Invitation code copied to clipboard!", "success");
+        }
+      });
     }
 
     const displayRole = myRole || "MEMBER";
     groupMyRole.textContent = displayRole;
 
+    const memberCount = group.memberCount !== undefined && group.memberCount !== null ? group.memberCount : (group.members ? group.members.length : 0);
+    const docCount = group.documentCount !== undefined && group.documentCount !== null ? group.documentCount : 0;
+    const folderCount = group.folderCount !== undefined && group.folderCount !== null ? group.folderCount : 0;
+
+    const groupCounts = document.getElementById("groupCounts");
+    if (groupCounts) {
+      groupCounts.innerHTML = `&middot; <strong>${memberCount}</strong> Members &middot; <strong>${docCount}</strong> Documents &middot; <strong>${folderCount}</strong> Folders`;
+    }
+
     // Step 8A Refactor: Cập nhật số lượng thành viên lên tiêu đề danh sách
     const memberSectionTitle = document.getElementById("memberSectionTitle");
-    if (memberSectionTitle && group.members) {
-      memberSectionTitle.textContent = `Members (${group.members.length})`;
+    if (memberSectionTitle) {
+      memberSectionTitle.textContent = `Members (${memberCount})`;
     }
 
     // Apply real color classes to groupMyRole badge based on feedback
@@ -155,7 +215,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const name = document.createElement("span");
     name.className = "member-row-name";
-    name.textContent = member.fullName || member.email || "Unknown User";
+    name.textContent = member.fullName || member.displayName || "Unknown User";
 
     const roleBadge = document.createElement("span");
     const isMemberOwner = member.role === "OWNER";
@@ -166,15 +226,8 @@ document.addEventListener("DOMContentLoaded", async function () {
       roleBadge.textContent = "MEMBER";
     }
 
-    const emailLine = document.createElement("span");
-    emailLine.className = "folder-meta";
-    emailLine.textContent = member.email && member.fullName ? member.email : "";
-
     main.append(name, roleBadge);
     row.appendChild(main);
-    if (emailLine.textContent) {
-      row.appendChild(emailLine);
-    }
 
     // Only the OWNER can remove members, and never themselves.
     if (myRole === "OWNER" && member.role !== "OWNER") {
@@ -185,7 +238,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       removeBtn.addEventListener("click", async function () {
         const confirmed = await confirmAction({
           title: "Remove Member?",
-          message: `Remove ${member.fullName || member.email} from this group? They will immediately lose access to this group's documents and folders.`,
+          message: `Remove ${member.fullName || member.displayName || "this member"} from this group? They will immediately lose access to this group's documents and folders.`,
           confirmText: "Remove",
           danger: true
         });
@@ -196,7 +249,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         try {
           await removeGroupMember(groupId, member.userId);
-          showToast(`${member.fullName || member.email} removed from the group.`, "success");
+          showToast(`${member.fullName || member.displayName || "Member"} removed from the group.`, "success");
           await loadGroupDetail();
         } catch (error) {
           showToast(error.message || "Failed to remove member.", "error");
@@ -542,6 +595,21 @@ document.addEventListener("DOMContentLoaded", async function () {
     overlay.addEventListener("click", function (e) {
       if (e.target === overlay) closeModal(overlay);
     });
+  });
+
+  // Setup focus traps
+  setupFocusTrap(editModal);
+  setupFocusTrap(deleteModal);
+
+  // Global Escape key modal closer
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      [editModal, deleteModal].forEach(function (overlay) {
+        if (overlay && overlay.classList.contains("open")) {
+          closeModal(overlay);
+        }
+      });
+    }
   });
 
   // Init
