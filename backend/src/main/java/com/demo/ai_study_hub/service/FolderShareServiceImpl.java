@@ -140,7 +140,7 @@ public class FolderShareServiceImpl implements FolderShareService {
         if (!isOwner) {
             sharedRoot = findSharedAncestor(folder, user);
             if (sharedRoot == null) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this folder");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found");
             }
         }
 
@@ -165,7 +165,7 @@ public class FolderShareServiceImpl implements FolderShareService {
                         .folderId(folder.getFolderId())
                         .folderName(folder.getName())
                         .ownerName(folder.getOwner().getFullName())
-                        .ownerEmail(folder.getOwner().getEmail())
+                        .ownerEmail(isOwner ? folder.getOwner().getEmail() : null)
                         .build();
 
         return SharedFolderContentResponse.builder()
@@ -267,7 +267,7 @@ public class FolderShareServiceImpl implements FolderShareService {
         }
 
         if (!folder.getOwner().getUserId().equals(owner.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the folder owner can perform this action");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found");
         }
 
         return folder;
@@ -275,7 +275,8 @@ public class FolderShareServiceImpl implements FolderShareService {
 
     private FolderShareResponse mapToShareResponse(FolderShare share, Integer currentUserId) {
         Folder folder = share.getFolder();
-        boolean canRevoke = folder.getOwner().getUserId().equals(currentUserId);
+        boolean isOwner = folder.getOwner().getUserId().equals(currentUserId);
+        boolean canRevoke = isOwner;
 
         return FolderShareResponse.builder()
                 .shareId(share.getShareId())
@@ -283,10 +284,11 @@ public class FolderShareServiceImpl implements FolderShareService {
                 .folderName(folder.getName())
                 .parentFolderId(folder.getParentFolder() != null ? folder.getParentFolder().getFolderId() : null)
                 .ownerName(folder.getOwner().getFullName())
-                .ownerEmail(folder.getOwner().getEmail())
+                .ownerEmail(isOwner ? folder.getOwner().getEmail() : null)
                 .sharedByName(share.getSharedBy().getFullName())
-                .sharedByEmail(share.getSharedBy().getEmail())
-                .sharedWithEmail(share.getSharedWithUser().getEmail())
+                .sharedWithName(share.getSharedWithUser().getFullName())
+                .sharedByEmail(isOwner ? share.getSharedBy().getEmail() : null)
+                .sharedWithEmail(isOwner ? share.getSharedWithUser().getEmail() : null)
                 .permission(share.getPermission())
                 .status(share.getStatus())
                 .createdAt(share.getCreatedAt())
@@ -318,7 +320,8 @@ public class FolderShareServiceImpl implements FolderShareService {
                 .publicId(doc.getPublicId())
                 .folderId(doc.getFolder() != null ? doc.getFolder().getFolderId() : null)
                 .folderName(doc.getFolder() != null ? doc.getFolder().getName() : null)
-                .uploadedBy(doc.getOwner().getEmail())
+                .uploadedBy(null)
+                .uploadedByName(doc.getOwner().getFullName())
                 .status(doc.getStatus())
                 .createdAt(doc.getCreatedAt())
                 .updatedAt(doc.getUpdatedAt())
@@ -340,7 +343,7 @@ public class FolderShareServiceImpl implements FolderShareService {
 
         boolean isMember = studyGroupMemberRepository.existsByGroupAndUserAndStatus(group, owner, "ACTIVE");
         if (!isMember) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
         }
 
         GroupFolderShare existing = groupFolderShareRepository.findByFolderAndGroup(folder, group).orElse(null);
@@ -378,7 +381,7 @@ public class FolderShareServiceImpl implements FolderShareService {
 
         boolean isMember = studyGroupMemberRepository.existsByGroupAndUserAndStatus(group, user, "ACTIVE");
         if (!isMember) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
         }
 
         return groupFolderShareRepository.findActiveSharesForGroup(group)
@@ -422,9 +425,9 @@ public class FolderShareServiceImpl implements FolderShareService {
                 .folderName(folder.getName())
                 .parentFolderId(folder.getParentFolder() != null ? folder.getParentFolder().getFolderId() : null)
                 .ownerName(folder.getOwner().getFullName())
-                .ownerEmail(folder.getOwner().getEmail())
+                .ownerEmail(null)
                 .sharedByName(share.getSharedBy().getFullName())
-                .sharedByEmail(share.getSharedBy().getEmail())
+                .sharedByEmail(null)
                 .groupId(group.getGroupId())
                 .groupName(group.getGroupName())
                 .permission(share.getPermission())

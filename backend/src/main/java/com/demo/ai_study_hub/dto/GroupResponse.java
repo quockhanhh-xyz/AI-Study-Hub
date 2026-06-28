@@ -21,4 +21,8 @@ public class GroupResponse {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    private Long memberCount;
+    private Long documentCount;
+    private Long folderCount;
 }

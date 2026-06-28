@@ -4,6 +4,7 @@ import com.demo.ai_study_hub.dto.*;
 import com.demo.ai_study_hub.entity.*;
 import com.demo.ai_study_hub.repository.*;
 import com.demo.ai_study_hub.service.StudyGroupServiceImpl;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -235,5 +236,91 @@ class StudyGroupServiceTest {
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
         assertEquals("Group not found", exception.getReason());
+    }
+
+    @Test
+    void getMyGroups_ShouldPopulateCounts() {
+        StudyGroupMember membership = new StudyGroupMember();
+        membership.setGroup(group);
+        membership.setUser(owner);
+        membership.setRole("OWNER");
+        membership.setStatus("ACTIVE");
+
+        when(userRepository.findByEmail("owner@gmail.com")).thenReturn(Optional.of(owner));
+        when(studyGroupMemberRepository.findByUserAndStatus(owner, "ACTIVE")).thenReturn(List.of(membership));
+
+        List<Object[]> memberCountsMock = new java.util.ArrayList<>();
+        memberCountsMock.add(new Object[]{1, 3L});
+        List<Object[]> docCountsMock = new java.util.ArrayList<>();
+        docCountsMock.add(new Object[]{1, 5L});
+        List<Object[]> folderCountsMock = new java.util.ArrayList<>();
+        folderCountsMock.add(new Object[]{1, 2L});
+
+        when(studyGroupMemberRepository.countActiveMembersByGroupIds(List.of(1)))
+                .thenReturn(memberCountsMock);
+        when(groupDocumentShareRepository.countActiveSharesByGroupIds(List.of(1)))
+                .thenReturn(docCountsMock);
+        when(groupFolderShareRepository.countActiveSharesByGroupIds(List.of(1)))
+                .thenReturn(folderCountsMock);
+
+        List<GroupResponse> responses = studyGroupService.getMyGroups("owner@gmail.com");
+
+        assertNotNull(responses);
+        assertEquals(1, responses.size());
+        assertEquals(3L, responses.get(0).getMemberCount());
+        assertEquals(5L, responses.get(0).getDocumentCount());
+        assertEquals(2L, responses.get(0).getFolderCount());
+    }
+
+    @Test
+    void getGroupDetail_ShouldPopulateCounts() {
+        StudyGroupMember membership = new StudyGroupMember();
+        membership.setGroup(group);
+        membership.setUser(owner);
+        membership.setRole("OWNER");
+        membership.setStatus("ACTIVE");
+
+        when(userRepository.findByEmail("owner@gmail.com")).thenReturn(Optional.of(owner));
+        when(studyGroupRepository.findById(1)).thenReturn(Optional.of(group));
+        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(group, owner, "ACTIVE"))
+                .thenReturn(Optional.of(membership));
+
+        when(studyGroupMemberRepository.findByGroupAndStatus(group, "ACTIVE"))
+                .thenReturn(List.of(membership));
+        when(groupDocumentShareRepository.findActiveSharesForGroup(group))
+                .thenReturn(java.util.Collections.emptyList());
+        when(groupFolderShareRepository.findActiveSharesForGroup(group))
+                .thenReturn(java.util.Collections.emptyList());
+
+        GroupDetailResponse response = studyGroupService.getGroupDetail(1, "owner@gmail.com");
+
+        assertNotNull(response);
+        assertEquals(1L, response.getMemberCount());
+        assertEquals(0L, response.getDocumentCount());
+        assertEquals(0L, response.getFolderCount());
+    }
+
+    @Test
+    void createGroup_ShouldSetCountsTo100() {
+        CreateGroupRequest request = new CreateGroupRequest();
+        request.setGroupName("Java Devs");
+        request.setDescription("Java description");
+
+        when(userRepository.findByEmail("owner@gmail.com")).thenReturn(Optional.of(owner));
+        when(studyGroupRepository.save(any(StudyGroup.class))).thenAnswer(invocation -> {
+            StudyGroup saved = invocation.getArgument(0);
+            saved.setGroupId(1);
+            return saved;
+        });
+
+        GroupResponse response = studyGroupService.createGroup(request, "owner@gmail.com");
+
+        assertNotNull(response);
+        assertEquals(1L, response.getMemberCount());
+        assertEquals(0L, response.getDocumentCount());
+        assertEquals(0L, response.getFolderCount());
+        assertEquals("OWNER", response.getRole());
+        assertEquals("ACTIVE", response.getStatus());
+        verify(studyGroupMemberRepository, times(1)).save(any(StudyGroupMember.class));
     }
 }

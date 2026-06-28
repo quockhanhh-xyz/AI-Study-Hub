@@ -459,7 +459,8 @@ Uploads a document file for the currently authenticated user.
     "subjectName": "Software Project",
     "folderId": null,
     "folderName": null,
-    "uploadedBy": "user@gmail.com",
+    "uploadedBy": null,
+    "uploadedByName": "User A",
     "createdAt": "2026-06-01T10:00:00"
   }
 }
@@ -634,7 +635,8 @@ Returns documents owned by the currently authenticated user, with optional searc
       "subjectName": "Software Project",
       "folderId": 1,
       "folderName": "Math Notes",
-      "uploadedBy": "user@gmail.com",
+      "uploadedBy": null,
+      "uploadedByName": "User A",
       "createdAt": "2026-06-01T10:00:00"
     }
   ]
@@ -793,6 +795,39 @@ Returned if `subjectCode` or `subjectName` already matches any SYSTEM subject, o
 
 ---
 
+## 4.3. Get Public Subjects API
+
+## GET `/api/subjects/public`
+
+Allows guest and authenticated users to fetch only subjects that are currently used by active, public, and approved documents. The response hides the `ownerId` field to protect privacy.
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Public subjects retrieved successfully",
+  "data": [
+    {
+      "subjectId": 1,
+      "subjectCode": "SWP391",
+      "subjectName": "Software Project",
+      "description": "Software project management and development course",
+      "scope": "SYSTEM"
+    },
+    {
+      "subjectId": 10,
+      "subjectCode": "MYSUB",
+      "subjectName": "My Custom Subject",
+      "description": "Custom subject that is used by a public document",
+      "scope": "USER_CUSTOM"
+    }
+  ]
+}
+```
+
+---
+
 # 5. Document Management APIs (Step 3)
 
 These APIs manage documents after upload. Access is restricted to the owner or users with active shared access.
@@ -831,7 +866,8 @@ Returns detailed information for a specific document. The request is authorized 
     "subjectName": "Software Project",
     "folderId": 1,
     "folderName": "Math Notes",
-    "uploadedBy": "user@gmail.com",
+    "uploadedBy": null,
+    "uploadedByName": "User A",
     "status": "ACTIVE",
     "createdAt": "2026-06-01T10:00:00",
     "canPreview": true,
@@ -978,7 +1014,8 @@ Updates the title, description, and subject of a specific document owned by the 
     "subjectName": "Software Testing",
     "folderId": null,
     "folderName": null,
-    "uploadedBy": "user@gmail.com",
+    "uploadedBy": null,
+    "uploadedByName": "User A",
     "createdAt": "2026-06-01T10:00:00"
   }
 }
@@ -1680,6 +1717,48 @@ Permanently deletes a document from the database and removes the associated file
 
 ---
 
+## 7.6. Empty Trash API
+
+## DELETE `/api/trash`
+
+Permanently deletes all soft-deleted documents and folders belonging to the authenticated user.
+
+### Behavior Rules:
+- **Recursive Deletion**: Deletion of folders must clear subfolders and files in a depth-first traversal order (deepest items first) to prevent folder structural orphans.
+- **Foreign Keys**: Association records (such as direct user shares, group document/folder shares, and activity logs) must be handled first.
+- **Failures & Outcomes**:
+  - `outcome = 'SUCCESS'`: All trashed folders and documents (and their remote Cloudinary files) are successfully purged.
+  - `outcome = 'PARTIAL_SUCCESS'`: Some metadata or remote file deletions (e.g., Cloudinary API timeout) failed, but other database records were cleaned.
+  - `outcome = 'FAILED'`: The process aborted or failed entirely.
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Trash cleared",
+  "data": {
+    "outcome": "PARTIAL_SUCCESS",
+    "deletedCount": 5,
+    "failedCount": 1,
+    "failures": [
+      {
+        "type": "DOCUMENT",
+        "id": 12,
+        "title": "Problematic Lecture Notes.pdf",
+        "reason": "Cloudinary delete failed"
+      }
+    ]
+  }
+}
+```
+
+---
+
 # 8. Study Group and Sharing APIs (Step 6A)
 
 ## 8.1. Create Group API
@@ -1704,6 +1783,9 @@ Creates a new study group. The creator is automatically added as the `OWNER`.
       "inviteCode": "A1B2C3D4",
       "ownerId": 5,
       "status": "ACTIVE",
+      "memberCount": 1,
+      "documentCount": 0,
+      "folderCount": 0,
       "createdAt": "2026-06-19T13:30:00"
     }
   }
@@ -1725,7 +1807,10 @@ Retrieves all groups that the current user belongs to (either as OWNER or MEMBER
         "inviteCode": "A1B2C3D4",
         "ownerId": 5,
         "status": "ACTIVE",
-        "role": "OWNER"
+        "role": "OWNER",
+        "memberCount": 3,
+        "documentCount": 2,
+        "folderCount": 1
       }
     ]
   }
@@ -1746,6 +1831,9 @@ Retrieves detailed information of a group, including member list. Access is allo
       "inviteCode": "A1B2C3D4",
       "ownerId": 5,
       "status": "ACTIVE",
+      "memberCount": 1,
+      "documentCount": 0,
+      "folderCount": 0,
       "members": [
         {
           "memberId": 1,
@@ -1778,7 +1866,15 @@ Joins a group using an invite code.
     "data": {
       "groupId": 1,
       "groupName": "Java Developers",
-      "role": "MEMBER"
+      "description": "Group for studying Java and Spring Boot",
+      "inviteCode": "A1B2C3D4",
+      "ownerId": 5,
+      "role": "MEMBER",
+      "status": "ACTIVE",
+      "createdAt": "2026-06-19T13:30:00",
+      "memberCount": null,
+      "documentCount": null,
+      "folderCount": null
     }
   }
   ```
@@ -1813,7 +1909,15 @@ Updates group name and description. Only the OWNER is allowed to perform this ac
     "data": {
       "groupId": 1,
       "groupName": "Updated Name",
-      "description": "Updated Description"
+      "description": "Updated Description",
+      "inviteCode": "A1B2C3D4",
+      "ownerId": 5,
+      "role": "OWNER",
+      "status": "ACTIVE",
+      "createdAt": "2026-06-19T13:30:00",
+      "memberCount": null,
+      "documentCount": null,
+      "folderCount": null
     }
   }
   ```
@@ -1884,7 +1988,10 @@ Retrieves all documents shared directly with the current user. Trashed or delete
         "fileType": "pdf",
         "fileSize": 1024,
         "fileUrl": "https://res.cloudinary.com/...",
-        "sharedByEmail": "owner@gmail.com",
+        "sharedByName": "John Owner",
+        "sharedWithName": "Mary Recipient",
+        "sharedByEmail": null,
+        "sharedWithEmail": null,
         "createdAt": "2026-06-19T13:40:00"
       }
     ]
@@ -1965,7 +2072,8 @@ Shares a document into a study group. Only the document owner can share, and the
       "shareId": 1,
       "documentId": 10,
       "groupId": 1,
-      "sharedByEmail": "member@gmail.com",
+      "sharedByName": "Mary Recipient",
+      "sharedByEmail": null,
       "permission": "VIEW",
       "status": "ACTIVE",
       "createdAt": "2026-06-19T13:45:00"
@@ -1990,11 +2098,12 @@ Lists documents shared in a group. User must be an active member of the group. T
         "fileSize": 1024,
         "fileUrl": "https://res.cloudinary.com/...",
         "groupId": 1,
-        "sharedByEmail": "member@gmail.com",
+        "sharedByName": "Mary Recipient",
+        "sharedByEmail": null,
         "permission": "VIEW",
         "status": "ACTIVE",
         "createdAt": "2026-06-19T13:45:00",
-        "canRevoke": true
+        "canRevoke": false
       }
     ]
   }
@@ -2160,9 +2269,10 @@ Retrieves the list of root folders that have been directly shared with the curre
       "folderName": "SWP391",
       "description": "Software Project Materials",
       "ownerName": "User A",
-      "ownerEmail": "usera@gmail.com",
+      "ownerEmail": null,
       "sharedByName": "User A",
-      "sharedByEmail": "usera@gmail.com",
+      "sharedWithName": "Mary Recipient",
+      "sharedByEmail": null,
       "permission": "VIEW",
       "status": "ACTIVE",
       "createdAt": "2026-06-21T14:50:00"
@@ -2292,9 +2402,9 @@ Retrieves all root folders shared directly into a study group. Only accessible b
       "folderName": "SWP391",
       "description": "Software Project Materials",
       "ownerName": "User A",
-      "ownerEmail": "usera@gmail.com",
+      "ownerEmail": null,
       "sharedByName": "User A",
-      "sharedByEmail": "usera@gmail.com",
+      "sharedByEmail": null,
       "permission": "VIEW",
       "status": "ACTIVE",
       "createdAt": "2026-06-21T14:55:00",
@@ -2355,7 +2465,7 @@ Retrieves the direct subfolders and documents inside a shared folder that the cu
       "folderId": 6,
       "folderName": "Lab",
       "ownerName": "User A",
-      "ownerEmail": "usera@gmail.com"
+      "ownerEmail": null
     },
     "subfolders": [
       {
@@ -2376,7 +2486,8 @@ Retrieves the direct subfolders and documents inside a shared folder that the cu
         "fileUrl": "http://cloudinary.com/lab-guidelines.pdf",
         "folderId": 6,
         "folderName": "Lab",
-        "uploadedBy": "usera@gmail.com",
+        "uploadedByName": "User A",
+        "uploadedBy": null,
         "status": "ACTIVE",
         "createdAt": "2026-06-21T15:00:00"
       }
@@ -2391,12 +2502,12 @@ Retrieves the direct subfolders and documents inside a shared folder that the cu
 }
 ```
 
-### Error Response - Access Denied (403 Forbidden)
+### Error Response - Not Found (404)
 If the user does not have access to this folder or any of its ancestors:
 ```json
 {
   "success": false,
-  "message": "Access denied",
+  "message": "Folder not found",
   "data": null
 }
 ```
@@ -2423,6 +2534,17 @@ These rules govern page routing on the frontend and operational behaviors betwee
 
 - On the user interface, a `folderId = null` or unassigned folder hierarchy must be consistently labeled **"My Documents"**.
 - Hardcoded technical terms like "root", "no folder", or "unassigned" are deprecated and must not appear in user-facing labels.
+
+## 10.4. Redirect Flows
+
+- **Login Redirect**: The login page accepts a `redirect` query parameter (e.g., `login.html?redirect=dashboard.html`). After successful authentication, the frontend must validate that the redirect target is within the same domain (origin) before performing the redirect to prevent Open Redirect security vulnerabilities. If the origin does not match or if the redirect parameter is omitted, the user is redirected to `dashboard.html` by default.
+- **Register & OTP Redirect Flow**: The registration flow requires OTP verification. After registration, if a redirect parameter was present (e.g., `register.html?redirect=community.html`), the application must pass this parameter to the OTP verification page (`verify-otp.html?email=<encoded-email>&redirect=community.html`). Upon successful OTP verification, the redirect parameter must be passed forward to the login page (`login.html?redirect=community.html`). After successful login, the user is redirected to the initial target page (e.g. `community.html`).
+- **Community Library Redirect**: Guest users browsing the Community page (`community.html`) can view public document listings. Clicking on a document detail redirects them to `document-detail.html?id=<id>&from=community`. When they attempt to preview or download, if the document requires authentication, they must be redirected to `login.html?redirect=document-detail.html?id=<id>&from=community`.
+
+## 10.5. File Type Filtering Conventions
+
+- **Frontend Behavior**: The file type filter panel sends raw formats (`DOC`, `DOCX`, `PPT`, `PPTX`, `PDF`, etc.) in the `fileType` query parameter to filter documents.
+- **Backend Matching**: The backend accepts raw file formats (case-insensitively) and matches them exactly against the database records to filter the results.
 
 ---
 
@@ -2521,6 +2643,7 @@ Allows guests and logged-in users to list and search all active public approved 
       "downloadCount": 42,
       "createdAt": "2026-06-25T15:00:00",
       "ownerName": "John Doe",
+      "displayName": "John Doe",
       "canPreview": true,
       "canOpen": true,
       "canDownload": true
@@ -2528,6 +2651,9 @@ Allows guests and logged-in users to list and search all active public approved 
   ]
 }
 ```
+
+> [!NOTE]
+> `ownerName` is deprecated and will be removed in a future update. The frontend should transition to using `displayName`.
 
 ---
 
@@ -2560,12 +2686,16 @@ Retrieves the metadata of a public approved document. Increments `viewCount` by 
     "downloadCount": 42,
     "createdAt": "2026-06-25T15:00:00",
     "ownerName": "John Doe",
+    "displayName": "John Doe",
     "canPreview": true,
     "canOpen": true,
     "canDownload": true
   }
 }
 ```
+
+> [!NOTE]
+> `ownerName` is deprecated and will be removed in a future update. The frontend should transition to using `displayName`.
 
 ### Error Response - Not Found / Forbidden (404 / 403)
 
@@ -2659,32 +2789,5 @@ Allows the owner of a document to withdraw it from the public library, resetting
     "approvalStatus": "PENDING",
     "publishedAt": null
   }
-}
-```
-
----
-
-## 12.6. Get Public Subjects API
-
-## GET `/api/subjects/public`
-
-Allows guests and logged-in users to list all active subjects that are currently associated with at least one public, approved, active document. Specifically excludes creator `ownerId` identifiers for privacy security.
-
-### Success Response (200 OK)
-
-```json
-{
-  "success": true,
-  "message": "Public subjects retrieved successfully",
-  "data": [
-    {
-      "subjectId": 2,
-      "subjectCode": "PHY101",
-      "subjectName": "General Physics I",
-      "description": "Basic mechanics and thermodynamics.",
-      "scope": "SYSTEM",
-      "ownerId": null
-    }
-  ]
 }
 ```

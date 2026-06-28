@@ -59,7 +59,7 @@ public class DocumentService {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found");
             }
             if (!folder.getOwner().getUserId().equals(owner.getUserId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found");
             }
         }
 
@@ -137,7 +137,7 @@ public class DocumentService {
         }
 
         if (!doc.getOwner().getUserId().equals(user.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
 
         if (folderId == null) {
@@ -147,7 +147,7 @@ public class DocumentService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found"));
 
             if (!folder.getOwner().getUserId().equals(user.getUserId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found");
             }
 
             if (!"ACTIVE".equals(folder.getStatus())) {
@@ -225,7 +225,7 @@ public class DocumentService {
         boolean hasSharedAccess = isDirectShared || isGroupShared || hasFolderAccess || isPublicAndApproved;
 
         if (!isOwner && !hasSharedAccess) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
     }
 
@@ -277,7 +277,7 @@ public class DocumentService {
         }
 
         if (!doc.getOwner().getUserId().equals(owner.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
 
         return doc;
@@ -366,7 +366,8 @@ public class DocumentService {
                 .publicId(doc.getPublicId())
                 .folderId(doc.getFolder() != null ? doc.getFolder().getFolderId() : null)
                 .folderName(doc.getFolder() != null ? doc.getFolder().getName() : null)
-                .uploadedBy(doc.getOwner().getEmail())
+                .uploadedBy(null)
+                .uploadedByName(doc.getOwner().getFullName())
                 .status(doc.getStatus())
                 .visibility(doc.getVisibility())
                 .approvalStatus(doc.getApprovalStatus())
@@ -412,6 +413,7 @@ public class DocumentService {
                 .downloadCount(doc.getDownloadCount())
                 .createdAt(doc.getCreatedAt())
                 .ownerName(doc.getOwner() != null ? doc.getOwner().getFullName() : null)
+                .displayName(doc.getOwner() != null ? doc.getOwner().getFullName() : null)
                 .canPreview(canPreview)
                 .canOpen(canOpen)
                 .canDownload(canDownload)
@@ -546,7 +548,7 @@ public class DocumentService {
         }
 
         if (!doc.getOwner().getUserId().equals(owner.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
 
         doc.setVisibility("PUBLIC");
@@ -569,7 +571,7 @@ public class DocumentService {
         }
 
         if (!doc.getOwner().getUserId().equals(owner.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
 
         doc.setVisibility("PRIVATE");

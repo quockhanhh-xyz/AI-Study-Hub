@@ -46,7 +46,11 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         member.setStatus("ACTIVE");
         studyGroupMemberRepository.save(member);
 
-        return mapToGroupResponse(savedGroup, "OWNER");
+        GroupResponse response = mapToGroupResponse(savedGroup, "OWNER");
+        response.setMemberCount(1L);
+        response.setDocumentCount(0L);
+        response.setFolderCount(0L);
+        return response;
     }
 
     @Override
@@ -56,9 +60,37 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
         List<StudyGroupMember> memberships = studyGroupMemberRepository.findByUserAndStatus(user, "ACTIVE");
 
+        List<Integer> groupIds = memberships.stream()
+                .filter(m -> "ACTIVE".equals(m.getGroup().getStatus()))
+                .map(m -> m.getGroup().getGroupId())
+                .collect(Collectors.toList());
+
+        java.util.Map<Integer, Long> memberCounts = new java.util.HashMap<>();
+        java.util.Map<Integer, Long> docCounts = new java.util.HashMap<>();
+        java.util.Map<Integer, Long> folderCounts = new java.util.HashMap<>();
+
+        if (!groupIds.isEmpty()) {
+            studyGroupMemberRepository.countActiveMembersByGroupIds(groupIds).forEach(row -> {
+                memberCounts.put((Integer) row[0], (Long) row[1]);
+            });
+            groupDocumentShareRepository.countActiveSharesByGroupIds(groupIds).forEach(row -> {
+                docCounts.put((Integer) row[0], (Long) row[1]);
+            });
+            groupFolderShareRepository.countActiveSharesByGroupIds(groupIds).forEach(row -> {
+                folderCounts.put((Integer) row[0], (Long) row[1]);
+            });
+        }
+
         return memberships.stream()
                 .filter(m -> "ACTIVE".equals(m.getGroup().getStatus()))
-                .map(m -> mapToGroupResponse(m.getGroup(), m.getRole()))
+                .map(m -> {
+                    StudyGroup group = m.getGroup();
+                    GroupResponse res = mapToGroupResponse(group, m.getRole());
+                    res.setMemberCount(memberCounts.getOrDefault(group.getGroupId(), 0L));
+                    res.setDocumentCount(docCounts.getOrDefault(group.getGroupId(), 0L));
+                    res.setFolderCount(folderCounts.getOrDefault(group.getGroupId(), 0L));
+                    return res;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -79,12 +111,17 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                         .memberId(m.getMemberId())
                         .userId(m.getUser().getUserId())
                         .fullName(m.getUser().getFullName())
-                        .email(m.getUser().getEmail())
+                        .displayName(m.getUser().getFullName())
+                        .email(null)
                         .role(m.getRole())
                         .status(m.getStatus())
                         .joinedAt(m.getJoinedAt())
                         .build())
                 .collect(Collectors.toList());
+
+        long memberCount = activeMembers.size();
+        long documentCount = groupDocumentShareRepository.findActiveSharesForGroup(group).size();
+        long folderCount = groupFolderShareRepository.findActiveSharesForGroup(group).size();
 
         return GroupDetailResponse.builder()
                 .groupId(group.getGroupId())
@@ -95,6 +132,9 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .status(group.getStatus())
                 .currentUserRole(currentMembership.getRole())
                 .members(memberItems)
+                .memberCount(memberCount)
+                .documentCount(documentCount)
+                .folderCount(folderCount)
                 .createdAt(group.getCreatedAt())
                 .updatedAt(group.getUpdatedAt())
                 .build();

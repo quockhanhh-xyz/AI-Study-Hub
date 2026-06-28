@@ -210,7 +210,7 @@ class FolderShareServiceTest {
     }
 
     @Test
-    void shareFolderToGroup_NonMember_ThrowsForbidden() {
+    void shareFolderToGroup_NonMember_ThrowsNotFound() {
         GroupFolderShareRequest req = new GroupFolderShareRequest(50);
 
         when(userRepository.findByEmail("owner@gmail.com")).thenReturn(Optional.of(owner));
@@ -221,7 +221,8 @@ class FolderShareServiceTest {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> {
             folderShareService.shareFolderToGroup(10, req, "owner@gmail.com");
         });
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Group not found", ex.getReason());
     }
 
     @Test
@@ -451,5 +452,74 @@ class FolderShareServiceTest {
         assertTrue(res.getCanEdit());
         assertTrue(res.getCanDelete());
         assertTrue(res.getCanMove());
+    }
+
+    @Test
+    void getSharedFoldersWithMe_AsRecipient_ShouldHideEmails() {
+        FolderShare share = new FolderShare();
+        share.setShareId(1);
+        share.setFolder(folder);
+        share.setSharedBy(owner);
+        share.setSharedWithUser(recipient);
+        share.setStatus("ACTIVE");
+
+        when(userRepository.findByEmail("recipient@gmail.com")).thenReturn(Optional.of(recipient));
+        when(folderShareRepository.findBySharedWithUserAndStatus(recipient, "ACTIVE"))
+                .thenReturn(List.of(share));
+
+        List<FolderShareResponse> responses = folderShareService.getSharedWithMe("recipient@gmail.com");
+
+        assertNotNull(responses);
+        assertEquals(1, responses.size());
+        assertNull(responses.get(0).getOwnerEmail());
+        assertNull(responses.get(0).getSharedByEmail());
+        assertNull(responses.get(0).getSharedWithEmail());
+        assertEquals("Folder Owner", responses.get(0).getOwnerName());
+        assertEquals("Folder Owner", responses.get(0).getSharedByName());
+        assertEquals("Recipient User", responses.get(0).getSharedWithName());
+    }
+
+    @Test
+    void getSharedContent_RecipientPermission_Success() {
+        when(userRepository.findByEmail("recipient@gmail.com")).thenReturn(Optional.of(recipient));
+        when(folderRepository.findById(10)).thenReturn(Optional.of(folder));
+
+        FolderShare share = new FolderShare();
+        share.setShareId(1);
+        share.setFolder(folder);
+        share.setSharedBy(owner);
+        share.setSharedWithUser(recipient);
+        share.setStatus("ACTIVE");
+
+        when(folderShareRepository.findByFolderAndSharedWithUserAndStatus(folder, recipient, "ACTIVE"))
+                .thenReturn(Optional.of(share));
+        when(folderRepository.findByOwnerAndStatusAndParentFolder(owner, "ACTIVE", folder))
+                .thenReturn(Collections.emptyList());
+
+        com.demo.ai_study_hub.entity.Document doc = new com.demo.ai_study_hub.entity.Document();
+        doc.setDocumentId(100);
+        doc.setTitle("Shared Document");
+        doc.setOwner(owner);
+        doc.setStatus("ACTIVE");
+
+        when(documentRepository.findByFolder(folder))
+                .thenReturn(List.of(doc));
+
+        SharedFolderContentResponse res = folderShareService.getSharedContent(10, "recipient@gmail.com");
+
+        assertNotNull(res);
+        assertEquals("VIEW", res.getPermission());
+        assertTrue(res.getIsSharedView());
+        assertFalse(res.getCanUpload());
+        assertFalse(res.getCanEdit());
+        assertFalse(res.getCanDelete());
+        assertFalse(res.getCanMove());
+
+        assertNull(res.getCurrentFolder().getOwnerEmail());
+        assertEquals("Folder Owner", res.getCurrentFolder().getOwnerName());
+
+        assertEquals(1, res.getDocuments().size());
+        assertNull(res.getDocuments().get(0).getUploadedBy());
+        assertEquals("Folder Owner", res.getDocuments().get(0).getUploadedByName());
     }
 }
