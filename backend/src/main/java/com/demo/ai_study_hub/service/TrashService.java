@@ -169,10 +169,11 @@ public class TrashService {
             if (!cloudinaryDeleted) {
                 log.warn("Cloudinary file deletion failed during empty trash. publicId={}", doc.getPublicId());
                 failures.add(EmptyTrashResponse.FailureItem.builder()
-                        .type("DOCUMENT")
-                        .id(doc.getDocumentId())
-                        .message("Cloudinary deletion failed")
-                        .build());
+                    .type("DOCUMENT")
+                    .id(doc.getDocumentId())
+                    .title(doc.getTitle())
+                    .reason("Cloudinary delete failed")
+                    .build());
                 continue;
             }
 
@@ -189,10 +190,11 @@ public class TrashService {
             } catch (Exception e) {
                 log.error("Failed to permanently delete document {} during empty trash", doc.getDocumentId(), e);
                 failures.add(EmptyTrashResponse.FailureItem.builder()
-                        .type("DOCUMENT")
-                        .id(doc.getDocumentId())
-                        .message("Failed to delete document: " + e.getMessage())
-                        .build());
+                    .type("DOCUMENT")
+                    .id(doc.getDocumentId())
+                    .title(doc.getTitle())
+                    .reason("Failed to delete document: " + e.getMessage())
+                    .build());
             }
         }
 
@@ -214,10 +216,11 @@ public class TrashService {
             } catch (Exception e) {
                 log.error("Failed to permanently delete folder {} during empty trash", folder.getFolderId(), e);
                 failures.add(EmptyTrashResponse.FailureItem.builder()
-                        .type("FOLDER")
-                        .id(folder.getFolderId())
-                        .message("Failed to delete folder: " + e.getMessage())
-                        .build());
+                    .type("FOLDER")
+                    .id(folder.getFolderId())
+                    .title(folder.getName())
+                    .reason("Failed to delete folder: " + e.getMessage())
+                    .build());
             }
         }
 

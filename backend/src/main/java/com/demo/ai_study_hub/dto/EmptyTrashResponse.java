@@ -24,6 +24,7 @@ public class EmptyTrashResponse {
     public static class FailureItem {
         private String type;
         private Integer id;
-        private String message;
+        private String title;
+        private String reason;
     }
 }

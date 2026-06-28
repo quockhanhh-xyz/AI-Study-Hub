@@ -68,10 +68,7 @@ public class TrashController {
     public ResponseEntity<ApiResponse<EmptyTrashResponse>> emptyTrash(Authentication auth) {
         try {
             EmptyTrashResponse data = trashService.emptyTrash(auth.getName());
-            String message = "SUCCESS".equals(data.getOutcome())
-                ? "Trash emptied successfully"
-                : "Trash cleanup completed with some failures";
-            return ResponseEntity.ok(ApiResponse.success(data, message));
+            return ResponseEntity.ok(ApiResponse.success(data, "Trash cleared"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {
