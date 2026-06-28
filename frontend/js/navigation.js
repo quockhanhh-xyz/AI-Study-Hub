@@ -16,26 +16,21 @@ const ICON_INFO = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="
 const ICON_COMMUNITY = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>';
 
 const NAVIGATION_MENU = [
-  { name: "Home", icon: ICON_HOME, url: "index.html", requiresAuth: false, hidden: true },
-  { name: "Login", icon: ICON_KEY, url: "login.html", requiresAuth: false, hideWhenAuth: true },
-  { name: "Register", icon: ICON_REGISTER, url: "register.html", requiresAuth: false, hideWhenAuth: true },
-  { name: "Verify OTP", icon: ICON_SHIELD, url: "verify-otp.html", requiresAuth: false, hideWhenAuth: true, hidden: true },
+  { name: "Dashboard", icon: ICON_HOME, url: "dashboard.html", requiresAuth: true },
+  { name: "My Documents", icon: ICON_DOCS, url: "documents.html", requiresAuth: true },
+  { name: "Shared with Me", icon: ICON_SHARED, url: "shared-with-me.html", requiresAuth: true },
+  { name: "Study Groups", icon: ICON_GROUPS, url: "groups.html", requiresAuth: true },
+  { name: "Community Library", icon: ICON_COMMUNITY, url: "community.html", requiresAuth: false },
+  { name: "Trash Can", icon: ICON_TRASH, url: "trash.html", requiresAuth: true },
 
-  // Authenticated visible main sidebar links ordered per specification
-  { name: "Dashboard", icon: ICON_DASHBOARD, url: "dashboard.html", requiresAuth: true },
-  { name: "My Documents", icon: ICON_FOLDER, url: "documents.html", requiresAuth: true },
-  
-  // Public community library menu - accessible to all, structured elegantly in position 3 for logged-in layout
-  { name: "Community Library", icon: ICON_COMMUNITY, url: "community.html", requiresAuth: false, publicRoute: true },
-  { name: "Folders", icon: ICON_FOLDER, url: "folders.html", requiresAuth: true },
-  { name: "Shared With Me", icon: ICON_SHARE, url: "shared-with-me.html", requiresAuth: true },
-  { name: "Groups", icon: ICON_GROUP, url: "groups.html", requiresAuth: true },
-  { name: "Trash", icon: ICON_BIN, url: "trash.html", requiresAuth: true },
+  // Guest-Only Gateway Routes (Step 8A Guard Target Authentication Sync)
+  { name: "Login", icon: ICON_KEY, url: "login.html", hideWhenAuth: true },
+  { name: "Register", icon: ICON_REGISTER, url: "register.html", hideWhenAuth: true },
+  { name: "Verify OTP", icon: ICON_KEY, url: "verify-otp.html", hideWhenAuth: true, hidden: true },
 
-  // Hidden views mapped explicitly for Auth Guard coverage and contextual active-states
-  { name: "Upload", icon: ICON_UPLOAD, url: "upload.html", requiresAuth: true, hidden: true },
-  { name: "Document Detail", icon: ICON_INFO, url: "document-detail.html", requiresAuth: false, hidden: true, publicRoute: true },
-  { name: "Group Detail", icon: ICON_GROUP, url: "group-detail.html", requiresAuth: true, hidden: true },
+  // Hidden Structural Layout Parameter Child Routes
+  { name: "Document Detail", icon: ICON_DOCS, url: "document-detail.html", requiresAuth: false, hidden: true },
+  { name: "Group Detail", icon: ICON_GROUPS, url: "group-detail.html", requiresAuth: true, hidden: true },
   { name: "Shared Folder Detail", icon: ICON_FOLDER, url: "shared-folder-detail.html", requiresAuth: true, hidden: true }
 ];
 
