@@ -64,7 +64,7 @@ public class TrashController {
                 .build());
     }
 
-    @DeleteMapping("/empty")
+    @DeleteMapping
     public ResponseEntity<ApiResponse<EmptyTrashResponse>> emptyTrash(Authentication auth) {
         try {
             EmptyTrashResponse data = trashService.emptyTrash(auth.getName());
