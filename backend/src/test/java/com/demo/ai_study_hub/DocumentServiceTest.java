@@ -695,4 +695,33 @@ class DocumentServiceTest {
         assertTrue(response.getCanMove());
         assertTrue(response.getCanShare());
     }
+
+    @Test
+    void uploadDocument_WhenPersistenceFails_ShouldRollbackCloudinaryUpload() {
+        MultipartFile mockFile = mock(MultipartFile.class);
+        when(mockFile.getOriginalFilename()).thenReturn("TailieuHot.pdf");
+        when(mockFile.getSize()).thenReturn(102400L);
+
+        FileUploadResult mockUploadResult = mock(FileUploadResult.class);
+        when(mockUploadResult.getFileUrl()).thenReturn("http://cloudinary.com/file.pdf");
+        when(mockUploadResult.getOriginalFileName()).thenReturn("TailieuHot.pdf");
+        when(mockUploadResult.getFileType()).thenReturn("PDF");
+        when(mockUploadResult.getFileSize()).thenReturn(102400L);
+        when(mockUploadResult.getPublicId()).thenReturn("public-id-rollback");
+
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(subjectRepository.findById(1)).thenReturn(Optional.of(mockSubject));
+        when(documentRepository.existsDuplicate(mockOwner, "TailieuHot.pdf", 102400L, null)).thenReturn(false);
+        when(cloudinaryStorageService.uploadFile(mockFile, mockOwner.getUserId())).thenReturn(mockUploadResult);
+        when(documentRepository.saveAndFlush(any(Document.class)))
+            .thenThrow(new RuntimeException("Simulated DB constraint violation"));
+        when(cloudinaryStorageService.deleteFile("public-id-rollback", "PDF")).thenReturn(true);
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            documentService.uploadDocument(mockFile, "Test Title", "Description", 1, null, "doantam785@gmail.com");
+        });
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getStatusCode());
+        verify(cloudinaryStorageService, times(1)).deleteFile("public-id-rollback", "PDF");
+    }
 }

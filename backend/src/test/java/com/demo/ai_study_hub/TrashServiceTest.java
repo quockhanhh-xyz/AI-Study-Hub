@@ -171,9 +171,13 @@ class TrashServiceTest {
 
         when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(mockUser));
         when(documentRepository.findByOwner_UserIdAndStatus(1, "DELETED")).thenReturn(List.of());
-
         when(folderRepository.findByOwnerAndStatusOrderByCreatedAtDesc(mockUser, "DELETED"))
-                .thenReturn(List.of(root, grandchild, child));
+            .thenReturn(List.of(root, grandchild, child));
+
+        when(folderRepository.findFolderDepth(1)).thenReturn(0);
+        when(folderRepository.findFolderDepth(2)).thenReturn(1);
+        when(folderRepository.findFolderDepth(3)).thenReturn(2);
+
         when(folderRepository.findById(1)).thenReturn(Optional.of(root));
         when(folderRepository.findById(2)).thenReturn(Optional.of(child));
         when(folderRepository.findById(3)).thenReturn(Optional.of(grandchild));
@@ -222,5 +226,28 @@ class TrashServiceTest {
 
         verify(documentRepository, times(1)).findByOwner_UserIdAndStatus(1, "DELETED");
         verify(folderRepository, times(1)).findByOwnerAndStatusOrderByCreatedAtDesc(mockUser, "DELETED");
+    }
+
+    @Test
+    void emptyTrash_WhenCloudinaryFileAlreadyMissing_ShouldStillDeleteMetadata() {
+        Document doc = new Document();
+        doc.setDocumentId(1);
+        doc.setTitle("Doc1.pdf");
+        doc.setPublicId("public-missing");
+        doc.setFileType("PDF");
+        doc.setStatus("DELETED");
+
+        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(mockUser));
+        when(documentRepository.findByOwner_UserIdAndStatus(1, "DELETED")).thenReturn(List.of(doc));
+        when(folderRepository.findByOwnerAndStatusOrderByCreatedAtDesc(mockUser, "DELETED")).thenReturn(List.of());
+
+        when(cloudinaryStorageService.deleteFile("public-missing", "PDF")).thenReturn(true);
+        when(documentRepository.findById(1)).thenReturn(Optional.of(doc));
+
+        EmptyTrashResponse response = trashService.emptyTrash("user@test.com");
+
+        assertEquals("SUCCESS", response.getOutcome());
+        assertEquals(1, response.getDeletedCount());
+        verify(documentRepository, times(1)).delete(doc);
     }
 }
