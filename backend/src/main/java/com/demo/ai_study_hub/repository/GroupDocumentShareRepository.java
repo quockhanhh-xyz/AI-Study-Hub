@@ -26,4 +26,6 @@ public interface GroupDocumentShareRepository extends JpaRepository<GroupDocumen
            "WHERE gds.group.groupId IN :groupIds AND gds.status = 'ACTIVE' AND gds.document.status = 'ACTIVE' " +
            "GROUP BY gds.group.groupId")
     List<Object[]> countActiveSharesByGroupIds(@Param("groupIds") List<Integer> groupIds);
+
+    void deleteByDocument(Document document);
 }

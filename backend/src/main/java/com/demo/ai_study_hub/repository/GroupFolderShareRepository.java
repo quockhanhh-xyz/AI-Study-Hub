@@ -40,4 +40,6 @@ public interface GroupFolderShareRepository extends JpaRepository<GroupFolderSha
            "WHERE gfs.group.groupId IN :groupIds AND gfs.status = 'ACTIVE' AND gfs.folder.status = 'ACTIVE' " +
            "GROUP BY gfs.group.groupId")
     List<Object[]> countActiveSharesByGroupIds(@Param("groupIds") List<Integer> groupIds);
+
+    void deleteByFolder(Folder folder);
 }

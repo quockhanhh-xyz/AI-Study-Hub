@@ -19,4 +19,6 @@ public interface FolderShareRepository extends JpaRepository<FolderShare, Intege
     List<FolderShare> findByFolderAndStatus(Folder folder, String status);
 
     Optional<FolderShare> findByFolderAndSharedWithUserAndStatus(Folder folder, User sharedWithUser, String status);
+
+    void deleteByFolder(Folder folder);
 }

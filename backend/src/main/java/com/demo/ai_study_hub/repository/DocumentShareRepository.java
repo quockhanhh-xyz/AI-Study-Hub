@@ -18,4 +18,6 @@ public interface DocumentShareRepository extends JpaRepository<DocumentShare, In
 
     @Query("SELECT ds FROM DocumentShare ds WHERE ds.sharedWith = :user AND ds.status = 'ACTIVE' AND ds.document.status = 'ACTIVE'")
     List<DocumentShare> findActiveSharesWithMe(@Param("user") User user);
+
+    void deleteByDocument(Document document);
 }
