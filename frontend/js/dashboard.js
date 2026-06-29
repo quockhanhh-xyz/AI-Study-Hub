@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const groupCountElement = document.getElementById("groupCount");
   const accountTierElement = document.getElementById("accountTier");
   const usageRemainingElement = document.getElementById("usageRemaining");
-  const usageProgressBar = document.getElementById("usageProgressBar");
+  const quotaProgressContainer = document.getElementById("quotaProgressContainer");
 
   // Document list elements
   const documentLoader = document.getElementById("documentLoader");
@@ -113,7 +113,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     } else {
       description.style.display = "none";
     }
-    
+
     const meta = document.createElement("div");
     meta.className = "document-meta";
     meta.append(
@@ -199,8 +199,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (usageRemainingElement) {
       usageRemainingElement.textContent = formatFileSize(totalBytesUsed);
     }
-    if (usageProgressBar) {
-      usageProgressBar.style.display = "none";
+    if (quotaProgressContainer) {
+      quotaProgressContainer.style.display = "none";
     }
   }
 

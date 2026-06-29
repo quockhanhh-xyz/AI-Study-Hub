@@ -122,18 +122,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       const result = await getPublicSubjects();
       const subjects = Array.isArray(result.data) ? result.data : [];
-      if (subjectFilter) {
-        const currentValue = subjectFilter.value;
-        subjectFilter.innerHTML = '<option value="">All Subjects</option>';
+      const subjectDatalist = document.getElementById("subjectDatalist");
+      if (subjectDatalist) {
+        subjectDatalist.innerHTML = "";
         subjects.forEach(function (subject) {
           const option = document.createElement("option");
-          option.value = subject.subjectId;
-          option.textContent = subject.subjectCode
+          const label = subject.subjectCode
             ? `${subject.subjectCode} - ${subject.subjectName}`
             : subject.subjectName;
-          subjectFilter.appendChild(option);
+          option.value = label;
+          option.dataset.id = subject.subjectId;
+          subjectDatalist.appendChild(option);
         });
-        subjectFilter.value = currentValue;
       }
     } catch (error) {
       // Non-fatal: community list still works without the subject dropdown.
@@ -142,12 +142,29 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  function getSelectedSubjectId() {
+    if (!subjectFilter) return "";
+    const typedText = subjectFilter.value.trim();
+    if (!typedText) return "";
+
+    const subjectDatalist = document.getElementById("subjectDatalist");
+    if (subjectDatalist) {
+      const options = subjectDatalist.options;
+      for (let i = 0; i < options.length; i++) {
+        if (options[i].value === typedText) {
+          return options[i].dataset.id || "";
+        }
+      }
+    }
+    return "";
+  }
+
   async function loadCommunityDocuments() {
     setLoading();
 
     const params = {
       keyword: searchInput ? searchInput.value.trim() : "",
-      subjectId: subjectFilter ? subjectFilter.value : "",
+      subjectId: getSelectedSubjectId(),
       fileType: fileTypeFilter ? fileTypeFilter.value : "",
       sort: sortFilter ? sortFilter.value : "newest"
     };
@@ -212,7 +229,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
 
-  if (subjectFilter) subjectFilter.addEventListener("change", loadCommunityDocuments);
+  if (subjectFilter) {
+    subjectFilter.addEventListener("change", loadCommunityDocuments);
+    subjectFilter.addEventListener("input", function () {
+      const id = getSelectedSubjectId();
+      if (id || subjectFilter.value === "") {
+        loadCommunityDocuments();
+      }
+    });
+  }
   if (fileTypeFilter) fileTypeFilter.addEventListener("change", loadCommunityDocuments);
   if (sortFilter) sortFilter.addEventListener("change", loadCommunityDocuments);
 

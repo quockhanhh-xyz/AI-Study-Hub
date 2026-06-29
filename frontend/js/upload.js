@@ -33,8 +33,6 @@ const newFolderError = document.getElementById("newFolderError");
 const CREATE_NEW_VALUE = "__new__";
 let lastSubjectValue = "";
 let lastFolderValue = "";
-let retainedSubjectId = "";
-let retainedFolderId = "";
 
 // Constants
 const ALLOWED_TYPES = [
@@ -151,9 +149,18 @@ function formatFileSize(bytes) {
 
 function updateDropZone(file) {
   if (file) {
-    dropZoneText.innerHTML = `<strong>${file.name}</strong><br/><small>${formatFileSize(file.size)}</small>`;
+    dropZoneText.innerHTML = "";
+    const strong = document.createElement("strong");
+    strong.textContent = file.name;
+    const br = document.createElement("br");
+    const small = document.createElement("small");
+    small.textContent = formatFileSize(file.size);
+    dropZoneText.appendChild(strong);
+    dropZoneText.appendChild(br);
+    dropZoneText.appendChild(small);
+
     dropZone.classList.add("has-file");
-    // Show Remove/Change File button
+    // Show Remove File button
     let removeBtn = document.getElementById("removeFileBtn");
     if (!removeBtn) {
       removeBtn = document.createElement("button");
@@ -161,7 +168,7 @@ function updateDropZone(file) {
       removeBtn.id = "removeFileBtn";
       removeBtn.className = "btn btn-secondary";
       removeBtn.style.marginTop = "8px";
-      removeBtn.textContent = "Remove / Change File";
+      removeBtn.textContent = "Remove File";
       removeBtn.addEventListener("click", function (e) {
         e.stopPropagation();
         fileInput.value = "";
@@ -175,7 +182,9 @@ function updateDropZone(file) {
     dropZoneText.innerHTML = `Drag and drop or click to select a file<br/><small>(PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG - max 10MB)</small>`;
     dropZone.classList.remove("has-file");
     const removeBtn = document.getElementById("removeFileBtn");
-    if (removeBtn) removeBtn.style.display = "none";
+    if (removeBtn) {
+      removeBtn.style.display = "none";
+    }
   }
 }
 
@@ -354,7 +363,6 @@ async function handleCreateSubject() {
     subjectSelect.insertBefore(option, subjectSelect.querySelector(`option[value="${CREATE_NEW_VALUE}"]`));
     subjectSelect.value = created.subjectId;
     lastSubjectValue = String(created.subjectId);
-    retainedSubjectId = String(created.subjectId);
 
     newSubjectRow.style.display = "none";
     subjectError.style.display = "none";
@@ -429,7 +437,6 @@ async function handleCreateFolder() {
     folderSelect.insertBefore(option, folderSelect.querySelector(`option[value="${CREATE_NEW_VALUE}"]`));
     folderSelect.value = created.folderId;
     lastFolderValue = String(created.folderId);
-    retainedFolderId = String(created.folderId);
 
     newFolderRow.style.display = "none";
     window.showToast(`Folder "${option.textContent}" created and selected.`, "success");
@@ -514,8 +521,6 @@ uploadForm.addEventListener("submit", async (e) => {
     completeProgress(progressInterval);
     window.showToast(`Upload successful: "${result.data.title}"`, "success");
     // Reset everything only if successful
-    retainedSubjectId = "";
-    retainedFolderId = "";
     uploadForm.reset();
     updateDropZone(null);
     newSubjectRow.style.display = "none";

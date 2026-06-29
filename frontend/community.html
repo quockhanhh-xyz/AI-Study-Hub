@@ -63,9 +63,8 @@
 
                 <div class="toolbar">
                     <div class="filter-group">
-                        <select id="subjectFilter">
-                            <option value="">All Subjects</option>
-                        </select>
+                        <input type="text" id="subjectFilter" list="subjectDatalist" placeholder="Filter by Subject..." style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background-color: var(--card-bg); color: var(--text); min-width: 180px; max-width: 250px;" />
+                        <datalist id="subjectDatalist"></datalist>
                     </div>
                     <div class="filter-group">
                         <select id="fileTypeFilter">
