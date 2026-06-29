@@ -326,27 +326,9 @@ function renderDocument(doc) {
 
             // Default active state
             if (doc.canEdit) {
-                if (tabDetails) tabDetails.classList.add("active");
-                if (tabSharing) tabSharing.classList.remove("active");
-                if (paneDetails) {
-                    paneDetails.style.display = "block";
-                    paneDetails.classList.add("active");
-                }
-                if (paneSharing) {
-                    paneSharing.style.display = "none";
-                    paneSharing.classList.remove("active");
-                }
+                setActiveTab("details", false);
             } else if (doc.canShare) {
-                if (tabSharing) tabSharing.classList.add("active");
-                if (tabDetails) tabDetails.classList.remove("active");
-                if (paneSharing) {
-                    paneSharing.style.display = "block";
-                    paneSharing.classList.add("active");
-                }
-                if (paneDetails) {
-                    paneDetails.style.display = "none";
-                    paneDetails.classList.remove("active");
-                }
+                setActiveTab("sharing", false);
             }
         } else {
             inspector.style.display = "none";
@@ -547,6 +529,39 @@ function formatDate(isoString) {
 }
 
 // ── Inspector Tabs UI ────────────────────────────────────────────────────────
+function setActiveTab(tabId, focus = true) {
+    const tabDetails = document.getElementById("inspectorTabDetails");
+    const tabSharing = document.getElementById("inspectorTabSharing");
+    const paneDetails = document.getElementById("inspectorPaneDetails");
+    const paneSharing = document.getElementById("inspectorPaneSharing");
+
+    if (!tabDetails || !tabSharing || !paneDetails || !paneSharing) return;
+
+    const tabs = [tabDetails, tabSharing];
+    const panes = [paneDetails, paneSharing];
+
+    tabs.forEach(t => {
+        t.classList.remove("active");
+        t.setAttribute("aria-selected", "false");
+    });
+
+    panes.forEach(p => {
+        p.classList.remove("active");
+        p.style.display = ""; // Clear any inline styles that override classes
+    });
+
+    const activeTab = tabId === "sharing" ? tabSharing : tabDetails;
+    const activePane = tabId === "sharing" ? paneSharing : paneDetails;
+
+    activeTab.classList.add("active");
+    activeTab.setAttribute("aria-selected", "true");
+    activePane.classList.add("active");
+
+    if (focus) {
+        activeTab.focus();
+    }
+}
+
 function initInspectorTabs() {
     const tabDetails = document.getElementById("inspectorTabDetails");
     const tabSharing = document.getElementById("inspectorTabSharing");
@@ -568,26 +583,8 @@ function initInspectorTabs() {
 
     const tabs = [tabDetails, tabSharing];
 
-    function selectTab(tab) {
-        tabs.forEach(t => {
-            t.classList.remove("active");
-            t.setAttribute("aria-selected", "false");
-        });
-        tab.classList.add("active");
-        tab.setAttribute("aria-selected", "true");
-
-        if (tab === tabDetails) {
-            paneDetails.classList.add("active");
-            paneSharing.classList.remove("active");
-        } else {
-            paneSharing.classList.add("active");
-            paneDetails.classList.remove("active");
-        }
-        tab.focus();
-    }
-
-    tabDetails.addEventListener("click", () => selectTab(tabDetails));
-    tabSharing.addEventListener("click", () => selectTab(tabSharing));
+    tabDetails.addEventListener("click", () => setActiveTab("details", true));
+    tabSharing.addEventListener("click", () => setActiveTab("sharing", true));
 
     // Keyboard support: Left/Right arrows
     tabs.forEach((tab, index) => {
@@ -595,7 +592,8 @@ function initInspectorTabs() {
             if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
                 e.preventDefault();
                 const nextIndex = (index + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
-                selectTab(tabs[nextIndex]);
+                const nextTabId = nextIndex === 1 ? "sharing" : "details";
+                setActiveTab(nextTabId, true);
             }
         });
     });
