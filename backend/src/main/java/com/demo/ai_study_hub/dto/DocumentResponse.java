@@ -30,6 +30,7 @@ public class DocumentResponse {
     private String status;
     private String visibility;
     private String approvalStatus;
+    private String processingStatus;
     private LocalDateTime publishedAt;
     private Long viewCount;
     private Long downloadCount;

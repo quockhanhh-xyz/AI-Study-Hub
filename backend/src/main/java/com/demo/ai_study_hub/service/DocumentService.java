@@ -31,7 +31,10 @@ public class DocumentService {
     private final DocumentShareRepository documentShareRepository;
     private final GroupDocumentShareRepository groupDocumentShareRepository;
     private final StudyGroupMemberRepository studyGroupMemberRepository;
+    private final DocumentContentRepository documentContentRepository;
+    private final DocumentChunkRepository documentChunkRepository;
 
+    @Transactional
     public DocumentResponse uploadDocument(MultipartFile file, String title, String description, Integer subjectId, Integer folderId, String email) {
         if (title == null || title.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Title is required");
@@ -109,6 +112,16 @@ public class DocumentService {
         Document savedDoc;
         try {
             savedDoc = documentRepository.saveAndFlush(doc);
+            DocumentContent content = DocumentContent.builder()
+                    .document(savedDoc)
+                    .processingStatus(ProcessingStatus.PENDING)
+                    .characterCount(0)
+                    .originalCharacterCount(0)
+                    .wordCount(0)
+                    .isTruncated(false)
+                    .build();
+            documentContentRepository.saveAndFlush(content);
+            savedDoc.setDocumentContent(content);
         } catch (Exception persistenceException) {
             log.error("Failed to persist document metadata, rolling back Cloudinary upload. publicId={}", publicId, persistenceException);
             boolean cleaned = cloudinaryStorageService.deleteFile(publicId, fileTypeForCleanup);
@@ -133,12 +146,12 @@ public class DocumentService {
             List<Integer> allFolderIds = new ArrayList<>();
             allFolderIds.add(folderId);
             collectSubFolderIds(folderId, allFolderIds);
-            return documentRepository.findByOwnerAndFolderIds(owner, allFolderIds, keyword, subjectId, fileType)
-                    .stream().map(this::mapToResponse).collect(Collectors.toList());
+            List<Document> docs = documentRepository.findByOwnerAndFolderIds(owner, allFolderIds, keyword, subjectId, fileType);
+            return mapToResponseList(docs, owner);
         }
 
-        return documentRepository.findMyDocumentsWithFilters(owner, keyword, subjectId, fileType, folderId)
-                .stream().map(this::mapToResponse).collect(Collectors.toList());
+        List<Document> docs = documentRepository.findMyDocumentsWithFilters(owner, keyword, subjectId, fileType, folderId);
+        return mapToResponseList(docs, owner);
     }
 
     private void collectSubFolderIds(Integer parentId, List<Integer> result) {
@@ -307,7 +320,64 @@ public class DocumentService {
         return doc;
     }
 
+    @Transactional
+    public DocumentContent findOrCreatePending(Document doc) {
+        java.util.Optional<DocumentContent> existingContent = documentContentRepository
+                .findByDocument_DocumentId(doc.getDocumentId());
+        if (existingContent.isPresent()) {
+            return existingContent.get();
+        }
+
+        Document lockedDocument = documentRepository.findByIdForWrite(doc.getDocumentId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+
+        return documentContentRepository.findByDocument_DocumentId(doc.getDocumentId())
+                .orElseGet(() -> {
+                    DocumentContent content = DocumentContent.builder()
+                            .document(lockedDocument)
+                            .processingStatus(ProcessingStatus.PENDING)
+                            .characterCount(0)
+                            .originalCharacterCount(0)
+                            .wordCount(0)
+                            .isTruncated(false)
+                            .build();
+                    return documentContentRepository.saveAndFlush(content);
+                });
+    }
+
+    public List<DocumentResponse> mapToResponseList(List<Document> docs) {
+        if (docs == null || docs.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return mapToResponseList(docs, docs.get(0).getOwner());
+    }
+
+    public List<DocumentResponse> mapToResponseList(List<Document> docs, User requester) {
+        if (docs == null || docs.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<Integer> docIds = docs.stream().map(Document::getDocumentId).collect(Collectors.toList());
+        List<DocumentContent> contents = documentContentRepository.findAllByDocumentIds(docIds);
+        java.util.Map<Integer, DocumentContent> contentMap = new java.util.HashMap<>();
+        for (DocumentContent content : contents) {
+            contentMap.put(content.getDocument().getDocumentId(), content);
+        }
+
+        return docs.stream().map(doc -> {
+            DocumentContent content = contentMap.get(doc.getDocumentId());
+            if (content != null) {
+                doc.setDocumentContent(content);
+            }
+            return mapToResponse(doc, requester);
+        }).collect(Collectors.toList());
+    }
+
     private DocumentResponse mapToResponse(Document doc) {
+        DocumentContent content = documentContentRepository.findByDocument_DocumentId(doc.getDocumentId()).orElse(null);
+        if (content != null) {
+            doc.setDocumentContent(content);
+        }
         return mapToResponse(doc, doc.getOwner());
     }
 
@@ -376,6 +446,11 @@ public class DocumentService {
             }
         }
 
+        String processingStatusVal = "PENDING";
+        if (doc.getDocumentContent() != null) {
+            processingStatusVal = doc.getDocumentContent().getProcessingStatus().name();
+        }
+
         return DocumentResponse.builder()
                 .documentId(doc.getDocumentId())
                 .title(doc.getTitle())
@@ -395,6 +470,7 @@ public class DocumentService {
                 .status(doc.getStatus())
                 .visibility(doc.getVisibility())
                 .approvalStatus(doc.getApprovalStatus())
+                .processingStatus(processingStatusVal)
                 .publishedAt(doc.getPublishedAt())
                 .viewCount(doc.getViewCount())
                 .downloadCount(doc.getDownloadCount())

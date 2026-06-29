@@ -2790,4 +2790,147 @@ Allows the owner of a document to withdraw it from the public library, resetting
     "publishedAt": null
   }
 }
+
+---
+
+## 13.1. Process Document API
+
+## POST `/api/documents/{id}/process`
+
+Initiates the text extraction and chunking processing flow for the specified document.
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (202 Accepted)
+
+> [!NOTE]
+> The HTTP 202 response indicates that processing has been scheduled. In case the server's task queue is completely saturated (full capacity), the background event listener will reject the task and transition its status to `FAILED` shortly after the response is returned. The frontend client MUST poll the processing status API to determine the true actual state of the document.
+
+```json
+{
+  "success": true,
+  "message": "Document processing started",
+  "data": {
+    "documentId": 25,
+    "processingStatus": "PROCESSING",
+    "characterCount": 0,
+    "originalCharacterCount": 0,
+    "wordCount": 0,
+    "chunkCount": 0,
+    "isTruncated": false,
+    "processingStartedAt": "2026-06-29T16:00:00",
+    "processedAt": null,
+    "lastAttemptStatus": null,
+    "lastAttemptError": null,
+    "lastAttemptedAt": null
+  }
+}
+```
+
+### Error Responses
+
+- **Conflict (409)**: If the document is already in `PROCESSING` state or has already been successfully processed (`COMPLETED`).
+- **Forbidden (403)**: If the user is not the owner of the document.
+- **Not Found (404)**: If the document does not exist or has been deleted.
+
+---
+
+## 13.2. Reprocess Document API
+
+## POST `/api/documents/{id}/reprocess`
+
+Re-initiates the text extraction and chunking flow. Unlike `/process`, this is designed to retry or refresh completed or failed extractions.
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (202 Accepted)
+
+> [!NOTE]
+> The HTTP 202 response indicates that reprocessing has been scheduled. Under server queue saturation, the listener will reject the task execution and transition its status to `FAILED` or restore `COMPLETED` shortly after the response is returned. The frontend client MUST poll the processing status API to verify the true status.
+
+```json
+{
+  "success": true,
+  "message": "Document reprocessing started",
+  "data": {
+    "documentId": 25,
+    "processingStatus": "PROCESSING",
+    "characterCount": 0,
+    "originalCharacterCount": 0,
+    "wordCount": 0,
+    "chunkCount": 0,
+    "isTruncated": false,
+    "processingStartedAt": "2026-06-29T16:00:00",
+    "processedAt": null,
+    "lastAttemptStatus": null,
+    "lastAttemptError": null,
+    "lastAttemptedAt": null
+  }
+}
+```
+
+---
+
+## 13.3. Get Document Processing Status API
+
+## GET `/api/documents/{id}/processing-status`
+
+Retrieves the current processing metadata status of a document.
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Document processing status retrieved",
+  "data": {
+    "documentId": 25,
+    "processingStatus": "COMPLETED",
+    "characterCount": 1500,
+    "originalCharacterCount": 1500,
+    "wordCount": 350,
+    "chunkCount": 3,
+    "isTruncated": false,
+    "processingStartedAt": "2026-06-29T16:00:00",
+    "processedAt": "2026-06-29T16:00:15",
+    "lastAttemptStatus": "COMPLETED",
+    "lastAttemptError": null,
+    "lastAttemptedAt": "2026-06-29T16:00:15"
+  }
+}
+```
+
+---
+
+## 13.4. Get Extracted Content API
+
+## GET `/api/documents/{id}/content`
+
+Retrieves the full raw cleaned text extracted from the document. Restricted exclusively to the document owner.
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Document extracted content retrieved",
+  "data": {
+    "documentId": 25,
+    "extractedText": "This is the full extracted and cleaned text content from the document..."
+  }
+}
+```
+
 ```
