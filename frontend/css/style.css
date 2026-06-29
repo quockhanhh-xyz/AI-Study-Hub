@@ -526,7 +526,7 @@ textarea.success {
   background: #ffffff;
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 24px;
+  padding: 18px 22px;
   text-align: left;
   position: relative;
   overflow: hidden;
@@ -546,7 +546,7 @@ textarea.success {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
 }
 
 .stat-icon {
@@ -589,26 +589,23 @@ textarea.success {
 
 .badge-tier-free,
 .badge-tier-premium {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 12px;
-  font-size: 13px;
-  font-weight: 700;
-  border-radius: 20px;
-  letter-spacing: 0.5px;
+  display: inline-block;
+  font-size: 26px !important;
+  font-weight: 700 !important;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 
 .badge-tier-free {
-  background: linear-gradient(135deg, #94a3b8, #64748b);
-  color: #ffffff !important;
+  color: #334155 !important; /* High contrast dark grey */
 }
 
 .badge-tier-premium {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: #ffffff !important;
-  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2);
+  color: #b45309 !important; /* High contrast premium gold/amber */
 }
 
 .stat-placeholder-note {
@@ -803,7 +800,7 @@ textarea.success {
 .document-card {
   display: flex !important;
   flex-direction: row !important;
-  align-items: flex-start !important;
+  align-items: center !important;
   gap: 16px !important;
   padding: 18px 20px !important;
   border: 1px solid var(--border) !important;
@@ -849,9 +846,9 @@ textarea.success {
 
 /* File type icon left block */
 .document-file-icon-wrapper {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
