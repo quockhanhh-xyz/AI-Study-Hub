@@ -147,7 +147,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     groupNameHeader.textContent = group.groupName || "Group";
     groupNameTitle.textContent = group.groupName || "Untitled Group";
     groupDescription.textContent = group.description || "No description provided.";
-    
+
     // Step 8A Refactor: Add click-to-copy functionality for invite code
     groupInviteCode.textContent = group.inviteCode || "-";
     if (group.inviteCode && group.inviteCode !== "-") {

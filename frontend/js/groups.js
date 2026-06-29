@@ -41,11 +41,11 @@ document.addEventListener("DOMContentLoaded", async function () {
   function openModal(overlay) {
     lastActiveElement = document.activeElement;
     overlay.classList.add("open");
-    
+
     // Accessibility dialog configurations enforcement attributes
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
-    
+
     // Focus Trap initial capture configuration
     const focusableInputs = overlay.querySelectorAll('input, select, textarea, button, [tabindex="0"]');
     if (focusableInputs.length > 0) {
