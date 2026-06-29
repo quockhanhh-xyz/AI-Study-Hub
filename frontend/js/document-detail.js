@@ -2,16 +2,25 @@
 // Standardized UI styles and theme configurations.
 
 function handleBack() {
-    if (document.referrer && (document.referrer.includes("dashboard.html") ||
-        document.referrer.includes("documents.html") ||
-        document.referrer.includes("shared-with-me.html") ||
-        document.referrer.includes("group-detail.html") ||
-        document.referrer.includes("shared-folder-detail.html") ||
-        document.referrer.includes("folders.html"))) {
-        window.location.href = document.referrer;
-    } else {
-        window.location.href = "dashboard.html";
+    if (document.referrer) {
+        try {
+            const refUrl = new URL(document.referrer);
+            if (refUrl.origin === window.location.origin && (
+                refUrl.pathname.includes("dashboard.html") ||
+                refUrl.pathname.includes("documents.html") ||
+                refUrl.pathname.includes("shared-with-me.html") ||
+                refUrl.pathname.includes("group-detail.html") ||
+                refUrl.pathname.includes("shared-folder-detail.html") ||
+                refUrl.pathname.includes("folders.html")
+            )) {
+                window.location.href = document.referrer;
+                return;
+            }
+        } catch (e) {
+            // Ignore parse errors, fallback to default redirect
+        }
     }
+    window.location.href = "dashboard.html";
 }
 
 // Fix #3: showFatalError queries DOM directly to avoid ReferenceError
@@ -85,6 +94,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         params.get("from") === "community" ||
         params.get("mode") === "public";
 
+    initInspectorTabs();
+
     loadPage(id, {
         isAuthenticated,
         isCommunityView: currentIsCommunityView
@@ -143,7 +154,7 @@ async function loadPage(id, { isAuthenticated, isCommunityView }) {
 function renderDocument(doc) {
     document.getElementById("fileTypeBadge").textContent = (doc.fileType || "–").toUpperCase();
     document.getElementById("docTitle").textContent = doc.title || "–";
-    
+
     // Hide email in community view to prevent exposure
     const docUploadedBy = document.getElementById("docUploadedBy");
     if (docUploadedBy) {
@@ -156,7 +167,7 @@ function renderDocument(doc) {
             }
         } else {
             docUploadedBy.style.display = "inline";
-            docUploadedBy.textContent = "Uploaded by " + (doc.ownerName || doc.uploadedBy || "–");
+            docUploadedBy.textContent = "Uploaded by " + (doc.uploadedByName || doc.ownerName || "–");
         }
     }
 
@@ -294,6 +305,36 @@ function renderDocument(doc) {
     if (typeof renderDocumentPreview === "function") {
         renderDocumentPreview(doc);
     }
+
+    // Configure Inspector panel visibility and defaults
+    const inspector = document.querySelector(".detail-right-inspector");
+    const hasInspector = doc.canEdit || doc.canShare;
+    const detailContentContainer = document.getElementById("detailContent");
+
+    if (inspector && detailContentContainer) {
+        if (!currentIsCommunityView && hasInspector) {
+            inspector.style.display = "block";
+            detailContentContainer.classList.add("has-inspector");
+
+            const tabDetails = document.getElementById("inspectorTabDetails");
+            const tabSharing = document.getElementById("inspectorTabSharing");
+            const paneDetails = document.getElementById("inspectorPaneDetails");
+            const paneSharing = document.getElementById("inspectorPaneSharing");
+
+            if (tabDetails) tabDetails.style.display = doc.canEdit ? "block" : "none";
+            if (tabSharing) tabSharing.style.display = doc.canShare ? "block" : "none";
+
+            // Default active state
+            if (doc.canEdit) {
+                setActiveTab("details", false);
+            } else if (doc.canShare) {
+                setActiveTab("sharing", false);
+            }
+        } else {
+            inspector.style.display = "none";
+            detailContentContainer.classList.remove("has-inspector");
+        }
+    }
 }
 
 // ── Render subject dropdown ───────────────────────────────────────────────────
@@ -351,34 +392,23 @@ async function handleSave() {
     }
 }
 
-// ── Delete confirm modal ──────────────────────────────────────────────────────
-function showDeleteConfirm() {
-    document.getElementById("deleteModal").classList.add("show");
-}
-
-// ── Modal overlay hide ──────────────────────────────────────────────────────
-function hideDeleteConfirm() {
-    document.getElementById("deleteModal").classList.remove("show");
-}
-
 async function handleDelete() {
-    const confirmBtn = document.getElementById("confirmDeleteBtn");
-    confirmBtn.disabled = true;
-    confirmBtn.textContent = "Deleting...";
+    const confirmed = await window.confirmAction({
+        title: "Move this document to Trash?",
+        message: "You can restore it later from Trash.",
+        confirmText: "Delete",
+        danger: true
+    });
+    if (!confirmed) return;
 
     try {
         await deleteDocument(currentDocumentId);
-        hideDeleteConfirm();
         window.showToast("Document deleted.", "success");
         setTimeout(() => {
             window.location.href = "dashboard.html";
         }, 1200);
     } catch (err) {
-        hideDeleteConfirm();
         window.showToast(err.message || "Failed to delete document.", "error");
-    } finally {
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = "Delete";
     }
 }
 
@@ -496,6 +526,77 @@ function formatDate(isoString) {
     if (!isoString) return "–";
     const d = new Date(isoString);
     return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+// ── Inspector Tabs UI ────────────────────────────────────────────────────────
+function setActiveTab(tabId, focus = true) {
+    const tabDetails = document.getElementById("inspectorTabDetails");
+    const tabSharing = document.getElementById("inspectorTabSharing");
+    const paneDetails = document.getElementById("inspectorPaneDetails");
+    const paneSharing = document.getElementById("inspectorPaneSharing");
+
+    if (!tabDetails || !tabSharing || !paneDetails || !paneSharing) return;
+
+    const tabs = [tabDetails, tabSharing];
+    const panes = [paneDetails, paneSharing];
+
+    tabs.forEach(t => {
+        t.classList.remove("active");
+        t.setAttribute("aria-selected", "false");
+    });
+
+    panes.forEach(p => {
+        p.classList.remove("active");
+        p.style.display = ""; // Clear any inline styles that override classes
+    });
+
+    const activeTab = tabId === "sharing" ? tabSharing : tabDetails;
+    const activePane = tabId === "sharing" ? paneSharing : paneDetails;
+
+    activeTab.classList.add("active");
+    activeTab.setAttribute("aria-selected", "true");
+    activePane.classList.add("active");
+
+    if (focus) {
+        activeTab.focus();
+    }
+}
+
+function initInspectorTabs() {
+    const tabDetails = document.getElementById("inspectorTabDetails");
+    const tabSharing = document.getElementById("inspectorTabSharing");
+    const paneDetails = document.getElementById("inspectorPaneDetails");
+    const paneSharing = document.getElementById("inspectorPaneSharing");
+
+    if (!tabDetails || !tabSharing || !paneDetails || !paneSharing) return;
+
+    // Accessibility attributes
+    tabDetails.setAttribute("role", "tab");
+    tabDetails.setAttribute("aria-selected", "true");
+    tabDetails.setAttribute("aria-controls", "inspectorPaneDetails");
+    tabSharing.setAttribute("role", "tab");
+    tabSharing.setAttribute("aria-selected", "false");
+    tabSharing.setAttribute("aria-controls", "inspectorPaneSharing");
+
+    paneDetails.setAttribute("role", "tabpanel");
+    paneSharing.setAttribute("role", "tabpanel");
+
+    const tabs = [tabDetails, tabSharing];
+
+    tabDetails.addEventListener("click", () => setActiveTab("details", true));
+    tabSharing.addEventListener("click", () => setActiveTab("sharing", true));
+
+    // Keyboard support: Left/Right arrows
+    tabs.forEach((tab, index) => {
+        tab.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                e.preventDefault();
+                const nextIndex = (index + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+                const nextTabId = nextIndex === 1 ? "sharing" : "details";
+                setActiveTab(nextTabId, true);
+            }
+        });
+    });
 }
 
 // ── Sharing UI & Logic ─────────────────────────────────────────────────────────
@@ -668,7 +769,7 @@ async function loadSharingInfo(docId) {
 
                 const name = document.createElement("span");
                 name.className = "member-row-name";
-                name.textContent = item.sharedWithEmail;
+                name.textContent = item.sharedWithName || "Unknown User";
 
                 const badge = document.createElement("span");
                 badge.className = "badge badge-success";
@@ -731,7 +832,12 @@ async function loadSharingInfo(docId) {
 
 // ── Revoke Actions ────────────────────────────────────────────────────────────
 async function handleRevokeDirect(shareId) {
-    const confirmed = confirm("Are you sure you want to revoke this direct share?");
+    const confirmed = await window.confirmAction({
+        title: "Revoke Direct Share",
+        message: "Are you sure you want to revoke this direct share?",
+        confirmText: "Revoke",
+        danger: true
+    });
     if (!confirmed) return;
     try {
         await revokeDocumentShare(shareId);
@@ -743,7 +849,12 @@ async function handleRevokeDirect(shareId) {
 }
 
 async function handleRevokeGroup(shareId) {
-    const confirmed = confirm("Are you sure you want to revoke this group share?");
+    const confirmed = await window.confirmAction({
+        title: "Revoke Group Share",
+        message: "Are you sure you want to revoke this group share?",
+        confirmText: "Revoke",
+        danger: true
+    });
     if (!confirmed) return;
     try {
         await revokeGroupDocumentShare(shareId);

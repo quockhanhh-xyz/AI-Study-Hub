@@ -380,6 +380,68 @@
         height: 320px;
       }
     }
+
+    /* ===== SPLIT LAYOUT STYLES ===== */
+    .detail-split-container {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    @media (min-width: 1024px) {
+      .detail-split-container.has-inspector {
+        display: grid;
+        grid-template-columns: 65fr 35fr;
+        gap: 32px;
+        align-items: start;
+      }
+      .detail-split-container:not(.has-inspector) .detail-left-panel .detail-card {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+    }
+    .detail-left-panel {
+      min-width: 0;
+    }
+    .detail-right-inspector {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .inspector-tabs-container {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .inspector-tab-btn {
+      flex: 1;
+      padding: 10px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    .inspector-tab-btn:hover {
+      color: var(--text);
+    }
+    .inspector-tab-btn.active {
+      color: var(--primary) !important;
+      border-bottom-color: var(--primary) !important;
+    }
+    .inspector-tab-pane {
+      display: none;
+    }
+    .inspector-tab-pane.active {
+      display: block;
+    }
+    .detail-divider {
+      display: none; /* Hide standard separator in split layout */
+    }
   </style>
 </head>
 
@@ -404,115 +466,129 @@
 
       <div id="detailLoader">Loading document...</div>
 
-      <div id="detailContent">
-        <div class="card detail-card">
-          <div class="detail-header" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-            <span class="detail-type-badge" id="fileTypeBadge">–</span>
-            <span id="visibilityBadge" class="status-badge" style="display: none;"></span>
-            <span id="approvalBadge" class="status-badge" style="display: none;"></span>
-            <div class="detail-title-block" style="flex-grow: 1; min-width: 200px;">
-              <h1 id="docTitle" style="margin: 0;">–</h1>
-              <span class="detail-uploaded-by" id="docUploadedBy"></span>
-            </div>
-          </div>
-
-          <div class="detail-meta-grid">
-            <div class="meta-item">
-              <div class="meta-item-label">Subject</div>
-              <div class="meta-item-value" id="docSubject">–</div>
-            </div>
-            <div class="meta-item">
-              <div class="meta-item-label">File size</div>
-              <div class="meta-item-value" id="docFileSize">–</div>
-            </div>
-            <div class="meta-item">
-              <div class="meta-item-label">Uploaded</div>
-              <div class="meta-item-value" id="docCreatedAt">–</div>
-            </div>
-          </div>
-
-          <div class="detail-description">
-            <label>Description</label>
-            <p id="docDescription">No description provided.</p>
-          </div>
-
-          <!-- Preview Area -->
-          <div class="preview-section">
-            <div class="preview-section-label">Preview</div>
-            <div id="previewArea">
-              <div class="preview-fallback">
-                <div class="preview-fallback-desc">Loading preview...</div>
+      <div id="detailContent" class="detail-split-container">
+        <!-- Left Panel: Card containing general information & Preview -->
+        <div class="detail-left-panel">
+          <div class="card detail-card">
+            <div class="detail-header" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <span class="detail-type-badge" id="fileTypeBadge">–</span>
+              <span id="visibilityBadge" class="status-badge" style="display: none;"></span>
+              <span id="approvalBadge" class="status-badge" style="display: none;"></span>
+              <div class="detail-title-block" style="flex-grow: 1; min-width: 200px;">
+                <h1 id="docTitle" style="margin: 0;">–</h1>
+                <span class="detail-uploaded-by" id="docUploadedBy"></span>
               </div>
             </div>
+
+            <div class="detail-meta-grid">
+              <div class="meta-item">
+                <div class="meta-item-label">Subject</div>
+                <div class="meta-item-value" id="docSubject">–</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-item-label">File size</div>
+                <div class="meta-item-value" id="docFileSize">–</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-item-label">Uploaded</div>
+                <div class="meta-item-value" id="docCreatedAt">–</div>
+              </div>
+            </div>
+
+            <div class="detail-description">
+              <label>Description</label>
+              <p id="docDescription">No description provided.</p>
+            </div>
+
+            <!-- Preview Area -->
+            <div class="preview-section">
+              <div class="preview-section-label">Preview</div>
+              <div id="previewArea">
+                <div class="preview-fallback">
+                  <div class="preview-fallback-desc">Loading preview...</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="file-action-section" style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px;">
+              <button id="openFileBtn" class="btn btn-primary" style="display:none; width:auto; padding:10px 24px;">
+                Open File ↗
+              </button>
+              <button id="downloadFileBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;">
+                Download
+              </button>
+              <button id="shareBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;">
+                Share
+              </button>
+              <button id="moveBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;" onclick="showMoveModal()">
+                Move
+              </button>
+              <button id="publishBtn" class="btn btn-success" style="display:none; width:auto; padding:10px 24px;">
+                Publish
+              </button>
+              <button id="unpublishBtn" class="btn btn-danger" style="display:none; width:auto; padding:10px 24px;">
+                Unpublish
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel / Inspector: Details & Sharing tabs -->
+        <div class="detail-right-inspector">
+          <div class="inspector-tabs-container" role="tablist">
+            <button type="button" id="inspectorTabDetails" class="inspector-tab-btn active">Details</button>
+            <button type="button" id="inspectorTabSharing" class="inspector-tab-btn">Sharing</button>
           </div>
 
-          <div class="file-action-section" style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px;">
-            <button id="openFileBtn" class="btn btn-primary" style="display:none; width:auto; padding:10px 24px;">
-              Open File ↗
-            </button>
-            <button id="downloadFileBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;">
-              Download
-            </button>
-            <button id="shareBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;">
-              Share
-            </button>
-            <button id="moveBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;" onclick="showMoveModal()">
-              Move
-            </button>
-            <button id="publishBtn" class="btn btn-success" style="display:none; width:auto; padding:10px 24px;">
-              Publish
-            </button>
-            <button id="unpublishBtn" class="btn btn-danger" style="display:none; width:auto; padding:10px 24px;">
-              Unpublish
-            </button>
-          </div>
+          <div class="inspector-panes">
+            <!-- Details tab pane -->
+            <div id="inspectorPaneDetails" class="inspector-tab-pane active">
+              <div class="edit-section" style="margin-top: 0;">
+                <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Edit Details</h2>
 
-          <div id="sharesPanel" class="shares-panel" style="display: none; margin-bottom: 28px;">
-            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">Document Sharing Management</h3>
+                <div class="form-group">
+                  <label for="editTitle">Title <span style="color:var(--danger)">*</span></label>
+                  <input type="text" id="editTitle" placeholder="Document title" />
+                </div>
 
-            <div style="margin-bottom: 20px;">
-              <h4 style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Direct User Shares
-              </h4>
-              <div id="directSharesList" class="member-list" style="margin-bottom: 12px;"></div>
-              <p id="noDirectShares" class="helper-text" style="color: var(--muted); display: none;">Not shared with any
-                users directly.</p>
+                <div class="form-group">
+                  <label for="editDescription">Description</label>
+                  <textarea id="editDescription" placeholder="Optional description" style="min-height: 80px;"></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="editSubject">Subject</label>
+                  <select id="editSubject">
+                    <option value="" disabled selected>Loading subjects...</option>
+                  </select>
+                </div>
+
+                <div id="editMessage" class="helper-text" style="min-height:20px;margin-bottom:12px;"></div>
+
+                <div class="edit-actions" style="display: flex; gap: 12px; margin-top: 16px;">
+                  <button class="btn btn-primary" id="saveBtn" onclick="handleSave()" style="flex: 1;">Save Changes</button>
+                  <button class="btn btn-danger" id="deleteBtn" onclick="handleDelete()" style="flex: 1;">Delete</button>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <h4 style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Group Shares</h4>
-              <div id="groupSharesList" class="member-list" style="margin-bottom: 12px;"></div>
-              <p id="noGroupShares" class="helper-text" style="color: var(--muted); display: none;">Not shared in any
-                groups.</p>
-            </div>
-          </div>
+            <!-- Sharing tab pane -->
+            <div id="inspectorPaneSharing" class="inspector-tab-pane">
+              <div id="sharesPanel" class="shares-panel" style="display: block; margin-bottom: 0;">
+                <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Sharing Management</h3>
 
-          <hr class="detail-divider" />
+                <div style="margin-bottom: 20px;">
+                  <h4 style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Direct User Shares</h4>
+                  <div id="directSharesList" class="member-list" style="margin-bottom: 12px;"></div>
+                  <p id="noDirectShares" class="helper-text" style="color: var(--muted); display: none;">Not shared with any users directly.</p>
+                </div>
 
-          <div class="edit-section">
-            <h2>Edit Details</h2>
-
-            <div class="form-group">
-              <label for="editTitle">Title <span style="color:var(--danger)">*</span></label>
-              <input type="text" id="editTitle" placeholder="Document title" />
-            </div>
-
-            <div class="form-group">
-              <label for="editDescription">Description</label>
-              <textarea id="editDescription" placeholder="Optional description"></textarea>
-            </div>
-
-            <div class="form-group">
-              <label for="editSubject">Subject</label>
-              <select id="editSubject">
-                <option value="" disabled selected>Loading subjects...</option>
-              </select>
-            </div>
-
-            <div id="editMessage" class="helper-text" style="min-height:20px;margin-bottom:12px;"></div>
-
-            <div class="edit-actions">
-              <button class="btn btn-primary" id="saveBtn" onclick="handleSave()">Save Changes</button>
-              <button class="btn btn-danger" id="deleteBtn" onclick="showDeleteConfirm()">Delete</button>
+                <div>
+                  <h4 style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Group Shares</h4>
+                  <div id="groupSharesList" class="member-list" style="margin-bottom: 12px;"></div>
+                  <p id="noGroupShares" class="helper-text" style="color: var(--muted); display: none;">Not shared in any groups.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

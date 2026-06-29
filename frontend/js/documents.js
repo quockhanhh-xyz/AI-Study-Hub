@@ -370,6 +370,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         loadDocuments();
       }
     });
+    subjectFilter.addEventListener("blur", function () {
+      const id = getSelectedSubjectId();
+      if (!id && subjectFilter.value !== "") {
+        subjectFilter.value = "";
+        loadDocuments();
+      }
+    });
   }
 
   if (fileTypeFilter) {

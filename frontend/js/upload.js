@@ -85,6 +85,14 @@ async function loadFolderOptions() {
   createOption.value = CREATE_NEW_VALUE;
   createOption.textContent = "+ Create new folder…";
   folderSelect.appendChild(createOption);
+
+  // Auto-select folder if folderId is provided in URL query params
+  const urlParams = new URLSearchParams(window.location.search);
+  const preselectedFolderId = urlParams.get("folderId") || urlParams.get("parentFolderId");
+  if (preselectedFolderId) {
+    folderSelect.value = preselectedFolderId;
+    lastFolderValue = preselectedFolderId;
+  }
 }
 
 async function loadSubjectOptions() {

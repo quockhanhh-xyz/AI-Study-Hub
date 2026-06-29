@@ -24,15 +24,27 @@
                         <h1 id="folderPageTitle">My Folders</h1>
                         <nav class="breadcrumb" id="breadcrumb" aria-label="Folder navigation"></nav>
                     </div>
-                    <button type="button" id="shareFolderBtn" class="btn btn-secondary" style="display: none; align-items: center; gap: 6px; padding: 10px 16px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 10" id="Link--Streamline-Micro" height="14" width="14" aria-hidden="true" focusable="false">
-                          <desc>Link Streamline Icon: https://streamlinehq.com</desc>
-                          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m2.5 4.502 -0.917 0.92a2.12 2.12 0 0 0 0.002 2.997v0a2.12 2.12 0 0 0 2.999 0l0.917 -0.917" stroke-width="1"></path>
-                          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m7.5 5.502 0.914 -0.912c0.83 -0.828 0.83 -2.172 0.002 -3.001v0a2.121 2.121 0 0 0 -2.999 -0.002l-0.916 0.915" stroke-width="1"></path>
-                          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m3.5 6.502 3 -3" stroke-width="1"></path>
-                        </svg>
-                        Share Folder
-                    </button>
+                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                        <button type="button" id="backFolderBtn" class="btn btn-secondary" style="display: none; align-items: center; gap: 6px; padding: 10px 16px;">
+                            Back
+                        </button>
+                        <button type="button" id="shareFolderBtn" class="btn btn-secondary" style="display: none; align-items: center; gap: 6px; padding: 10px 16px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 10" id="Link--Streamline-Micro" height="14" width="14" aria-hidden="true" focusable="false">
+                              <desc>Link Streamline Icon: https://streamlinehq.com</desc>
+                              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m2.5 4.502 -0.917 0.92a2.12 2.12 0 0 0 0.002 2.997v0a2.12 2.12 0 0 0 2.999 0l0.917 -0.917" stroke-width="1"></path>
+                              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m7.5 5.502 0.914 -0.912c0.83 -0.828 0.83 -2.172 0.002 -3.001v0a2.121 2.121 0 0 0 -2.999 -0.002l-0.916 0.915" stroke-width="1"></path>
+                              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m3.5 6.502 3 -3" stroke-width="1"></path>
+                            </svg>
+                            Share Folder
+                        </button>
+                        <a href="upload.html" id="uploadDocumentToFolderBtn" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; text-decoration: none; color: inherit;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Arrow-Up-1--Streamline-Core" height="14" width="14" aria-hidden="true" focusable="false">
+                              <desc>Arrow Up 1 Streamline Icon: https://streamlinehq.com</desc>
+                              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 13.5V0.5M7 0.5 13.5 7M7 0.5 0.5 7" stroke-width="1"></path>
+                            </svg>
+                            Upload File
+                        </a>
+                    </div>
                 </section>
 
                 <div class="card dashboard-panel">
