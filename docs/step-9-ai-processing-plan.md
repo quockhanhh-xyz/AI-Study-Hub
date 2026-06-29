@@ -237,7 +237,7 @@ chunk_index bắt đầu từ 0 và tăng liên tục
 Yêu cầu:
 
 - Không tạo chunk rỗng hoặc chỉ whitespace.
-- Overlap được phép trùng một phần nội dung; “không trùng chunk” nghĩa l�
+- Overlap được phép trùng một phần nội dung; “không trùng chunk” nghĩa là
   không có row/index trùng do chạy lại job.
 - Thuật toán luôn tiến con trỏ để không lặp vô hạn.
 - Có giới hạn số chunk/document.
@@ -494,4 +494,3 @@ Step 9 hoàn thành khi backend xử lý bất đồng bộ được TXT/PDF th�
 và ordered chunks; trạng thái, concurrency, lifecycle và permission hoạt động
 đúng; frontend hiển thị và polling đúng; dữ liệu sẵn sàng cho Step 10 nhưng hệ
 thống chưa phụ thuộc bất kỳ AI provider nào.
-

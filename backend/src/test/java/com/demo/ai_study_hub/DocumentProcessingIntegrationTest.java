@@ -160,35 +160,52 @@ class DocumentProcessingIntegrationTest {
         java.util.concurrent.ExecutorService executorService = java.util.concurrent.Executors.newFixedThreadPool(threadCount);
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch endLatch = new CountDownLatch(threadCount);
+        CountDownLatch releaseExtractor = new CountDownLatch(1);
+        CountDownLatch extractorCompleted = new CountDownLatch(1);
 
         java.util.concurrent.atomic.AtomicInteger successCount = new java.util.concurrent.atomic.AtomicInteger(0);
         java.util.concurrent.atomic.AtomicInteger conflictCount = new java.util.concurrent.atomic.AtomicInteger(0);
 
-        for (int i = 0; i < threadCount; i++) {
-            executorService.submit(() -> {
-                try {
-                    startLatch.await();
-                    documentProcessingService.startProcessing(testDoc.getDocumentId(), "integration@gmail.com");
-                    successCount.incrementAndGet();
-                } catch (ResponseStatusException e) {
-                    if (e.getStatusCode() == org.springframework.http.HttpStatus.CONFLICT) {
-                        conflictCount.incrementAndGet();
+        when(documentTextExtractor.extract(any())).thenAnswer(invocation -> {
+            try {
+                releaseExtractor.await(5, TimeUnit.SECONDS);
+                return ExtractionResult.builder()
+                        .status(ProcessingStatus.COMPLETED)
+                        .build();
+            } finally {
+                extractorCompleted.countDown();
+            }
+        });
+
+        try {
+            for (int i = 0; i < threadCount; i++) {
+                executorService.submit(() -> {
+                    try {
+                        startLatch.await();
+                        documentProcessingService.startProcessing(testDoc.getDocumentId(), "integration@gmail.com");
+                        successCount.incrementAndGet();
+                    } catch (ResponseStatusException e) {
+                        if (e.getStatusCode() == org.springframework.http.HttpStatus.CONFLICT) {
+                            conflictCount.incrementAndGet();
+                        }
+                    } catch (Exception e) {
+                        // An unexpected failure is reflected by the final request counts.
+                    } finally {
+                        endLatch.countDown();
                     }
-                } catch (Exception e) {
-                    // Ignore other exceptions
-                } finally {
-                    endLatch.countDown();
-                }
-            });
+                });
+            }
+
+            startLatch.countDown();
+            boolean finished = endLatch.await(5, TimeUnit.SECONDS);
+            assertTrue(finished, "Threads should finish processing");
+
+            assertEquals(1, successCount.get(), "Only one thread should successfully start processing");
+            assertEquals(threadCount - 1, conflictCount.get(), "All other threads should throw 409 Conflict");
+        } finally {
+            releaseExtractor.countDown();
+            extractorCompleted.await(5, TimeUnit.SECONDS);
+            executorService.shutdownNow();
         }
-
-        // Start all threads concurrently
-        startLatch.countDown();
-        boolean finished = endLatch.await(5, TimeUnit.SECONDS);
-        assertTrue(finished, "Threads should finish processing");
-        executorService.shutdown();
-
-        assertEquals(1, successCount.get(), "Only one thread should successfully start processing");
-        assertEquals(threadCount - 1, conflictCount.get(), "All other threads should throw 409 Conflict");
     }
 }

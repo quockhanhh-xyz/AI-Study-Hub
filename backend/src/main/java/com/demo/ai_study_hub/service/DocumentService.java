@@ -322,13 +322,19 @@ public class DocumentService {
 
     @Transactional
     public DocumentContent findOrCreatePending(Document doc) {
-        documentRepository.findByIdForWrite(doc.getDocumentId())
+        java.util.Optional<DocumentContent> existingContent = documentContentRepository
+                .findByDocument_DocumentId(doc.getDocumentId());
+        if (existingContent.isPresent()) {
+            return existingContent.get();
+        }
+
+        Document lockedDocument = documentRepository.findByIdForWrite(doc.getDocumentId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
 
         return documentContentRepository.findByDocument_DocumentId(doc.getDocumentId())
                 .orElseGet(() -> {
                     DocumentContent content = DocumentContent.builder()
-                            .document(doc)
+                            .document(lockedDocument)
                             .processingStatus(ProcessingStatus.PENDING)
                             .characterCount(0)
                             .originalCharacterCount(0)
