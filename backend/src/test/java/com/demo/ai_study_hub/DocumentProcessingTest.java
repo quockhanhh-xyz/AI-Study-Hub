@@ -120,9 +120,8 @@ class DocumentProcessingTest {
     void startProcessing_WhenOwnerAndPending_ShouldSucceedAndPublishEvent() {
         when(userRepository.findByEmail("owner@gmail.com")).thenReturn(Optional.of(owner));
         when(documentRepository.findById(10)).thenReturn(Optional.of(document));
-        when(documentService.findOrCreatePending(document)).thenReturn(pendingContent);
         when(documentContentRepository.findByDocumentIdForWrite(10)).thenReturn(Optional.of(pendingContent));
-        when(documentChunkRepository.findByDocument_DocumentIdOrderByChunkIndexAsc(10)).thenReturn(Collections.emptyList());
+        when(documentChunkRepository.countByDocument_DocumentId(10)).thenReturn(0);
 
         DocumentProcessingStatusResponse response = documentProcessingService.startProcessing(10, "owner@gmail.com");
 
@@ -182,9 +181,8 @@ class DocumentProcessingTest {
     void startReprocessing_WhenOwnerAndCompleted_ShouldSucceedAndPublishEvent() {
         when(userRepository.findByEmail("owner@gmail.com")).thenReturn(Optional.of(owner));
         when(documentRepository.findById(10)).thenReturn(Optional.of(document));
-        when(documentService.findOrCreatePending(document)).thenReturn(completedContent);
         when(documentContentRepository.findByDocumentIdForWrite(10)).thenReturn(Optional.of(completedContent));
-        when(documentChunkRepository.findByDocument_DocumentIdOrderByChunkIndexAsc(10)).thenReturn(Collections.emptyList());
+        when(documentChunkRepository.countByDocument_DocumentId(10)).thenReturn(0);
 
         DocumentProcessingStatusResponse response = documentProcessingService.startReprocessing(10, "owner@gmail.com");
 
@@ -243,7 +241,8 @@ class DocumentProcessingTest {
                 .processingStartedAt(LocalDateTime.now().minusMinutes(15))
                 .build();
 
-        when(documentContentRepository.findAll()).thenReturn(List.of(staleContent));
+        when(documentContentRepository.findByProcessingStatusAndProcessingStartedAtBefore(eq(ProcessingStatus.PROCESSING), any(LocalDateTime.class)))
+                .thenReturn(List.of(staleContent));
 
         documentProcessingService.recoverStaleJobs();
 
@@ -263,7 +262,8 @@ class DocumentProcessingTest {
                 .processedAt(LocalDateTime.now().minusMinutes(30))
                 .build();
 
-        when(documentContentRepository.findAll()).thenReturn(List.of(staleContent));
+        when(documentContentRepository.findByProcessingStatusAndProcessingStartedAtBefore(eq(ProcessingStatus.PROCESSING), any(LocalDateTime.class)))
+                .thenReturn(List.of(staleContent));
 
         documentProcessingService.recoverStaleJobs();
 
@@ -284,7 +284,7 @@ class DocumentProcessingTest {
         documentProcessingEventListener.handleDocumentProcessingEvent(event);
 
         verify(documentProcessingPersister, times(1))
-                .saveFailure(eq(10), eq(ProcessingStatus.PENDING), anyString(), eq(ProcessingStatus.PENDING));
+                .saveFailure(eq(10), eq(ProcessingStatus.FAILED), anyString(), eq(ProcessingStatus.PENDING));
     }
 
     // --- Worker Tests ---

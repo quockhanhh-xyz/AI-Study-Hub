@@ -1,5 +1,6 @@
 package com.demo.ai_study_hub.service;
 
+import com.demo.ai_study_hub.entity.ProcessingStatus;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +27,7 @@ public class DocumentProcessingEventListener {
             try {
                 documentProcessingPersister.saveFailure(
                         event.getDocumentId(),
-                        event.getPreviousStatus(),
+                        ProcessingStatus.FAILED,
                         "Server queue is full. Task was rejected.",
                         event.getPreviousStatus()
                 );

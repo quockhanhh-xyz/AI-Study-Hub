@@ -3,11 +3,7 @@ package com.demo.ai_study_hub.service;
 import com.demo.ai_study_hub.dto.ExtractionResult;
 import com.demo.ai_study_hub.entity.Document;
 import com.demo.ai_study_hub.entity.ProcessingStatus;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.stereotype.Component;
 
-@Component
-@ConditionalOnMissingBean(DocumentTextExtractor.class)
 public class DefaultDocumentTextExtractor implements DocumentTextExtractor {
 
     @Override

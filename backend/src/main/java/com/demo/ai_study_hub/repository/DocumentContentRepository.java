@@ -23,4 +23,9 @@ public interface DocumentContentRepository extends JpaRepository<DocumentContent
 
     @Query("SELECT dc FROM DocumentContent dc JOIN FETCH dc.document d WHERE d.documentId IN :documentIds")
     List<DocumentContent> findAllByDocumentIds(@Param("documentIds") List<Integer> documentIds);
+
+    List<DocumentContent> findByProcessingStatusAndProcessingStartedAtBefore(
+            com.demo.ai_study_hub.entity.ProcessingStatus status,
+            java.time.LocalDateTime threshold
+    );
 }

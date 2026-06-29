@@ -162,6 +162,10 @@ public class DocumentProcessingService {
         DocumentContent content = documentContentRepository.findByDocument_DocumentId(documentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document content not found"));
 
+        if (content.getProcessingStatus() != ProcessingStatus.COMPLETED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Content is not available");
+        }
+
         return DocumentContentResponse.builder()
                 .documentId(documentId)
                 .extractedText(content.getExtractedText() != null ? content.getExtractedText() : "")
@@ -171,11 +175,8 @@ public class DocumentProcessingService {
     @Transactional
     public void recoverStaleJobs() {
         LocalDateTime threshold = LocalDateTime.now().minusMinutes(10);
-        List<DocumentContent> staleContents = documentContentRepository.findAll().stream()
-                .filter(c -> c.getProcessingStatus() == ProcessingStatus.PROCESSING 
-                        && c.getProcessingStartedAt() != null 
-                        && c.getProcessingStartedAt().isBefore(threshold))
-                .toList();
+        List<DocumentContent> staleContents = documentContentRepository
+                .findByProcessingStatusAndProcessingStartedAtBefore(ProcessingStatus.PROCESSING, threshold);
 
         for (DocumentContent content : staleContents) {
             if (content.getExtractedText() != null && content.getProcessedAt() != null) {
@@ -257,7 +258,7 @@ public class DocumentProcessingService {
 
     private DocumentProcessingStatusResponse mapToStatusResponse(Document doc) {
         DocumentContent content = doc.getDocumentContent();
-        int chunkCount = content != null ? documentChunkRepository.findByDocument_DocumentIdOrderByChunkIndexAsc(doc.getDocumentId()).size() : 0;
+        int chunkCount = content != null ? documentChunkRepository.countByDocument_DocumentId(doc.getDocumentId()) : 0;
         
         return DocumentProcessingStatusResponse.builder()
                 .documentId(doc.getDocumentId())

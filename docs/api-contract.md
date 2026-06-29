@@ -2811,8 +2811,17 @@ Initiates the text extraction and chunking processing flow for the specified doc
   "message": "Document processing started",
   "data": {
     "documentId": 25,
-    "title": "Introduction to Physics",
-    "processingStatus": "PROCESSING"
+    "processingStatus": "PROCESSING",
+    "characterCount": 0,
+    "originalCharacterCount": 0,
+    "wordCount": 0,
+    "chunkCount": 0,
+    "isTruncated": false,
+    "processingStartedAt": "2026-06-29T16:00:00",
+    "processedAt": null,
+    "lastAttemptStatus": null,
+    "lastAttemptError": null,
+    "lastAttemptedAt": null
   }
 }
 ```
@@ -2843,8 +2852,17 @@ Re-initiates the text extraction and chunking flow. Unlike `/process`, this is d
   "message": "Document reprocessing started",
   "data": {
     "documentId": 25,
-    "title": "Introduction to Physics",
-    "processingStatus": "PROCESSING"
+    "processingStatus": "PROCESSING",
+    "characterCount": 0,
+    "originalCharacterCount": 0,
+    "wordCount": 0,
+    "chunkCount": 0,
+    "isTruncated": false,
+    "processingStartedAt": "2026-06-29T16:00:00",
+    "processedAt": null,
+    "lastAttemptStatus": null,
+    "lastAttemptError": null,
+    "lastAttemptedAt": null
   }
 }
 ```
@@ -2869,8 +2887,17 @@ Retrieves the current processing metadata status of a document.
   "message": "Document processing status retrieved",
   "data": {
     "documentId": 25,
-    "title": "Introduction to Physics",
-    "processingStatus": "COMPLETED"
+    "processingStatus": "COMPLETED",
+    "characterCount": 1500,
+    "originalCharacterCount": 1500,
+    "wordCount": 350,
+    "chunkCount": 3,
+    "isTruncated": false,
+    "processingStartedAt": "2026-06-29T16:00:00",
+    "processedAt": "2026-06-29T16:00:15",
+    "lastAttemptStatus": "COMPLETED",
+    "lastAttemptError": null,
+    "lastAttemptedAt": "2026-06-29T16:00:15"
   }
 }
 ```
@@ -2893,7 +2920,11 @@ Retrieves the full raw cleaned text extracted from the document. Restricted excl
 {
   "success": true,
   "message": "Document extracted content retrieved",
-  "data": "This is the full extracted and cleaned text content from the document..."
+  "data": {
+    "documentId": 25,
+    "extractedText": "This is the full extracted and cleaned text content from the document..."
+  }
 }
 ```
+
 ```
