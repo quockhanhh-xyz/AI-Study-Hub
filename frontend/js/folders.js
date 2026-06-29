@@ -363,12 +363,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     const card = document.createElement("article");
     card.className = "document-card";
 
+    // Left Column: The Large File Type Icon
+    const iconContainer = document.createElement("div");
+    iconContainer.innerHTML = getFileTypeIcon(doc.fileType);
+    const iconWrapper = iconContainer.firstElementChild;
+    card.appendChild(iconWrapper);
+
+    // Right Column: The Details Column
+    const content = document.createElement("div");
+    content.className = "document-card-content";
+
     const header = document.createElement("div");
     header.className = "document-card-header";
-
-    const badge = document.createElement("span");
-    badge.className = "document-type-badge";
-    badge.textContent = (doc.fileType || "FILE").toUpperCase();
 
     const titleEl = document.createElement("h3");
     const titleLink = document.createElement("a");
@@ -376,14 +382,29 @@ document.addEventListener("DOMContentLoaded", async function () {
     titleLink.textContent = doc.title || doc.originalFileName || "Untitled";
     titleLink.className = "document-title-link";
     titleEl.appendChild(titleLink);
-
-    header.append(badge, titleEl);
+    header.appendChild(titleEl);
 
     const desc = document.createElement("p");
     desc.className = "document-description";
     desc.textContent = doc.description || "No description provided.";
 
-    card.append(header, desc);
+    const meta = document.createElement("div");
+    meta.className = "document-meta";
+
+    const formatDate = (val) => {
+      if (!val) return "-";
+      const date = new Date(val);
+      if (Number.isNaN(date.getTime())) return "-";
+      return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" });
+    };
+
+    const dateItem = document.createElement("span");
+    dateItem.className = "document-meta-item";
+    dateItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> ${formatDate(doc.createdAt)}`;
+    meta.append(dateItem);
+
+    content.append(header, desc, meta);
+    card.appendChild(content);
 
     card.addEventListener("click", function (e) {
       if (e.target.closest("button") || e.target.closest("a")) {

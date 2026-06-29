@@ -290,17 +290,22 @@ document.addEventListener("DOMContentLoaded", async function () {
     const card = document.createElement("article");
     card.className = "document-card";
 
+    // Left Column: The Large File Type Icon
+    const iconContainer = document.createElement("div");
+    iconContainer.innerHTML = getFileTypeIcon(documentItem.fileType);
+    const iconWrapper = iconContainer.firstElementChild;
+    card.appendChild(iconWrapper);
+
+    // Right Column: The Details Column
+    const content = document.createElement("div");
+    content.className = "document-card-content";
+
     const header = document.createElement("div");
     header.className = "document-card-header";
 
-    const badge = document.createElement("span");
-    badge.className = "document-type-badge";
-    badge.textContent = (documentItem.fileType || "doc").toUpperCase();
-
     const title = document.createElement("h3");
     title.textContent = documentItem.title || documentItem.originalFileName || "Untitled document";
-
-    header.append(badge, title);
+    header.appendChild(title);
 
     const description = document.createElement("p");
     description.className = "document-description";
@@ -308,13 +313,20 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const meta = document.createElement("div");
     meta.className = "document-meta";
-    meta.append(
-      createMetaItem("Size", formatFileSize(documentItem.fileSize)),
-      createMetaItem("Deleted", formatDate(documentItem.deletedAt))
-    );
+
+    const dateItem = document.createElement("span");
+    dateItem.className = "document-meta-item";
+    dateItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Xóa ngày: ${formatDate(documentItem.deletedAt)}`;
+    meta.append(dateItem);
+
+    const sizeItem = document.createElement("span");
+    sizeItem.className = "document-meta-item";
+    sizeItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01"/></svg> Dung lượng: ${formatFileSize(documentItem.fileSize)}`;
+    meta.append(sizeItem);
 
     const actions = document.createElement("div");
     actions.className = "trash-actions";
+    actions.style.marginTop = "8px";
 
     const restoreButton = document.createElement("button");
     restoreButton.type = "button";
@@ -337,7 +349,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     actions.append(restoreButton, deleteButton);
-    card.append(header, description, meta, actions);
+    content.append(header, description, meta, actions);
+    card.appendChild(content);
 
     return card;
   }
@@ -346,17 +359,22 @@ document.addEventListener("DOMContentLoaded", async function () {
     const card = document.createElement("article");
     card.className = "document-card";
 
+    // Left Column: The Folder Icon
+    const iconWrapper = document.createElement("div");
+    iconWrapper.className = "document-file-icon-wrapper file-icon-other";
+    iconWrapper.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="22" width="22"><path stroke="currentColor" stroke-width="1.8" d="M1.5 10V2.5h5l3 3h11v3m3 0.25V8.5H4.6 l-0.15 0.25 -0.234 0.492A28 28 0 0 0 1.5 21.272v0.228h19v-0.128a28 28 0 0 1 2.757 -12.116l0.243 -0.506Z"/></svg>`;
+    card.appendChild(iconWrapper);
+
+    // Right Column: The Details Column
+    const content = document.createElement("div");
+    content.className = "document-card-content";
+
     const header = document.createElement("div");
     header.className = "document-card-header";
 
-    const badge = document.createElement("span");
-    badge.className = "document-type-badge";
-    badge.textContent = "DIR";
-
     const title = document.createElement("h3");
     title.textContent = folderItem.folderName || "Untitled folder";
-
-    header.append(badge, title);
+    header.appendChild(title);
 
     const description = document.createElement("p");
     description.className = "document-description";
@@ -364,12 +382,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const meta = document.createElement("div");
     meta.className = "document-meta";
-    meta.append(
-      createMetaItem("Deleted", formatDate(folderItem.deletedAt))
-    );
+
+    const dateItem = document.createElement("span");
+    dateItem.className = "document-meta-item";
+    dateItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Xóa ngày: ${formatDate(folderItem.deletedAt)}`;
+    meta.append(dateItem);
 
     const actions = document.createElement("div");
     actions.className = "trash-actions";
+    actions.style.marginTop = "8px";
 
     const restoreButton = document.createElement("button");
     restoreButton.type = "button";
@@ -392,7 +413,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     actions.append(restoreButton, deleteButton);
-    card.append(header, description, meta, actions);
+    content.append(header, description, meta, actions);
+    card.appendChild(content);
 
     return card;
   }

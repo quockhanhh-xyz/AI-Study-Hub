@@ -90,12 +90,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     const card = document.createElement("article");
     card.className = "document-card";
 
+    // Left Column: The Large File Type Icon
+    const iconContainer = document.createElement("div");
+    iconContainer.innerHTML = getFileTypeIcon(documentItem.fileType);
+    const iconWrapper = iconContainer.firstElementChild;
+    card.appendChild(iconWrapper);
+
+    // Right Column: The Details Column
+    const content = document.createElement("div");
+    content.className = "document-card-content";
+
     const header = document.createElement("div");
     header.className = "document-card-header";
-
-    const fileBadge = document.createElement("span");
-    fileBadge.className = "document-type-badge";
-    fileBadge.textContent = getFileLabel(documentItem.fileType);
 
     const title = document.createElement("h3");
     const titleLink = document.createElement("a");
@@ -103,8 +109,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     titleLink.textContent = documentItem.title || documentItem.originalFileName || "Untitled document";
     titleLink.style.color = "inherit";
     title.appendChild(titleLink);
-
-    header.append(fileBadge, title);
+    header.appendChild(title);
 
     const description = document.createElement("p");
     description.className = "document-description";
@@ -116,18 +121,21 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const meta = document.createElement("div");
     meta.className = "document-meta";
+
     const dateItem = document.createElement("span");
-    dateItem.textContent = formatDate(documentItem.createdAt);
+    dateItem.className = "document-meta-item";
+    dateItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> ${formatDate(documentItem.createdAt)}`;
     meta.append(dateItem);
 
     if (documentItem.subjectCode) {
-      const subjectBadge = document.createElement("div");
-      subjectBadge.className = "document-card-subject";
-      subjectBadge.textContent = `${documentItem.subjectCode} - ${documentItem.subjectName}`;
-      meta.append(subjectBadge);
+      const subjectItem = document.createElement("span");
+      subjectItem.className = "document-meta-item";
+      subjectItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01"/></svg> Môn: ${documentItem.subjectCode} - ${documentItem.subjectName}`;
+      meta.append(subjectItem);
     }
 
-    card.append(header, description, meta);
+    content.append(header, description, meta);
+    card.appendChild(content);
 
     card.addEventListener("click", function (e) {
       if (e.target.closest("button") || e.target.closest("a")) {
