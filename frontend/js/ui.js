@@ -337,13 +337,17 @@ const UIHelper = {
     if (!inputElement || inputElement.dataset.customized) return;
     inputElement.dataset.customized = "true";
 
+    // Prevent cursor blinking and text editing directly in the trigger
+    inputElement.setAttribute("readonly", "true");
+    inputElement.style.cursor = "pointer";
+
     const container = document.createElement("div");
     container.className = "custom-select";
     container.id = inputElement.id + "Container";
 
     const trigger = document.createElement("div");
     trigger.className = "custom-select-trigger";
-    trigger.style.cursor = "text";
+    trigger.style.cursor = "pointer";
 
     inputElement.parentNode.insertBefore(container, inputElement);
     trigger.appendChild(inputElement);
@@ -359,8 +363,26 @@ const UIHelper = {
     optionsMenu.className = "custom-select-options";
     container.appendChild(optionsMenu);
 
+    // Create sticky search input inside the dropdown options panel
+    const searchWrapper = document.createElement("div");
+    searchWrapper.className = "custom-select-search-wrapper";
+    
+    const searchInput = document.createElement("input");
+    searchInput.type = "text";
+    searchInput.className = "custom-select-search-input";
+    searchInput.placeholder = "Type to search...";
+    searchInput.autocomplete = "off";
+    
+    searchWrapper.appendChild(searchInput);
+    optionsMenu.appendChild(searchWrapper);
+
+    // List container to hold dynamic options
+    const listContainer = document.createElement("div");
+    listContainer.className = "custom-select-list-container";
+    optionsMenu.appendChild(listContainer);
+
     const rebuildOptions = () => {
-      optionsMenu.innerHTML = "";
+      listContainer.innerHTML = "";
       const listId = inputElement.getAttribute("list") || inputElement.dataset.listId;
       if (listId) {
         inputElement.dataset.listId = listId;
@@ -370,29 +392,34 @@ const UIHelper = {
       const datalist = document.getElementById(listId);
       if (!datalist) return;
 
-      const filterVal = inputElement.value.toLowerCase().trim();
+      const filterVal = searchInput.value.toLowerCase().trim();
       const options = Array.from(datalist.options);
 
       if (!filterVal) {
         const clearOpt = document.createElement("div");
         clearOpt.className = "custom-select-option";
-        clearOpt.textContent = "All Subjects";
+        clearOpt.textContent = (inputElement.id === "subjectSelect" || inputElement.id === "subjectFilter") ? "-- Select a subject --" : "All Subjects";
         clearOpt.dataset.value = "";
         if (inputElement.value === "") clearOpt.classList.add("selected");
         clearOpt.addEventListener("click", (e) => {
           e.stopPropagation();
           inputElement.value = "";
+          searchInput.value = "";
           container.classList.remove("active");
           inputElement.dispatchEvent(new Event("change", { bubbles: true }));
           inputElement.dispatchEvent(new Event("input", { bubbles: true }));
         });
-        optionsMenu.appendChild(clearOpt);
+        listContainer.appendChild(clearOpt);
       }
 
       options.forEach(opt => {
         const text = opt.value;
         const id = opt.dataset.id || "";
         
+        if (text === CREATE_NEW_VALUE || id === CREATE_NEW_VALUE) {
+          return;
+        }
+
         if (filterVal && !text.toLowerCase().includes(filterVal)) {
           return;
         }
@@ -409,41 +436,63 @@ const UIHelper = {
         item.addEventListener("click", (e) => {
           e.stopPropagation();
           inputElement.value = text;
+          searchInput.value = "";
           container.classList.remove("active");
           inputElement.dispatchEvent(new Event("change", { bubbles: true }));
           inputElement.dispatchEvent(new Event("input", { bubbles: true }));
         });
 
-        optionsMenu.appendChild(item);
+        listContainer.appendChild(item);
       });
+
+      // Append create new inline trigger option at bottom if present
+      const hasCreateNew = options.some(opt => opt.value === CREATE_NEW_VALUE || opt.dataset.id === CREATE_NEW_VALUE);
+      if (hasCreateNew && !filterVal) {
+        const matchingOpt = options.find(opt => opt.value === CREATE_NEW_VALUE || opt.dataset.id === CREATE_NEW_VALUE);
+        const createOpt = document.createElement("div");
+        createOpt.className = "custom-select-option";
+        createOpt.style.borderTop = "1px solid var(--border)";
+        createOpt.style.color = "var(--primary)";
+        createOpt.style.fontWeight = "600";
+        createOpt.textContent = matchingOpt.textContent || "+ Create new subject…";
+        createOpt.dataset.value = CREATE_NEW_VALUE;
+        createOpt.addEventListener("click", (e) => {
+          e.stopPropagation();
+          inputElement.value = CREATE_NEW_VALUE;
+          searchInput.value = "";
+          container.classList.remove("active");
+          inputElement.dispatchEvent(new Event("change", { bubbles: true }));
+          inputElement.dispatchEvent(new Event("input", { bubbles: true }));
+        });
+        listContainer.appendChild(createOpt);
+      }
       
-      if (optionsMenu.children.length === 0) {
+      if (listContainer.children.length === 0) {
         const noResult = document.createElement("div");
         noResult.className = "custom-select-option";
         noResult.textContent = "No subjects found";
         noResult.style.color = "var(--text-light)";
         noResult.style.cursor = "default";
-        optionsMenu.appendChild(noResult);
+        listContainer.appendChild(noResult);
       }
     };
 
-    inputElement.addEventListener("focus", (e) => {
-      e.stopPropagation();
-      rebuildOptions();
-      document.querySelectorAll(".custom-select").forEach(el => el.classList.remove("active"));
-      container.classList.add("active");
-    });
-
     trigger.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (document.activeElement !== inputElement) {
-        inputElement.focus();
-      } else {
-        container.classList.toggle("active");
+      const isActive = container.classList.contains("active");
+      document.querySelectorAll(".custom-select").forEach(el => el.classList.remove("active"));
+      if (!isActive) {
+        container.classList.add("active");
+        rebuildOptions();
+        setTimeout(() => searchInput.focus(), 50);
       }
     });
 
-    inputElement.addEventListener("input", () => {
+    optionsMenu.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+
+    searchInput.addEventListener("input", () => {
       rebuildOptions();
     });
 

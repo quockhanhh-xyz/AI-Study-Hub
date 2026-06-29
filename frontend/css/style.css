@@ -2225,6 +2225,7 @@ textarea.success {
   outline: none !important;
   width: 100%;
   height: 100%;
+  pointer-events: none;
 }
 
 .custom-select-arrow {
@@ -3002,4 +3003,37 @@ svg {
 .file-preview-remove:hover {
   background-color: #fee2e2;
   color: #ef4444;
+}
+
+/* ── 10. Custom Dropdown Search Input ── */
+.custom-select-search-wrapper {
+  padding: 8px 10px;
+  border-bottom: 1.5px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.custom-select-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--surface-soft);
+  color: var(--text-main);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.custom-select-search-input:focus {
+  border-color: var(--primary);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(255, 88, 88, 0.08);
+}
+
+.custom-select-list-container {
+  max-height: 240px;
+  overflow-y: auto;
 }
