@@ -227,17 +227,32 @@ document.addEventListener("DOMContentLoaded", async function () {
       const deletedCount = result?.data?.deletedCount || 0;
       const failedCount = result?.data?.failedCount || 0;
 
-      closeEmptyTrashModal();
-
       if (outcome === "SUCCESS") {
+        closeEmptyTrashModal();
         window.showToast(`Trash has been emptied successfully (${deletedCount} items deleted).`, "success");
-      } else if (outcome === "PARTIAL_SUCCESS") {
-        window.showToast(`Trash partially cleared. ${deletedCount} deleted, ${failedCount} failed.`, "warning");
+        await loadTrash();
       } else {
-        window.showToast("Failed to empty trash. Please try again.", "error");
-      }
+        let errorHtml = `<div class="error-summary"><strong>Trash emptying outcome: ${outcome}</strong></div>`;
+        errorHtml += `<div class="error-stats">Deleted: ${deletedCount} item(s), Failed: ${failedCount} item(s)</div>`;
 
-      await loadTrash();
+        const failures = result?.data?.failures || [];
+        if (failures.length > 0) {
+          errorHtml += `<ul class="error-list" style="text-align: left; margin-top: 10px; max-height: 150px; overflow-y: auto; padding-left: 20px;">`;
+          failures.forEach(f => {
+            const title = f.title || "Unknown Item";
+            const reason = f.reason || "Cloudinary deletion failed";
+            errorHtml += `<li><strong>${title}</strong>: ${reason}</li>`;
+          });
+          errorHtml += `</ul>`;
+        }
+
+        emptyTrashError.innerHTML = errorHtml;
+        emptyTrashError.style.display = "block";
+
+        if (deletedCount > 0) {
+          await loadTrash();
+        }
+      }
     } catch (error) {
       emptyTrashError.textContent = error.message || "Failed to empty trash.";
       emptyTrashError.style.display = "block";
@@ -255,7 +270,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const badge = document.createElement("span");
     badge.className = "document-type-badge";
-    badge.textContent = (documentItem.fileType || "FILE").toUpperCase();
+    badge.textContent = (documentItem.fileType || "doc").toUpperCase();
 
     const title = document.createElement("h3");
     title.textContent = documentItem.title || documentItem.originalFileName || "Untitled document";
@@ -272,10 +287,6 @@ document.addEventListener("DOMContentLoaded", async function () {
       createMetaItem("Size", formatFileSize(documentItem.fileSize)),
       createMetaItem("Deleted", formatDate(documentItem.deletedAt))
     );
-
-    if (documentItem.folderId) {
-      meta.append(createMetaItem("Folder ID", documentItem.folderId));
-    }
 
     const actions = document.createElement("div");
     actions.className = "trash-actions";
@@ -329,7 +340,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const meta = document.createElement("div");
     meta.className = "document-meta";
     meta.append(
-      createMetaItem("Folder ID", folderItem.folderId),
       createMetaItem("Deleted", formatDate(folderItem.deletedAt))
     );
 

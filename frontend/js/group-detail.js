@@ -148,28 +148,43 @@ document.addEventListener("DOMContentLoaded", async function () {
     groupNameTitle.textContent = group.groupName || "Untitled Group";
     groupDescription.textContent = group.description || "No description provided.";
     
-    // Step 8A Refactor: Thêm tính năng click-to-copy cho mã mời
+    // Step 8A Refactor: Add click-to-copy functionality for invite code
     groupInviteCode.textContent = group.inviteCode || "-";
     if (group.inviteCode && group.inviteCode !== "-") {
       groupInviteCode.style.cursor = "pointer";
       groupInviteCode.title = "Click to copy invite code";
-      
-      // Xóa listener cũ nếu có bằng cách clone node để tránh rò rỉ bộ nhớ khi re-render
-      const newInviteCode = groupInviteCode.cloneNode(true);
-      groupInviteCode.parentNode.replaceChild(newInviteCode, groupInviteCode);
-      
-      newInviteCode.addEventListener("click", function() {
-        navigator.clipboard.writeText(group.inviteCode);
-        showToast("Invitation code copied to clipboard!", "success");
-      });
+      groupInviteCode.tabIndex = 0;
 
-      newInviteCode.addEventListener("keydown", function(e) {
+      groupInviteCode.onclick = function() {
+        navigator.clipboard.writeText(group.inviteCode)
+          .then(() => {
+            showToast("Invitation code copied to clipboard!", "success");
+          })
+          .catch(err => {
+            console.error("Clipboard copy failed:", err);
+            showToast("Failed to copy invite code.", "error");
+          });
+      };
+
+      groupInviteCode.onkeydown = function(e) {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          navigator.clipboard.writeText(group.inviteCode);
-          showToast("Invitation code copied to clipboard!", "success");
+          navigator.clipboard.writeText(group.inviteCode)
+            .then(() => {
+              showToast("Invitation code copied to clipboard!", "success");
+            })
+            .catch(err => {
+              console.error("Clipboard copy failed:", err);
+              showToast("Failed to copy invite code.", "error");
+            });
         }
-      });
+      };
+    } else {
+      groupInviteCode.style.cursor = "";
+      groupInviteCode.title = "";
+      groupInviteCode.removeAttribute("tabindex");
+      groupInviteCode.onclick = null;
+      groupInviteCode.onkeydown = null;
     }
 
     const displayRole = myRole || "MEMBER";
@@ -184,7 +199,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       groupCounts.innerHTML = `&middot; <strong>${memberCount}</strong> Members &middot; <strong>${docCount}</strong> Documents &middot; <strong>${folderCount}</strong> Folders`;
     }
 
-    // Step 8A Refactor: Cập nhật số lượng thành viên lên tiêu đề danh sách
+    // Step 8A Refactor: Update member count in the list section header
     const memberSectionTitle = document.getElementById("memberSectionTitle");
     if (memberSectionTitle) {
       memberSectionTitle.textContent = `Members (${memberCount})`;
