@@ -174,19 +174,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     meta.style.marginTop = "8px";
     meta.textContent = `Size: ${formatFileSize(doc.fileSize)}`;
 
-    const actions = document.createElement("div");
-    actions.className = "document-actions";
+    card.append(header, desc, meta);
 
-    const detailsBtn = document.createElement("a");
-    detailsBtn.href = `document-detail.html?id=${doc.documentId}`;
-    detailsBtn.className = "btn btn-primary document-detail-btn";
-    detailsBtn.style.width = "auto";
-    detailsBtn.style.padding = "6px 12px";
-    detailsBtn.style.fontSize = "13px";
-    detailsBtn.textContent = "View Details";
-    actions.appendChild(detailsBtn);
+    card.addEventListener("click", function (e) {
+      if (e.target.closest("button") || e.target.closest("a")) {
+        return;
+      }
+      window.location.href = `document-detail.html?id=${doc.documentId}`;
+    });
 
-    card.append(header, desc, meta, actions);
     return card;
   }
 

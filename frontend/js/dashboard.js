@@ -128,16 +128,14 @@ document.addEventListener("DOMContentLoaded", async function () {
       meta.append(subjectBadge);
     }
 
-    const actions = document.createElement("div");
-    actions.className = "document-actions";
+    card.append(header, description, meta);
 
-    const detailButton = document.createElement("a");
-    detailButton.href = `document-detail.html?id=${documentItem.documentId}`;
-    detailButton.className = "btn btn-primary document-detail-btn";
-    detailButton.textContent = "View Details";
-
-    actions.append(detailButton);
-    card.append(header, description, meta, actions);
+    card.addEventListener("click", function (e) {
+      if (e.target.closest("button") || e.target.closest("a")) {
+        return;
+      }
+      window.location.href = `document-detail.html?id=${documentItem.documentId}`;
+    });
 
     return card;
   }

@@ -320,12 +320,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const actions = document.createElement("div");
     actions.className = "document-actions";
 
-    const detailsBtn = document.createElement("a");
-    detailsBtn.href = `document-detail.html?id=${doc.documentId}`;
-    detailsBtn.className = "btn btn-primary document-detail-btn";
-    detailsBtn.textContent = "View Details";
-    actions.appendChild(detailsBtn);
-
     // Revoke is shown strictly based on backend's canRevoke flag —
     // never computed locally, since revoke permission depends on
     // document ownership vs. group ownership rules decided by the server.
@@ -354,7 +348,19 @@ document.addEventListener("DOMContentLoaded", async function () {
       actions.appendChild(revokeBtn);
     }
 
-    card.append(header, desc, actions);
+    if (actions.children.length > 0) {
+      card.append(header, desc, actions);
+    } else {
+      card.append(header, desc);
+    }
+
+    card.addEventListener("click", function (e) {
+      if (e.target.closest("button") || e.target.closest("a")) {
+        return;
+      }
+      window.location.href = `document-detail.html?id=${doc.documentId}`;
+    });
+
     return card;
   }
 

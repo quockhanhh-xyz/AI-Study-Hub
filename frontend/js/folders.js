@@ -383,16 +383,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     desc.className = "document-description";
     desc.textContent = doc.description || "No description provided.";
 
-    const actions = document.createElement("div");
-    actions.className = "document-actions";
+    card.append(header, desc);
 
-    const viewBtn = document.createElement("a");
-    viewBtn.href = `document-detail.html?id=${doc.documentId}`;
-    viewBtn.className = "btn btn-primary document-detail-btn";
-    viewBtn.textContent = "View Details";
+    card.addEventListener("click", function (e) {
+      if (e.target.closest("button") || e.target.closest("a")) {
+        return;
+      }
+      window.location.href = `document-detail.html?id=${doc.documentId}`;
+    });
 
-    actions.appendChild(viewBtn);
-    card.append(header, desc, actions);
     return card;
   }
 
