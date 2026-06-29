@@ -237,7 +237,7 @@ chunk_index bắt đầu từ 0 và tăng liên tục
 Yêu cầu:
 
 - Không tạo chunk rỗng hoặc chỉ whitespace.
-- Overlap được phép trùng một phần nội dung; “không trùng chunk” nghĩa là
+- Overlap được phép trùng một phần nội dung; “không trùng chunk” nghĩa l�
   không có row/index trùng do chạy lại job.
 - Thuật toán luôn tiến con trỏ để không lặp vô hạn.
 - Có giới hạn số chunk/document.

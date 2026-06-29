@@ -2805,6 +2805,9 @@ Initiates the text extraction and chunking processing flow for the specified doc
 
 ### Success Response (202 Accepted)
 
+> [!NOTE]
+> The HTTP 202 response indicates that processing has been scheduled. In case the server's task queue is completely saturated (full capacity), the background event listener will reject the task and transition its status to `FAILED` shortly after the response is returned. The frontend client MUST poll the processing status API to determine the true actual state of the document.
+
 ```json
 {
   "success": true,
@@ -2845,6 +2848,9 @@ Re-initiates the text extraction and chunking flow. Unlike `/process`, this is d
 - Cookie: `accessToken=jwt-token-value-here`
 
 ### Success Response (202 Accepted)
+
+> [!NOTE]
+> The HTTP 202 response indicates that reprocessing has been scheduled. Under server queue saturation, the listener will reject the task execution and transition its status to `FAILED` or restore `COMPLETED` shortly after the response is returned. The frontend client MUST poll the processing status API to verify the true status.
 
 ```json
 {

@@ -26,7 +26,7 @@ public class DocumentProcessingService {
     private final DocumentContentRepository documentContentRepository;
     private final DocumentChunkRepository documentChunkRepository;
     private final UserRepository userRepository;
-    
+
     // For access validations
     private final DocumentShareRepository documentShareRepository;
     private final GroupDocumentShareRepository groupDocumentShareRepository;
@@ -44,7 +44,7 @@ public class DocumentProcessingService {
     public DocumentProcessingStatusResponse startProcessing(Integer documentId, String email) {
         User user = getUser(email);
         Document doc = getActiveDocument(documentId);
-        
+
         // Only owner can trigger process
         validateOwnerAccess(doc, user);
 
@@ -53,7 +53,7 @@ public class DocumentProcessingService {
 
         // Legacy file support - ensure content exists
         DocumentContent content = documentService.findOrCreatePending(doc);
-        
+
         // Lock content row for update
         content = documentContentRepository.findByDocumentIdForWrite(documentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document content not found"));
@@ -131,7 +131,7 @@ public class DocumentProcessingService {
         if (content.getProcessingStatus() == ProcessingStatus.PROCESSING
                 && content.getProcessingStartedAt() != null
                 && content.getProcessingStartedAt().isBefore(LocalDateTime.now().minusMinutes(10))) {
-            
+
             // Revert state safely based on previous successful snapshot
             if (content.getExtractedText() != null && content.getProcessedAt() != null) {
                 content.setProcessingStatus(ProcessingStatus.COMPLETED);
@@ -259,7 +259,7 @@ public class DocumentProcessingService {
     private DocumentProcessingStatusResponse mapToStatusResponse(Document doc) {
         DocumentContent content = doc.getDocumentContent();
         int chunkCount = content != null ? documentChunkRepository.countByDocument_DocumentId(doc.getDocumentId()) : 0;
-        
+
         return DocumentProcessingStatusResponse.builder()
                 .documentId(doc.getDocumentId())
                 .processingStatus(content != null ? content.getProcessingStatus().name() : "PENDING")

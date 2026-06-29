@@ -13,6 +13,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -151,5 +152,43 @@ class DocumentProcessingIntegrationTest {
         // Verify status record does not exist since the entire transaction rolled back
         java.util.Optional<DocumentContent> contentOpt = documentContentRepository.findByDocument_DocumentId(testDoc.getDocumentId());
         assertTrue(contentOpt.isEmpty(), "Content record should be rolled back and not exist in DB");
+    }
+
+    @Test
+    void processDocument_ConcurrentRequests_ShouldSucceedOnlyOnceAndThrowConflict() throws Exception {
+        int threadCount = 4;
+        java.util.concurrent.ExecutorService executorService = java.util.concurrent.Executors.newFixedThreadPool(threadCount);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch endLatch = new CountDownLatch(threadCount);
+
+        java.util.concurrent.atomic.AtomicInteger successCount = new java.util.concurrent.atomic.AtomicInteger(0);
+        java.util.concurrent.atomic.AtomicInteger conflictCount = new java.util.concurrent.atomic.AtomicInteger(0);
+
+        for (int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    startLatch.await();
+                    documentProcessingService.startProcessing(testDoc.getDocumentId(), "integration@gmail.com");
+                    successCount.incrementAndGet();
+                } catch (ResponseStatusException e) {
+                    if (e.getStatusCode() == org.springframework.http.HttpStatus.CONFLICT) {
+                        conflictCount.incrementAndGet();
+                    }
+                } catch (Exception e) {
+                    // Ignore other exceptions
+                } finally {
+                    endLatch.countDown();
+                }
+            });
+        }
+
+        // Start all threads concurrently
+        startLatch.countDown();
+        boolean finished = endLatch.await(5, TimeUnit.SECONDS);
+        assertTrue(finished, "Threads should finish processing");
+        executorService.shutdown();
+
+        assertEquals(1, successCount.get(), "Only one thread should successfully start processing");
+        assertEquals(threadCount - 1, conflictCount.get(), "All other threads should throw 409 Conflict");
     }
 }

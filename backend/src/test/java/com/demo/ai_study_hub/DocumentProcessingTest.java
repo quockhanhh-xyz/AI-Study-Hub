@@ -128,7 +128,7 @@ class DocumentProcessingTest {
         assertNotNull(response);
         assertEquals("PROCESSING", response.getProcessingStatus());
         verify(documentContentRepository, times(1)).save(pendingContent);
-        
+
         ArgumentCaptor<DocumentProcessingEvent> captor = ArgumentCaptor.forClass(DocumentProcessingEvent.class);
         verify(eventPublisher, times(1)).publishEvent(captor.capture());
         assertEquals(10, captor.getValue().getDocumentId());
@@ -189,7 +189,7 @@ class DocumentProcessingTest {
         assertNotNull(response);
         assertEquals("PROCESSING", response.getProcessingStatus());
         verify(documentContentRepository, times(1)).save(completedContent);
-        
+
         ArgumentCaptor<DocumentProcessingEvent> captor = ArgumentCaptor.forClass(DocumentProcessingEvent.class);
         verify(eventPublisher, times(1)).publishEvent(captor.capture());
         assertEquals(10, captor.getValue().getDocumentId());

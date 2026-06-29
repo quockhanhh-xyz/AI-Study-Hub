@@ -322,23 +322,21 @@ public class DocumentService {
 
     @Transactional
     public DocumentContent findOrCreatePending(Document doc) {
-        try {
-            return documentContentRepository.findByDocument_DocumentId(doc.getDocumentId())
-                    .orElseGet(() -> {
-                        DocumentContent content = DocumentContent.builder()
-                                .document(doc)
-                                .processingStatus(ProcessingStatus.PENDING)
-                                .characterCount(0)
-                                .originalCharacterCount(0)
-                                .wordCount(0)
-                                .isTruncated(false)
-                                .build();
-                        return documentContentRepository.saveAndFlush(content);
-                    });
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            return documentContentRepository.findByDocument_DocumentId(doc.getDocumentId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document content not found after constraint violation"));
-        }
+        documentRepository.findByIdForWrite(doc.getDocumentId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+
+        return documentContentRepository.findByDocument_DocumentId(doc.getDocumentId())
+                .orElseGet(() -> {
+                    DocumentContent content = DocumentContent.builder()
+                            .document(doc)
+                            .processingStatus(ProcessingStatus.PENDING)
+                            .characterCount(0)
+                            .originalCharacterCount(0)
+                            .wordCount(0)
+                            .isTruncated(false)
+                            .build();
+                    return documentContentRepository.saveAndFlush(content);
+                });
     }
 
     public List<DocumentResponse> mapToResponseList(List<Document> docs) {
