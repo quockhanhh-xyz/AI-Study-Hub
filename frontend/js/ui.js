@@ -227,8 +227,251 @@ const UIHelper = {
     }
     
     return `<div class="document-file-icon-wrapper ${iconClass}">${iconSvg}</div>`;
+  },
+
+  convertSelectToCustomDropdown(selectElement) {
+    if (!selectElement || selectElement.dataset.customized) return;
+    selectElement.dataset.customized = "true";
+
+    const container = document.createElement("div");
+    container.className = "custom-select";
+    container.id = selectElement.id + "Container";
+
+    const trigger = document.createElement("div");
+    trigger.className = "custom-select-trigger";
+
+    const label = document.createElement("span");
+    label.className = "custom-select-value";
+    
+    const arrow = document.createElement("span");
+    arrow.className = "custom-select-arrow";
+    arrow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+
+    trigger.append(label, arrow);
+    container.append(trigger);
+
+    const optionsMenu = document.createElement("div");
+    optionsMenu.className = "custom-select-options";
+    container.appendChild(optionsMenu);
+
+    const rebuildSelectOptions = () => {
+      optionsMenu.innerHTML = "";
+      
+      const updateLabel = () => {
+        const activeOpt = selectElement.options[selectElement.selectedIndex];
+        label.textContent = activeOpt ? activeOpt.textContent : (selectElement.placeholder || "");
+      };
+      
+      updateLabel();
+
+      Array.from(selectElement.children).forEach(child => {
+        if (child.tagName === 'OPTGROUP') {
+          const groupHeader = document.createElement("div");
+          groupHeader.className = "custom-select-group-header";
+          groupHeader.textContent = child.label;
+          optionsMenu.appendChild(groupHeader);
+
+          Array.from(child.children).forEach(option => {
+            const item = document.createElement("div");
+            item.className = "custom-select-option indented";
+            item.textContent = option.textContent;
+            item.dataset.value = option.value;
+            if (option.selected) {
+              item.classList.add("selected");
+            }
+
+            item.addEventListener("click", (e) => {
+              e.stopPropagation();
+              selectElement.value = option.value;
+              updateLabel();
+              optionsMenu.querySelectorAll(".custom-select-option").forEach(opt => opt.classList.remove("selected"));
+              item.classList.add("selected");
+              container.classList.remove("active");
+              selectElement.dispatchEvent(new Event("change", { bubbles: true }));
+            });
+            optionsMenu.appendChild(item);
+          });
+        } else if (child.tagName === 'OPTION') {
+          const item = document.createElement("div");
+          item.className = "custom-select-option";
+          item.textContent = child.textContent;
+          item.dataset.value = child.value;
+          if (child.selected) {
+            item.classList.add("selected");
+          }
+
+          item.addEventListener("click", (e) => {
+            e.stopPropagation();
+            selectElement.value = child.value;
+            updateLabel();
+            optionsMenu.querySelectorAll(".custom-select-option").forEach(opt => opt.classList.remove("selected"));
+            item.classList.add("selected");
+            container.classList.remove("active");
+            selectElement.dispatchEvent(new Event("change", { bubbles: true }));
+          });
+          optionsMenu.appendChild(item);
+        }
+      });
+    };
+
+    rebuildSelectOptions();
+
+    selectElement.parentNode.insertBefore(container, selectElement);
+    selectElement.style.display = "none";
+
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isActive = container.classList.contains("active");
+      document.querySelectorAll(".custom-select").forEach(el => el.classList.remove("active"));
+      if (!isActive) {
+        container.classList.add("active");
+      }
+    });
+
+    selectElement.addEventListener("syncCustom", () => {
+      rebuildSelectOptions();
+    });
+  },
+
+  convertInputToCustomDropdown(inputElement) {
+    if (!inputElement || inputElement.dataset.customized) return;
+    inputElement.dataset.customized = "true";
+
+    const container = document.createElement("div");
+    container.className = "custom-select";
+    container.id = inputElement.id + "Container";
+
+    const trigger = document.createElement("div");
+    trigger.className = "custom-select-trigger";
+    trigger.style.cursor = "text";
+
+    inputElement.parentNode.insertBefore(container, inputElement);
+    trigger.appendChild(inputElement);
+    inputElement.className = "custom-select-input";
+
+    const arrow = document.createElement("span");
+    arrow.className = "custom-select-arrow";
+    arrow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+    trigger.appendChild(arrow);
+    container.appendChild(trigger);
+
+    const optionsMenu = document.createElement("div");
+    optionsMenu.className = "custom-select-options";
+    container.appendChild(optionsMenu);
+
+    const rebuildOptions = () => {
+      optionsMenu.innerHTML = "";
+      const listId = inputElement.getAttribute("list") || inputElement.dataset.listId;
+      if (listId) {
+        inputElement.dataset.listId = listId;
+        inputElement.removeAttribute("list");
+      }
+      if (!listId) return;
+      const datalist = document.getElementById(listId);
+      if (!datalist) return;
+
+      const filterVal = inputElement.value.toLowerCase().trim();
+      const options = Array.from(datalist.options);
+
+      if (!filterVal) {
+        const clearOpt = document.createElement("div");
+        clearOpt.className = "custom-select-option";
+        clearOpt.textContent = "All Subjects";
+        clearOpt.dataset.value = "";
+        if (inputElement.value === "") clearOpt.classList.add("selected");
+        clearOpt.addEventListener("click", (e) => {
+          e.stopPropagation();
+          inputElement.value = "";
+          container.classList.remove("active");
+          inputElement.dispatchEvent(new Event("change", { bubbles: true }));
+          inputElement.dispatchEvent(new Event("input", { bubbles: true }));
+        });
+        optionsMenu.appendChild(clearOpt);
+      }
+
+      options.forEach(opt => {
+        const text = opt.value;
+        const id = opt.dataset.id || "";
+        
+        if (filterVal && !text.toLowerCase().includes(filterVal)) {
+          return;
+        }
+
+        const item = document.createElement("div");
+        item.className = "custom-select-option";
+        item.textContent = text;
+        item.dataset.value = text;
+        item.dataset.id = id;
+        if (inputElement.value === text) {
+          item.classList.add("selected");
+        }
+
+        item.addEventListener("click", (e) => {
+          e.stopPropagation();
+          inputElement.value = text;
+          container.classList.remove("active");
+          inputElement.dispatchEvent(new Event("change", { bubbles: true }));
+          inputElement.dispatchEvent(new Event("input", { bubbles: true }));
+        });
+
+        optionsMenu.appendChild(item);
+      });
+      
+      if (optionsMenu.children.length === 0) {
+        const noResult = document.createElement("div");
+        noResult.className = "custom-select-option";
+        noResult.textContent = "No subjects found";
+        noResult.style.color = "var(--text-light)";
+        noResult.style.cursor = "default";
+        optionsMenu.appendChild(noResult);
+      }
+    };
+
+    inputElement.addEventListener("focus", (e) => {
+      e.stopPropagation();
+      rebuildOptions();
+      document.querySelectorAll(".custom-select").forEach(el => el.classList.remove("active"));
+      container.classList.add("active");
+    });
+
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (document.activeElement !== inputElement) {
+        inputElement.focus();
+      } else {
+        container.classList.toggle("active");
+      }
+    });
+
+    inputElement.addEventListener("input", () => {
+      rebuildOptions();
+    });
+
+    inputElement.addEventListener("syncCustom", () => {
+      rebuildOptions();
+    });
+  },
+
+  initCustomDropdowns() {
+    document.querySelectorAll(".toolbar select").forEach(select => {
+      UIHelper.convertSelectToCustomDropdown(select);
+    });
+    const subjectFilter = document.querySelector(".toolbar #subjectFilter");
+    if (subjectFilter) {
+      UIHelper.convertInputToCustomDropdown(subjectFilter);
+    }
   }
 };
+
+// Global click outside to close dropdowns
+document.addEventListener("click", () => {
+  document.querySelectorAll(".custom-select").forEach(el => el.classList.remove("active"));
+});
+
+// Auto-run dropdown initialization on DOMContentLoaded
+document.addEventListener("DOMContentLoaded", () => {
+  UIHelper.initCustomDropdowns();
+});
 
 // Expose individual helper functions directly to window scope to fulfill checklist prerequisites
 window.showToast = UIHelper.showToast;
@@ -237,6 +480,7 @@ window.setButtonLoading = UIHelper.setButtonLoading;
 window.showInlineError = UIHelper.showInlineError;
 window.clearInlineError = UIHelper.clearInlineError;
 window.getFileTypeIcon = UIHelper.getFileTypeIcon;
+window.initCustomDropdowns = UIHelper.initCustomDropdowns;
 
 // Also preserve the namespace export to guarantee zero breaking integrations for existing callers
 window.UIHelper = UIHelper;

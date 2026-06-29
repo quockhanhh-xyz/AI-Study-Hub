@@ -89,7 +89,10 @@ document.addEventListener("DOMContentLoaded", async function () {
       currentId = folder.parentFolderId;
       iterations++;
     }
-    return ["My Documents", ...path].join(" / ");
+    if (path.length === 0) {
+      return "My Documents";
+    }
+    return path.join(" / ");
   }
 
   function createDocumentCard(documentItem) {
@@ -118,21 +121,17 @@ document.addEventListener("DOMContentLoaded", async function () {
     header.appendChild(title);
 
     const vis = documentItem.visibility || "PRIVATE";
-    const visibilityBadge = document.createElement("span");
-    visibilityBadge.className = "status-badge " + vis.toLowerCase();
-    visibilityBadge.textContent = vis;
-    visibilityBadge.style.fontSize = "10px";
-    visibilityBadge.style.height = "20px";
-    visibilityBadge.style.padding = "0 8px";
-    header.appendChild(visibilityBadge);
+    if (vis !== "PRIVATE") {
+      const visibilityBadge = document.createElement("span");
+      visibilityBadge.className = "status-badge " + vis.toLowerCase();
+      visibilityBadge.textContent = vis;
+      header.appendChild(visibilityBadge);
+    }
 
     if (vis === "PUBLIC" && documentItem.approvalStatus) {
       const approvalBadge = document.createElement("span");
       approvalBadge.className = "status-badge " + documentItem.approvalStatus.toLowerCase();
       approvalBadge.textContent = documentItem.approvalStatus;
-      approvalBadge.style.fontSize = "10px";
-      approvalBadge.style.height = "20px";
-      approvalBadge.style.padding = "0 8px";
       header.appendChild(approvalBadge);
     }
 
@@ -155,7 +154,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (documentItem.subjectCode) {
       const subjectItem = document.createElement("span");
       subjectItem.className = "document-meta-item";
-      subjectItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01"/></svg> Subject: ${documentItem.subjectCode} - ${documentItem.subjectName}`;
+      subjectItem.title = `${documentItem.subjectCode} - ${documentItem.subjectName}`;
+      subjectItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01"/></svg> ${documentItem.subjectCode} - ${documentItem.subjectName}`;
       meta.append(subjectItem);
     }
 
@@ -202,6 +202,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           option.dataset.id = subject.subjectId;
           subjectDatalist.appendChild(option);
         });
+        if (subjectFilter) subjectFilter.dispatchEvent(new Event("syncCustom"));
       }
     } catch (error) {
       console.warn("Failed to load subjects:", error);
@@ -227,6 +228,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           folderFilter.appendChild(option);
         });
         folderFilter.value = currentValue;
+        folderFilter.dispatchEvent(new Event("syncCustom"));
       }
     } catch (error) {
       console.warn("Failed to load folders:", error);
@@ -392,9 +394,18 @@ document.addEventListener("DOMContentLoaded", async function () {
   if (clearFiltersBtn) {
     clearFiltersBtn.addEventListener("click", async function () {
       if (searchInput) searchInput.value = "";
-      if (subjectFilter) subjectFilter.value = "";
-      if (fileTypeFilter) fileTypeFilter.value = "";
-      if (folderFilter) folderFilter.value = "";
+      if (subjectFilter) {
+        subjectFilter.value = "";
+        subjectFilter.dispatchEvent(new Event("syncCustom"));
+      }
+      if (fileTypeFilter) {
+        fileTypeFilter.value = "";
+        fileTypeFilter.dispatchEvent(new Event("syncCustom"));
+      }
+      if (folderFilter) {
+        folderFilter.value = "";
+        folderFilter.dispatchEvent(new Event("syncCustom"));
+      }
       await loadDocuments();
     });
   }
