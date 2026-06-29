@@ -2,16 +2,25 @@
 // Standardized UI styles and theme configurations.
 
 function handleBack() {
-    if (document.referrer && (document.referrer.includes("dashboard.html") ||
-        document.referrer.includes("documents.html") ||
-        document.referrer.includes("shared-with-me.html") ||
-        document.referrer.includes("group-detail.html") ||
-        document.referrer.includes("shared-folder-detail.html") ||
-        document.referrer.includes("folders.html"))) {
-        window.location.href = document.referrer;
-    } else {
-        window.location.href = "dashboard.html";
+    if (document.referrer) {
+        try {
+            const refUrl = new URL(document.referrer);
+            if (refUrl.origin === window.location.origin && (
+                refUrl.pathname.includes("dashboard.html") ||
+                refUrl.pathname.includes("documents.html") ||
+                refUrl.pathname.includes("shared-with-me.html") ||
+                refUrl.pathname.includes("group-detail.html") ||
+                refUrl.pathname.includes("shared-folder-detail.html") ||
+                refUrl.pathname.includes("folders.html")
+            )) {
+                window.location.href = document.referrer;
+                return;
+            }
+        } catch (e) {
+            // Ignore parse errors, fallback to default redirect
+        }
     }
+    window.location.href = "dashboard.html";
 }
 
 // Fix #3: showFatalError queries DOM directly to avoid ReferenceError
@@ -403,8 +412,8 @@ async function handleSave() {
 
 async function handleDelete() {
     const confirmed = await window.confirmAction({
-        title: "Delete Document",
-        message: "Are you sure you want to delete this document permanently?",
+        title: "Move this document to Trash?",
+        message: "You can restore it later from Trash.",
         confirmText: "Delete",
         danger: true
     });
@@ -535,6 +544,61 @@ function formatDate(isoString) {
     if (!isoString) return "–";
     const d = new Date(isoString);
     return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+// ── Inspector Tabs UI ────────────────────────────────────────────────────────
+function initInspectorTabs() {
+    const tabDetails = document.getElementById("inspectorTabDetails");
+    const tabSharing = document.getElementById("inspectorTabSharing");
+    const paneDetails = document.getElementById("inspectorPaneDetails");
+    const paneSharing = document.getElementById("inspectorPaneSharing");
+
+    if (!tabDetails || !tabSharing || !paneDetails || !paneSharing) return;
+
+    // Accessibility attributes
+    tabDetails.setAttribute("role", "tab");
+    tabDetails.setAttribute("aria-selected", "true");
+    tabDetails.setAttribute("aria-controls", "inspectorPaneDetails");
+    tabSharing.setAttribute("role", "tab");
+    tabSharing.setAttribute("aria-selected", "false");
+    tabSharing.setAttribute("aria-controls", "inspectorPaneSharing");
+
+    paneDetails.setAttribute("role", "tabpanel");
+    paneSharing.setAttribute("role", "tabpanel");
+
+    const tabs = [tabDetails, tabSharing];
+
+    function selectTab(tab) {
+        tabs.forEach(t => {
+            t.classList.remove("active");
+            t.setAttribute("aria-selected", "false");
+        });
+        tab.classList.add("active");
+        tab.setAttribute("aria-selected", "true");
+
+        if (tab === tabDetails) {
+            paneDetails.classList.add("active");
+            paneSharing.classList.remove("active");
+        } else {
+            paneSharing.classList.add("active");
+            paneDetails.classList.remove("active");
+        }
+        tab.focus();
+    }
+
+    tabDetails.addEventListener("click", () => selectTab(tabDetails));
+    tabSharing.addEventListener("click", () => selectTab(tabSharing));
+
+    // Keyboard support: Left/Right arrows
+    tabs.forEach((tab, index) => {
+        tab.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                e.preventDefault();
+                const nextIndex = (index + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+                selectTab(tabs[nextIndex]);
+            }
+        });
+    });
 }
 
 // ── Sharing UI & Logic ─────────────────────────────────────────────────────────

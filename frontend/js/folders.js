@@ -172,11 +172,15 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Folder list rendering
 
   function createFolderCard(folder) {
-    const card = document.createElement("a");
+    const card = document.createElement("div");
     card.className = "folder-card";
-    card.href = folder.folderId ? `folders.html?folderId=${folder.folderId}` : "folders.html";
-    card.style.textDecoration = "none";
-    card.style.color = "inherit";
+
+    // Main link wrapper for navigation (semantic HTML for links, avoiding button inside a link)
+    const link = document.createElement("a");
+    link.href = folder.folderId ? `folders.html?folderId=${folder.folderId}` : "folders.html";
+    link.style.textDecoration = "none";
+    link.style.color = "inherit";
+    link.style.display = "block";
 
     const icon = document.createElement("div");
     icon.className = "folder-icon";
@@ -207,6 +211,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     const main = document.createElement("div");
     main.className = "folder-card-main";
     main.append(icon, name, meta);
+
+    link.appendChild(main);
 
     // Kebab actions dropdown menu
     const actions = document.createElement("div");
@@ -267,7 +273,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     dropdown.append(renameLink, deleteLink);
     actions.append(kebabBtn, dropdown);
 
-    card.append(main, actions);
+    card.append(link, actions);
 
     // Kebab Menu Event Listeners
     kebabBtn.addEventListener("click", function (e) {
@@ -308,10 +314,10 @@ document.addEventListener("DOMContentLoaded", async function () {
       }
     });
 
-    // Close on click outside
-    document.addEventListener("click", function (e) {
+    // Whole-card click handling (unless clicking on kebab menu actions)
+    card.addEventListener("click", function (e) {
       if (!actions.contains(e.target)) {
-        dropdown.style.display = "none";
+        window.location.href = link.href;
       }
     });
 
@@ -600,15 +606,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         const info = document.createElement("div");
         info.className = "share-roster-info";
 
-        const emailSpan = document.createElement("span");
-        emailSpan.className = "share-email";
-        emailSpan.textContent = share.sharedWithEmail;
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "share-name";
+        nameSpan.textContent = share.sharedWithName || "Unknown User";
 
         const typeSpan = document.createElement("span");
         typeSpan.className = "share-type";
         typeSpan.textContent = " (User)";
 
-        info.append(emailSpan, typeSpan);
+        info.append(nameSpan, typeSpan);
 
         const revokeBtn = document.createElement("button");
         revokeBtn.type = "button";
@@ -784,6 +790,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   shareFolderCloseBtn.addEventListener("click", () => {
     closeModal(shareFolderModal);
+  });
+
+  // Close all folder dropdowns when clicking outside (Event Delegation)
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest(".folder-card-actions")) {
+      document.querySelectorAll(".kebab-dropdown").forEach(dropdown => {
+        dropdown.style.display = "none";
+      });
+    }
   });
 
   // Init
