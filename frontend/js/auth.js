@@ -37,6 +37,11 @@
     button.textContent = button.dataset.originalText || button.textContent;
   }
 
+  function getRedirectParam() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("redirect") || "";
+  }
+
   // ─────────────────────────────────────────────────────────────
   // REGISTER
   // ─────────────────────────────────────────────────────────────
@@ -86,7 +91,9 @@
       setMessage("registerMessage", "Registration successful! Redirecting to OTP verification...", "success");
 
       setTimeout(() => {
-        window.location.href = `verify-otp.html?email=${encodeURIComponent(email)}`;
+        const redirectValue = getRedirectParam();
+        const appendRedirect = redirectValue ? `&redirect=${encodeURIComponent(redirectValue)}` : "";
+        window.location.href = `verify-otp.html?email=${encodeURIComponent(email)}${appendRedirect}`;
       }, 1500);
     } catch (error) {
       setMessage("registerMessage", error.message || "Registration failed. Please try again.", "error");
@@ -131,7 +138,9 @@
       setMessage("otpMessage", "Verification successful! Redirecting to login...", "success");
 
       setTimeout(() => {
-        window.location.href = "login.html";
+        const redirectValue = getRedirectParam();
+        const appendRedirect = redirectValue ? `?redirect=${encodeURIComponent(redirectValue)}` : "";
+        window.location.href = `login.html${appendRedirect}`;
       }, 1500);
     } catch (error) {
       setMessage("otpMessage", error.message || "Verification failed. Please try again.", "error");
@@ -227,16 +236,18 @@
 
       setTimeout(function () {
         let target = "dashboard.html";
-        const redirectValue = new URLSearchParams(window.location.search).get("redirect");
+        const redirectValue = getRedirectParam();
 
         if (redirectValue) {
           try {
-            const redirectUrl = new URL(redirectValue, window.location.origin);
-            if (redirectUrl.origin === window.location.origin) {
-              target = redirectUrl.href;
+            const parsed = new URL(redirectValue, window.location.href);
+            if (parsed.origin === window.location.origin && (parsed.protocol === "http:" || parsed.protocol === "https:")) {
+              target = parsed.pathname + parsed.search + parsed.hash;
+            } else {
+              console.warn("Mismatched open-redirect origin or protocol detected.");
             }
           } catch (e) {
-            console.warn("Invalid redirect URL", e);
+            console.warn("Invalid redirect origin context detected, falling back to dashboard.", e);
           }
         }
 

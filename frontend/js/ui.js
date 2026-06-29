@@ -15,12 +15,16 @@ const UIHelper = {
     if (!container) {
       container = document.createElement('div');
       container.id = 'toast-container';
+      // Accessibility Foundation Rule: Toast live regional announcement pipeline
+      container.setAttribute('aria-live', 'polite');
+      container.setAttribute('aria-atomic', 'true');
       document.body.appendChild(container);
     }
 
     // Create individual toast wrapper safely
     const toast = document.createElement('div');
     toast.className = `toast-item toast-${type}`;
+    toast.setAttribute('role', 'status');
 
     // Create text element securely to eliminate XSS/UI injection vulnerabilities
     const textSpan = document.createElement('span');
@@ -31,6 +35,9 @@ const UIHelper = {
     const closeBtn = document.createElement('span');
     closeBtn.className = 'toast-close-btn';
     closeBtn.innerHTML = '&times;'; // Safe as static entity representation text
+    closeBtn.setAttribute('role', 'button');
+    closeBtn.setAttribute('aria-label', 'Close notification');
+    closeBtn.setAttribute('tabindex', '0');
 
     // Assemble safe DOM tree
     toast.appendChild(textSpan);
@@ -47,6 +54,15 @@ const UIHelper = {
     closeBtn.addEventListener('click', () => {
       clearTimeout(dismissTimeout);
       toast.remove();
+    });
+
+    // Keyboard support for the focusable close button
+    closeBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        clearTimeout(dismissTimeout);
+        toast.remove();
+      }
     });
   },
 

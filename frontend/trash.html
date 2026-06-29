@@ -23,13 +23,16 @@
                 <p>Restore deleted items or permanently remove them from your workspace.</p>
             </section>
 
-            <section class="card document-panel">
+            <section class="card trash-panel document-panel">
                 <div class="section-header">
                     <div>
                         <h2>Deleted Items</h2>
                         <p>Items in trash cannot be opened or downloaded until restored.</p>
                     </div>
-                    <a href="dashboard.html" class="btn btn-secondary upload-link-btn">Back to Dashboard</a>
+                    <div class="dashboard-actions">
+                        <button type="button" id="emptyTrashBtn" class="btn btn-danger" style="display: none;">Empty Trash</button>
+                        <a href="dashboard.html" class="btn btn-secondary upload-link-btn">Back to Dashboard</a>
+                    </div>
                 </div>
 
                 <div id="trashLoader" class="document-state">
@@ -121,6 +124,18 @@
             <div class="modal-actions">
                 <button type="button" id="cancelPermanentDeleteBtn" class="btn btn-secondary">Cancel</button>
                 <button type="button" id="confirmPermanentDeleteBtn" class="btn btn-danger">Delete Permanently</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="emptyTrashModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="emptyTrashTitle">
+        <div class="modal-box">
+            <h3 id="emptyTrashTitle" class="modal-title-danger">Empty Trash?</h3>
+            <p id="emptyTrashMessage" class="modal-warning-text">All folders and documents in the trash will be permanently deleted. This action cannot be undone.</p>
+            <div id="emptyTrashError" class="modal-error" role="alert" aria-live="polite"></div>
+            <div class="modal-actions">
+                <button type="button" id="cancelEmptyTrashBtn" class="btn btn-secondary">Cancel</button>
+                <button type="button" id="confirmEmptyTrashBtn" class="btn btn-danger">Empty Trash</button>
             </div>
         </div>
     </div>

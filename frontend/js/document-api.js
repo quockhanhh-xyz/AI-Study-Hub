@@ -111,6 +111,14 @@ function permanentDeleteDocument(id) {
   return del(`/api/trash/documents/${id}`);
 }
 
+/**
+ * Permanently purges all soft-deleted documents and folders.
+ * @returns {Promise<Object>} The server confirmation payload with empty trash results.
+ */
+function emptyTrash() {
+  return del("/api/trash");
+}
+
 /* ==========================================================================
    STEP 7 ADDITIONS: OPEN & DOWNLOAD FLOW ACTION HELPERS
    ========================================================================== */
