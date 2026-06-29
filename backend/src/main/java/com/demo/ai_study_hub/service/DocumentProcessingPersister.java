@@ -44,9 +44,9 @@ public class DocumentProcessingPersister {
         content.setExtractedText(text);
         content.setProcessingStatus(ProcessingStatus.COMPLETED);
         content.setCharacterCount(charCount);
-        content.setOriginalCharacterCount(charCount);
+        content.setOriginalCharacterCount(result.getOriginalCharacterCount() != null ? result.getOriginalCharacterCount() : charCount);
         content.setWordCount(wordCount);
-        content.setIsTruncated(false);
+        content.setIsTruncated(result.getIsTruncated() != null ? result.getIsTruncated() : false);
         content.setProcessedAt(LocalDateTime.now());
         content.setLastAttemptStatus(ProcessingStatus.COMPLETED);
         content.setLastAttemptError(null);

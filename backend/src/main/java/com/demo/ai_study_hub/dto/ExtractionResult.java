@@ -14,6 +14,8 @@ public class ExtractionResult {
     private ProcessingStatus status;
     private String error;
     private List<ExtractedChunk> chunks;
+    private Integer originalCharacterCount;
+    private Boolean isTruncated;
 
     @Data
     @Builder

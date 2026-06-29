@@ -22,6 +22,8 @@ public class DocumentChunk {
     @Column(name = "chunk_id")
     private Long chunkId;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", nullable = false, foreignKey = @ForeignKey(name = "fk_doc_chunks_doc", foreignKeyDefinition = "FOREIGN KEY (document_id) REFERENCES documents(document_id) ON DELETE CASCADE"))
     private Document document;

@@ -120,7 +120,7 @@ public class DocumentService {
                     .wordCount(0)
                     .isTruncated(false)
                     .build();
-            documentContentRepository.save(content);
+            documentContentRepository.saveAndFlush(content);
             savedDoc.setDocumentContent(content);
         } catch (Exception persistenceException) {
             log.error("Failed to persist document metadata, rolling back Cloudinary upload. publicId={}", publicId, persistenceException);

@@ -1,16 +1,22 @@
 package com.demo.ai_study_hub.service;
 
-import com.demo.ai_study_hub.dto.DocumentResponse;
+import com.demo.ai_study_hub.dto.DocumentContentResponse;
+import com.demo.ai_study_hub.dto.DocumentProcessingStatusResponse;
 import com.demo.ai_study_hub.entity.*;
 import com.demo.ai_study_hub.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 @Service
 @RequiredArgsConstructor
@@ -18,8 +24,8 @@ public class DocumentProcessingService {
 
     private final DocumentRepository documentRepository;
     private final DocumentContentRepository documentContentRepository;
+    private final DocumentChunkRepository documentChunkRepository;
     private final UserRepository userRepository;
-    private final DocumentProcessingWorker documentProcessingWorker;
     
     // For access validations
     private final DocumentShareRepository documentShareRepository;
@@ -28,13 +34,22 @@ public class DocumentProcessingService {
     private final FolderShareService folderShareService;
     private final DocumentService documentService;
 
+    private final ApplicationEventPublisher eventPublisher;
+
+    @Autowired
+    @Qualifier("documentProcessingExecutor")
+    private Executor documentProcessingExecutor;
+
     @Transactional
-    public DocumentResponse startProcessing(Integer documentId, String email) {
+    public DocumentProcessingStatusResponse startProcessing(Integer documentId, String email) {
         User user = getUser(email);
         Document doc = getActiveDocument(documentId);
         
         // Only owner can trigger process
         validateOwnerAccess(doc, user);
+
+        // Check thread pool capacity synchronously before starting transaction
+        checkExecutorCapacity();
 
         // Legacy file support - ensure content exists
         DocumentContent content = documentService.findOrCreatePending(doc);
@@ -58,20 +73,23 @@ public class DocumentProcessingService {
         content.setProcessingStartedAt(LocalDateTime.now());
         documentContentRepository.save(content);
 
-        // Trigger async worker
-        documentProcessingWorker.processDocumentAsync(documentId, previousStatus);
+        // Publish event to run worker after transaction commit
+        eventPublisher.publishEvent(new DocumentProcessingEvent(this, documentId, previousStatus));
 
         doc.setDocumentContent(content);
-        return mapToResponse(doc, user);
+        return mapToStatusResponse(doc);
     }
 
     @Transactional
-    public DocumentResponse startReprocessing(Integer documentId, String email) {
+    public DocumentProcessingStatusResponse startReprocessing(Integer documentId, String email) {
         User user = getUser(email);
         Document doc = getActiveDocument(documentId);
 
         // Only owner can trigger reprocess
         validateOwnerAccess(doc, user);
+
+        // Check thread pool capacity synchronously before starting transaction
+        checkExecutorCapacity();
 
         // Legacy file support - ensure content exists
         DocumentContent content = documentService.findOrCreatePending(doc);
@@ -91,15 +109,15 @@ public class DocumentProcessingService {
         content.setProcessingStartedAt(LocalDateTime.now());
         documentContentRepository.save(content);
 
-        // Trigger async worker
-        documentProcessingWorker.processDocumentAsync(documentId, previousStatus);
+        // Publish event to run worker after transaction commit
+        eventPublisher.publishEvent(new DocumentProcessingEvent(this, documentId, previousStatus));
 
         doc.setDocumentContent(content);
-        return mapToResponse(doc, user);
+        return mapToStatusResponse(doc);
     }
 
     @Transactional
-    public DocumentResponse getProcessingStatus(Integer documentId, String email) {
+    public DocumentProcessingStatusResponse getProcessingStatus(Integer documentId, String email) {
         User user = getUser(email);
         Document doc = getActiveDocument(documentId);
 
@@ -113,19 +131,28 @@ public class DocumentProcessingService {
         if (content.getProcessingStatus() == ProcessingStatus.PROCESSING
                 && content.getProcessingStartedAt() != null
                 && content.getProcessingStartedAt().isBefore(LocalDateTime.now().minusMinutes(10))) {
-            content.setProcessingStatus(ProcessingStatus.FAILED);
-            content.setLastAttemptStatus(ProcessingStatus.FAILED);
-            content.setLastAttemptError("Processing was interrupted. Please reprocess the document.");
-            content.setLastAttemptedAt(LocalDateTime.now());
+            
+            // Revert state safely based on previous successful snapshot
+            if (content.getExtractedText() != null && content.getProcessedAt() != null) {
+                content.setProcessingStatus(ProcessingStatus.COMPLETED);
+                content.setLastAttemptStatus(ProcessingStatus.FAILED);
+                content.setLastAttemptError("Reprocessing was interrupted. Previous successful content preserved.");
+                content.setLastAttemptedAt(LocalDateTime.now());
+            } else {
+                content.setProcessingStatus(ProcessingStatus.FAILED);
+                content.setLastAttemptStatus(ProcessingStatus.FAILED);
+                content.setLastAttemptError("Processing was interrupted. Please reprocess the document.");
+                content.setLastAttemptedAt(LocalDateTime.now());
+            }
             documentContentRepository.save(content);
             doc.setDocumentContent(content);
         }
 
-        return mapToResponse(doc, user);
+        return mapToStatusResponse(doc);
     }
 
     @Transactional(readOnly = true)
-    public String getExtractedContent(Integer documentId, String email) {
+    public DocumentContentResponse getExtractedContent(Integer documentId, String email) {
         User user = getUser(email);
         Document doc = getActiveDocument(documentId);
 
@@ -135,7 +162,10 @@ public class DocumentProcessingService {
         DocumentContent content = documentContentRepository.findByDocument_DocumentId(documentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document content not found"));
 
-        return content.getExtractedText() != null ? content.getExtractedText() : "";
+        return DocumentContentResponse.builder()
+                .documentId(documentId)
+                .extractedText(content.getExtractedText() != null ? content.getExtractedText() : "")
+                .build();
     }
 
     @Transactional
@@ -148,11 +178,29 @@ public class DocumentProcessingService {
                 .toList();
 
         for (DocumentContent content : staleContents) {
-            content.setProcessingStatus(ProcessingStatus.FAILED);
-            content.setLastAttemptStatus(ProcessingStatus.FAILED);
-            content.setLastAttemptError("Processing was interrupted. Please reprocess the document.");
-            content.setLastAttemptedAt(LocalDateTime.now());
+            if (content.getExtractedText() != null && content.getProcessedAt() != null) {
+                content.setProcessingStatus(ProcessingStatus.COMPLETED);
+                content.setLastAttemptStatus(ProcessingStatus.FAILED);
+                content.setLastAttemptError("Reprocessing was interrupted. Previous successful content preserved.");
+                content.setLastAttemptedAt(LocalDateTime.now());
+            } else {
+                content.setProcessingStatus(ProcessingStatus.FAILED);
+                content.setLastAttemptStatus(ProcessingStatus.FAILED);
+                content.setLastAttemptError("Processing was interrupted. Please reprocess the document.");
+                content.setLastAttemptedAt(LocalDateTime.now());
+            }
             documentContentRepository.save(content);
+        }
+    }
+
+    private void checkExecutorCapacity() {
+        if (documentProcessingExecutor instanceof ThreadPoolTaskExecutor executor) {
+            int active = executor.getActiveCount();
+            int maxPoolSize = executor.getMaxPoolSize();
+            int queueCapacity = executor.getThreadPoolExecutor().getQueue().remainingCapacity();
+            if (queueCapacity == 0 && active >= maxPoolSize) {
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Server is busy. Please try again later.");
+            }
         }
     }
 
@@ -207,8 +255,23 @@ public class DocumentProcessingService {
         }
     }
 
-    private DocumentResponse mapToResponse(Document doc, User requester) {
-        // Use documentService's mapping method to avoid duplicating the complex logic
-        return documentService.mapToResponseList(List.of(doc), requester).get(0);
+    private DocumentProcessingStatusResponse mapToStatusResponse(Document doc) {
+        DocumentContent content = doc.getDocumentContent();
+        int chunkCount = content != null ? documentChunkRepository.findByDocument_DocumentIdOrderByChunkIndexAsc(doc.getDocumentId()).size() : 0;
+        
+        return DocumentProcessingStatusResponse.builder()
+                .documentId(doc.getDocumentId())
+                .processingStatus(content != null ? content.getProcessingStatus().name() : "PENDING")
+                .characterCount(content != null ? content.getCharacterCount() : 0)
+                .originalCharacterCount(content != null ? content.getOriginalCharacterCount() : 0)
+                .wordCount(content != null ? content.getWordCount() : 0)
+                .chunkCount(chunkCount)
+                .isTruncated(content != null ? content.getIsTruncated() : false)
+                .processingStartedAt(content != null ? content.getProcessingStartedAt() : null)
+                .processedAt(content != null ? content.getProcessedAt() : null)
+                .lastAttemptStatus(content != null && content.getLastAttemptStatus() != null ? content.getLastAttemptStatus().name() : null)
+                .lastAttemptError(content != null ? content.getLastAttemptError() : null)
+                .lastAttemptedAt(content != null ? content.getLastAttemptedAt() : null)
+                .build();
     }
 }

@@ -28,6 +28,12 @@ public class DocumentProcessingWorker {
             Document doc = documentRepository.findById(documentId).orElse(null);
             if (doc == null || !"ACTIVE".equals(doc.getStatus())) {
                 log.warn("Document is not active or deleted, aborting processing. documentId={}", documentId);
+                documentProcessingPersister.saveFailure(
+                        documentId,
+                        ProcessingStatus.FAILED,
+                        "Document is no longer active (deleted or trashed).",
+                        previousStatus
+                );
                 return;
             }
 
@@ -38,6 +44,12 @@ public class DocumentProcessingWorker {
             doc = documentRepository.findById(documentId).orElse(null);
             if (doc == null || !"ACTIVE".equals(doc.getStatus())) {
                 log.warn("Document was deleted or trashed during processing, aborting. documentId={}", documentId);
+                documentProcessingPersister.saveFailure(
+                        documentId,
+                        ProcessingStatus.FAILED,
+                        "Document is no longer active (deleted or trashed).",
+                        previousStatus
+                );
                 return;
             }
 
@@ -57,7 +69,7 @@ public class DocumentProcessingWorker {
                 documentProcessingPersister.saveFailure(
                         documentId,
                         ProcessingStatus.FAILED,
-                        "Internal error during extraction: " + e.getMessage(),
+                        "An unexpected error occurred during extraction.",
                         previousStatus
                 );
             } catch (Exception ex) {
