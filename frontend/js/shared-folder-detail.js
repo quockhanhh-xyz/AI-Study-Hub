@@ -172,7 +172,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     meta.style.fontSize = "12px";
     meta.style.color = "var(--muted)";
     meta.style.marginTop = "8px";
-    meta.textContent = `Size: ${formatFileSize(doc.fileSize)}`;
+    meta.textContent = formatDate(doc.createdAt);
 
     card.append(header, desc, meta);
 

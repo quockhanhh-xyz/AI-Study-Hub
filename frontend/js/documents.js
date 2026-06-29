@@ -144,10 +144,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const meta = document.createElement("div");
     meta.className = "document-meta";
-    meta.append(
-      createMetaItem("Size", formatFileSize(documentItem.fileSize)),
-      createMetaItem("Uploaded", formatDate(documentItem.createdAt))
-    );
+    const dateItem = document.createElement("span");
+    dateItem.textContent = formatDate(documentItem.createdAt);
+    meta.append(dateItem);
 
     if (documentItem.subjectCode) {
       const subjectBadge = document.createElement("div");
