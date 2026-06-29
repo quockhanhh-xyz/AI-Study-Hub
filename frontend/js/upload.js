@@ -149,11 +149,42 @@ function formatFileSize(bytes) {
 
 function updateDropZone(file) {
   if (file) {
-    dropZoneText.innerHTML = `<strong>${file.name}</strong><br/><small>${formatFileSize(file.size)}</small>`;
+    dropZoneText.innerHTML = "";
+    const strong = document.createElement("strong");
+    strong.textContent = file.name;
+    const br = document.createElement("br");
+    const small = document.createElement("small");
+    small.textContent = formatFileSize(file.size);
+    dropZoneText.appendChild(strong);
+    dropZoneText.appendChild(br);
+    dropZoneText.appendChild(small);
+
     dropZone.classList.add("has-file");
+    // Show Remove File button
+    let removeBtn = document.getElementById("removeFileBtn");
+    if (!removeBtn) {
+      removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.id = "removeFileBtn";
+      removeBtn.className = "btn btn-secondary";
+      removeBtn.style.marginTop = "8px";
+      removeBtn.textContent = "Remove File";
+      removeBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        fileInput.value = "";
+        updateDropZone(null);
+        hideMessage();
+      });
+      dropZone.parentNode.insertBefore(removeBtn, dropZone.nextSibling);
+    }
+    removeBtn.style.display = "inline-flex";
   } else {
     dropZoneText.innerHTML = `Drag and drop or click to select a file<br/><small>(PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG - max 10MB)</small>`;
     dropZone.classList.remove("has-file");
+    const removeBtn = document.getElementById("removeFileBtn");
+    if (removeBtn) {
+      removeBtn.style.display = "none";
+    }
   }
 }
 
@@ -489,6 +520,7 @@ uploadForm.addEventListener("submit", async (e) => {
     const result = await uploadDocument(formData);
     completeProgress(progressInterval);
     window.showToast(`Upload successful: "${result.data.title}"`, "success");
+    // Reset everything only if successful
     uploadForm.reset();
     updateDropZone(null);
     newSubjectRow.style.display = "none";
@@ -498,6 +530,7 @@ uploadForm.addEventListener("submit", async (e) => {
   } catch (err) {
     clearInterval(progressInterval);
     hideProgress();
+    // Keep the file + subject + folder intact so the user does not need to retry and select again
     showMessage(resolveUploadError(err), "error");
 
   } finally {

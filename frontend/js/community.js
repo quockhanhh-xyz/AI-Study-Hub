@@ -15,8 +15,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // Guest CTA banner
   const guestCtaBanner = document.getElementById("guestCtaBanner");
+  const authCtaBanner = document.getElementById("authCtaBanner");
   if (guestCtaBanner) {
     guestCtaBanner.style.display = isAuthenticated ? "none" : "flex";
+  }
+  if (authCtaBanner) {
+    authCtaBanner.style.display = isAuthenticated ? "flex" : "none";
   }
 
   // Filter UI elements
@@ -62,13 +66,10 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   function createCommunityCard(doc) {
-    const card = document.createElement("article");
+    // Use <a> instead of div+click — correct semantics, accessible
+    const card = document.createElement("a");
     card.className = "document-card";
-    // Whole card navigates to detail, matching FE2 "Card click flow" requirement.
-    card.style.cursor = "pointer";
-    card.addEventListener("click", function () {
-      window.location.href = `document-detail.html?id=${doc.documentId}&from=community`;
-    });
+    card.href = `document-detail.html?id=${doc.documentId}&from=community`;
 
     const header = document.createElement("div");
     header.className = "document-card-header";
@@ -81,10 +82,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     title.textContent = doc.title || doc.originalFileName || "Untitled document";
 
     header.append(fileBadge, title);
+    card.append(header);
 
-    const description = document.createElement("p");
-    description.className = "document-description";
-    description.textContent = doc.description || "No description provided.";
+    // Hide if no description
+    if (doc.description) {
+      const description = document.createElement("p");
+      description.className = "document-description";
+      description.textContent = doc.description;
+      card.append(description);
+    }
 
     const meta = document.createElement("div");
     meta.className = "document-meta";
@@ -94,6 +100,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       createMetaItem("Downloads", doc.downloadCount ?? 0)
     );
 
+    // Only use ownerName/displayName — do not display email
     if (doc.ownerName) {
       meta.append(createMetaItem("By", doc.ownerName));
     }
@@ -107,21 +114,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       meta.append(subjectBadge);
     }
 
-    const actions = document.createElement("div");
-    actions.className = "document-actions";
-
-    const detailButton = document.createElement("a");
-    detailButton.href = `document-detail.html?id=${doc.documentId}&from=community`;
-    detailButton.className = "btn btn-primary document-detail-btn";
-    detailButton.textContent = "View Detail";
-    // Prevent the card's own click handler from double-navigating.
-    detailButton.addEventListener("click", function (e) {
-      e.stopPropagation();
-    });
-
-    actions.append(detailButton);
-    card.append(header, description, meta, actions);
-
+    card.append(meta);
     return card;
   }
 
@@ -129,18 +122,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       const result = await getPublicSubjects();
       const subjects = Array.isArray(result.data) ? result.data : [];
-      if (subjectFilter) {
-        const currentValue = subjectFilter.value;
-        subjectFilter.innerHTML = '<option value="">All Subjects</option>';
+      const subjectDatalist = document.getElementById("subjectDatalist");
+      if (subjectDatalist) {
+        subjectDatalist.innerHTML = "";
         subjects.forEach(function (subject) {
           const option = document.createElement("option");
-          option.value = subject.subjectId;
-          option.textContent = subject.subjectCode
+          const label = subject.subjectCode
             ? `${subject.subjectCode} - ${subject.subjectName}`
             : subject.subjectName;
-          subjectFilter.appendChild(option);
+          option.value = label;
+          option.dataset.id = subject.subjectId;
+          subjectDatalist.appendChild(option);
         });
-        subjectFilter.value = currentValue;
       }
     } catch (error) {
       // Non-fatal: community list still works without the subject dropdown.
@@ -149,12 +142,29 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  function getSelectedSubjectId() {
+    if (!subjectFilter) return "";
+    const typedText = subjectFilter.value.trim();
+    if (!typedText) return "";
+
+    const subjectDatalist = document.getElementById("subjectDatalist");
+    if (subjectDatalist) {
+      const options = subjectDatalist.options;
+      for (let i = 0; i < options.length; i++) {
+        if (options[i].value === typedText) {
+          return options[i].dataset.id || "";
+        }
+      }
+    }
+    return "";
+  }
+
   async function loadCommunityDocuments() {
     setLoading();
 
     const params = {
       keyword: searchInput ? searchInput.value.trim() : "",
-      subjectId: subjectFilter ? subjectFilter.value : "",
+      subjectId: getSelectedSubjectId(),
       fileType: fileTypeFilter ? fileTypeFilter.value : "",
       sort: sortFilter ? sortFilter.value : "newest"
     };
@@ -219,7 +229,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
 
-  if (subjectFilter) subjectFilter.addEventListener("change", loadCommunityDocuments);
+  if (subjectFilter) {
+    subjectFilter.addEventListener("change", loadCommunityDocuments);
+    subjectFilter.addEventListener("input", function () {
+      const id = getSelectedSubjectId();
+      if (id || subjectFilter.value === "") {
+        loadCommunityDocuments();
+      }
+    });
+  }
   if (fileTypeFilter) fileTypeFilter.addEventListener("change", loadCommunityDocuments);
   if (sortFilter) sortFilter.addEventListener("change", loadCommunityDocuments);
 

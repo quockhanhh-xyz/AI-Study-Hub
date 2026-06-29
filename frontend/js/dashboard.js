@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const groupCountElement = document.getElementById("groupCount");
   const accountTierElement = document.getElementById("accountTier");
   const usageRemainingElement = document.getElementById("usageRemaining");
-  const usageProgressBar = document.getElementById("usageProgressBar");
+  const quotaProgressContainer = document.getElementById("quotaProgressContainer");
 
   // Document list elements
   const documentLoader = document.getElementById("documentLoader");
@@ -108,7 +108,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const description = document.createElement("p");
     description.className = "document-description";
-    description.textContent = documentItem.description || "No description provided.";
+    if (documentItem.description) {
+      description.textContent = documentItem.description;
+    } else {
+      description.style.display = "none";
+    }
 
     const meta = document.createElement("div");
     meta.className = "document-meta";
@@ -191,19 +195,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     // 5. Storage Quota Calculation
-    const tier = currentUser.tier || "FREE";
-    const maxQuotaBytes = tier === "PREMIUM" ? 1024 * 1024 * 1024 : 100 * 1024 * 1024; // 1GB or 100MB
     const totalBytesUsed = documents.reduce((sum, doc) => sum + (doc.fileSize || 0), 0);
-
     if (usageRemainingElement) {
-      const usedFormatted = formatFileSize(totalBytesUsed);
-      const quotaFormatted = formatFileSize(maxQuotaBytes);
-      usageRemainingElement.textContent = `${usedFormatted} / ${quotaFormatted}`;
+      usageRemainingElement.textContent = formatFileSize(totalBytesUsed);
     }
-
-    if (usageProgressBar) {
-      const percentage = Math.min((totalBytesUsed / maxQuotaBytes) * 100, 100);
-      usageProgressBar.style.width = `${percentage}%`;
+    if (quotaProgressContainer) {
+      quotaProgressContainer.style.display = "none";
     }
   }
 

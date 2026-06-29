@@ -122,21 +122,25 @@ document.addEventListener("DOMContentLoaded", async function () {
     header.append(fileBadge, visibilityBadge);
 
     if (vis === "PUBLIC" && documentItem.approvalStatus) {
-        const approvalBadge = document.createElement("span");
-        approvalBadge.className = "status-badge " + documentItem.approvalStatus.toLowerCase();
-        approvalBadge.textContent = documentItem.approvalStatus;
-        approvalBadge.style.marginLeft = "4px";
-        approvalBadge.style.fontSize = "10px";
-        approvalBadge.style.height = "20px";
-        approvalBadge.style.padding = "0 8px";
-        header.append(approvalBadge);
+      const approvalBadge = document.createElement("span");
+      approvalBadge.className = "status-badge " + documentItem.approvalStatus.toLowerCase();
+      approvalBadge.textContent = documentItem.approvalStatus;
+      approvalBadge.style.marginLeft = "4px";
+      approvalBadge.style.fontSize = "10px";
+      approvalBadge.style.height = "20px";
+      approvalBadge.style.padding = "0 8px";
+      header.append(approvalBadge);
     }
 
     header.append(title);
 
     const description = document.createElement("p");
     description.className = "document-description";
-    description.textContent = documentItem.description || "No description provided.";
+    if (documentItem.description) {
+      description.textContent = documentItem.description;
+    } else {
+      description.style.display = "none";
+    }
 
     const meta = document.createElement("div");
     meta.className = "document-meta";
@@ -184,18 +188,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       const result = await getSubjects();
       const subjects = Array.isArray(result.data) ? result.data : [];
-      if (subjectFilter) {
-        const currentValue = subjectFilter.value;
-        subjectFilter.innerHTML = '<option value="">All Subjects</option>';
+      const subjectDatalist = document.getElementById("subjectDatalist");
+      if (subjectDatalist) {
+        subjectDatalist.innerHTML = "";
         subjects.forEach(function (subject) {
           const option = document.createElement("option");
-          option.value = subject.subjectId;
-          option.textContent = subject.subjectCode
+          const label = subject.subjectCode
             ? `${subject.subjectCode} - ${subject.subjectName}`
             : subject.subjectName;
-          subjectFilter.appendChild(option);
+          option.value = label;
+          option.dataset.id = subject.subjectId;
+          subjectDatalist.appendChild(option);
         });
-        subjectFilter.value = currentValue;
       }
     } catch (error) {
       console.warn("Failed to load subjects:", error);
@@ -255,12 +259,29 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  function getSelectedSubjectId() {
+    if (!subjectFilter) return "";
+    const typedText = subjectFilter.value.trim();
+    if (!typedText) return "";
+
+    const subjectDatalist = document.getElementById("subjectDatalist");
+    if (subjectDatalist) {
+      const options = subjectDatalist.options;
+      for (let i = 0; i < options.length; i++) {
+        if (options[i].value === typedText) {
+          return options[i].dataset.id || "";
+        }
+      }
+    }
+    return "";
+  }
+
   async function loadDocuments() {
     setDocumentsLoading();
 
     const params = {
       keyword: searchInput ? searchInput.value.trim() : "",
-      subjectId: subjectFilter ? subjectFilter.value : "",
+      subjectId: getSelectedSubjectId(),
       fileType: fileTypeFilter ? fileTypeFilter.value : "",
       folderId: folderFilter ? folderFilter.value : ""
     };
@@ -343,6 +364,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   if (subjectFilter) {
     subjectFilter.addEventListener("change", loadDocuments);
+    subjectFilter.addEventListener("input", function () {
+      const id = getSelectedSubjectId();
+      if (id || subjectFilter.value === "") {
+        loadDocuments();
+      }
+    });
   }
 
   if (fileTypeFilter) {
