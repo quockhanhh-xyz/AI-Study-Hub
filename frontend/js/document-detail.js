@@ -85,6 +85,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         params.get("from") === "community" ||
         params.get("mode") === "public";
 
+    initInspectorTabs();
+
     loadPage(id, {
         isAuthenticated,
         isCommunityView: currentIsCommunityView
@@ -143,7 +145,7 @@ async function loadPage(id, { isAuthenticated, isCommunityView }) {
 function renderDocument(doc) {
     document.getElementById("fileTypeBadge").textContent = (doc.fileType || "–").toUpperCase();
     document.getElementById("docTitle").textContent = doc.title || "–";
-    
+
     // Hide email in community view to prevent exposure
     const docUploadedBy = document.getElementById("docUploadedBy");
     if (docUploadedBy) {
@@ -156,7 +158,7 @@ function renderDocument(doc) {
             }
         } else {
             docUploadedBy.style.display = "inline";
-            docUploadedBy.textContent = "Uploaded by " + (doc.ownerName || doc.uploadedBy || "–");
+            docUploadedBy.textContent = "Uploaded by " + (doc.uploadedByName || doc.ownerName || "–");
         }
     }
 
@@ -294,6 +296,54 @@ function renderDocument(doc) {
     if (typeof renderDocumentPreview === "function") {
         renderDocumentPreview(doc);
     }
+
+    // Configure Inspector panel visibility and defaults
+    const inspector = document.querySelector(".detail-right-inspector");
+    const hasInspector = doc.canEdit || doc.canShare;
+    const detailContentContainer = document.getElementById("detailContent");
+
+    if (inspector && detailContentContainer) {
+        if (!currentIsCommunityView && hasInspector) {
+            inspector.style.display = "block";
+            detailContentContainer.classList.add("has-inspector");
+
+            const tabDetails = document.getElementById("inspectorTabDetails");
+            const tabSharing = document.getElementById("inspectorTabSharing");
+            const paneDetails = document.getElementById("inspectorPaneDetails");
+            const paneSharing = document.getElementById("inspectorPaneSharing");
+
+            if (tabDetails) tabDetails.style.display = doc.canEdit ? "block" : "none";
+            if (tabSharing) tabSharing.style.display = doc.canShare ? "block" : "none";
+
+            // Default active state
+            if (doc.canEdit) {
+                if (tabDetails) tabDetails.classList.add("active");
+                if (tabSharing) tabSharing.classList.remove("active");
+                if (paneDetails) {
+                    paneDetails.style.display = "block";
+                    paneDetails.classList.add("active");
+                }
+                if (paneSharing) {
+                    paneSharing.style.display = "none";
+                    paneSharing.classList.remove("active");
+                }
+            } else if (doc.canShare) {
+                if (tabSharing) tabSharing.classList.add("active");
+                if (tabDetails) tabDetails.classList.remove("active");
+                if (paneSharing) {
+                    paneSharing.style.display = "block";
+                    paneSharing.classList.add("active");
+                }
+                if (paneDetails) {
+                    paneDetails.style.display = "none";
+                    paneDetails.classList.remove("active");
+                }
+            }
+        } else {
+            inspector.style.display = "none";
+            detailContentContainer.classList.remove("has-inspector");
+        }
+    }
 }
 
 // ── Render subject dropdown ───────────────────────────────────────────────────
@@ -351,34 +401,23 @@ async function handleSave() {
     }
 }
 
-// ── Delete confirm modal ──────────────────────────────────────────────────────
-function showDeleteConfirm() {
-    document.getElementById("deleteModal").classList.add("show");
-}
-
-// ── Modal overlay hide ──────────────────────────────────────────────────────
-function hideDeleteConfirm() {
-    document.getElementById("deleteModal").classList.remove("show");
-}
-
 async function handleDelete() {
-    const confirmBtn = document.getElementById("confirmDeleteBtn");
-    confirmBtn.disabled = true;
-    confirmBtn.textContent = "Deleting...";
+    const confirmed = await window.confirmAction({
+        title: "Delete Document",
+        message: "Are you sure you want to delete this document permanently?",
+        confirmText: "Delete",
+        danger: true
+    });
+    if (!confirmed) return;
 
     try {
         await deleteDocument(currentDocumentId);
-        hideDeleteConfirm();
         window.showToast("Document deleted.", "success");
         setTimeout(() => {
             window.location.href = "dashboard.html";
         }, 1200);
     } catch (err) {
-        hideDeleteConfirm();
         window.showToast(err.message || "Failed to delete document.", "error");
-    } finally {
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = "Delete";
     }
 }
 
@@ -668,7 +707,7 @@ async function loadSharingInfo(docId) {
 
                 const name = document.createElement("span");
                 name.className = "member-row-name";
-                name.textContent = item.sharedWithEmail;
+                name.textContent = item.sharedWithName || "Unknown User";
 
                 const badge = document.createElement("span");
                 badge.className = "badge badge-success";
@@ -731,7 +770,12 @@ async function loadSharingInfo(docId) {
 
 // ── Revoke Actions ────────────────────────────────────────────────────────────
 async function handleRevokeDirect(shareId) {
-    const confirmed = confirm("Are you sure you want to revoke this direct share?");
+    const confirmed = await window.confirmAction({
+        title: "Revoke Direct Share",
+        message: "Are you sure you want to revoke this direct share?",
+        confirmText: "Revoke",
+        danger: true
+    });
     if (!confirmed) return;
     try {
         await revokeDocumentShare(shareId);
@@ -743,7 +787,12 @@ async function handleRevokeDirect(shareId) {
 }
 
 async function handleRevokeGroup(shareId) {
-    const confirmed = confirm("Are you sure you want to revoke this group share?");
+    const confirmed = await window.confirmAction({
+        title: "Revoke Group Share",
+        message: "Are you sure you want to revoke this group share?",
+        confirmText: "Revoke",
+        danger: true
+    });
     if (!confirmed) return;
     try {
         await revokeGroupDocumentShare(shareId);

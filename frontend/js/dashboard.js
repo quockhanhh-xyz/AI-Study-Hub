@@ -1,6 +1,6 @@
 /**
  * Simplified Dashboard Controller (FE1 - Step 6D).
- * Provides an overview of study statistics, dynamic storage quota,
+ * Provides an overview of study statistics, storage used,
  * and lists the 3-5 most recent documents.
  * All folder hierarchies, document searches/filters, and folder modals
  * are moved to their respective specialized pages.

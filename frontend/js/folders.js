@@ -32,6 +32,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // Buttons
   const createFolderBtn = document.getElementById("createFolderBtn");
+  const backFolderBtn = document.getElementById("backFolderBtn");
+  const uploadDocumentToFolderBtn = document.getElementById("uploadDocumentToFolderBtn");
 
   // Create modal
   const createModal = document.getElementById("createModal");
@@ -170,9 +172,11 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Folder list rendering
 
   function createFolderCard(folder) {
-    const card = document.createElement("div");
+    const card = document.createElement("a");
     card.className = "folder-card";
-    card.style.cursor = "pointer";
+    card.href = folder.folderId ? `folders.html?folderId=${folder.folderId}` : "folders.html";
+    card.style.textDecoration = "none";
+    card.style.color = "inherit";
 
     const icon = document.createElement("div");
     icon.className = "folder-icon";
@@ -204,34 +208,111 @@ document.addEventListener("DOMContentLoaded", async function () {
     main.className = "folder-card-main";
     main.append(icon, name, meta);
 
+    // Kebab actions dropdown menu
     const actions = document.createElement("div");
     actions.className = "folder-card-actions";
+    actions.style.position = "relative";
 
-    // Browse Files and Open buttons removed — clicking the card is sufficient
-    const renameBtn = document.createElement("button");
-    renameBtn.type = "button";
-    renameBtn.className = "btn btn-secondary btn-sm";
-    renameBtn.textContent = "Rename";
-    renameBtn.addEventListener("click", function (e) {
-      e.stopPropagation(); // Prevent card click from triggering folder navigation
+    const kebabBtn = document.createElement("button");
+    kebabBtn.type = "button";
+    kebabBtn.className = "btn-kebab";
+    kebabBtn.setAttribute("aria-label", "Folder actions");
+    kebabBtn.innerHTML = "⋮";
+    kebabBtn.style.background = "transparent";
+    kebabBtn.style.border = "none";
+    kebabBtn.style.fontSize = "20px";
+    kebabBtn.style.cursor = "pointer";
+    kebabBtn.style.color = "var(--text)";
+    kebabBtn.style.padding = "0 8px";
+
+    const dropdown = document.createElement("div");
+    dropdown.className = "kebab-dropdown";
+    dropdown.style.display = "none";
+    dropdown.style.position = "absolute";
+    dropdown.style.right = "0";
+    dropdown.style.top = "100%";
+    dropdown.style.background = "var(--card-bg)";
+    dropdown.style.border = "1px solid var(--border)";
+    dropdown.style.borderRadius = "6px";
+    dropdown.style.boxShadow = "var(--shadow)";
+    dropdown.style.zIndex = "10";
+    dropdown.style.minWidth = "120px";
+
+    const renameLink = document.createElement("button");
+    renameLink.type = "button";
+    renameLink.className = "dropdown-item";
+    renameLink.textContent = "Rename";
+    renameLink.style.display = "block";
+    renameLink.style.width = "100%";
+    renameLink.style.padding = "8px 12px";
+    renameLink.style.textAlign = "left";
+    renameLink.style.border = "none";
+    renameLink.style.background = "transparent";
+    renameLink.style.cursor = "pointer";
+    renameLink.style.color = "var(--text)";
+
+    const deleteLink = document.createElement("button");
+    deleteLink.type = "button";
+    deleteLink.className = "dropdown-item";
+    deleteLink.textContent = "Delete";
+    deleteLink.style.display = "block";
+    deleteLink.style.width = "100%";
+    deleteLink.style.padding = "8px 12px";
+    deleteLink.style.textAlign = "left";
+    deleteLink.style.border = "none";
+    deleteLink.style.background = "transparent";
+    deleteLink.style.cursor = "pointer";
+    deleteLink.style.color = "var(--danger)";
+
+    dropdown.append(renameLink, deleteLink);
+    actions.append(kebabBtn, dropdown);
+
+    card.append(main, actions);
+
+    // Kebab Menu Event Listeners
+    kebabBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Close all other open kebab dropdowns
+      document.querySelectorAll(".kebab-dropdown").forEach(el => {
+        if (el !== dropdown) el.style.display = "none";
+      });
+
+      const isOpen = dropdown.style.display === "block";
+      dropdown.style.display = isOpen ? "none" : "block";
+      if (!isOpen) {
+        renameLink.focus();
+      }
+    });
+
+    renameLink.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dropdown.style.display = "none";
       openRenameModal(folder);
     });
 
-    const deleteBtn = document.createElement("button");
-    deleteBtn.type = "button";
-    deleteBtn.className = "btn btn-danger btn-sm";
-    deleteBtn.textContent = "Delete";
-    deleteBtn.addEventListener("click", function (e) {
-      e.stopPropagation(); //  Prevent card click from triggering folder navigation
+    deleteLink.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dropdown.style.display = "none";
       openDeleteModal(folder.folderId);
     });
 
-    actions.append(renameBtn, deleteBtn);
-    card.append(main, actions);
+    // Escape key closes dropdown and restores focus to kebabBtn
+    actions.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        dropdown.style.display = "none";
+        kebabBtn.focus();
+      }
+    });
 
-    // Clicking anywhere on the card navigates into the folder
-    card.addEventListener("click", function () {
-      navigateToFolder(folder.folderId);
+    // Close on click outside
+    document.addEventListener("click", function (e) {
+      if (!actions.contains(e.target)) {
+        dropdown.style.display = "none";
+      }
     });
 
     return card;
@@ -598,8 +679,17 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   if (currentParentFolderId) {
+    if (backFolderBtn) {
+      backFolderBtn.style.display = "inline-flex";
+      backFolderBtn.addEventListener("click", () => {
+        const parentId = breadcrumbTrail.length > 2
+          ? breadcrumbTrail[breadcrumbTrail.length - 2].folderId
+          : null;
+        navigateToFolder(parentId);
+      });
+    }
     if (shareFolderBtn) {
-      shareFolderBtn.style.display = "flex";
+      shareFolderBtn.style.display = "inline-flex";
       shareFolderBtn.addEventListener("click", async () => {
         // Reset modal state
         hideError(shareUserError);
@@ -616,6 +706,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         await loadFolderShares();
         await loadGroupsDropdown();
       });
+    }
+  }
+
+  if (uploadDocumentToFolderBtn) {
+    if (currentParentFolderId) {
+      uploadDocumentToFolderBtn.href = `upload.html?folderId=${currentParentFolderId}`;
+    } else {
+      uploadDocumentToFolderBtn.href = "upload.html";
     }
   }
 

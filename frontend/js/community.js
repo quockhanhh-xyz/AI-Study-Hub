@@ -237,6 +237,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         loadCommunityDocuments();
       }
     });
+    subjectFilter.addEventListener("blur", function () {
+      const id = getSelectedSubjectId();
+      if (!id && subjectFilter.value !== "") {
+        subjectFilter.value = "";
+        loadCommunityDocuments();
+      }
+    });
   }
   if (fileTypeFilter) fileTypeFilter.addEventListener("change", loadCommunityDocuments);
   if (sortFilter) sortFilter.addEventListener("change", loadCommunityDocuments);

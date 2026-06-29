@@ -92,7 +92,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const desc = document.createElement("p");
     desc.className = "document-description";
-    desc.textContent = `Shared by: ${doc.sharedByEmail || "Unknown User"}`;
+    desc.textContent = `Shared by: ${doc.sharedByName || "Unknown User"}`;
 
     const meta = document.createElement("p");
     meta.className = "helper-text";
@@ -118,9 +118,11 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   function createFolderCard(share) {
-    const card = document.createElement("div");
+    const card = document.createElement("a");
     card.className = "folder-card";
-    card.style.cursor = "pointer";
+    card.href = `shared-folder-detail.html?folderId=${share.folderId}`;
+    card.style.textDecoration = "none";
+    card.style.color = "inherit";
 
     const icon = document.createElement("div");
     icon.className = "folder-icon";
@@ -134,7 +136,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     desc.className = "folder-meta";
     desc.style.fontSize = "12px";
     desc.style.marginTop = "4px";
-    desc.textContent = `Owner: ${share.ownerName || "Unknown"} (${share.ownerEmail || "N/A"})`;
+    desc.textContent = `Owner: ${share.ownerName || "Unknown"}`;
 
     const meta = document.createElement("p");
     meta.className = "folder-meta";
@@ -144,10 +146,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     meta.textContent = `Shared by: ${share.sharedByName || "System"} · Date: ${formatDate(share.createdAt)}`;
 
     card.append(icon, name, desc, meta);
-
-    card.addEventListener("click", function () {
-      window.location.href = `shared-folder-detail.html?folderId=${share.folderId}`;
-    });
 
     return card;
   }
