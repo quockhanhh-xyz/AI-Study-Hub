@@ -46,6 +46,10 @@ class DocumentServiceTest {
     private StudyGroupMemberRepository studyGroupMemberRepository;
     @Mock
     private FolderShareService folderShareService;
+    @Mock
+    private DocumentContentRepository documentContentRepository;
+    @Mock
+    private DocumentChunkRepository documentChunkRepository;
 
     @InjectMocks
     private DocumentService documentService;

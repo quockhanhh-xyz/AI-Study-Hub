@@ -402,3 +402,51 @@ Stores important admin or system actions.
 | `target_id`   | INT          | Target object ID               |
 | `reason`      | TEXT         | Action reason                  |
 | `created_at`  | TIMESTAMP    | Action time                    |
+
+---
+
+## 10. Table `document_contents`
+
+Stores the full extracted text content and processing metadata for documents.
+
+| Column Name | Data Type | Description |
+| :--- | :--- | :--- |
+| `content_id` | BIGINT AUTO_INCREMENT | Primary key |
+| `document_id` | INT UNIQUE | Foreign Key referencing `documents(document_id)` (ON DELETE CASCADE) |
+| `extracted_text` | LONGTEXT | Full cleaned extracted text content |
+| `processing_status` | VARCHAR(30) | Enum state: PENDING, PROCESSING, COMPLETED, FAILED, UNSUPPORTED, EMPTY_CONTENT |
+| `character_count` | INT | Number of characters in the stored extracted text |
+| `original_character_count` | INT | Original length before truncation |
+| `word_count` | INT | Number of words in the stored text |
+| `is_truncated` | BOOLEAN | Indicates if the text exceeded the 200k limit and was truncated |
+| `processing_started_at` | DATETIME | Timestamp when processing started |
+| `processed_at` | DATETIME | Timestamp when processing successfully finished |
+| `last_attempt_status` | VARCHAR(30) | Outcome of the last processing attempt |
+| `last_attempt_error` | VARCHAR(1000) | Error message if last processing attempt failed |
+| `last_attempted_at` | DATETIME | Timestamp of the last processing attempt |
+| `created_at` | DATETIME | Audit creation timestamp |
+| `updated_at` | DATETIME | Audit modification timestamp |
+| `version` | BIGINT | Optimistic locking version |
+
+---
+
+## 11. Table `document_chunks`
+
+Stores the partitioned ordered chunks of a document's extracted text for AI context.
+
+| Column Name | Data Type | Description |
+| :--- | :--- | :--- |
+| `chunk_id` | BIGINT AUTO_INCREMENT | Primary key |
+| `document_id` | INT | Foreign Key referencing `documents(document_id)` (ON DELETE CASCADE) |
+| `chunk_index` | INT | Sequence index of the chunk starting from 0 |
+| `chunk_text` | LONGTEXT | Content text of the chunk |
+| `character_count` | INT | Number of characters in the chunk |
+| `page_number` | INT | Associated page number (PDF citation support) |
+| `source_label` | VARCHAR(255) | Label indicating page/slide/section |
+| `start_offset` | INT | Character index in original text where chunk starts |
+| `end_offset` | INT | Character index in original text where chunk ends |
+| `created_at` | DATETIME | Audit creation timestamp |
+
+- **Constraints**:
+  - `UNIQUE KEY uk_doc_chunks_doc_index (document_id, chunk_index)`
+  - `INDEX idx_doc_chunks_doc_id (document_id)`

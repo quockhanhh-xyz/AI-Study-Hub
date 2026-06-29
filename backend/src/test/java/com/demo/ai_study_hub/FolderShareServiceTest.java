@@ -38,6 +38,8 @@ class FolderShareServiceTest {
     private StudyGroupRepository studyGroupRepository;
     @Mock
     private StudyGroupMemberRepository studyGroupMemberRepository;
+    @Mock
+    private DocumentContentRepository documentContentRepository;
 
     @InjectMocks
     private FolderShareServiceImpl folderShareService;
@@ -504,6 +506,8 @@ class FolderShareServiceTest {
 
         when(documentRepository.findByFolder(folder))
                 .thenReturn(List.of(doc));
+        when(documentContentRepository.findStatusesByDocumentIds(anyList()))
+                .thenReturn(Collections.emptyList());
 
         SharedFolderContentResponse res = folderShareService.getSharedContent(10, "recipient@gmail.com");
 

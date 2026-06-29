@@ -2790,4 +2790,110 @@ Allows the owner of a document to withdraw it from the public library, resetting
     "publishedAt": null
   }
 }
+
+---
+
+## 13.1. Process Document API
+
+## POST `/api/documents/{id}/process`
+
+Initiates the text extraction and chunking processing flow for the specified document.
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (202 Accepted)
+
+```json
+{
+  "success": true,
+  "message": "Document processing started",
+  "data": {
+    "documentId": 25,
+    "title": "Introduction to Physics",
+    "processingStatus": "PROCESSING"
+  }
+}
+```
+
+### Error Responses
+
+- **Conflict (409)**: If the document is already in `PROCESSING` state or has already been successfully processed (`COMPLETED`).
+- **Forbidden (403)**: If the user is not the owner of the document.
+- **Not Found (404)**: If the document does not exist or has been deleted.
+
+---
+
+## 13.2. Reprocess Document API
+
+## POST `/api/documents/{id}/reprocess`
+
+Re-initiates the text extraction and chunking flow. Unlike `/process`, this is designed to retry or refresh completed or failed extractions.
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (202 Accepted)
+
+```json
+{
+  "success": true,
+  "message": "Document reprocessing started",
+  "data": {
+    "documentId": 25,
+    "title": "Introduction to Physics",
+    "processingStatus": "PROCESSING"
+  }
+}
+```
+
+---
+
+## 13.3. Get Document Processing Status API
+
+## GET `/api/documents/{id}/processing-status`
+
+Retrieves the current processing metadata status of a document.
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Document processing status retrieved",
+  "data": {
+    "documentId": 25,
+    "title": "Introduction to Physics",
+    "processingStatus": "COMPLETED"
+  }
+}
+```
+
+---
+
+## 13.4. Get Extracted Content API
+
+## GET `/api/documents/{id}/content`
+
+Retrieves the full raw cleaned text extracted from the document. Restricted exclusively to the document owner.
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Document extracted content retrieved",
+  "data": "This is the full extracted and cleaned text content from the document..."
+}
+```
 ```

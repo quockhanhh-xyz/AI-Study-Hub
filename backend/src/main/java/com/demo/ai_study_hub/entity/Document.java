@@ -79,4 +79,10 @@ public class Document {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @OneToOne(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private DocumentContent documentContent;
+
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private java.util.List<DocumentChunk> chunks;
 }

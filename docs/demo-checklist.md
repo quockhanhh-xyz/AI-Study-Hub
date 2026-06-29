@@ -100,3 +100,28 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
 - [ ] **Step 5.8**: Log in as User A, publish Document `10` again, then delete it (`DELETE /api/documents/10`).
 - [ ] **Step 5.9**: Perform unauthenticated (Guest) search (`GET /api/documents/public`).
   - *Expected*: Document `10` is not listed (hidden in trash).
+
+---
+
+## 7. Flow 6: AI Document Processing Foundation
+
+- [ ] **Step 6.1**: Upload a new text document (`POST /api/documents/upload` with a TXT file).
+  - *Expected*: Returns `200 OK`, `success: true`. Response data includes `"processingStatus": "PENDING"`.
+- [ ] **Step 6.2**: Check the document detail (`GET /api/documents/{id}`).
+  - *Expected*: Returns `200 OK` with `"processingStatus": "PENDING"`.
+- [ ] **Step 6.3**: Request document processing (`POST /api/documents/{id}/process`) as owner.
+  - *Expected*: Returns `202 Accepted`, `success: true`, status is `"PROCESSING"`. Async processing worker starts.
+- [ ] **Step 6.4**: Make a concurrent request (`POST /api/documents/{id}/process`) during worker execution.
+  - *Expected*: Returns `409 Conflict`, error message indicating document is already processing.
+- [ ] **Step 6.5**: Poll the status endpoint (`GET /api/documents/{id}/processing-status`) as owner until terminal status is reached.
+  - *Expected*: Returns `200 OK`. Eventually status transitions to `"COMPLETED"`.
+- [ ] **Step 6.6**: Fetch extracted content (`GET /api/documents/{id}/content`) as owner.
+  - *Expected*: Returns `200 OK` with the full mock text of the document.
+- [ ] **Step 6.7**: Fetch processing status (`GET /api/documents/{id}/processing-status`) as a Direct Shared User.
+  - *Expected*: Returns `200 OK` with `"processingStatus": "COMPLETED"`.
+- [ ] **Step 6.8**: Fetch extracted content (`GET /api/documents/{id}/content`) as a Direct Shared User.
+  - *Expected*: Returns `403 Forbidden` (only owner can read full content).
+- [ ] **Step 6.9**: Trigger reprocessing (`POST /api/documents/{id}/reprocess`) as owner.
+  - *Expected*: Returns `202 Accepted`, resets status to `"PROCESSING"`, and updates content successfully to `"COMPLETED"`.
+- [ ] **Step 6.10**: Check stale job recovery (Simulate job stuck in `PROCESSING` for >10 mins by updating `processing_started_at` in DB, then query `/processing-status`).
+  - *Expected*: Status transitions to `"FAILED"` and registers error in `lastAttemptError`.

@@ -28,6 +28,7 @@ public class FolderShareServiceImpl implements FolderShareService {
     private final GroupFolderShareRepository groupFolderShareRepository;
     private final StudyGroupRepository studyGroupRepository;
     private final StudyGroupMemberRepository studyGroupMemberRepository;
+    private final DocumentContentRepository documentContentRepository;
 
     @Override
     @Transactional
@@ -156,8 +157,22 @@ public class FolderShareServiceImpl implements FolderShareService {
 
         List<com.demo.ai_study_hub.entity.Document> docs = documentRepository.findByFolder(folder)
                 .stream().filter(d -> "ACTIVE".equals(d.getStatus())).collect(Collectors.toList());
+
+        List<Integer> docIds = docs.stream().map(com.demo.ai_study_hub.entity.Document::getDocumentId).collect(Collectors.toList());
+        java.util.Map<Integer, String> statusMap = new java.util.HashMap<>();
+        if (!docIds.isEmpty()) {
+            List<Object[]> statuses = documentContentRepository.findStatusesByDocumentIds(docIds);
+            for (Object[] row : statuses) {
+                statusMap.put((Integer) row[0], ((com.demo.ai_study_hub.entity.ProcessingStatus) row[1]).name());
+            }
+        }
+
         List<DocumentResponse> documentResponses = docs.stream()
-                .map(this::mapToDocumentResponseSimple)
+                .map(d -> {
+                    DocumentResponse resp = mapToDocumentResponseSimple(d);
+                    resp.setProcessingStatus(statusMap.getOrDefault(d.getDocumentId(), "PENDING"));
+                    return resp;
+                })
                 .collect(Collectors.toList());
 
         SharedFolderContentResponse.CurrentFolderInfo currentFolderInfo =
