@@ -232,21 +232,46 @@ document.addEventListener("DOMContentLoaded", async function () {
         window.showToast(`Trash has been emptied successfully (${deletedCount} items deleted).`, "success");
         await loadTrash();
       } else {
-        let errorHtml = `<div class="error-summary"><strong>Trash emptying outcome: ${outcome}</strong></div>`;
-        errorHtml += `<div class="error-stats">Deleted: ${deletedCount} item(s), Failed: ${failedCount} item(s)</div>`;
+        emptyTrashError.innerHTML = "";
+
+        const summaryDiv = document.createElement("div");
+        summaryDiv.className = "error-summary";
+        const summaryStrong = document.createElement("strong");
+        summaryStrong.textContent = `Trash emptying outcome: ${outcome}`;
+        summaryDiv.appendChild(summaryStrong);
+
+        const statsDiv = document.createElement("div");
+        statsDiv.className = "error-stats";
+        statsDiv.textContent = `Deleted: ${deletedCount} item(s), Failed: ${failedCount} item(s)`;
+
+        emptyTrashError.appendChild(summaryDiv);
+        emptyTrashError.appendChild(statsDiv);
 
         const failures = result?.data?.failures || [];
         if (failures.length > 0) {
-          errorHtml += `<ul class="error-list" style="text-align: left; margin-top: 10px; max-height: 150px; overflow-y: auto; padding-left: 20px;">`;
+          const ul = document.createElement("ul");
+          ul.className = "error-list";
+          ul.style.textAlign = "left";
+          ul.style.marginTop = "10px";
+          ul.style.maxHeight = "150px";
+          ul.style.overflowY = "auto";
+          ul.style.paddingLeft = "20px";
+
           failures.forEach(f => {
-            const title = f.title || "Unknown Item";
-            const reason = f.reason || "Cloudinary deletion failed";
-            errorHtml += `<li><strong>${title}</strong>: ${reason}</li>`;
+            const li = document.createElement("li");
+            const strongTitle = document.createElement("strong");
+            strongTitle.textContent = f.title || "Unknown Item";
+            li.appendChild(strongTitle);
+
+            const reasonSpan = document.createElement("span");
+            reasonSpan.textContent = `: ${f.reason || "Cloudinary deletion failed"}`;
+            li.appendChild(reasonSpan);
+
+            ul.appendChild(li);
           });
-          errorHtml += `</ul>`;
+          emptyTrashError.appendChild(ul);
         }
 
-        emptyTrashError.innerHTML = errorHtml;
         emptyTrashError.style.display = "block";
 
         if (deletedCount > 0) {
