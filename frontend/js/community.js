@@ -13,14 +13,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     isAuthenticated = await window.authReady;
   }
 
-  // Guest CTA banner
-  const guestCtaBanner = document.getElementById("guestCtaBanner");
-  const authCtaBanner = document.getElementById("authCtaBanner");
-  if (guestCtaBanner) {
-    guestCtaBanner.style.display = isAuthenticated ? "none" : "flex";
+  // Header CTA toggle
+  const communityUploadBtn = document.getElementById("communityUploadBtn");
+  const communityGuestActions = document.getElementById("communityGuestActions");
+  if (communityUploadBtn) {
+    communityUploadBtn.style.display = isAuthenticated ? "inline-flex" : "none";
   }
-  if (authCtaBanner) {
-    authCtaBanner.style.display = isAuthenticated ? "flex" : "none";
+  if (communityGuestActions) {
+    communityGuestActions.style.display = isAuthenticated ? "none" : "flex";
   }
 
   // Filter UI elements
@@ -66,55 +66,104 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   function createCommunityCard(doc) {
-    // Use <a> instead of div+click — correct semantics, accessible
     const card = document.createElement("a");
     card.className = "document-card";
     card.href = `document-detail.html?id=${doc.documentId}&from=community`;
 
+    // A. Header: Icon + Title
     const header = document.createElement("div");
-    header.className = "document-card-header";
+    header.className = "comm-card-header";
 
-    const fileBadge = document.createElement("span");
-    fileBadge.className = "document-type-badge";
-    fileBadge.textContent = getFileLabel(doc.fileType);
-
-    const title = document.createElement("h3");
-    title.textContent = doc.title || doc.originalFileName || "Untitled document";
-
-    header.append(fileBadge, title);
-    card.append(header);
-
-    // Hide if no description
-    if (doc.description) {
-      const description = document.createElement("p");
-      description.className = "document-description";
-      description.textContent = doc.description;
-      card.append(description);
+    const iconContainer = document.createElement("div");
+    iconContainer.innerHTML = getFileTypeIcon(doc.fileType);
+    const iconWrapper = iconContainer.firstElementChild;
+    if (iconWrapper) {
+      iconWrapper.style.width = "20px";
+      iconWrapper.style.height = "20px";
+      header.appendChild(iconWrapper);
     }
 
-    const meta = document.createElement("div");
-    meta.className = "document-meta";
-    meta.append(
-      createMetaItem("Published", formatDate(doc.publishedAt)),
-      createMetaItem("Views", doc.viewCount ?? 0),
-      createMetaItem("Downloads", doc.downloadCount ?? 0)
-    );
+    const titleEl = document.createElement("h3");
+    titleEl.textContent = doc.title || doc.originalFileName || "Untitled document";
+    titleEl.title = doc.title || doc.originalFileName || "Untitled document";
+    header.appendChild(titleEl);
 
-    // Only use ownerName/displayName — do not display email
-    if (doc.ownerName) {
-      meta.append(createMetaItem("By", doc.ownerName));
-    }
+    // B. Body: Avatar + Author + Subject tag badge
+    const body = document.createElement("div");
+    body.className = "comm-card-body";
+
+    const authorDiv = document.createElement("div");
+    authorDiv.className = "comm-card-author";
+
+    const avatarDiv = document.createElement("div");
+    avatarDiv.className = "comm-card-avatar";
+    const authorName = doc.uploadedByName || doc.uploadedBy || "Unknown User";
+    avatarDiv.textContent = authorName.trim().charAt(0).toUpperCase();
+    avatarDiv.title = authorName;
+
+    const authorNameSpan = document.createElement("span");
+    authorNameSpan.className = "comm-card-author-name";
+    authorNameSpan.textContent = authorName;
+
+    authorDiv.append(avatarDiv, authorNameSpan);
+    body.appendChild(authorDiv);
 
     if (doc.subjectCode || doc.subjectName) {
-      const subjectBadge = document.createElement("div");
-      subjectBadge.className = "document-card-subject";
-      subjectBadge.textContent = doc.subjectCode
+      const subjectTag = document.createElement("div");
+      subjectTag.className = "comm-card-subject-tag";
+      const tagText = doc.subjectCode
         ? `${doc.subjectCode} - ${doc.subjectName}`
         : doc.subjectName;
-      meta.append(subjectBadge);
+      subjectTag.title = tagText;
+      subjectTag.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01"/>
+        </svg>
+        <span>${tagText}</span>
+      `;
+      body.appendChild(subjectTag);
     }
 
-    card.append(meta);
+    // C. Footer: Date & Metrics
+    const footer = document.createElement("div");
+    footer.className = "comm-card-footer";
+
+    const dateSpan = document.createElement("span");
+    dateSpan.className = "comm-card-date";
+    dateSpan.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 6v6l4 2"/>
+      </svg>
+      ${formatDate(doc.publishedAt || doc.createdAt)}
+    `;
+
+    const metricsDiv = document.createElement("div");
+    metricsDiv.className = "comm-card-metrics";
+
+    const viewsSpan = document.createElement("span");
+    viewsSpan.className = "comm-card-metric-item";
+    viewsSpan.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5">
+        <path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      ${doc.viewCount ?? 0}
+    `;
+
+    const downloadsSpan = document.createElement("span");
+    downloadsSpan.className = "comm-card-metric-item";
+    downloadsSpan.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5">
+        <path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+      </svg>
+      ${doc.downloadCount ?? 0}
+    `;
+
+    metricsDiv.append(viewsSpan, downloadsSpan);
+    footer.append(dateSpan, metricsDiv);
+
+    card.append(header, body, footer);
     return card;
   }
 
@@ -134,6 +183,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           option.dataset.id = subject.subjectId;
           subjectDatalist.appendChild(option);
         });
+        if (subjectFilter) subjectFilter.dispatchEvent(new Event("syncCustom"));
       }
     } catch (error) {
       // Non-fatal: community list still works without the subject dropdown.
@@ -177,8 +227,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       if (communityLoader) communityLoader.style.display = "none";
 
-      if (communityPanelSubtitle) {
-        communityPanelSubtitle.textContent = `${documents.length} public document${documents.length === 1 ? "" : "s"} found.`;
+      const communityResultsCount = document.getElementById("communityResultsCount");
+      if (communityResultsCount) {
+        communityResultsCount.innerHTML = `<strong>${documents.length}</strong> public document${documents.length === 1 ? "" : "s"} found.`;
+        communityResultsCount.style.display = documents.length > 0 ? "block" : "none";
       }
 
       if (documents.length === 0) {
@@ -251,9 +303,18 @@ document.addEventListener("DOMContentLoaded", async function () {
   if (clearFiltersBtn) {
     clearFiltersBtn.addEventListener("click", async function () {
       if (searchInput) searchInput.value = "";
-      if (subjectFilter) subjectFilter.value = "";
-      if (fileTypeFilter) fileTypeFilter.value = "";
-      if (sortFilter) sortFilter.value = "newest";
+      if (subjectFilter) {
+        subjectFilter.value = "";
+        subjectFilter.dispatchEvent(new Event("syncCustom"));
+      }
+      if (fileTypeFilter) {
+        fileTypeFilter.value = "";
+        fileTypeFilter.dispatchEvent(new Event("syncCustom"));
+      }
+      if (sortFilter) {
+        sortFilter.value = "newest";
+        sortFilter.dispatchEvent(new Event("syncCustom"));
+      }
       await loadCommunityDocuments();
     });
   }

@@ -72,48 +72,50 @@ document.addEventListener("DOMContentLoaded", async function () {
     const card = document.createElement("article");
     card.className = "document-card";
 
+    // Left Column: The Large File Type Icon
+    const iconContainer = document.createElement("div");
+    iconContainer.innerHTML = getFileTypeIcon(doc.fileType);
+    const iconWrapper = iconContainer.firstElementChild;
+    card.appendChild(iconWrapper);
+
+    // Right Column: The Details Column
+    const content = document.createElement("div");
+    content.className = "document-card-content";
+
     const header = document.createElement("div");
     header.className = "document-card-header";
 
-    const badge = document.createElement("span");
-    badge.className = "document-type-badge";
-    badge.textContent = (doc.fileType || "FILE").toUpperCase();
-
+    const titleEl = document.createElement("h3");
     const titleLink = document.createElement("a");
     titleLink.href = `document-detail.html?id=${doc.documentId}`;
     titleLink.style.color = "inherit";
     titleLink.style.textDecoration = "none";
-
-    const titleEl = document.createElement("h3");
-    titleEl.textContent = doc.title || "Untitled Document";
-    titleLink.appendChild(titleEl);
-
-    header.append(badge, titleLink);
+    titleLink.textContent = doc.title || "Untitled Document";
+    titleEl.appendChild(titleLink);
+    header.appendChild(titleEl);
 
     const desc = document.createElement("p");
     desc.className = "document-description";
     desc.textContent = `Shared by: ${doc.sharedByName || "Unknown User"}`;
 
-    const meta = document.createElement("p");
-    meta.className = "helper-text";
-    meta.style.fontSize = "12px";
-    meta.style.color = "var(--muted)";
-    meta.style.marginTop = "8px";
-    meta.textContent = `Size: ${formatFileSize(doc.fileSize)} · Shared: ${formatDate(doc.createdAt)}`;
+    const meta = document.createElement("div");
+    meta.className = "document-meta";
 
-    const actions = document.createElement("div");
-    actions.className = "document-actions";
+    const dateItem = document.createElement("span");
+    dateItem.className = "document-meta-item";
+    dateItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> ${formatDate(doc.createdAt)}`;
+    meta.append(dateItem);
 
-    const detailsBtn = document.createElement("a");
-    detailsBtn.href = `document-detail.html?id=${doc.documentId}`;
-    detailsBtn.className = "btn btn-primary document-detail-btn";
-    detailsBtn.style.width = "auto";
-    detailsBtn.style.padding = "6px 12px";
-    detailsBtn.style.fontSize = "13px";
-    detailsBtn.textContent = "View Details";
-    actions.appendChild(detailsBtn);
+    content.append(header, desc, meta);
+    card.appendChild(content);
 
-    card.append(header, desc, meta, actions);
+    card.addEventListener("click", function (e) {
+      if (e.target.closest("button") || e.target.closest("a")) {
+        return;
+      }
+      window.location.href = `document-detail.html?id=${doc.documentId}`;
+    });
+
     return card;
   }
 
@@ -163,7 +165,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       sharedLoader.style.display = "none";
 
       if (docs.length === 0) {
-        sharedEmpty.style.display = "block";
+        sharedEmpty.style.display = "flex";
         return;
       }
 
@@ -192,7 +194,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       folderLoader.style.display = "none";
 
       if (shares.length === 0) {
-        folderEmpty.style.display = "block";
+        folderEmpty.style.display = "flex";
         return;
       }
 

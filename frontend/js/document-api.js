@@ -9,8 +9,8 @@
  * @param {FormData} formData - FormData object containing file, title, description, folderId, and subjectId.
  * @returns {Promise<Object>} Server upload response context.
  */
-function uploadDocument(formData) {
-  return post("/api/documents/upload", formData);
+function uploadDocument(formData, options = {}) {
+  return post("/api/documents/upload", formData, options);
 }
 
 /**

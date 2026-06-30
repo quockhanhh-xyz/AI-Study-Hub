@@ -72,8 +72,6 @@ const detailContent = document.getElementById("detailContent");
 let currentDocumentId = null;
 let currentDocumentFolderId = null;
 let currentIsCommunityView = false;
-let aiExtractedTextLoaded = false;
-let aiExtractedTextExpanded = true;
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
@@ -136,7 +134,7 @@ async function loadPage(id, { isAuthenticated, isCommunityView }) {
         }
 
         detailLoader.style.display = "none";
-        detailContent.style.display = "block";
+        detailContent.hidden = false;
     } catch (err) {
         if (!isAuthenticated) {
             showFatalError("This document is private or no longer available.", true);
@@ -217,10 +215,9 @@ function renderDocument(doc) {
     const moveBtn = document.getElementById("moveBtn");
     const publishBtn = document.getElementById("publishBtn");
     const unpublishBtn = document.getElementById("unpublishBtn");
+    const documentActionRow = document.getElementById("documentActionRow");
 
     currentDocumentFolderId = doc.folderId;
-    // ── AI Processing panel (Step 9) — Only the owner can see it. ──
-    renderAIProcessingPanel(doc);
 
     // Open button
     if (openBtn) {
@@ -279,10 +276,10 @@ function renderDocument(doc) {
     }
 
     // Delete button — only the owner has canDelete
-    const deleteBtn = document.getElementById("deleteBtn");
-    if (deleteBtn) {
-        deleteBtn.style.display =
-            !currentIsCommunityView && doc.canDelete ? "inline-flex" : "none";
+    const dangerZone = document.querySelector(".inspector-danger-zone");
+    if (dangerZone) {
+        dangerZone.style.display =
+            !currentIsCommunityView && doc.canDelete ? "block" : "none";
     }
 
     // Publish button
@@ -305,25 +302,30 @@ function renderDocument(doc) {
         }
     }
 
+    if (documentActionRow) {
+        const hasDocumentActions = !currentIsCommunityView && (
+            doc.canShare || doc.canMove || doc.canPublish || doc.canUnpublish
+        );
+        documentActionRow.style.display = hasDocumentActions ? "flex" : "none";
+    }
+
     // ── Call render preview (document-preview.js) ──
     if (typeof renderDocumentPreview === "function") {
         renderDocumentPreview(doc);
     }
 
     // Configure Inspector panel visibility and defaults
-    const inspector = document.querySelector(".detail-right-inspector");
+    const tabsContainer = document.querySelector(".inspector-tabs-container");
+    const tabPanes = document.querySelector(".inspector-panes");
     const hasInspector = doc.canEdit || doc.canShare;
-    const detailContentContainer = document.getElementById("detailContent");
 
-    if (inspector && detailContentContainer) {
+    if (tabsContainer && tabPanes) {
         if (!currentIsCommunityView && hasInspector) {
-            inspector.style.display = "block";
-            detailContentContainer.classList.add("has-inspector");
+            tabsContainer.style.display = "flex";
+            tabPanes.style.display = "block";
 
             const tabDetails = document.getElementById("inspectorTabDetails");
             const tabSharing = document.getElementById("inspectorTabSharing");
-            const paneDetails = document.getElementById("inspectorPaneDetails");
-            const paneSharing = document.getElementById("inspectorPaneSharing");
 
             if (tabDetails) tabDetails.style.display = doc.canEdit ? "block" : "none";
             if (tabSharing) tabSharing.style.display = doc.canShare ? "block" : "none";
@@ -335,755 +337,560 @@ function renderDocument(doc) {
                 setActiveTab("sharing", false);
             }
         } else {
-            inspector.style.display = "none";
-            detailContentContainer.classList.remove("has-inspector");
+            tabsContainer.style.display = "none";
+            tabPanes.style.display = "none";
         }
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-// AI PROCESSING PANEL (Step 9)
-// ══════════════════════════════════════════════════════════════════════════
+// ── Render subject dropdown ───────────────────────────────────────────────────
+function renderSubjectOptions(subjects, currentSubjectId) {
+    const select = document.getElementById("editSubject");
+    select.innerHTML = "";
 
-const AI_STATUS_LABELS = {
-    PENDING: "Pending",
-    PROCESSING: "Processing",
-    COMPLETED: "Completed",
-    FAILED: "Failed",
-    UNSUPPORTED: "Unsupported",
-    EMPTY_CONTENT: "Empty Content"
-};
+    subjects.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s.subjectId;
+        opt.textContent = `${s.subjectCode} – ${s.subjectName}`;
+        if (s.subjectId === currentSubjectId) opt.selected = true;
+        select.appendChild(opt);
+    });
 
-const AI_STATUS_MESSAGES = {
-    PENDING: "This document has not been processed for AI yet. Process it to prepare it for AI Q&A.",
-    PROCESSING: "Processing this document… this may take a moment.",
-    COMPLETED: "This document has been processed successfully and is ready for AI Q&A.",
-    FAILED: "Processing failed. You can retry to process this document again.",
-    UNSUPPORTED: "This file format is not supported for AI processing yet.",
-    EMPTY_CONTENT: "No readable text content was found in this file."
-};
+    if (!currentSubjectId) {
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.disabled = true;
+        placeholder.selected = true;
+        placeholder.textContent = "— Select a subject —";
+        select.insertBefore(placeholder, select.firstChild);
+    }
 
-function renderAIProcessingPanel(doc) {
-    const section = document.getElementById("aiProcessingSection");
-    if (!section) return;
+    if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+        window.UIHelper.convertSelectToCustomDropdown(select);
+        select.dispatchEvent(new Event("syncCustom"));
+    }
+}
 
-    AIProcessingPolling.stop();
-    aiExtractedTextLoaded = false;
-    aiExtractedTextExpanded = true;
-    const textBox = document.getElementById("aiExtractedTextBox");
-    if (textBox) textBox.style.display = "none";
+// ── Save changes ──────────────────────────────────────────────────────────────
+async function handleSave() {
+    const title = document.getElementById("editTitle").value.trim();
+    const description = document.getElementById("editDescription").value.trim();
+    const subjectId = document.getElementById("editSubject").value;
 
-    const canSeePanel = !currentIsCommunityView && doc.canEdit;
-    if (!canSeePanel) {
-        section.style.display = "none";
+    if (!title) {
+        showEditMessage("Title is required.", "error");
         return;
     }
 
-    section.style.display = "block";
-
-    const status = doc.processingStatus || "PENDING";
-    applyAIProcessingState({
-        processingStatus: status,
-        characterCount: doc.characterCount,
-        wordCount: doc.wordCount,
-        isTruncated: doc.isTruncated,
-        lastAttemptError: doc.lastAttemptError,
-        processedAt: doc.processedAt
-    });
-
-    if (status === "PROCESSING") {
-        startAIPolling();
-    }
-}
-
-function applyAIProcessingState(data) {
-    const status = (data && data.processingStatus) || "PENDING";
-
-    const badge = document.getElementById("aiStatusBadge");
-    if (badge) {
-        badge.className = "status-badge " + status.toLowerCase();
-        badge.innerHTML = "";
-        if (status === "PROCESSING") {
-            const spinner = document.createElement("span");
-            spinner.className = "ai-status-spinner";
-            badge.appendChild(spinner);
-        }
-        badge.appendChild(document.createTextNode(AI_STATUS_LABELS[status] || status));
-    }
-
-    const meta = document.getElementById("aiProcessingMeta");
-    if (meta) {
-        if (status === "COMPLETED" && (data.characterCount || data.wordCount)) {
-            let text = `${data.wordCount || 0} words · ${data.characterCount || 0} characters`;
-            if (data.isTruncated) text += " · truncated";
-            meta.textContent = text;
-        } else {
-            meta.textContent = "";
-        }
-    }
-
-    const messageEl = document.getElementById("aiProcessingMessage");
-    if (messageEl) {
-        let text = AI_STATUS_MESSAGES[status] || "";
-        if ((status === "FAILED") && data.lastAttemptError) {
-            text = data.lastAttemptError;
-        }
-        messageEl.textContent = text;
-        messageEl.className = "ai-processing-message" + (status === "FAILED" ? " error" : "");
-    }
-
-    renderAIActions(status);
-}
-
-function renderAIActions(status) {
-    const actionsEl = document.getElementById("aiProcessingActions");
-    if (!actionsEl) return;
-    actionsEl.innerHTML = "";
-
-    if (status === "PENDING") {
-        actionsEl.appendChild(
-            buildAIActionButton("Process for AI", "btn-primary", () => handleAIProcessAction("process"))
-        );
-    } else if (status === "PROCESSING") {
-        const loadingBtn = document.createElement("button");
-        loadingBtn.type = "button";
-        loadingBtn.className = "btn btn-secondary";
-        loadingBtn.disabled = true;
-        loadingBtn.textContent = "Processing…";
-        actionsEl.appendChild(loadingBtn);
-    } else if (status === "FAILED") {
-        actionsEl.appendChild(
-            buildAIActionButton("Retry", "btn-primary", () => handleAIProcessAction("process"))
-        );
-    } else if (status === "EMPTY_CONTENT") {
-        actionsEl.appendChild(
-            buildAIActionButton("Reprocess", "btn-primary", () => handleAIProcessAction("reprocess"))
-        );
-    } else if (status === "COMPLETED") {
-        actionsEl.appendChild(
-            buildAIActionButton("View Extracted Text", "btn-secondary", handleViewExtractedText)
-        );
-        actionsEl.appendChild(
-            buildAIActionButton("Reprocess", "btn-secondary", () => handleAIProcessAction("reprocess"))
-        );
-    }
-}
-
-function buildAIActionButton(label, btnClass, onClick) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "btn " + btnClass;
-    btn.textContent = label;
-    btn.addEventListener("click", onClick);
-    return btn;
-}
-
-async function handleAIProcessAction(action) {
-    const actionsEl = document.getElementById("aiProcessingActions");
-    if (actionsEl) {
-        Array.from(actionsEl.querySelectorAll("button")).forEach(b => (b.disabled = true));
-    }
+    const saveBtn = document.getElementById("saveBtn");
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Saving...";
 
     try {
-        const res = action === "reprocess"
-            ? await reprocessDocument(currentDocumentId)
-            : await processDocument(currentDocumentId);
+        const payload = { title, description };
+        if (subjectId) payload.subjectId = parseInt(subjectId, 10);
 
-        const status = (res.data && res.data.processingStatus) || "PROCESSING";
-        applyAIProcessingState({ processingStatus: status });
-        startAIPolling();
+        const res = await updateDocument(currentDocumentId, payload);
+
+        renderDocument(res.data);
+        showEditMessage("", "");
+        window.showToast("Changes saved successfully.", "success");
     } catch (err) {
-        if (err.status === 409) {
-            applyAIProcessingState({ processingStatus: "PROCESSING" });
-            startAIPolling();
-            window.showToast("Document is already being processed.", "info");
-        } else {
-            window.showToast(err.message || "Failed to start AI processing.", "error");
-            const badge = document.getElementById("aiStatusBadge");
-            const fallbackStatus = badge ? badge.textContent.trim().toUpperCase().replace(" ", "_") : "PENDING";
-            renderAIActions(fallbackStatus);
-        }
+        showEditMessage(err.message || "Failed to save changes.", "error");
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save Changes";
     }
 }
 
-function startAIPolling() {
-    AIProcessingPolling.start(currentDocumentId, {
-        onUpdate: (data) => applyAIProcessingState(data),
-        onTimeout: () => {
-            const messageEl = document.getElementById("aiProcessingMessage");
-            if (messageEl) {
-                messageEl.textContent = "Processing is taking longer than expected. It will keep running in the background — you can check back later.";
+async function handleDelete() {
+    const confirmed = await window.confirmAction({
+        title: "Move this document to Trash?",
+        message: "You can restore it later from Trash.",
+        confirmText: "Delete",
+        danger: true
+    });
+    if (!confirmed) return;
+
+    try {
+        await deleteDocument(currentDocumentId);
+        window.showToast("Document deleted.", "success");
+        setTimeout(() => {
+            window.location.href = "dashboard.html";
+        }, 1200);
+    } catch (err) {
+        window.showToast(err.message || "Failed to delete document.", "error");
+    }
+}
+
+async function handlePublish() {
+    const publishBtn = document.getElementById("publishBtn");
+    publishBtn.disabled = true;
+    const oldText = publishBtn.textContent;
+    publishBtn.textContent = "Publishing...";
+
+    try {
+        const res = await publishDocument(currentDocumentId);
+        renderDocument(res.data);
+        window.showToast("Document published successfully.", "success");
+    } catch (err) {
+        window.showToast(err.message || "Failed to publish document.", "error");
+    } finally {
+        publishBtn.disabled = false;
+        publishBtn.textContent = oldText;
+    }
+}
+
+async function handleUnpublish() {
+    const unpublishBtn = document.getElementById("unpublishBtn");
+    unpublishBtn.disabled = true;
+    const oldText = unpublishBtn.textContent;
+    unpublishBtn.textContent = "Unpublishing...";
+
+    try {
+        const res = await unpublishDocument(currentDocumentId);
+        renderDocument(res.data);
+        window.showToast("Document unpublished successfully.", "success");
+    } catch (err) {
+        window.showToast(err.message || "Failed to unpublish document.", "error");
+    } finally {
+        unpublishBtn.disabled = false;
+        unpublishBtn.textContent = oldText;
+    }
+}
+
+// ── Move modal ────────────────────────────────────────────────────────────────
+function showMoveModal() {
+    const errorEl = document.getElementById("moveError");
+    if (errorEl) errorEl.style.display = "none";
+    const select = document.getElementById("moveFolderSelect");
+    if (!select) return;
+
+    getMyFolders(null, true).then(res => {
+        const folders = Array.isArray(res.data) ? res.data : [];
+        select.innerHTML = '<option value="">— My Documents —</option>';
+        folders.forEach(f => {
+            const path = [];
+            let current = f;
+            let iterations = 0;
+            while (current && iterations < 100) {
+                path.unshift(current.folderName);
+                const parentId = current.parentFolderId;
+                if (!parentId) break;
+                current = folders.find(folder => folder.folderId === parentId);
+                iterations++;
             }
-        },
-        onError: (err) => {
-            window.showToast(err.message || "Failed to check processing status.", "error");
-        }
-    });
-}
-
-async function handleViewExtractedText() {
-    const box = document.getElementById("aiExtractedTextBox");
-    const contentEl = document.getElementById("aiExtractedTextContent");
-    if (!box || !contentEl) return;
-
-    if (aiExtractedTextLoaded) {
-        aiExtractedTextExpanded = !aiExtractedTextExpanded;
-        box.style.display = aiExtractedTextExpanded ? "block" : "none";
-        return;
-    }
-
-    contentEl.textContent = "Loading extracted text…";
-    box.style.display = "block";
-    aiExtractedTextExpanded = true;
-
-    try {
-        const res = await getDocumentContent(currentDocumentId);
-        const text = (res.data && res.data.extractedText) || "";
-        contentEl.textContent = text || "(No text available.)";
-        aiExtractedTextLoaded = true;
-    } catch (err) {
-        contentEl.textContent = "";
-        box.style.display = "none";
-        window.showToast(err.message || "Failed to load extracted text.", "error");
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    const toggleBtn = document.getElementById("aiTextToggleBtn");
-    if (toggleBtn) {
-        toggleBtn.addEventListener("click", () => {
-            const box = document.getElementById("aiExtractedTextBox");
-            aiExtractedTextExpanded = !aiExtractedTextExpanded;
-            if (box) box.style.display = aiExtractedTextExpanded ? "block" : "none";
-            toggleBtn.textContent = aiExtractedTextExpanded ? "Collapse" : "Expand";
-        });
-    }
-});
-
-    // ── Render subject dropdown ───────────────────────────────────────────────────
-    function renderSubjectOptions(subjects, currentSubjectId) {
-        const select = document.getElementById("editSubject");
-        select.innerHTML = "";
-
-        subjects.forEach(s => {
             const opt = document.createElement("option");
-            opt.value = s.subjectId;
-            opt.textContent = `${s.subjectCode} – ${s.subjectName}`;
-            if (s.subjectId === currentSubjectId) opt.selected = true;
+            opt.value = f.folderId;
+            opt.textContent = path.join(" / ") || "Untitled Folder";
+            if (currentDocumentFolderId === f.folderId) {
+                opt.disabled = true;
+                opt.textContent += " (Current)";
+            }
             select.appendChild(opt);
         });
-
-        if (!currentSubjectId) {
-            const placeholder = document.createElement("option");
-            placeholder.value = "";
-            placeholder.disabled = true;
-            placeholder.selected = true;
-            placeholder.textContent = "— Select a subject —";
-            select.insertBefore(placeholder, select.firstChild);
+        if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+            window.UIHelper.convertSelectToCustomDropdown(select);
+            select.dispatchEvent(new Event("syncCustom"));
         }
+        document.getElementById("moveModal").classList.add("show");
+    }).catch(err => {
+        window.showToast(err.message || "Failed to load folders.", "error");
+    });
+}
+
+function hideMoveModal() {
+    document.getElementById("moveModal").classList.remove("show");
+}
+
+async function handleMove() {
+    const select = document.getElementById("moveFolderSelect");
+    if (!select) return;
+    const folderIdVal = select.value ? parseInt(select.value, 10) : null;
+    const confirmBtn = document.getElementById("moveConfirmBtn");
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = "Moving...";
     }
 
-    // ── Save changes ──────────────────────────────────────────────────────────────
-    async function handleSave() {
-        const title = document.getElementById("editTitle").value.trim();
-        const description = document.getElementById("editDescription").value.trim();
-        const subjectId = document.getElementById("editSubject").value;
+    try {
+        const res = await moveDocument(currentDocumentId, folderIdVal);
+        hideMoveModal();
+        window.showToast("Document moved successfully.", "success");
+        renderDocument(res.data);
+    } catch (err) {
+        const errEl = document.getElementById("moveError");
+        if (errEl) {
+            errEl.textContent = err.message || "Failed to move document.";
+            errEl.style.display = "block";
+        }
+    } finally {
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = "Move";
+        }
+    }
+}
 
-        if (!title) {
-            showEditMessage("Title is required.", "error");
+// ── Edit message helper ───────────────────────────────────────────────────────
+function showEditMessage(text, type) {
+    const el = document.getElementById("editMessage");
+    el.textContent = text;
+    el.className = "helper-text" + (type === "error" ? " error" : type === "success" ? " success" : "");
+}
+
+// ── Formatters ────────────────────────────────────────────────────────────────
+function formatFileSize(bytes) {
+    if (!bytes) return "–";
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+function formatDate(isoString) {
+    if (!isoString) return "–";
+    const d = new Date(isoString);
+    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+// ── Inspector Tabs UI ────────────────────────────────────────────────────────
+function setActiveTab(tabId, focus = true) {
+    const tabDetails = document.getElementById("inspectorTabDetails");
+    const tabSharing = document.getElementById("inspectorTabSharing");
+    const paneDetails = document.getElementById("inspectorPaneDetails");
+    const paneSharing = document.getElementById("inspectorPaneSharing");
+
+    if (!tabDetails || !tabSharing || !paneDetails || !paneSharing) return;
+
+    const tabs = [tabDetails, tabSharing];
+    const panes = [paneDetails, paneSharing];
+
+    tabs.forEach(t => {
+        t.classList.remove("active");
+        t.setAttribute("aria-selected", "false");
+    });
+
+    panes.forEach(p => {
+        p.classList.remove("active");
+        p.style.display = ""; // Clear any inline styles that override classes
+    });
+
+    const activeTab = tabId === "sharing" ? tabSharing : tabDetails;
+    const activePane = tabId === "sharing" ? paneSharing : paneDetails;
+
+    activeTab.classList.add("active");
+    activeTab.setAttribute("aria-selected", "true");
+    activePane.classList.add("active");
+
+    if (focus) {
+        activeTab.focus();
+    }
+}
+
+function initInspectorTabs() {
+    const tabDetails = document.getElementById("inspectorTabDetails");
+    const tabSharing = document.getElementById("inspectorTabSharing");
+    const paneDetails = document.getElementById("inspectorPaneDetails");
+    const paneSharing = document.getElementById("inspectorPaneSharing");
+
+    if (!tabDetails || !tabSharing || !paneDetails || !paneSharing) return;
+
+    // Accessibility attributes
+    tabDetails.setAttribute("role", "tab");
+    tabDetails.setAttribute("aria-selected", "true");
+    tabDetails.setAttribute("aria-controls", "inspectorPaneDetails");
+    tabSharing.setAttribute("role", "tab");
+    tabSharing.setAttribute("aria-selected", "false");
+    tabSharing.setAttribute("aria-controls", "inspectorPaneSharing");
+
+    paneDetails.setAttribute("role", "tabpanel");
+    paneSharing.setAttribute("role", "tabpanel");
+
+    const tabs = [tabDetails, tabSharing];
+
+    tabDetails.addEventListener("click", () => setActiveTab("details", true));
+    tabSharing.addEventListener("click", () => setActiveTab("sharing", true));
+
+    // Keyboard support: Left/Right arrows
+    tabs.forEach((tab, index) => {
+        tab.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                e.preventDefault();
+                const nextIndex = (index + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+                const nextTabId = nextIndex === 1 ? "sharing" : "details";
+                setActiveTab(nextTabId, true);
+            }
+        });
+    });
+}
+
+// ── Sharing UI & Logic ─────────────────────────────────────────────────────────
+function initSharingUI() {
+    const shareBtn = document.getElementById("shareBtn");
+    const shareModal = document.getElementById("shareModal");
+
+    const tabUserBtn = document.getElementById("tabUserBtn");
+    const tabGroupBtn = document.getElementById("tabGroupBtn");
+    const tabUserContent = document.getElementById("tabUserContent");
+    const tabGroupContent = document.getElementById("tabGroupContent");
+
+    const shareUserEmail = document.getElementById("shareUserEmail");
+    const shareGroupSelect = document.getElementById("shareGroupSelect");
+
+    // Tab switching
+    tabUserBtn.addEventListener("click", () => {
+        tabUserBtn.classList.add("active");
+        tabUserBtn.style.borderBottomColor = "var(--primary)";
+        tabUserBtn.style.color = "var(--primary)";
+
+        tabGroupBtn.classList.remove("active");
+        tabGroupBtn.style.borderBottomColor = "transparent";
+        tabGroupBtn.style.color = "var(--muted)";
+
+        tabUserContent.style.display = "block";
+        tabGroupContent.style.display = "none";
+    });
+
+    tabGroupBtn.addEventListener("click", () => {
+        tabGroupBtn.classList.add("active");
+        tabGroupBtn.style.borderBottomColor = "var(--primary)";
+        tabGroupBtn.style.color = "var(--primary)";
+
+        tabUserBtn.classList.remove("active");
+        tabUserBtn.style.borderBottomColor = "transparent";
+        tabUserBtn.style.color = "var(--muted)";
+
+        tabGroupContent.style.display = "block";
+        tabUserContent.style.display = "none";
+    });
+
+    // Modal display
+    shareBtn.addEventListener("click", async () => {
+        shareUserEmail.value = "";
+        document.getElementById("shareUserError").style.display = "none";
+        document.getElementById("shareGroupError").style.display = "none";
+        shareModal.classList.add("show");
+
+        // Populating dropdown groups
+        shareGroupSelect.innerHTML = '<option value="" disabled selected>Loading groups...</option>';
+        try {
+            const res = await getMyGroups();
+            const groups = Array.isArray(res.data) ? res.data : [];
+            shareGroupSelect.innerHTML = "";
+            if (groups.length === 0) {
+                const opt = document.createElement("option");
+                opt.value = "";
+                opt.disabled = true;
+                opt.selected = true;
+                opt.textContent = "No groups available";
+                shareGroupSelect.appendChild(opt);
+            } else {
+                const placeholder = document.createElement("option");
+                placeholder.value = "";
+                placeholder.disabled = true;
+                placeholder.selected = true;
+                placeholder.textContent = "— Select a group —";
+                shareGroupSelect.appendChild(placeholder);
+
+                groups.forEach(g => {
+                    const opt = document.createElement("option");
+                    opt.value = g.groupId;
+                    opt.textContent = g.groupName;
+                    shareGroupSelect.appendChild(opt);
+                });
+            }
+        } catch (e) {
+            console.error(e);
+            shareGroupSelect.innerHTML = '<option value="" disabled>Failed to load groups</option>';
+        } finally {
+            if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+                window.UIHelper.convertSelectToCustomDropdown(shareGroupSelect);
+                shareGroupSelect.dispatchEvent(new Event("syncCustom"));
+            }
+        }
+    });
+
+    // Close buttons
+    document.getElementById("shareUserCancelBtn").addEventListener("click", () => {
+        shareModal.classList.remove("show");
+    });
+    document.getElementById("shareGroupCancelBtn").addEventListener("click", () => {
+        shareModal.classList.remove("show");
+    });
+    shareModal.addEventListener("click", (e) => {
+        if (e.target === shareModal) shareModal.classList.remove("show");
+    });
+
+    // Confirm buttons
+    document.getElementById("shareUserConfirmBtn").addEventListener("click", async () => {
+        const email = shareUserEmail.value.trim();
+        const errorEl = document.getElementById("shareUserError");
+        if (!email) {
+            errorEl.textContent = "Email is required.";
+            errorEl.style.display = "block";
             return;
         }
-
-        const saveBtn = document.getElementById("saveBtn");
-        saveBtn.disabled = true;
-        saveBtn.textContent = "Saving...";
-
+        errorEl.style.display = "none";
         try {
-            const payload = { title, description };
-            if (subjectId) payload.subjectId = parseInt(subjectId, 10);
-
-            const res = await updateDocument(currentDocumentId, payload);
-
-            renderDocument(res.data);
-            showEditMessage("", "");
-            window.showToast("Changes saved successfully.", "success");
-        } catch (err) {
-            showEditMessage(err.message || "Failed to save changes.", "error");
-        } finally {
-            saveBtn.disabled = false;
-            saveBtn.textContent = "Save Changes";
-        }
-    }
-
-    async function handleDelete() {
-        const confirmed = await window.confirmAction({
-            title: "Move this document to Trash?",
-            message: "You can restore it later from Trash.",
-            confirmText: "Delete",
-            danger: true
-        });
-        if (!confirmed) return;
-
-        try {
-            await deleteDocument(currentDocumentId);
-            window.showToast("Document deleted.", "success");
-            setTimeout(() => {
-                window.location.href = "dashboard.html";
-            }, 1200);
-        } catch (err) {
-            window.showToast(err.message || "Failed to delete document.", "error");
-        }
-    }
-
-    async function handlePublish() {
-        const publishBtn = document.getElementById("publishBtn");
-        publishBtn.disabled = true;
-        const oldText = publishBtn.textContent;
-        publishBtn.textContent = "Publishing...";
-
-        try {
-            const res = await publishDocument(currentDocumentId);
-            renderDocument(res.data);
-            window.showToast("Document published successfully.", "success");
-        } catch (err) {
-            window.showToast(err.message || "Failed to publish document.", "error");
-        } finally {
-            publishBtn.disabled = false;
-            publishBtn.textContent = oldText;
-        }
-    }
-
-    async function handleUnpublish() {
-        const unpublishBtn = document.getElementById("unpublishBtn");
-        unpublishBtn.disabled = true;
-        const oldText = unpublishBtn.textContent;
-        unpublishBtn.textContent = "Unpublishing...";
-
-        try {
-            const res = await unpublishDocument(currentDocumentId);
-            renderDocument(res.data);
-            window.showToast("Document unpublished successfully.", "success");
-        } catch (err) {
-            window.showToast(err.message || "Failed to unpublish document.", "error");
-        } finally {
-            unpublishBtn.disabled = false;
-            unpublishBtn.textContent = oldText;
-        }
-    }
-
-    // ── Move modal ────────────────────────────────────────────────────────────────
-    function showMoveModal() {
-        const errorEl = document.getElementById("moveError");
-        if (errorEl) errorEl.style.display = "none";
-        const select = document.getElementById("moveFolderSelect");
-        if (!select) return;
-
-        getMyFolders(null, true).then(res => {
-            const folders = Array.isArray(res.data) ? res.data : [];
-            select.innerHTML = '<option value="">— My Documents —</option>';
-            folders.forEach(f => {
-                const opt = document.createElement("option");
-                opt.value = f.folderId;
-                opt.textContent = f.folderName || "Untitled Folder";
-                if (currentDocumentFolderId === f.folderId) {
-                    opt.disabled = true;
-                    opt.textContent += " (Current)";
-                }
-                select.appendChild(opt);
-            });
-            document.getElementById("moveModal").classList.add("show");
-        }).catch(err => {
-            window.showToast(err.message || "Failed to load folders.", "error");
-        });
-    }
-
-    function hideMoveModal() {
-        document.getElementById("moveModal").classList.remove("show");
-    }
-
-    async function handleMove() {
-        const select = document.getElementById("moveFolderSelect");
-        if (!select) return;
-        const folderIdVal = select.value ? parseInt(select.value, 10) : null;
-        const confirmBtn = document.getElementById("moveConfirmBtn");
-        if (confirmBtn) {
-            confirmBtn.disabled = true;
-            confirmBtn.textContent = "Moving...";
-        }
-
-        try {
-            const res = await moveDocument(currentDocumentId, folderIdVal);
-            hideMoveModal();
-            window.showToast("Document moved successfully.", "success");
-            renderDocument(res.data);
-        } catch (err) {
-            const errEl = document.getElementById("moveError");
-            if (errEl) {
-                errEl.textContent = err.message || "Failed to move document.";
-                errEl.style.display = "block";
-            }
-        } finally {
-            if (confirmBtn) {
-                confirmBtn.disabled = false;
-                confirmBtn.textContent = "Move";
-            }
-        }
-    }
-
-    // ── Edit message helper ───────────────────────────────────────────────────────
-    function showEditMessage(text, type) {
-        const el = document.getElementById("editMessage");
-        el.textContent = text;
-        el.className = "helper-text" + (type === "error" ? " error" : type === "success" ? " success" : "");
-    }
-
-    // ── Formatters ────────────────────────────────────────────────────────────────
-    function formatFileSize(bytes) {
-        if (!bytes) return "–";
-        if (bytes < 1024) return bytes + " B";
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-        return (bytes / (1024 * 1024)).toFixed(1) + " MB";
-    }
-
-    function formatDate(isoString) {
-        if (!isoString) return "–";
-        const d = new Date(isoString);
-        return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-    }
-
-    // ── Inspector Tabs UI ────────────────────────────────────────────────────────
-    function setActiveTab(tabId, focus = true) {
-        const tabDetails = document.getElementById("inspectorTabDetails");
-        const tabSharing = document.getElementById("inspectorTabSharing");
-        const paneDetails = document.getElementById("inspectorPaneDetails");
-        const paneSharing = document.getElementById("inspectorPaneSharing");
-
-        if (!tabDetails || !tabSharing || !paneDetails || !paneSharing) return;
-
-        const tabs = [tabDetails, tabSharing];
-        const panes = [paneDetails, paneSharing];
-
-        tabs.forEach(t => {
-            t.classList.remove("active");
-            t.setAttribute("aria-selected", "false");
-        });
-
-        panes.forEach(p => {
-            p.classList.remove("active");
-            p.style.display = ""; // Clear any inline styles that override classes
-        });
-
-        const activeTab = tabId === "sharing" ? tabSharing : tabDetails;
-        const activePane = tabId === "sharing" ? paneSharing : paneDetails;
-
-        activeTab.classList.add("active");
-        activeTab.setAttribute("aria-selected", "true");
-        activePane.classList.add("active");
-
-        if (focus) {
-            activeTab.focus();
-        }
-    }
-
-    function initInspectorTabs() {
-        const tabDetails = document.getElementById("inspectorTabDetails");
-        const tabSharing = document.getElementById("inspectorTabSharing");
-        const paneDetails = document.getElementById("inspectorPaneDetails");
-        const paneSharing = document.getElementById("inspectorPaneSharing");
-
-        if (!tabDetails || !tabSharing || !paneDetails || !paneSharing) return;
-
-        // Accessibility attributes
-        tabDetails.setAttribute("role", "tab");
-        tabDetails.setAttribute("aria-selected", "true");
-        tabDetails.setAttribute("aria-controls", "inspectorPaneDetails");
-        tabSharing.setAttribute("role", "tab");
-        tabSharing.setAttribute("aria-selected", "false");
-        tabSharing.setAttribute("aria-controls", "inspectorPaneSharing");
-
-        paneDetails.setAttribute("role", "tabpanel");
-        paneSharing.setAttribute("role", "tabpanel");
-
-        const tabs = [tabDetails, tabSharing];
-
-        tabDetails.addEventListener("click", () => setActiveTab("details", true));
-        tabSharing.addEventListener("click", () => setActiveTab("sharing", true));
-
-        // Keyboard support: Left/Right arrows
-        tabs.forEach((tab, index) => {
-            tab.addEventListener("keydown", (e) => {
-                if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
-                    e.preventDefault();
-                    const nextIndex = (index + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
-                    const nextTabId = nextIndex === 1 ? "sharing" : "details";
-                    setActiveTab(nextTabId, true);
-                }
-            });
-        });
-    }
-
-    // ── Sharing UI & Logic ─────────────────────────────────────────────────────────
-    function initSharingUI() {
-        const shareBtn = document.getElementById("shareBtn");
-        const shareModal = document.getElementById("shareModal");
-
-        const tabUserBtn = document.getElementById("tabUserBtn");
-        const tabGroupBtn = document.getElementById("tabGroupBtn");
-        const tabUserContent = document.getElementById("tabUserContent");
-        const tabGroupContent = document.getElementById("tabGroupContent");
-
-        const shareUserEmail = document.getElementById("shareUserEmail");
-        const shareGroupSelect = document.getElementById("shareGroupSelect");
-
-        // Tab switching
-        tabUserBtn.addEventListener("click", () => {
-            tabUserBtn.classList.add("active");
-            tabUserBtn.style.borderBottomColor = "var(--primary)";
-            tabUserBtn.style.color = "var(--primary)";
-
-            tabGroupBtn.classList.remove("active");
-            tabGroupBtn.style.borderBottomColor = "transparent";
-            tabGroupBtn.style.color = "var(--muted)";
-
-            tabUserContent.style.display = "block";
-            tabGroupContent.style.display = "none";
-        });
-
-        tabGroupBtn.addEventListener("click", () => {
-            tabGroupBtn.classList.add("active");
-            tabGroupBtn.style.borderBottomColor = "var(--primary)";
-            tabGroupBtn.style.color = "var(--primary)";
-
-            tabUserBtn.classList.remove("active");
-            tabUserBtn.style.borderBottomColor = "transparent";
-            tabUserBtn.style.color = "var(--muted)";
-
-            tabGroupContent.style.display = "block";
-            tabUserContent.style.display = "none";
-        });
-
-        // Modal display
-        shareBtn.addEventListener("click", async () => {
-            shareUserEmail.value = "";
-            document.getElementById("shareUserError").style.display = "none";
-            document.getElementById("shareGroupError").style.display = "none";
-            shareModal.classList.add("show");
-
-            // Populating dropdown groups
-            shareGroupSelect.innerHTML = '<option value="" disabled selected>Loading groups...</option>';
-            try {
-                const res = await getMyGroups();
-                const groups = Array.isArray(res.data) ? res.data : [];
-                shareGroupSelect.innerHTML = "";
-                if (groups.length === 0) {
-                    const opt = document.createElement("option");
-                    opt.value = "";
-                    opt.disabled = true;
-                    opt.selected = true;
-                    opt.textContent = "No groups available";
-                    shareGroupSelect.appendChild(opt);
-                } else {
-                    const placeholder = document.createElement("option");
-                    placeholder.value = "";
-                    placeholder.disabled = true;
-                    placeholder.selected = true;
-                    placeholder.textContent = "— Select a group —";
-                    shareGroupSelect.appendChild(placeholder);
-
-                    groups.forEach(g => {
-                        const opt = document.createElement("option");
-                        opt.value = g.groupId;
-                        opt.textContent = g.groupName;
-                        shareGroupSelect.appendChild(opt);
-                    });
-                }
-            } catch (e) {
-                console.error(e);
-                shareGroupSelect.innerHTML = '<option value="" disabled>Failed to load groups</option>';
-            }
-        });
-
-        // Close buttons
-        document.getElementById("shareUserCancelBtn").addEventListener("click", () => {
+            await shareDocumentToUser(currentDocumentId, email);
             shareModal.classList.remove("show");
-        });
-        document.getElementById("shareGroupCancelBtn").addEventListener("click", () => {
-            shareModal.classList.remove("show");
-        });
-        shareModal.addEventListener("click", (e) => {
-            if (e.target === shareModal) shareModal.classList.remove("show");
-        });
-
-        // Confirm buttons
-        document.getElementById("shareUserConfirmBtn").addEventListener("click", async () => {
-            const email = shareUserEmail.value.trim();
-            const errorEl = document.getElementById("shareUserError");
-            if (!email) {
-                errorEl.textContent = "Email is required.";
-                errorEl.style.display = "block";
-                return;
-            }
-            errorEl.style.display = "none";
-            try {
-                await shareDocumentToUser(currentDocumentId, email);
-                shareModal.classList.remove("show");
-                window.showToast("Document shared successfully.", "success");
-                loadSharingInfo(currentDocumentId);
-            } catch (err) {
-                errorEl.textContent = err.message || "Failed to share document.";
-                errorEl.style.display = "block";
-            }
-        });
-
-        document.getElementById("shareGroupConfirmBtn").addEventListener("click", async () => {
-            const groupId = shareGroupSelect.value;
-            const errorEl = document.getElementById("shareGroupError");
-            if (!groupId) {
-                errorEl.textContent = "Please select a group.";
-                errorEl.style.display = "block";
-                return;
-            }
-            errorEl.style.display = "none";
-            try {
-                await shareDocumentToGroup(currentDocumentId, parseInt(groupId, 10));
-                shareModal.classList.remove("show");
-                window.showToast("Document shared to group successfully.", "success");
-                loadSharingInfo(currentDocumentId);
-            } catch (err) {
-                errorEl.textContent = err.message || "Failed to share to group.";
-                errorEl.style.display = "block";
-            }
-        });
-    }
-
-    // ── Load shares information ──────────────────────────────────────────────────
-    async function loadSharingInfo(docId) {
-        try {
-            const [sharesRes, groupsRes] = await Promise.all([
-                getDocumentShares(docId),
-                getMyGroups()
-            ]);
-
-            const groupMap = {};
-            if (groupsRes && groupsRes.data) {
-                groupsRes.data.forEach(g => {
-                    groupMap[g.groupId] = g.groupName;
-                });
-            }
-
-            const info = sharesRes.data || { userShares: [], groupShares: [] };
-            const userShares = Array.isArray(info.userShares) ? info.userShares : [];
-            const groupShares = Array.isArray(info.groupShares) ? info.groupShares : [];
-
-            // Direct shares list
-            const directList = document.getElementById("directSharesList");
-            const noDirect = document.getElementById("noDirectShares");
-            directList.innerHTML = "";
-            if (userShares.length === 0) {
-                noDirect.style.display = "block";
-            } else {
-                noDirect.style.display = "none";
-                userShares.forEach(item => {
-                    const row = document.createElement("div");
-                    row.className = "member-row";
-
-                    const main = document.createElement("div");
-                    main.className = "member-row-main";
-
-                    const name = document.createElement("span");
-                    name.className = "member-row-name";
-                    name.textContent = item.sharedWithName || "Unknown User";
-
-                    const badge = document.createElement("span");
-                    badge.className = "badge badge-success";
-                    badge.textContent = item.status;
-
-                    main.append(name, badge);
-                    row.appendChild(main);
-
-                    const btn = document.createElement("button");
-                    btn.type = "button";
-                    btn.className = "btn btn-danger btn-sm";
-                    btn.textContent = "Revoke";
-                    btn.addEventListener("click", () => handleRevokeDirect(item.shareId));
-                    row.appendChild(btn);
-
-                    directList.appendChild(row);
-                });
-            }
-
-            // Group shares list
-            const groupList = document.getElementById("groupSharesList");
-            const noGroup = document.getElementById("noGroupShares");
-            groupList.innerHTML = "";
-            if (groupShares.length === 0) {
-                noGroup.style.display = "block";
-            } else {
-                noGroup.style.display = "none";
-                groupShares.forEach(item => {
-                    const row = document.createElement("div");
-                    row.className = "member-row";
-
-                    const main = document.createElement("div");
-                    main.className = "member-row-main";
-
-                    const name = document.createElement("span");
-                    name.className = "member-row-name";
-                    name.textContent = groupMap[item.groupId] || `Group (ID: ${item.groupId})`;
-
-                    const badge = document.createElement("span");
-                    badge.className = "badge badge-success";
-                    badge.textContent = item.status;
-
-                    main.append(name, badge);
-                    row.appendChild(main);
-
-                    const btn = document.createElement("button");
-                    btn.type = "button";
-                    btn.className = "btn btn-danger btn-sm";
-                    btn.textContent = "Revoke";
-                    btn.addEventListener("click", () => handleRevokeGroup(item.shareId));
-                    row.appendChild(btn);
-
-                    groupList.appendChild(row);
-                });
-            }
-        } catch (err) {
-            console.error("Failed to load sharing details", err);
-        }
-    }
-
-    // ── Revoke Actions ────────────────────────────────────────────────────────────
-    async function handleRevokeDirect(shareId) {
-        const confirmed = await window.confirmAction({
-            title: "Revoke Direct Share",
-            message: "Are you sure you want to revoke this direct share?",
-            confirmText: "Revoke",
-            danger: true
-        });
-        if (!confirmed) return;
-        try {
-            await revokeDocumentShare(shareId);
-            window.showToast("Share revoked successfully.", "success");
+            window.showToast("Document shared successfully.", "success");
             loadSharingInfo(currentDocumentId);
         } catch (err) {
-            window.showToast(err.message || "Failed to revoke share.", "error");
+            errorEl.textContent = err.message || "Failed to share document.";
+            errorEl.style.display = "block";
         }
-    }
+    });
 
-    async function handleRevokeGroup(shareId) {
-        const confirmed = await window.confirmAction({
-            title: "Revoke Group Share",
-            message: "Are you sure you want to revoke this group share?",
-            confirmText: "Revoke",
-            danger: true
-        });
-        if (!confirmed) return;
+    document.getElementById("shareGroupConfirmBtn").addEventListener("click", async () => {
+        const groupId = shareGroupSelect.value;
+        const errorEl = document.getElementById("shareGroupError");
+        if (!groupId) {
+            errorEl.textContent = "Please select a group.";
+            errorEl.style.display = "block";
+            return;
+        }
+        errorEl.style.display = "none";
         try {
-            await revokeGroupDocumentShare(shareId);
-            window.showToast("Group share revoked successfully.", "success");
+            await shareDocumentToGroup(currentDocumentId, parseInt(groupId, 10));
+            shareModal.classList.remove("show");
+            window.showToast("Document shared to group successfully.", "success");
             loadSharingInfo(currentDocumentId);
         } catch (err) {
-            window.showToast(err.message || "Failed to revoke group share.", "error");
+            errorEl.textContent = err.message || "Failed to share to group.";
+            errorEl.style.display = "block";
         }
+    });
+}
+
+// ── Load shares information ──────────────────────────────────────────────────
+async function loadSharingInfo(docId) {
+    try {
+        const [sharesRes, groupsRes] = await Promise.all([
+            getDocumentShares(docId),
+            getMyGroups()
+        ]);
+
+        const groupMap = {};
+        if (groupsRes && groupsRes.data) {
+            groupsRes.data.forEach(g => {
+                groupMap[g.groupId] = g.groupName;
+            });
+        }
+
+        const info = sharesRes.data || { userShares: [], groupShares: [] };
+        const userShares = Array.isArray(info.userShares) ? info.userShares : [];
+        const groupShares = Array.isArray(info.groupShares) ? info.groupShares : [];
+
+        // Direct shares list
+        const directList = document.getElementById("directSharesList");
+        const noDirect = document.getElementById("noDirectShares");
+        directList.innerHTML = "";
+        if (userShares.length === 0) {
+            noDirect.style.display = "block";
+        } else {
+            noDirect.style.display = "none";
+            userShares.forEach(item => {
+                const row = document.createElement("div");
+                row.className = "member-row";
+
+                const main = document.createElement("div");
+                main.className = "member-row-main";
+
+                const name = document.createElement("span");
+                name.className = "member-row-name";
+                name.textContent = item.sharedWithName || "Unknown User";
+
+                const badge = document.createElement("span");
+                badge.className = "badge badge-success";
+                badge.textContent = item.status;
+
+                main.append(name, badge);
+                row.appendChild(main);
+
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "btn btn-danger btn-sm";
+                btn.textContent = "Revoke";
+                btn.addEventListener("click", () => handleRevokeDirect(item.shareId));
+                row.appendChild(btn);
+
+                directList.appendChild(row);
+            });
+        }
+
+        // Group shares list
+        const groupList = document.getElementById("groupSharesList");
+        const noGroup = document.getElementById("noGroupShares");
+        groupList.innerHTML = "";
+        if (groupShares.length === 0) {
+            noGroup.style.display = "block";
+        } else {
+            noGroup.style.display = "none";
+            groupShares.forEach(item => {
+                const row = document.createElement("div");
+                row.className = "member-row";
+
+                const main = document.createElement("div");
+                main.className = "member-row-main";
+
+                const name = document.createElement("span");
+                name.className = "member-row-name";
+                name.textContent = groupMap[item.groupId] || `Group (ID: ${item.groupId})`;
+
+                const badge = document.createElement("span");
+                badge.className = "badge badge-success";
+                badge.textContent = item.status;
+
+                main.append(name, badge);
+                row.appendChild(main);
+
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "btn btn-danger btn-sm";
+                btn.textContent = "Revoke";
+                btn.addEventListener("click", () => handleRevokeGroup(item.shareId));
+                row.appendChild(btn);
+
+                groupList.appendChild(row);
+            });
+        }
+    } catch (err) {
+        console.error("Failed to load sharing details", err);
     }
+}
+
+// ── Revoke Actions ────────────────────────────────────────────────────────────
+async function handleRevokeDirect(shareId) {
+    const confirmed = await window.confirmAction({
+        title: "Revoke Direct Share",
+        message: "Are you sure you want to revoke this direct share?",
+        confirmText: "Revoke",
+        danger: true
+    });
+    if (!confirmed) return;
+    try {
+        await revokeDocumentShare(shareId);
+        window.showToast("Share revoked successfully.", "success");
+        loadSharingInfo(currentDocumentId);
+    } catch (err) {
+        window.showToast(err.message || "Failed to revoke share.", "error");
+    }
+}
+
+async function handleRevokeGroup(shareId) {
+    const confirmed = await window.confirmAction({
+        title: "Revoke Group Share",
+        message: "Are you sure you want to revoke this group share?",
+        confirmText: "Revoke",
+        danger: true
+    });
+    if (!confirmed) return;
+    try {
+        await revokeGroupDocumentShare(shareId);
+        window.showToast("Group share revoked successfully.", "success");
+        loadSharingInfo(currentDocumentId);
+    } catch (err) {
+        window.showToast(err.message || "Failed to revoke group share.", "error");
+    }
+}
