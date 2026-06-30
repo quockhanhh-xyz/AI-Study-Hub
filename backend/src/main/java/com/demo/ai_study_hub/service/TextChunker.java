@@ -73,6 +73,11 @@ public class TextChunker {
             }
 
 
+            if (end >= len) {
+                break;
+            }
+
+
             int nextPos = end - OVERLAP_SIZE;
             if (nextPos <= pos) {
                 nextPos = end;
