@@ -4,673 +4,623 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Document Detail – AI Study Hub</title>
+  <title>Document Detail - AI Study Hub</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="stylesheet" href="css/style.css" />
 
   <style>
-    /* Force main content layout properties for fixed split page */
-    .main-content {
-      height: 100vh !important;
-      overflow: hidden !important;
-      padding: 24px !important;
-      box-sizing: border-box !important;
-    }
-
-    /* ===== SPLIT-SCREEN LAYOUT SYSTEM ===== */
-    .detail-split-container {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      height: calc(100vh - 48px);
-      box-sizing: border-box;
-    }
-    @media (min-width: 576px) {
-      .detail-split-container {
-        display: flex;
-        flex-direction: row; /* Ép 2 cột nằm ngang */
-        height: 100%;
-        overflow: hidden; /* Ngăn cuộn toàn trang */
-      }
-    }
-
-    .detail-left-panel {
-      flex: 7; /* Chiếm khoảng 70% */
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-    }
-    @media (max-width: 575px) {
-      .detail-left-panel {
-        flex: none;
-        height: 480px;
-      }
-    }
-    
-    .preview-toolbar {
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      margin-bottom: 12px;
-      flex-shrink: 0;
-    }
-    .preview-toolbar .btn {
-      padding: 8px 14px;
-      font-size: 13px;
-      font-weight: 600;
-      border-radius: 8px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    
-    #previewArea {
-      flex: 1;
-      width: 100%;
-      border: 1px solid var(--border);
-      border-radius: 12px;
+    .document-detail-page {
       overflow: hidden;
-      background: var(--background);
-      position: relative;
     }
-    
-    .preview-iframe {
+
+    .document-detail-page .app-layout {
+      height: 100vh;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .detail-main {
+      height: 100vh;
+      min-width: 0;
+      min-height: 0;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    #detailLoader {
+      display: grid;
+      flex: 1;
+      place-items: center;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .detail-workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(340px, 1fr);
+      gap: 18px;
       width: 100%;
       height: 100%;
-      display: block;
-      border: none;
+      min-height: 0;
+    }
+
+    .detail-workspace[hidden] {
+      display: none !important;
+    }
+
+    .preview-workspace {
+      display: flex;
+      min-width: 0;
+      min-height: 0;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .preview-toolbar {
+      display: flex;
+      min-height: 64px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .preview-toolbar-title {
+      min-width: 0;
+    }
+
+    .preview-toolbar-title strong,
+    .preview-toolbar-title span {
+      display: block;
+    }
+
+    .preview-toolbar-title strong {
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .preview-toolbar-title span {
+      margin-top: 2px;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .preview-toolbar-actions,
+    .document-action-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .preview-toolbar .btn,
+    .document-action-row .btn {
+      width: auto;
+      min-height: 38px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .preview-toolbar .btn-primary {
+      border-color: var(--primary);
+    }
+
+    #previewArea {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      background: #eef0f3;
+    }
+
+    .preview-iframe {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      border: 0;
+      background: #ffffff;
     }
 
     .preview-image-wrap {
-      padding: 24px;
       display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100%;
       width: 100%;
-      box-sizing: border-box;
-      background: var(--background);
+      height: 100%;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      padding: 24px;
     }
 
     .preview-image {
       max-width: 100%;
       max-height: 100%;
       object-fit: contain;
-      border-radius: 6px;
     }
 
     .preview-fallback {
       display: flex;
-      flex-direction: column;
+      width: 100%;
+      min-height: 100%;
       align-items: center;
       justify-content: center;
-      padding: 48px 24px;
+      flex-direction: column;
+      gap: 10px;
+      padding: 32px;
+      color: var(--muted);
       text-align: center;
-      color: var(--muted);
-      gap: 12px;
-      height: 100%;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .preview-fallback-icon {
-      color: var(--muted);
-      opacity: 0.5;
     }
 
     .preview-fallback-title {
-      font-size: 15px;
-      font-weight: 600;
       color: var(--text);
+      font-weight: 700;
     }
 
     .preview-fallback-desc {
+      max-width: 440px;
       font-size: 13px;
-      color: var(--muted);
+      line-height: 1.5;
     }
-    
+
     .detail-right-inspector {
-      flex: 3; /* Chiếm khoảng 30% */
+      display: flex;
+      min-width: 0;
+      min-height: 0;
+      flex-direction: column;
+      overflow-y: auto;
+      scrollbar-gutter: stable;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .inspector-inner {
       display: flex;
+      min-height: 100%;
       flex-direction: column;
-      gap: 24px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-      box-sizing: border-box;
-      overflow-y: auto; /* Chỉ cho phép cuộn ở cột phải */
+      padding: 20px;
     }
-    @media (max-width: 575px) {
-      .detail-right-inspector {
-        flex: none;
-        overflow-y: visible;
-      }
-    }
-    
-    .detail-right-inspector::-webkit-scrollbar {
-      width: 6px;
-    }
-    .detail-right-inspector::-webkit-scrollbar-track {
+
+    .detail-back-btn {
+      width: fit-content;
+      min-height: 36px;
+      margin: 0 0 18px;
+      padding: 7px 10px;
+      gap: 7px;
       background: transparent;
-    }
-    .detail-right-inspector::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 3px;
-    }
-    .detail-right-inspector::-webkit-scrollbar-thumb:hover {
-      background: var(--muted);
-    }
-    
-    .btn-back {
-      background: transparent;
-      border: none;
+      border: 1px solid transparent;
+      border-radius: 8px;
       color: var(--muted);
-      font-size: 14px;
-      cursor: pointer;
-      display: inline-flex;
+      font-size: 13px;
+    }
+
+    .detail-back-btn:hover {
+      color: var(--text);
+      background: var(--surface-soft);
+      border-color: var(--border);
+    }
+
+    .document-badge-row {
+      display: flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: 6px;
-      padding: 0;
-      margin-bottom: 0;
-      font-weight: 500;
-      transition: color 0.2s ease;
-      align-self: flex-start;
+      margin-bottom: 10px;
     }
-    .btn-back:hover {
-      color: var(--primary);
-    }
-    
-    .inspector-header {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 20px;
-    }
-    .inspector-header h1 {
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--text-main);
-      line-height: 1.3;
-      margin: 0;
-      word-break: break-word;
-    }
-    .inspector-badge-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .inspector-badge-row .detail-type-badge {
-      height: 22px;
-      min-width: auto;
-      padding: 0 8px;
-      font-size: 10px;
-      font-weight: 700;
-      border-radius: 4px;
-      margin: 0;
-      background: var(--primary-light);
-      color: var(--primary);
+
+    .detail-type-badge,
+    .status-badge {
       display: inline-flex;
+      min-height: 24px;
       align-items: center;
       justify-content: center;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1;
     }
-    .inspector-badge-row .status-badge {
-      height: 22px;
-      padding: 0 8px;
-      font-size: 10px;
-      font-weight: 700;
-      border-radius: 4px;
-      margin: 0;
+
+    .detail-type-badge {
+      color: var(--primary-hover);
+      background: var(--primary-light);
+      border: 1px solid var(--primary-border);
     }
-    .inspector-header .detail-uploaded-by {
-      font-size: 13px;
+
+    .status-badge {
       color: var(--muted);
-    }
-    
-    .inspector-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 20px;
-    }
-    .inspector-actions .btn {
-      flex: 1 1 calc(50% - 4px);
-      padding: 10px 16px;
-      font-size: 13px;
-      font-weight: 600;
-      justify-content: center;
-      border-radius: 10px;
-    }
-    
-    .inspector-info-summary {
       background: var(--background);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
     }
-    .inspector-info-summary .info-item {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      align-items: flex-start;
-    }
-    .inspector-info-summary .info-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      color: var(--muted);
-      letter-spacing: 0.5px;
-    }
-    .inspector-info-summary .info-value {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-main);
-    }
-    .inspector-info-summary .info-description {
-      border-top: 1px solid var(--border);
-      padding-top: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .inspector-info-summary .info-description p {
+
+    .inspector-document-header h1 {
       margin: 0;
+      color: var(--text);
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    .detail-uploaded-by {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
       font-size: 13px;
-      color: var(--text-main);
-      line-height: 1.5;
-      word-break: break-word;
     }
-    
+
+    .document-action-row {
+      margin-top: 18px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .document-action-row .btn-secondary {
+      background: var(--surface);
+    }
+
+    .document-action-row .btn-primary {
+      border-color: var(--primary);
+    }
+
+    .detail-summary {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .detail-meta-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+    }
+
+    .detail-meta-row {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr);
+      gap: 12px;
+      align-items: baseline;
+      font-size: 13px;
+    }
+
+    .detail-meta-row dt {
+      color: var(--muted);
+    }
+
+    .detail-meta-row dd {
+      margin: 0;
+      color: var(--text);
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+
+    .detail-description {
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+
     .inspector-tabs-container {
-      display: flex !important;
-      background: var(--background) !important;
-      padding: 4px !important;
-      border-radius: 10px !important;
-      margin-bottom: 20px !important;
-      border: 1px solid var(--border) !important;
+      display: flex;
+      gap: 18px;
+      margin-top: 4px;
+      border-bottom: 1px solid var(--border);
     }
+
     .inspector-tab-btn {
-      flex: 1;
-      padding: 8px 16px !important;
-      background: transparent !important;
-      border: none !important;
-      border-radius: 8px !important;
-      color: var(--text-light) !important;
-      font-weight: 600 !important;
-      cursor: pointer !important;
-      font-size: 14px !important;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-      text-align: center !important;
-      box-shadow: none !important;
+      padding: 14px 2px 11px;
+      background: transparent;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
     }
+
     .inspector-tab-btn:hover {
-      color: var(--text-main) !important;
+      color: var(--text);
     }
+
     .inspector-tab-btn.active {
-      background: var(--surface) !important;
-      color: var(--primary) !important;
-      box-shadow: 0 2px 8px rgba(23, 32, 51, 0.08) !important;
+      color: var(--primary);
+      border-bottom-color: var(--primary);
     }
+
+    .inspector-panes {
+      flex: 1;
+      padding-top: 18px;
+    }
+
     .inspector-tab-pane {
       display: none;
     }
+
     .inspector-tab-pane.active {
       display: block;
     }
-    
-    .inspector-danger-zone {
-      margin-top: 12px;
-      border-top: 1px solid var(--border);
-      padding-top: 20px;
-      text-align: center;
-    }
-    .inspector-danger-zone button {
-      background: transparent;
-      border: none;
-      color: var(--danger);
-      text-decoration: underline;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: color 0.2s ease;
-    }
-    .inspector-danger-zone button:hover {
-      color: #b91c1c;
-    }
 
-    /* ===== EDIT FORM ===== */
-    .edit-section h2 {
-      font-size: 16px;
-      font-weight: 700;
+    .edit-section h2,
+    .shares-panel h2 {
       margin: 0 0 16px;
-      text-align: left;
+      font-size: 16px;
     }
 
-    textarea {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 15px;
-      font-family: inherit;
+    .edit-section textarea {
+      min-height: 92px;
       resize: vertical;
-      min-height: 80px;
-      transition: all 0.2s ease;
-      background-color: var(--surface);
-      color: var(--text);
     }
 
-    textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(255, 88, 88, 0.15);
+    .edit-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 14px;
     }
 
-    select {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 15px;
-      font-family: inherit;
-      background-color: var(--surface);
+    .edit-actions .btn {
+      width: auto;
+      min-width: 132px;
+    }
+
+    .danger-zone {
+      margin-top: 32px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .danger-zone-label {
+      display: block;
+      margin-bottom: 6px;
       color: var(--text);
-      transition: all 0.2s ease;
-      appearance: none;
-      background-repeat: no-repeat;
-      background-position: right 14px center;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .danger-zone-copy {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .danger-link {
+      width: auto;
+      padding: 0;
+      color: var(--danger-text);
+      background: transparent;
+      border: 0;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 3px;
       cursor: pointer;
     }
 
-    select:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(255, 88, 88, 0.15);
-    }
-
-    /* ===== LOADER & ERROR STATE ===== */
-    #detailLoader {
-      text-align: center;
-      padding: 48px 24px;
-      color: var(--muted);
-      font-size: 15px;
-    }
-
-    #detailContent {
-      display: none;
-    }
-
-    /* ===== TOAST ===== */
-    #toast {
-      position: fixed;
-      bottom: 28px;
-      right: 28px;
-      padding: 14px 20px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease;
-      z-index: 9999;
-      max-width: 320px;
-    }
-
-    #toast.show {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    #toast.toast-success {
-      background: #ecfdf5;
-      color: var(--success);
-      border: 1px solid #d1fae5;
-    }
-
-    #toast.toast-error {
-      background: #fef2f2;
+    .danger-link:hover {
       color: var(--danger);
-      border: 1px solid #fecaca;
     }
 
-    /* ===== CONFIRM MODAL ===== */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.35);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
+    .share-block + .share-block {
+      margin-top: 20px;
+    }
+
+    .share-block h3 {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .modal-box.detail-modal {
+      max-width: 460px;
     }
 
     .modal-overlay.show {
       display: flex;
     }
 
-    .modal-box {
-      background: var(--surface);
-      border-radius: 12px;
-      padding: 32px;
-      max-width: 400px;
-      width: 90%;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    @media (max-width: 1180px) {
+      .detail-workspace {
+        grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr);
+      }
+
+      .detail-main {
+        padding: 14px;
+      }
     }
 
-    .modal-box h3 {
-      margin: 0 0 10px;
-      font-size: 18px;
-      font-weight: 700;
+    @media (max-width: 980px) {
+      .document-detail-page,
+      .document-detail-page .app-layout,
+      .detail-main {
+        height: auto;
+        overflow: visible;
+      }
+
+      .detail-main {
+        min-height: 100vh;
+      }
+
+      .detail-workspace {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+
+      .preview-workspace {
+        min-height: 68vh;
+      }
+
+      .detail-right-inspector {
+        overflow: visible;
+      }
     }
-
-    .modal-box p {
-      margin: 0 0 24px;
-      color: var(--muted);
-      font-size: 15px;
-      line-height: 1.5;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 12px;
-    }
-
-    .modal-actions .btn {
-      flex: 1;
-    }
-
-    .btn-danger-solid {
-      background-color: var(--danger);
-      color: #ffffff;
-    }
-
-    .btn-danger-solid:hover {
-      background-color: #b91c1c;
-    }
-
-
   </style>
 </head>
 
-<body>
+<body class="document-detail-page">
   <div class="app-layout">
     <aside class="sidebar">
       <div class="logo">AI Study Hub</div>
       <nav class="sidebar-nav"></nav>
     </aside>
 
-    <main class="main-content">
+    <main class="main-content detail-main">
       <div id="detailLoader">Loading document...</div>
 
-      <div id="detailContent" class="document-detail-container detail-split-container">
-        <!-- Left Column: Document Space (preview-section) -->
-        <div class="preview-section detail-left-panel">
-          <div class="preview-toolbar">
-            <button id="openFileBtn" class="btn btn-secondary btn-sm" style="display:none;">
-              Open Fullscreen ↗
-            </button>
-            <button id="downloadFileBtn" class="btn btn-secondary btn-sm" style="display:none;">
-              Download ⬇
-            </button>
-          </div>
+      <div id="detailContent" class="detail-workspace" hidden>
+        <section class="preview-workspace" aria-label="Document preview">
+          <header class="preview-toolbar">
+            <div class="preview-toolbar-title">
+              <strong>Document preview</strong>
+              <span>Read the file without leaving this workspace</span>
+            </div>
+            <div class="preview-toolbar-actions">
+              <button id="openFileBtn" class="btn btn-primary" style="display:none;">
+                Open fullscreen <span aria-hidden="true">&#8599;</span>
+              </button>
+              <button id="downloadFileBtn" class="btn btn-secondary" style="display:none;">
+                Download <span aria-hidden="true">&#8595;</span>
+              </button>
+            </div>
+          </header>
+
           <div id="previewArea">
             <div class="preview-fallback">
               <div class="preview-fallback-desc">Loading preview...</div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Right Column: Control Panel & Metadata (details-section) -->
-        <div class="details-section detail-right-inspector">
-          <!-- Back button at the very top of details column -->
-          <button class="btn-back" onclick="handleBack()">← Back to My Documents</button>
-
-          <!-- Inspector Header -->
-          <div class="inspector-header">
-            <h1 id="docTitle">–</h1>
-            <div class="inspector-badge-row">
-              <span class="detail-type-badge" id="fileTypeBadge">–</span>
-              <span id="visibilityBadge" class="status-badge" style="display: none;"></span>
-              <span id="approvalBadge" class="status-badge" style="display: none;"></span>
-            </div>
-            <span class="detail-uploaded-by" id="docUploadedBy"></span>
-          </div>
-
-          <!-- Action buttons row -->
-          <div class="inspector-actions" style="display: flex; flex-direction: column; gap: 8px;">
-            <button id="publishBtn" class="btn btn-primary" style="display:none; width: 100%; padding: 12px; font-weight: 700; border-radius: 10px;">
-              Publish
+        <aside class="detail-right-inspector" aria-label="Document information and actions">
+          <div class="inspector-inner">
+            <button class="btn detail-back-btn" type="button" onclick="handleBack()">
+              <span aria-hidden="true">&#8592;</span> Back
             </button>
-            <button id="unpublishBtn" class="btn btn-danger" style="display:none; width: 100%; padding: 12px; font-weight: 700; border-radius: 10px;">
-              Unpublish
-            </button>
-            <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
-              <button id="shareBtn" class="btn btn-secondary" style="display:none; flex: 1; padding: 10px; border-radius: 10px;">
-                Share
-              </button>
-              <button id="moveBtn" class="btn btn-secondary" style="display:none; flex: 1; padding: 10px; border-radius: 10px;" onclick="showMoveModal()">
-                Move
-              </button>
-            </div>
-          </div>
 
-          <!-- Document details summary (Read-only list) -->
-          <div class="inspector-info-summary">
-            <div class="info-list" style="display: flex; flex-direction: column; gap: 12px;">
-              <div class="info-item">
-                <span class="info-label">Subject</span>
-                <span class="info-value" id="docSubject">–</span>
+            <header class="inspector-document-header">
+              <div class="document-badge-row">
+                <span class="detail-type-badge" id="fileTypeBadge">FILE</span>
+                <span id="visibilityBadge" class="status-badge" style="display:none;"></span>
+                <span id="approvalBadge" class="status-badge" style="display:none;"></span>
               </div>
-              <div class="info-item" style="border-top: 1px solid var(--border); padding-top: 8px;">
-                <span class="info-label">File size</span>
-                <span class="info-value" id="docFileSize">–</span>
-              </div>
-              <div class="info-item" style="border-top: 1px solid var(--border); padding-top: 8px;">
-                <span class="info-label">Uploaded</span>
-                <span class="info-value" id="docCreatedAt">–</span>
-              </div>
-            </div>
-            <div class="info-description">
-              <span class="info-label">Description</span>
-              <p id="docDescription">No description provided.</p>
-            </div>
-          </div>
+              <h1 id="docTitle">Document</h1>
+              <span class="detail-uploaded-by" id="docUploadedBy"></span>
+            </header>
 
-          <!-- Inspector Tabs (Details / Sharing) -->
-          <div class="inspector-tabs-container" role="tablist">
-            <button type="button" id="inspectorTabDetails" class="inspector-tab-btn active">Details</button>
-            <button type="button" id="inspectorTabSharing" class="inspector-tab-btn">Sharing</button>
-          </div>
-
-          <div class="inspector-panes">
-            <!-- Details tab pane -->
-            <div id="inspectorPaneDetails" class="inspector-tab-pane active">
-              <div class="edit-section" style="margin-top: 0;">
-                <h2 style="font-size: 15px; font-weight: 700; margin-bottom: 12px;">Edit Details</h2>
-
-                <div class="form-group">
-                  <label for="editTitle">Title <span style="color:var(--danger)">*</span></label>
-                  <input type="text" id="editTitle" placeholder="Document title" />
-                </div>
-
-                <div class="form-group">
-                  <label for="editDescription">Description</label>
-                  <textarea id="editDescription" placeholder="Optional description" style="min-height: 80px;"></textarea>
-                </div>
-
-                <div class="form-group">
-                  <label for="editSubject">Subject</label>
-                  <select id="editSubject">
-                    <option value="" disabled selected>Loading subjects...</option>
-                  </select>
-                </div>
-
-                <div id="editMessage" class="helper-text" style="min-height:20px;margin-bottom:12px;"></div>
-
-                <div class="edit-actions" style="margin-top: 16px;">
-                  <button class="btn btn-primary" id="saveBtn" onclick="handleSave()" style="width:100%;">Save Changes</button>
-                </div>
-              </div>
+            <div class="document-action-row" id="documentActionRow" aria-label="Document actions">
+              <button id="shareBtn" class="btn btn-secondary" style="display:none;">Share</button>
+              <button id="moveBtn" class="btn btn-secondary" style="display:none;" onclick="showMoveModal()">Move</button>
+              <button id="publishBtn" class="btn btn-primary" style="display:none;">Publish</button>
+              <button id="unpublishBtn" class="btn btn-secondary" style="display:none;">Unpublish</button>
             </div>
 
-            <!-- Sharing tab pane -->
-            <div id="inspectorPaneSharing" class="inspector-tab-pane">
-              <div id="sharesPanel" class="shares-panel" style="display: block; margin-bottom: 0;">
-                <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 12px;">Sharing Management</h3>
-
-                <div style="margin-bottom: 20px;">
-                  <h4 style="font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Direct User Shares</h4>
-                  <div id="directSharesList" class="member-list" style="margin-bottom: 12px;"></div>
-                  <p id="noDirectShares" class="helper-text" style="color: var(--muted); display: none;">Not shared with any users directly.</p>
+            <section class="detail-summary" aria-label="Document metadata">
+              <dl class="detail-meta-list">
+                <div class="detail-meta-row">
+                  <dt>Subject</dt>
+                  <dd id="docSubject">No subject</dd>
                 </div>
-
-                <div>
-                  <h4 style="font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Group Shares</h4>
-                  <div id="groupSharesList" class="member-list" style="margin-bottom: 12px;"></div>
-                  <p id="noGroupShares" class="helper-text" style="color: var(--muted); display: none;">Not shared in any groups.</p>
+                <div class="detail-meta-row">
+                  <dt>File size</dt>
+                  <dd id="docFileSize">-</dd>
                 </div>
+                <div class="detail-meta-row">
+                  <dt>Uploaded</dt>
+                  <dd id="docCreatedAt">-</dd>
+                </div>
+              </dl>
+              <p class="detail-description" id="docDescription">No description provided.</p>
+            </section>
+
+            <div class="inspector-tabs-container" id="inspectorTabs" role="tablist">
+              <button type="button" id="inspectorTabDetails" class="inspector-tab-btn active">Details</button>
+              <button type="button" id="inspectorTabSharing" class="inspector-tab-btn">Sharing</button>
+            </div>
+
+            <div class="inspector-panes">
+              <div id="inspectorPaneDetails" class="inspector-tab-pane active">
+                <section class="edit-section">
+                  <h2>Edit details</h2>
+
+                  <div class="form-group">
+                    <label for="editTitle">Title <span class="label-required">*</span></label>
+                    <input type="text" id="editTitle" placeholder="Document title" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="editDescription">Description</label>
+                    <textarea id="editDescription" placeholder="Optional description"></textarea>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="editSubject">Subject</label>
+                    <select id="editSubject">
+                      <option value="" disabled selected>Loading subjects...</option>
+                    </select>
+                  </div>
+
+                  <div id="editMessage" class="helper-text" style="min-height:20px;"></div>
+
+                  <div class="edit-actions">
+                    <button class="btn btn-primary" id="saveBtn" onclick="handleSave()">Save changes</button>
+                  </div>
+
+                  <div class="danger-zone inspector-danger-zone">
+                    <span class="danger-zone-label">Danger zone</span>
+                    <p class="danger-zone-copy">Move this document to Trash. You can restore it later.</p>
+                    <button class="danger-link" id="deleteBtn" onclick="handleDelete()">Delete document</button>
+                  </div>
+                </section>
+              </div>
+
+              <div id="inspectorPaneSharing" class="inspector-tab-pane">
+                <section id="sharesPanel" class="shares-panel" style="display:block;">
+                  <h2>Sharing management</h2>
+
+                  <div class="share-block">
+                    <h3>Direct user shares</h3>
+                    <div id="directSharesList" class="member-list"></div>
+                    <p id="noDirectShares" class="helper-text" style="display:none;">Not shared with any users directly.</p>
+                  </div>
+
+                  <div class="share-block">
+                    <h3>Group shares</h3>
+                    <div id="groupSharesList" class="member-list"></div>
+                    <p id="noGroupShares" class="helper-text" style="display:none;">Not shared in any groups.</p>
+                  </div>
+                </section>
               </div>
             </div>
           </div>
-
-          <!-- Danger Zone: separated Delete link -->
-          <div class="inspector-danger-zone" style="display: none;">
-            <button type="button" id="deleteBtn" onclick="handleDelete()">Delete Document</button>
-          </div>
-        </div>
+        </aside>
       </div>
     </main>
   </div>
 
-  <div class="modal-overlay" id="deleteModal">
-    <div class="modal-box">
-      <h3>Delete document?</h3>
-      <p>This document will be removed from your document list.</p>
-      <div class="modal-actions">
-        <button class="btn btn-secondary" onclick="hideDeleteConfirm()">Cancel</button>
-        <button class="btn btn-danger-solid" id="confirmDeleteBtn" onclick="handleDelete()">Delete</button>
-      </div>
-    </div>
-  </div>
-
   <div class="modal-overlay" id="moveModal">
-    <div class="modal-box" style="max-width: 450px;">
-      <h3>Move Document</h3>
-      <div class="form-group" style="margin-top: 16px; margin-bottom: 20px;">
-        <label for="moveFolderSelect">Select Destination Folder</label>
-        <select id="moveFolderSelect" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text);">
-          <option value="">— My Documents —</option>
+    <div class="modal-box detail-modal">
+      <h3>Move document</h3>
+      <div class="form-group" style="margin-top:16px;">
+        <label for="moveFolderSelect">Destination folder</label>
+        <select id="moveFolderSelect">
+          <option value="">My Documents</option>
         </select>
       </div>
-      <p id="moveError" class="modal-error" role="alert" aria-live="polite"
-        style="color: var(--danger); font-size: 13px; display: none; margin-bottom: 16px;"></p>
+      <p id="moveError" class="modal-error" role="alert" aria-live="polite" style="display:none;"></p>
       <div class="modal-actions">
         <button class="btn btn-secondary" onclick="hideMoveModal()">Cancel</button>
         <button class="btn btn-primary" id="moveConfirmBtn" onclick="handleMove()">Move</button>
@@ -679,63 +629,56 @@
   </div>
 
   <div class="modal-overlay" id="shareModal" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
-    <div class="modal-box" style="max-width: 450px;">
-      <h3 id="shareModalTitle">Share Document</h3>
+    <div class="modal-box detail-modal">
+      <h3 id="shareModalTitle">Share document</h3>
 
-      <div class="tab-header" style="display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px;">
+      <div class="tab-header" style="display:flex;border-bottom:1px solid var(--border);margin-bottom:20px;">
         <button type="button" class="tab-btn active" id="tabUserBtn"
-          style="flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600; cursor: pointer;">Share
-          with User</button>
+          style="flex:1;padding:10px;background:transparent;border:0;border-bottom:2px solid var(--primary);color:var(--primary);font-weight:600;cursor:pointer;">Share with user</button>
         <button type="button" class="tab-btn" id="tabGroupBtn"
-          style="flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-weight: 600; cursor: pointer;">Share
-          with Group</button>
+          style="flex:1;padding:10px;background:transparent;border:0;border-bottom:2px solid transparent;color:var(--muted);font-weight:600;cursor:pointer;">Share with group</button>
       </div>
 
       <div id="tabUserContent">
         <div class="form-group">
-          <label for="shareUserEmail">Recipient Email <span class="label-required">*</span></label>
-          <input type="email" id="shareUserEmail" placeholder="E.g: student@gmail.com" autocomplete="off" />
+          <label for="shareUserEmail">Recipient email <span class="label-required">*</span></label>
+          <input type="email" id="shareUserEmail" placeholder="student@gmail.com" autocomplete="off" />
         </div>
-        <p id="shareUserError" class="modal-error" role="alert" aria-live="polite"
-          style="color: var(--danger); font-size: 13px; display: none; margin-bottom: 16px;"></p>
+        <p id="shareUserError" class="modal-error" role="alert" aria-live="polite" style="display:none;"></p>
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" id="shareUserCancelBtn">Cancel</button>
           <button type="button" class="btn btn-primary" id="shareUserConfirmBtn">Share</button>
         </div>
       </div>
 
-      <div id="tabGroupContent" style="display: none;">
+      <div id="tabGroupContent" style="display:none;">
         <div class="form-group">
-          <label for="shareGroupSelect">Select Study Group <span class="label-required">*</span></label>
+          <label for="shareGroupSelect">Study group <span class="label-required">*</span></label>
           <select id="shareGroupSelect">
             <option value="" disabled selected>Loading groups...</option>
           </select>
         </div>
-        <p id="shareGroupError" class="modal-error" role="alert" aria-live="polite"
-          style="color: var(--danger); font-size: 13px; display: none; margin-bottom: 16px;"></p>
+        <p id="shareGroupError" class="modal-error" role="alert" aria-live="polite" style="display:none;"></p>
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" id="shareGroupCancelBtn">Cancel</button>
-          <button type="button" class="btn btn-primary" id="shareGroupConfirmBtn">Share to Group</button>
+          <button type="button" class="btn btn-primary" id="shareGroupConfirmBtn">Share to group</button>
         </div>
       </div>
     </div>
   </div>
 
-  <div id="toast"></div>
-
   <script src="js/api.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/navigation.js"></script>
-<script src="js/layout.js"></script>
-<script src="js/subject-api.js"></script>
-<script src="js/document-api.js"></script>
-<script src="js/community-api.js"></script>
-<script src="js/group-api.js"></script>
-<script src="js/share-api.js"></script>
-<script src="js/folder-api.js"></script>
-
-<script src="js/document-preview.js"></script>
-<script src="js/document-detail.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/subject-api.js"></script>
+  <script src="js/document-api.js"></script>
+  <script src="js/community-api.js"></script>
+  <script src="js/group-api.js"></script>
+  <script src="js/share-api.js"></script>
+  <script src="js/folder-api.js"></script>
+  <script src="js/document-preview.js"></script>
+  <script src="js/document-detail.js"></script>
 </body>
 
 </html>

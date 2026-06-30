@@ -134,7 +134,7 @@ async function loadPage(id, { isAuthenticated, isCommunityView }) {
         }
 
         detailLoader.style.display = "none";
-        detailContent.style.display = "block";
+        detailContent.hidden = false;
     } catch (err) {
         if (!isAuthenticated) {
             showFatalError("This document is private or no longer available.", true);
@@ -215,6 +215,7 @@ function renderDocument(doc) {
     const moveBtn = document.getElementById("moveBtn");
     const publishBtn = document.getElementById("publishBtn");
     const unpublishBtn = document.getElementById("unpublishBtn");
+    const documentActionRow = document.getElementById("documentActionRow");
 
     currentDocumentFolderId = doc.folderId;
 
@@ -299,6 +300,13 @@ function renderDocument(doc) {
         } else {
             unpublishBtn.style.display = "none";
         }
+    }
+
+    if (documentActionRow) {
+        const hasDocumentActions = !currentIsCommunityView && (
+            doc.canShare || doc.canMove || doc.canPublish || doc.canUnpublish
+        );
+        documentActionRow.style.display = hasDocumentActions ? "flex" : "none";
     }
 
     // ── Call render preview (document-preview.js) ──
