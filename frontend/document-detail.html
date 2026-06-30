@@ -415,7 +415,163 @@
       color: var(--danger);
     }
 
-    .share-block + .share-block {
+    .ai-processing-section {
+      margin-top: 32px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .ai-processing-heading {
+      margin: 0 0 12px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .ai-processing-status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .status-badge.processing {
+      background-color: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+
+    .status-badge.completed {
+      background-color: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .status-badge.failed {
+      background-color: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .status-badge.unsupported,
+    .status-badge.empty-content {
+      background-color: #f3f4f6;
+      color: #374151;
+      border: 1px solid #d1d5db;
+    }
+
+    .ai-status-spinner {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid #bfdbfe;
+      border-top-color: #1e40af;
+      animation: ai-spin 0.8s linear infinite;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+
+    @keyframes ai-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .ai-processing-meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .ai-processing-message {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .ai-processing-message.error {
+      color: var(--danger-text);
+    }
+
+    .ai-processing-warning {
+      margin: 0 0 10px;
+      padding: 8px 10px;
+      background-color: #fffbeb;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .ai-processing-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .ai-processing-actions .btn {
+      width: auto;
+      min-width: 0;
+      padding: 6px 14px;
+      font-size: 12px;
+    }
+
+    .ai-extracted-text-box {
+      margin-top: 14px;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+
+    .ai-extracted-text-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .ai-extracted-text-header span {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .ai-text-toggle-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 11px;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .ai-text-toggle-btn:hover {
+      background: var(--surface-soft);
+    }
+
+    .ai-extracted-text-content {
+      max-height: 260px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: inherit;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin: 0;
+    }
+
+    .share-block+.share-block {
       margin-top: 20px;
     }
 
@@ -444,6 +600,7 @@
     }
 
     @media (max-width: 980px) {
+
       .document-detail-page,
       .document-detail-page .app-layout,
       .detail-main {
@@ -523,7 +680,8 @@
 
             <div class="document-action-row" id="documentActionRow" aria-label="Document actions">
               <button id="shareBtn" class="btn btn-secondary" style="display:none;">Share</button>
-              <button id="moveBtn" class="btn btn-secondary" style="display:none;" onclick="showMoveModal()">Move</button>
+              <button id="moveBtn" class="btn btn-secondary" style="display:none;"
+                onclick="showMoveModal()">Move</button>
               <button id="publishBtn" class="btn btn-primary" style="display:none;">Publish</button>
               <button id="unpublishBtn" class="btn btn-secondary" style="display:none;">Unpublish</button>
             </div>
@@ -579,6 +737,26 @@
                     <button class="btn btn-primary" id="saveBtn" onclick="handleSave()">Save changes</button>
                   </div>
 
+                  <section class="ai-processing-section" id="aiProcessingSection"
+                    aria-label="AI document processing status" style="display:none;">
+                    <h3 class="ai-processing-heading">AI Document Processing</h3>
+                    <div class="ai-processing-status-row">
+                      <span class="status-badge" id="aiStatusBadge">–</span>
+                      <span class="ai-processing-meta" id="aiProcessingMeta"></span>
+                    </div>
+                    <p class="ai-processing-message" id="aiProcessingMessage"></p>
+                    <p class="ai-processing-warning" id="aiProcessingWarning"></p>
+                    <div class="ai-processing-actions" id="aiProcessingActions"></div>
+
+                    <div class="ai-extracted-text-box" id="aiExtractedTextBox" style="display:none;">
+                      <div class="ai-extracted-text-header">
+                        <span>Extracted Text</span>
+                        <button type="button" class="ai-text-toggle-btn" id="aiTextToggleBtn">Collapse</button>
+                      </div>
+                      <pre class="ai-extracted-text-content" id="aiExtractedTextContent"></pre>
+                    </div>
+                  </section>
+
                   <div class="danger-zone inspector-danger-zone">
                     <span class="danger-zone-label">Danger zone</span>
                     <p class="danger-zone-copy">Move this document to Trash. You can restore it later.</p>
@@ -594,7 +772,8 @@
                   <div class="share-block">
                     <h3>Direct user shares</h3>
                     <div id="directSharesList" class="member-list"></div>
-                    <p id="noDirectShares" class="helper-text" style="display:none;">Not shared with any users directly.</p>
+                    <p id="noDirectShares" class="helper-text" style="display:none;">Not shared with any users directly.
+                    </p>
                   </div>
 
                   <div class="share-block">
@@ -634,9 +813,11 @@
 
       <div class="tab-header" style="display:flex;border-bottom:1px solid var(--border);margin-bottom:20px;">
         <button type="button" class="tab-btn active" id="tabUserBtn"
-          style="flex:1;padding:10px;background:transparent;border:0;border-bottom:2px solid var(--primary);color:var(--primary);font-weight:600;cursor:pointer;">Share with user</button>
+          style="flex:1;padding:10px;background:transparent;border:0;border-bottom:2px solid var(--primary);color:var(--primary);font-weight:600;cursor:pointer;">Share
+          with user</button>
         <button type="button" class="tab-btn" id="tabGroupBtn"
-          style="flex:1;padding:10px;background:transparent;border:0;border-bottom:2px solid transparent;color:var(--muted);font-weight:600;cursor:pointer;">Share with group</button>
+          style="flex:1;padding:10px;background:transparent;border:0;border-bottom:2px solid transparent;color:var(--muted);font-weight:600;cursor:pointer;">Share
+          with group</button>
       </div>
 
       <div id="tabUserContent">
