@@ -165,7 +165,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       sharedLoader.style.display = "none";
 
       if (docs.length === 0) {
-        sharedEmpty.style.display = "block";
+        sharedEmpty.style.display = "flex";
         return;
       }
 
@@ -194,7 +194,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       folderLoader.style.display = "none";
 
       if (shares.length === 0) {
-        folderEmpty.style.display = "block";
+        folderEmpty.style.display = "flex";
         return;
       }
 
