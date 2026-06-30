@@ -80,4 +80,49 @@ class TextChunkerTest {
         assertNotNull(chunks.get(0).getSourceLabel());
         assertTrue(chunks.get(0).getSourceLabel().startsWith("Page "));
     }
+
+    @Test
+    void chunk_WhenTextEndsExactlyAtChunkBoundary_ShouldNotDuplicateLastChunk() {
+
+        String text = "a".repeat(500);
+        List<ExtractionResult.ExtractedChunk> chunks = chunker.chunk(text);
+
+        assertEquals(1, chunks.size());
+        assertEquals(0, chunks.get(0).getStartOffset());
+        assertEquals(500, chunks.get(0).getEndOffset());
+    }
+
+    @Test
+    void chunk_WhenLongTextEndsNearOverlapWindow_ShouldNotCreateOverlappingTailChunk() {
+
+        String text = "word ".repeat(400);
+        List<ExtractionResult.ExtractedChunk> chunks = chunker.chunk(text);
+
+        assertFalse(chunks.isEmpty());
+
+
+        ExtractionResult.ExtractedChunk last = chunks.get(chunks.size() - 1);
+        assertEquals(text.length(), last.getEndOffset());
+
+
+        for (int i = 1; i < chunks.size(); i++) {
+            ExtractionResult.ExtractedChunk prev = chunks.get(i - 1);
+            ExtractionResult.ExtractedChunk curr = chunks.get(i);
+            boolean fullyContained = curr.getStartOffset() >= prev.getStartOffset()
+                && curr.getEndOffset() <= prev.getEndOffset();
+            assertFalse(fullyContained,
+                "Chunk " + i + " is fully contained within chunk " + (i - 1));
+        }
+    }
+
+    @Test
+    void chunk_AllChunksShouldAlwaysAdvancePastPreviousStart() {
+        String text = "Sentence one. ".repeat(300);
+        List<ExtractionResult.ExtractedChunk> chunks = chunker.chunk(text);
+
+        for (int i = 1; i < chunks.size(); i++) {
+            assertTrue(chunks.get(i).getStartOffset() > chunks.get(i - 1).getStartOffset(),
+                "Chunk pointer did not advance between chunk " + (i - 1) + " and " + i);
+        }
+    }
 }
