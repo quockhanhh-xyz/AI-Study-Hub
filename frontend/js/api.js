@@ -71,7 +71,8 @@ async function apiRequest(endpoint, options = {}) {
   }
 
   // Handle all other HTTP errors or business failures
-  if (!response.ok || data.success === false) {
+  // Explicitly treats all HTTP 2xx statuses (including 202 Accepted) as successful mutations
+  if (!response.ok || (data && data.success === false)) {
     console.warn("API Request Business Error:", data || rawText);
 
     // Extract backend error message accurately, fallback to customized status text if empty
