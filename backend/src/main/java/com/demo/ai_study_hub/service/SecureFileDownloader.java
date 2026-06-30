@@ -2,7 +2,6 @@ package com.demo.ai_study_hub.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
@@ -18,14 +17,28 @@ public class SecureFileDownloader {
 
     private static final Logger log = LoggerFactory.getLogger(SecureFileDownloader.class);
 
-    private static final List<String> ALLOWED_HOSTS = List.of(
-            "res.cloudinary.com"
-    );
-
     private static final int CONNECT_TIMEOUT_MS = 10_000;
     private static final int READ_TIMEOUT_MS = 30_000;
     private static final long MAX_DOWNLOAD_SIZE_BYTES = 15 * 1024 * 1024;
     private static final int MAX_REDIRECTS = 2;
+
+    private final List<String> allowedHosts;
+    private final boolean requireHttps;
+
+    public SecureFileDownloader() {
+        this.allowedHosts = List.of("res.cloudinary.com");
+        this.requireHttps = true;
+    }
+
+    /**
+     * Test-only constructor — allows pointing at a local test HTTP server
+     * without weakening production allowlist/HTTPS enforcement. Production
+     * code must always use the no-arg constructor.
+     */
+    public SecureFileDownloader(List<String> allowedHosts, boolean requireHttps) {
+        this.allowedHosts = allowedHosts;
+        this.requireHttps = requireHttps;
+    }
 
     public static class DownloadException extends RuntimeException {
         public DownloadException(String message) {
@@ -112,13 +125,16 @@ public class SecureFileDownloader {
     }
 
     private void validateHost(String urlString) {
+        if (urlString == null || urlString.isBlank()) {
+            throw new DownloadException("File URL must not be empty");
+        }
         try {
             URI uri = URI.create(urlString);
             String host = uri.getHost();
-            if (host == null || !ALLOWED_HOSTS.contains(host.toLowerCase())) {
+            if (host == null || !allowedHosts.contains(host.toLowerCase())) {
                 throw new DownloadException("File URL host is not in the allowed list: " + host);
             }
-            if (!"https".equalsIgnoreCase(uri.getScheme())) {
+            if (requireHttps && !"https".equalsIgnoreCase(uri.getScheme())) {
                 throw new DownloadException("File URL must use HTTPS");
             }
         } catch (IllegalArgumentException e) {
