@@ -87,12 +87,18 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Breadcrumb helpers
 
   // Builds and renders the breadcrumb trail for the current folder.
-  // My Documents is always the first crumb; subsequent crumbs come from
+  // My Folders is always the first crumb; subsequent crumbs come from
   // resolving parent folder names via the API.
   async function buildBreadcrumb() {
-    breadcrumbTrail = [{ folderId: null, name: "My Documents" }];
+    breadcrumbTrail = [{ folderId: null, name: "My Folders" }];
+
+    const subtitleEl = document.getElementById("folderPageSubtitle");
+    const breadcrumbEl = document.getElementById("breadcrumb");
 
     if (currentParentFolderId) {
+      if (subtitleEl) subtitleEl.style.display = "none";
+      if (breadcrumbEl) breadcrumbEl.style.display = "block";
+
       // Build full path by walking up the parent chain
       const chain = [];
       let folderId = currentParentFolderId;
@@ -114,8 +120,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
       }
 
-      breadcrumbTrail = [{ folderId: null, name: "My Documents" }, ...chain];
+      breadcrumbTrail = [{ folderId: null, name: "My Folders" }, ...chain];
     } else {
+      if (subtitleEl) subtitleEl.style.display = "block";
+      if (breadcrumbEl) breadcrumbEl.style.display = "none";
+
       const pageTitleEl = document.getElementById("folderPageTitle");
       if (pageTitleEl) {
         pageTitleEl.textContent = "My Folders";
@@ -147,7 +156,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const sep = document.createElement("span");
         sep.className = "breadcrumb-sep";
-        sep.textContent = " / ";
+        sep.textContent = " > ";
         sep.setAttribute("aria-hidden", "true");
         breadcrumb.appendChild(sep);
       }
@@ -764,11 +773,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  const emptyUploadBtn = document.getElementById("emptyUploadBtn");
   if (uploadDocumentToFolderBtn) {
     if (currentParentFolderId) {
       uploadDocumentToFolderBtn.href = `upload.html?folderId=${currentParentFolderId}`;
+      if (emptyUploadBtn) emptyUploadBtn.href = `upload.html?folderId=${currentParentFolderId}`;
     } else {
       uploadDocumentToFolderBtn.href = "upload.html";
+      if (emptyUploadBtn) emptyUploadBtn.href = "upload.html";
     }
   }
 
