@@ -286,49 +286,77 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
-  function createTrashDocumentCard(documentItem) {
-    const card = document.createElement("article");
-    card.className = "document-card";
+  function createTrashDocumentRow(documentItem) {
+    const row = document.createElement("div");
+    row.className = "trash-row";
 
-    const header = document.createElement("div");
-    header.className = "document-card-header";
+    // Left Section: Icon + Info (Title & Subtitle with size)
+    const left = document.createElement("div");
+    left.className = "trash-row-left";
 
-    const badge = document.createElement("span");
-    badge.className = "document-type-badge";
-    badge.textContent = (documentItem.fileType || "doc").toUpperCase();
+    const iconContainer = document.createElement("div");
+    iconContainer.className = "trash-row-icon";
+    iconContainer.innerHTML = getFileTypeIcon(documentItem.fileType);
+    const iconWrapper = iconContainer.firstElementChild;
+    if (iconWrapper) {
+      iconWrapper.style.width = "20px";
+      iconWrapper.style.height = "20px";
+      iconContainer.innerHTML = "";
+      iconContainer.appendChild(iconWrapper);
+    }
+    
+    const info = document.createElement("div");
+    info.className = "trash-row-info";
 
-    const title = document.createElement("h3");
-    title.textContent = documentItem.title || documentItem.originalFileName || "Untitled document";
+    const titleEl = document.createElement("h4");
+    titleEl.className = "trash-row-title";
+    titleEl.textContent = documentItem.title || documentItem.originalFileName || "Untitled document";
 
-    header.append(badge, title);
+    const subtitleEl = document.createElement("span");
+    subtitleEl.className = "trash-row-subtitle";
+    subtitleEl.textContent = `${documentItem.originalFileName || "Deleted document."} • ${formatFileSize(documentItem.fileSize)}`;
 
-    const description = document.createElement("p");
-    description.className = "document-description";
-    description.textContent = documentItem.originalFileName || "Deleted document.";
+    info.append(titleEl, subtitleEl);
+    left.append(iconContainer, info);
 
-    const meta = document.createElement("div");
-    meta.className = "document-meta";
-    meta.append(
-      createMetaItem("Size", formatFileSize(documentItem.fileSize)),
-      createMetaItem("Deleted", formatDate(documentItem.deletedAt))
-    );
+    // Center Section: Deleted on date
+    const center = document.createElement("div");
+    center.className = "trash-row-center";
+    center.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="14" width="14" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 6v6l4 2"/>
+      </svg>
+      Deleted on: ${formatDate(documentItem.deletedAt)}
+    `;
 
-    const actions = document.createElement("div");
-    actions.className = "trash-actions";
+    // Right Section: Action Buttons
+    const right = document.createElement("div");
+    right.className = "trash-row-right";
 
-    const restoreButton = document.createElement("button");
-    restoreButton.type = "button";
-    restoreButton.className = "btn btn-secondary";
-    restoreButton.textContent = "Restore";
-    restoreButton.addEventListener("click", function () {
-      restoreItem("document", documentItem.documentId, restoreButton);
+    const restoreBtn = document.createElement("button");
+    restoreBtn.type = "button";
+    restoreBtn.className = "trash-action-btn btn-restore";
+    restoreBtn.title = "Restore";
+    restoreBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+      </svg>
+    `;
+    restoreBtn.addEventListener("click", function () {
+      restoreItem("document", documentItem.documentId, restoreBtn);
     });
 
-    const deleteButton = document.createElement("button");
-    deleteButton.type = "button";
-    deleteButton.className = "btn btn-danger";
-    deleteButton.textContent = "Delete Permanently";
-    deleteButton.addEventListener("click", function () {
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "trash-action-btn btn-delete-perm";
+    deleteBtn.title = "Delete Permanently";
+    deleteBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+    `;
+    deleteBtn.addEventListener("click", function () {
       openPermanentDeleteModal({
         type: "document",
         id: documentItem.documentId,
@@ -336,54 +364,76 @@ document.addEventListener("DOMContentLoaded", async function () {
       });
     });
 
-    actions.append(restoreButton, deleteButton);
-    card.append(header, description, meta, actions);
+    right.append(restoreBtn, deleteBtn);
+    row.append(left, center, right);
 
-    return card;
+    return row;
   }
 
-  function createTrashFolderCard(folderItem) {
-    const card = document.createElement("article");
-    card.className = "document-card";
+  function createTrashFolderRow(folderItem) {
+    const row = document.createElement("div");
+    row.className = "trash-row";
 
-    const header = document.createElement("div");
-    header.className = "document-card-header";
+    // Left Section: Icon + Info
+    const left = document.createElement("div");
+    left.className = "trash-row-left";
 
-    const badge = document.createElement("span");
-    badge.className = "document-type-badge";
-    badge.textContent = "DIR";
+    const iconContainer = document.createElement("div");
+    iconContainer.className = "trash-row-icon";
+    iconContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20" stroke="currentColor" stroke-width="2"><path d="M1.5 10V2.5h5l3 3h11v3m3 0.25V8.5H4.6l-0.15 0.25 -0.234 0.492A28 28 0 0 0 1.5 21.272v0.228h19v-0.128a28 28 0 0 1 2.757 -12.116l0.243 -0.506Z"/></svg>`;
+    
+    const info = document.createElement("div");
+    info.className = "trash-row-info";
 
-    const title = document.createElement("h3");
-    title.textContent = folderItem.folderName || "Untitled folder";
+    const titleEl = document.createElement("h4");
+    titleEl.className = "trash-row-title";
+    titleEl.textContent = folderItem.folderName || "Untitled folder";
 
-    header.append(badge, title);
+    const subtitleEl = document.createElement("span");
+    subtitleEl.className = "trash-row-subtitle";
+    subtitleEl.textContent = "Deleted folder. Restores folder and documents.";
 
-    const description = document.createElement("p");
-    description.className = "document-description";
-    description.textContent = "Deleted folder. Restoring it also restores documents deleted with it.";
+    info.append(titleEl, subtitleEl);
+    left.append(iconContainer, info);
 
-    const meta = document.createElement("div");
-    meta.className = "document-meta";
-    meta.append(
-      createMetaItem("Deleted", formatDate(folderItem.deletedAt))
-    );
+    // Center Section: Deleted on date
+    const center = document.createElement("div");
+    center.className = "trash-row-center";
+    center.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="14" width="14" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 6v6l4 2"/>
+      </svg>
+      Deleted on: ${formatDate(folderItem.deletedAt)}
+    `;
 
-    const actions = document.createElement("div");
-    actions.className = "trash-actions";
+    // Right Section: Actions
+    const right = document.createElement("div");
+    right.className = "trash-row-right";
 
-    const restoreButton = document.createElement("button");
-    restoreButton.type = "button";
-    restoreButton.className = "btn btn-secondary";
-    restoreButton.textContent = "Restore";
-    restoreButton.addEventListener("click", function () {
-      restoreItem("folder", folderItem.folderId, restoreButton);
+    const restoreBtn = document.createElement("button");
+    restoreBtn.type = "button";
+    restoreBtn.className = "trash-action-btn btn-restore";
+    restoreBtn.title = "Restore";
+    restoreBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+      </svg>
+    `;
+    restoreBtn.addEventListener("click", function () {
+      restoreItem("folder", folderItem.folderId, restoreBtn);
     });
 
-    const deleteButton = document.createElement("button");
-    deleteButton.type = "button";
-    deleteButton.className = "btn btn-danger";
-    deleteButton.textContent = "Delete Permanently";
-    deleteButton.addEventListener("click", function () {
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "trash-action-btn btn-delete-perm";
+    deleteBtn.title = "Delete Permanently";
+    deleteBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+    `;
+    deleteBtn.addEventListener("click", function () {
       openPermanentDeleteModal({
         type: "folder",
         id: folderItem.folderId,
@@ -391,10 +441,10 @@ document.addEventListener("DOMContentLoaded", async function () {
       });
     });
 
-    actions.append(restoreButton, deleteButton);
-    card.append(header, description, meta, actions);
+    right.append(restoreBtn, deleteBtn);
+    row.append(left, center, right);
 
-    return card;
+    return row;
   }
 
   function renderTrashItems(documents, folders) {
@@ -468,13 +518,13 @@ document.addEventListener("DOMContentLoaded", async function () {
       groupSection.appendChild(header);
 
       const grid = document.createElement("div");
-      grid.className = "document-grid";
+      grid.className = "trash-list";
 
       groups[dateKey].forEach(function (item) {
         if (item.itemType === "folder") {
-          grid.appendChild(createTrashFolderCard(item));
+          grid.appendChild(createTrashFolderRow(item));
         } else {
-          grid.appendChild(createTrashDocumentCard(item));
+          grid.appendChild(createTrashDocumentRow(item));
         }
       });
 

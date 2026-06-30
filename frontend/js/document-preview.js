@@ -75,7 +75,7 @@ function renderFallback(container, fileType) {
         </svg>
       </div>
       <div class="preview-fallback-title">${label} files cannot be previewed</div>
-      <div class="preview-fallback-desc">Use the Open or Download button below to access this file.</div>
+      <div class="preview-fallback-desc">Use the Open or Download buttons at the top of the preview panel to access this file.</div>
     </div>
   `;
 }

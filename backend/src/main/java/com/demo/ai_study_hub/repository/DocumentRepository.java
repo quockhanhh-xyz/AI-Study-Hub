@@ -82,4 +82,8 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     @Modifying
     @Query("UPDATE Document d SET d.downloadCount = COALESCE(d.downloadCount, 0) + 1 WHERE d.documentId = :id")
     void incrementDownloadCountById(@Param("id") Integer id);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT d FROM Document d WHERE d.documentId = :id")
+    java.util.Optional<Document> findByIdForWrite(@Param("id") Integer id);
 }

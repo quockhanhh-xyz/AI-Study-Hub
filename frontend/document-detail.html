@@ -4,620 +4,623 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Document Detail – AI Study Hub</title>
+  <title>Document Detail - AI Study Hub</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="stylesheet" href="css/style.css" />
 
   <style>
-    /* ===== DETAIL PAGE SPECIFIC ===== */
-    .detail-back-btn {
-      width: auto;
-      padding: 10px 20px;
-      margin-bottom: 24px;
-      background: transparent;
-      border: 1px solid var(--border);
+    .document-detail-page {
+      overflow: hidden;
+    }
+
+    .document-detail-page .app-layout {
+      height: 100vh;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .detail-main {
+      height: 100vh;
+      min-width: 0;
+      min-height: 0;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    #detailLoader {
+      display: grid;
+      flex: 1;
+      place-items: center;
       color: var(--muted);
-      font-size: 14px;
+      font-size: 15px;
+    }
+
+    .detail-workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(340px, 1fr);
+      gap: 18px;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .detail-workspace[hidden] {
+      display: none !important;
+    }
+
+    .preview-workspace {
+      display: flex;
+      min-width: 0;
+      min-height: 0;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .preview-toolbar {
+      display: flex;
+      min-height: 64px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .preview-toolbar-title {
+      min-width: 0;
+    }
+
+    .preview-toolbar-title strong,
+    .preview-toolbar-title span {
+      display: block;
+    }
+
+    .preview-toolbar-title strong {
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .preview-toolbar-title span {
+      margin-top: 2px;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .preview-toolbar-actions,
+    .document-action-row {
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: 8px;
     }
 
-    .detail-back-btn:hover {
-      background: var(--surface-soft);
-      color: var(--text);
+    .preview-toolbar .btn,
+    .document-action-row .btn {
+      width: auto;
+      min-height: 38px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      white-space: nowrap;
     }
 
-    .detail-card {
-      max-width: 720px;
-      width: 100%;
-      margin: 0 auto;
+    .preview-toolbar .btn-primary {
+      border-color: var(--primary);
     }
 
-    .detail-header {
+    #previewArea {
       display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      margin-bottom: 28px;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      background: #eef0f3;
+    }
+
+    .preview-iframe {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      border: 0;
+      background: #ffffff;
+    }
+
+    .preview-image-wrap {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      padding: 24px;
+    }
+
+    .preview-image {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .preview-fallback {
+      display: flex;
+      width: 100%;
+      min-height: 100%;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
+      padding: 32px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .preview-fallback-title {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .preview-fallback-desc {
+      max-width: 440px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .detail-right-inspector {
+      display: flex;
+      min-width: 0;
+      min-height: 0;
+      flex-direction: column;
+      overflow-y: auto;
+      scrollbar-gutter: stable;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .inspector-inner {
+      display: flex;
+      min-height: 100%;
+      flex-direction: column;
+      padding: 20px;
+    }
+
+    .detail-back-btn {
+      width: fit-content;
+      min-height: 36px;
+      margin: 0 0 18px;
+      padding: 7px 10px;
+      gap: 7px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .detail-back-btn:hover {
+      color: var(--text);
+      background: var(--surface-soft);
+      border-color: var(--border);
+    }
+
+    .document-badge-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .detail-type-badge,
+    .status-badge {
+      display: inline-flex;
+      min-height: 24px;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1;
     }
 
     .detail-type-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 56px;
-      height: 32px;
-      padding: 0 10px;
-      border-radius: 6px;
+      color: var(--primary-hover);
       background: var(--primary-light);
-      color: var(--primary);
-      font-size: 13px;
-      font-weight: 700;
-      flex-shrink: 0;
-      margin-top: 4px;
+      border: 1px solid var(--primary-border);
     }
 
-    .detail-title-block h1 {
-      margin: 0 0 6px;
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-      line-height: 1.3;
-    }
-
-    .detail-title-block .detail-uploaded-by {
-      font-size: 13px;
+    .status-badge {
       color: var(--muted);
-    }
-
-    .detail-meta-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 28px;
-    }
-
-    .meta-item {
       background: var(--background);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px 16px;
     }
 
-    .meta-item-label {
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-
-    .meta-item-value {
-      font-size: 14px;
-      font-weight: 600;
+    .inspector-document-header h1 {
+      margin: 0;
       color: var(--text);
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    .detail-uploaded-by {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .document-action-row {
+      margin-top: 18px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .document-action-row .btn-secondary {
+      background: var(--surface);
+    }
+
+    .document-action-row .btn-primary {
+      border-color: var(--primary);
+    }
+
+    .detail-summary {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .detail-meta-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+    }
+
+    .detail-meta-row {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr);
+      gap: 12px;
+      align-items: baseline;
+      font-size: 13px;
+    }
+
+    .detail-meta-row dt {
+      color: var(--muted);
+    }
+
+    .detail-meta-row dd {
+      margin: 0;
+      color: var(--text);
+      font-weight: 600;
+      overflow-wrap: anywhere;
     }
 
     .detail-description {
-      margin-bottom: 28px;
-    }
-
-    .detail-description label {
-      font-size: 12px;
+      margin: 14px 0 0;
       color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
+      font-size: 13px;
+      line-height: 1.55;
+      white-space: pre-wrap;
     }
 
-    .detail-description p {
-      margin: 0;
-      font-size: 15px;
-      color: var(--text);
-      line-height: 1.6;
+    .inspector-tabs-container {
+      display: flex;
+      gap: 18px;
+      margin-top: 4px;
+      border-bottom: 1px solid var(--border);
     }
 
-    .detail-divider {
-      border: none;
-      border-top: 1px solid var(--border);
-      margin: 28px 0;
-    }
-
-    /* ===== EDIT FORM ===== */
-    .edit-section h2 {
-      font-size: 18px;
+    .inspector-tab-btn {
+      padding: 14px 2px 11px;
+      background: transparent;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      font-size: 13px;
       font-weight: 700;
-      margin: 0 0 20px;
-      text-align: left;
-    }
-
-    textarea {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 15px;
-      font-family: inherit;
-      resize: vertical;
-      min-height: 90px;
-      transition: all 0.2s ease;
-      background-color: var(--surface);
-      color: var(--text);
-    }
-
-    textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(255, 88, 88, 0.15);
-    }
-
-    select {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 15px;
-      font-family: inherit;
-      background-color: var(--surface);
-      color: var(--text);
-      transition: all 0.2s ease;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 14px center;
       cursor: pointer;
     }
 
-    select:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(255, 88, 88, 0.15);
+    .inspector-tab-btn:hover {
+      color: var(--text);
+    }
+
+    .inspector-tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .inspector-panes {
+      flex: 1;
+      padding-top: 18px;
+    }
+
+    .inspector-tab-pane {
+      display: none;
+    }
+
+    .inspector-tab-pane.active {
+      display: block;
+    }
+
+    .edit-section h2,
+    .shares-panel h2 {
+      margin: 0 0 16px;
+      font-size: 16px;
+    }
+
+    .edit-section textarea {
+      min-height: 92px;
+      resize: vertical;
     }
 
     .edit-actions {
       display: flex;
-      gap: 12px;
-      margin-top: 8px;
+      justify-content: flex-end;
+      margin-top: 14px;
     }
 
     .edit-actions .btn {
-      flex: 1;
-    }
-
-    /* ===== FILE ACTION ===== */
-    .file-action-section {
-      margin-bottom: 28px;
-    }
-
-    .file-action-section .btn {
       width: auto;
-      padding: 10px 24px;
-      gap: 8px;
-      display: inline-flex;
-      align-items: center;
+      min-width: 132px;
     }
 
-    /* ===== LOADER & ERROR ===== */
-    #detailLoader {
-      text-align: center;
-      padding: 48px 24px;
+    .danger-zone {
+      margin-top: 32px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .danger-zone-label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .danger-zone-copy {
+      margin: 0 0 10px;
       color: var(--muted);
-      font-size: 15px;
+      font-size: 12px;
+      line-height: 1.45;
     }
 
-    #detailContent {
-      display: none;
+    .danger-link {
+      width: auto;
+      padding: 0;
+      color: var(--danger-text);
+      background: transparent;
+      border: 0;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
     }
 
-    /* ===== TOAST ===== */
-    #toast {
-      position: fixed;
-      bottom: 28px;
-      right: 28px;
-      padding: 14px 20px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease;
-      z-index: 9999;
-      max-width: 320px;
-    }
-
-    #toast.show {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    #toast.toast-success {
-      background: #ecfdf5;
-      color: var(--success);
-      border: 1px solid #d1fae5;
-    }
-
-    #toast.toast-error {
-      background: #fef2f2;
+    .danger-link:hover {
       color: var(--danger);
-      border: 1px solid #fecaca;
     }
 
-    /* ===== CONFIRM MODAL ===== */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.35);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
+    .share-block + .share-block {
+      margin-top: 20px;
+    }
+
+    .share-block h3 {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .modal-box.detail-modal {
+      max-width: 460px;
     }
 
     .modal-overlay.show {
       display: flex;
     }
 
-    .modal-box {
-      background: var(--surface);
-      border-radius: 12px;
-      padding: 32px;
-      max-width: 400px;
-      width: 90%;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-    }
-
-    .modal-box h3 {
-      margin: 0 0 10px;
-      font-size: 18px;
-      font-weight: 700;
-    }
-
-    .modal-box p {
-      margin: 0 0 24px;
-      color: var(--muted);
-      font-size: 15px;
-      line-height: 1.5;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 12px;
-    }
-
-    .modal-actions .btn {
-      flex: 1;
-    }
-
-    .btn-danger-solid {
-      background-color: var(--danger);
-      color: #ffffff;
-    }
-
-    .btn-danger-solid:hover {
-      background-color: #b91c1c;
-    }
-
-    /* ===== PREVIEW AREA ===== */
-    .preview-section {
-      margin-bottom: 28px;
-    }
-
-    .preview-section-label {
-      font-size: 12px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
-    }
-
-    #previewArea {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-      background: var(--background);
-      min-height: 120px;
-    }
-
-    .preview-iframe {
-      width: 100%;
-      height: 520px;
-      display: block;
-      border: none;
-    }
-
-    .preview-image-wrap {
-      padding: 24px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 300px;
-      background: var(--background);
-    }
-
-    .preview-image {
-      max-width: 100%;
-      max-height: 480px;
-      object-fit: contain;
-      border-radius: 6px;
-    }
-
-    .preview-fallback {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 48px 24px;
-      text-align: center;
-      color: var(--muted);
-      gap: 12px;
-    }
-
-    .preview-fallback-icon {
-      color: var(--muted);
-      opacity: 0.5;
-    }
-
-    .preview-fallback-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    .preview-fallback-desc {
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    @media (max-width: 768px) {
-      .detail-meta-grid {
-        grid-template-columns: repeat(2, 1fr);
+    @media (max-width: 1180px) {
+      .detail-workspace {
+        grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr);
       }
 
-      .detail-header {
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .preview-iframe {
-        height: 320px;
+      .detail-main {
+        padding: 14px;
       }
     }
 
-    /* ===== SPLIT LAYOUT STYLES ===== */
-    .detail-split-container {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-    @media (min-width: 1024px) {
-      .detail-split-container.has-inspector {
-        display: grid;
-        grid-template-columns: 65fr 35fr;
-        gap: 32px;
-        align-items: start;
+    @media (max-width: 980px) {
+      .document-detail-page,
+      .document-detail-page .app-layout,
+      .detail-main {
+        height: auto;
+        overflow: visible;
       }
-      .detail-split-container:not(.has-inspector) .detail-left-panel .detail-card {
-        max-width: 800px;
-        margin: 0 auto;
+
+      .detail-main {
+        min-height: 100vh;
       }
-    }
-    .detail-left-panel {
-      min-width: 0;
-    }
-    .detail-right-inspector {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-    }
-    .inspector-tabs-container {
-      display: flex;
-      gap: 8px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 20px;
-    }
-    .inspector-tab-btn {
-      flex: 1;
-      padding: 10px;
-      background: transparent;
-      border: none;
-      border-bottom: 2px solid transparent;
-      color: var(--muted);
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 14px;
-      transition: all 0.2s ease;
-    }
-    .inspector-tab-btn:hover {
-      color: var(--text);
-    }
-    .inspector-tab-btn.active {
-      color: var(--primary) !important;
-      border-bottom-color: var(--primary) !important;
-    }
-    .inspector-tab-pane {
-      display: none;
-    }
-    .inspector-tab-pane.active {
-      display: block;
-    }
-    .detail-divider {
-      display: none; /* Hide standard separator in split layout */
+
+      .detail-workspace {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+
+      .preview-workspace {
+        min-height: 68vh;
+      }
+
+      .detail-right-inspector {
+        overflow: visible;
+      }
     }
   </style>
 </head>
 
-<body>
+<body class="document-detail-page">
   <div class="app-layout">
     <aside class="sidebar">
       <div class="logo">AI Study Hub</div>
       <nav class="sidebar-nav"></nav>
     </aside>
 
-    <main class="main-content">
-      <button class="btn detail-back-btn" onclick="handleBack()">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-          id="Right-Angle-Arrow--Streamline-Guidance-Free" height="18" width="18" aria-hidden="true" focusable="false">
-          <desc>Right Angle Arrow Streamline Icon: https://streamlinehq.com</desc>
-          <path stroke="currentColor"
-            d="M8 24c0 -0.741 -0.733 -1.85 -1.475 -2.78 -0.954 -1.2 -2.094 -2.247 -3.401 -3.046C2.144 17.575 0.956 17 0 17m0 0c0.956 0 2.145 -0.575 3.124 -1.174 1.307 -0.8 2.447 -1.847 3.401 -3.045C7.267 11.85 8 10.74 8 10m-8 7 11.5 0c6.627 0 12 -5.373 12 -12l0 -5"
-            stroke-width="1"></path>
-        </svg>
-        Back
-      </button>
-
+    <main class="main-content detail-main">
       <div id="detailLoader">Loading document...</div>
 
-      <div id="detailContent" class="detail-split-container">
-        <!-- Left Panel: Card containing general information & Preview -->
-        <div class="detail-left-panel">
-          <div class="card detail-card">
-            <div class="detail-header" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-              <span class="detail-type-badge" id="fileTypeBadge">–</span>
-              <span id="visibilityBadge" class="status-badge" style="display: none;"></span>
-              <span id="approvalBadge" class="status-badge" style="display: none;"></span>
-              <div class="detail-title-block" style="flex-grow: 1; min-width: 200px;">
-                <h1 id="docTitle" style="margin: 0;">–</h1>
-                <span class="detail-uploaded-by" id="docUploadedBy"></span>
-              </div>
+      <div id="detailContent" class="detail-workspace" hidden>
+        <section class="preview-workspace" aria-label="Document preview">
+          <header class="preview-toolbar">
+            <div class="preview-toolbar-title">
+              <strong>Document preview</strong>
+              <span>Read the file without leaving this workspace</span>
             </div>
-
-            <div class="detail-meta-grid">
-              <div class="meta-item">
-                <div class="meta-item-label">Subject</div>
-                <div class="meta-item-value" id="docSubject">–</div>
-              </div>
-              <div class="meta-item">
-                <div class="meta-item-label">File size</div>
-                <div class="meta-item-value" id="docFileSize">–</div>
-              </div>
-              <div class="meta-item">
-                <div class="meta-item-label">Uploaded</div>
-                <div class="meta-item-value" id="docCreatedAt">–</div>
-              </div>
+            <div class="preview-toolbar-actions">
+              <button id="openFileBtn" class="btn btn-secondary" style="display:none;">
+                Open fullscreen <span aria-hidden="true">&#8599;</span>
+              </button>
+              <button id="downloadFileBtn" class="btn btn-secondary" style="display:none;">
+                Download <span aria-hidden="true">&#8595;</span>
+              </button>
             </div>
+          </header>
 
-            <div class="detail-description">
-              <label>Description</label>
-              <p id="docDescription">No description provided.</p>
-            </div>
-
-            <!-- Preview Area -->
-            <div class="preview-section">
-              <div class="preview-section-label">Preview</div>
-              <div id="previewArea">
-                <div class="preview-fallback">
-                  <div class="preview-fallback-desc">Loading preview...</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="file-action-section" style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px;">
-              <button id="openFileBtn" class="btn btn-primary" style="display:none; width:auto; padding:10px 24px;">
-                Open File ↗
-              </button>
-              <button id="downloadFileBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;">
-                Download
-              </button>
-              <button id="shareBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;">
-                Share
-              </button>
-              <button id="moveBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;" onclick="showMoveModal()">
-                Move
-              </button>
-              <button id="publishBtn" class="btn btn-success" style="display:none; width:auto; padding:10px 24px;">
-                Publish
-              </button>
-              <button id="unpublishBtn" class="btn btn-danger" style="display:none; width:auto; padding:10px 24px;">
-                Unpublish
-              </button>
+          <div id="previewArea">
+            <div class="preview-fallback">
+              <div class="preview-fallback-desc">Loading preview...</div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Right Panel / Inspector: Details & Sharing tabs -->
-        <div class="detail-right-inspector">
-          <div class="inspector-tabs-container" role="tablist">
-            <button type="button" id="inspectorTabDetails" class="inspector-tab-btn active">Details</button>
-            <button type="button" id="inspectorTabSharing" class="inspector-tab-btn">Sharing</button>
-          </div>
+        <aside class="detail-right-inspector" aria-label="Document information and actions">
+          <div class="inspector-inner" style="padding-top: 8px;">
+            <button class="btn-back" type="button" onclick="handleBack()">
+              ← Back
+            </button>
 
-          <div class="inspector-panes">
-            <!-- Details tab pane -->
-            <div id="inspectorPaneDetails" class="inspector-tab-pane active">
-              <div class="edit-section" style="margin-top: 0;">
-                <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Edit Details</h2>
-
-                <div class="form-group">
-                  <label for="editTitle">Title <span style="color:var(--danger)">*</span></label>
-                  <input type="text" id="editTitle" placeholder="Document title" />
-                </div>
-
-                <div class="form-group">
-                  <label for="editDescription">Description</label>
-                  <textarea id="editDescription" placeholder="Optional description" style="min-height: 80px;"></textarea>
-                </div>
-
-                <div class="form-group">
-                  <label for="editSubject">Subject</label>
-                  <select id="editSubject">
-                    <option value="" disabled selected>Loading subjects...</option>
-                  </select>
-                </div>
-
-                <div id="editMessage" class="helper-text" style="min-height:20px;margin-bottom:12px;"></div>
-
-                <div class="edit-actions" style="display: flex; gap: 12px; margin-top: 16px;">
-                  <button class="btn btn-primary" id="saveBtn" onclick="handleSave()" style="flex: 1;">Save Changes</button>
-                  <button class="btn btn-danger" id="deleteBtn" onclick="handleDelete()" style="flex: 1;">Delete</button>
-                </div>
+            <header class="inspector-document-header">
+              <div class="document-badge-row">
+                <span class="detail-type-badge" id="fileTypeBadge">FILE</span>
+                <span id="visibilityBadge" class="status-badge" style="display:none;"></span>
+                <span id="approvalBadge" class="status-badge" style="display:none;"></span>
               </div>
+              <h1 id="docTitle">Document</h1>
+              <span class="detail-uploaded-by" id="docUploadedBy"></span>
+            </header>
+
+            <div class="document-action-row" id="documentActionRow" aria-label="Document actions">
+              <button id="shareBtn" class="btn btn-secondary" style="display:none;">Share</button>
+              <button id="moveBtn" class="btn btn-secondary" style="display:none;" onclick="showMoveModal()">Move</button>
+              <button id="publishBtn" class="btn btn-primary" style="display:none;">Publish</button>
+              <button id="unpublishBtn" class="btn btn-secondary" style="display:none;">Unpublish</button>
             </div>
 
-            <!-- Sharing tab pane -->
-            <div id="inspectorPaneSharing" class="inspector-tab-pane">
-              <div id="sharesPanel" class="shares-panel" style="display: block; margin-bottom: 0;">
-                <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Sharing Management</h3>
-
-                <div style="margin-bottom: 20px;">
-                  <h4 style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Direct User Shares</h4>
-                  <div id="directSharesList" class="member-list" style="margin-bottom: 12px;"></div>
-                  <p id="noDirectShares" class="helper-text" style="color: var(--muted); display: none;">Not shared with any users directly.</p>
+            <section class="detail-summary" aria-label="Document metadata">
+              <dl class="detail-meta-list">
+                <div class="detail-meta-row">
+                  <dt>Subject</dt>
+                  <dd id="docSubject">No subject</dd>
                 </div>
-
-                <div>
-                  <h4 style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Group Shares</h4>
-                  <div id="groupSharesList" class="member-list" style="margin-bottom: 12px;"></div>
-                  <p id="noGroupShares" class="helper-text" style="color: var(--muted); display: none;">Not shared in any groups.</p>
+                <div class="detail-meta-row">
+                  <dt>File size</dt>
+                  <dd id="docFileSize">-</dd>
                 </div>
+                <div class="detail-meta-row">
+                  <dt>Uploaded</dt>
+                  <dd id="docCreatedAt">-</dd>
+                </div>
+              </dl>
+              <p class="detail-description" id="docDescription" style="display:none;">No description provided.</p>
+            </section>
+
+            <div class="inspector-tabs-container" id="inspectorTabs" role="tablist">
+              <button type="button" id="inspectorTabDetails" class="inspector-tab-btn active">Details</button>
+              <button type="button" id="inspectorTabSharing" class="inspector-tab-btn">Sharing</button>
+            </div>
+
+            <div class="inspector-panes">
+              <div id="inspectorPaneDetails" class="inspector-tab-pane active">
+                <section class="edit-section">
+                  <h2>Edit details</h2>
+
+                  <div class="form-group">
+                    <label for="editTitle">Title <span class="label-required">*</span></label>
+                    <input type="text" id="editTitle" placeholder="Document title" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="editDescription">Description</label>
+                    <textarea id="editDescription" placeholder="Optional description"></textarea>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="editSubject">Subject</label>
+                    <select id="editSubject">
+                      <option value="" disabled selected>Loading subjects...</option>
+                    </select>
+                  </div>
+
+                  <div id="editMessage" class="helper-text" style="min-height:20px;"></div>
+
+                  <div class="edit-actions">
+                    <button class="btn btn-primary" id="saveBtn" onclick="handleSave()">Save changes</button>
+                  </div>
+
+                  <div class="danger-zone inspector-danger-zone">
+                    <span class="danger-zone-label">Danger zone</span>
+                    <p class="danger-zone-copy">Move this document to Trash. You can restore it later.</p>
+                    <button class="danger-link" id="deleteBtn" onclick="handleDelete()">Delete document</button>
+                  </div>
+                </section>
+              </div>
+
+              <div id="inspectorPaneSharing" class="inspector-tab-pane">
+                <section id="sharesPanel" class="shares-panel" style="display:block;">
+                  <h2>Sharing management</h2>
+
+                  <div class="share-block">
+                    <h3>Direct user shares</h3>
+                    <div id="directSharesList" class="member-list"></div>
+                    <p id="noDirectShares" class="helper-text" style="display:none;">Not shared with any users directly.</p>
+                  </div>
+
+                  <div class="share-block">
+                    <h3>Group shares</h3>
+                    <div id="groupSharesList" class="member-list"></div>
+                    <p id="noGroupShares" class="helper-text" style="display:none;">Not shared in any groups.</p>
+                  </div>
+                </section>
               </div>
             </div>
           </div>
-        </div>
+        </aside>
       </div>
     </main>
   </div>
 
-  <div class="modal-overlay" id="deleteModal">
-    <div class="modal-box">
-      <h3>Delete document?</h3>
-      <p>This document will be removed from your document list.</p>
-      <div class="modal-actions">
-        <button class="btn btn-secondary" onclick="hideDeleteConfirm()">Cancel</button>
-        <button class="btn btn-danger-solid" id="confirmDeleteBtn" onclick="handleDelete()">Delete</button>
-      </div>
-    </div>
-  </div>
-
   <div class="modal-overlay" id="moveModal">
-    <div class="modal-box" style="max-width: 450px;">
-      <h3>Move Document</h3>
-      <div class="form-group" style="margin-top: 16px; margin-bottom: 20px;">
-        <label for="moveFolderSelect">Select Destination Folder</label>
-        <select id="moveFolderSelect" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text);">
-          <option value="">— My Documents —</option>
+    <div class="modal-box detail-modal">
+      <h3>Move document</h3>
+      <div class="form-group" style="margin-top:16px;">
+        <label for="moveFolderSelect">Destination folder</label>
+        <select id="moveFolderSelect">
+          <option value="">My Documents</option>
         </select>
       </div>
-      <p id="moveError" class="modal-error" role="alert" aria-live="polite"
-        style="color: var(--danger); font-size: 13px; display: none; margin-bottom: 16px;"></p>
+      <p id="moveError" class="modal-error" role="alert" aria-live="polite" style="display:none;"></p>
       <div class="modal-actions">
         <button class="btn btn-secondary" onclick="hideMoveModal()">Cancel</button>
         <button class="btn btn-primary" id="moveConfirmBtn" onclick="handleMove()">Move</button>
@@ -626,64 +629,57 @@
   </div>
 
   <div class="modal-overlay" id="shareModal" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
-    <div class="modal-box" style="max-width: 450px;">
-      <h3 id="shareModalTitle">Share Document</h3>
+    <div class="modal-box detail-modal">
+      <h3 id="shareModalTitle">Share document</h3>
 
-      <div class="tab-header" style="display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px;">
+      <div class="tab-header" style="display:flex;border-bottom:1px solid var(--border);margin-bottom:20px;">
         <button type="button" class="tab-btn active" id="tabUserBtn"
-          style="flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600; cursor: pointer;">Share
-          with User</button>
+          style="flex:1;padding:10px;background:transparent;border:0;border-bottom:2px solid var(--primary);color:var(--primary);font-weight:600;cursor:pointer;">Share with user</button>
         <button type="button" class="tab-btn" id="tabGroupBtn"
-          style="flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-weight: 600; cursor: pointer;">Share
-          with Group</button>
+          style="flex:1;padding:10px;background:transparent;border:0;border-bottom:2px solid transparent;color:var(--muted);font-weight:600;cursor:pointer;">Share with group</button>
       </div>
 
       <div id="tabUserContent">
         <div class="form-group">
-          <label for="shareUserEmail">Recipient Email <span class="label-required">*</span></label>
-          <input type="email" id="shareUserEmail" placeholder="E.g: student@gmail.com" autocomplete="off" />
+          <label for="shareUserEmail">Recipient email <span class="label-required">*</span></label>
+          <input type="email" id="shareUserEmail" placeholder="student@gmail.com" autocomplete="off" />
         </div>
-        <p id="shareUserError" class="modal-error" role="alert" aria-live="polite"
-          style="color: var(--danger); font-size: 13px; display: none; margin-bottom: 16px;"></p>
+        <p id="shareUserError" class="modal-error" role="alert" aria-live="polite" style="display:none;"></p>
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" id="shareUserCancelBtn">Cancel</button>
           <button type="button" class="btn btn-primary" id="shareUserConfirmBtn">Share</button>
         </div>
       </div>
 
-      <div id="tabGroupContent" style="display: none;">
+      <div id="tabGroupContent" style="display:none;">
         <div class="form-group">
-          <label for="shareGroupSelect">Select Study Group <span class="label-required">*</span></label>
+          <label for="shareGroupSelect">Study group <span class="label-required">*</span></label>
           <select id="shareGroupSelect">
             <option value="" disabled selected>Loading groups...</option>
           </select>
         </div>
-        <p id="shareGroupError" class="modal-error" role="alert" aria-live="polite"
-          style="color: var(--danger); font-size: 13px; display: none; margin-bottom: 16px;"></p>
+        <p id="shareGroupError" class="modal-error" role="alert" aria-live="polite" style="display:none;"></p>
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" id="shareGroupCancelBtn">Cancel</button>
-          <button type="button" class="btn btn-primary" id="shareGroupConfirmBtn">Share to Group</button>
+          <button type="button" class="btn btn-primary" id="shareGroupConfirmBtn">Share to group</button>
         </div>
       </div>
     </div>
   </div>
 
-  <div id="toast"></div>
-
   <script src="js/api.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/navigation.js"></script>
-<script src="js/layout.js"></script>
-<script src="js/subject-api.js"></script>
-<script src="js/document-api.js"></script>
-<script src="js/processing-api.js"></script>
-<script src="js/community-api.js"></script>
-<script src="js/group-api.js"></script>
-<script src="js/share-api.js"></script>
-<script src="js/folder-api.js"></script>
-
-<script src="js/document-preview.js"></script>
-<script src="js/document-detail.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/subject-api.js"></script>
+  <script src="js/document-api.js"></script>
+  <script src="js/processing-api.js"></script>
+  <script src="js/community-api.js"></script>
+  <script src="js/group-api.js"></script>
+  <script src="js/share-api.js"></script>
+  <script src="js/folder-api.js"></script>
+  <script src="js/document-preview.js"></script>
+  <script src="js/document-detail.js"></script>
 </body>
 
 </html>

@@ -31,27 +31,59 @@
 
             <section class="grid-container dashboard-section">
                 <div class="stat-card">
-                    <div class="stat-label">My Documents</div>
-                    <div class="stat-value" id="docCount">-</div>
+                    <div class="stat-card-header">
+                        <span class="stat-label">My Documents</span>
+                        <span class="stat-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
+                        </span>
+                    </div>
+                    <div class="stat-value stat-value-neutral" id="docCount">-</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">My Folders</div>
-                    <div class="stat-value" id="folderCount">-</div>
+                    <div class="stat-card-header">
+                        <span class="stat-label">My Folders</span>
+                        <span class="stat-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true"><path stroke="currentColor" stroke-width="1.8" d="M1.5 10V2.5h5l3 3h11v3m3 0.25V8.5H4.6 l-0.15 0.25 -0.234 0.492A28 28 0 0 0 1.5 21.272v0.228h19v-0.128a28 28 0 0 1 2.757 -12.116l0.243 -0.506Z"/></svg>
+                        </span>
+                    </div>
+                    <div class="stat-value stat-value-neutral" id="folderCount">-</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Shared With Me</div>
-                    <div class="stat-value" id="sharedCount">-</div>
+                    <div class="stat-card-header">
+                        <span class="stat-label">Shared With Me</span>
+                        <span class="stat-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a3 3 0 1 1 0-3.44m0 3.44a3 3 0 1 0 0-3.44m0 3.44v-1.4m0-2.04v-1.4M12 12a3 3 0 1 1 0-6 3 3 0 0 1 0 6Zm0 0v5.25m0 0H6.75A2.25 2.25 0 0 1 4.5 15V9a2.25 2.25 0 0 1 2.25-2.25h1.5"/></svg>
+                        </span>
+                    </div>
+                    <div class="stat-value stat-value-neutral" id="sharedCount">-</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Study Groups</div>
-                    <div class="stat-value" id="groupCount">-</div>
+                    <div class="stat-card-header">
+                        <span class="stat-label">Study Groups</span>
+                        <span class="stat-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a3 3 0 1 1 0-3.44m0 3.44a3 3 0 1 0 0-3.44m0 3.44V12a6 6 0 0 0-6-6h-1.5M6 18.72a3 3 0 1 1 0-3.44m0 3.44a3 3 0 1 0 0-3.44m0 3.44V12a6 6 0 0 1 6-6h1.5M12 6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></svg>
+                        </span>
+                    </div>
+                    <div class="stat-value stat-value-neutral" id="groupCount">-</div>
+                </div>
+                <div class="stat-card stat-card-premium">
+                    <div class="stat-card-header">
+                        <span class="stat-label">Account Tier</span>
+                        <span class="stat-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M2 4l3 12h14l3-12-6 5-4-5-4 5-6-5zm3 15h14v2H5v-2z"/></svg>
+                        </span>
+                    </div>
+                    <div>
+                        <span class="stat-value" id="accountTier">-</span>
+                    </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Account Tier</div>
-                    <div class="stat-value" id="accountTier">-</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Storage Used</div>
+                    <div class="stat-card-header">
+                        <span class="stat-label">Storage Used</span>
+                        <span class="stat-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M3 12h18M12 3a9 9 0 1 0 9 9h-9V3z"/></svg>
+                        </span>
+                    </div>
                     <div class="stat-value" id="usageRemaining">-</div>
                     <div id="quotaProgressContainer" class="quota-progress-container">
                         <div id="usageProgressBar" class="quota-progress-bar"></div>
@@ -67,24 +99,22 @@
                 </div>
                 <div class="quick-links-grid">
                     <a href="upload.html" class="quick-link-card">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24"
-                            aria-hidden="true" focusable="false">
-                            <path fill="currentColor"
-                                d="M6 18h12v-3h2v5H4v-5h2zm11.207-8.707L15.793 10.707 13 7.914V16h-2V7.914L8.207 10.707 6.793 9.293 12 4.086z">
-                            </path>
-                        </svg>
-                        <span>Upload Document</span>
+                        <div class="quick-link-icon-wrapper">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M4.5 19.5h15"/></svg>
+                        </div>
+                        <div class="quick-link-text">
+                            <span class="quick-link-title">Upload Document</span>
+                            <span class="quick-link-desc">Add new study files to your personal library</span>
+                        </div>
                     </a>
                     <a href="community.html" class="quick-link-card">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24"
-                            aria-hidden="true" focusable="false">
-                            <path stroke="currentColor" stroke-width="1.5"
-                                d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.5"></circle>
-                            <path stroke="currentColor" stroke-width="1.5"
-                                d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                        <span>Browse Community</span>
+                        <div class="quick-link-icon-wrapper">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.386 11.386 0 0110.089 20 11.384 11.384 0 014 18.232v-.109A4.125 4.125 0 0110.088 15c.673 0 1.316.082 1.93.238m3.768-4.738a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM22.5 9.75a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+                        </div>
+                        <div class="quick-link-text">
+                            <span class="quick-link-title">Browse Community</span>
+                            <span class="quick-link-desc">Explore public resources shared by peers</span>
+                        </div>
                     </a>
                 </div>
             </section>
