@@ -364,6 +364,11 @@ function renderSubjectOptions(subjects, currentSubjectId) {
         placeholder.textContent = "— Select a subject —";
         select.insertBefore(placeholder, select.firstChild);
     }
+
+    if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+        window.UIHelper.convertSelectToCustomDropdown(select);
+        select.dispatchEvent(new Event("syncCustom"));
+    }
 }
 
 // ── Save changes ──────────────────────────────────────────────────────────────
@@ -484,6 +489,10 @@ function showMoveModal() {
             }
             select.appendChild(opt);
         });
+        if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+            window.UIHelper.convertSelectToCustomDropdown(select);
+            select.dispatchEvent(new Event("syncCustom"));
+        }
         document.getElementById("moveModal").classList.add("show");
     }).catch(err => {
         window.showToast(err.message || "Failed to load folders.", "error");
@@ -693,6 +702,11 @@ function initSharingUI() {
         } catch (e) {
             console.error(e);
             shareGroupSelect.innerHTML = '<option value="" disabled>Failed to load groups</option>';
+        } finally {
+            if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+                window.UIHelper.convertSelectToCustomDropdown(shareGroupSelect);
+                shareGroupSelect.dispatchEvent(new Event("syncCustom"));
+            }
         }
     });
 
