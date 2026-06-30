@@ -22,10 +22,10 @@
         border: 1px solid var(--border);
         border-radius: 12px;
         padding: 16px;
-        height: 110px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+        height: 110px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
         cursor: pointer;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -39,46 +39,53 @@
       }
       
       .folder-card-main {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        width: calc(100% - 24px); /* Make room for kebab */
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 12px !important;
+        width: calc(100% - 24px) !important; /* Make room for kebab */
+        text-align: left !important;
       }
       
       .folder-icon {
-        color: var(--primary); /* Color icon with brand red-orange */
+        color: var(--primary) !important; /* Color icon with brand red-orange */
         flex-shrink: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
       }
       
       .folder-icon svg {
-        width: 32px;
-        height: 32px;
+        width: 32px !important;
+        height: 32px !important;
       }
       
       .folder-info-text {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        min-width: 0;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 4px !important;
+        align-items: flex-start !important;
+        text-align: left !important;
+        min-width: 0 !important;
       }
       
       .folder-name {
-        margin: 0;
-        font-size: 15px;
-        font-weight: 700;
-        color: var(--text-main);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        margin: 0 !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        color: var(--text-main) !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        text-align: left !important;
+        width: 100% !important;
       }
       
       .folder-meta {
-        margin: 0;
-        font-size: 12px;
-        color: var(--muted);
+        margin: 0 !important;
+        font-size: 12px !important;
+        color: var(--muted) !important;
+        text-align: left !important;
       }
       
       .folder-card-actions {
@@ -164,6 +171,14 @@
       }
       .btn-back:hover {
         color: var(--primary);
+      }
+
+      /* Force buttons in page-header to be inline and auto width */
+      .page-header .btn,
+      .page-header a.btn {
+        width: auto !important;
+        display: inline-flex !important;
+        white-space: nowrap !important;
       }
     </style>
 </head>

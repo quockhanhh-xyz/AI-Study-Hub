@@ -184,7 +184,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const icon = document.createElement("div");
     icon.className = "folder-icon";
-    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-19.5 0A2.25 2.25 0 004.5 15h15a2.25 2.25 0 002.25-2.25m-19.5 0v.158c0 .824.238 1.62.684 2.302L6.16 19.5a2.25 2.25 0 001.882 1.05h7.918a2.25 2.25 0 001.882-1.05l1.726-2.656a3.75 3.75 0 01.684-2.302V12.75" /></svg>';
+    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 13.5H9m4.06-7.19-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" /></svg>';
 
     const infoText = document.createElement("div");
     infoText.className = "folder-info-text";
