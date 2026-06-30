@@ -452,6 +452,24 @@ function applyAIProcessingState(status, data) {
         messageEl.className = "ai-processing-message" + (status === "FAILED" ? " error" : "");
     }
 
+    // Reprocess-failure-but-content-preserved case: per the Step 9 spec,
+    // when reprocessing a COMPLETED document fails, the backend restores
+    // processingStatus = COMPLETED and keeps the old content/chunks, but
+    // records the failure in lastAttemptStatus/lastAttemptError. The panel
+    // must surface that instead of silently looking like nothing happened.
+    const warningEl = document.getElementById("aiProcessingWarning");
+    if (warningEl) {
+        if (status === "COMPLETED" && data.lastAttemptStatus === "FAILED") {
+            warningEl.style.display = "block";
+            warningEl.textContent = data.lastAttemptError
+                ? `Last reprocess attempt failed: ${data.lastAttemptError}. Showing the previous successful version.`
+                : "Last reprocess attempt failed. Showing the previous successful version.";
+        } else {
+            warningEl.style.display = "none";
+            warningEl.textContent = "";
+        }
+    }
+
     renderAIActions(status);
 }
 
