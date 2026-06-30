@@ -452,21 +452,18 @@ textarea.error {
 /* Step 6D: Inline "Create new subject/folder" row inside the Upload form */
 .inline-create-row {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: #f8fafc;
+  border: 1.5px dashed #e2e8f0;
+  align-items: stretch;
 }
 
 .inline-create-row input[type="text"] {
-  flex: 1 1 200px;
   margin: 0;
-}
-
-.inline-create-row .btn-sm {
-  flex: 0 0 auto;
-  width: auto;
-  padding: 9px 16px;
 }
 
 /* Input success state */

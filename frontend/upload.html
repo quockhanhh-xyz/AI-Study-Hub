@@ -47,7 +47,7 @@
                         <div class="form-group">
                             <label for="description">Description <span class="label-optional">(optional)</span></label>
                             <textarea id="description" name="description"
-                                placeholder="E.g: Summary of Week 1 SWR lecture..."></textarea>
+                                placeholder="E.g: Summary of Week 1 SWR lecture..." rows="3" style="min-height: 80px; height: 80px; resize: vertical;"></textarea>
                         </div>
 
                         <div class="form-group">
@@ -55,22 +55,13 @@
                             <input type="text" id="subjectSelect" list="subjectDatalist" placeholder="-- Select a subject --" required autocomplete="off" />
                             <datalist id="subjectDatalist"></datalist>
 
-                            <div id="newSubjectRow" class="inline-create-row"
-                                style="display:none; flex-direction: column; align-items: stretch;">
-                                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <div id="newSubjectRow" class="inline-create-row" style="display:none;">
+                                <div style="display:flex; gap:8px; flex-wrap:wrap; width:100%;">
                                     <input type="text" id="newSubjectCode" placeholder="Code, e.g: MYSUB" autocomplete="off"
                                         style="flex:0 0 140px;" />
                                     <input type="text" id="newSubjectName"
                                         placeholder="Subject name, e.g: Software Architecture" autocomplete="off"
                                         style="flex:1 1 200px;" />
-                                </div>
-                                <input type="text" id="newSubjectDescription" placeholder="Description (optional)"
-                                    autocomplete="off" style="margin-top:8px;" />
-                                <div style="display:flex; gap:8px; margin-top:8px;">
-                                    <button type="button" id="createSubjectBtn"
-                                        class="btn btn-secondary btn-sm">Create</button>
-                                    <button type="button" id="cancelNewSubjectBtn"
-                                        class="btn btn-secondary btn-sm">Cancel</button>
                                 </div>
                             </div>
                             <p id="newSubjectError" class="helper-text error" role="alert" style="display:none;"></p>
@@ -85,11 +76,7 @@
                             </select>
 
                             <div id="newFolderRow" class="inline-create-row" style="display:none;">
-                                <input type="text" id="newFolderName" placeholder="E.g: Math Notes" autocomplete="off" />
-                                <button type="button" id="createFolderInlineBtn"
-                                    class="btn btn-secondary btn-sm">Create</button>
-                                <button type="button" id="cancelNewFolderBtn"
-                                    class="btn btn-secondary btn-sm">Cancel</button>
+                                <input type="text" id="newFolderName" placeholder="E.g: Math Notes" autocomplete="off" style="width: 100%;" />
                             </div>
                             <p id="newFolderError" class="helper-text error" role="alert" style="display:none;"></p>
                         </div>

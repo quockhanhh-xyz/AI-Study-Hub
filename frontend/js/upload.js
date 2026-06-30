@@ -18,16 +18,11 @@ const progressText = document.getElementById("progressText");
 const newSubjectRow = document.getElementById("newSubjectRow");
 const newSubjectCode = document.getElementById("newSubjectCode");
 const newSubjectName = document.getElementById("newSubjectName");
-const newSubjectDescription = document.getElementById("newSubjectDescription");
-const createSubjectBtn = document.getElementById("createSubjectBtn");
-const cancelNewSubjectBtn = document.getElementById("cancelNewSubjectBtn");
 const newSubjectError = document.getElementById("newSubjectError");
 
 // Inline "Create new folder" refs
 const newFolderRow = document.getElementById("newFolderRow");
 const newFolderName = document.getElementById("newFolderName");
-const createFolderInlineBtn = document.getElementById("createFolderInlineBtn");
-const cancelNewFolderBtn = document.getElementById("cancelNewFolderBtn");
 const newFolderError = document.getElementById("newFolderError");
 
 const CREATE_NEW_VALUE = "__new__";
@@ -381,7 +376,6 @@ subjectSelect.addEventListener("change", () => {
     showRowError(newSubjectError, "");
     newSubjectCode.value = "";
     newSubjectName.value = "";
-    newSubjectDescription.value = "";
     newSubjectCode.focus();
     subjectSelect.value = "";
     subjectSelect.dispatchEvent(new Event("syncCustom"));
@@ -391,90 +385,6 @@ subjectSelect.addEventListener("change", () => {
     subjectError.style.display = "none";
   }
 });
-
-cancelNewSubjectBtn.addEventListener("click", () => {
-  newSubjectRow.style.display = "none";
-  showRowError(newSubjectError, "");
-  subjectSelect.value = lastSubjectValue;
-  subjectSelect.dispatchEvent(new Event("syncCustom"));
-});
-
-async function handleCreateSubject() {
-  const code = newSubjectCode.value.trim();
-  const name = newSubjectName.value.trim();
-
-  if (!code) {
-    showRowError(newSubjectError, "Subject code is required.");
-    newSubjectCode.focus();
-    return;
-  }
-  if (!name) {
-    showRowError(newSubjectError, "Subject name is required.");
-    newSubjectName.focus();
-    return;
-  }
-
-  createSubjectBtn.disabled = true;
-  showRowError(newSubjectError, "");
-
-  try {
-    const description = newSubjectDescription.value.trim();
-    const payload = { subjectCode: code, subjectName: name };
-    if (description) payload.description = description;
-    const result = await createSubject(payload);
-    const created = result && result.data ? result.data : null;
-    if (!created || !created.subjectId) {
-      throw new Error("Unexpected response while creating the subject.");
-    }
-
-    const datalist = document.getElementById("subjectDatalist");
-    const option = document.createElement("option");
-    const label = created.subjectCode
-      ? `${created.subjectCode} - ${created.subjectName}`
-      : (created.subjectName || name);
-    option.value = label;
-    option.dataset.id = created.subjectId;
-
-    const createNewOpt = datalist.querySelector(`option[value="${CREATE_NEW_VALUE}"]`);
-    if (createNewOpt) {
-      datalist.insertBefore(option, createNewOpt);
-    } else {
-      datalist.appendChild(option);
-    }
-
-    subjectSelect.value = label;
-    lastSubjectValue = label;
-    subjectSelect.dispatchEvent(new Event("syncCustom"));
-
-    newSubjectRow.style.display = "none";
-    subjectError.style.display = "none";
-    window.showToast(`Subject "${label}" created and selected.`, "success");
-  } catch (err) {
-    const msg = (err.message || "").toLowerCase();
-    const isDuplicate = msg.includes("409") || msg.includes("duplicate") || msg.includes("already exists");
-    showRowError(
-      newSubjectError,
-      isDuplicate ? "A subject with this code or name already exists. Please choose it from the list instead." : (err.message || "Failed to create subject.")
-    );
-  } finally {
-    createSubjectBtn.disabled = false;
-  }
-}
-
-createSubjectBtn.addEventListener("click", handleCreateSubject);
-newSubjectName.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    handleCreateSubject();
-  }
-});
-newSubjectCode.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    handleCreateSubject();
-  }
-});
-
 
 // Folder: toggle inline row when "+ Create new folder…" is chosen.
 folderSelect.addEventListener("change", () => {
@@ -486,61 +396,6 @@ folderSelect.addEventListener("change", () => {
   } else {
     newFolderRow.style.display = "none";
     lastFolderValue = folderSelect.value;
-  }
-});
-
-cancelNewFolderBtn.addEventListener("click", () => {
-  newFolderRow.style.display = "none";
-  showRowError(newFolderError, "");
-  folderSelect.value = lastFolderValue;
-  folderSelect.dispatchEvent(new Event("syncCustom"));
-});
-
-async function handleCreateFolder() {
-  const name = newFolderName.value.trim();
-  if (!name) {
-    showRowError(newFolderError, "Folder name is required.");
-    newFolderName.focus();
-    return;
-  }
-
-  createFolderInlineBtn.disabled = true;
-  showRowError(newFolderError, "");
-
-  try {
-    const result = await createFolder({ folderName: name, parentFolderId: null });
-    const created = result && result.data ? result.data : null;
-    if (!created || !created.folderId) {
-      throw new Error("Unexpected response while creating the folder.");
-    }
-
-    const option = document.createElement("option");
-    option.value = created.folderId;
-    option.textContent = created.folderName || name;
-    folderSelect.insertBefore(option, folderSelect.querySelector(`option[value="${CREATE_NEW_VALUE}"]`));
-    folderSelect.value = created.folderId;
-    lastFolderValue = String(created.folderId);
-    folderSelect.dispatchEvent(new Event("syncCustom"));
-
-    newFolderRow.style.display = "none";
-    window.showToast(`Folder "${option.textContent}" created and selected.`, "success");
-  } catch (err) {
-    const msg = (err.message || "").toLowerCase();
-    const isDuplicate = msg.includes("409") || msg.includes("duplicate") || msg.includes("already exists");
-    showRowError(
-      newFolderError,
-      isDuplicate ? "A folder with this name already exists here. Please choose it from the list instead." : (err.message || "Failed to create folder.")
-    );
-  } finally {
-    createFolderInlineBtn.disabled = false;
-  }
-}
-
-createFolderInlineBtn.addEventListener("click", handleCreateFolder);
-newFolderName.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    handleCreateFolder();
   }
 });
 
@@ -560,27 +415,59 @@ uploadForm.addEventListener("submit", async (e) => {
     return;
   }
 
-  const subjectId = getSelectedSubjectId();
-
-  if (subjectId === CREATE_NEW_VALUE) {
-    showRowError(newSubjectError, "Please create the subject first, or pick an existing one from the list.");
-    newSubjectName.focus();
-    return;
+  // 1. Check if we need to create a new Subject
+  const isCreatingSubject = (newSubjectRow.style.display === "flex");
+  let subjectCodeVal = "";
+  let subjectNameVal = "";
+  if (isCreatingSubject) {
+    subjectCodeVal = newSubjectCode.value.trim();
+    subjectNameVal = newSubjectName.value.trim();
+    if (!subjectCodeVal) {
+      showRowError(newSubjectError, "Subject code is required.");
+      newSubjectCode.focus();
+      return;
+    }
+    if (!subjectNameVal) {
+      showRowError(newSubjectError, "Subject name is required.");
+      newSubjectName.focus();
+      return;
+    }
+    showRowError(newSubjectError, "");
   }
 
-  if (!subjectId) {
-    subjectError.textContent = "Please select a valid subject from the list or create a new one.";
-    subjectError.style.display = "block";
-    subjectSelect.focus();
-    return;
+  let subjectId = "";
+  if (!isCreatingSubject) {
+    subjectId = getSelectedSubjectId();
+    if (!subjectId) {
+      subjectError.textContent = "Please select a valid subject from the list or create a new one.";
+      subjectError.style.display = "block";
+      subjectSelect.focus();
+      return;
+    }
+    subjectError.style.display = "none";
   }
-  subjectError.style.display = "none";
 
-  const folderId = folderSelect.value;
-  if (folderId === CREATE_NEW_VALUE) {
-    showRowError(newFolderError, "Please create the folder first, or pick an existing one from the list.");
-    newFolderName.focus();
-    return;
+  // 2. Check if we need to create a new Folder
+  const isCreatingFolder = (newFolderRow.style.display === "flex");
+  let folderNameVal = "";
+  if (isCreatingFolder) {
+    folderNameVal = newFolderName.value.trim();
+    if (!folderNameVal) {
+      showRowError(newFolderError, "Folder name is required.");
+      newFolderName.focus();
+      return;
+    }
+    showRowError(newFolderError, "");
+  }
+
+  let folderId = "";
+  if (!isCreatingFolder) {
+    folderId = folderSelect.value;
+    if (folderId === CREATE_NEW_VALUE) {
+      showRowError(newFolderError, "Please pick an existing folder or enter a folder name to create.");
+      newFolderName.focus();
+      return;
+    }
   }
 
   const fileError = validateFile(file);
@@ -588,13 +475,6 @@ uploadForm.addEventListener("submit", async (e) => {
     showMessage(fileError, "error");
     return;
   }
-
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("title", title);
-  if (description) formData.append("description", description);
-  if (folderId) formData.append("folderId", folderId);
-  formData.append("subjectId", subjectId);
 
   submitBtn.disabled = true;
   submitBtn.textContent = "Uploading...";
@@ -618,6 +498,47 @@ uploadForm.addEventListener("submit", async (e) => {
   }
 
   try {
+    // Step 2.2: Create Subject dynamically if requested
+    if (isCreatingSubject) {
+      try {
+        const payload = { subjectCode: subjectCodeVal, subjectName: subjectNameVal };
+        const resultSub = await createSubject(payload);
+        subjectId = resultSub.data.subjectId;
+      } catch (err) {
+        const msg = (err.message || "").toLowerCase();
+        const isDuplicate = msg.includes("409") || msg.includes("duplicate") || msg.includes("already exists");
+        showRowError(
+          newSubjectError,
+          isDuplicate ? "A subject with this code or name already exists." : (err.message || "Failed to create subject.")
+        );
+        throw err;
+      }
+    }
+
+    // Step 2.3: Create Folder dynamically if requested
+    if (isCreatingFolder) {
+      try {
+        const resultFolder = await createFolder({ folderName: folderNameVal, parentFolderId: null });
+        folderId = resultFolder.data.folderId;
+      } catch (err) {
+        const msg = (err.message || "").toLowerCase();
+        const isDuplicate = msg.includes("409") || msg.includes("duplicate") || msg.includes("already exists");
+        showRowError(
+          newFolderError,
+          isDuplicate ? "A folder with this name already exists here." : (err.message || "Failed to create folder.")
+        );
+        throw err;
+      }
+    }
+
+    // Step 2.4: Upload document with new or preselected IDs
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("title", title);
+    if (description) formData.append("description", description);
+    if (folderId) formData.append("folderId", folderId);
+    formData.append("subjectId", subjectId);
+
     const result = await uploadDocument(formData, { signal });
     completeProgress(progressInterval);
     window.showToast(`Upload successful: "${result.data.title}"`, "success");
