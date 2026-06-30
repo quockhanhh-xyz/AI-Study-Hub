@@ -7,6 +7,165 @@
     <title>Folders - AI Study Hub</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+      /* ===== COMPACT FOLDER CARD SYSTEM ===== */
+      .folder-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 16px;
+        margin-top: 12px;
+      }
+      
+      .folder-card {
+        position: relative; /* For absolute kebab button */
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        height: 110px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-sizing: border-box;
+      }
+      
+      .folder-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+      }
+      
+      .folder-card-main {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: calc(100% - 24px); /* Make room for kebab */
+      }
+      
+      .folder-icon {
+        color: var(--primary); /* Color icon with brand red-orange */
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .folder-icon svg {
+        width: 32px;
+        height: 32px;
+      }
+      
+      .folder-info-text {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+      }
+      
+      .folder-name {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text-main);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      
+      .folder-meta {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      
+      .folder-card-actions {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 5;
+      }
+      
+      .btn-kebab {
+        background: transparent;
+        border: none;
+        font-size: 18px;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 4px;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        transition: all 0.2s ease;
+      }
+      .btn-kebab:hover {
+        background: var(--background);
+        color: var(--text-main);
+      }
+      
+      /* ===== COMPACT EMPTY STATE BOX ===== */
+      .empty-state-box {
+        border: 1px dashed var(--border);
+        border-radius: 12px;
+        padding: 24px 16px;
+        height: 150px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        box-sizing: border-box;
+        background: var(--surface);
+        gap: 6px;
+        margin-top: 12px;
+        width: 100%;
+      }
+      
+      .empty-state-box .empty-icon {
+        width: 36px;
+        height: 36px;
+        color: var(--border);
+      }
+      
+      .empty-state-box .empty-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin: 0;
+      }
+      
+      .empty-state-box .empty-desc {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 0;
+        max-width: 360px;
+      }
+      
+      /* ===== BREADCRUMB TEXT BACK BUTTON ===== */
+      .btn-back {
+        background: transparent;
+        border: none;
+        color: var(--muted);
+        font-size: 13px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0;
+        margin-bottom: 8px;
+        font-weight: 500;
+        transition: color 0.2s ease;
+      }
+      .btn-back:hover {
+        color: var(--primary);
+      }
+    </style>
 </head>
 
 <body>
@@ -17,84 +176,70 @@
         </aside>
 
         <main class="main-content">
+            <!-- Text link back button above the title -->
+            <button type="button" id="backFolderBtn" class="btn-back" style="display: none;" onclick="navigateToFolder(null)">
+                ← Back to My Folders
+            </button>
 
             <div id="folderListView">
-                <section class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; max-width: none;">
+                <section class="page-header" style="display: flex; justify-content: space-between; align-items: center; max-width: none; margin-top: 8px;">
                     <div>
-                        <h1 id="folderPageTitle">My Folders</h1>
-                        <nav class="breadcrumb" id="breadcrumb" aria-label="Folder navigation"></nav>
+                        <h1 id="folderPageTitle" style="margin: 0; font-size: 28px; font-weight: 800; color: var(--text);">My Folders</h1>
+                        <nav class="breadcrumb" id="breadcrumb" aria-label="Folder navigation" style="margin-top: 4px;"></nav>
                     </div>
                     <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                        <button type="button" id="backFolderBtn" class="btn btn-secondary" style="display: none; align-items: center; gap: 6px; padding: 10px 16px;">
-                            Back
-                        </button>
                         <button type="button" id="shareFolderBtn" class="btn btn-secondary" style="display: none; align-items: center; gap: 6px; padding: 10px 16px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 10" id="Link--Streamline-Micro" height="14" width="14" aria-hidden="true" focusable="false">
-                              <desc>Link Streamline Icon: https://streamlinehq.com</desc>
-                              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m2.5 4.502 -0.917 0.92a2.12 2.12 0 0 0 0.002 2.997v0a2.12 2.12 0 0 0 2.999 0l0.917 -0.917" stroke-width="1"></path>
-                              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m7.5 5.502 0.914 -0.912c0.83 -0.828 0.83 -2.172 0.002 -3.001v0a2.121 2.121 0 0 0 -2.999 -0.002l-0.916 0.915" stroke-width="1"></path>
-                              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m3.5 6.502 3 -3" stroke-width="1"></path>
-                            </svg>
-                            Share Folder
+                            🔗 Share Folder
+                        </button>
+                        <button type="button" id="createFolderBtn" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px;">
+                            ➕ New Folder
                         </button>
                         <a href="upload.html" id="uploadDocumentToFolderBtn" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; text-decoration: none; color: inherit;">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Arrow-Up-1--Streamline-Core" height="14" width="14" aria-hidden="true" focusable="false">
-                              <desc>Arrow Up 1 Streamline Icon: https://streamlinehq.com</desc>
-                              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 13.5V0.5M7 0.5 13.5 7M7 0.5 0.5 7" stroke-width="1"></path>
-                            </svg>
-                            Upload File
+                            📤 Upload File
                         </a>
                     </div>
                 </section>
 
-                <div class="card dashboard-panel">
-                    <div class="section-header">
-                        <div>
-                            <h2 class="section-title">Folders</h2>
-                            <p>Click a folder to view its documents.</p>
-                        </div>
-                        <button type="button" id="createFolderBtn" class="btn btn-primary upload-link-btn" style="display: inline-flex; align-items: center; gap: 6px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Add-1--Streamline-Core" height="14" width="14" aria-hidden="true" focusable="false">
-                              <desc>Add 1 Streamline Icon: https://streamlinehq.com</desc>
-                              <g id="add-1--expand-cross-buttons-button-more-remove-plus-add-+-mathematics-math">
-                                <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 0.5v13" stroke-width="1"></path>
-                                <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 6.95996h13" stroke-width="1"></path>
-                              </g>
-                            </svg>
-                            New Folder
-                        </button>
-                    </div>
-
-                    <div id="folderLoader" class="document-state">
+                <div class="folders-section-wrap" style="margin-top: 24px;">
+                    <div id="folderLoader" class="document-state" style="display: none; justify-content: center; padding: 24px;">
                         <span>Loading folders...</span>
                     </div>
 
-                    <p id="folderError" class="helper-text error" role="alert"></p>
+                    <p id="folderError" class="helper-text error" role="alert" style="display: none;"></p>
 
-                    <div id="folderGrid" class="folder-grid"></div>
+                    <div id="folderGrid" class="folder-grid" style="display: none;"></div>
 
-                    <div id="folderEmpty" class="empty-state">
+                    <div id="folderEmpty" class="empty-state-box" style="display: none;">
+                        <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                           <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-19.5 0A2.25 2.25 0 004.5 15h15a2.25 2.25 0 002.25-2.25m-19.5 0v.158c0 .824.238 1.62.684 2.302L6.16 19.5a2.25 2.25 0 001.882 1.05h7.918a2.25 2.25 0 001.882-1.05l1.726-2.656a3.75 3.75 0 01.684-2.302V12.75" />
+                        </svg>
                         <div class="empty-title">No folders yet</div>
-                        <p>Create your first folder to start organizing your documents. Use the <strong>New Folder</strong> button above.</p>
+                        <p class="empty-desc">Create your first folder to start organizing your documents.</p>
                     </div>
                 </div>
             </div>
 
-            <div id="folderDocView" class="folder-doc-view">
+            <div id="folderDocView" class="folder-doc-view" style="margin-top: 32px; display: none;">
+                <hr style="border: 0; border-top: 1px solid var(--border); margin-bottom: 24px;" />
 
-                <div class="card dashboard-panel">
-                    <div id="docLoader" class="document-state">
-                        <span>Loading documents...</span>
-                    </div>
+                <div class="section-header" style="margin-bottom: 16px;">
+                    <h2 class="section-title" style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Documents</h2>
+                </div>
 
-                    <p id="docError" class="helper-text error" role="alert"></p>
+                <div id="docLoader" class="document-state" style="display: none; justify-content: center; padding: 24px;">
+                    <span>Loading documents...</span>
+                </div>
 
-                    <div id="docGrid" class="document-grid"></div>
+                <p id="docError" class="helper-text error" role="alert" style="display: none;"></p>
 
-                    <div id="docEmpty" class="empty-state">
-                        <div class="empty-title">This folder is empty</div>
-                        <p>Move documents into this folder from the Dashboard or Document Detail page.</p>
-                    </div>
+                <div id="docGrid" class="document-grid" style="display: none;"></div>
+
+                <div id="docEmpty" class="empty-state-box" style="display: none;">
+                    <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                       <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    <div class="empty-title">This folder is empty</div>
+                    <p class="empty-desc">Move documents into this folder from the Dashboard or Document Detail page.</p>
                 </div>
             </div>
 

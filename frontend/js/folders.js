@@ -184,7 +184,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const icon = document.createElement("div");
     icon.className = "folder-icon";
-    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" aria-hidden="true" focusable="false"><path stroke="currentColor" d="M1.5 10V2.5h5l3 3h11v3m3 0.25V8.5H4.6l-0.15 0.25 -0.234 0.492A28 28 0 0 0 1.5 21.272v0.228h19v-0.128a28 28 0 0 1 2.757 -12.116l0.243 -0.506Z" stroke-width="1"></path></svg>';
+    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-19.5 0A2.25 2.25 0 004.5 15h15a2.25 2.25 0 002.25-2.25m-19.5 0v.158c0 .824.238 1.62.684 2.302L6.16 19.5a2.25 2.25 0 001.882 1.05h7.918a2.25 2.25 0 001.882-1.05l1.726-2.656a3.75 3.75 0 01.684-2.302V12.75" /></svg>';
+
+    const infoText = document.createElement("div");
+    infoText.className = "folder-info-text";
 
     const name = document.createElement("p");
     name.className = "folder-name";
@@ -208,28 +211,23 @@ document.addEventListener("DOMContentLoaded", async function () {
       meta.textContent = parts.join(" · ");
     }
 
+    infoText.append(name, meta);
+
     const main = document.createElement("div");
     main.className = "folder-card-main";
-    main.append(icon, name, meta);
+    main.append(icon, infoText);
 
     link.appendChild(main);
 
     // Kebab actions dropdown menu
     const actions = document.createElement("div");
     actions.className = "folder-card-actions";
-    actions.style.position = "relative";
 
     const kebabBtn = document.createElement("button");
     kebabBtn.type = "button";
     kebabBtn.className = "btn-kebab";
     kebabBtn.setAttribute("aria-label", "Folder actions");
     kebabBtn.innerHTML = "⋮";
-    kebabBtn.style.background = "transparent";
-    kebabBtn.style.border = "none";
-    kebabBtn.style.fontSize = "20px";
-    kebabBtn.style.cursor = "pointer";
-    kebabBtn.style.color = "var(--text)";
-    kebabBtn.style.padding = "0 8px";
 
     const dropdown = document.createElement("div");
     dropdown.className = "kebab-dropdown";
@@ -384,9 +382,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     titleEl.appendChild(titleLink);
     header.appendChild(titleEl);
 
-    const desc = document.createElement("p");
-    desc.className = "document-description";
-    desc.textContent = doc.description || "No description provided.";
+    content.append(header);
+
+    // Only render description if it is not empty/falsy
+    if (doc.description && doc.description.trim()) {
+      const desc = document.createElement("p");
+      desc.className = "document-description";
+      desc.textContent = doc.description;
+      content.appendChild(desc);
+    }
 
     const meta = document.createElement("div");
     meta.className = "document-meta";
@@ -398,12 +402,33 @@ document.addEventListener("DOMContentLoaded", async function () {
       return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" });
     };
 
+    const formatFileSize = (bytes) => {
+      if (bytes === undefined || bytes === null) return "-";
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    };
+
     const dateItem = document.createElement("span");
     dateItem.className = "document-meta-item";
     dateItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> ${formatDate(doc.createdAt)}`;
     meta.append(dateItem);
 
-    content.append(header, desc, meta);
+    // Size metadata tag
+    const sizeItem = document.createElement("span");
+    sizeItem.className = "document-meta-item";
+    sizeItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg> ${formatFileSize(doc.fileSize)}`;
+    meta.append(sizeItem);
+
+    // Owner metadata tag (if present)
+    if (doc.ownerName) {
+      const ownerItem = document.createElement("span");
+      ownerItem.className = "document-meta-item";
+      ownerItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg> ${doc.ownerName}`;
+      meta.append(ownerItem);
+    }
+
+    content.append(meta);
     card.appendChild(content);
 
     card.addEventListener("click", function (e) {
@@ -592,6 +617,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         shareGroupSelect.appendChild(opt);
       });
       groupsLoaded = true;
+      if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+        window.UIHelper.convertSelectToCustomDropdown(shareGroupSelect);
+        shareGroupSelect.dispatchEvent(new Event("syncCustom"));
+      }
     } catch (e) {
       console.error("Failed to load groups for dropdown", e);
     }
