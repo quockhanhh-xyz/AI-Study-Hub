@@ -275,10 +275,10 @@ function renderDocument(doc) {
     }
 
     // Delete button — only the owner has canDelete
-    const deleteBtn = document.getElementById("deleteBtn");
-    if (deleteBtn) {
-        deleteBtn.style.display =
-            !currentIsCommunityView && doc.canDelete ? "inline-flex" : "none";
+    const dangerZone = document.querySelector(".inspector-danger-zone");
+    if (dangerZone) {
+        dangerZone.style.display =
+            !currentIsCommunityView && doc.canDelete ? "block" : "none";
     }
 
     // Publish button
@@ -307,19 +307,17 @@ function renderDocument(doc) {
     }
 
     // Configure Inspector panel visibility and defaults
-    const inspector = document.querySelector(".detail-right-inspector");
+    const tabsContainer = document.querySelector(".inspector-tabs-container");
+    const tabPanes = document.querySelector(".inspector-panes");
     const hasInspector = doc.canEdit || doc.canShare;
-    const detailContentContainer = document.getElementById("detailContent");
 
-    if (inspector && detailContentContainer) {
+    if (tabsContainer && tabPanes) {
         if (!currentIsCommunityView && hasInspector) {
-            inspector.style.display = "block";
-            detailContentContainer.classList.add("has-inspector");
+            tabsContainer.style.display = "flex";
+            tabPanes.style.display = "block";
 
             const tabDetails = document.getElementById("inspectorTabDetails");
             const tabSharing = document.getElementById("inspectorTabSharing");
-            const paneDetails = document.getElementById("inspectorPaneDetails");
-            const paneSharing = document.getElementById("inspectorPaneSharing");
 
             if (tabDetails) tabDetails.style.display = doc.canEdit ? "block" : "none";
             if (tabSharing) tabSharing.style.display = doc.canShare ? "block" : "none";
@@ -331,8 +329,8 @@ function renderDocument(doc) {
                 setActiveTab("sharing", false);
             }
         } else {
-            inspector.style.display = "none";
-            detailContentContainer.classList.remove("has-inspector");
+            tabsContainer.style.display = "none";
+            tabPanes.style.display = "none";
         }
     }
 }

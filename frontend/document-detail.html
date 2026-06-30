@@ -9,131 +9,298 @@
   <link rel="stylesheet" href="css/style.css" />
 
   <style>
-    /* ===== DETAIL PAGE SPECIFIC ===== */
-    .detail-back-btn {
-      width: fit-content !important;
-      padding: 8px 16px;
-      margin-bottom: 24px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text-main);
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: 500;
-      display: inline-flex !important;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 6px rgba(23, 32, 51, 0.04);
-      align-self: flex-start !important;
-    }
-
-    .detail-back-btn:hover {
-      background: var(--primary-light);
-      border-color: var(--primary-border);
-      color: var(--primary);
-      transform: translateX(-2px);
-    }
-
-    .detail-card {
-      max-width: 720px;
-      width: 100%;
-      margin: 0 auto;
-    }
-
-    .detail-header {
+    /* ===== SPLIT-SCREEN LAYOUT SYSTEM ===== */
+    .detail-split-container {
       display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      margin-bottom: 28px;
+      flex-direction: column;
+      gap: 24px;
     }
-
-    .detail-type-badge {
+    @media (min-width: 1024px) {
+      .detail-split-container {
+        display: grid;
+        grid-template-columns: 65fr 35fr;
+        gap: 32px;
+        align-items: start;
+      }
+    }
+    .detail-left-panel {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .preview-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .preview-toolbar .btn {
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 8px;
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      min-width: 56px;
-      height: 32px;
-      padding: 0 10px;
-      border-radius: 6px;
-      background: var(--primary-light);
-      color: var(--primary);
-      font-size: 13px;
-      font-weight: 700;
-      flex-shrink: 0;
-      margin-top: 4px;
+      gap: 6px;
     }
-
-    .detail-title-block h1 {
-      margin: 0 0 6px;
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-      line-height: 1.3;
-    }
-
-    .detail-title-block .detail-uploaded-by {
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .detail-meta-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 28px;
-    }
-
-    .meta-item {
-      background: var(--background);
+    
+    #previewArea {
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px 16px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--background);
+      height: calc(100vh - 180px);
+      min-height: 550px;
+    }
+    
+    .preview-iframe {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border: none;
     }
 
-    .meta-item-label {
-      font-size: 12px;
+    .preview-image-wrap {
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      background: var(--background);
+    }
+
+    .preview-image {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+
+    .preview-fallback {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      text-align: center;
       color: var(--muted);
-      margin-bottom: 4px;
+      gap: 12px;
+      height: 100%;
     }
 
-    .meta-item-value {
-      font-size: 14px;
+    .preview-fallback-icon {
+      color: var(--muted);
+      opacity: 0.5;
+    }
+
+    .preview-fallback-title {
+      font-size: 15px;
       font-weight: 600;
       color: var(--text);
     }
 
-    .detail-description {
-      margin-bottom: 28px;
-    }
-
-    .detail-description label {
-      font-size: 12px;
+    .preview-fallback-desc {
+      font-size: 13px;
       color: var(--muted);
+    }
+    
+    .detail-right-inspector {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    }
+    
+    .detail-right-inspector .detail-back-btn {
+      margin-bottom: 0;
+      align-self: flex-start;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+    }
+    
+    .inspector-header {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+    .inspector-header h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.3;
+      margin: 0;
+      word-break: break-word;
+    }
+    .inspector-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .inspector-badge-row .detail-type-badge {
+      height: 22px;
+      min-width: auto;
+      padding: 0 8px;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 4px;
+      margin: 0;
+      background: var(--primary-light);
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .inspector-badge-row .status-badge {
+      height: 22px;
+      padding: 0 8px;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 4px;
+      margin: 0;
+    }
+    .inspector-header .detail-uploaded-by {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    
+    .inspector-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+    .inspector-actions .btn {
+      flex: 1 1 calc(50% - 4px);
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      justify-content: center;
+      border-radius: 10px;
+    }
+    
+    .inspector-info-summary {
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .inspector-info-summary .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      margin: 0;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 8px;
     }
-
-    .detail-description p {
-      margin: 0;
-      font-size: 15px;
-      color: var(--text);
-      line-height: 1.6;
+    .inspector-info-summary .info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
-
-    .detail-divider {
-      border: none;
+    .inspector-info-summary .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+    .inspector-info-summary .info-label {
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .inspector-info-summary .info-value {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+    .inspector-info-summary .info-description {
       border-top: 1px solid var(--border);
-      margin: 28px 0;
+      padding-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .inspector-info-summary .info-description p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text-main);
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    
+    .inspector-tabs-container {
+      display: flex !important;
+      background: var(--background) !important;
+      padding: 4px !important;
+      border-radius: 10px !important;
+      margin-bottom: 20px !important;
+      border: 1px solid var(--border) !important;
+    }
+    .inspector-tab-btn {
+      flex: 1;
+      padding: 8px 16px !important;
+      background: transparent !important;
+      border: none !important;
+      border-radius: 8px !important;
+      color: var(--text-light) !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      font-size: 14px !important;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      text-align: center !important;
+      box-shadow: none !important;
+    }
+    .inspector-tab-btn:hover {
+      color: var(--text-main) !important;
+    }
+    .inspector-tab-btn.active {
+      background: var(--surface) !important;
+      color: var(--primary) !important;
+      box-shadow: 0 2px 8px rgba(23, 32, 51, 0.08) !important;
+    }
+    .inspector-tab-pane {
+      display: none;
+    }
+    .inspector-tab-pane.active {
+      display: block;
+    }
+    
+    .inspector-danger-zone {
+      margin-top: 12px;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+      text-align: center;
+    }
+    .inspector-danger-zone button {
+      background: transparent;
+      border: none;
+      color: var(--danger);
+      text-decoration: underline;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+    .inspector-danger-zone button:hover {
+      color: #b91c1c;
     }
 
     /* ===== EDIT FORM ===== */
     .edit-section h2 {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
-      margin: 0 0 20px;
+      margin: 0 0 16px;
       text-align: left;
     }
 
@@ -145,7 +312,7 @@
       font-size: 15px;
       font-family: inherit;
       resize: vertical;
-      min-height: 90px;
+      min-height: 80px;
       transition: all 0.2s ease;
       background-color: var(--surface);
       color: var(--text);
@@ -168,7 +335,6 @@
       color: var(--text);
       transition: all 0.2s ease;
       appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 14px center;
       cursor: pointer;
@@ -180,30 +346,7 @@
       box-shadow: 0 0 0 3px rgba(255, 88, 88, 0.15);
     }
 
-    .edit-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 8px;
-    }
-
-    .edit-actions .btn {
-      flex: 1;
-    }
-
-    /* ===== FILE ACTION ===== */
-    .file-action-section {
-      margin-bottom: 28px;
-    }
-
-    .file-action-section .btn {
-      width: auto;
-      padding: 10px 24px;
-      gap: 8px;
-      display: inline-flex;
-      align-items: center;
-    }
-
-    /* ===== LOADER & ERROR ===== */
+    /* ===== LOADER & ERROR STATE ===== */
     #detailLoader {
       text-align: center;
       padding: 48px 24px;
@@ -303,163 +446,11 @@
       background-color: #b91c1c;
     }
 
-    /* ===== PREVIEW AREA ===== */
-    .preview-section {
-      margin-bottom: 28px;
-    }
-
-    .preview-section-label {
-      font-size: 12px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
-    }
-
-    #previewArea {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-      background: var(--background);
-      min-height: 120px;
-    }
-
-    .preview-iframe {
-      width: 100%;
-      height: 520px;
-      display: block;
-      border: none;
-    }
-
-    .preview-image-wrap {
-      padding: 24px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 300px;
-      background: var(--background);
-    }
-
-    .preview-image {
-      max-width: 100%;
-      max-height: 480px;
-      object-fit: contain;
-      border-radius: 6px;
-    }
-
-    .preview-fallback {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 48px 24px;
-      text-align: center;
-      color: var(--muted);
-      gap: 12px;
-    }
-
-    .preview-fallback-icon {
-      color: var(--muted);
-      opacity: 0.5;
-    }
-
-    .preview-fallback-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    .preview-fallback-desc {
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    @media (max-width: 768px) {
-      .detail-meta-grid {
-        grid-template-columns: repeat(2, 1fr);
+    @media (max-width: 1023px) {
+      #previewArea {
+        height: 480px;
+        min-height: auto;
       }
-
-      .detail-header {
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .preview-iframe {
-        height: 320px;
-      }
-    }
-
-    /* ===== SPLIT LAYOUT STYLES ===== */
-    .detail-split-container {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-    @media (min-width: 1024px) {
-      .detail-split-container.has-inspector {
-        display: grid;
-        grid-template-columns: 65fr 35fr;
-        gap: 32px;
-        align-items: start;
-      }
-      .detail-split-container.has-inspector .detail-left-panel .detail-card {
-        max-width: none;
-      }
-      .detail-split-container:not(.has-inspector) .detail-left-panel .detail-card {
-        max-width: 800px;
-        margin: 0 auto;
-      }
-    }
-    .detail-left-panel {
-      min-width: 0;
-    }
-    .detail-right-inspector {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-    }
-    .inspector-tabs-container {
-      display: flex !important;
-      background: var(--background) !important;
-      padding: 4px !important;
-      border-radius: 10px !important;
-      margin-bottom: 20px !important;
-      border: 1px solid var(--border) !important;
-    }
-    .inspector-tab-btn {
-      flex: 1;
-      padding: 8px 16px !important;
-      background: transparent !important;
-      border: none !important;
-      border-radius: 8px !important;
-      color: var(--text-light) !important;
-      font-weight: 600 !important;
-      cursor: pointer !important;
-      font-size: 14px !important;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-      text-align: center !important;
-      box-shadow: none !important;
-      border-bottom: none !important;
-    }
-    .inspector-tab-btn:hover {
-      color: var(--text-main) !important;
-    }
-    .inspector-tab-btn.active {
-      background: var(--surface) !important;
-      color: var(--primary) !important;
-      box-shadow: 0 2px 8px rgba(23, 32, 51, 0.08) !important;
-      border-bottom-color: transparent !important;
-      border-bottom: none !important;
-    }
-    .inspector-tab-pane {
-      display: none;
-    }
-    .inspector-tab-pane.active {
-      display: block;
-    }
-    .detail-divider {
-      display: none; /* Hide standard separator in split layout */
     }
   </style>
 </head>
@@ -472,88 +463,86 @@
     </aside>
 
     <main class="main-content">
-      <button class="btn detail-back-btn" onclick="handleBack()">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-          id="Right-Angle-Arrow--Streamline-Guidance-Free" height="18" width="18" aria-hidden="true" focusable="false">
-          <desc>Right Angle Arrow Streamline Icon: https://streamlinehq.com</desc>
-          <path stroke="currentColor"
-            d="M8 24c0 -0.741 -0.733 -1.85 -1.475 -2.78 -0.954 -1.2 -2.094 -2.247 -3.401 -3.046C2.144 17.575 0.956 17 0 17m0 0c0.956 0 2.145 -0.575 3.124 -1.174 1.307 -0.8 2.447 -1.847 3.401 -3.045C7.267 11.85 8 10.74 8 10m-8 7 11.5 0c6.627 0 12 -5.373 12 -12l0 -5"
-            stroke-width="1"></path>
-        </svg>
-        Back
-      </button>
-
       <div id="detailLoader">Loading document...</div>
 
       <div id="detailContent" class="detail-split-container">
-        <!-- Left Panel: Card containing general information & Preview -->
+        <!-- Left Column: Document Space -->
         <div class="detail-left-panel">
-          <div class="card detail-card">
-            <div class="detail-header" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-              <span class="detail-type-badge" id="fileTypeBadge">–</span>
-              <span id="visibilityBadge" class="status-badge" style="display: none;"></span>
-              <span id="approvalBadge" class="status-badge" style="display: none;"></span>
-              <div class="detail-title-block" style="flex-grow: 1; min-width: 200px;">
-                <h1 id="docTitle" style="margin: 0;">–</h1>
-                <span class="detail-uploaded-by" id="docUploadedBy"></span>
-              </div>
-            </div>
-
-            <div class="detail-meta-grid">
-              <div class="meta-item">
-                <div class="meta-item-label">Subject</div>
-                <div class="meta-item-value" id="docSubject">–</div>
-              </div>
-              <div class="meta-item">
-                <div class="meta-item-label">File size</div>
-                <div class="meta-item-value" id="docFileSize">–</div>
-              </div>
-              <div class="meta-item">
-                <div class="meta-item-label">Uploaded</div>
-                <div class="meta-item-value" id="docCreatedAt">–</div>
-              </div>
-            </div>
-
-            <div class="detail-description">
-              <label>Description</label>
-              <p id="docDescription">No description provided.</p>
-            </div>
-
-            <!-- Preview Area -->
-            <div class="preview-section">
-              <div class="preview-section-label">Preview</div>
-              <div id="previewArea">
-                <div class="preview-fallback">
-                  <div class="preview-fallback-desc">Loading preview...</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="file-action-section" style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px;">
-              <button id="openFileBtn" class="btn btn-primary" style="display:none; width:auto; padding:10px 24px;">
-                Open File ↗
-              </button>
-              <button id="downloadFileBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;">
-                Download
-              </button>
-              <button id="shareBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;">
-                Share
-              </button>
-              <button id="moveBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;" onclick="showMoveModal()">
-                Move
-              </button>
-              <button id="publishBtn" class="btn btn-success" style="display:none; width:auto; padding:10px 24px;">
-                Publish
-              </button>
-              <button id="unpublishBtn" class="btn btn-danger" style="display:none; width:auto; padding:10px 24px;">
-                Unpublish
-              </button>
+          <div class="preview-toolbar">
+            <button id="openFileBtn" class="btn btn-secondary btn-sm" style="display:none;">
+              Open Fullscreen ↗
+            </button>
+            <button id="downloadFileBtn" class="btn btn-secondary btn-sm" style="display:none;">
+              Download ⬇
+            </button>
+          </div>
+          <div id="previewArea">
+            <div class="preview-fallback">
+              <div class="preview-fallback-desc">Loading preview...</div>
             </div>
           </div>
         </div>
 
-        <!-- Right Panel / Inspector: Details & Sharing tabs -->
+        <!-- Right Column: Control Panel & Metadata -->
         <div class="detail-right-inspector">
+          <!-- Back button inside inspector -->
+          <button class="btn detail-back-btn" onclick="handleBack()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" aria-hidden="true" focusable="false">
+              <path stroke="currentColor" d="M8 24c0 -0.741 -0.733 -1.85 -1.475 -2.78 -0.954 -1.2 -2.094 -2.247 -3.401 -3.046C2.144 17.575 0.956 17 0 17m0 0c0.956 0 2.145 -0.575 3.124 -1.174 1.307 -0.8 2.447 -1.847 3.401 -3.045C7.267 11.85 8 10.74 8 10m-8 7 11.5 0c6.627 0 12 -5.373 12 -12l0 -5" stroke-width="1.5"></path>
+            </svg>
+            Back
+          </button>
+
+          <!-- Inspector Header -->
+          <div class="inspector-header">
+            <h1 id="docTitle">–</h1>
+            <div class="inspector-badge-row">
+              <span class="detail-type-badge" id="fileTypeBadge">–</span>
+              <span id="visibilityBadge" class="status-badge" style="display: none;"></span>
+              <span id="approvalBadge" class="status-badge" style="display: none;"></span>
+            </div>
+            <span class="detail-uploaded-by" id="docUploadedBy"></span>
+          </div>
+
+          <!-- Action buttons row -->
+          <div class="inspector-actions">
+            <button id="shareBtn" class="btn btn-secondary" style="display:none;">
+              Share
+            </button>
+            <button id="moveBtn" class="btn btn-secondary" style="display:none;" onclick="showMoveModal()">
+              Move
+            </button>
+            <button id="publishBtn" class="btn btn-primary" style="display:none;">
+              Publish
+            </button>
+            <button id="unpublishBtn" class="btn btn-danger" style="display:none;">
+              Unpublish
+            </button>
+          </div>
+
+          <!-- Document details summary (Read-only list) -->
+          <div class="inspector-info-summary">
+            <div class="info-list">
+              <div class="info-item">
+                <span class="info-label">Subject:</span>
+                <span class="info-value" id="docSubject">–</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">File size:</span>
+                <span class="info-value" id="docFileSize">–</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Uploaded:</span>
+                <span class="info-value" id="docCreatedAt">–</span>
+              </div>
+            </div>
+            <div class="info-description">
+              <span class="info-label">Description</span>
+              <p id="docDescription">No description provided.</p>
+            </div>
+          </div>
+
+          <!-- Inspector Tabs (Details / Sharing) -->
           <div class="inspector-tabs-container" role="tablist">
             <button type="button" id="inspectorTabDetails" class="inspector-tab-btn active">Details</button>
             <button type="button" id="inspectorTabSharing" class="inspector-tab-btn">Sharing</button>
@@ -563,7 +552,7 @@
             <!-- Details tab pane -->
             <div id="inspectorPaneDetails" class="inspector-tab-pane active">
               <div class="edit-section" style="margin-top: 0;">
-                <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Edit Details</h2>
+                <h2 style="font-size: 15px; font-weight: 700; margin-bottom: 12px;">Edit Details</h2>
 
                 <div class="form-group">
                   <label for="editTitle">Title <span style="color:var(--danger)">*</span></label>
@@ -584,9 +573,8 @@
 
                 <div id="editMessage" class="helper-text" style="min-height:20px;margin-bottom:12px;"></div>
 
-                <div class="edit-actions" style="display: flex; gap: 12px; margin-top: 16px;">
-                  <button class="btn btn-primary" id="saveBtn" onclick="handleSave()" style="flex: 1;">Save Changes</button>
-                  <button class="btn btn-danger" id="deleteBtn" onclick="handleDelete()" style="flex: 1;">Delete</button>
+                <div class="edit-actions" style="margin-top: 16px;">
+                  <button class="btn btn-primary" id="saveBtn" onclick="handleSave()" style="width:100%;">Save Changes</button>
                 </div>
               </div>
             </div>
@@ -594,21 +582,26 @@
             <!-- Sharing tab pane -->
             <div id="inspectorPaneSharing" class="inspector-tab-pane">
               <div id="sharesPanel" class="shares-panel" style="display: block; margin-bottom: 0;">
-                <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Sharing Management</h3>
+                <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 12px;">Sharing Management</h3>
 
                 <div style="margin-bottom: 20px;">
-                  <h4 style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Direct User Shares</h4>
+                  <h4 style="font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Direct User Shares</h4>
                   <div id="directSharesList" class="member-list" style="margin-bottom: 12px;"></div>
                   <p id="noDirectShares" class="helper-text" style="color: var(--muted); display: none;">Not shared with any users directly.</p>
                 </div>
 
                 <div>
-                  <h4 style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Group Shares</h4>
+                  <h4 style="font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Group Shares</h4>
                   <div id="groupSharesList" class="member-list" style="margin-bottom: 12px;"></div>
                   <p id="noGroupShares" class="helper-text" style="color: var(--muted); display: none;">Not shared in any groups.</p>
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- Danger Zone: separated Delete link -->
+          <div class="inspector-danger-zone" style="display: none;">
+            <button type="button" id="deleteBtn" onclick="handleDelete()">Delete Document</button>
           </div>
         </div>
       </div>
