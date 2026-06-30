@@ -155,7 +155,3 @@ function del(endpoint, options = {}) {
     ...options
   });
 }
-
-// Expose globally so page scripts can flush sessions on logout or document switch
-window.clearAllPollingSessions = clearAllPollingSessions;
-window.stopDocumentPolling = stopDocumentPolling;

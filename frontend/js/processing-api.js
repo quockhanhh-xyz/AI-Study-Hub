@@ -10,7 +10,7 @@
  */
 async function processDocument(documentId) {
   if (!documentId) throw new Error("Document ID is required.");
-  
+
   // Utilizes the centralized apiRequest utility; bypassing raw fetch implementations.
   return await apiRequest(`/api/documents/${documentId}/process`, {
     method: "POST"
@@ -38,10 +38,10 @@ async function reprocessDocument(documentId) {
 const DOCUMENT_PROCESSING_STATUS = {
   PENDING: { label: "Pending", class: "status-pending" },
   PROCESSING: { label: "Processing Text", class: "status-processing" },
-  CLEANING: { label: "Cleaning Text", class: "status-cleaning" },
-  CHUNKING: { label: "Splitting Chunks", class: "status-chunking" },
-  SUCCESS: { label: "Ready for AI Q&A", class: "status-success" },
-  FAILED: { label: "Processing Failed", class: "status-error" }
+  COMPLETED: { label: "Ready for AI Q&A", class: "status-success" },
+  FAILED: { label: "Processing Failed", class: "status-error" },
+  UNSUPPORTED: { label: "Unsupported File Type", class: "status-error" },
+  EMPTY_CONTENT: { label: "No Extractable Content", class: "status-error" }
 };
 
 /**
@@ -68,14 +68,14 @@ async function getDocumentContent(documentId) {
   if (!documentId) throw new Error("Document ID is required.");
 
   // Utilizes the centralized apiRequest utility; bypassing raw fetch implementations.
-  return await apiRequest(`/api/documents/${documentId}/chunks`, {
+  return await apiRequest(`/api/documents/${documentId}/content`, {
     method: "GET"
   });
 }
 
 /**
  * Global registry tracking active polling sessions to eliminate duplicate timers per document.
- * Maps documentId -> { intervalId, attempts }
+ * Maps documentId -> { intervalId, attempts, isRequestInFlight }
  */
 const activePollingSessions = new Map();
 
@@ -83,9 +83,10 @@ const activePollingSessions = new Map();
  * Orchestrates a controlled polling session to monitor background document processing.
  * Frequency: Every 2 seconds, up to 30 attempts max.
  * Handles 409 Conflict gracefully by sustaining the session rather than allocating a new timer.
- * * @param {string|number} documentId - The target document identifier.
+ * Guards against overlapping requests when the backend responds slowly.
+ * @param {string|number} documentId - The target document identifier.
  * @param {Function} onStatusUpdate - Callback invoked on each successful status fetch. Receives (status, data).
- * @param {Function} onTerminalState - Callback invoked when a final state (SUCCESS/FAILED) or limit is reached. Receives (status, data).
+ * @param {Function} onTerminalState - Callback invoked when a final state (COMPLETED/FAILED/UNSUPPORTED/EMPTY_CONTENT) or limit is reached. Receives (status, data).
  */
 function startDocumentPolling(documentId, onStatusUpdate, onTerminalState) {
   if (!documentId) throw new Error("Document ID is required for polling initialization.");
@@ -98,12 +99,19 @@ function startDocumentPolling(documentId, onStatusUpdate, onTerminalState) {
 
   const sessionState = {
     intervalId: null,
-    attempts: 0
+    attempts: 0,
+    isRequestInFlight: false
   };
 
   const executePoll = async () => {
+    // Overlap guard: skip this tick if the previous request hasn't resolved yet
+    if (sessionState.isRequestInFlight) {
+      console.warn(`Skipping poll tick for document #${documentId}: previous request still in flight.`);
+      return;
+    }
+
     sessionState.attempts++;
-    
+
     // Safety boundary check: Halt when maximum threshold is exceeded
     if (sessionState.attempts > 30) {
       stopDocumentPolling(documentId);
@@ -113,18 +121,25 @@ function startDocumentPolling(documentId, onStatusUpdate, onTerminalState) {
       return;
     }
 
+    sessionState.isRequestInFlight = true;
+
     try {
       const response = await getProcessingStatus(documentId);
-      
+
       if (response && response.success && response.data) {
-        const currentStatus = response.data.status;
-        
+        const currentStatus = response.data.processingStatus;
+
         if (typeof onStatusUpdate === "function") {
           onStatusUpdate(currentStatus, response.data);
         }
 
         // Terminal status detection: Halt polling immediately
-        if (currentStatus === "SUCCESS" || currentStatus === "FAILED") {
+        if (
+          currentStatus === "COMPLETED" ||
+          currentStatus === "FAILED" ||
+          currentStatus === "UNSUPPORTED" ||
+          currentStatus === "EMPTY_CONTENT"
+        ) {
           stopDocumentPolling(documentId);
           if (typeof onTerminalState === "function") {
             onTerminalState(currentStatus, response.data);
@@ -144,13 +159,15 @@ function startDocumentPolling(documentId, onStatusUpdate, onTerminalState) {
       if (typeof onTerminalState === "function") {
         onTerminalState("ERROR", error);
       }
+    } finally {
+      sessionState.isRequestInFlight = false;
     }
   };
 
   // Trigger immediate primary evaluation, then establish the recurring interval loop
   executePoll();
   sessionState.intervalId = setInterval(executePoll, 2000);
-  
+
   // Register session context into global tracking matrix
   activePollingSessions.set(documentId, sessionState);
 }
@@ -181,3 +198,7 @@ function clearAllPollingSessions() {
 
 // Hook into navigation teardowns or page exits to fulfill cleanup invariants
 window.addEventListener("beforeunload", clearAllPollingSessions);
+
+// Expose globally so page scripts can flush sessions on logout or document switch
+window.clearAllPollingSessions = clearAllPollingSessions;
+window.stopDocumentPolling = stopDocumentPolling;

@@ -214,6 +214,11 @@ function initializeLogoutFlow() {
     } catch (error) {
       console.warn("Backend logout session cleanup failed, performing client fallback...", error);
     } finally {
+      // Flush any active document processing polling sessions before tearing down the session
+      if (typeof window.clearAllPollingSessions === "function") {
+        window.clearAllPollingSessions();
+      }
+
       // Clear remaining metadata objects from storage catalog safely
       localStorage.removeItem("currentUser");
 
