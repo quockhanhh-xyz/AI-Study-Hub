@@ -61,7 +61,6 @@ public class RealDocumentTextExtractor implements DocumentTextExtractor {
         List<Integer> pageStartOffsets = null;
         int originalCharacterCount;
         boolean isTruncated;
-        int wordCount;
 
         try {
             if ("PDF".equals(fileType)) {
