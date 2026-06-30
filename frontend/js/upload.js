@@ -546,7 +546,16 @@ uploadForm.addEventListener("submit", async (e) => {
     updateDropZone(null);
     newSubjectRow.style.display = "none";
     newFolderRow.style.display = "none";
-    setTimeout(() => { window.location.href = "documents.html"; }, 1500);
+    setTimeout(() => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const source = urlParams.get("source");
+      const fId = urlParams.get("folderId");
+      if (source === "folder" && fId) {
+        window.location.href = `folders.html?folderId=${fId}`;
+      } else {
+        window.location.href = "documents.html";
+      }
+    }, 1500);
 
   } catch (err) {
     clearInterval(progressInterval);
@@ -566,6 +575,31 @@ uploadForm.addEventListener("submit", async (e) => {
     uploadAbortController = null;
     submitBtn.disabled = false;
     submitBtn.textContent = "Upload Document";
+  }
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+  const urlParams = new URLSearchParams(window.location.search);
+  const source = urlParams.get("source");
+  const folderId = urlParams.get("folderId");
+  const folderName = urlParams.get("folderName");
+
+  if (source === "folder" && folderId) {
+    const backLink = document.querySelector(".back-link");
+    if (backLink) {
+      backLink.href = `folders.html?folderId=${folderId}`;
+      backLink.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+            id="Right-Angle-Arrow--Streamline-Guidance-Free" height="18" width="18" aria-hidden="true"
+            focusable="false">
+            <desc>Right Angle Arrow Streamline Icon: https://streamlinehq.com</desc>
+            <path stroke="currentColor"
+                d="M8 24c0 -0.741 -0.733 -1.85 -1.475 -2.78 -0.954 -1.2 -2.094 -2.247 -3.401 -3.046C2.144 17.575 0.956 17 0 17m0 0c0.956 0 2.145 -0.575 3.124 -1.174 1.307 -0.8 2.447 -1.847 3.401 -3.045C7.267 11.85 8 10.74 8 10m-8 7 11.5 0c6.627 0 12 -5.373 12 -12l0 -5"
+                stroke-width="1"></path>
+        </svg>
+        Back to ${folderName || "Folder"}
+      `;
+    }
   }
 });
 

@@ -112,6 +112,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (pageTitleEl) {
               pageTitleEl.textContent = folder.folderName;
             }
+            const folderNameEncoded = encodeURIComponent(folder.folderName);
+            const uploadUrl = `upload.html?source=folder&folderId=${currentParentFolderId}&folderName=${folderNameEncoded}`;
+            const uploadBtn = document.getElementById("uploadDocumentToFolderBtn");
+            const emptyUploadBtn = document.getElementById("emptyUploadBtn");
+            if (uploadBtn) uploadBtn.href = uploadUrl;
+            if (emptyUploadBtn) emptyUploadBtn.href = uploadUrl;
           }
           chain.unshift({ folderId: folder.folderId, name: folder.folderName });
           folderId = folder.parentFolderId || null;
@@ -348,7 +354,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       folderLoader.style.display = "none";
 
       if (folders.length === 0) {
-        folderEmpty.style.display = "block";
+        folderEmpty.style.display = "flex";
         return;
       }
 
@@ -466,7 +472,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       docLoader.style.display = "none";
 
       if (docs.length === 0) {
-        docEmpty.style.display = "block";
+        docEmpty.style.display = "flex";
         return;
       }
 
