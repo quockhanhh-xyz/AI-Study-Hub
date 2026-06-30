@@ -3034,3 +3034,36 @@ svg {
   max-height: 240px;
   overflow-y: auto;
 }
+
+/* ===== BREADCRUMB/TEXT BACK BUTTON ===== */
+.btn-back {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 0 !important;
+  margin-bottom: 8px !important;
+  font-weight: 500 !important;
+  transition: color 0.2s ease !important;
+  text-decoration: none !important;
+  font-family: 'Inter', Arial, sans-serif !important;
+}
+.btn-back:hover {
+  color: var(--primary) !important;
+}
+
+/* ===== UNIFIED PAGE HEADER H1 TYPOGRAPHY ===== */
+.page-header h1,
+#folderPageTitle,
+#groupNameTitleHeader,
+.dashboard-header h1,
+.trash-header h1 {
+  font-size: 26px !important;
+  font-weight: 800 !important;
+  font-family: 'Inter', Arial, sans-serif !important;
+  color: var(--text-main) !important;
+}
