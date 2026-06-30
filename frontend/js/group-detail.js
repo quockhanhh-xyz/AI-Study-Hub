@@ -145,7 +145,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     myRole = group.currentUserRole || group.role || group.myRole || null;
 
     groupNameHeader.textContent = group.groupName || "Group";
-    groupNameTitle.textContent = group.groupName || "Untitled Group";
+    const groupNameTitleHeader = document.getElementById("groupNameTitleHeader");
+    if (groupNameTitleHeader) {
+      groupNameTitleHeader.textContent = group.groupName || "Untitled Group";
+    }
+    if (groupNameTitle) {
+      groupNameTitle.textContent = group.groupName || "Untitled Group";
+    }
     groupDescription.textContent = group.description || "No description provided.";
 
     // Step 8A Refactor: Add click-to-copy functionality for invite code
@@ -212,11 +218,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     const isOwner = myRole === "OWNER";
 
     // OWNER-only actions
-    editGroupBtn.style.display = isOwner ? "inline-block" : "none";
-    deleteGroupBtn.style.display = isOwner ? "inline-block" : "none";
+    editGroupBtn.style.display = isOwner ? "inline-flex" : "none";
+    const dangerZoneSection = document.getElementById("dangerZoneSection");
+    if (dangerZoneSection) {
+      dangerZoneSection.style.display = isOwner ? "block" : "none";
+    }
+    deleteGroupBtn.style.display = isOwner ? "inline-flex" : "none";
 
     // MEMBER-only action (OWNER does not use leave in MVP)
-    leaveGroupBtn.style.display = !isOwner ? "inline-block" : "none";
+    leaveGroupBtn.style.display = !isOwner ? "inline-flex" : "none";
   }
 
   // Member list rendering
@@ -296,12 +306,20 @@ document.addEventListener("DOMContentLoaded", async function () {
     const card = document.createElement("article");
     card.className = "document-card";
 
+    // Left Column: Contributor Avatar instead of file type icon
+    const avatarWrapper = document.createElement("div");
+    avatarWrapper.className = "contributor-avatar";
+    const contributorName = doc.uploadedByName || doc.uploadedBy || "Unknown User";
+    avatarWrapper.textContent = contributorName.trim().charAt(0).toUpperCase();
+    avatarWrapper.title = `Uploaded by: ${contributorName}`;
+    card.appendChild(avatarWrapper);
+
+    // Right Column: The Details Column
+    const content = document.createElement("div");
+    content.className = "document-card-content";
+
     const header = document.createElement("div");
     header.className = "document-card-header";
-
-    const badge = document.createElement("span");
-    badge.className = "document-type-badge";
-    badge.textContent = (doc.fileType || "FILE").toUpperCase();
 
     const titleEl = document.createElement("h3");
     const titleLink = document.createElement("a");
@@ -310,31 +328,47 @@ document.addEventListener("DOMContentLoaded", async function () {
     titleLink.style.color = "inherit";
     titleLink.style.textDecoration = "none";
     titleEl.appendChild(titleLink);
-
-    header.append(badge, titleEl);
+    header.appendChild(titleEl);
 
     const desc = document.createElement("p");
     desc.className = "document-description";
-    desc.textContent = doc.description || "No description provided.";
+    if (doc.description && doc.description.trim() !== "No description provided.") {
+      desc.textContent = doc.description;
+    } else {
+      desc.style.display = "none";
+    }
 
-    const actions = document.createElement("div");
-    actions.className = "document-actions";
+    const meta = document.createElement("div");
+    meta.className = "document-meta";
 
-    const detailsBtn = document.createElement("a");
-    detailsBtn.href = `document-detail.html?id=${doc.documentId}`;
-    detailsBtn.className = "btn btn-primary document-detail-btn";
-    detailsBtn.textContent = "View Details";
-    actions.appendChild(detailsBtn);
+    const formatDate = (val) => {
+      if (!val) return "-";
+      const date = new Date(val);
+      if (Number.isNaN(date.getTime())) return "-";
+      return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" });
+    };
 
-    // Revoke is shown strictly based on backend's canRevoke flag —
-    // never computed locally, since revoke permission depends on
-    // document ownership vs. group ownership rules decided by the server.
+    const dateItem = document.createElement("span");
+    dateItem.className = "document-meta-item";
+    dateItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> ${formatDate(doc.createdAt)}`;
+    meta.append(dateItem);
+
+    const uploaderItem = document.createElement("span");
+    uploaderItem.className = "document-meta-item";
+    uploaderItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Uploaded by: <strong>${contributorName}</strong>`;
+    meta.append(uploaderItem);
+
+    content.append(header, desc, meta);
+    card.appendChild(content);
+
+    // Revoke is shown strictly based on backend's canRevoke flag
     if (doc.canRevoke === true) {
       const revokeBtn = document.createElement("button");
       revokeBtn.type = "button";
-      revokeBtn.className = "btn btn-danger";
+      revokeBtn.className = "btn-revoke-inline";
       revokeBtn.textContent = "Revoke";
-      revokeBtn.addEventListener("click", async function () {
+      revokeBtn.addEventListener("click", async function (e) {
+        e.stopPropagation(); // Prevent card click event from navigating
         const confirmed = await confirmAction({
           title: "Revoke Document?",
           message: "This document will no longer be shared with this group.",
@@ -351,10 +385,16 @@ document.addEventListener("DOMContentLoaded", async function () {
           showToast(error.message || "Failed to revoke document.", "error");
         }
       });
-      actions.appendChild(revokeBtn);
+      card.appendChild(revokeBtn);
     }
 
-    card.append(header, desc, actions);
+    card.addEventListener("click", function (e) {
+      if (e.target.closest("button") || e.target.closest("a")) {
+        return;
+      }
+      window.location.href = `document-detail.html?id=${doc.documentId}`;
+    });
+
     return card;
   }
 
@@ -376,7 +416,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       }
 
       if (docs.length === 0) {
-        docEmpty.style.display = "block";
+        docEmpty.style.display = "flex";
         return;
       }
 
@@ -419,15 +459,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     main.className = "folder-card-main";
     main.append(icon, name, ownerMeta, sharedByMeta);
 
-    const actions = document.createElement("div");
-    actions.className = "folder-card-actions";
+    card.append(main);
 
-    // Revoke is shown strictly based on backend's canRevoke flag —
-    // never computed locally, mirroring the group documents pattern.
     if (folder.canRevoke === true) {
       const revokeBtn = document.createElement("button");
       revokeBtn.type = "button";
-      revokeBtn.className = "btn btn-danger btn-sm";
+      revokeBtn.className = "btn-revoke-inline";
       revokeBtn.textContent = "Revoke";
       revokeBtn.addEventListener("click", async function (e) {
         e.stopPropagation(); // Prevent card click from triggering navigation
@@ -447,10 +484,8 @@ document.addEventListener("DOMContentLoaded", async function () {
           showToast(error.message || "Failed to revoke folder.", "error");
         }
       });
-      actions.appendChild(revokeBtn);
+      card.appendChild(revokeBtn);
     }
-
-    card.append(main, actions);
 
     // Clicking anywhere on the card opens the shared folder detail page.
     card.addEventListener("click", function () {
@@ -478,7 +513,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       }
 
       if (folders.length === 0) {
-        folderEmpty.style.display = "block";
+        folderEmpty.style.display = "flex";
         return;
       }
 

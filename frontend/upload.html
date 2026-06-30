@@ -16,127 +16,105 @@
             <nav class="sidebar-nav"></nav>
         </aside>
 
-        <main class="main-content">
-            <a href="documents.html" class="back-link" style="display: inline-flex; align-items: center; gap: 8px;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                    id="Right-Angle-Arrow--Streamline-Guidance-Free" height="18" width="18" aria-hidden="true"
-                    focusable="false">
-                    <desc>Right Angle Arrow Streamline Icon: https://streamlinehq.com</desc>
-                    <path stroke="currentColor"
-                        d="M8 24c0 -0.741 -0.733 -1.85 -1.475 -2.78 -0.954 -1.2 -2.094 -2.247 -3.401 -3.046C2.144 17.575 0.956 17 0 17m0 0c0.956 0 2.145 -0.575 3.124 -1.174 1.307 -0.8 2.447 -1.847 3.401 -3.045C7.267 11.85 8 10.74 8 10m-8 7 11.5 0c6.627 0 12 -5.373 12 -12l0 -5"
-                        stroke-width="1"></path>
-                </svg>
-                Back to Documents
-            </a>
+        <main class="main-content" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+            <div style="width: 100%; max-width: 680px; display: flex; flex-direction: column; align-items: stretch; gap: 24px;">
+                <a href="documents.html" class="btn-back">
+                    ← Back to My Documents
+                </a>
 
-            <section class="page-header">
-                <h1>Upload Document</h1>
-                <p>Upload your study documents to store and access later.</p>
-            </section>
+                <section class="page-header" style="margin: 0; text-align: left;">
+                    <h1>Upload Document</h1>
+                    <p>Upload your study documents to store and access later.</p>
+                </section>
 
-            <div class="card">
-                <form id="uploadForm" novalidate>
+                <div class="card" style="margin: 0;">
+                    <form id="uploadForm" novalidate>
 
-                    <div class="form-group">
-                        <label for="title">Title <span class="label-required">*</span></label>
-                        <input type="text" id="title" name="title" placeholder="E.g: SWR Lecture 1 - Week 1 Notes"
-                            required autocomplete="off" />
-                    </div>
-
-                    <div class="form-group">
-                        <label for="description">Description <span class="label-optional">(optional)</span></label>
-                        <textarea id="description" name="description"
-                            placeholder="E.g: Summary of Week 1 SWR lecture..."></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="subjectSelect">Subject <span class="label-required">*</span></label>
-                        <select id="subjectSelect" required>
-                            <option value="">-- Select a subject --</option>
-                        </select>
-
-                        <div id="newSubjectRow" class="inline-create-row"
-                            style="display:none; flex-direction: column; align-items: stretch;">
-                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                                <input type="text" id="newSubjectCode" placeholder="Code, e.g: MYSUB" autocomplete="off"
-                                    style="flex:0 0 140px;" />
-                                <input type="text" id="newSubjectName"
-                                    placeholder="Subject name, e.g: Software Architecture" autocomplete="off"
-                                    style="flex:1 1 200px;" />
-                            </div>
-                            <input type="text" id="newSubjectDescription" placeholder="Description (optional)"
-                                autocomplete="off" style="margin-top:8px;" />
-                            <div style="display:flex; gap:8px; margin-top:8px;">
-                                <button type="button" id="createSubjectBtn"
-                                    class="btn btn-secondary btn-sm">Create</button>
-                                <button type="button" id="cancelNewSubjectBtn"
-                                    class="btn btn-secondary btn-sm">Cancel</button>
-                            </div>
+                        <div class="form-group">
+                            <label for="title">Title <span class="label-required">*</span></label>
+                            <input type="text" id="title" name="title" placeholder="E.g: SWR Lecture 1 - Week 1 Notes"
+                                required autocomplete="off" />
                         </div>
-                        <p id="newSubjectError" class="helper-text error" role="alert" style="display:none;"></p>
 
-                        <p id="subjectError" class="helper-text error" role="alert" style="display:none;"></p>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="folderSelect">Folder <span class="label-optional">— Optional</span></label>
-                        <select id="folderSelect">
-                            <option value="">Upload to My Documents</option>
-                        </select>
-
-                        <div id="newFolderRow" class="inline-create-row" style="display:none;">
-                            <input type="text" id="newFolderName" placeholder="E.g: Math Notes" autocomplete="off" />
-                            <button type="button" id="createFolderInlineBtn"
-                                class="btn btn-secondary btn-sm">Create</button>
-                            <button type="button" id="cancelNewFolderBtn"
-                                class="btn btn-secondary btn-sm">Cancel</button>
+                        <div class="form-group">
+                            <label for="description">Description <span class="label-optional">(optional)</span></label>
+                            <textarea id="description" name="description"
+                                placeholder="E.g: Summary of Week 1 SWR lecture..." rows="3" style="min-height: 80px; height: 80px; resize: vertical;"></textarea>
                         </div>
-                        <p id="newFolderError" class="helper-text error" role="alert" style="display:none;"></p>
-                    </div>
 
-                    <div class="form-group">
-                        <label for="file">Document File <span class="label-required">*</span></label>
-                        <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-describedby="fileHint">
-                            <input type="file" id="file" name="file"
-                                accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.png,.jpg,.jpeg" required
-                                aria-describedby="fileHint" />
-                            <div class="drop-zone-content" id="dropZoneContent">
-                                <div class="drop-zone-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                        id="Folder--Streamline-Guidance-Free" height="32" width="32" aria-hidden="true"
-                                        focusable="false">
-                                        <desc>Folder Streamline Icon: https://streamlinehq.com</desc>
-                                        <path stroke="currentColor"
-                                            d="M1.5 10V2.5h5l3 3h11v3m3 0.25V8.5H4.6l-0.15 0.25 -0.234 0.492A28 28 0 0 0 1.5 21.272v0.228h19v-0.128a28 28 0 0 1 2.757 -12.116l0.243 -0.506Z"
-                                            stroke-width="1"></path>
-                                    </svg>
+                        <div class="form-group">
+                            <label for="subjectSelect">Subject <span class="label-required">*</span></label>
+                            <input type="text" id="subjectSelect" list="subjectDatalist" placeholder="-- Select a subject --" required autocomplete="off" />
+                            <datalist id="subjectDatalist"></datalist>
+
+                            <div id="newSubjectRow" class="inline-create-row" style="display:none;">
+                                <div style="display:flex; gap:8px; flex-wrap:wrap; width:100%;">
+                                    <input type="text" id="newSubjectCode" placeholder="Code, e.g: MYSUB" autocomplete="off"
+                                        style="flex:0 0 140px;" />
+                                    <input type="text" id="newSubjectName"
+                                        placeholder="Subject name, e.g: Software Architecture" autocomplete="off"
+                                        style="flex:1 1 200px;" />
                                 </div>
-                                <span class="drop-zone-text" id="dropZoneText">
-                                    Drag & drop or click to select a file<br />
-                                    <small>(PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG — max 10MB)</small>
-                                </span>
+                            </div>
+                            <p id="newSubjectError" class="helper-text error" role="alert" style="display:none;"></p>
+
+                            <p id="subjectError" class="helper-text error" role="alert" style="display:none;"></p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="folderSelect">Folder <span class="label-optional">— Optional</span></label>
+                            <select id="folderSelect">
+                                <option value="">Upload to My Documents</option>
+                            </select>
+
+                            <div id="newFolderRow" class="inline-create-row" style="display:none;">
+                                <input type="text" id="newFolderName" placeholder="E.g: Math Notes" autocomplete="off" style="width: 100%;" />
+                            </div>
+                            <p id="newFolderError" class="helper-text error" role="alert" style="display:none;"></p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="file">Document File <span class="label-required">*</span></label>
+                            <div class="drop-zone" id="dropZone" role="button" tabindex="0">
+                                <input type="file" id="file" name="file"
+                                    accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.png,.jpg,.jpeg" required />
+                                <div class="drop-zone-content" id="dropZoneContent">
+                                    <div class="drop-zone-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            id="Folder--Streamline-Guidance-Free" height="32" width="32" aria-hidden="true"
+                                            focusable="false">
+                                            <desc>Folder Streamline Icon: https://streamlinehq.com</desc>
+                                            <path stroke="currentColor"
+                                                d="M1.5 10V2.5h5l3 3h11v3m3 0.25V8.5H4.6l-0.15 0.25 -0.234 0.492A28 28 0 0 0 1.5 21.272v0.228h19v-0.128a28 28 0 0 1 2.757 -12.116l0.243 -0.506Z"
+                                                stroke-width="1"></path>
+                                        </svg>
+                                    </div>
+                                    <span class="drop-zone-text" id="dropZoneText">
+                                        Drag & drop or click to select a file<br />
+                                        <small>(PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG — max 10MB)</small>
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                        <p id="fileHint" class="file-hint">
-                            Supported formats: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG, JPEG &nbsp;|&nbsp;
-                            Max: 10MB
-                        </p>
-                    </div>
 
-                    <div id="uploadProgress" class="progress-container" aria-hidden="true">
-                        <div class="progress-bar">
-                            <div id="progressFill" class="progress-fill"></div>
+                        <div id="uploadProgress" class="progress-container" aria-hidden="true">
+                            <div class="progress-bar">
+                                <div id="progressFill" class="progress-fill"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                                <span id="progressText" class="progress-text" style="margin-top: 0;">Uploading...</span>
+                                <button type="button" id="cancelUploadBtn" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 11px;">Cancel</button>
+                            </div>
                         </div>
-                        <span id="progressText" class="progress-text">Uploading...</span>
-                    </div>
 
-                    <div id="uploadMessage" class="upload-message" role="alert"></div>
+                        <div id="uploadMessage" class="upload-message" role="alert"></div>
 
-                    <button type="submit" id="submitBtn" class="btn btn-primary">
-                        Upload Document
-                    </button>
+                        <button type="submit" id="submitBtn" class="btn btn-primary" style="margin-top: 10px;">
+                            Upload Document
+                        </button>
 
-                </form>
+                    </form>
+                </div>
             </div>
         </main>
     </div>

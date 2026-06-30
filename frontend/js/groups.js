@@ -176,7 +176,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       groupLoader.style.display = "none";
 
       if (groups.length === 0) {
-        groupEmpty.style.display = "block";
+        groupEmpty.style.display = "flex";
         return;
       }
 

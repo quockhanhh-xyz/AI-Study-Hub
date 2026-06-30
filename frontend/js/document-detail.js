@@ -134,7 +134,7 @@ async function loadPage(id, { isAuthenticated, isCommunityView }) {
         }
 
         detailLoader.style.display = "none";
-        detailContent.style.display = "block";
+        detailContent.hidden = false;
     } catch (err) {
         if (!isAuthenticated) {
             showFatalError("This document is private or no longer available.", true);
@@ -215,6 +215,7 @@ function renderDocument(doc) {
     const moveBtn = document.getElementById("moveBtn");
     const publishBtn = document.getElementById("publishBtn");
     const unpublishBtn = document.getElementById("unpublishBtn");
+    const documentActionRow = document.getElementById("documentActionRow");
 
     currentDocumentFolderId = doc.folderId;
 
@@ -275,10 +276,10 @@ function renderDocument(doc) {
     }
 
     // Delete button — only the owner has canDelete
-    const deleteBtn = document.getElementById("deleteBtn");
-    if (deleteBtn) {
-        deleteBtn.style.display =
-            !currentIsCommunityView && doc.canDelete ? "inline-flex" : "none";
+    const dangerZone = document.querySelector(".inspector-danger-zone");
+    if (dangerZone) {
+        dangerZone.style.display =
+            !currentIsCommunityView && doc.canDelete ? "block" : "none";
     }
 
     // Publish button
@@ -301,25 +302,30 @@ function renderDocument(doc) {
         }
     }
 
+    if (documentActionRow) {
+        const hasDocumentActions = !currentIsCommunityView && (
+            doc.canShare || doc.canMove || doc.canPublish || doc.canUnpublish
+        );
+        documentActionRow.style.display = hasDocumentActions ? "flex" : "none";
+    }
+
     // ── Call render preview (document-preview.js) ──
     if (typeof renderDocumentPreview === "function") {
         renderDocumentPreview(doc);
     }
 
     // Configure Inspector panel visibility and defaults
-    const inspector = document.querySelector(".detail-right-inspector");
+    const tabsContainer = document.querySelector(".inspector-tabs-container");
+    const tabPanes = document.querySelector(".inspector-panes");
     const hasInspector = doc.canEdit || doc.canShare;
-    const detailContentContainer = document.getElementById("detailContent");
 
-    if (inspector && detailContentContainer) {
+    if (tabsContainer && tabPanes) {
         if (!currentIsCommunityView && hasInspector) {
-            inspector.style.display = "block";
-            detailContentContainer.classList.add("has-inspector");
+            tabsContainer.style.display = "flex";
+            tabPanes.style.display = "block";
 
             const tabDetails = document.getElementById("inspectorTabDetails");
             const tabSharing = document.getElementById("inspectorTabSharing");
-            const paneDetails = document.getElementById("inspectorPaneDetails");
-            const paneSharing = document.getElementById("inspectorPaneSharing");
 
             if (tabDetails) tabDetails.style.display = doc.canEdit ? "block" : "none";
             if (tabSharing) tabSharing.style.display = doc.canShare ? "block" : "none";
@@ -331,8 +337,8 @@ function renderDocument(doc) {
                 setActiveTab("sharing", false);
             }
         } else {
-            inspector.style.display = "none";
-            detailContentContainer.classList.remove("has-inspector");
+            tabsContainer.style.display = "none";
+            tabPanes.style.display = "none";
         }
     }
 }
@@ -357,6 +363,11 @@ function renderSubjectOptions(subjects, currentSubjectId) {
         placeholder.selected = true;
         placeholder.textContent = "— Select a subject —";
         select.insertBefore(placeholder, select.firstChild);
+    }
+
+    if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+        window.UIHelper.convertSelectToCustomDropdown(select);
+        select.dispatchEvent(new Event("syncCustom"));
     }
 }
 
@@ -459,15 +470,29 @@ function showMoveModal() {
         const folders = Array.isArray(res.data) ? res.data : [];
         select.innerHTML = '<option value="">— My Documents —</option>';
         folders.forEach(f => {
+            const path = [];
+            let current = f;
+            let iterations = 0;
+            while (current && iterations < 100) {
+                path.unshift(current.folderName);
+                const parentId = current.parentFolderId;
+                if (!parentId) break;
+                current = folders.find(folder => folder.folderId === parentId);
+                iterations++;
+            }
             const opt = document.createElement("option");
             opt.value = f.folderId;
-            opt.textContent = f.folderName || "Untitled Folder";
+            opt.textContent = path.join(" / ") || "Untitled Folder";
             if (currentDocumentFolderId === f.folderId) {
                 opt.disabled = true;
                 opt.textContent += " (Current)";
             }
             select.appendChild(opt);
         });
+        if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+            window.UIHelper.convertSelectToCustomDropdown(select);
+            select.dispatchEvent(new Event("syncCustom"));
+        }
         document.getElementById("moveModal").classList.add("show");
     }).catch(err => {
         window.showToast(err.message || "Failed to load folders.", "error");
@@ -677,6 +702,11 @@ function initSharingUI() {
         } catch (e) {
             console.error(e);
             shareGroupSelect.innerHTML = '<option value="" disabled>Failed to load groups</option>';
+        } finally {
+            if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+                window.UIHelper.convertSelectToCustomDropdown(shareGroupSelect);
+                shareGroupSelect.dispatchEvent(new Event("syncCustom"));
+            }
         }
     });
 

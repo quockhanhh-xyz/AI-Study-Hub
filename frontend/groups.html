@@ -18,42 +18,38 @@
 
         <main class="main-content">
 
-            <section class="page-header">
-                <h1>My Study Groups</h1>
+            <section class="page-header" style="display: flex; justify-content: space-between; align-items: center; max-width: none; margin-top: 8px; margin-bottom: 24px;">
+                <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
+                    <p style="margin: 0; color: var(--muted); font-size: 14px;">Click a group to view members and shared documents.</p>
+                    <h1 style="margin: 4px 0 0 0; font-size: 26px; font-weight: 800; color: var(--text);">My Study Groups</h1>
+                </div>
+                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    <button type="button" id="joinGroupBtn" class="btn btn-secondary" style="width: auto !important; padding: 10px 16px;">
+                        Join Group
+                    </button>
+                    <button type="button" id="createGroupBtn" class="btn btn-primary upload-link-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; width: auto !important;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Add-1--Streamline-Core" height="14" width="14" aria-hidden="true" focusable="false">
+                          <desc>Add 1 Streamline Icon: https://streamlinehq.com</desc>
+                          <g id="add-1--expand-cross-buttons-button-more-remove-plus-add-+-mathematics-math">
+                            <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 0.5v13" stroke-width="1"></path>
+                            <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 6.95996h13" stroke-width="1"></path>
+                          </g>
+                        </svg>
+                        New Group
+                    </button>
+                </div>
             </section>
 
-            <div class="card dashboard-panel">
-                <div class="section-header">
-                    <div>
-                        <h2 class="section-title">Groups</h2>
-                        <p>Click a group to view members and shared documents.</p>
-                    </div>
-                    <div class="header-actions">
-                        <button type="button" id="joinGroupBtn" class="btn btn-secondary">
-                            Join Group
-                        </button>
-                        <button type="button" id="createGroupBtn" class="btn btn-primary upload-link-btn" style="display: inline-flex; align-items: center; gap: 6px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Add-1--Streamline-Core" height="14" width="14" aria-hidden="true" focusable="false">
-                              <desc>Add 1 Streamline Icon: https://streamlinehq.com</desc>
-                              <g id="add-1--expand-cross-buttons-button-more-remove-plus-add-+-mathematics-math">
-                                <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 0.5v13" stroke-width="1"></path>
-                                <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 6.95996h13" stroke-width="1"></path>
-                              </g>
-                            </svg>
-                            New Group
-                        </button>
-                    </div>
-                </div>
-
-                <div id="groupLoader" class="document-state">
+            <div id="groupListView" class="dashboard-panel">
+                <div id="groupLoader" class="document-state" style="display: none; justify-content: center; padding: 24px;">
                     <span>Loading groups...</span>
                 </div>
 
-                <p id="groupError" class="helper-text error" role="alert"></p>
+                <p id="groupError" class="helper-text error" role="alert" style="display: none;"></p>
 
-                <div id="groupGrid" class="folder-grid"></div>
+                <div id="groupGrid" class="folder-grid" style="display: none;"></div>
 
-                <div id="groupEmpty" class="empty-state">
+                <div id="groupEmpty" class="empty-state" style="display: none;">
                     <div class="empty-title">No study groups yet</div>
                     <p>Create your first group or join one using an invite code. Use the buttons above.</p>
                 </div>
