@@ -8,6 +8,55 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link rel="stylesheet" href="css/style.css" />
     <style>
+      /* ===== BREADCRUMB TEXT BACK BUTTON ===== */
+      .btn-back {
+        background: transparent !important;
+        border: none !important;
+        color: var(--muted) !important;
+        font-size: 13px !important;
+        cursor: pointer !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        padding: 0 !important;
+        margin-bottom: 8px !important;
+        font-weight: 500 !important;
+        transition: color 0.2s ease !important;
+        text-decoration: none !important;
+      }
+      .btn-back:hover {
+        color: var(--primary) !important;
+      }
+
+      /* Anchor absolute buttons inside the cards correctly */
+      .document-card, .folder-card {
+        position: relative !important;
+      }
+
+      /* Circular contributor initials avatar */
+      .contributor-avatar {
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 50% !important;
+        background-color: var(--primary-light) !important;
+        color: var(--primary) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-weight: 700 !important;
+        font-size: 14px !important;
+        border: 2px solid var(--primary-border) !important;
+        flex-shrink: 0 !important;
+      }
+
+      /* Section spacing for polished layout structure */
+      .dashboard-panel {
+        margin-bottom: 42px !important;
+      }
+      .section-header {
+        margin-bottom: 16px !important;
+      }
+
       /* Polished Empty States: Loose dashed container layout */
       .empty-state {
         border: 2px dashed var(--border) !important;
@@ -115,21 +164,6 @@
                         <h1 id="groupNameTitleHeader" style="margin: 4px 0 0 0; font-size: 28px; font-weight: 800; color: var(--text);">Group Name</h1>
                     </div>
                     <div class="header-actions" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                        <button type="button" id="editGroupBtn" class="btn btn-secondary"
-                            style="display:none; align-items: center; gap: 6px; padding: 10px 16px; width: auto !important;">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"
-                                id="Pencil--Streamline-Core" height="14" width="14" aria-hidden="true"
-                                focusable="false">
-                                <desc>Pencil Streamline Icon: https://streamlinehq.com</desc>
-                                <g id="pencil--change-edit-modify-pencil-write-writing">
-                                    <path id="Vector" stroke="currentColor" stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M5 12.24 0.5 13.5l1.26 -4.49998L10 0.800021c0.0931 -0.095246 0.2044 -0.170925 0.3271 -0.222592 0.1228 -0.051668 0.2547 -0.078283 0.3879 -0.078283 0.1332 0 0.2651 0.026615 0.3879 0.078283 0.1227 0.051667 0.234 0.127346 0.3271 0.222592L13.2 2.58002c0.0937 0.09296 0.1681 0.20357 0.2189 0.32542 0.0508 0.12186 0.0769 0.25257 0.0769 0.38458 0 0.13201 -0.0261 0.26272 -0.0769 0.38458 -0.0508 0.12186 -0.1252 0.23246 -0.2189 0.32542L5 12.24Z"
-                                        stroke-width="1"></path>
-                                </g>
-                            </svg>
-                            Edit
-                        </button>
                         <button type="button" id="leaveGroupBtn" class="btn btn-secondary"
                             style="display:none; align-items: center; gap: 6px; padding: 10px 16px; width: auto !important;">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"
@@ -153,10 +187,10 @@
                 </div>
 
                 <!-- Group Metadata Card (no wrapper cards, direct display) -->
-                <div class="card dashboard-panel" style="margin-bottom: 24px; padding: 20px 24px; max-width: none; width: 100%;">
+                <div class="card dashboard-panel" style="position: relative; margin-bottom: 24px; padding: 20px 24px; max-width: none; width: 100%;">
                     <div>
                         <h2 class="section-title" id="groupNameTitle" style="display: none;">Group Name</h2>
-                        <p id="groupDescription" style="margin: 0 0 8px; font-size: 15px; color: var(--text-main); font-weight: 500;"></p>
+                        <p id="groupDescription" style="margin: 0 40px 8px 0; font-size: 15px; color: var(--text-main); font-weight: 500;"></p>
                         <p class="helper-text" style="margin: 0; font-size: 13px; color: var(--muted); display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
                             Invite code: <strong id="groupInviteCode" tabindex="0" role="button" aria-label="Group invite code, press enter or space to copy" style="color: var(--primary); text-decoration: underline; cursor: pointer;">-</strong>
                             <span style="color: var(--border); margin: 0 4px;">•</span>
@@ -164,6 +198,21 @@
                             <span id="groupCounts" style="color: var(--text-muted);"></span>
                         </p>
                     </div>
+                    <!-- Relocated Edit Group button inside metadata card -->
+                    <button type="button" id="editGroupBtn" class="btn btn-secondary"
+                        style="display:none; position: absolute; top: 16px; right: 16px; width: 32px !important; height: 32px !important; padding: 0 !important; align-items: center; justify-content: center; border-radius: 50%;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"
+                            id="Pencil--Streamline-Core" height="14" width="14" aria-hidden="true"
+                            focusable="false" style="margin: 0;">
+                            <desc>Pencil Streamline Icon: https://streamlinehq.com</desc>
+                            <g id="pencil--change-edit-modify-pencil-write-writing">
+                                <path id="Vector" stroke="currentColor" stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M5 12.24 0.5 13.5l1.26 -4.49998L10 0.800021c0.0931 -0.095246 0.2044 -0.170925 0.3271 -0.222592 0.1228 -0.051668 0.2547 -0.078283 0.3879 -0.078283 0.1332 0 0.2651 0.026615 0.3879 0.078283 0.1227 0.051667 0.234 0.127346 0.3271 0.222592L13.2 2.58002c0.0937 0.09296 0.1681 0.20357 0.2189 0.32542 0.0508 0.12186 0.0769 0.25257 0.0769 0.38458 0 0.13201 -0.0261 0.26272 -0.0769 0.38458 -0.0508 0.12186 -0.1252 0.23246 -0.2189 0.32542L5 12.24Z"
+                                    stroke-width="1.2"></path>
+                            </g>
+                        </svg>
+                    </button>
                 </div>
 
                 <!-- Members Section (no white card wrapper) -->

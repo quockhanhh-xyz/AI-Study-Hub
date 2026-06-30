@@ -306,11 +306,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     const card = document.createElement("article");
     card.className = "document-card";
 
-    // Left Column: The Large File Type Icon
-    const iconContainer = document.createElement("div");
-    iconContainer.innerHTML = getFileTypeIcon(doc.fileType);
-    const iconWrapper = iconContainer.firstElementChild;
-    card.appendChild(iconWrapper);
+    // Left Column: Contributor Avatar instead of file type icon
+    const avatarWrapper = document.createElement("div");
+    avatarWrapper.className = "contributor-avatar";
+    const contributorName = doc.uploadedByName || doc.uploadedBy || "Unknown User";
+    avatarWrapper.textContent = contributorName.trim().charAt(0).toUpperCase();
+    avatarWrapper.title = `Uploaded by: ${contributorName}`;
+    card.appendChild(avatarWrapper);
 
     // Right Column: The Details Column
     const content = document.createElement("div");
@@ -330,7 +332,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const desc = document.createElement("p");
     desc.className = "document-description";
-    desc.textContent = doc.description || "No description provided.";
+    if (doc.description && doc.description.trim() !== "No description provided.") {
+      desc.textContent = doc.description;
+    } else {
+      desc.style.display = "none";
+    }
 
     const meta = document.createElement("div");
     meta.className = "document-meta";
@@ -346,6 +352,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     dateItem.className = "document-meta-item";
     dateItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> ${formatDate(doc.createdAt)}`;
     meta.append(dateItem);
+
+    const uploaderItem = document.createElement("span");
+    uploaderItem.className = "document-meta-item";
+    uploaderItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Uploaded by: <strong>${contributorName}</strong>`;
+    meta.append(uploaderItem);
 
     content.append(header, desc, meta);
     card.appendChild(content);

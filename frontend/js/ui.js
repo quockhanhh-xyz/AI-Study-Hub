@@ -345,6 +345,15 @@ const UIHelper = {
     container.className = "custom-select";
     container.id = inputElement.id + "Container";
 
+    // Transfer width dimensions from source input to the wrapper container
+    if (inputElement.style.minWidth) container.style.minWidth = inputElement.style.minWidth;
+    if (inputElement.style.maxWidth) container.style.maxWidth = inputElement.style.maxWidth;
+    if (inputElement.style.width) {
+      container.style.width = inputElement.style.width;
+    } else {
+      container.style.width = "100%";
+    }
+
     const trigger = document.createElement("div");
     trigger.className = "custom-select-trigger";
     trigger.style.cursor = "pointer";
@@ -352,6 +361,11 @@ const UIHelper = {
     inputElement.parentNode.insertBefore(container, inputElement);
     trigger.appendChild(inputElement);
     inputElement.className = "custom-select-input";
+    
+    // Clear dimensions from the raw input element so it doesn't overflow or stretch the flex container
+    inputElement.style.minWidth = "0";
+    inputElement.style.maxWidth = "none";
+    inputElement.style.width = "100%";
 
     const arrow = document.createElement("span");
     arrow.className = "custom-select-arrow";

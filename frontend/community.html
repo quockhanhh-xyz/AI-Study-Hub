@@ -8,6 +8,150 @@
     <meta name="description" content="Browse, search, and discover public study documents shared by the community." />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+      /* Overrides for Community Page: Document Card 3-Part Anatomy */
+      #communityGrid .document-card {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 14px !important;
+        padding: 20px !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+        box-shadow: 0 4px 20px rgba(23, 32, 51, 0.02) !important;
+        transition: all 0.3s ease !important;
+        text-decoration: none !important;
+        color: inherit !important;
+        min-height: 200px !important;
+        justify-content: space-between !important;
+        position: relative !important;
+      }
+      #communityGrid .document-card:hover {
+        border-color: var(--primary) !important;
+        transform: translateY(-4px) !important;
+        box-shadow: 0 12px 24px rgba(255, 88, 88, 0.06) !important;
+      }
+
+      /* Part A: Header */
+      .comm-card-header {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        margin-bottom: 4px !important;
+      }
+      .comm-card-header h3 {
+        margin: 0 !important;
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        color: var(--text-main) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        flex: 1 !important;
+      }
+      .comm-card-header svg {
+        flex-shrink: 0 !important;
+        color: var(--primary) !important;
+        width: 20px !important;
+        height: 20px !important;
+      }
+
+      /* Part B: Body */
+      .comm-card-body {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+        flex-grow: 1 !important;
+        margin-bottom: 6px !important;
+      }
+      .comm-card-author {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+      }
+      .comm-card-avatar {
+        width: 24px !important;
+        height: 24px !important;
+        border-radius: 50% !important;
+        background-color: var(--primary-light) !important;
+        color: var(--primary) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        border: 1px solid var(--primary-border) !important;
+        flex-shrink: 0 !important;
+      }
+      .comm-card-author-name {
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        color: var(--text-main) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+      .comm-card-subject-tag {
+        align-self: flex-start !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        background-color: var(--background) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 6px !important;
+        padding: 4px 8px !important;
+        font-size: 12px !important;
+        font-weight: 500 !important;
+        color: var(--text-muted) !important;
+        max-width: 100% !important;
+      }
+      .comm-card-subject-tag span {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+
+      /* Part C: Footer */
+      .comm-card-footer {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        border-top: 1px solid var(--border) !important;
+        padding-top: 12px !important;
+        margin-top: auto !important;
+        font-size: 12px !important;
+        color: var(--text-light) !important;
+      }
+      .comm-card-date {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+      }
+      .comm-card-metrics {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+      }
+      .comm-card-metric-item {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+      }
+
+      /* Fix custom select input sizing in toolbar */
+      .custom-select-trigger input.custom-select-input {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        outline: none !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+    </style>
 </head>
 
 <body>
@@ -18,29 +162,34 @@
         </aside>
 
         <main class="main-content">
-            <section class="page-header dashboard-header">
+            <section class="page-header dashboard-header" style="display: flex; justify-content: space-between; align-items: center; max-width: none; margin-top: 8px; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
                 <div class="dashboard-header-content">
                     <div>
-                        <h1>Community Library</h1>
-                        <p class="dashboard-subtitle">Discover documents shared publicly by the AI Study Hub community.
-                        </p>
+                        <h1 style="margin: 0; font-size: 28px; font-weight: 800; color: var(--text);">Community Library</h1>
+                        <p class="dashboard-subtitle" style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Discover documents shared publicly by the AI Study Hub community.</p>
+                    </div>
+                </div>
+                <div id="communityHeaderActions" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    <!-- If logged in: Upload a document -->
+                    <a href="upload.html?source=community" id="communityUploadBtn" class="btn btn-primary" style="display: none; align-items: center; gap: 6px; padding: 10px 16px; width: auto !important; text-decoration: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Add-1--Streamline-Core" height="14" width="14" aria-hidden="true" focusable="false">
+                          <desc>Add 1 Streamline Icon: https://streamlinehq.com</desc>
+                          <g id="add-1--expand-cross-buttons-button-more-remove-plus-add-+-mathematics-math">
+                            <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 0.5v13" stroke-width="1"></path>
+                            <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 6.95996h13" stroke-width="1"></path>
+                          </g>
+                        </svg>
+                        Upload a document
+                    </a>
+                    <!-- If guest: compact login prompt -->
+                    <div id="communityGuestActions" style="display: none; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px; color: var(--muted); font-weight: 500;">Want to upload?</span>
+                        <a href="login.html?redirect=community.html" class="btn btn-primary btn-sm" style="width: auto !important; padding: 8px 16px; text-decoration: none;">Login</a>
                     </div>
                 </div>
             </section>
 
-            <!-- Guest CTA banner, shown only when not logged in -->
-            <section id="guestCtaBanner" class="status-box status-info community-guest-banner" style="display:none;">
-                <span>Want to upload and share your own documents?</span>
-                <a href="login.html?redirect=community.html" class="btn btn-primary btn-sm">Login</a>
-                <a href="register.html?redirect=community.html" class="btn btn-secondary btn-sm">Register</a>
-            </section>
-
-            <section id="authCtaBanner" class="status-box status-info community-guest-banner" style="display:none;">
-                <span>Share your study materials with the community.</span>
-                <a href="upload.html" class="btn btn-primary btn-sm">Upload a document</a>
-            </section>
-
-            <section class="card document-panel dashboard-panel">
+            <div id="communityListView" class="dashboard-panel">
                 <div class="dashboard-panel-header">
                     <div>
                         <h2>Public Documents</h2>
@@ -101,6 +250,8 @@
                     <button type="button" id="clearFiltersBtn" class="btn btn-secondary clear-filters-btn">Clear
                         Filters</button>
                 </div>
+
+                <p id="communityResultsCount" style="margin: 0 0 16px; font-size: 14px; color: var(--muted); font-weight: 500; display: none;"></p>
 
                 <div id="communityLoader" class="document-state">
                     <span>Loading public documents...</span>
