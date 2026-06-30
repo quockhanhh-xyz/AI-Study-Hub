@@ -30,85 +30,104 @@ public class RealDocumentTextExtractor implements DocumentTextExtractor {
     @Override
     public ExtractionResult extract(Document doc) {
         String fileType = doc.getFileType() != null
-                ? doc.getFileType().toUpperCase().trim()
-                : "";
+            ? doc.getFileType().toUpperCase().trim()
+            : "";
 
         if (!SUPPORTED_TYPES.contains(fileType)) {
             return ExtractionResult.builder()
-                    .status(ProcessingStatus.UNSUPPORTED)
-                    .error("File type not supported: " + fileType)
-                    .originalCharacterCount(0)
-                    .isTruncated(false)
-                    .build();
+                .status(ProcessingStatus.UNSUPPORTED)
+                .error("File type not supported: " + fileType)
+                .originalCharacterCount(0)
+                .isTruncated(false)
+                .build();
         }
 
-        // Step 1: Download file securely
+
         byte[] fileBytes;
         try {
             fileBytes = secureFileDownloader.download(doc.getFileUrl());
         } catch (SecureFileDownloader.DownloadException e) {
             log.warn("Failed to download file for documentId={}: {}", doc.getDocumentId(), e.getMessage());
             return ExtractionResult.builder()
-                    .status(ProcessingStatus.FAILED)
-                    .error("Failed to download file for extraction")
-                    .originalCharacterCount(0)
-                    .isTruncated(false)
-                    .build();
+                .status(ProcessingStatus.FAILED)
+                .error("Failed to download file for extraction")
+                .originalCharacterCount(0)
+                .isTruncated(false)
+                .build();
         }
 
-        // Step 2: Parse raw text by file type
-        String rawText;
+
+        String cleanedText;
         List<Integer> pageStartOffsets = null;
+        int originalCharacterCount;
+        boolean isTruncated;
+        int wordCount;
 
         try {
             if ("PDF".equals(fileType)) {
                 PdfTextExtractor.PdfExtractionResult pdfResult = pdfTextExtractor.extract(fileBytes);
                 if (!pdfResult.success) {
                     return ExtractionResult.builder()
-                            .status(ProcessingStatus.FAILED)
-                            .error("PDF parsing failed")
-                            .originalCharacterCount(0)
-                            .isTruncated(false)
-                            .build();
+                        .status(ProcessingStatus.FAILED)
+                        .error("PDF parsing failed")
+                        .originalCharacterCount(0)
+                        .isTruncated(false)
+                        .build();
                 }
-                rawText = pdfResult.rawText;
-                pageStartOffsets = pdfResult.pageStartOffsets;
+
+                TextCleaner.CleanPagesResult cleanedPages = textCleaner.cleanPages(pdfResult.pageTexts);
+
+                if (cleanedPages.cleanedText == null || cleanedPages.cleanedText.isBlank()) {
+                    return ExtractionResult.builder()
+                        .status(ProcessingStatus.EMPTY_CONTENT)
+                        .error("No extractable text found in document")
+                        .originalCharacterCount(cleanedPages.originalCharacterCount)
+                        .isTruncated(false)
+                        .build();
+                }
+
+                cleanedText = cleanedPages.cleanedText;
+                pageStartOffsets = cleanedPages.pageStartOffsets;
+                originalCharacterCount = cleanedPages.originalCharacterCount;
+                isTruncated = cleanedPages.isTruncated;
+
             } else {
-                rawText = txtTextExtractor.extract(fileBytes);
+                String rawText = txtTextExtractor.extract(fileBytes);
+                TextCleaner.CleanResult cleaned = textCleaner.clean(rawText);
+
+                if (cleaned.cleanedText == null || cleaned.cleanedText.isBlank()) {
+                    return ExtractionResult.builder()
+                        .status(ProcessingStatus.EMPTY_CONTENT)
+                        .error("No extractable text found in document")
+                        .originalCharacterCount(cleaned.originalCharacterCount)
+                        .isTruncated(false)
+                        .build();
+                }
+
+                cleanedText = cleaned.cleanedText;
+                originalCharacterCount = cleaned.originalCharacterCount;
+                isTruncated = cleaned.isTruncated;
             }
         } catch (Exception e) {
             log.warn("Parser error for documentId={}: {}", doc.getDocumentId(), e.getMessage());
             return ExtractionResult.builder()
-                    .status(ProcessingStatus.FAILED)
-                    .error("File parsing failed")
-                    .originalCharacterCount(0)
-                    .isTruncated(false)
-                    .build();
+                .status(ProcessingStatus.FAILED)
+                .error("File parsing failed")
+                .originalCharacterCount(0)
+                .isTruncated(false)
+                .build();
         }
 
-        // Step 3: Clean text
-        TextCleaner.CleanResult cleaned = textCleaner.clean(rawText);
-
-        if (cleaned.cleanedText == null || cleaned.cleanedText.isBlank()) {
-            return ExtractionResult.builder()
-                    .status(ProcessingStatus.EMPTY_CONTENT)
-                    .error("No extractable text found in document")
-                    .originalCharacterCount(cleaned.originalCharacterCount)
-                    .isTruncated(false)
-                    .build();
-        }
-
-        // Step 4: Chunk text
         List<ExtractionResult.ExtractedChunk> chunks = pageStartOffsets != null
-                ? textChunker.chunkWithPages(cleaned.cleanedText, pageStartOffsets)
-                : textChunker.chunk(cleaned.cleanedText);
+            ? textChunker.chunkWithPages(cleanedText, pageStartOffsets)
+            : textChunker.chunk(cleanedText);
 
         return ExtractionResult.builder()
-                .status(ProcessingStatus.COMPLETED)
-                .extractedText(cleaned.cleanedText)
-                .originalCharacterCount(cleaned.originalCharacterCount)
-                .isTruncated(cleaned.isTruncated)
-                .chunks(chunks)
-                .build();
+            .status(ProcessingStatus.COMPLETED)
+            .extractedText(cleanedText)
+            .originalCharacterCount(originalCharacterCount)
+            .isTruncated(isTruncated)
+            .chunks(chunks)
+            .build();
     }
 }

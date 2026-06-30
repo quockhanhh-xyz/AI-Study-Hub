@@ -15,29 +15,27 @@ import java.util.List;
 public class PdfTextExtractor {
 
     private static final Logger log = LoggerFactory.getLogger(PdfTextExtractor.class);
+    private static final int MAX_PAGES = 2000;
 
     public static class PdfExtractionResult {
-        public final String rawText;
-        public final List<Integer> pageStartOffsets; // char offset in rawText where each page starts
+        public final List<String> pageTexts;
         public final boolean success;
         public final String errorMessage;
 
-        private PdfExtractionResult(String rawText, List<Integer> pageStartOffsets) {
-            this.rawText = rawText;
-            this.pageStartOffsets = pageStartOffsets;
+        private PdfExtractionResult(List<String> pageTexts) {
+            this.pageTexts = pageTexts;
             this.success = true;
             this.errorMessage = null;
         }
 
         private PdfExtractionResult(String errorMessage) {
-            this.rawText = null;
-            this.pageStartOffsets = null;
+            this.pageTexts = null;
             this.success = false;
             this.errorMessage = errorMessage;
         }
 
-        public static PdfExtractionResult ok(String text, List<Integer> offsets) {
-            return new PdfExtractionResult(text, offsets);
+        public static PdfExtractionResult ok(List<String> pageTexts) {
+            return new PdfExtractionResult(pageTexts);
         }
 
         public static PdfExtractionResult failed(String msg) {
@@ -51,20 +49,21 @@ public class PdfTextExtractor {
             if (pageCount == 0) {
                 return PdfExtractionResult.failed("PDF has no pages");
             }
+            if (pageCount > MAX_PAGES) {
+                return PdfExtractionResult.failed("PDF exceeds maximum allowed page count (" + MAX_PAGES + ")");
+            }
 
             PDFTextStripper stripper = new PDFTextStripper();
-            List<Integer> pageStartOffsets = new ArrayList<>();
-            StringBuilder fullText = new StringBuilder();
+            List<String> pageTexts = new ArrayList<>();
 
             for (int i = 1; i <= pageCount; i++) {
                 stripper.setStartPage(i);
                 stripper.setEndPage(i);
                 String pageText = stripper.getText(document);
-                pageStartOffsets.add(fullText.length());
-                fullText.append(pageText);
+                pageTexts.add(pageText);
             }
 
-            return PdfExtractionResult.ok(fullText.toString(), pageStartOffsets);
+            return PdfExtractionResult.ok(pageTexts);
 
         } catch (IOException e) {
             log.warn("PDF parsing failed: {}", e.getMessage());
