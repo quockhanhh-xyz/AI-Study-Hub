@@ -459,9 +459,19 @@ function showMoveModal() {
         const folders = Array.isArray(res.data) ? res.data : [];
         select.innerHTML = '<option value="">— My Documents —</option>';
         folders.forEach(f => {
+            const path = [];
+            let current = f;
+            let iterations = 0;
+            while (current && iterations < 100) {
+                path.unshift(current.folderName);
+                const parentId = current.parentFolderId;
+                if (!parentId) break;
+                current = folders.find(folder => folder.folderId === parentId);
+                iterations++;
+            }
             const opt = document.createElement("option");
             opt.value = f.folderId;
-            opt.textContent = f.folderName || "Untitled Folder";
+            opt.textContent = path.join(" / ") || "Untitled Folder";
             if (currentDocumentFolderId === f.folderId) {
                 opt.disabled = true;
                 opt.textContent += " (Current)";

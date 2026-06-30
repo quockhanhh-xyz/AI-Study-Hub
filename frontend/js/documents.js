@@ -222,9 +222,19 @@ document.addEventListener("DOMContentLoaded", async function () {
           <option value="0">My Documents</option>
         `;
         folders.forEach(function (folder) {
+          const path = [];
+          let current = folder;
+          let iterations = 0;
+          while (current && iterations < 100) {
+            path.unshift(current.folderName);
+            const parentId = current.parentFolderId;
+            if (!parentId) break;
+            current = folders.find(f => f.folderId === parentId);
+            iterations++;
+          }
           const option = document.createElement("option");
           option.value = folder.folderId;
-          option.textContent = folder.folderName;
+          option.textContent = path.join(" / ");
           folderFilter.appendChild(option);
         });
         folderFilter.value = currentValue;
