@@ -145,7 +145,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     myRole = group.currentUserRole || group.role || group.myRole || null;
 
     groupNameHeader.textContent = group.groupName || "Group";
-    groupNameTitle.textContent = group.groupName || "Untitled Group";
+    const groupNameTitleHeader = document.getElementById("groupNameTitleHeader");
+    if (groupNameTitleHeader) {
+      groupNameTitleHeader.textContent = group.groupName || "Untitled Group";
+    }
+    if (groupNameTitle) {
+      groupNameTitle.textContent = group.groupName || "Untitled Group";
+    }
     groupDescription.textContent = group.description || "No description provided.";
 
     // Step 8A Refactor: Add click-to-copy functionality for invite code
@@ -212,11 +218,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     const isOwner = myRole === "OWNER";
 
     // OWNER-only actions
-    editGroupBtn.style.display = isOwner ? "inline-block" : "none";
-    deleteGroupBtn.style.display = isOwner ? "inline-block" : "none";
+    editGroupBtn.style.display = isOwner ? "inline-flex" : "none";
+    const dangerZoneSection = document.getElementById("dangerZoneSection");
+    if (dangerZoneSection) {
+      dangerZoneSection.style.display = isOwner ? "block" : "none";
+    }
+    deleteGroupBtn.style.display = isOwner ? "inline-flex" : "none";
 
     // MEMBER-only action (OWNER does not use leave in MVP)
-    leaveGroupBtn.style.display = !isOwner ? "inline-block" : "none";
+    leaveGroupBtn.style.display = !isOwner ? "inline-flex" : "none";
   }
 
   // Member list rendering
@@ -337,18 +347,17 @@ document.addEventListener("DOMContentLoaded", async function () {
     dateItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> ${formatDate(doc.createdAt)}`;
     meta.append(dateItem);
 
-    const actions = document.createElement("div");
-    actions.className = "document-actions";
+    content.append(header, desc, meta);
+    card.appendChild(content);
 
-    // Revoke is shown strictly based on backend's canRevoke flag —
-    // never computed locally, since revoke permission depends on
-    // document ownership vs. group ownership rules decided by the server.
+    // Revoke is shown strictly based on backend's canRevoke flag
     if (doc.canRevoke === true) {
       const revokeBtn = document.createElement("button");
       revokeBtn.type = "button";
-      revokeBtn.className = "btn btn-danger";
+      revokeBtn.className = "btn-revoke-inline";
       revokeBtn.textContent = "Revoke";
-      revokeBtn.addEventListener("click", async function () {
+      revokeBtn.addEventListener("click", async function (e) {
+        e.stopPropagation(); // Prevent card click event from navigating
         const confirmed = await confirmAction({
           title: "Revoke Document?",
           message: "This document will no longer be shared with this group.",
@@ -365,15 +374,8 @@ document.addEventListener("DOMContentLoaded", async function () {
           showToast(error.message || "Failed to revoke document.", "error");
         }
       });
-      actions.appendChild(revokeBtn);
+      card.appendChild(revokeBtn);
     }
-
-    if (actions.children.length > 0) {
-      content.append(header, desc, meta, actions);
-    } else {
-      content.append(header, desc, meta);
-    }
-    card.appendChild(content);
 
     card.addEventListener("click", function (e) {
       if (e.target.closest("button") || e.target.closest("a")) {
@@ -403,7 +405,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       }
 
       if (docs.length === 0) {
-        docEmpty.style.display = "block";
+        docEmpty.style.display = "flex";
         return;
       }
 
@@ -446,15 +448,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     main.className = "folder-card-main";
     main.append(icon, name, ownerMeta, sharedByMeta);
 
-    const actions = document.createElement("div");
-    actions.className = "folder-card-actions";
+    card.append(main);
 
-    // Revoke is shown strictly based on backend's canRevoke flag —
-    // never computed locally, mirroring the group documents pattern.
     if (folder.canRevoke === true) {
       const revokeBtn = document.createElement("button");
       revokeBtn.type = "button";
-      revokeBtn.className = "btn btn-danger btn-sm";
+      revokeBtn.className = "btn-revoke-inline";
       revokeBtn.textContent = "Revoke";
       revokeBtn.addEventListener("click", async function (e) {
         e.stopPropagation(); // Prevent card click from triggering navigation
@@ -474,10 +473,8 @@ document.addEventListener("DOMContentLoaded", async function () {
           showToast(error.message || "Failed to revoke folder.", "error");
         }
       });
-      actions.appendChild(revokeBtn);
+      card.appendChild(revokeBtn);
     }
-
-    card.append(main, actions);
 
     // Clicking anywhere on the card opens the shared folder detail page.
     card.addEventListener("click", function () {
@@ -505,7 +502,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       }
 
       if (folders.length === 0) {
-        folderEmpty.style.display = "block";
+        folderEmpty.style.display = "flex";
         return;
       }
 
