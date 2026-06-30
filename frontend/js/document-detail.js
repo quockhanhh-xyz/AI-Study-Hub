@@ -382,12 +382,35 @@ function renderAIProcessingPanel(doc) {
     if (textBox) textBox.style.display = "none";
 
     // The Document Detail DTO only contains `processingStatus`, so render
-    // immediately with that, then start polling if it's already PROCESSING.
+    // immediately with that, then enrich the panel with the full
+    // processing-status payload (characterCount, wordCount, lastAttemptError,
+    // lastAttemptStatus...), which the detail DTO does not include. This is
+    // also what makes documents that are already COMPLETED from a previous
+    // session show their metadata correctly on first load.
     const status = doc.processingStatus || "PENDING";
     applyAIProcessingState(status, { processingStatus: status });
 
-    if (status === "PROCESSING") {
-        startAIPolling();
+    fetchAndApplyProcessingStatus();
+}
+
+// Fetches the full processing-status payload once and applies it to the panel.
+// Called on every panel render (initial load, after Save/Move/Publish), and
+// also kicks off polling automatically if the fetched status is PROCESSING.
+async function fetchAndApplyProcessingStatus() {
+    const docId = currentDocumentId;
+    try {
+        const res = await getProcessingStatus(docId);
+        if (docId !== currentDocumentId) return; // navigated away / doc switched meanwhile
+        const data = res.data || {};
+        applyAIProcessingState(data.processingStatus, data);
+
+        if (data.processingStatus === "PROCESSING") {
+            startAIPolling();
+        }
+    } catch (err) {
+        // Keep showing whatever was already rendered from the detail DTO;
+        // a transient status-fetch failure shouldn't break the whole panel.
+        console.error("Failed to fetch processing status", err);
     }
 }
 
@@ -499,9 +522,7 @@ async function handleAIProcessAction(action) {
             window.showToast("Document is already being processed.", "info");
         } else {
             window.showToast(err.message || "Failed to start AI processing.", "error");
-            const badge = document.getElementById("aiStatusBadge");
-            const fallbackStatus = badge ? badge.textContent.trim().toUpperCase().replace(/\s+/g, "_") : "PENDING";
-            renderAIActions(fallbackStatus);
+            fetchAndApplyProcessingStatus();
         }
     }
 }
