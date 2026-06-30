@@ -366,6 +366,148 @@
       color: var(--muted);
     }
 
+    /* ===== AI PROCESSING PANEL (Step 9) ===== */
+    .ai-processing-section {
+      margin-bottom: 28px;
+    }
+
+    .ai-processing-panel {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      background: var(--background);
+    }
+
+    .ai-processing-status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .status-badge.processing {
+      background-color: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+
+    .status-badge.completed {
+      background-color: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .status-badge.failed {
+      background-color: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .status-badge.unsupported,
+    .status-badge.empty_content {
+      background-color: #f3f4f6;
+      color: #374151;
+      border: 1px solid #d1d5db;
+    }
+
+    .ai-status-spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid #bfdbfe;
+      border-top-color: #1e40af;
+      animation: ai-spin 0.8s linear infinite;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    @keyframes ai-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .ai-processing-meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .ai-processing-message {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .ai-processing-message.error {
+      color: var(--danger-text);
+    }
+
+    .ai-processing-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .ai-processing-actions .btn {
+      width: auto;
+      padding: 8px 18px;
+      font-size: 13px;
+    }
+
+    .ai-extracted-text-box {
+      margin-top: 16px;
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+
+    .ai-extracted-text-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .ai-extracted-text-header span {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .ai-text-toggle-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .ai-text-toggle-btn:hover {
+      background: var(--surface-soft);
+    }
+
+    .ai-extracted-text-content {
+      max-height: 320px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: inherit;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      margin: 0;
+    }
+
     @media (max-width: 768px) {
       .detail-meta-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -387,6 +529,7 @@
       flex-direction: column;
       gap: 24px;
     }
+
     @media (min-width: 1024px) {
       .detail-split-container.has-inspector {
         display: grid;
@@ -394,26 +537,31 @@
         gap: 32px;
         align-items: start;
       }
+
       .detail-split-container:not(.has-inspector) .detail-left-panel .detail-card {
         max-width: 800px;
         margin: 0 auto;
       }
     }
+
     .detail-left-panel {
       min-width: 0;
     }
+
     .detail-right-inspector {
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 24px;
     }
+
     .inspector-tabs-container {
       display: flex;
       gap: 8px;
       border-bottom: 1px solid var(--border);
       margin-bottom: 20px;
     }
+
     .inspector-tab-btn {
       flex: 1;
       padding: 10px;
@@ -426,21 +574,27 @@
       font-size: 14px;
       transition: all 0.2s ease;
     }
+
     .inspector-tab-btn:hover {
       color: var(--text);
     }
+
     .inspector-tab-btn.active {
       color: var(--primary) !important;
       border-bottom-color: var(--primary) !important;
     }
+
     .inspector-tab-pane {
       display: none;
     }
+
     .inspector-tab-pane.active {
       display: block;
     }
+
     .detail-divider {
-      display: none; /* Hide standard separator in split layout */
+      display: none;
+      /* Hide standard separator in split layout */
     }
   </style>
 </head>
@@ -500,6 +654,27 @@
               <p id="docDescription">No description provided.</p>
             </div>
 
+            <!-- AI Processing Panel (Step 9) -->
+            <div class="ai-processing-section" id="aiProcessingSection" style="display: none;">
+              <div class="preview-section-label">AI Document Processing</div>
+              <div class="ai-processing-panel">
+                <div class="ai-processing-status-row">
+                  <span class="status-badge" id="aiStatusBadge">–</span>
+                  <span class="ai-processing-meta" id="aiProcessingMeta"></span>
+                </div>
+                <div class="ai-processing-message" id="aiProcessingMessage"></div>
+                <div class="ai-processing-actions" id="aiProcessingActions"></div>
+
+                <div class="ai-extracted-text-box" id="aiExtractedTextBox" style="display: none;">
+                  <div class="ai-extracted-text-header">
+                    <span>Extracted Text</span>
+                    <button type="button" class="ai-text-toggle-btn" id="aiTextToggleBtn">Collapse</button>
+                  </div>
+                  <pre class="ai-extracted-text-content" id="aiExtractedTextContent"></pre>
+                </div>
+              </div>
+            </div>
+
             <!-- Preview Area -->
             <div class="preview-section">
               <div class="preview-section-label">Preview</div>
@@ -514,13 +689,15 @@
               <button id="openFileBtn" class="btn btn-primary" style="display:none; width:auto; padding:10px 24px;">
                 Open File ↗
               </button>
-              <button id="downloadFileBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;">
+              <button id="downloadFileBtn" class="btn btn-secondary"
+                style="display:none; width:auto; padding:10px 24px;">
                 Download
               </button>
               <button id="shareBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;">
                 Share
               </button>
-              <button id="moveBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;" onclick="showMoveModal()">
+              <button id="moveBtn" class="btn btn-secondary" style="display:none; width:auto; padding:10px 24px;"
+                onclick="showMoveModal()">
                 Move
               </button>
               <button id="publishBtn" class="btn btn-success" style="display:none; width:auto; padding:10px 24px;">
@@ -553,7 +730,8 @@
 
                 <div class="form-group">
                   <label for="editDescription">Description</label>
-                  <textarea id="editDescription" placeholder="Optional description" style="min-height: 80px;"></textarea>
+                  <textarea id="editDescription" placeholder="Optional description"
+                    style="min-height: 80px;"></textarea>
                 </div>
 
                 <div class="form-group">
@@ -566,8 +744,10 @@
                 <div id="editMessage" class="helper-text" style="min-height:20px;margin-bottom:12px;"></div>
 
                 <div class="edit-actions" style="display: flex; gap: 12px; margin-top: 16px;">
-                  <button class="btn btn-primary" id="saveBtn" onclick="handleSave()" style="flex: 1;">Save Changes</button>
-                  <button class="btn btn-danger" id="deleteBtn" onclick="handleDelete()" style="flex: 1;">Delete</button>
+                  <button class="btn btn-primary" id="saveBtn" onclick="handleSave()" style="flex: 1;">Save
+                    Changes</button>
+                  <button class="btn btn-danger" id="deleteBtn" onclick="handleDelete()"
+                    style="flex: 1;">Delete</button>
                 </div>
               </div>
             </div>
@@ -578,15 +758,19 @@
                 <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Sharing Management</h3>
 
                 <div style="margin-bottom: 20px;">
-                  <h4 style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Direct User Shares</h4>
+                  <h4 style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Direct User
+                    Shares</h4>
                   <div id="directSharesList" class="member-list" style="margin-bottom: 12px;"></div>
-                  <p id="noDirectShares" class="helper-text" style="color: var(--muted); display: none;">Not shared with any users directly.</p>
+                  <p id="noDirectShares" class="helper-text" style="color: var(--muted); display: none;">Not shared with
+                    any users directly.</p>
                 </div>
 
                 <div>
-                  <h4 style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Group Shares</h4>
+                  <h4 style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Group Shares
+                  </h4>
                   <div id="groupSharesList" class="member-list" style="margin-bottom: 12px;"></div>
-                  <p id="noGroupShares" class="helper-text" style="color: var(--muted); display: none;">Not shared in any groups.</p>
+                  <p id="noGroupShares" class="helper-text" style="color: var(--muted); display: none;">Not shared in
+                    any groups.</p>
                 </div>
               </div>
             </div>
@@ -612,7 +796,8 @@
       <h3>Move Document</h3>
       <div class="form-group" style="margin-top: 16px; margin-bottom: 20px;">
         <label for="moveFolderSelect">Select Destination Folder</label>
-        <select id="moveFolderSelect" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text);">
+        <select id="moveFolderSelect"
+          style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text);">
           <option value="">— My Documents —</option>
         </select>
       </div>
@@ -671,18 +856,19 @@
   <div id="toast"></div>
 
   <script src="js/api.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/navigation.js"></script>
-<script src="js/layout.js"></script>
-<script src="js/subject-api.js"></script>
-<script src="js/document-api.js"></script>
-<script src="js/community-api.js"></script>
-<script src="js/group-api.js"></script>
-<script src="js/share-api.js"></script>
-<script src="js/folder-api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/subject-api.js"></script>
+  <script src="js/document-api.js"></script>
+  <script src="js/processing-api.js"></script>
+  <script src="js/community-api.js"></script>
+  <script src="js/group-api.js"></script>
+  <script src="js/share-api.js"></script>
+  <script src="js/folder-api.js"></script>
 
-<script src="js/document-preview.js"></script>
-<script src="js/document-detail.js"></script>
+  <script src="js/document-preview.js"></script>
+  <script src="js/document-detail.js"></script>
 </body>
 
 </html>
