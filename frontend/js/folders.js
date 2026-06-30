@@ -751,16 +751,16 @@ document.addEventListener("DOMContentLoaded", async function () {
   if (currentParentFolderId) {
     if (backFolderBtn) {
       backFolderBtn.style.display = "inline-flex";
-      backFolderBtn.addEventListener("click", () => {
+      backFolderBtn.onclick = () => {
         const parentId = breadcrumbTrail.length > 2
           ? breadcrumbTrail[breadcrumbTrail.length - 2].folderId
           : null;
         navigateToFolder(parentId);
-      });
+      };
     }
     if (shareFolderBtn) {
       shareFolderBtn.style.display = "inline-flex";
-      shareFolderBtn.addEventListener("click", async () => {
+      shareFolderBtn.onclick = async () => {
         // Reset modal state
         hideError(shareUserError);
         hideError(shareGroupError);
@@ -775,7 +775,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         // Load active shares and group dropdown options
         await loadFolderShares();
         await loadGroupsDropdown();
-      });
+      };
+    }
+  } else {
+    if (backFolderBtn) {
+      backFolderBtn.style.display = "none";
+      backFolderBtn.onclick = null;
+    }
+    if (shareFolderBtn) {
+      shareFolderBtn.style.display = "none";
+      shareFolderBtn.onclick = null;
     }
   }
 
