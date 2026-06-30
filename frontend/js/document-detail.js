@@ -72,6 +72,8 @@ const detailContent = document.getElementById("detailContent");
 let currentDocumentId = null;
 let currentDocumentFolderId = null;
 let currentIsCommunityView = false;
+let aiExtractedTextLoaded = false;
+let aiExtractedTextExpanded = true;
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
@@ -218,6 +220,8 @@ function renderDocument(doc) {
     const documentActionRow = document.getElementById("documentActionRow");
 
     currentDocumentFolderId = doc.folderId;
+    // ── AI Processing panel (Step 9) — owner only ──
+    renderAIProcessingPanel(doc);
 
     // Open button
     if (openBtn) {
@@ -342,6 +346,227 @@ function renderDocument(doc) {
         }
     }
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+// AI PROCESSING PANEL (Step 9)
+// Uses the polling API provided by PR #117 (js/processing-api.js):
+//   processDocument(id), reprocessDocument(id), getProcessingStatus(id),
+//   getDocumentContent(id), startDocumentPolling(id, onStatusUpdate, onTerminalState),
+//   stopDocumentPolling(id), DOCUMENT_PROCESSING_STATUS
+// ══════════════════════════════════════════════════════════════════════════
+
+const AI_STATUS_DESCRIPTIONS = {
+    PENDING: "This document has not been processed for AI yet. Process it to prepare it for AI Q&A.",
+    PROCESSING: "Processing this document… this may take a moment.",
+    COMPLETED: "This document has been processed successfully and is ready for AI Q&A.",
+    FAILED: "Processing failed. You can retry to process this document again.",
+    UNSUPPORTED: "This file format is not supported for AI processing yet.",
+    EMPTY_CONTENT: "No readable text content was found in this file."
+};
+
+function renderAIProcessingPanel(doc) {
+    const section = document.getElementById("aiProcessingSection");
+    if (!section) return;
+
+    const canSeePanel = !currentIsCommunityView && doc.canEdit;
+    if (!canSeePanel) {
+        section.style.display = "none";
+        if (currentDocumentId) stopDocumentPolling(currentDocumentId);
+        return;
+    }
+
+    section.style.display = "block";
+    aiExtractedTextLoaded = false;
+    aiExtractedTextExpanded = true;
+    const textBox = document.getElementById("aiExtractedTextBox");
+    if (textBox) textBox.style.display = "none";
+
+    // The Document Detail DTO only contains `processingStatus`, so render
+    // immediately with that, then start polling if it's already PROCESSING.
+    const status = doc.processingStatus || "PENDING";
+    applyAIProcessingState(status, { processingStatus: status });
+
+    if (status === "PROCESSING") {
+        startAIPolling();
+    }
+}
+
+function applyAIProcessingState(status, data) {
+    data = data || {};
+    status = status || "PENDING";
+    const meta = DOCUMENT_PROCESSING_STATUS[status] || { label: status };
+
+    const badge = document.getElementById("aiStatusBadge");
+    if (badge) {
+        badge.className = "status-badge " + status.toLowerCase().replace(/_/g, "-");
+        badge.innerHTML = "";
+        if (status === "PROCESSING") {
+            const spinner = document.createElement("span");
+            spinner.className = "ai-status-spinner";
+            badge.appendChild(spinner);
+        }
+        badge.appendChild(document.createTextNode(meta.label));
+    }
+
+    const metaEl = document.getElementById("aiProcessingMeta");
+    if (metaEl) {
+        if (status === "COMPLETED" && (data.characterCount || data.wordCount)) {
+            let text = `${data.wordCount || 0} words · ${data.characterCount || 0} characters`;
+            if (data.isTruncated) text += " · truncated";
+            metaEl.textContent = text;
+        } else {
+            metaEl.textContent = "";
+        }
+    }
+
+    const messageEl = document.getElementById("aiProcessingMessage");
+    if (messageEl) {
+        let text = AI_STATUS_DESCRIPTIONS[status] || "";
+        if (status === "FAILED" && data.lastAttemptError) {
+            text = data.lastAttemptError;
+        }
+        messageEl.textContent = text;
+        messageEl.className = "ai-processing-message" + (status === "FAILED" ? " error" : "");
+    }
+
+    renderAIActions(status);
+}
+
+function renderAIActions(status) {
+    const actionsEl = document.getElementById("aiProcessingActions");
+    if (!actionsEl) return;
+    actionsEl.innerHTML = "";
+
+    if (status === "PENDING") {
+        actionsEl.appendChild(
+            buildAIActionButton("Process for AI", "btn-primary", () => handleAIProcessAction("process"))
+        );
+    } else if (status === "PROCESSING") {
+        const loadingBtn = document.createElement("button");
+        loadingBtn.type = "button";
+        loadingBtn.className = "btn btn-secondary";
+        loadingBtn.disabled = true;
+        loadingBtn.textContent = "Processing…";
+        actionsEl.appendChild(loadingBtn);
+    } else if (status === "FAILED") {
+        actionsEl.appendChild(
+            buildAIActionButton("Retry", "btn-primary", () => handleAIProcessAction("process"))
+        );
+    } else if (status === "EMPTY_CONTENT") {
+        actionsEl.appendChild(
+            buildAIActionButton("Reprocess", "btn-primary", () => handleAIProcessAction("reprocess"))
+        );
+    } else if (status === "COMPLETED") {
+        actionsEl.appendChild(
+            buildAIActionButton("View Extracted Text", "btn-secondary", handleViewExtractedText)
+        );
+        actionsEl.appendChild(
+            buildAIActionButton("Reprocess", "btn-secondary", () => handleAIProcessAction("reprocess"))
+        );
+    }
+}
+
+function buildAIActionButton(label, btnClass, onClick) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn " + btnClass;
+    btn.textContent = label;
+    btn.addEventListener("click", onClick);
+    return btn;
+}
+
+async function handleAIProcessAction(action) {
+    const actionsEl = document.getElementById("aiProcessingActions");
+    if (actionsEl) {
+        Array.from(actionsEl.querySelectorAll("button")).forEach(b => (b.disabled = true));
+    }
+
+    try {
+        const res = action === "reprocess"
+            ? await reprocessDocument(currentDocumentId)
+            : await processDocument(currentDocumentId);
+
+        const status = (res.data && res.data.processingStatus) || "PROCESSING";
+        applyAIProcessingState(status, res.data || {});
+        startAIPolling();
+    } catch (err) {
+        if (err.status === 409) {
+            // Already PROCESSING (e.g. duplicate click). startDocumentPolling()
+            // itself no-ops if a session already exists for this document, so
+            // this safely resumes the same session instead of a new timer.
+            applyAIProcessingState("PROCESSING", {});
+            startAIPolling();
+            window.showToast("Document is already being processed.", "info");
+        } else {
+            window.showToast(err.message || "Failed to start AI processing.", "error");
+            const badge = document.getElementById("aiStatusBadge");
+            const fallbackStatus = badge ? badge.textContent.trim().toUpperCase().replace(/\s+/g, "_") : "PENDING";
+            renderAIActions(fallbackStatus);
+        }
+    }
+}
+
+// Wraps PR #117's startDocumentPolling(documentId, onStatusUpdate, onTerminalState).
+function startAIPolling() {
+    startDocumentPolling(
+        currentDocumentId,
+        (status, data) => applyAIProcessingState(status, data),
+        (status, data) => {
+            if (status === "TIMEOUT") {
+                const messageEl = document.getElementById("aiProcessingMessage");
+                if (messageEl) {
+                    messageEl.textContent = "Processing is taking longer than expected. It will keep running in the background — you can check back later.";
+                }
+                return;
+            }
+            if (status === "ERROR") {
+                window.showToast((data && data.message) || "Failed to check processing status.", "error");
+                return;
+            }
+            applyAIProcessingState(status, data);
+        }
+    );
+}
+
+async function handleViewExtractedText() {
+    const box = document.getElementById("aiExtractedTextBox");
+    const contentEl = document.getElementById("aiExtractedTextContent");
+    if (!box || !contentEl) return;
+
+    if (aiExtractedTextLoaded) {
+        aiExtractedTextExpanded = !aiExtractedTextExpanded;
+        box.style.display = aiExtractedTextExpanded ? "block" : "none";
+        return;
+    }
+
+    contentEl.textContent = "Loading extracted text…";
+    box.style.display = "block";
+    aiExtractedTextExpanded = true;
+
+    try {
+        const res = await getDocumentContent(currentDocumentId);
+        const text = (res.data && res.data.extractedText) || "";
+        contentEl.textContent = text || "(No text available.)";
+        aiExtractedTextLoaded = true;
+    } catch (err) {
+        contentEl.textContent = "";
+        box.style.display = "none";
+        window.showToast(err.message || "Failed to load extracted text.", "error");
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const toggleBtn = document.getElementById("aiTextToggleBtn");
+    if (toggleBtn) {
+        toggleBtn.addEventListener("click", () => {
+            const box = document.getElementById("aiExtractedTextBox");
+            aiExtractedTextExpanded = !aiExtractedTextExpanded;
+            if (box) box.style.display = aiExtractedTextExpanded ? "block" : "none";
+            toggleBtn.textContent = aiExtractedTextExpanded ? "Collapse" : "Expand";
+        });
+    }
+});
+
 
 // ── Render subject dropdown ───────────────────────────────────────────────────
 function renderSubjectOptions(subjects, currentSubjectId) {
