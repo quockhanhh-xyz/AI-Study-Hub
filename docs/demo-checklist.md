@@ -125,3 +125,88 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
   - *Expected*: Returns `202 Accepted`, resets status to `"PROCESSING"`, and updates content successfully to `"COMPLETED"`.
 - [ ] **Step 6.10**: Check stale job recovery (Simulate job stuck in `PROCESSING` for >10 mins by updating `processing_started_at` in DB, then query `/processing-status`).
   - *Expected*: Status transitions to `"FAILED"` and registers error in `lastAttemptError`.
+
+---
+
+## 7. Flow 7: AI Document Chat (Step 10)
+
+### Prerequisites
+- User A has uploaded a document (`Document ID = 25`) that has `processingStatus = COMPLETED`.
+- User A has shared Document 25 with User B (direct share, ACTIVE).
+- `AI_PROVIDER=mock` is set in application.properties for local demo.
+
+### 7.1. Quota and Usage
+
+- [ ] **Step 7.1.1**: Call `GET /api/ai/usage/me` as User A.
+  - *Expected*: `200 OK` with `tier: "FREE"`, `dailyLimit: 3`, `usedToday: 0`, `remainingQuestions: 3`.
+- [ ] **Step 7.1.2**: Call `GET /api/ai/usage/me` as guest (no auth).
+  - *Expected*: `401 Unauthorized`.
+
+### 7.2. Ask AI — Basic Flow
+
+- [ ] **Step 7.2.1**: `POST /api/ai/documents/25/ask` as User A with `{"question": "Summarize this document"}`.
+  - *Expected*: `200 OK`, `answer` non-empty, `sourceChunks` non-empty, `provider: "mock"` (or `"gemini"`), `remainingQuestions: 2`.
+- [ ] **Step 7.2.2**: `GET /api/ai/usage/me` as User A.
+  - *Expected*: `usedToday: 1`, `remainingQuestions: 2`.
+- [ ] **Step 7.2.3**: Ask User A 2 more questions.
+  - *Expected*: Third question returns `remainingQuestions: 0`.
+- [ ] **Step 7.2.4**: Ask User A a 4th question (quota exhausted).
+  - *Expected*: `429 Too Many Requests`.
+
+### 7.3. Ask AI — Permission Checks
+
+- [ ] **Step 7.3.1**: Guest asks `POST /api/ai/documents/25/ask`.
+  - *Expected*: `401 Unauthorized`.
+- [ ] **Step 7.3.2**: User B (shared user) asks `POST /api/ai/documents/25/ask`.
+  - *Expected*: `200 OK` (shared user has view permission).
+- [ ] **Step 7.3.3**: User C (no access) asks.
+  - *Expected*: `403 Forbidden`.
+
+### 7.4. Ask AI — Document Status Checks
+
+- [ ] **Step 7.4.1**: Ask about a document with `processingStatus = PENDING`.
+  - *Expected*: `409 Conflict` with message `"document is not ready yet"`.
+- [ ] **Step 7.4.2**: Ask about a document with `processingStatus = FAILED`.
+  - *Expected*: `422 Unprocessable Entity` with message `"document has no usable AI content"`.
+- [ ] **Step 7.4.3**: Ask about a deleted document (in Trash).
+  - *Expected*: `404 Not Found`.
+
+### 7.5. Input Validation
+
+- [ ] **Step 7.5.1**: Ask with empty `question: ""`.
+  - *Expected*: `400 Bad Request`.
+- [ ] **Step 7.5.2**: Ask with question > 500 chars as FREE user.
+  - *Expected*: `400 Bad Request`.
+
+### 7.6. No-Context Fallback
+
+- [ ] **Step 7.6.1**: Ask a question where no chunks match (e.g., "What is the color of the moon?").
+  - *Expected*: `200 OK` with `answer: "I could not find this information in the selected document."`, `sourceChunks: []`, `provider: null`.
+- [ ] **Step 7.6.2**: Verify quota was NOT consumed (call `/api/ai/usage/me`).
+  - *Expected*: `usedToday` unchanged.
+
+### 7.7. Chat History
+
+- [ ] **Step 7.7.1**: `GET /api/ai/documents/25/chats` as User A after asking 1 question.
+  - *Expected*: `200 OK` with `sessionId` non-null, `messages` length = 2 (USER + ASSISTANT).
+- [ ] **Step 7.7.2**: `GET /api/ai/documents/25/chats` as User A before ever asking.
+  - *Expected*: `200 OK` with `messages: []`.
+- [ ] **Step 7.7.3**: `GET /api/ai/documents/25/chats` as User B (different user, same doc).
+  - *Expected*: Returns User B's own chat only (not User A's).
+
+### 7.8. Delete Chat
+
+- [ ] **Step 7.8.1**: `DELETE /api/ai/chats/{sessionId}` as User A (own session).
+  - *Expected*: `200 OK`.
+- [ ] **Step 7.8.2**: `GET /api/ai/documents/25/chats` after delete.
+  - *Expected*: `messages: []` (empty — deleted session not shown).
+- [ ] **Step 7.8.3**: `DELETE /api/ai/chats/{sessionId}` as User B on User A's session.
+  - *Expected*: `403 Forbidden`.
+
+### 7.9. AI Configuration
+
+- [ ] **Step 7.9.1**: With `AI_PROVIDER=mock`, ask any question.
+  - *Expected*: Returns mock answer without needing API key.
+- [ ] **Step 7.9.2** *(Optional)*: With `AI_PROVIDER=gemini` and no `GEMINI_API_KEY` set.
+  - *Expected*: `503 Service Unavailable` — `"AI service is not configured"`.
+

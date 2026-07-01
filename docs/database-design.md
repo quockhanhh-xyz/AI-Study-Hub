@@ -450,3 +450,107 @@ Stores the partitioned ordered chunks of a document's extracted text for AI cont
 - **Constraints**:
   - `UNIQUE KEY uk_doc_chunks_doc_index (document_id, chunk_index)`
   - `INDEX idx_doc_chunks_doc_id (document_id)`
+
+---
+
+# AI Document Chat Tables (Step 10)
+
+## 14. Table `ai_chat_sessions`
+
+Stores one chat session per user per document. Sessions are soft-deleted, not physically removed.
+
+| Column Name | Data Type | Constraints | Description |
+|:---|:---|:---|:---|
+| `session_id` | BIGINT | PRIMARY KEY, AUTO_INCREMENT, NOT NULL | Unique session ID |
+| `user_id` | INT | FOREIGN KEY → `users(user_id)`, NOT NULL | User who owns this session |
+| `document_id` | INT | FOREIGN KEY → `documents(document_id)`, NOT NULL | Document being chatted about |
+| `title` | VARCHAR(255) | NULLABLE | Auto-generated from first question (first 100 chars) |
+| `status` | VARCHAR(20) | DEFAULT `ACTIVE`, NOT NULL | Session status: `ACTIVE` \| `DELETED` |
+| `created_at` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Session creation time |
+| `updated_at` | DATETIME | ON UPDATE CURRENT_TIMESTAMP | Last update time |
+| `deleted_at` | DATETIME | NULLABLE | Soft-delete timestamp |
+
+### Business Rules
+
+- One user can have at most one `ACTIVE` session per document.
+- If no session exists, backend auto-creates one on the first AI question.
+- Deleting a session sets `status = DELETED` and `deleted_at = NOW()`.
+- Usage logs are never deleted along with the session.
+
+### Indexes
+
+```sql
+INDEX idx_ai_chat_sessions_user_doc (user_id, document_id)
+```
+
+---
+
+## 15. Table `ai_chat_messages`
+
+Stores individual messages in a chat session. Messages are never physically deleted.
+
+| Column Name | Data Type | Constraints | Description |
+|:---|:---|:---|:---|
+| `message_id` | BIGINT | PRIMARY KEY, AUTO_INCREMENT, NOT NULL | Unique message ID |
+| `session_id` | BIGINT | FOREIGN KEY → `ai_chat_sessions(session_id)`, NOT NULL | Parent session |
+| `role` | VARCHAR(20) | NOT NULL | Message role: `USER` \| `ASSISTANT` |
+| `content` | TEXT | NOT NULL | Message text content |
+| `provider` | VARCHAR(50) | NULLABLE | AI provider used: `gemini` \| `mock` (null for USER messages) |
+| `model_name` | VARCHAR(100) | NULLABLE | AI model name used (null for USER messages) |
+| `input_tokens` | INT | NULLABLE | Input token count (null for USER messages) |
+| `output_tokens` | INT | NULLABLE | Output token count (null for USER messages) |
+| `total_tokens` | INT | NULLABLE | Total tokens = input + output |
+| `token_usage_estimated` | BOOLEAN | DEFAULT FALSE | True if token counts are estimates |
+| `source_chunks` | TEXT | NULLABLE | JSON array of source chunks used: `[{"chunkIndex": 1, "sourceLabel": "Chunk 1"}]` |
+| `created_at` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Message creation time |
+
+### Business Rules
+
+- USER role messages: `provider`, `model_name`, token fields, `source_chunks` are all null.
+- ASSISTANT role messages: `provider` and `model_name` must be set if AI was called.
+- No-context fallback messages: `provider = null`, all token fields = 0.
+- `token_usage_estimated = true` when provider does not return exact token counts.
+
+### Indexes
+
+```sql
+INDEX idx_ai_chat_messages_session (session_id)
+INDEX idx_ai_chat_messages_created (created_at)
+```
+
+---
+
+## 16. Table `ai_usage_logs`
+
+Audit log for all AI usage attempts. Used for quota enforcement and usage reporting.
+
+| Column Name | Data Type | Constraints | Description |
+|:---|:---|:---|:---|
+| `usage_id` | BIGINT | PRIMARY KEY, AUTO_INCREMENT, NOT NULL | Unique log ID |
+| `user_id` | INT | FOREIGN KEY → `users(user_id)`, NOT NULL | User who made the request |
+| `document_id` | INT | FOREIGN KEY → `documents(document_id)`, NULLABLE | Document requested |
+| `request_type` | VARCHAR(30) | DEFAULT `ASK`, NOT NULL | Type of AI request: `ASK` |
+| `input_tokens` | INT | DEFAULT 0 | Input tokens (0 if AI was not called) |
+| `output_tokens` | INT | DEFAULT 0 | Output tokens (0 if AI was not called) |
+| `total_tokens` | INT | DEFAULT 0 | Total tokens |
+| `token_usage_estimated` | BOOLEAN | DEFAULT FALSE | True if token counts are estimates |
+| `provider` | VARCHAR(50) | NULLABLE | AI provider used (null if AI not called) |
+| `model_name` | VARCHAR(100) | NULLABLE | AI model name used (null if AI not called) |
+| `counted_as_question` | BOOLEAN | DEFAULT FALSE, NOT NULL | Counts toward daily quota only when `true` |
+| `status` | VARCHAR(30) | DEFAULT `SUCCESS`, NOT NULL | Outcome: `SUCCESS` \| `FAILED` \| `SKIPPED_NO_CONTEXT` \| `QUOTA_EXCEEDED` \| `AI_NOT_CONFIGURED` |
+| `created_at` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Log creation time |
+
+### Business Rules
+
+- `counted_as_question = true` only when AI provider was called successfully and returned a valid response.
+- The following do NOT set `counted_as_question = true`: no-context fallback, provider error, quota exceeded, AI not configured.
+- Daily quota = count of rows where `user_id = X AND counted_as_question = true AND status = 'SUCCESS' AND created_at >= today_start`.
+- Records are never deleted (kept for audit).
+
+### Indexes
+
+```sql
+INDEX idx_ai_usage_logs_user_date (user_id, created_at)
+INDEX idx_ai_usage_logs_user_status (user_id, status, counted_as_question)
+```
+
