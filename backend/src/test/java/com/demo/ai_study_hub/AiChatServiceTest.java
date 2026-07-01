@@ -131,10 +131,10 @@ class AiChatServiceTest {
         when(aiModelSelector.getMaxQuestionChars(anyString())).thenReturn(500);
         when(documentChunkRepository.countByDocument_DocumentId(anyInt())).thenReturn(5);
         when(aiProviderRouter.isConfigured()).thenReturn(true);
-        when(aiModelSelector.getDailyQuestionLimit("FREE")).thenReturn(3);
+        when(aiModelSelector.getDailyQuestionLimit("FREE")).thenReturn(5);
 
         // Mock 3 successful questions today
-        when(aiUsageLogRepository.countSuccessfulQuestionsAfter(anyInt(), any(LocalDateTime.class))).thenReturn(3L);
+        when(aiUsageLogRepository.countSuccessfulQuestionsAfter(anyInt(), any(LocalDateTime.class))).thenReturn(5L);
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
             aiChatService.ask(1, "Test question", "user@test.com");
@@ -163,10 +163,10 @@ class AiChatServiceTest {
         when(aiModelSelector.getMaxQuestionChars(anyString())).thenReturn(500);
         when(documentChunkRepository.countByDocument_DocumentId(anyInt())).thenReturn(5);
         when(aiProviderRouter.isConfigured()).thenReturn(true);
-        when(aiModelSelector.getDailyQuestionLimit("FREE")).thenReturn(3);
+        when(aiModelSelector.getDailyQuestionLimit("FREE")).thenReturn(5);
         when(aiUsageLogRepository.countSuccessfulQuestionsAfter(anyInt(), any(LocalDateTime.class))).thenReturn(0L);
 
-        when(aiModelSelector.getMaxContextChunks("FREE")).thenReturn(3);
+        when(aiModelSelector.getMaxContextChunks("FREE")).thenReturn(5);
         when(summaryIntentDetector.isSummaryIntent(anyString())).thenReturn(false);
         when(chunkRetrievalService.retrieveByKeyword(anyInt(), anyString(), anyInt()))
                 .thenReturn(Collections.emptyList()); // No context found!
@@ -178,7 +178,7 @@ class AiChatServiceTest {
 
         assertEquals("I could not find this information in the selected document.", response.getAnswer());
         assertEquals(0, response.getSourceChunks().size());
-        assertEquals(3, response.getRemainingQuestions()); // Remaining is limit (3) - used today (0)
+        assertEquals(5, response.getRemainingQuestions());
 
         // Verify usage log was saved with countedAsQuestion = false and status SKIPPED_NO_CONTEXT
         verify(aiUsageLogRepository, times(1)).save(argThat(log ->
@@ -200,7 +200,7 @@ class AiChatServiceTest {
         when(aiModelSelector.getMaxQuestionChars(anyString())).thenReturn(500);
         when(documentChunkRepository.countByDocument_DocumentId(anyInt())).thenReturn(5);
         when(aiProviderRouter.isConfigured()).thenReturn(true);
-        when(aiModelSelector.getDailyQuestionLimit("FREE")).thenReturn(3);
+        when(aiModelSelector.getDailyQuestionLimit("FREE")).thenReturn(5);
         when(aiUsageLogRepository.countSuccessfulQuestionsAfter(anyInt(), any(LocalDateTime.class))).thenReturn(0L);
 
         when(aiModelSelector.getMaxContextChunks("FREE")).thenReturn(3);

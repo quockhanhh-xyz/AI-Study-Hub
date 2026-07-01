@@ -50,9 +50,9 @@
 
 | TC | Condition | Expected |
 |---|---|---|
-| TC-AI-040 | FREE user with 0 questions used today | 200 OK — remainingQuestions = 3 |
-| TC-AI-041 | FREE user with 2 questions used today | 200 OK — remainingQuestions = 1 |
-| TC-AI-042 | FREE user with 3 questions used today | 429 Too Many Requests |
+TC-AI-040 | FREE user with 0 questions used today | 200 OK — remainingQuestions = 5
+TC-AI-041 | FREE user with 4 questions used today | 200 OK — remainingQuestions = 1
+TC-AI-042 | FREE user with 5 questions used today | 429 Too Many Requests
 | TC-AI-043 | PREMIUM user with 49 questions used today | 200 OK — remainingQuestions = 1 |
 | TC-AI-044 | PREMIUM user with 50 questions used today | 429 Too Many Requests |
 | TC-AI-045 | No-context fallback answer | quota NOT consumed |
@@ -131,15 +131,15 @@
 
 ## 4. Get My AI Usage — GET /api/ai/usage/me
 
-| TC | Condition | Expected |
-|---|---|---|
-| TC-USAGE-001 | Guest | 401 Unauthorized |
-| TC-USAGE-002 | FREE user, 0 questions today | dailyLimit=3, usedToday=0, remaining=3 |
-| TC-USAGE-003 | FREE user, 1 question today | usedToday=1, remaining=2 |
-| TC-USAGE-004 | FREE user, 3 questions today (exhausted) | usedToday=3, remaining=0 |
-| TC-USAGE-005 | PREMIUM user | dailyLimit=50 |
+| TC | Condition | Expected                                   |
+|---|---|--------------------------------------------|
+| TC-USAGE-001 | Guest | 401 Unauthorized                           |
+| TC-USAGE-002 | FREE user, 0 questions today | dailyLimit=5, usedToday=0, remaining=5
+TC-USAGE-003 | FREE user, 1 question today | usedToday=1, remaining=4
+TC-USAGE-004 | FREE user, 5 questions today (exhausted) | usedToday=5, remaining=0
+| TC-USAGE-005 | PREMIUM user | dailyLimit=50                              |
 | TC-USAGE-006 | Response includes provider and modelName | based on user tier and configured provider |
-| TC-USAGE-007 | Quota resets after midnight | usedToday = 0 next day |
+| TC-USAGE-007 | Quota resets after midnight | usedToday = 0 next day                     |
 
 ---
 
