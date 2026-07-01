@@ -2922,6 +2922,51 @@ svg {
   border: 1px solid #fecaca;
 }
 
+/* ===== Step 9: Processing Status Badges ===== */
+.processing-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  letter-spacing: 0.3px;
+}
+
+.processing-status-badge.status-pending {
+  background-color: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.processing-status-badge.status-processing {
+  background-color: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+  animation: pulse-badge 1.5s ease-in-out infinite;
+}
+
+.processing-status-badge.status-success {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.processing-status-badge.status-error {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+@keyframes pulse-badge {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 /* Enforce Full-Width layout on Trash panel */
 .trash-panel {
   max-width: none !important;
