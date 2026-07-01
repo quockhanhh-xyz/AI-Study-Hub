@@ -52,3 +52,9 @@ function getMyAiUsage() {
   const endpoint = `/api/ai/usage/me`;
   return get(endpoint);
 }
+
+// Bind individual functions securely to the global window scope for integration visibility
+window.askDocumentQuestion = askDocumentQuestion;
+window.getDocumentChats = getDocumentChats;
+window.deleteAiChat = deleteAiChat;
+window.getMyAiUsage = getMyAiUsage;
