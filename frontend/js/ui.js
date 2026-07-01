@@ -545,5 +545,81 @@ window.clearInlineError = UIHelper.clearInlineError;
 window.getFileTypeIcon = UIHelper.getFileTypeIcon;
 window.initCustomDropdowns = UIHelper.initCustomDropdowns;
 
+// AI API & UI Helper Extensions for Step 10. All responses, labels, and error messages are standardized here.
+const AIUIHelper = {
+  /**
+   * 19.2. Error mapping helper
+   * Standardizes HTTP status codes into user-friendly error messages.
+   * @param {number} status - The HTTP status code.
+   * @returns {string} The standardized error message.
+   */
+  mapAiError(status) {
+    const errorMap = {
+      400: "Your question is empty or too long.",
+      401: "Please log in to use AI Q&A.",
+      403: "You do not have permission to ask about this document.",
+      404: "This document is not available.",
+      409: "This document is not ready for AI yet. Please process it first.",
+      422: "This document has no usable AI content.",
+      429: "You have reached your daily AI question limit.",
+      503: "AI service is currently unavailable."
+    };
+    return errorMap[status] || "An unexpected AI error occurred. Please try again.";
+  },
+
+  /**
+   * 19.3. Usage/model/token helper
+   * Normalizes the AI usage response payload into a standardized structure.
+   * @param {object} data - Raw data payload from the backend.
+   * @returns {object} Standardized usage metrics.
+   */
+  normalizeAiUsage(data) {
+    return {
+      tier: data?.tier || "FREE",
+      dailyLimit: data?.dailyLimit || 0,
+      usedToday: data?.usedToday || 0,
+      remainingQuestions: data?.remainingQuestions || 0,
+      provider: data?.provider || "mock",
+      modelName: data?.modelName || "mock",
+      tokenUsageEstimated: !!data?.tokenUsageEstimated
+    };
+  },
+
+  /**
+   * 19.3. Model label helper
+   * Maps technical model names to user-friendly presentation strings.
+   * @param {string} modelName - The internal technical model identifier.
+   * @returns {string} The formatted presentation label.
+   */
+  getAiModelLabel(modelName) {
+    const labelMap = {
+      "gemini-2.5-flash-lite": "Powered by Gemini Flash-Lite",
+      "gemini-2.5-flash": "Powered by Gemini Flash",
+      "mock": "Demo mode"
+    };
+    return labelMap[modelName] || "Powered by AI Assistant";
+  },
+
+  /**
+   * 19.4. Source chunks helper
+   * Standardizes backend source metadata into human-readable citation labels.
+   * @param {object} chunk - Individual context piece used by the AI model.
+   * @param {number} index - Index iteration count.
+   * @returns {string} Standardized source string format.
+   */
+  formatAiSourceLabel(chunk, index) {
+    if (chunk && chunk.pageInfo) {
+      return `Page ${chunk.pageInfo}`;
+    }
+    return `Chunk ${index + 1}`;
+  }
+};
+
+// Expose individual helper functions directly to window scope to fulfill checklist prerequisites
+window.mapAiError = AIUIHelper.mapAiError;
+window.normalizeAiUsage = AIUIHelper.normalizeAiUsage;
+window.getAiModelLabel = AIUIHelper.getAiModelLabel;
+window.formatAiSourceLabel = AIUIHelper.formatAiSourceLabel;
+
 // Also preserve the namespace export to guarantee zero breaking integrations for existing callers
 window.UIHelper = UIHelper;
