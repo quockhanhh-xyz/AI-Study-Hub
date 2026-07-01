@@ -611,9 +611,18 @@ const AIUIHelper = {
    * @returns {string} Standardized source string format.
    */
   formatAiSourceLabel(chunk, index) {
-    if (chunk && chunk.pageInfo) {
+    if (chunk?.sourceLabel) {
+      return chunk.sourceLabel;
+    }
+
+    if (chunk?.pageInfo) {
       return `Page ${chunk.pageInfo}`;
     }
+
+    if (typeof chunk?.chunkIndex === "number") {
+      return `Chunk ${chunk.chunkIndex + 1}`;
+    }
+
     return `Chunk ${index + 1}`;
   }
 };
