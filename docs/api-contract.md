@@ -2956,7 +2956,7 @@ If `AI_PROVIDER=gemini` but `GEMINI_API_KEY` is missing, the app starts normally
 
 | Tier | Model | Daily Limit | Max Chunks | Max Output Tokens |
 |---|---|---|---|---|
-| FREE | `gemini-2.5-flash-lite` | 3 questions/day | 3 chunks | 500 tokens |
+| FREE | `gemini-2.5-flash-lite` | 5 questions/day | 3 chunks | 500 tokens |
 | PREMIUM | `gemini-2.5-flash` | 50 questions/day | 8 chunks | 1500 tokens |
 
 Model is selected server-side based on `user.tier`. Controller never hardcodes model name.
@@ -3099,7 +3099,7 @@ When no relevant chunks are found (not a summary intent):
     "outputTokens": 0,
     "totalTokens": 0,
     "tokenUsageEstimated": false,
-    "remainingQuestions": 3
+    "remainingQuestions": 5
   }
 }
 ```
@@ -3240,9 +3240,9 @@ Retrieve current user's AI usage statistics and remaining quota for today.
   "message": "AI usage retrieved successfully",
   "data": {
     "tier": "FREE",
-    "dailyLimit": 3,
+    "dailyLimit": 5,
     "usedToday": 1,
-    "remainingQuestions": 2,
+    "remainingQuestions": 4,
     "provider": "gemini",
     "modelName": "gemini-2.5-flash-lite"
   }
