@@ -137,9 +137,17 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Step 9: Processing status badge — fallback to PENDING for legacy responses
     const rawStatus = documentItem.processingStatus || "PENDING";
+    const CARD_STATUS_LABELS = {
+      PENDING: "Pending",
+      PROCESSING: "Processing",
+      COMPLETED: "Ready",
+      FAILED: "Failed",
+      UNSUPPORTED: "Unsupported",
+      EMPTY_CONTENT: "Empty"
+    };
     const statusInfo = (typeof DOCUMENT_PROCESSING_STATUS !== "undefined" && DOCUMENT_PROCESSING_STATUS[rawStatus])
-      ? DOCUMENT_PROCESSING_STATUS[rawStatus]
-      : { label: "Pending", class: "status-pending" };
+      ? { label: CARD_STATUS_LABELS[rawStatus] || DOCUMENT_PROCESSING_STATUS[rawStatus].label, class: DOCUMENT_PROCESSING_STATUS[rawStatus].class }
+      : { label: CARD_STATUS_LABELS[rawStatus] || "Pending", class: "status-pending" };
     const processingBadge = document.createElement("span");
     processingBadge.className = `processing-status-badge ${statusInfo.class}`;
     processingBadge.textContent = statusInfo.label;
