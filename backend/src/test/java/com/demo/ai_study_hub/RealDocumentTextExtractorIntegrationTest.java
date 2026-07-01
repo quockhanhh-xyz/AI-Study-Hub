@@ -14,6 +14,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.demo.ai_study_hub.service.DocxTextExtractor;
+import com.demo.ai_study_hub.service.PptxTextExtractor;
+import com.demo.ai_study_hub.service.XlsxTextExtractor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -38,11 +41,14 @@ class RealDocumentTextExtractorIntegrationTest {
     @BeforeEach
     void setUp() {
         extractor = new RealDocumentTextExtractor(
-                secureFileDownloader,
-                new PdfTextExtractor(),
-                new TxtTextExtractor(),
-                new TextCleaner(),
-                new TextChunker()
+            secureFileDownloader,
+            new PdfTextExtractor(),
+            new TxtTextExtractor(),
+            new DocxTextExtractor(),
+            new PptxTextExtractor(),
+            new XlsxTextExtractor(),
+            new TextCleaner(),
+            new TextChunker()
         );
 
         mockDoc = new Document();
