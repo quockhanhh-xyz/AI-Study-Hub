@@ -1,6 +1,6 @@
 /**
  * ai-api.js
- * Frontend API layer for Section 14 (AI Document Chat APIs).
+ * Frontend API layer for Step 10 (AI Document Chat APIs).
  * Integrates seamlessly with core api.js HTTP helpers.
  */
 
