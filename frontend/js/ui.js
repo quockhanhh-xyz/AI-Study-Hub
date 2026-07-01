@@ -205,7 +205,7 @@ const UIHelper = {
     const ext = (fileType || '').toLowerCase();
     let iconClass = 'file-icon-other';
     let iconSvg = '';
-    
+
     if (ext === 'pdf') {
       iconClass = 'file-icon-pdf';
       iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9zM9 13h6M9 17h3"/></svg>`;
@@ -225,7 +225,7 @@ const UIHelper = {
       iconClass = 'file-icon-other';
       iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5-7.5M12 1.5v7.5h7.5M19.5 22.5H4.5A2.25 2.25 0 012.25 20.25V3.75A2.25 2.25 0 014.5 1.5H12v7.5h7.5V20.25a2.25 2.25 0 01-2.25 2.25z"/></svg>`;
     }
-    
+
     return `<div class="document-file-icon-wrapper ${iconClass}">${iconSvg}</div>`;
   },
 
@@ -242,7 +242,7 @@ const UIHelper = {
 
     const label = document.createElement("span");
     label.className = "custom-select-value";
-    
+
     const arrow = document.createElement("span");
     arrow.className = "custom-select-arrow";
     arrow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
@@ -256,12 +256,12 @@ const UIHelper = {
 
     const rebuildSelectOptions = () => {
       optionsMenu.innerHTML = "";
-      
+
       const updateLabel = () => {
         const activeOpt = selectElement.options[selectElement.selectedIndex];
         label.textContent = activeOpt ? activeOpt.textContent : (selectElement.placeholder || "");
       };
-      
+
       updateLabel();
 
       Array.from(selectElement.children).forEach(child => {
@@ -361,7 +361,7 @@ const UIHelper = {
     inputElement.parentNode.insertBefore(container, inputElement);
     trigger.appendChild(inputElement);
     inputElement.className = "custom-select-input";
-    
+
     // Clear dimensions from the raw input element so it doesn't overflow or stretch the flex container
     inputElement.style.minWidth = "0";
     inputElement.style.maxWidth = "none";
@@ -380,13 +380,13 @@ const UIHelper = {
     // Create sticky search input inside the dropdown options panel
     const searchWrapper = document.createElement("div");
     searchWrapper.className = "custom-select-search-wrapper";
-    
+
     const searchInput = document.createElement("input");
     searchInput.type = "text";
     searchInput.className = "custom-select-search-input";
     searchInput.placeholder = "Type to search...";
     searchInput.autocomplete = "off";
-    
+
     searchWrapper.appendChild(searchInput);
     optionsMenu.appendChild(searchWrapper);
 
@@ -429,7 +429,7 @@ const UIHelper = {
       options.forEach(opt => {
         const text = opt.value;
         const id = opt.dataset.id || "";
-        
+
         if (text === CREATE_NEW_VALUE || id === CREATE_NEW_VALUE) {
           return;
         }
@@ -480,7 +480,7 @@ const UIHelper = {
         });
         listContainer.appendChild(createOpt);
       }
-      
+
       if (listContainer.children.length === 0) {
         const noResult = document.createElement("div");
         noResult.className = "custom-select-option";
@@ -544,6 +544,94 @@ window.showInlineError = UIHelper.showInlineError;
 window.clearInlineError = UIHelper.clearInlineError;
 window.getFileTypeIcon = UIHelper.getFileTypeIcon;
 window.initCustomDropdowns = UIHelper.initCustomDropdowns;
+
+// AI API & UI Helper Extensions for Step 10. All responses, labels, and error messages are standardized here.
+const AIUIHelper = {
+  /**
+   * 19.2. Error mapping helper
+   * Standardizes HTTP status codes into user-friendly error messages.
+   * @param {number} status - The HTTP status code.
+   * @returns {string} The standardized error message.
+   */
+  mapAiError(status) {
+    const errorMap = {
+      400: "Your question is empty or too long.",
+      401: "Please log in to use AI Q&A.",
+      403: "You do not have permission to ask about this document.",
+      404: "This document is not available.",
+      409: "This document is not ready for AI yet. Please process it first.",
+      422: "This document has no usable AI content.",
+      429: "You have reached your daily AI question limit.",
+      503: "AI service is currently unavailable."
+    };
+    return errorMap[status] || "An unexpected AI error occurred. Please try again.";
+  },
+
+  /**
+   * 19.3. Usage/model/token helper
+   * Normalizes the AI usage response payload into a standardized structure.
+   * @param {object} response - Raw response payload from the backend API.
+   * @returns {object} Standardized usage metrics.
+   */
+  normalizeAiUsage(response) {
+    // Handle both wrapped response envelope (response.data) and direct payload structures
+    const target = response?.success && response?.data ? response.data : response;
+
+    return {
+      tier: target?.tier || "FREE",
+      dailyLimit: typeof target?.dailyLimit === "number" ? target.dailyLimit : 0,
+      usedToday: typeof target?.usedToday === "number" ? target.usedToday : 0,
+      remainingQuestions: typeof target?.remainingQuestions === "number" ? target.remainingQuestions : 0,
+      provider: target?.provider || "mock",
+      modelName: target?.modelName || "mock",
+      tokenUsageEstimated: target?.tokenUsageEstimated === true || target?.tokenUsageEstimated === "true"
+    };
+  },
+
+  /**
+   * 19.3. Model label helper
+   * Maps technical model names to user-friendly presentation strings.
+   * @param {string} modelName - The internal technical model identifier.
+   * @returns {string} The formatted presentation label.
+   */
+  getAiModelLabel(modelName) {
+    const labelMap = {
+      "gemini-2.5-flash-lite": "Powered by Gemini Flash-Lite",
+      "gemini-2.5-flash": "Powered by Gemini Flash",
+      "mock": "Demo mode"
+    };
+    return labelMap[modelName] || "Powered by AI Assistant";
+  },
+
+  /**
+   * 19.4. Source chunks helper
+   * Standardizes backend source metadata into human-readable citation labels.
+   * @param {object} chunk - Individual context piece used by the AI model.
+   * @param {number} index - Index iteration count.
+   * @returns {string} Standardized source string format.
+   */
+  formatAiSourceLabel(chunk, index) {
+    if (chunk?.sourceLabel) {
+      return chunk.sourceLabel;
+    }
+
+    if (chunk?.pageInfo) {
+      return `Page ${chunk.pageInfo}`;
+    }
+
+    if (typeof chunk?.chunkIndex === "number") {
+      return `Chunk ${chunk.chunkIndex + 1}`;
+    }
+
+    return `Chunk ${index + 1}`;
+  }
+};
+
+// Expose individual helper functions directly to window scope to fulfill checklist prerequisites
+window.mapAiError = AIUIHelper.mapAiError;
+window.normalizeAiUsage = AIUIHelper.normalizeAiUsage;
+window.getAiModelLabel = AIUIHelper.getAiModelLabel;
+window.formatAiSourceLabel = AIUIHelper.formatAiSourceLabel;
 
 // Also preserve the namespace export to guarantee zero breaking integrations for existing callers
 window.UIHelper = UIHelper;
