@@ -166,7 +166,7 @@ class AiChatServiceTest {
         when(aiModelSelector.getDailyQuestionLimit("FREE")).thenReturn(5);
         when(aiUsageLogRepository.countSuccessfulQuestionsAfter(anyInt(), any(LocalDateTime.class))).thenReturn(0L);
 
-        when(aiModelSelector.getMaxContextChunks("FREE")).thenReturn(5);
+        when(aiModelSelector.getMaxContextChunks("FREE")).thenReturn(3);
         when(summaryIntentDetector.isSummaryIntent(anyString())).thenReturn(false);
         when(chunkRetrievalService.retrieveByKeyword(anyInt(), anyString(), anyInt()))
                 .thenReturn(Collections.emptyList()); // No context found!

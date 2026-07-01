@@ -138,7 +138,7 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
 ### 7.1. Quota and Usage
 
 - [ ] **Step 7.1.1**: Call `GET /api/ai/usage/me` as User A.
-  - *Expected*: `200 OK` with `tier: "FREE"`, `dailyLimit: 3`, `usedToday: 0`, `remainingQuestions: 3`.
+  - *Expected*: `200 OK` with `tier: "FREE"`, `dailyLimit: 5`, `usedToday: 0`, `remainingQuestions: 5`.
 - [ ] **Step 7.1.2**: Call `GET /api/ai/usage/me` as guest (no auth).
   - *Expected*: `401 Unauthorized`.
 
