@@ -589,6 +589,199 @@
       display: flex;
     }
 
+    .ai-qa-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .ai-qa-panel .ai-processing-section {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ai-qa-usage-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .ai-qa-model-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--primary-light);
+      color: var(--primary-hover);
+      border: 1px solid var(--primary-border);
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .ai-qa-sample-questions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .ai-qa-sample-btn {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .ai-qa-sample-btn:hover {
+      background: var(--surface-soft);
+      border-color: var(--primary-border);
+    }
+
+    .ai-qa-sample-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .ai-qa-messages {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 120px;
+      max-height: 420px;
+      overflow-y: auto;
+      padding: 4px 2px;
+    }
+
+    .ai-qa-empty-state {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      padding: 24px 0;
+    }
+
+    .ai-qa-message {
+      max-width: 88%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .ai-qa-message.user {
+      align-self: flex-end;
+      background: var(--primary);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .ai-qa-message.assistant {
+      align-self: flex-start;
+      background: var(--background);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+
+    .ai-qa-message.loading {
+      align-self: flex-start;
+      background: var(--background);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .ai-qa-message-sources {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .ai-qa-message-meta {
+      margin-top: 4px;
+      font-size: 10px;
+      color: var(--muted);
+      opacity: 0.8;
+    }
+
+    .ai-qa-status-banner {
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .ai-qa-status-banner.info {
+      background-color: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+
+    .ai-qa-status-banner.warning {
+      background-color: #fffbeb;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+
+    .ai-qa-status-banner.error {
+      background-color: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .ai-qa-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .ai-qa-input-row textarea {
+      flex: 1;
+      resize: vertical;
+      min-height: 44px;
+      max-height: 120px;
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font: inherit;
+      font-size: 13px;
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    .ai-qa-input-row textarea:disabled {
+      background: var(--background);
+      color: var(--muted);
+    }
+
+    .ai-qa-input-row button {
+      width: auto;
+      min-width: 72px;
+      min-height: 40px;
+      padding: 8px 16px;
+    }
+
+    .ai-qa-input-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
     @media (max-width: 1180px) {
       .detail-workspace {
         grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr);
@@ -707,6 +900,7 @@
             <div class="inspector-tabs-container" id="inspectorTabs" role="tablist">
               <button type="button" id="inspectorTabDetails" class="inspector-tab-btn active">Details</button>
               <button type="button" id="inspectorTabSharing" class="inspector-tab-btn">Sharing</button>
+              <button type="button" id="inspectorTabAI" class="inspector-tab-btn">AI Q&amp;A</button>
             </div>
 
             <div class="inspector-panes">
@@ -737,26 +931,6 @@
                     <button class="btn btn-primary" id="saveBtn" onclick="handleSave()">Save changes</button>
                   </div>
 
-                  <section class="ai-processing-section" id="aiProcessingSection"
-                    aria-label="AI document processing status" style="display:none;">
-                    <h3 class="ai-processing-heading">AI Document Processing</h3>
-                    <div class="ai-processing-status-row">
-                      <span class="status-badge" id="aiStatusBadge">–</span>
-                      <span class="ai-processing-meta" id="aiProcessingMeta"></span>
-                    </div>
-                    <p class="ai-processing-message" id="aiProcessingMessage"></p>
-                    <p class="ai-processing-warning" id="aiProcessingWarning"></p>
-                    <div class="ai-processing-actions" id="aiProcessingActions"></div>
-
-                    <div class="ai-extracted-text-box" id="aiExtractedTextBox" style="display:none;">
-                      <div class="ai-extracted-text-header">
-                        <span>Extracted Text</span>
-                        <button type="button" class="ai-text-toggle-btn" id="aiTextToggleBtn">Collapse</button>
-                      </div>
-                      <pre class="ai-extracted-text-content" id="aiExtractedTextContent"></pre>
-                    </div>
-                  </section>
-
                   <div class="danger-zone inspector-danger-zone">
                     <span class="danger-zone-label">Danger zone</span>
                     <p class="danger-zone-copy">Move this document to Trash. You can restore it later.</p>
@@ -781,6 +955,58 @@
                     <div id="groupSharesList" class="member-list"></div>
                     <p id="noGroupShares" class="helper-text" style="display:none;">Not shared in any groups.</p>
                   </div>
+                </section>
+              </div>
+
+              <div id="inspectorPaneAI" class="inspector-tab-pane">
+                <section class="ai-qa-panel" aria-label="AI Document Q&A">
+                  <section class="ai-processing-section" id="aiProcessingSection"
+                    aria-label="AI document processing status" style="display:none;">
+                    <h3 class="ai-processing-heading">AI Document Processing</h3>
+                    <div class="ai-processing-status-row">
+                      <span class="status-badge" id="aiStatusBadge">–</span>
+                      <span class="ai-processing-meta" id="aiProcessingMeta"></span>
+                    </div>
+                    <p class="ai-processing-message" id="aiProcessingMessage"></p>
+                    <p class="ai-processing-warning" id="aiProcessingWarning"></p>
+                    <div class="ai-processing-actions" id="aiProcessingActions"></div>
+
+                    <div class="ai-extracted-text-box" id="aiExtractedTextBox" style="display:none;">
+                      <div class="ai-extracted-text-header">
+                        <span>Extracted Text</span>
+                        <button type="button" class="ai-text-toggle-btn" id="aiTextToggleBtn">Collapse</button>
+                      </div>
+                      <pre class="ai-extracted-text-content" id="aiExtractedTextContent"></pre>
+                    </div>
+                  </section>
+
+                  <div class="ai-qa-usage-row" id="aiQaUsageRow" style="display:none;">
+                    <span id="aiQaUsageText">–</span>
+                    <span id="aiQaModelLabel" class="ai-qa-model-badge" style="display:none;"></span>
+                  </div>
+
+                  <div class="ai-qa-sample-questions" id="aiQaSampleQuestions" style="display:none;">
+                    <button type="button" class="ai-qa-sample-btn" data-question="Summarize this document">Summarize
+                      this document</button>
+                    <button type="button" class="ai-qa-sample-btn" data-question="What are the key points?">What are
+                      the key points?</button>
+                    <button type="button" class="ai-qa-sample-btn" data-question="Explain this in simple words">Explain
+                      this in simple words</button>
+                  </div>
+
+                  <div class="ai-qa-messages" id="aiQaMessages">
+                    <div class="ai-qa-empty-state" id="aiQaEmptyState">Ask a question about this document to get
+                      started.</div>
+                  </div>
+
+                  <div class="ai-qa-status-banner" id="aiQaStatusBanner" style="display:none;"></div>
+
+                  <form class="ai-qa-input-row" id="aiQaInputForm">
+                    <textarea id="aiQaQuestionInput" placeholder="Ask something about this document..." rows="2"
+                      maxlength="2000" disabled></textarea>
+                    <button type="submit" class="btn btn-primary" id="aiQaAskBtn" disabled>Ask</button>
+                  </form>
+                  <div class="ai-qa-input-meta" id="aiQaInputMeta"></div>
                 </section>
               </div>
             </div>
@@ -860,6 +1086,7 @@
   <script src="js/share-api.js"></script>
   <script src="js/folder-api.js"></script>
   <script src="js/document-preview.js"></script>
+  <script src="js/ai-api.js"></script>
   <script src="js/document-detail.js"></script>
 </body>
 
