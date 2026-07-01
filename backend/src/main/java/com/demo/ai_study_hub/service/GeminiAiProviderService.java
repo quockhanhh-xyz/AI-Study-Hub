@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -64,9 +65,14 @@ public class GeminiAiProviderService implements AiProviderService {
                 )
         );
 
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(aiProperties.getGemini().getConnectTimeoutMs());
+        requestFactory.setReadTimeout(aiProperties.getGemini().getReadTimeoutMs());
+
         try {
             RestClient restClient = RestClient.builder()
                     .baseUrl(url)
+                    .requestFactory(requestFactory)
                     .build();
 
             @SuppressWarnings("unchecked")
@@ -81,14 +87,23 @@ public class GeminiAiProviderService implements AiProviderService {
         } catch (ResponseStatusException e) {
             throw e;
         } catch (RestClientException e) {
-            log.error("Gemini API call failed: {}", e.getMessage());
+            log.error("Gemini API call failed: {}", sanitizeMessage(e.getMessage()));
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "AI service is temporarily unavailable");
         } catch (Exception e) {
-            log.error("Unexpected error calling Gemini: {}", e.getMessage());
+            log.error("Unexpected error calling Gemini: {}", sanitizeMessage(e.getMessage()));
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "AI service is temporarily unavailable");
         }
+    }
+
+    private String sanitizeMessage(String message) {
+        if (message == null) return "";
+        String apiKey = aiProperties.getGemini().getApiKey();
+        if (apiKey != null && !apiKey.isBlank()) {
+            return message.replace(apiKey, "******");
+        }
+        return message;
     }
 
     @Override
@@ -150,7 +165,7 @@ public class GeminiAiProviderService implements AiProviderService {
         } catch (ResponseStatusException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Failed to parse Gemini response: {}", e.getMessage());
+            log.error("Failed to parse Gemini response: {}", sanitizeMessage(e.getMessage()));
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "AI service returned invalid response");
         }

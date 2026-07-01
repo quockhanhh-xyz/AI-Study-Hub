@@ -307,7 +307,8 @@ public class AiChatServiceImpl implements AiChatService {
         List<GroupDocumentShare> activeGroupShares =
                 groupDocumentShareRepository.findByDocumentAndStatus(doc, "ACTIVE");
         for (GroupDocumentShare gs : activeGroupShares) {
-            if (studyGroupMemberRepository.existsByGroupAndUserAndStatus(gs.getGroup(), user, "ACTIVE")) {
+            if ("ACTIVE".equals(gs.getGroup().getStatus()) &&
+                    studyGroupMemberRepository.existsByGroupAndUserAndStatus(gs.getGroup(), user, "ACTIVE")) {
                 return;
             }
         }
