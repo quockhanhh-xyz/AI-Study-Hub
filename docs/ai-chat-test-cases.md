@@ -50,9 +50,9 @@
 
 | TC | Condition | Expected |
 |---|---|---|
-| TC-USAGE-002 | FREE user, 0 questions today | dailyLimit=5, usedToday=0, remaining=5 |
-| TC-USAGE-003 | FREE user, 1 question today | usedToday=1, remaining=4 |
-| TC-USAGE-004 | FREE user, 5 questions today (exhausted) | usedToday=5, remaining=0 |
+| TC-AI-040 | FREE user with 0 questions used today | 200 OK — remainingQuestions = 5 |
+| TC-AI-041 | FREE user with 4 questions used today | 200 OK — remainingQuestions = 1 |
+| TC-AI-042 | FREE user with 5 questions used today | 429 Too Many Requests |
 | TC-AI-043 | PREMIUM user with 49 questions used today | 200 OK — remainingQuestions = 1 |
 | TC-AI-044 | PREMIUM user with 50 questions used today | 429 Too Many Requests |
 | TC-AI-045 | No-context fallback answer | quota NOT consumed |

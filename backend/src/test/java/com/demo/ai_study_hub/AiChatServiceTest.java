@@ -133,7 +133,7 @@ class AiChatServiceTest {
         when(aiProviderRouter.isConfigured()).thenReturn(true);
         when(aiModelSelector.getDailyQuestionLimit("FREE")).thenReturn(5);
 
-        // Mock 3 successful questions today
+        // Mock 5 successful questions today
         when(aiUsageLogRepository.countSuccessfulQuestionsAfter(anyInt(), any(LocalDateTime.class))).thenReturn(5L);
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
