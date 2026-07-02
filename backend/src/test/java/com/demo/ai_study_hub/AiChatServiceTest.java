@@ -231,4 +231,56 @@ class AiChatServiceTest {
                 !log.getCountedAsQuestion() && "FAILED".equals(log.getStatus())
         ));
     }
+
+    // =========================================================================
+    // 6. Get chat history và giải tuần tự sourceChunks
+    // =========================================================================
+    @Test
+    void getChatHistory_Success_ShouldPopulateSourceChunks() {
+        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(mockUser));
+        when(documentRepository.findById(1)).thenReturn(Optional.of(mockDocument));
+
+        AiChatSession mockSession = AiChatSession.builder()
+                .sessionId(100L)
+                .user(mockUser)
+                .document(mockDocument)
+                .status("ACTIVE")
+                .build();
+        when(aiChatSessionRepository.findByUser_UserIdAndDocument_DocumentIdAndStatus(1, 1, "ACTIVE"))
+                .thenReturn(Optional.of(mockSession));
+
+        AiChatMessage msg = AiChatMessage.builder()
+                .messageId(200L)
+                .session(mockSession)
+                .role("ASSISTANT")
+                .content("Answer here")
+                .provider("gemini")
+                .modelName("gemini-2.5-flash-lite")
+                .tokenUsageEstimated(true)
+                .sourceChunks("[{\"chunkIndex\":1,\"sourceLabel\":\"Page 2\"}]")
+                .createdAt(LocalDateTime.now())
+                .build();
+        when(aiChatMessageRepository.findBySession_SessionIdOrderByCreatedAtAsc(100L))
+                .thenReturn(List.of(msg));
+
+        AiChatHistoryResponse response = aiChatService.getChatHistory(1, "user@test.com");
+
+        assertNotNull(response);
+        assertEquals(100L, response.getSessionId());
+        assertEquals(1, response.getDocumentId());
+        assertEquals(1, response.getMessages().size());
+
+        AiChatMessageDto msgDto = response.getMessages().get(0);
+        assertEquals(200L, msgDto.getMessageId());
+        assertEquals("ASSISTANT", msgDto.getRole());
+        assertEquals("Answer here", msgDto.getContent());
+        assertEquals("gemini", msgDto.getProvider());
+        assertEquals("gemini-2.5-flash-lite", msgDto.getModelName());
+        assertTrue(msgDto.getTokenUsageEstimated());
+
+        assertNotNull(msgDto.getSourceChunks());
+        assertEquals(1, msgDto.getSourceChunks().size());
+        assertEquals(1, msgDto.getSourceChunks().get(0).getChunkIndex());
+        assertEquals("Page 2", msgDto.getSourceChunks().get(0).getSourceLabel());
+    }
 }

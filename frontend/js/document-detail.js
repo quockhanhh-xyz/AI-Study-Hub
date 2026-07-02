@@ -72,8 +72,15 @@ const detailContent = document.getElementById("detailContent");
 let currentDocumentId = null;
 let currentDocumentFolderId = null;
 let currentIsCommunityView = false;
+let currentIsAuthenticated = false;
 let aiExtractedTextLoaded = false;
 let aiExtractedTextExpanded = true;
+
+// Step 10 — AI Q&A chat state
+let aiQaChatLoaded = false;
+let aiQaSending = false;
+let aiQaProcessingStatus = "PENDING";
+let aiQaUsageInfo = null;
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
@@ -90,6 +97,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     currentDocumentId = id;
+    currentIsAuthenticated = isAuthenticated;
 
     currentIsCommunityView =
         !isAuthenticated ||
@@ -321,24 +329,38 @@ function renderDocument(doc) {
     // Configure Inspector panel visibility and defaults
     const tabsContainer = document.querySelector(".inspector-tabs-container");
     const tabPanes = document.querySelector(".inspector-panes");
-    const hasInspector = doc.canEdit || doc.canShare;
+    const showDetailsTab = !currentIsCommunityView && doc.canEdit;
+    const showSharingTab = !currentIsCommunityView && doc.canShare;
+    // AI Q&A tab: available to any logged-in user (owner, shared user, group
+    // member, or logged-in public viewer). Backend is the final authority —
+    // if the user actually can't ask, askDocumentQuestion() will fail with a
+    // mapped error (401/403/409/422) shown inline in the chat panel.
+    const showAiTab = currentIsAuthenticated;
+    const hasInspector = showDetailsTab || showSharingTab || showAiTab;
+
+    // Step 10: reset + (re)populate the AI Q&A tab for this document
+    renderAIQaTab(doc);
 
     if (tabsContainer && tabPanes) {
-        if (!currentIsCommunityView && hasInspector) {
+        if (hasInspector) {
             tabsContainer.style.display = "flex";
             tabPanes.style.display = "block";
 
             const tabDetails = document.getElementById("inspectorTabDetails");
             const tabSharing = document.getElementById("inspectorTabSharing");
+            const tabAI = document.getElementById("inspectorTabAI");
 
-            if (tabDetails) tabDetails.style.display = doc.canEdit ? "block" : "none";
-            if (tabSharing) tabSharing.style.display = doc.canShare ? "block" : "none";
+            if (tabDetails) tabDetails.style.display = showDetailsTab ? "block" : "none";
+            if (tabSharing) tabSharing.style.display = showSharingTab ? "block" : "none";
+            if (tabAI) tabAI.style.display = showAiTab ? "block" : "none";
 
             // Default active state
-            if (doc.canEdit) {
+            if (showDetailsTab) {
                 setActiveTab("details", false);
-            } else if (doc.canShare) {
+            } else if (showSharingTab) {
                 setActiveTab("sharing", false);
+            } else if (showAiTab) {
+                setActiveTab("ai", false);
             }
         } else {
             tabsContainer.style.display = "none";
@@ -471,6 +493,11 @@ function applyAIProcessingState(status, data) {
     }
 
     renderAIActions(status);
+
+    if (currentIsAuthenticated) {
+        aiQaProcessingStatus = status;
+        updateAskAvailability();
+    }
 }
 
 function renderAIActions(status) {
@@ -821,13 +848,15 @@ function formatDate(isoString) {
 function setActiveTab(tabId, focus = true) {
     const tabDetails = document.getElementById("inspectorTabDetails");
     const tabSharing = document.getElementById("inspectorTabSharing");
+    const tabAI = document.getElementById("inspectorTabAI");
     const paneDetails = document.getElementById("inspectorPaneDetails");
     const paneSharing = document.getElementById("inspectorPaneSharing");
+    const paneAI = document.getElementById("inspectorPaneAI");
 
-    if (!tabDetails || !tabSharing || !paneDetails || !paneSharing) return;
+    if (!tabDetails || !tabSharing || !tabAI || !paneDetails || !paneSharing || !paneAI) return;
 
-    const tabs = [tabDetails, tabSharing];
-    const panes = [paneDetails, paneSharing];
+    const tabs = [tabDetails, tabSharing, tabAI];
+    const panes = [paneDetails, paneSharing, paneAI];
 
     tabs.forEach(t => {
         t.classList.remove("active");
@@ -839,12 +868,24 @@ function setActiveTab(tabId, focus = true) {
         p.style.display = ""; // Clear any inline styles that override classes
     });
 
-    const activeTab = tabId === "sharing" ? tabSharing : tabDetails;
-    const activePane = tabId === "sharing" ? paneSharing : paneDetails;
+    let activeTab = tabDetails;
+    let activePane = paneDetails;
+    if (tabId === "sharing") {
+        activeTab = tabSharing;
+        activePane = paneSharing;
+    } else if (tabId === "ai") {
+        activeTab = tabAI;
+        activePane = paneAI;
+    }
 
     activeTab.classList.add("active");
     activeTab.setAttribute("aria-selected", "true");
     activePane.classList.add("active");
+
+    // Lazily load chat history the first time the AI Q&A tab is opened
+    if (tabId === "ai") {
+        loadAiQaChatHistory();
+    }
 
     if (focus) {
         activeTab.focus();
@@ -854,10 +895,12 @@ function setActiveTab(tabId, focus = true) {
 function initInspectorTabs() {
     const tabDetails = document.getElementById("inspectorTabDetails");
     const tabSharing = document.getElementById("inspectorTabSharing");
+    const tabAI = document.getElementById("inspectorTabAI");
     const paneDetails = document.getElementById("inspectorPaneDetails");
     const paneSharing = document.getElementById("inspectorPaneSharing");
+    const paneAI = document.getElementById("inspectorPaneAI");
 
-    if (!tabDetails || !tabSharing || !paneDetails || !paneSharing) return;
+    if (!tabDetails || !tabSharing || !tabAI || !paneDetails || !paneSharing || !paneAI) return;
 
     // Accessibility attributes
     tabDetails.setAttribute("role", "tab");
@@ -866,23 +909,49 @@ function initInspectorTabs() {
     tabSharing.setAttribute("role", "tab");
     tabSharing.setAttribute("aria-selected", "false");
     tabSharing.setAttribute("aria-controls", "inspectorPaneSharing");
+    tabAI.setAttribute("role", "tab");
+    tabAI.setAttribute("aria-selected", "false");
+    tabAI.setAttribute("aria-controls", "inspectorPaneAI");
 
     paneDetails.setAttribute("role", "tabpanel");
     paneSharing.setAttribute("role", "tabpanel");
+    paneAI.setAttribute("role", "tabpanel");
 
-    const tabs = [tabDetails, tabSharing];
+    const tabIds = ["details", "sharing", "ai"];
+    const tabs = [tabDetails, tabSharing, tabAI];
 
     tabDetails.addEventListener("click", () => setActiveTab("details", true));
     tabSharing.addEventListener("click", () => setActiveTab("sharing", true));
+    tabAI.addEventListener("click", () => setActiveTab("ai", true));
 
-    // Keyboard support: Left/Right arrows
-    tabs.forEach((tab, index) => {
+    // Keyboard support: Left/Right arrows (skipping hidden tabs)
+    const getVisibleTabs = () => {
+        const list = [];
+        if (tabDetails.offsetWidth > 0 || tabDetails.offsetHeight > 0) {
+            list.push({ id: "details", element: tabDetails });
+        }
+        if (tabSharing.offsetWidth > 0 || tabSharing.offsetHeight > 0) {
+            list.push({ id: "sharing", element: tabSharing });
+        }
+        if (tabAI.offsetWidth > 0 || tabAI.offsetHeight > 0) {
+            list.push({ id: "ai", element: tabAI });
+        }
+        return list;
+    };
+
+    tabs.forEach((tab) => {
         tab.addEventListener("keydown", (e) => {
             if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                const visible = getVisibleTabs();
+                if (visible.length <= 1) return;
+
                 e.preventDefault();
-                const nextIndex = (index + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
-                const nextTabId = nextIndex === 1 ? "sharing" : "details";
-                setActiveTab(nextTabId, true);
+                const currentIndex = visible.findIndex(item => item.element === tab);
+                if (currentIndex === -1) return;
+
+                const step = e.key === "ArrowRight" ? 1 : -1;
+                const nextIndex = (currentIndex + step + visible.length) % visible.length;
+                setActiveTab(visible[nextIndex].id, true);
             }
         });
     });
@@ -1158,3 +1227,293 @@ async function handleRevokeGroup(shareId) {
         window.showToast(err.message || "Failed to revoke group share.", "error");
     }
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+// AI Q&A CHAT PANEL (Step 10)
+// APIs used (js/ai-api.js): askDocumentQuestion(id, q), getDocumentChats(id),
+// deleteAiChat(chatId), getMyAiUsage()
+// UI helpers used (js/ui.js -> AIUIHelper): mapAiError(status),
+// normalizeAiUsage(res), getAiModelLabel(modelName), formatAiSourceLabel(chunk, i)
+// ══════════════════════════════════════════════════════════════════════════
+
+// Resets and (re)initializes the AI Q&A tab whenever a document is (re)rendered.
+function renderAIQaTab(doc) {
+    if (!currentIsAuthenticated) return;
+
+    aiQaChatLoaded = false;
+    aiQaSending = false;
+    aiQaUsageInfo = null;
+    aiQaProcessingStatus = doc.processingStatus || "PENDING";
+
+    if (!doc.processingStatus && currentIsAuthenticated && currentDocumentId) {
+        getProcessingStatus(currentDocumentId)
+            .then(res => {
+                const target = res?.success && res?.data ? res.data : res;
+                aiQaProcessingStatus = target?.processingStatus || "PENDING";
+                updateAskAvailability();
+            })
+            .catch(err => {
+                console.error("Failed to fetch public document processing status", err);
+                aiQaProcessingStatus = "PENDING";
+                updateAskAvailability();
+            });
+    }
+
+    const messagesEl = document.getElementById("aiQaMessages");
+    if (messagesEl) {
+        messagesEl.innerHTML =
+            '<div class="ai-qa-empty-state" id="aiQaEmptyState">Ask a question about this document to get started.</div>';
+    }
+    showAiQaBanner("");
+
+    const usageRow = document.getElementById("aiQaUsageRow");
+    if (usageRow) usageRow.style.display = "flex";
+    const sampleRow = document.getElementById("aiQaSampleQuestions");
+    if (sampleRow) sampleRow.style.display = "flex";
+    const modelLabel = document.getElementById("aiQaModelLabel");
+    if (modelLabel) modelLabel.style.display = "none";
+
+    const textarea = document.getElementById("aiQaQuestionInput");
+    if (textarea) textarea.value = "";
+
+    updateAskAvailability();
+    loadAiQaUsage();
+}
+
+async function loadAiQaUsage() {
+    try {
+        const res = await getMyAiUsage();
+        aiQaUsageInfo = window.normalizeAiUsage(res);
+        renderAiQaUsage();
+    } catch (err) {
+        // 503 = AI service not configured, 401 = not logged in, etc.
+        // Don't block the chat UI itself — just hide the usage row.
+        const usageRow = document.getElementById("aiQaUsageRow");
+        if (usageRow) usageRow.style.display = "none";
+    }
+}
+
+function renderAiQaUsage() {
+    if (!aiQaUsageInfo) return;
+    const usageText = document.getElementById("aiQaUsageText");
+    const modelLabel = document.getElementById("aiQaModelLabel");
+
+    if (usageText) {
+        usageText.textContent =
+            `${aiQaUsageInfo.remainingQuestions}/${aiQaUsageInfo.dailyLimit} questions left today (${aiQaUsageInfo.tier})`;
+    }
+    if (modelLabel) {
+        modelLabel.textContent = window.getAiModelLabel(aiQaUsageInfo.modelName);
+        modelLabel.style.display = "inline-flex";
+    }
+
+    updateAskAvailability();
+}
+
+// Loads chat history once per tab activation (per document).
+async function loadAiQaChatHistory() {
+    if (aiQaChatLoaded || !currentDocumentId) return;
+    aiQaChatLoaded = true;
+
+    try {
+        const res = await getDocumentChats(currentDocumentId);
+        const raw = res && res.data !== undefined ? res.data : res;
+
+        let messages = [];
+        if (Array.isArray(raw)) {
+            messages = raw;
+        } else if (raw && Array.isArray(raw.messages)) {
+            messages = raw.messages;
+        } else if (raw && Array.isArray(raw.sessions)) {
+            raw.sessions.forEach(s => {
+                if (Array.isArray(s.messages)) messages = messages.concat(s.messages);
+            });
+        }
+
+        if (messages.length === 0) return;
+
+        const messagesEl = document.getElementById("aiQaMessages");
+        if (messagesEl) messagesEl.innerHTML = "";
+
+        messages.forEach(m => {
+            const role = (m.role || "").toUpperCase() === "USER" ? "user" : "assistant";
+            appendAiQaMessage(role, m.content || "", {
+                sourceChunks: m.sourceChunks,
+                modelName: m.modelName
+            });
+        });
+    } catch (err) {
+        console.error("Failed to load AI chat history", err);
+        // Silent failure — an empty chat panel is an acceptable fallback.
+    }
+}
+
+// Appends one chat bubble (user / assistant / loading) to the messages list.
+// Uses textContent everywhere (never innerHTML with dynamic content) to avoid XSS.
+function appendAiQaMessage(role, content, meta = {}) {
+    const messagesEl = document.getElementById("aiQaMessages");
+    if (!messagesEl) return null;
+
+    const emptyState = document.getElementById("aiQaEmptyState");
+    if (emptyState) emptyState.remove();
+
+    const bubble = document.createElement("div");
+    bubble.className = `ai-qa-message ${role}`;
+    bubble.textContent = content;
+
+    if (Array.isArray(meta.sourceChunks) && meta.sourceChunks.length > 0) {
+        const sourcesEl = document.createElement("div");
+        sourcesEl.className = "ai-qa-message-sources";
+        const labels = meta.sourceChunks.map((c, i) => window.formatAiSourceLabel(c, i));
+        sourcesEl.textContent = "Sources: " + labels.join(", ");
+        bubble.appendChild(sourcesEl);
+    }
+
+    if (role === "assistant" && meta.modelName) {
+        const metaEl = document.createElement("div");
+        metaEl.className = "ai-qa-message-meta";
+        metaEl.textContent = window.getAiModelLabel(meta.modelName);
+        bubble.appendChild(metaEl);
+    }
+
+    messagesEl.appendChild(bubble);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return bubble;
+}
+
+function showAiQaBanner(message, type = "info") {
+    const banner = document.getElementById("aiQaStatusBanner");
+    if (!banner) return;
+    if (!message) {
+        banner.style.display = "none";
+        banner.textContent = "";
+        return;
+    }
+    banner.textContent = message;
+    banner.className = `ai-qa-status-banner ${type}`;
+    banner.style.display = "block";
+}
+
+// Step 10 — messages shown inside the AI Q&A tab itself, distinct from
+// AI_STATUS_DESCRIPTIONS (which is written for the owner-only Processing
+// panel). These are worded for any viewer, including non-owners who
+// cannot see/trigger processing at all.
+const AI_QA_STATUS_MESSAGES = {
+    PENDING: "Please process this document before asking AI.",
+    PROCESSING: "This document is being processed for AI. Please wait…",
+    FAILED: "AI processing failed for this document. Please process this document before asking AI.",
+    UNSUPPORTED: "This file type is not supported for AI Q&A.",
+    EMPTY_CONTENT: "No readable text was found in this document."
+};
+
+// Central gate for the Ask button / textarea / sample questions.
+// Disables asking when: not logged in, document not COMPLETED, out of quota,
+// or a request is currently in flight.
+function updateAskAvailability() {
+    const textarea = document.getElementById("aiQaQuestionInput");
+    const askBtn = document.getElementById("aiQaAskBtn");
+    const sampleButtons = document.querySelectorAll(".ai-qa-sample-btn");
+    if (!textarea || !askBtn) return;
+
+    let disabledReason = "";
+    if (!currentIsAuthenticated) {
+        disabledReason = "Please log in to use AI Q&A.";
+    } else if (aiQaProcessingStatus !== "COMPLETED") {
+        disabledReason =
+            AI_QA_STATUS_MESSAGES[aiQaProcessingStatus] ||
+            "This document is not ready for AI yet. Please process it first.";
+    } else if (aiQaUsageInfo && aiQaUsageInfo.remainingQuestions <= 0) {
+        disabledReason = "You have reached your daily AI question limit.";
+    }
+
+    const disabled = !!disabledReason || aiQaSending;
+    textarea.disabled = disabled;
+    askBtn.disabled = disabled;
+    sampleButtons.forEach(b => (b.disabled = disabled));
+
+    if (!aiQaSending) {
+        showAiQaBanner(disabledReason, "warning");
+    }
+}
+
+async function handleAiQaSubmit(e) {
+    if (e) e.preventDefault();
+    const textarea = document.getElementById("aiQaQuestionInput");
+    if (!textarea) return;
+
+    const question = textarea.value.trim();
+    if (!question) {
+        showAiQaBanner("Please enter a question.", "warning");
+        return;
+    }
+    if (question.length > 2000) {
+        showAiQaBanner("Your question is too long.", "warning");
+        return;
+    }
+
+    await sendAiQaQuestion(question);
+}
+
+async function sendAiQaQuestion(question) {
+    aiQaSending = true;
+    updateAskAvailability();
+    showAiQaBanner("");
+
+    appendAiQaMessage("user", question);
+
+    const textarea = document.getElementById("aiQaQuestionInput");
+    if (textarea) textarea.value = "";
+
+    const loadingBubble = appendAiQaMessage("loading", "Thinking…");
+    if (loadingBubble) loadingBubble.classList.add("loading");
+
+    try {
+        const res = await askDocumentQuestion(currentDocumentId, question);
+        const data = res.data || {};
+
+        if (loadingBubble) loadingBubble.remove();
+        appendAiQaMessage("assistant", data.answer || "", {
+            sourceChunks: data.sourceChunks,
+            modelName: data.modelName
+        });
+
+        if (typeof data.remainingQuestions === "number" && aiQaUsageInfo) {
+            aiQaUsageInfo.remainingQuestions = data.remainingQuestions;
+            renderAiQaUsage();
+        }
+    } catch (err) {
+        if (loadingBubble) loadingBubble.remove();
+        const message = window.mapAiError(err.status);
+        showAiQaBanner(message, "error");
+    } finally {
+        aiQaSending = false;
+        updateAskAvailability();
+    }
+}
+
+function initAiQaHandlers() {
+    const form = document.getElementById("aiQaInputForm");
+    if (form) form.addEventListener("submit", handleAiQaSubmit);
+
+    const sampleRow = document.getElementById("aiQaSampleQuestions");
+    if (sampleRow) {
+        sampleRow.addEventListener("click", (e) => {
+            const btn = e.target.closest(".ai-qa-sample-btn");
+            if (!btn || btn.disabled) return;
+            sendAiQaQuestion(btn.dataset.question);
+        });
+    }
+
+    const textarea = document.getElementById("aiQaQuestionInput");
+    if (textarea) {
+        // Enter to send, Shift+Enter for newline
+        textarea.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleAiQaSubmit();
+            }
+        });
+    }
+}
+
+document.addEventListener("DOMContentLoaded", initAiQaHandlers);

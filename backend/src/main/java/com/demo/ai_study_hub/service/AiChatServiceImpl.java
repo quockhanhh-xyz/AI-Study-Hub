@@ -442,6 +442,18 @@ public class AiChatServiceImpl implements AiChatService {
     }
 
     private AiChatMessageDto toMessageDto(AiChatMessage msg) {
+        List<AiSourceChunk> sourceChunks = null;
+        if (msg.getSourceChunks() != null && !msg.getSourceChunks().isBlank()) {
+            try {
+                sourceChunks = objectMapper.readValue(
+                        msg.getSourceChunks(),
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, AiSourceChunk.class)
+                );
+            } catch (Exception e) {
+                // Silent fallback for invalid JSON strings
+            }
+        }
+
         return AiChatMessageDto.builder()
                 .messageId(msg.getMessageId())
                 .role(msg.getRole())
@@ -449,6 +461,7 @@ public class AiChatServiceImpl implements AiChatService {
                 .provider(msg.getProvider())
                 .modelName(msg.getModelName())
                 .tokenUsageEstimated(msg.getTokenUsageEstimated())
+                .sourceChunks(sourceChunks)
                 .createdAt(msg.getCreatedAt())
                 .build();
     }
