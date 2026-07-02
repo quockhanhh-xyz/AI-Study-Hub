@@ -366,6 +366,55 @@ class DocumentServiceTest {
     }
 
     @Test
+    void uploadDocument_WhenDocumentContentAlreadyExists_ShouldReuseExistingContent() {
+        MultipartFile mockFile = mock(MultipartFile.class);
+        when(mockFile.getOriginalFilename()).thenReturn("TailieuHot.pdf");
+        when(mockFile.getSize()).thenReturn(204800L);
+
+        FileUploadResult mockUploadResult = mock(FileUploadResult.class);
+        when(mockUploadResult.getFileUrl()).thenReturn("http://cloudinary.com/file.pdf");
+        when(mockUploadResult.getOriginalFileName()).thenReturn("TailieuHot.pdf");
+        when(mockUploadResult.getFileType()).thenReturn("PDF");
+        when(mockUploadResult.getFileSize()).thenReturn(204800L);
+        when(mockUploadResult.getPublicId()).thenReturn("public-id");
+
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(subjectRepository.findById(1)).thenReturn(Optional.of(mockSubject));
+        when(documentRepository.existsDuplicate(mockOwner, "TailieuHot.pdf", 204800L, null)).thenReturn(false);
+        when(cloudinaryStorageService.uploadFile(mockFile, mockOwner.getUserId())).thenReturn(mockUploadResult);
+
+        Document savedDoc = new Document();
+        savedDoc.setDocumentId(18);
+        savedDoc.setTitle("Test Title");
+        savedDoc.setOriginalFileName("TailieuHot.pdf");
+        savedDoc.setFileType("PDF");
+        savedDoc.setFileSize(204800L);
+        savedDoc.setFileUrl("http://cloudinary.com/file.pdf");
+        savedDoc.setPublicId("public-id");
+        savedDoc.setOwner(mockOwner);
+        savedDoc.setSubject(mockSubject);
+        savedDoc.setStatus("ACTIVE");
+        when(documentRepository.saveAndFlush(any(Document.class))).thenReturn(savedDoc);
+
+        DocumentContent existingContent = DocumentContent.builder()
+                .document(savedDoc)
+                .processingStatus(ProcessingStatus.PENDING)
+                .characterCount(0)
+                .originalCharacterCount(0)
+                .wordCount(0)
+                .isTruncated(false)
+                .build();
+        when(documentContentRepository.findByDocument_DocumentId(18)).thenReturn(Optional.of(existingContent));
+
+        DocumentResponse response = documentService.uploadDocument(mockFile, "Test Title", "Description", 1, null, "doantam785@gmail.com");
+
+        assertNotNull(response);
+        assertEquals(18, response.getDocumentId());
+        verify(documentContentRepository, never()).saveAndFlush(any(DocumentContent.class));
+        verify(cloudinaryStorageService, never()).deleteFile(anyString(), anyString());
+    }
+
+    @Test
     void uploadDocument_WhenSameFileNameButDifferentFolder_ShouldSucceed() {
         MultipartFile mockFile = mock(MultipartFile.class);
         when(mockFile.getOriginalFilename()).thenReturn("TailieuHot.pdf");

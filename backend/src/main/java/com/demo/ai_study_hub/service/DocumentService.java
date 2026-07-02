@@ -8,6 +8,7 @@ import com.demo.ai_study_hub.dto.PublicDocumentResponse;
 import com.demo.ai_study_hub.entity.*;
 import com.demo.ai_study_hub.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
 @Service
@@ -120,8 +122,22 @@ public class DocumentService {
                     .wordCount(0)
                     .isTruncated(false)
                     .build();
-            documentContentRepository.saveAndFlush(content);
-            savedDoc.setDocumentContent(content);
+            Optional<DocumentContent> existingContent = documentContentRepository.findByDocument_DocumentId(savedDoc.getDocumentId());
+            if (existingContent.isPresent()) {
+                savedDoc.setDocumentContent(existingContent.get());
+                log.warn("Document content already exists for documentId={}, reusing existing record.", savedDoc.getDocumentId());
+            } else {
+                try {
+                    DocumentContent savedContent = documentContentRepository.saveAndFlush(content);
+                    savedDoc.setDocumentContent(savedContent != null ? savedContent : content);
+                } catch (DataAccessException contentException) {
+                    DocumentContent recoveredContent = documentContentRepository
+                            .findByDocument_DocumentId(savedDoc.getDocumentId())
+                            .orElseThrow(() -> contentException);
+                    savedDoc.setDocumentContent(recoveredContent);
+                    log.warn("Document content already exists for documentId={}, reusing existing record.", savedDoc.getDocumentId());
+                }
+            }
         } catch (Exception persistenceException) {
             log.error("Failed to persist document metadata, rolling back Cloudinary upload. publicId={}", publicId, persistenceException);
             boolean cleaned = cloudinaryStorageService.deleteFile(publicId, fileTypeForCleanup);
