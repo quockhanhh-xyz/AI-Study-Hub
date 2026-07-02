@@ -728,4 +728,127 @@ class DocumentServiceTest {
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getStatusCode());
         verify(cloudinaryStorageService, times(1)).deleteFile("public-id-rollback", "PDF");
     }
+
+// =========================================================================
+// Duplicate upload check tests
+// =========================================================================
+
+    @Test
+    void uploadDocument_WhenDuplicateInRoot_ShouldThrow409() {
+        MultipartFile mockFile = mock(MultipartFile.class);
+        when(mockFile.getOriginalFilename()).thenReturn("report.pdf");
+        when(mockFile.getSize()).thenReturn(1024L);
+        lenient().when(mockFile.getContentType()).thenReturn("application/pdf");
+
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(subjectRepository.findById(1)).thenReturn(Optional.of(mockSubject));
+        // folderId = null → root → duplicate found
+        when(documentRepository.existsDuplicate(mockOwner, "report.pdf", 1024L, null)).thenReturn(true);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+            documentService.uploadDocument(mockFile, "Report", null, 1, null, "doantam785@gmail.com"));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+    }
+
+    @Test
+    void uploadDocument_WhenDuplicateInSameFolder_ShouldThrow409() {
+        MultipartFile mockFile = mock(MultipartFile.class);
+        when(mockFile.getOriginalFilename()).thenReturn("report.pdf");
+        when(mockFile.getSize()).thenReturn(1024L);
+        lenient().when(mockFile.getContentType()).thenReturn("application/pdf");
+
+        Folder folder = new Folder();
+        folder.setFolderId(5);
+        folder.setOwner(mockOwner);
+        folder.setStatus("ACTIVE");
+
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(subjectRepository.findById(1)).thenReturn(Optional.of(mockSubject));
+        when(folderRepository.findById(5)).thenReturn(Optional.of(folder));
+        when(documentRepository.existsDuplicate(mockOwner, "report.pdf", 1024L, 5)).thenReturn(true);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+            documentService.uploadDocument(mockFile, "Report", null, 1, 5, "doantam785@gmail.com"));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+    }
+
+    @Test
+    void uploadDocument_WhenSameFileInDifferentFolder_ShouldNotThrow409() throws Exception {
+        MultipartFile mockFile = mock(MultipartFile.class);
+        when(mockFile.getOriginalFilename()).thenReturn("report.pdf");
+        when(mockFile.getSize()).thenReturn(1024L);
+        lenient().when(mockFile.getContentType()).thenReturn("application/pdf");
+
+        Folder folder = new Folder();
+        folder.setFolderId(5);
+        folder.setOwner(mockOwner);
+        folder.setStatus("ACTIVE");
+
+        FileUploadResult mockUploadResult = mock(FileUploadResult.class);
+        when(mockUploadResult.getFileUrl()).thenReturn("https://cloudinary.com/file.pdf");
+        when(mockUploadResult.getPublicId()).thenReturn("public-id-1");
+        when(mockUploadResult.getOriginalFileName()).thenReturn("report.pdf");
+        when(mockUploadResult.getFileType()).thenReturn("PDF");
+        when(mockUploadResult.getFileSize()).thenReturn(1024L);
+
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(subjectRepository.findById(1)).thenReturn(Optional.of(mockSubject));
+        when(folderRepository.findById(5)).thenReturn(Optional.of(folder));
+        // File exists in folder 5 but we are uploading to folder 10 → not duplicate
+        when(documentRepository.existsDuplicate(mockOwner, "report.pdf", 1024L, 5)).thenReturn(false);
+        when(cloudinaryStorageService.uploadFile(mockFile, mockOwner.getUserId())).thenReturn(mockUploadResult);
+        when(documentRepository.saveAndFlush(any(Document.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        assertDoesNotThrow(() ->
+            documentService.uploadDocument(mockFile, "Report", null, 1, 5, "doantam785@gmail.com"));
+    }
+
+    @Test
+    void uploadDocument_WhenSameNameDifferentSize_ShouldNotThrow409() throws Exception {
+        MultipartFile mockFile = mock(MultipartFile.class);
+        when(mockFile.getOriginalFilename()).thenReturn("report.pdf");
+        when(mockFile.getSize()).thenReturn(2048L); // different size
+
+        FileUploadResult mockUploadResult = mock(FileUploadResult.class);
+        when(mockUploadResult.getFileUrl()).thenReturn("https://cloudinary.com/file.pdf");
+        when(mockUploadResult.getPublicId()).thenReturn("public-id-2");
+        when(mockUploadResult.getOriginalFileName()).thenReturn("report.pdf");
+        when(mockUploadResult.getFileType()).thenReturn("PDF");
+        when(mockUploadResult.getFileSize()).thenReturn(2048L);
+
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(subjectRepository.findById(1)).thenReturn(Optional.of(mockSubject));
+        when(documentRepository.existsDuplicate(mockOwner, "report.pdf", 2048L, null)).thenReturn(false);
+        when(cloudinaryStorageService.uploadFile(mockFile, mockOwner.getUserId())).thenReturn(mockUploadResult);
+        when(documentRepository.saveAndFlush(any(Document.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        assertDoesNotThrow(() ->
+            documentService.uploadDocument(mockFile, "Report", null, 1, null, "doantam785@gmail.com"));
+    }
+
+    @Test
+    void uploadDocument_WhenOldDocumentDeleted_ShouldNotThrow409() throws Exception {
+        MultipartFile mockFile = mock(MultipartFile.class);
+        when(mockFile.getOriginalFilename()).thenReturn("report.pdf");
+        when(mockFile.getSize()).thenReturn(1024L);
+
+        FileUploadResult mockUploadResult = mock(FileUploadResult.class);
+        when(mockUploadResult.getFileUrl()).thenReturn("https://cloudinary.com/file.pdf");
+        when(mockUploadResult.getPublicId()).thenReturn("public-id-3");
+        when(mockUploadResult.getOriginalFileName()).thenReturn("report.pdf");
+        when(mockUploadResult.getFileType()).thenReturn("PDF");
+        when(mockUploadResult.getFileSize()).thenReturn(1024L);
+
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(subjectRepository.findById(1)).thenReturn(Optional.of(mockSubject));
+        // old doc is DELETED → existsDuplicate returns false (query checks ACTIVE only)
+        when(documentRepository.existsDuplicate(mockOwner, "report.pdf", 1024L, null)).thenReturn(false);
+        when(cloudinaryStorageService.uploadFile(mockFile, mockOwner.getUserId())).thenReturn(mockUploadResult);
+        when(documentRepository.saveAndFlush(any(Document.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        assertDoesNotThrow(() ->
+            documentService.uploadDocument(mockFile, "Report", null, 1, null, "doantam785@gmail.com"));
+    }
 }
