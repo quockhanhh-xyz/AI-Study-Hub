@@ -309,7 +309,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Left Column: Contributor Avatar instead of file type icon
     const avatarWrapper = document.createElement("div");
     avatarWrapper.className = "contributor-avatar";
-    const contributorName = doc.uploadedByName || doc.uploadedBy || "Unknown User";
+    const contributorName = doc.sharedByName || doc.uploadedByName || doc.ownerName || doc.displayName || doc.uploadedBy || "Unknown User";
     avatarWrapper.textContent = contributorName.trim().charAt(0).toUpperCase();
     avatarWrapper.title = `Uploaded by: ${contributorName}`;
     card.appendChild(avatarWrapper);
