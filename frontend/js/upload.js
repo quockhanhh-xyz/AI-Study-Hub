@@ -188,33 +188,33 @@ function updateDropZone(file) {
 
     const card = document.createElement("div");
     card.className = "file-preview-card";
-    
+
     const iconWrapper = document.createElement("div");
     iconWrapper.className = "file-preview-icon";
     const ext = file.name.split('.').pop() || '';
     if (window.getFileTypeIcon) {
       iconWrapper.innerHTML = window.getFileTypeIcon(ext);
     }
-    
+
     const details = document.createElement("div");
     details.className = "file-preview-details";
-    
+
     const nameSpan = document.createElement("span");
     nameSpan.className = "file-preview-name";
     nameSpan.textContent = file.name;
-    
+
     const sizeSpan = document.createElement("span");
     sizeSpan.className = "file-preview-size";
     sizeSpan.textContent = formatFileSize(file.size);
-    
+
     details.append(nameSpan, sizeSpan);
-    
+
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
     removeBtn.className = "file-preview-remove";
     removeBtn.id = "removeFileBtn";
     removeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>`;
-    
+
     removeBtn.addEventListener("click", function (e) {
       e.stopPropagation();
       e.preventDefault();
@@ -222,10 +222,10 @@ function updateDropZone(file) {
       updateDropZone(null);
       hideMessage();
     });
-    
+
     card.append(iconWrapper, details, removeBtn);
     contentContainer.appendChild(card);
-    
+
     dropZone.style.padding = "12px";
     dropZone.classList.add("has-file");
   } else {
@@ -344,18 +344,19 @@ dropZone.addEventListener("drop", (e) => {
 
 // Error message resolver
 function resolveUploadError(err) {
-  const msg = (err.message || "").toLowerCase();
-  const isDuplicate =
-    msg.includes("409") ||
-    msg.includes("duplicate") ||
-    msg.includes("already exists") ||
-    msg.includes("file already");
-
-  if (isDuplicate) {
+  if (err.status === 409) {
     return "This file already exists in the current folder. Please rename the file, choose a different folder, or upload a different file.";
   }
-  return err.message || "Upload failed. Please try again.";
+  if (err.status === 500) {
+    return "Something went wrong on the server while processing your file. Please try again in a moment.";
+  }
+  const msg = err.message || "";
+  if (msg.length > 150 || /SQL|Duplicate entry|constraint/i.test(msg)) {
+    return "Upload failed due to a server error. Please try again or contact support if it persists.";
+  }
+  return msg || "Upload failed. Please try again.";
 }
+
 
 /* ==========================================================================
    STEP 6D: INLINE "CREATE NEW SUBJECT" / "CREATE NEW FOLDER" UX
@@ -369,8 +370,8 @@ function showRowError(el, message) {
 
 // Subject: toggle inline row when "+ Create new subject…" is chosen.
 subjectSelect.addEventListener("change", () => {
-  const isCreateNew = subjectSelect.value === CREATE_NEW_VALUE || 
-                       subjectSelect.value === "+ Create new subject…";
+  const isCreateNew = subjectSelect.value === CREATE_NEW_VALUE ||
+    subjectSelect.value === "+ Create new subject…";
   if (isCreateNew) {
     newSubjectRow.style.display = "flex";
     showRowError(newSubjectError, "");
@@ -478,11 +479,11 @@ uploadForm.addEventListener("submit", async (e) => {
 
   submitBtn.disabled = true;
   submitBtn.textContent = "Uploading...";
-  
+
   // Setup AbortController
   uploadAbortController = new AbortController();
   const signal = uploadAbortController.signal;
-  
+
   const progressInterval = showProgress();
 
   // Setup Cancel button listener
@@ -505,8 +506,7 @@ uploadForm.addEventListener("submit", async (e) => {
         const resultSub = await createSubject(payload);
         subjectId = resultSub.data.subjectId;
       } catch (err) {
-        const msg = (err.message || "").toLowerCase();
-        const isDuplicate = msg.includes("409") || msg.includes("duplicate") || msg.includes("already exists");
+        const isDuplicate = err.status === 409;
         showRowError(
           newSubjectError,
           isDuplicate ? "A subject with this code or name already exists." : (err.message || "Failed to create subject.")
@@ -521,8 +521,7 @@ uploadForm.addEventListener("submit", async (e) => {
         const resultFolder = await createFolder({ folderName: folderNameVal, parentFolderId: null });
         folderId = resultFolder.data.folderId;
       } catch (err) {
-        const msg = (err.message || "").toLowerCase();
-        const isDuplicate = msg.includes("409") || msg.includes("duplicate") || msg.includes("already exists");
+        const isDuplicate = err.status === 409;
         showRowError(
           newFolderError,
           isDuplicate ? "A folder with this name already exists here." : (err.message || "Failed to create folder.")
@@ -562,12 +561,12 @@ uploadForm.addEventListener("submit", async (e) => {
   } catch (err) {
     clearInterval(progressInterval);
     hideProgress();
-    
+
     if (err.name === "AbortError" || (err.message && err.message.includes("aborted"))) {
       showMessage("Upload cancelled by user.", "warning");
       return;
     }
-    
+
     showMessage(resolveUploadError(err), "error");
 
   } finally {
