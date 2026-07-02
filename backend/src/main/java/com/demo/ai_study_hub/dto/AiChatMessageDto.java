@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Individual message DTO within a chat session history.
@@ -33,6 +34,9 @@ public class AiChatMessageDto {
 
     /** True if token counts are estimates (null for USER role messages) */
     private Boolean tokenUsageEstimated;
+
+    /** Source chunk references used as context (null for USER role messages) */
+    private List<AiSourceChunk> sourceChunks;
 
     private LocalDateTime createdAt;
 }

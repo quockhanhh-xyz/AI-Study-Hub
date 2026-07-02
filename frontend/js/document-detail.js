@@ -924,13 +924,34 @@ function initInspectorTabs() {
     tabSharing.addEventListener("click", () => setActiveTab("sharing", true));
     tabAI.addEventListener("click", () => setActiveTab("ai", true));
 
-    // Keyboard support: Left/Right arrows
-    tabs.forEach((tab, index) => {
+    // Keyboard support: Left/Right arrows (skipping hidden tabs)
+    const getVisibleTabs = () => {
+        const list = [];
+        if (tabDetails.offsetWidth > 0 || tabDetails.offsetHeight > 0) {
+            list.push({ id: "details", element: tabDetails });
+        }
+        if (tabSharing.offsetWidth > 0 || tabSharing.offsetHeight > 0) {
+            list.push({ id: "sharing", element: tabSharing });
+        }
+        if (tabAI.offsetWidth > 0 || tabAI.offsetHeight > 0) {
+            list.push({ id: "ai", element: tabAI });
+        }
+        return list;
+    };
+
+    tabs.forEach((tab) => {
         tab.addEventListener("keydown", (e) => {
             if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                const visible = getVisibleTabs();
+                if (visible.length <= 1) return;
+
                 e.preventDefault();
-                const nextIndex = (index + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
-                setActiveTab(tabIds[nextIndex], true);
+                const currentIndex = visible.findIndex(item => item.element === tab);
+                if (currentIndex === -1) return;
+
+                const step = e.key === "ArrowRight" ? 1 : -1;
+                const nextIndex = (currentIndex + step + visible.length) % visible.length;
+                setActiveTab(visible[nextIndex].id, true);
             }
         });
     });
@@ -1223,6 +1244,20 @@ function renderAIQaTab(doc) {
     aiQaSending = false;
     aiQaUsageInfo = null;
     aiQaProcessingStatus = doc.processingStatus || "PENDING";
+
+    if (!doc.processingStatus && currentIsAuthenticated && currentDocumentId) {
+        getProcessingStatus(currentDocumentId)
+            .then(res => {
+                const target = res?.success && res?.data ? res.data : res;
+                aiQaProcessingStatus = target?.processingStatus || "PENDING";
+                updateAskAvailability();
+            })
+            .catch(err => {
+                console.error("Failed to fetch public document processing status", err);
+                aiQaProcessingStatus = "PENDING";
+                updateAskAvailability();
+            });
+    }
 
     const messagesEl = document.getElementById("aiQaMessages");
     if (messagesEl) {
