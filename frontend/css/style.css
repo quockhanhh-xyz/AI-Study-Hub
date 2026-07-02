@@ -1684,8 +1684,11 @@ textarea.success {
 }
 
 .upload-message {
-  display: none;
-  margin-bottom: 16px;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .btn-auto {
