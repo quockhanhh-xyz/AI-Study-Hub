@@ -32,16 +32,17 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     );
 
     @Query("SELECT COUNT(d) > 0 FROM Document d " +
-            "WHERE d.owner = :owner " +
-            "AND d.originalFileName = :originalFileName " +
-            "AND d.fileSize = :fileSize " +
-            "AND d.status = 'ACTIVE' " +
-            "AND (:folderId IS NULL AND d.folder IS NULL OR d.folder.folderId = :folderId)")
+        "WHERE d.owner = :owner " +
+        "AND d.originalFileName = :originalFileName " +
+        "AND d.fileSize = :fileSize " +
+        "AND d.status = 'ACTIVE' " +
+        "AND ((:folderId IS NULL AND d.folder IS NULL) " +
+        "OR (:folderId IS NOT NULL AND d.folder.folderId = :folderId))")
     boolean existsDuplicate(
-            @Param("owner") User owner,
-            @Param("originalFileName") String originalFileName,
-            @Param("fileSize") Long fileSize,
-            @Param("folderId") Integer folderId
+        @Param("owner") User owner,
+        @Param("originalFileName") String originalFileName,
+        @Param("fileSize") Long fileSize,
+        @Param("folderId") Integer folderId
     );
 
     @Query("SELECT d FROM Document d LEFT JOIN d.subject s " +
