@@ -97,7 +97,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const avatarDiv = document.createElement("div");
     avatarDiv.className = "comm-card-avatar";
-    const authorName = doc.uploadedByName || doc.uploadedBy || "Unknown User";
+    const authorName = doc.displayName || doc.ownerName || doc.uploadedByName || doc.uploadedBy || "Unknown User";
     avatarDiv.textContent = authorName.trim().charAt(0).toUpperCase();
     avatarDiv.title = authorName;
 
