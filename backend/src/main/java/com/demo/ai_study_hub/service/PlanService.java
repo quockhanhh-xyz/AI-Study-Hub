@@ -9,7 +9,7 @@ import java.util.List;
 @Service
 public class PlanService {
 
-    // Single source of truth cho tất cả tier limits
+    // Single source of truth for all tier limits
     public static final int FREE_DAILY_LIMIT = 5;
     public static final int FREE_MAX_QUESTION_CHARS = 500;
     public static final int FREE_MAX_CONTEXT_CHUNKS = 3;
