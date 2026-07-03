@@ -3544,3 +3544,138 @@ Retrieve the current user's payment history.
 | **404 Not Found** | Payment order does not exist OR does not belong to the current user |
 | **409 Conflict** | User is already `PREMIUM` (on payment creation or confirmation) OR payment order is not in `PENDING` status (double confirmation / double-click prevention) |
 | **500 Internal Server Error** | Unexpected backend failures |
+
+---
+
+# 16. Persistent Study Group Chat APIs
+
+> [!NOTE]
+> Step 12 implements a **Persistent Study Group Chat MVP** flow.
+> - Unlike the initial transient/temporary MVP, group chat history is saved to the MySQL database for persistence.
+> - Only **ACTIVE** members of a group are permitted to view history or send messages.
+> - Members who left or were removed from the group, as well as guests or non-group members, are blocked.
+> - There is **no WebSocket** used in Step 12; realtime is simulated using REST polling every 5 seconds.
+> - Frontend must merge messages by `messageId` to prevent duplicates and disable the send button while sending.
+> - `afterMessageId` is an optional query parameter and is not strictly required to pass Step 12.
+
+## 16.1. Get Group Messages
+
+### GET `/api/groups/{groupId}/messages?limit=50`
+### GET `/api/groups/{groupId}/messages?limit=50&afterMessageId=123` (Optional)
+
+Retrieve the chat history for a specific study group. Returns the latest ACTIVE messages.
+
+#### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+#### Request Parameters
+
+- `limit` (Query parameter, Optional): Default is `50`, maximum allowed is `100`.
+- `afterMessageId` (Query parameter, Optional): If provided, the backend returns only ACTIVE messages with `messageId` greater than `afterMessageId`. This parameter is optional; backend implementations are not required to support it for Step 12 completion.
+
+#### Rules & Constraints
+- User must be logged in; otherwise returns **401 Unauthorized**.
+- The study group must exist and have status = `ACTIVE`. If the group does not exist or has status = `DELETED`, returns **404 Not Found**.
+- Only users with an `ACTIVE` membership in the group can access messages. If the user is a non-member, has left the group, or was removed, returns **403 Forbidden**.
+- The API returns the **latest** messages (up to the limit, default 50) and displays them sorted by `createdAt` in **ascending** (ASC) order.
+- To prevent querying 50 oldest messages, the backend should query the newest 50 messages (ordered by `createdAt` DESC) and then reverse the list to ASC order before returning.
+- Only messages with status = `ACTIVE` are returned.
+- Response contains `isMine` boolean parameter, which is `true` if the message was sent by the requesting user, and `false` otherwise.
+- `createdAt` returns the datetime formatted as an ISO 8601 string. The frontend must format the timestamp locally.
+
+#### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Group messages retrieved successfully",
+  "data": [
+    {
+      "messageId": 1,
+      "groupId": 10,
+      "senderId": 5,
+      "senderName": "Nguyen Van A",
+      "senderRole": "OWNER",
+      "content": "Can someone explain this document?",
+      "status": "ACTIVE",
+      "isMine": true,
+      "createdAt": "2026-07-03T10:30:00"
+    },
+    {
+      "messageId": 2,
+      "groupId": 10,
+      "senderId": 8,
+      "senderName": "Tran Thi B",
+      "senderRole": "MEMBER",
+      "content": "I think this part is about AI document processing.",
+      "status": "ACTIVE",
+      "isMine": false,
+      "createdAt": "2026-07-03T10:31:00"
+    }
+  ]
+}
+```
+
+---
+
+## 16.2. Send Group Message
+
+### POST `/api/groups/{groupId}/messages`
+
+Send a new chat message to the study group.
+
+#### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+#### Request Body
+
+```json
+{
+  "content": "Can someone explain this document?"
+}
+```
+
+#### Rules & Constraints
+- User must be logged in; otherwise returns **401 Unauthorized**.
+- The study group must exist and have status = `ACTIVE`. If the group does not exist or has status = `DELETED`, returns **404 Not Found**.
+- Only users with an `ACTIVE` membership in the group can send messages. If the user is a non-member, has left the group, or was removed, returns **403 Forbidden**.
+- Input validation:
+  - `content` must be trimmed before saving.
+  - After trimming, the message must not be empty; empty messages return **400 Bad Request**.
+  - Message length must not exceed 1000 characters; longer messages return **400 Bad Request**.
+- The saved message will have status = `ACTIVE`, `createdAt` = current time, `updatedAt` = `createdAt`, and `deletedAt` = `null`.
+- The backend must not allow dangerous HTML or script contents (e.g. escaping/XSS prevention). The frontend must render the message using `textContent` and must NOT use `innerHTML`.
+
+#### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Message sent successfully",
+  "data": {
+    "messageId": 3,
+    "groupId": 10,
+    "senderId": 5,
+    "senderName": "Nguyen Van A",
+    "senderRole": "OWNER",
+    "content": "Can someone explain this document?",
+    "status": "ACTIVE",
+    "isMine": true,
+    "createdAt": "2026-07-03T10:35:00"
+  }
+}
+```
+
+---
+
+## 16.3. Error Code Reference Table
+
+| HTTP Status | Condition |
+|---|---|
+| **400 Bad Request** | Empty message content / content exceeding 1000 characters after trimming |
+| **401 Unauthorized** | User is not logged in / missing auth cookie |
+| **403 Forbidden** | User is not an ACTIVE member of the study group (e.g., non-member, removed, or left) |
+| **404 Not Found** | Group does not exist OR group status is `DELETED` |
+| **500 Internal Server Error** | Unexpected backend failures |

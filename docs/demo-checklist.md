@@ -268,3 +268,56 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
 ### 8.7. Retrieve Payment History
 - [ ] **Step 8.16**: Retrieve payment history (`GET /api/payments/my`).
   - *Expected*: `200 OK`. Returns list containing orders `15`, `16`, and `17` with their respective final statuses, sorted by `createdAt` descending (newest first).
+
+---
+
+## 9. Flow 9: Persistent Study Group Chat MVP (Step 12)
+
+### Setup & Preconditions
+- User A is registered and is the **OWNER** of Study Group `10` (status = `ACTIVE`).
+- User B is registered and is an **ACTIVE member** of Study Group `10`.
+- User C is registered and is **not** a member of Study Group `10` (non-member).
+- Study Group `11` is created but has been soft-deleted (status = `DELETED`).
+
+### 9.1. Unauthorized and Access Controls
+- [ ] **Step 9.1**: Make an unauthenticated (Guest) request to view group chat history (`GET /api/groups/10/messages`) and send a message (`POST /api/groups/10/messages`).
+  - *Expected*: `401 Unauthorized`.
+- [ ] **Step 9.2**: Log in as User C (non-member) and attempt to view Group `10` chat history OR send a message.
+  - *Expected*: `403 Forbidden` (User has no active membership permission).
+- [ ] **Step 9.3**: Log in as User A (owner) and attempt to view or send messages in deleted Group `11`.
+  - *Expected*: `404 Not Found` (Group not found or DELETED).
+
+### 9.2. Basic Chat & Realtime Polling
+- [ ] **Step 9.4**: Log in as User A and view Group `10` chat history (`GET /api/groups/10/messages?limit=50`).
+  - *Expected*: `200 OK` with an empty data array (`[]`).
+- [ ] **Step 9.5**: Log in as User A and send a valid message:
+  - `POST /api/groups/10/messages` with `{"content": "Welcome to Group 10!"}`
+  - *Expected*: `200 OK` (or `201 Created`). Returns message DTO with `messageId = 1`, `groupId: 10`, `senderName: "User A"`, `senderRole: "OWNER"`, `content: "Welcome to Group 10!"`, `status: "ACTIVE"`, `isMine: true`, and `createdAt` as an ISO datetime string.
+- [ ] **Step 9.6**: Log in as User B and open the Group `10` detail page.
+  - *Expected*: UI loads successfully and fetches chat history. Shows User A's message with their name, role badge (`OWNER`), and locally formatted timestamp.
+  - *Expected*: REST polling starts in the background every 5 seconds.
+- [ ] **Step 9.7**: While logged in as User B, send a message: "Thanks for creating this group!".
+  - *Expected*:
+    - The input is validated: trailing/leading spaces are trimmed.
+    - During submission, the Send button is disabled to prevent double submit.
+    - Returns `200 OK` with `messageId = 2`, `isMine: true`.
+    - Input box is cleared, message is appended to the UI list, and chat area auto-scrolls to the bottom.
+
+### 9.3. Input Validation
+- [ ] **Step 9.8**: Log in as User B and attempt to send an empty message or a message containing only whitespaces.
+  - *Expected*: `400 Bad Request`.
+- [ ] **Step 9.9**: Log in as User B and attempt to send a message exceeding 1000 characters.
+  - *Expected*: `400 Bad Request`.
+
+### 9.4. Polling Sync & Duplicate Prevention
+- [ ] **Step 9.10**: Switch back to User A's active session. Wait for background polling (every 5 seconds) to trigger.
+  - *Expected*: Polling retrieves latest messages. User B's message (`messageId = 2`, `isMine: false`) is rendered under User A's message in `createdAt` ascending order.
+  - *Expected*: Frontend merges incoming messages by `messageId` to ensure no duplicates are rendered.
+- [ ] **Step 9.11**: Log in as User A, refresh the group detail page.
+  - *Expected*: Chat history loads both messages correctly in chronological order (`createdAt` ascending).
+
+### 9.5. Revocation of Access
+- [ ] **Step 9.12**: Log in as User A (owner) and remove User B from Group `10` (`DELETE /api/groups/10/members/{userBId}`).
+  - *Expected*: `200 OK`.
+- [ ] **Step 9.13**: Log in as User B (removed member) and attempt to view Group `10` chat history (`GET /api/groups/10/messages`) or send a message.
+  - *Expected*: `403 Forbidden` (Removed members cannot access old chat history anymore).
