@@ -44,11 +44,16 @@ document.addEventListener("DOMContentLoaded", async function () {
   const emptyState = document.getElementById("emptyState");
 
   // Account tier styling
+  const dashboardUpgradeCta = document.getElementById("dashboardUpgradeCta");
   if (accountTierElement) {
     const tier = currentUser.tier || "FREE";
     accountTierElement.textContent = tier;
     accountTierElement.classList.remove("badge-tier-free", "badge-tier-premium");
     accountTierElement.classList.add(tier === "PREMIUM" ? "badge-tier-premium" : "badge-tier-free");
+
+    if (dashboardUpgradeCta) {
+      dashboardUpgradeCta.style.display = tier === "PREMIUM" ? "none" : "inline-flex";
+    }
   }
 
   function setDocumentsLoading() {

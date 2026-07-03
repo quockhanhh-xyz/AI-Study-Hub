@@ -3109,6 +3109,34 @@ svg {
   transform: translateX(-2px);
 }
 
+/* ═══════════════════════════════════════════════════════
+   FE2 — STEP 11: UPGRADE / PAYMENT PAGE
+═══════════════════════════════════════════════════════ */
+#checkoutSection {
+  margin-top: 24px;
+}
+
+#pricingGrid .card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.member-row-main {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  #checkoutActions {
+    flex-direction: column;
+  }
+
+  #checkoutActions .btn {
+    width: 100%;
+  }
+}
+
 /* ===== UNIFIED PAGE HEADER H1 TYPOGRAPHY ===== */
 .page-header h1,
 #folderPageTitle,
