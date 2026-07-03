@@ -4,57 +4,38 @@ import com.demo.ai_study_hub.config.AiProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-/**
- * Selects the appropriate AI model and tier-based limits based on user tier.
- * All tier logic and model names come from AiProperties (application.properties).
- * No values are hardcoded here.
- */
 @Service
 @RequiredArgsConstructor
 public class DefaultAiModelSelector implements AiModelSelector {
 
     private final AiProperties aiProperties;
+    private final PlanService planService;
 
     @Override
     public String selectModel(String userTier) {
         if ("mock".equalsIgnoreCase(aiProperties.getProvider())) {
             return "mock";
         }
-        if ("PREMIUM".equalsIgnoreCase(userTier)) {
-            return aiProperties.getGemini().getPremiumModel();
-        }
-        return aiProperties.getGemini().getFreeModel();
+        return planService.getModel(userTier);
     }
 
     @Override
     public int getMaxOutputTokens(String userTier) {
-        if ("PREMIUM".equalsIgnoreCase(userTier)) {
-            return aiProperties.getPremium().getMaxOutputTokens();
-        }
-        return aiProperties.getFree().getMaxOutputTokens();
+        return planService.getMaxOutputTokens(userTier);
     }
 
     @Override
     public int getMaxContextChunks(String userTier) {
-        if ("PREMIUM".equalsIgnoreCase(userTier)) {
-            return aiProperties.getPremium().getMaxContextChunks();
-        }
-        return aiProperties.getFree().getMaxContextChunks();
+        return planService.getMaxContextChunks(userTier);
     }
 
     @Override
     public int getMaxQuestionChars(String userTier) {
-        if ("PREMIUM".equalsIgnoreCase(userTier)) {
-            return aiProperties.getPremium().getMaxQuestionChars();
-        }
-        return aiProperties.getFree().getMaxQuestionChars();
+        return planService.getMaxQuestionChars(userTier);
     }
 
     @Override
     public int getDailyQuestionLimit(String userTier) {
-        if ("PREMIUM".equalsIgnoreCase(userTier)) {
-            return aiProperties.getPremium().getDailyQuestionLimit();
-        }
-        return aiProperties.getFree().getDailyQuestionLimit();
+        return planService.getDailyLimit(userTier);
     }
 }
