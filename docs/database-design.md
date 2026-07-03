@@ -554,3 +554,45 @@ INDEX idx_ai_usage_logs_user_date (user_id, created_at)
 INDEX idx_ai_usage_logs_user_status (user_id, status, counted_as_question)
 ```
 
+---
+
+# Payment & Account Tier Tables (Step 11)
+
+## 17. Table `payment_orders`
+
+Stores user payment order records for plan subscriptions. 
+
+| Column Name | Data Type | Constraints | Description |
+|:---|:---|:---|:---|
+| `payment_id` | BIGINT | PRIMARY KEY, AUTO_INCREMENT, NOT NULL | Unique payment order ID |
+| `user_id` | INT | FOREIGN KEY REFERENCES `users(user_id)`, NOT NULL | User who placed the order |
+| `plan_code` | VARCHAR(50) | NOT NULL | Target plan code (e.g. `PREMIUM`) |
+| `amount` | BIGINT | NOT NULL | Price in currency (uses `BIGINT` since VND has no decimals) |
+| `currency` | VARCHAR(10) | DEFAULT `'VND'`, NOT NULL | Currency code |
+| `status` | VARCHAR(30) | DEFAULT `'PENDING'`, NOT NULL | Order status: `PENDING` \| `SUCCESS` \| `FAILED` \| `CANCELLED` |
+| `payment_method` | VARCHAR(50) | DEFAULT `'MOCK'`, NOT NULL | Payment method |
+| `created_at` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Order creation time |
+| `paid_at` | DATETIME | NULLABLE | Timestamp when the order was successfully completed |
+| `updated_at` | DATETIME | NULLABLE, ON UPDATE CURRENT_TIMESTAMP | Last status update time |
+
+### Business Rules
+
+- **MVP Limit**: The subscription upgrade (Premium) is permanent for the MVP demo (no expiration, no auto-renew).
+- **Price Resolution**: Price is resolved dynamically by the backend from a central shared config/PlanService, not sent by the frontend.
+- **Paid Date**: The `paid_at` timestamp is set ONLY when the payment status changes to `SUCCESS`. For `FAILED` or `CANCELLED` statuses, it remains `null`.
+- **Excluded Columns (NOT added in Step 11)**: To keep the MVP simple, the following subscription/auto-renew fields are **not** present in the schema:
+  - `expired_at`
+  - `failed_at`
+  - `cancelled_at`
+  - `subscription_cycle`
+  - `auto_renew`
+- **Amount Representation**: `amount` is stored as a `BIGINT` since the currency is VND (price = `199000` VND), eliminating decimal rounding risks.
+
+### Indexes
+
+```sql
+INDEX idx_payment_orders_user (user_id)
+INDEX idx_payment_orders_status (status)
+```
+
+
