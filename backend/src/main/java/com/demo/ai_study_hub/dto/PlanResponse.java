@@ -1,4 +1,16 @@
 package com.demo.ai_study_hub.dto;
 
+import lombok.*;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PlanResponse {
+    private String planCode;
+    private String planName;
+    private long price;
+    private String currency;
+    private String billingLabel;
+    private int aiDailyLimit;
 }
