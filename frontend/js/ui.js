@@ -635,3 +635,33 @@ window.formatAiSourceLabel = AIUIHelper.formatAiSourceLabel;
 
 // Also preserve the namespace export to guarantee zero breaking integrations for existing callers
 window.UIHelper = UIHelper;
+
+// ─────────────────────────────────────────────────────────────
+// TIER BADGE HELPER (Step 11)
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Returns an HTML string for a tier badge (FREE or PREMIUM).
+ * @param {string} tier - "FREE" or "PREMIUM"
+ * @returns {string} HTML badge string.
+ */
+function getTierBadgeHTML(tier) {
+  if (tier === "PREMIUM") {
+    return `<span class="tier-badge tier-badge-premium">PREMIUM</span>`;
+  }
+  return `<span class="tier-badge tier-badge-free">FREE</span>`;
+}
+
+/**
+ * Renders a tier badge into a given DOM element.
+ * @param {HTMLElement} element - The container element to render into.
+ * @param {string} tier - "FREE" or "PREMIUM"
+ */
+function renderTierBadge(element, tier) {
+  if (!element) return;
+  element.innerHTML = getTierBadgeHTML(tier || "FREE");
+}
+
+// Expose globally for page scripts
+window.getTierBadgeHTML = getTierBadgeHTML;
+window.renderTierBadge = renderTierBadge;

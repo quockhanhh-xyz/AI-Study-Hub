@@ -605,6 +605,35 @@ textarea.success {
   color: #b45309 !important; /* High contrast premium gold/amber */
 }
 
+/* ===== Step 11: Tier Badge (compact inline variant for payment/upgrade UI) ===== */
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tier-badge-free {
+  background-color: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.tier-badge-premium {
+  background: linear-gradient(90deg, #f59e0b, #ef4444, #a855f7, #f59e0b);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 2s linear infinite;
+  border: 1px solid #f59e0b;
+}
+
 .stat-placeholder-note {
   margin-top: 6px;
   font-size: 11px;
