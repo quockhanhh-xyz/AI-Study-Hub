@@ -267,7 +267,7 @@ class PaymentServiceTest {
                 .amount(199000L).currency("VND")
                 .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
 
-        when(paymentOrderRepository.findByPaymentIdAndUser(1L, freeUser))
+        when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, freeUser))
                 .thenReturn(Optional.of(order));
         when(userRepository.findById(freeUser.getUserId())).thenReturn(Optional.of(freeUser));
         when(paymentOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -283,7 +283,7 @@ class PaymentServiceTest {
 
     @Test
     void markPaymentFailed_WhenPaymentNotFound_ShouldThrow404() {
-        when(paymentOrderRepository.findByPaymentIdAndUser(99L, freeUser))
+        when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(99L, freeUser))
                 .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
@@ -298,7 +298,7 @@ class PaymentServiceTest {
                 .paymentId(1L).user(freeUser)
                 .status(PaymentStatus.SUCCESS).build();
 
-        when(paymentOrderRepository.findByPaymentIdAndUser(1L, freeUser))
+        when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, freeUser))
                 .thenReturn(Optional.of(order));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
@@ -315,7 +315,7 @@ class PaymentServiceTest {
                 .amount(199000L).currency("VND")
                 .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
 
-        when(paymentOrderRepository.findByPaymentIdAndUser(1L, premiumUser))
+        when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, premiumUser))
                 .thenReturn(Optional.of(order));
         when(userRepository.findById(premiumUser.getUserId())).thenReturn(Optional.of(premiumUser));
         when(paymentOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -338,7 +338,7 @@ class PaymentServiceTest {
                 .amount(199000L).currency("VND")
                 .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
 
-        when(paymentOrderRepository.findByPaymentIdAndUser(1L, freeUser))
+        when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, freeUser))
                 .thenReturn(Optional.of(order));
         when(userRepository.findById(freeUser.getUserId())).thenReturn(Optional.of(freeUser));
         when(paymentOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -354,7 +354,7 @@ class PaymentServiceTest {
 
     @Test
     void cancelPayment_WhenPaymentNotFound_ShouldThrow404() {
-        when(paymentOrderRepository.findByPaymentIdAndUser(99L, freeUser))
+        when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(99L, freeUser))
                 .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
@@ -369,7 +369,7 @@ class PaymentServiceTest {
                 .paymentId(1L).user(freeUser)
                 .status(PaymentStatus.SUCCESS).build();
 
-        when(paymentOrderRepository.findByPaymentIdAndUser(1L, freeUser))
+        when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, freeUser))
                 .thenReturn(Optional.of(order));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
@@ -386,7 +386,7 @@ class PaymentServiceTest {
                 .amount(199000L).currency("VND")
                 .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
 
-        when(paymentOrderRepository.findByPaymentIdAndUser(1L, premiumUser))
+        when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, premiumUser))
                 .thenReturn(Optional.of(order));
         when(userRepository.findById(premiumUser.getUserId())).thenReturn(Optional.of(premiumUser));
         when(paymentOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
