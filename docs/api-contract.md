@@ -3255,3 +3255,292 @@ Retrieve current user's AI usage statistics and remaining quota for today.
 |---|---|
 | 401 Unauthorized | Not logged in |
 
+---
+
+# 15. Payment and Account Tier MVP APIs
+
+> [!NOTE]
+> Step 11 implements a **Mock Payment / Account Tier MVP** flow for demonstration purposes.
+> - No real payment gateway integration is performed.
+> - No real money is processed.
+> - No auto-renewal, subscription cycles, or automatic expiration logic is implemented in this step.
+> - Premium tier status remains permanent for the duration of the MVP demo.
+> - Daily AI questions limits: **FREE = 5**, **PREMIUM = 50**.
+> - Pricing and quota values (price, currency, tier quota limits) are defined dynamically in a central `PlanService` or shared configuration file (e.g. application properties) as the single source of truth.
+> - **Mock VNPay-style Checkout**: After creating a mock payment order, the frontend (FE) may redirect to a mock VNPay-style checkout screen. This screen is UI-only and does NOT call the actual VNPay API. Confirming Success, Failure, or Cancellation from this screen still calls the respective mock payment endpoints listed below. No VNPay secret keys are required.
+
+## 15.1. Get Plans
+
+### GET `/api/payments/plans`
+
+Retrieve list of available billing plans. This is a public API and does not require authentication.
+
+#### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Billing plans retrieved successfully",
+  "data": [
+    {
+      "planCode": "FREE",
+      "planName": "Free",
+      "price": 0,
+      "currency": "VND",
+      "billingLabel": "free",
+      "aiDailyLimit": 5
+    },
+    {
+      "planCode": "PREMIUM",
+      "planName": "Premium",
+      "price": 199000,
+      "currency": "VND",
+      "billingLabel": "month",
+      "aiDailyLimit": 50
+    }
+  ]
+}
+```
+
+---
+
+## 15.2. Create Mock Payment
+
+### POST `/api/payments/mock/create`
+
+Create a new pending payment order for a plan.
+
+#### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+#### Request Body
+
+```json
+{
+  "planCode": "PREMIUM"
+}
+```
+
+#### Rules & Constraints
+- Only `planCode = PREMIUM` is accepted.
+- Creating a payment order with `planCode = FREE` returns **400 Bad Request**.
+- Invalid `planCode` values return **400 Bad Request**.
+- User must be logged in; otherwise returns **401 Unauthorized**.
+- If the user already has a `PREMIUM` tier, creating a new payment returns **409 Conflict**.
+- Frontend does not specify the price, currency, or tier in the request body; the backend resolves these details from `PlanService`.
+
+#### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Mock payment order created successfully",
+  "data": {
+    "paymentId": 15,
+    "planCode": "PREMIUM",
+    "planName": "Premium",
+    "amount": 199000,
+    "currency": "VND",
+    "billingLabel": "month",
+    "paymentMethod": "MOCK",
+    "status": "PENDING",
+    "createdAt": "2026-07-02T10:30:00"
+  }
+}
+```
+
+---
+
+## 15.3. Confirm Success
+
+### POST `/api/payments/mock/{paymentId}/success`
+
+Mock confirmation of a successful payment.
+
+#### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+#### Rules & Constraints
+- User must be logged in; otherwise returns **401 Unauthorized**.
+- The payment order must belong to the current user.
+- If the payment order does not exist or does not belong to the current user, the server must return **404 Not Found** (do not return 403, to prevent leaking paymentId details).
+- The payment order must have `PENDING` status.
+- If the payment is not `PENDING` (already SUCCESS, FAILED, or CANCELLED), returns **409 Conflict** (handles double-clicks or duplicate requests gracefully).
+- If the user is already at the `PREMIUM` tier (e.g. upgraded via another payment order), they cannot success any old pending payment orders; returns **409 Conflict**.
+- **Transactional Atomicity**: The success operation must be transactional (`@Transactional`). Updating the payment status to `SUCCESS` and the user's tier to `PREMIUM` must occur atomically within the same database transaction.
+- Upon success, the user's tier is updated to `PREMIUM`, and the `paidAt` field is set to the current timestamp.
+
+#### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Payment confirmed successfully",
+  "data": {
+    "paymentId": 15,
+    "planCode": "PREMIUM",
+    "planName": "Premium",
+    "amount": 199000,
+    "currency": "VND",
+    "billingLabel": "month",
+    "paymentMethod": "MOCK",
+    "status": "SUCCESS",
+    "tier": "PREMIUM",
+    "paidAt": "2026-07-02T10:35:00"
+  }
+}
+```
+
+---
+
+## 15.4. Confirm Fail
+
+### POST `/api/payments/mock/{paymentId}/fail`
+
+Mock confirmation of a failed payment.
+
+#### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+#### Rules & Constraints
+- User must be logged in; otherwise returns **401 Unauthorized**.
+- The payment order must belong to the current user.
+- If the payment order does not exist or does not belong to the current user, returns **404 Not Found**.
+- The payment order must have `PENDING` status.
+- If the payment is not `PENDING`, returns **409 Conflict**.
+- Marking a payment as failed does not change the user's tier, and the `paidAt` timestamp remains `null`.
+- The response returns the user's current tier (e.g. `FREE`, or `PREMIUM` if they are already upgraded by another payment).
+- Already upgraded `PREMIUM` users are still allowed to mark their old stale `PENDING` payments as failed.
+
+#### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Payment marked as failed",
+  "data": {
+    "paymentId": 15,
+    "planCode": "PREMIUM",
+    "planName": "Premium",
+    "amount": 199000,
+    "currency": "VND",
+    "billingLabel": "month",
+    "paymentMethod": "MOCK",
+    "status": "FAILED",
+    "tier": "FREE",
+    "paidAt": null
+  }
+}
+```
+
+---
+
+## 15.5. Cancel Payment
+
+### POST `/api/payments/mock/{paymentId}/cancel`
+
+Cancel a pending payment order.
+
+#### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+#### Rules & Constraints
+- User must be logged in; otherwise returns **401 Unauthorized**.
+- The payment order must belong to the current user.
+- If the payment order does not exist or does not belong to the current user, returns **404 Not Found**.
+- The payment order must have `PENDING` status.
+- If the payment is not `PENDING`, returns **409 Conflict**.
+- Cancelling a payment does not change the user's tier, and the `paidAt` timestamp remains `null`.
+- The response returns the user's current tier.
+- Already upgraded `PREMIUM` users are still allowed to cancel their old stale `PENDING` payments.
+
+#### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Payment cancelled successfully",
+  "data": {
+    "paymentId": 15,
+    "planCode": "PREMIUM",
+    "planName": "Premium",
+    "amount": 199000,
+    "currency": "VND",
+    "billingLabel": "month",
+    "paymentMethod": "MOCK",
+    "status": "CANCELLED",
+    "tier": "FREE",
+    "paidAt": null
+  }
+}
+```
+
+---
+
+## 15.6. Get My Payments
+
+### GET `/api/payments/my`
+
+Retrieve the current user's payment history.
+
+#### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+#### Rules & Constraints
+- User must be logged in; otherwise returns **401 Unauthorized**.
+- Only returns payment orders belonging to the current user.
+- Orders must be sorted newest first (sorted by `createdAt` descending).
+- Displays all payment statuses: `PENDING`, `SUCCESS`, `FAILED`, and `CANCELLED`.
+- No hard delete is allowed; all historical payments must remain visible.
+
+#### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Payment history retrieved successfully",
+  "data": [
+    {
+      "paymentId": 15,
+      "planCode": "PREMIUM",
+      "planName": "Premium",
+      "amount": 199000,
+      "currency": "VND",
+      "billingLabel": "month",
+      "paymentMethod": "MOCK",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-02T10:30:00",
+      "paidAt": "2026-07-02T10:35:00"
+    },
+    {
+      "paymentId": 14,
+      "planCode": "PREMIUM",
+      "planName": "Premium",
+      "amount": 199000,
+      "currency": "VND",
+      "billingLabel": "month",
+      "paymentMethod": "MOCK",
+      "status": "FAILED",
+      "createdAt": "2026-07-02T10:00:00",
+      "paidAt": null
+    }
+  ]
+}
+```
+
+---
+
+## 15.7. Error Code Reference Table
+
+| HTTP Status | Condition |
+|---|---|
+| **400 Bad Request** | Invalid `planCode` / creating payment for `planCode = FREE` |
+| **401 Unauthorized** | User is not logged in / missing accessToken cookie |
+| **404 Not Found** | Payment order does not exist OR does not belong to the current user |
+| **409 Conflict** | User is already `PREMIUM` (on payment creation or confirmation) OR payment order is not in `PENDING` status (double confirmation / double-click prevention) |
+| **500 Internal Server Error** | Unexpected backend failures |

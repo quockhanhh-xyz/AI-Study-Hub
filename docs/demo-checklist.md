@@ -210,3 +210,61 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
 - [ ] **Step 7.9.2** *(Optional)*: With `AI_PROVIDER=gemini` and no `GEMINI_API_KEY` set.
   - *Expected*: `503 Service Unavailable` — `"AI service is not configured"`.
 
+---
+
+## 8. Flow 8: Payment & Account Tier Upgrade (Step 11)
+
+### Setup & Preconditions
+- User A is registered and has `tier = "FREE"`.
+- Central config/PlanService defines PREMIUM plan price as `199000 VND`, billingLabel = `"month"`, and daily limit = `50`.
+
+### 8.1. Plan Inquiry & Unauthorized Access Check
+- [ ] **Step 8.1**: Make an unauthenticated (Guest) request to view plans (`GET /api/payments/plans`).
+  - *Expected*: `200 OK`. Returns two plans:
+    - `FREE`: `price: 0`, `currency: "VND"`, `billingLabel: "free"`, `aiDailyLimit: 5`
+    - `PREMIUM`: `price: 199000`, `currency: "VND"`, `billingLabel: "month"`, `aiDailyLimit: 50`.
+- [ ] **Step 8.2**: Make an unauthenticated (Guest) request to create a payment order (`POST /api/payments/mock/create` with body `{"planCode": "PREMIUM"}`).
+  - *Expected*: `401 Unauthorized`.
+
+### 8.2. Create Payment & Mock Checkout Verification
+- [ ] **Step 8.3**: Log in as User A (FREE) and attempt to create an order with planCode `FREE` or `INVALID`.
+  - *Expected*: `400 Bad Request`.
+- [ ] **Step 8.4**: Log in as User A (FREE) and create a valid PREMIUM order (`POST /api/payments/mock/create` with body `{"planCode": "PREMIUM"}`).
+  - *Expected*: `200 OK` (or `201 Created`). Returns order with `paymentId = 15`, `planCode: "PREMIUM"`, `amount: 199000`, `currency: "VND"`, `billingLabel: "month"`, `paymentMethod: "MOCK"`, `status: "PENDING"`.
+  - *Note*: Mock payment for MVP demo. No real subscription or expiration is applied.
+- [ ] **Step 8.4.1**: (Mock Checkout Redirect) Verify that after creating the mock payment order, the frontend redirects the user to a mock VNPay-style checkout screen.
+  - *Expected*: The mock screen shows QR code or mock checkout options. It is purely UI-only and does not call any external VNPay API.
+  - *Expected*: Selecting "Confirm Success", "Confirm Fail", or "Cancel" on this mock screen calls the respective backend endpoints (`POST /api/payments/mock/15/success`, etc.).
+
+### 8.3. Ownership & Status transition Checks
+- [ ] **Step 8.5**: Log in as User B and attempt to mark User A's pending payment `15` as success (`POST /api/payments/mock/15/success`).
+  - *Expected*: `404 Not Found` (Important: do not leak existence of User A's payment by returning 403).
+- [ ] **Step 8.6**: Log in as User A and cancel the pending payment `15` (`POST /api/payments/mock/15/cancel`).
+  - *Expected*: `200 OK`. Returns order with `status: "CANCELLED"`, `tier: "FREE"`, `paidAt: null`.
+- [ ] **Step 8.7**: Log in as User A and attempt to cancel the cancelled payment `15` again.
+  - *Expected*: `409 Conflict` (Order is no longer `PENDING`).
+
+### 8.4. Upgrade to PREMIUM Flow
+- [ ] **Step 8.8**: Log in as User A and create a new payment order (`POST /api/payments/mock/create` -> returns `paymentId = 16`).
+- [ ] **Step 8.9**: Confirm payment success for order `16` (atomically updating order status and user tier) (`POST /api/payments/mock/16/success`).
+  - *Expected*: `200 OK`. Returns order with `status: "SUCCESS"`, `tier: "PREMIUM"`, and `paidAt` set to the current timestamp.
+- [ ] **Step 8.10**: Attempt to success order `16` again (Double-click prevention).
+  - *Expected*: `409 Conflict` (status is no longer `PENDING`).
+
+### 8.5. Post-Upgrade verification
+- [ ] **Step 8.11**: Log in as User A, retrieve profile info (`GET /api/auth/me`).
+  - *Expected*: `200 OK` with `"tier": "PREMIUM"`.
+- [ ] **Step 8.12**: Retrieve AI usage limit (`GET /api/ai/usage/me`).
+  - *Expected*: `200 OK` with `"tier": "PREMIUM"`, `"dailyLimit": 50` (daily limit successfully upgraded from 5 to 50 questions).
+- [ ] **Step 8.13**: Attempt to create a new PREMIUM payment order (`POST /api/payments/mock/create` with body `{"planCode": "PREMIUM"}`).
+  - *Expected*: `409 Conflict` (User is already `PREMIUM`).
+
+### 8.6. Stale Order Management for Upgraded User
+- [ ] **Step 8.14**: Create another order `17` as FREE user prior to upgrade. After User A is upgraded to PREMIUM, attempt to success order `17` (`POST /api/payments/mock/17/success`).
+  - *Expected*: `409 Conflict` (User is already `PREMIUM`).
+- [ ] **Step 8.15**: Attempt to fail order `17` (`POST /api/payments/mock/17/fail`).
+  - *Expected*: `200 OK` with `status: "FAILED"`, `tier: "PREMIUM"`, `paidAt: null` (Already upgraded user can still fail/cancel old pending orders).
+
+### 8.7. Retrieve Payment History
+- [ ] **Step 8.16**: Retrieve payment history (`GET /api/payments/my`).
+  - *Expected*: `200 OK`. Returns list containing orders `15`, `16`, and `17` with their respective final statuses, sorted by `createdAt` descending (newest first).
