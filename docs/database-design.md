@@ -595,3 +595,39 @@ INDEX idx_payment_orders_user (user_id)
 INDEX idx_payment_orders_status (status)
 INDEX idx_payment_orders_user_created_at (user_id, created_at)
 ```
+
+---
+
+# Study Group Chat Tables (Step 12)
+
+## 18. Table `group_chat_messages`
+
+Stores individual persistent chat messages exchanged within study groups.
+
+| Column Name | Data Type | Constraints | Description |
+|:---|:---|:---|:---|
+| `message_id` | BIGINT | PRIMARY KEY, AUTO_INCREMENT, NOT NULL | Unique message ID |
+| `group_id` | INT | FOREIGN KEY REFERENCES `study_groups(group_id)`, NOT NULL | Study group ID |
+| `sender_id` | INT | FOREIGN KEY REFERENCES `users(user_id)`, NOT NULL | Message sender ID |
+| `content` | TEXT | NOT NULL | Message text content |
+| `status` | VARCHAR(30) | DEFAULT `'ACTIVE'`, NOT NULL | Message status: `ACTIVE` \| `DELETED` |
+| `created_at` | DATETIME | DEFAULT CURRENT_TIMESTAMP, NOT NULL | Message creation time |
+| `updated_at` | DATETIME | NOT NULL | Timestamp when the message was last updated |
+| `deleted_at` | DATETIME | NULLABLE | Timestamp when the message was soft-deleted |
+
+### Business Rules
+
+- **Persistence**: Chat history is persisted in the database, allowing users to view older exchanges when returning to the study group.
+- **Auditing & Timestamps**:
+  - On message creation: `created_at` = current time, `status = 'ACTIVE'`, `deleted_at = null`.
+  - In Step 12 (MVP), since edit and delete features are not yet implemented, the `updated_at` field must be set equal to `created_at` upon creation.
+- **Query Restriction**: The GET messages endpoint only returns messages with status = `'ACTIVE'`.
+- **Identity Size**: `message_id` uses `BIGINT` to prevent integer overflow as message counts grow. `group_id` and `sender_id` remain `INT` to match other project tables.
+
+### Indexes
+
+```sql
+INDEX idx_group_chat_group_created_at (group_id, created_at)
+INDEX idx_group_chat_group_status_created_at (group_id, status, created_at)
+INDEX idx_group_chat_sender (sender_id)
+```
