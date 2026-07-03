@@ -86,7 +86,7 @@ public class PaymentService {
     @Transactional
     public PaymentResponse markPaymentFailed(User user, Long paymentId) {
         PaymentOrder order = paymentOrderRepository
-                .findByPaymentIdAndUser(paymentId, user)
+                .findByPaymentIdAndUserForUpdate(paymentId, user)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Payment not found"));
 
@@ -106,7 +106,7 @@ public class PaymentService {
     @Transactional
     public PaymentResponse cancelPayment(User user, Long paymentId) {
         PaymentOrder order = paymentOrderRepository
-                .findByPaymentIdAndUser(paymentId, user)
+                .findByPaymentIdAndUserForUpdate(paymentId, user)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Payment not found"));
 
