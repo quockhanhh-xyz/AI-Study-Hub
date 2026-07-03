@@ -220,16 +220,21 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
 
 ### 8.1. Plan Inquiry & Unauthorized Access Check
 - [ ] **Step 8.1**: Make an unauthenticated (Guest) request to view plans (`GET /api/payments/plans`).
-  - *Expected*: `200 OK`. Returns PREMIUM plan with details: `planCode: "PREMIUM"`, `price: 199000`, `currency: "VND"`, `billingLabel: "month"`, `aiDailyLimit: 50`.
+  - *Expected*: `200 OK`. Returns two plans:
+    - `FREE`: `price: 0`, `currency: "VND"`, `billingLabel: "free"`, `aiDailyLimit: 5`
+    - `PREMIUM`: `price: 199000`, `currency: "VND"`, `billingLabel: "month"`, `aiDailyLimit: 50`.
 - [ ] **Step 8.2**: Make an unauthenticated (Guest) request to create a payment order (`POST /api/payments/mock/create` with body `{"planCode": "PREMIUM"}`).
   - *Expected*: `401 Unauthorized`.
 
-### 8.2. Create Payment Verification
+### 8.2. Create Payment & Mock Checkout Verification
 - [ ] **Step 8.3**: Log in as User A (FREE) and attempt to create an order with planCode `FREE` or `INVALID`.
   - *Expected*: `400 Bad Request`.
 - [ ] **Step 8.4**: Log in as User A (FREE) and create a valid PREMIUM order (`POST /api/payments/mock/create` with body `{"planCode": "PREMIUM"}`).
-  - *Expected*: `200 OK` (or `201 Created`). Returns order with `paymentId = 15`, `planCode: "PREMIUM"`, `amount: 199000`, `currency: "VND"`, `status: "PENDING"`.
+  - *Expected*: `200 OK` (or `201 Created`). Returns order with `paymentId = 15`, `planCode: "PREMIUM"`, `amount: 199000`, `currency: "VND"`, `billingLabel: "month"`, `paymentMethod: "MOCK"`, `status: "PENDING"`.
   - *Note*: Mock payment for MVP demo. No real subscription or expiration is applied.
+- [ ] **Step 8.4.1**: (Mock Checkout Redirect) Verify that after creating the mock payment order, the frontend redirects the user to a mock VNPay-style checkout screen.
+  - *Expected*: The mock screen shows QR code or mock checkout options. It is purely UI-only and does not call any external VNPay API.
+  - *Expected*: Selecting "Confirm Success", "Confirm Fail", or "Cancel" on this mock screen calls the respective backend endpoints (`POST /api/payments/mock/15/success`, etc.).
 
 ### 8.3. Ownership & Status transition Checks
 - [ ] **Step 8.5**: Log in as User B and attempt to mark User A's pending payment `15` as success (`POST /api/payments/mock/15/success`).
@@ -241,7 +246,7 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
 
 ### 8.4. Upgrade to PREMIUM Flow
 - [ ] **Step 8.8**: Log in as User A and create a new payment order (`POST /api/payments/mock/create` -> returns `paymentId = 16`).
-- [ ] **Step 8.9**: Confirm payment success for order `16` (`POST /api/payments/mock/16/success`).
+- [ ] **Step 8.9**: Confirm payment success for order `16` (atomically updating order status and user tier) (`POST /api/payments/mock/16/success`).
   - *Expected*: `200 OK`. Returns order with `status: "SUCCESS"`, `tier: "PREMIUM"`, and `paidAt` set to the current timestamp.
 - [ ] **Step 8.10**: Attempt to success order `16` again (Double-click prevention).
   - *Expected*: `409 Conflict` (status is no longer `PENDING`).

@@ -3267,6 +3267,7 @@ Retrieve current user's AI usage statistics and remaining quota for today.
 > - Premium tier status remains permanent for the duration of the MVP demo.
 > - Daily AI questions limits: **FREE = 5**, **PREMIUM = 50**.
 > - Pricing and quota values (price, currency, tier quota limits) are defined dynamically in a central `PlanService` or shared configuration file (e.g. application properties) as the single source of truth.
+> - **Mock VNPay-style Checkout**: After creating a mock payment order, the frontend (FE) may redirect to a mock VNPay-style checkout screen. This screen is UI-only and does NOT call the actual VNPay API. Confirming Success, Failure, or Cancellation from this screen still calls the respective mock payment endpoints listed below. No VNPay secret keys are required.
 
 ## 15.1. Get Plans
 
@@ -3281,6 +3282,14 @@ Retrieve list of available billing plans. This is a public API and does not requ
   "success": true,
   "message": "Billing plans retrieved successfully",
   "data": [
+    {
+      "planCode": "FREE",
+      "planName": "Free",
+      "price": 0,
+      "currency": "VND",
+      "billingLabel": "free",
+      "aiDailyLimit": 5
+    },
     {
       "planCode": "PREMIUM",
       "planName": "Premium",
@@ -3333,6 +3342,8 @@ Create a new pending payment order for a plan.
     "planName": "Premium",
     "amount": 199000,
     "currency": "VND",
+    "billingLabel": "month",
+    "paymentMethod": "MOCK",
     "status": "PENDING",
     "createdAt": "2026-07-02T10:30:00"
   }
@@ -3358,6 +3369,7 @@ Mock confirmation of a successful payment.
 - The payment order must have `PENDING` status.
 - If the payment is not `PENDING` (already SUCCESS, FAILED, or CANCELLED), returns **409 Conflict** (handles double-clicks or duplicate requests gracefully).
 - If the user is already at the `PREMIUM` tier (e.g. upgraded via another payment order), they cannot success any old pending payment orders; returns **409 Conflict**.
+- **Transactional Atomicity**: The success operation must be transactional (`@Transactional`). Updating the payment status to `SUCCESS` and the user's tier to `PREMIUM` must occur atomically within the same database transaction.
 - Upon success, the user's tier is updated to `PREMIUM`, and the `paidAt` field is set to the current timestamp.
 
 #### Success Response (200 OK)
@@ -3373,6 +3385,7 @@ Mock confirmation of a successful payment.
     "amount": 199000,
     "currency": "VND",
     "billingLabel": "month",
+    "paymentMethod": "MOCK",
     "status": "SUCCESS",
     "tier": "PREMIUM",
     "paidAt": "2026-07-02T10:35:00"
@@ -3415,6 +3428,7 @@ Mock confirmation of a failed payment.
     "amount": 199000,
     "currency": "VND",
     "billingLabel": "month",
+    "paymentMethod": "MOCK",
     "status": "FAILED",
     "tier": "FREE",
     "paidAt": null
@@ -3457,6 +3471,7 @@ Cancel a pending payment order.
     "amount": 199000,
     "currency": "VND",
     "billingLabel": "month",
+    "paymentMethod": "MOCK",
     "status": "CANCELLED",
     "tier": "FREE",
     "paidAt": null
@@ -3497,6 +3512,7 @@ Retrieve the current user's payment history.
       "amount": 199000,
       "currency": "VND",
       "billingLabel": "month",
+      "paymentMethod": "MOCK",
       "status": "SUCCESS",
       "createdAt": "2026-07-02T10:30:00",
       "paidAt": "2026-07-02T10:35:00"
@@ -3508,6 +3524,7 @@ Retrieve the current user's payment history.
       "amount": 199000,
       "currency": "VND",
       "billingLabel": "month",
+      "paymentMethod": "MOCK",
       "status": "FAILED",
       "createdAt": "2026-07-02T10:00:00",
       "paidAt": null

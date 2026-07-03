@@ -593,6 +593,7 @@ Stores user payment order records for plan subscriptions.
 ```sql
 INDEX idx_payment_orders_user (user_id)
 INDEX idx_payment_orders_status (status)
+INDEX idx_payment_orders_user_created_at (user_id, created_at)
 ```
 
 
