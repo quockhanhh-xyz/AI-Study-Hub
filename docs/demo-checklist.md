@@ -230,7 +230,7 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
 - [ ] **Step 8.3**: Log in as User A (FREE) and attempt to create an order with planCode `FREE` or `INVALID`.
   - *Expected*: `400 Bad Request`.
 - [ ] **Step 8.4**: Log in as User A (FREE) and create a valid PREMIUM order (`POST /api/payments/mock/create` with body `{"planCode": "PREMIUM"}`).
-  - *Expected*: `200 OK` (or `201 Created`). Returns order with `paymentId = 15`, `planCode: "PREMIUM"`, `amount: 199000`, `currency: "VND"`, `billingLabel: "month"`, `paymentMethod: "MOCK"`, `status: "PENDING"`.
+  - *Expected*: `200 OK`. Returns order with `paymentId = 15`, `planCode: "PREMIUM"`, `amount: 199000`, `currency: "VND"`, `billingLabel: "month"`, `paymentMethod: "MOCK"`, `status: "PENDING"`.
   - *Note*: Mock payment for MVP demo. No real subscription or expiration is applied.
 - [ ] **Step 8.4.1**: (Mock Checkout Redirect) Verify that after creating the mock payment order, the frontend redirects the user to a mock VNPay-style checkout screen.
   - *Expected*: The mock screen shows QR code or mock checkout options. It is purely UI-only and does not call any external VNPay API.
@@ -292,7 +292,7 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
   - *Expected*: `200 OK` with an empty data array (`[]`).
 - [ ] **Step 9.5**: Log in as User A and send a valid message:
   - `POST /api/groups/10/messages` with `{"content": "Welcome to Group 10!"}`
-  - *Expected*: `200 OK` (or `201 Created`). Returns message DTO with `messageId = 1`, `groupId: 10`, `senderName: "User A"`, `senderRole: "OWNER"`, `content: "Welcome to Group 10!"`, `status: "ACTIVE"`, `isMine: true`, and `createdAt` as an ISO datetime string.
+  - *Expected*: `200 OK`. Returns message DTO with `messageId = 1`, `groupId: 10`, `senderName: "User A"`, `senderRole: "OWNER"`, `content: "Welcome to Group 10!"`, `status: "ACTIVE"`, `isMine: true`, and `createdAt` as an ISO datetime string.
 - [ ] **Step 9.6**: Log in as User B and open the Group `10` detail page.
   - *Expected*: UI loads successfully and fetches chat history. Shows User A's message with their name, role badge (`OWNER`), and locally formatted timestamp.
   - *Expected*: REST polling starts in the background every 5 seconds.

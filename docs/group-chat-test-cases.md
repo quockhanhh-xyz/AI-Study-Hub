@@ -41,7 +41,7 @@ This document defines the backend contract and frontend verification test cases 
 | TC-GC-024 | Active Member | `{"content": ""}` | 400 Bad Request | Empty message content is rejected. |
 | TC-GC-025 | Active Member | `{"content": "     "}` | 400 Bad Request | Blank messages (spaces only) are rejected. |
 | TC-GC-026 | Active Member | `{"content": "[1001 characters]"}` | 400 Bad Request | Messages exceeding 1000 characters are rejected. |
-| TC-GC-027 | Active Member | `{"content": "<script>alert('xss')</script>"}` | 200 OK | Content stored safely. Sanitized or strictly escaped on return. |
+| TC-GC-027 | Active Member | `{"content": "<script>alert('xss')</script>"}` | 200 OK | Content is stored as plain text. Frontend renders with textContent, so script is not executed. |
 | TC-GC-028 | Active Member | Deleted Group `11` | 404 Not Found | Message is not saved; returns group not found/deleted. |
 
 ---
