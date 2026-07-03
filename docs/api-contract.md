@@ -3260,7 +3260,7 @@ Retrieve current user's AI usage statistics and remaining quota for today.
 # 15. Payment and Account Tier MVP APIs
 
 > [!NOTE]
-> Step 11 implements a **Mock Payment / Account Tier MVP** flow for demonstration purposes. 
+> Step 11 implements a **Mock Payment / Account Tier MVP** flow for demonstration purposes.
 > - No real payment gateway integration is performed.
 > - No real money is processed.
 > - No auto-renewal, subscription cycles, or automatic expiration logic is implemented in this step.
@@ -3544,5 +3544,3 @@ Retrieve the current user's payment history.
 | **404 Not Found** | Payment order does not exist OR does not belong to the current user |
 | **409 Conflict** | User is already `PREMIUM` (on payment creation or confirmation) OR payment order is not in `PENDING` status (double confirmation / double-click prevention) |
 | **500 Internal Server Error** | Unexpected backend failures |
-
-

@@ -560,7 +560,7 @@ INDEX idx_ai_usage_logs_user_status (user_id, status, counted_as_question)
 
 ## 17. Table `payment_orders`
 
-Stores user payment order records for plan subscriptions. 
+Stores user payment order records for plan subscriptions.
 
 | Column Name | Data Type | Constraints | Description |
 |:---|:---|:---|:---|
@@ -595,5 +595,3 @@ INDEX idx_payment_orders_user (user_id)
 INDEX idx_payment_orders_status (status)
 INDEX idx_payment_orders_user_created_at (user_id, created_at)
 ```
-
-

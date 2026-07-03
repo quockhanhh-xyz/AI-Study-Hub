@@ -268,5 +268,3 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
 ### 8.7. Retrieve Payment History
 - [ ] **Step 8.16**: Retrieve payment history (`GET /api/payments/my`).
   - *Expected*: `200 OK`. Returns list containing orders `15`, `16`, and `17` with their respective final statuses, sorted by `createdAt` descending (newest first).
-
-
