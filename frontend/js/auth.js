@@ -282,3 +282,29 @@
   });
 
 })();
+
+// ─────────────────────────────────────────────────────────────
+  // AUTH REFRESH HELPER
+  // ─────────────────────────────────────────────────────────────
+
+  /**
+   * Re-fetches the current user from backend and updates localStorage.
+   * Call this after payment success to sync the updated tier (FREE → PREMIUM).
+   * @returns {Promise<Object|null>} Updated user data or null on failure.
+   */
+  async function refreshCurrentUser() {
+    try {
+      const result = await get("/api/auth/me", { skipUnauthorizedRedirect: true });
+      if (result && result.data) {
+        localStorage.setItem("currentUser", JSON.stringify(result.data));
+        return result.data;
+      }
+      return null;
+    } catch (error) {
+      console.warn("Failed to refresh current user session:", error);
+      return null;
+    }
+  }
+
+  // Expose globally so payment flow and other page scripts can call it
+  window.refreshCurrentUser = refreshCurrentUser;
