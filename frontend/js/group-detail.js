@@ -613,33 +613,34 @@ document.addEventListener("DOMContentLoaded", async function () {
     chatSendBtn.disabled = isSendingMessage || !hasContent;
   }
 
-  async function loadChatMessages() {
+  // Tracks whether we're still waiting for the first poll to complete, so we know
+  // when to hide the loader and force-scroll to the bottom for the initial render.
+  let isInitialChatLoad = true;
+
+  function loadChatMessages() {
     chatLoader.style.display = "flex";
     chatMessageList.style.display = "none";
     chatEmpty.style.display = "none";
     hideError(chatError);
+    isInitialChatLoad = true;
 
-    try {
-      const result = await getGroupMessages(groupId, 50);
-      chatMessages = Array.isArray(result.data) ? result.data : [];
-      chatLoader.style.display = "none";
-      renderChatMessages();
-
-      // Only start polling after a successful initial load
-      startGroupChatPolling(groupId, handleIncomingMessages, handlePollingError);
-    } catch (error) {
-      chatLoader.style.display = "none";
-      showError(chatError, getGroupChatErrorMessage(error));
-      // Do not start polling if user has no permission or group not found
-    }
+    // startGroupChatPolling() fires an immediate poll before starting the 5s interval —
+    // that immediate poll IS the initial load, so no separate getGroupMessages() call is needed.
+    startGroupChatPolling(groupId, handleIncomingMessages, handlePollingError);
   }
 
   function handleIncomingMessages(incomingMessages) {
+    const wasInitialLoad = isInitialChatLoad;
+    isInitialChatLoad = false;
+    chatLoader.style.display = "none";
+
     chatMessages = mergeMessagesById(chatMessages, incomingMessages);
-    renderChatMessages();
+    renderChatMessages({ forceScroll: wasInitialLoad });
   }
 
   function handlePollingError(error) {
+    isInitialChatLoad = false;
+    chatLoader.style.display = "none";
     showError(chatError, getGroupChatErrorMessage(error));
 
     // Lost access mid-session (removed/left member, group deleted) — lock the composer.
