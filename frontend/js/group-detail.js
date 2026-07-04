@@ -544,7 +544,16 @@ document.addEventListener("DOMContentLoaded", async function () {
   // GROUP CHAT (Step 12)
   // ─────────────────────────────────────────────────────────────
 
-  function renderChatMessages() {
+  function isChatNearBottom(threshold = 80) {
+    return chatMessageList.scrollHeight - chatMessageList.scrollTop - chatMessageList.clientHeight < threshold;
+  }
+
+  function renderChatMessages(options) {
+    const opts = options || {};
+    // Capture scroll position BEFORE wiping the list, so polling doesn't yank
+    // the view away while the user is reading older messages.
+    const shouldScroll = opts.forceScroll || isChatNearBottom();
+
     chatMessageList.innerHTML = "";
 
     if (chatMessages.length === 0) {
@@ -560,8 +569,13 @@ document.addEventListener("DOMContentLoaded", async function () {
       chatMessageList.appendChild(createChatMessageRow(msg));
     });
 
-    // Auto scroll to newest message
-    chatMessageList.scrollTop = chatMessageList.scrollHeight;
+    if (shouldScroll) {
+      if (opts.smooth) {
+        chatMessageList.scrollTo({ top: chatMessageList.scrollHeight, behavior: "smooth" });
+      } else {
+        chatMessageList.scrollTop = chatMessageList.scrollHeight;
+      }
+    }
   }
 
   function createChatMessageRow(msg) {
@@ -641,7 +655,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       const result = await sendGroupMessage(groupId, content);
       chatMessages = mergeMessagesById(chatMessages, [result.data]);
-      renderChatMessages();
+      renderChatMessages({ forceScroll: true, smooth: true });
       chatInput.value = "";
     } catch (error) {
       showError(chatError, getGroupChatErrorMessage(error));
