@@ -44,6 +44,15 @@ document.addEventListener("DOMContentLoaded", async function () {
   const folderGrid = document.getElementById("folderGrid");
   const folderEmpty = document.getElementById("folderEmpty");
 
+  // Group Detail Tabs (Members / Documents / Folders / Chat)
+  const groupTabButtons = document.querySelectorAll("#groupTabHeader .tab-btn[data-tab]");
+  const groupTabPanels = {
+    members: document.getElementById("groupTabPanelMembers"),
+    documents: document.getElementById("groupTabPanelDocuments"),
+    folders: document.getElementById("groupTabPanelFolders"),
+    chat: document.getElementById("groupTabPanelChat"),
+  };
+  let isChatTabInitialized = false;
   const chatLoader = document.getElementById("chatLoader");
   const chatError = document.getElementById("chatError");
   const chatEmpty = document.getElementById("chatEmpty");
@@ -539,6 +548,27 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  function switchGroupTab(tabName) {
+    groupTabButtons.forEach(function (btn) {
+      btn.classList.toggle("active", btn.dataset.tab === tabName);
+    });
+    Object.keys(groupTabPanels).forEach(function (key) {
+      groupTabPanels[key].style.display = key === tabName ? "block" : "none";
+    });
+
+    // Contract requirement: only load chat history when the Chat tab is opened.
+    if (tabName === "chat" && !isChatTabInitialized) {
+      isChatTabInitialized = true;
+      loadChatMessages();
+    }
+  }
+
+  groupTabButtons.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      switchGroupTab(btn.dataset.tab);
+    });
+  });
+
   // Load group detail (info + members)
   // ─────────────────────────────────────────────────────────────
   // GROUP CHAT (Step 12)
@@ -822,5 +852,4 @@ document.addEventListener("DOMContentLoaded", async function () {
   await loadGroupDetail();
   await loadGroupDocuments();
   await loadGroupFolders();
-  await loadChatMessages();
 });
