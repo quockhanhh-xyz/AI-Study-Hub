@@ -641,6 +641,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   function handlePollingError(error) {
     showError(chatError, getGroupChatErrorMessage(error));
+
+    // Lost access mid-session (removed/left member, group deleted) — lock the composer.
+    if (error.status === 403 || error.status === 404) {
+      chatInput.disabled = true;
+      chatSendBtn.disabled = true;
+    }
   }
 
   async function handleSendMessage() {
