@@ -41,7 +41,8 @@ public class GroupChatService {
 
         List<GroupChatMessage> messages;
         if (afterMessageId != null) {
-            messages = groupChatMessageRepository.findActiveMessagesAfter(group, afterMessageId);
+            messages = groupChatMessageRepository.findActiveMessagesAfter(
+                group, afterMessageId, PageRequest.of(0, effectiveLimit));
         } else {
             List<GroupChatMessage> latest = groupChatMessageRepository
                     .findLatestActiveMessages(group, PageRequest.of(0, effectiveLimit));
@@ -75,12 +76,13 @@ public class GroupChatService {
 
         LocalDateTime now = LocalDateTime.now();
         GroupChatMessage message = GroupChatMessage.builder()
-                .group(group)
-                .sender(currentUser)
-                .content(trimmedContent)
-                .status("ACTIVE")
-                .updatedAt(now)
-                .build();
+            .group(group)
+            .sender(currentUser)
+            .content(trimmedContent)
+            .status("ACTIVE")
+            .createdAt(now)
+            .updatedAt(now)
+            .build();
 
         groupChatMessageRepository.save(message);
         return toResponse(message, currentUser.getUserId());
