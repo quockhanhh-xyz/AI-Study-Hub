@@ -102,8 +102,11 @@ function startGroupChatPolling(groupId, onMessages, onError) {
             if (typeof callback === "function") {
                 callback(messages);
             }
-        } catch (error) {
-            console.warn(`Group chat polling error for group #${groupId}:`, error);
+         } catch (error) {
+      if (error.status === 403 || error.status === 404) {
+        stopGroupChatPolling();
+      }
+      onError?.(error);
         } finally {
             isRequestInFlight = false;
         }
