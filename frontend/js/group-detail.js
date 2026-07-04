@@ -44,6 +44,26 @@ document.addEventListener("DOMContentLoaded", async function () {
   const folderGrid = document.getElementById("folderGrid");
   const folderEmpty = document.getElementById("folderEmpty");
 
+  // Group Detail Tabs (Members / Documents / Folders / Chat)
+  const groupTabButtons = document.querySelectorAll("#groupTabHeader .tab-btn[data-tab]");
+  const groupTabPanels = {
+    members: document.getElementById("groupTabPanelMembers"),
+    documents: document.getElementById("groupTabPanelDocuments"),
+    folders: document.getElementById("groupTabPanelFolders"),
+    chat: document.getElementById("groupTabPanelChat"),
+  };
+  let isChatTabInitialized = false;
+  const chatLoader = document.getElementById("chatLoader");
+  const chatError = document.getElementById("chatError");
+  const chatEmpty = document.getElementById("chatEmpty");
+  const chatMessageList = document.getElementById("chatMessageList");
+  const chatInput = document.getElementById("chatInput");
+  const chatSendBtn = document.getElementById("chatSendBtn");
+
+  let chatMessages = [];
+  let isSendingMessage = false;
+  let chatAccessBlocked = false;
+
   // Edit modal
   const editModal = document.getElementById("editModal");
   const editGroupName = document.getElementById("editGroupName");
@@ -161,7 +181,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       groupInviteCode.title = "Click to copy invite code";
       groupInviteCode.tabIndex = 0;
 
-      groupInviteCode.onclick = function() {
+      groupInviteCode.onclick = function () {
         navigator.clipboard.writeText(group.inviteCode)
           .then(() => {
             showToast("Invitation code copied to clipboard!", "success");
@@ -172,7 +192,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           });
       };
 
-      groupInviteCode.onkeydown = function(e) {
+      groupInviteCode.onkeydown = function (e) {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           navigator.clipboard.writeText(group.inviteCode)
@@ -529,7 +549,180 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  function switchGroupTab(tabName) {
+    groupTabButtons.forEach(function (btn) {
+      btn.classList.toggle("active", btn.dataset.tab === tabName);
+    });
+    Object.keys(groupTabPanels).forEach(function (key) {
+      groupTabPanels[key].style.display = key === tabName ? "block" : "none";
+    });
+
+    // Contract requirement: only load chat history when the Chat tab is opened.
+    if (tabName === "chat" && !isChatTabInitialized) {
+      isChatTabInitialized = true;
+      loadChatMessages();
+    }
+  }
+
+  groupTabButtons.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      switchGroupTab(btn.dataset.tab);
+    });
+  });
+
   // Load group detail (info + members)
+  // ─────────────────────────────────────────────────────────────
+  // GROUP CHAT (Step 12)
+  // ─────────────────────────────────────────────────────────────
+
+  function isChatNearBottom(threshold = 80) {
+    return chatMessageList.scrollHeight - chatMessageList.scrollTop - chatMessageList.clientHeight < threshold;
+  }
+
+  function renderChatMessages(options) {
+    const opts = options || {};
+    // Capture scroll position BEFORE wiping the list, so polling doesn't yank
+    // the view away while the user is reading older messages.
+    const shouldScroll = opts.forceScroll || isChatNearBottom();
+
+    chatMessageList.innerHTML = "";
+
+    if (chatMessages.length === 0) {
+      chatEmpty.style.display = "flex";
+      chatMessageList.style.display = "none";
+      return;
+    }
+
+    chatEmpty.style.display = "none";
+    chatMessageList.style.display = "flex";
+
+    chatMessages.forEach(function (msg) {
+      chatMessageList.appendChild(createChatMessageRow(msg));
+    });
+
+    if (shouldScroll) {
+      if (opts.smooth) {
+        chatMessageList.scrollTo({ top: chatMessageList.scrollHeight, behavior: "smooth" });
+      } else {
+        chatMessageList.scrollTop = chatMessageList.scrollHeight;
+      }
+    }
+  }
+
+  function createChatMessageRow(msg) {
+    const row = document.createElement("div");
+    row.className = "chat-message-row " + (msg.isMine ? "chat-message-mine" : "chat-message-other");
+    row.dataset.messageId = msg.messageId;
+
+    const meta = document.createElement("div");
+    meta.className = "chat-message-meta";
+
+    const senderName = document.createElement("span");
+    senderName.className = "chat-message-sender";
+    safeTextRender(senderName, msg.senderName || "Unknown");
+
+    const roleBadge = document.createElement("span");
+    roleBadge.className = msg.senderRole === "OWNER" ? "badge-role-owner" : "badge-role-member";
+    safeTextRender(roleBadge, msg.senderRole || "MEMBER");
+
+    const timeEl = document.createElement("span");
+    timeEl.className = "chat-message-time";
+    safeTextRender(timeEl, formatMessageTime(msg.createdAt));
+
+    meta.append(senderName, roleBadge, timeEl);
+
+    const bubble = document.createElement("div");
+    bubble.className = "chat-message-bubble";
+    safeTextRender(bubble, msg.content);
+
+    row.append(meta, bubble);
+    return row;
+  }
+
+  function updateSendButtonState() {
+    const hasContent = chatInput.value.trim().length > 0;
+    chatInput.disabled = chatAccessBlocked;
+    chatSendBtn.disabled = chatAccessBlocked || isSendingMessage || !hasContent;
+  }
+
+  // Tracks whether we're still waiting for the first poll to complete, so we know
+  // when to hide the loader and force-scroll to the bottom for the initial render.
+  let isInitialChatLoad = true;
+
+  function loadChatMessages() {
+    chatLoader.style.display = "flex";
+    chatMessageList.style.display = "none";
+    chatEmpty.style.display = "none";
+    hideError(chatError);
+    isInitialChatLoad = true;
+
+    // startGroupChatPolling() fires an immediate poll before starting the 5s interval —
+    // that immediate poll IS the initial load, so no separate getGroupMessages() call is needed.
+    startGroupChatPolling(groupId, handleIncomingMessages, handlePollingError);
+  }
+
+  function handleIncomingMessages(incomingMessages) {
+    const wasInitialLoad = isInitialChatLoad;
+    isInitialChatLoad = false;
+    chatLoader.style.display = "none";
+
+    chatMessages = mergeMessagesById(chatMessages, incomingMessages);
+    renderChatMessages({ forceScroll: wasInitialLoad });
+  }
+
+  function handlePollingError(error) {
+    isInitialChatLoad = false;
+    chatLoader.style.display = "none";
+    showError(chatError, getGroupChatErrorMessage(error));
+
+    // Lost access mid-session (removed/left member, group deleted) — lock the composer permanently.
+    if (error.status === 403 || error.status === 404) {
+      chatAccessBlocked = true;
+      updateSendButtonState();
+    }
+  }
+
+  async function handleSendMessage() {
+    if (chatAccessBlocked) return;
+
+    const content = chatInput.value.trim();
+    if (!content || isSendingMessage) return;
+
+    isSendingMessage = true;
+    hideError(chatError);
+    updateSendButtonState();
+
+    try {
+      const result = await sendGroupMessage(groupId, content);
+      chatMessages = mergeMessagesById(chatMessages, [result.data]);
+      renderChatMessages({ forceScroll: true, smooth: true });
+      chatInput.value = "";
+    } catch (error) {
+      showError(chatError, getGroupChatErrorMessage(error));
+
+      // The send itself revealed the user lost access — lock the composer permanently.
+      if (error.status === 403 || error.status === 404) {
+        chatAccessBlocked = true;
+      }
+    } finally {
+      isSendingMessage = false;
+      updateSendButtonState();
+    }
+  }
+
+  chatSendBtn.addEventListener("click", handleSendMessage);
+
+  chatInput.addEventListener("input", updateSendButtonState);
+
+  chatInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  });
+
+  // Initial button state
+  updateSendButtonState();
 
   async function loadGroupDetail() {
     detailLoader.style.display = "flex";
