@@ -62,6 +62,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   let chatMessages = [];
   let isSendingMessage = false;
+  let chatAccessBlocked = false;
 
   // Edit modal
   const editModal = document.getElementById("editModal");
@@ -640,7 +641,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   function updateSendButtonState() {
     const hasContent = chatInput.value.trim().length > 0;
-    chatSendBtn.disabled = isSendingMessage || !hasContent;
+    chatInput.disabled = chatAccessBlocked;
+    chatSendBtn.disabled = chatAccessBlocked || isSendingMessage || !hasContent;
   }
 
   // Tracks whether we're still waiting for the first poll to complete, so we know
@@ -673,21 +675,22 @@ document.addEventListener("DOMContentLoaded", async function () {
     chatLoader.style.display = "none";
     showError(chatError, getGroupChatErrorMessage(error));
 
-    // Lost access mid-session (removed/left member, group deleted) — lock the composer.
+    // Lost access mid-session (removed/left member, group deleted) — lock the composer permanently.
     if (error.status === 403 || error.status === 404) {
-      chatInput.disabled = true;
-      chatSendBtn.disabled = true;
+      chatAccessBlocked = true;
+      updateSendButtonState();
     }
   }
 
   async function handleSendMessage() {
+    if (chatAccessBlocked) return;
+
     const content = chatInput.value.trim();
     if (!content || isSendingMessage) return;
 
     isSendingMessage = true;
-    chatSendBtn.disabled = true;
-    chatInput.disabled = true;
     hideError(chatError);
+    updateSendButtonState();
 
     try {
       const result = await sendGroupMessage(groupId, content);
@@ -696,9 +699,13 @@ document.addEventListener("DOMContentLoaded", async function () {
       chatInput.value = "";
     } catch (error) {
       showError(chatError, getGroupChatErrorMessage(error));
+
+      // The send itself revealed the user lost access — lock the composer permanently.
+      if (error.status === 403 || error.status === 404) {
+        chatAccessBlocked = true;
+      }
     } finally {
       isSendingMessage = false;
-      chatInput.disabled = false;
       updateSendButtonState();
     }
   }
