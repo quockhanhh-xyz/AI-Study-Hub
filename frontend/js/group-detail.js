@@ -635,6 +635,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     isSendingMessage = true;
     chatSendBtn.disabled = true;
+    chatInput.disabled = true;
     hideError(chatError);
 
     try {
@@ -646,6 +647,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       showError(chatError, getGroupChatErrorMessage(error));
     } finally {
       isSendingMessage = false;
+      chatInput.disabled = false;
       updateSendButtonState();
     }
   }
