@@ -27,8 +27,9 @@ public interface GroupChatMessageRepository extends JpaRepository<GroupChatMessa
      * Get ACTIVE messages after a specific messageId (for incremental polling).
      */
     @Query("SELECT m FROM GroupChatMessage m WHERE m.group = :group AND m.status = 'ACTIVE' " +
-           "AND m.messageId > :afterMessageId ORDER BY m.createdAt ASC")
+        "AND m.messageId > :afterMessageId ORDER BY m.createdAt ASC")
     List<GroupChatMessage> findActiveMessagesAfter(
-            @Param("group") StudyGroup group,
-            @Param("afterMessageId") Long afterMessageId);
+        @Param("group") StudyGroup group,
+        @Param("afterMessageId") Long afterMessageId,
+        Pageable pageable);
 }
