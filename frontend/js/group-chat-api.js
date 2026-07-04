@@ -110,7 +110,7 @@ function startGroupChatPolling(groupId, callback) {
     };
 
     executePoll();
-    _groupChatPollingSession = setInterval(executePoll, 3000);
+    _groupChatPollingSession = setInterval(executePoll, 5000);
 }
 
 /**
