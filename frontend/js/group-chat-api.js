@@ -85,7 +85,7 @@ let _groupChatPollingSession = null;
  * @param {string|number} groupId - The target group identifier.
  * @param {Function} callback - Called with the latest messages array on each successful poll.
  */
-function startGroupChatPolling(groupId, callback) {
+function startGroupChatPolling(groupId, onMessages, onError) {
     if (!groupId) throw new Error("Group ID is required for polling.");
 
     // Stop any existing session before starting a new one
