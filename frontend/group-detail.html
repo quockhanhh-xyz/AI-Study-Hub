@@ -8,110 +8,112 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link rel="stylesheet" href="css/style.css" />
     <style>
+        /* Anchor absolute buttons inside the cards correctly */
+        .document-card,
+        .folder-card {
+            position: relative !important;
+        }
 
+        /* Circular contributor initials avatar */
+        .contributor-avatar {
+            width: 36px !important;
+            height: 36px !important;
+            border-radius: 50% !important;
+            background-color: var(--primary-light) !important;
+            color: var(--primary) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-weight: 700 !important;
+            font-size: 14px !important;
+            border: 2px solid var(--primary-border) !important;
+            flex-shrink: 0 !important;
+        }
 
-      /* Anchor absolute buttons inside the cards correctly */
-      .document-card, .folder-card {
-        position: relative !important;
-      }
+        /* Section spacing for polished layout structure */
+        .dashboard-panel {
+            margin-bottom: 42px !important;
+        }
 
-      /* Circular contributor initials avatar */
-      .contributor-avatar {
-        width: 36px !important;
-        height: 36px !important;
-        border-radius: 50% !important;
-        background-color: var(--primary-light) !important;
-        color: var(--primary) !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        font-weight: 700 !important;
-        font-size: 14px !important;
-        border: 2px solid var(--primary-border) !important;
-        flex-shrink: 0 !important;
-      }
+        .section-header {
+            margin-bottom: 16px !important;
+        }
 
-      /* Section spacing for polished layout structure */
-      .dashboard-panel {
-        margin-bottom: 42px !important;
-      }
-      .section-header {
-        margin-bottom: 16px !important;
-      }
+        /* Polished Empty States: Loose dashed container layout */
+        .empty-state {
+            border: 2px dashed var(--border) !important;
+            border-radius: 20px !important;
+            padding: 60px 40px !important;
+            text-align: center !important;
+            color: var(--text-muted) !important;
+            background: #ffffff !important;
+            box-shadow: 0 10px 30px rgba(23, 32, 51, 0.03) !important;
+            display: flex;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            max-width: 640px !important;
+            margin: 40px auto !important;
+        }
 
-      /* Polished Empty States: Loose dashed container layout */
-      .empty-state {
-        border: 2px dashed var(--border) !important;
-        border-radius: 20px !important;
-        padding: 60px 40px !important;
-        text-align: center !important;
-        color: var(--text-muted) !important;
-        background: #ffffff !important;
-        box-shadow: 0 10px 30px rgba(23, 32, 51, 0.03) !important;
-        display: flex;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        max-width: 640px !important;
-        margin: 40px auto !important;
-      }
-      
-      /* Circular backdrop around the empty-state icon */
-      .empty-state-icon {
-        width: 80px !important;
-        height: 80px !important;
-        border-radius: 50% !important;
-        background-color: var(--primary-light) !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        margin-bottom: 20px !important;
-        color: var(--primary) !important;
-      }
-      .empty-state-icon svg {
-        width: 36px !important;
-        height: 36px !important;
-      }
-      
-      /* Correct button widths to not stretch */
-      .empty-actions .btn {
-        width: auto !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        white-space: nowrap !important;
-        padding: 10px 20px !important;
-      }
-      
-      /* Revoke Inline small red text button on cards */
-      .btn-revoke-inline {
-        position: absolute !important;
-        top: 12px !important;
-        right: 12px !important;
-        width: auto !important;
-        height: auto !important;
-        background: transparent !important;
-        border: none !important;
-        color: var(--danger) !important;
-        font-size: 12px !important;
-        font-weight: 600 !important;
-        padding: 4px 8px !important;
-        cursor: pointer !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 4px !important;
-        border-radius: 6px !important;
-        transition: all 0.2s ease !important;
-        font-family: inherit !important;
-      }
-      .btn-revoke-inline:hover {
-        background-color: var(--danger-light) !important;
-      }
-      
-      /* Prevent long card title overlap with revoke button */
-      .document-card-header h3 {
-        padding-right: 64px !important;
-      }
+        /* Circular backdrop around the empty-state icon */
+        .empty-state-icon {
+            width: 80px !important;
+            height: 80px !important;
+            border-radius: 50% !important;
+            background-color: var(--primary-light) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin-bottom: 20px !important;
+            color: var(--primary) !important;
+        }
+
+        .empty-state-icon svg {
+            width: 36px !important;
+            height: 36px !important;
+        }
+
+        /* Correct button widths to not stretch */
+        .empty-actions .btn {
+            width: auto !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            white-space: nowrap !important;
+            padding: 10px 20px !important;
+        }
+
+        /* Revoke Inline small red text button on cards */
+        .btn-revoke-inline {
+            position: absolute !important;
+            top: 12px !important;
+            right: 12px !important;
+            width: auto !important;
+            height: auto !important;
+            background: transparent !important;
+            border: none !important;
+            color: var(--danger) !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            padding: 4px 8px !important;
+            cursor: pointer !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            border-radius: 6px !important;
+            transition: all 0.2s ease !important;
+            font-family: inherit !important;
+        }
+
+        .btn-revoke-inline:hover {
+            background-color: var(--danger-light) !important;
+        }
+
+        /* Prevent long card title overlap with revoke button */
+        .document-card-header h3 {
+            padding-right: 64px !important;
+        }
     </style>
 </head>
 
@@ -132,18 +134,23 @@
             <div id="groupDetailContent" style="display:none;">
 
                 <!-- Header Actions Section positioned on the top-right -->
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; max-width: none; margin-top: 8px; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; max-width: none; margin-top: 8px; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
                     <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
                         <!-- Text link back button above breadcrumb/title -->
                         <a href="groups.html" class="btn-back">
                             ← Back to Study Groups
                         </a>
-                        <nav class="breadcrumb" aria-label="Group navigation" style="margin: 0; font-size: 13px; color: var(--muted); display: block;">
+                        <nav class="breadcrumb" aria-label="Group navigation"
+                            style="margin: 0; font-size: 13px; color: var(--muted); display: block;">
                             <a href="groups.html" class="breadcrumb-link" style="color: var(--muted);">Study Groups</a>
                             <span class="breadcrumb-sep"> > </span>
-                            <span id="groupNameHeader" class="breadcrumb-current" style="color: var(--text-main); font-weight: 600;">Group</span>
+                            <span id="groupNameHeader" class="breadcrumb-current"
+                                style="color: var(--text-main); font-weight: 600;">Group</span>
                         </nav>
-                        <h1 id="groupNameTitleHeader" style="margin: 4px 0 0 0; font-size: 28px; font-weight: 800; color: var(--text);">Group Name</h1>
+                        <h1 id="groupNameTitleHeader"
+                            style="margin: 4px 0 0 0; font-size: 28px; font-weight: 800; color: var(--text);">Group Name
+                        </h1>
                     </div>
                     <div class="header-actions" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
                         <button type="button" id="leaveGroupBtn" class="btn btn-secondary"
@@ -169,12 +176,18 @@
                 </div>
 
                 <!-- Group Metadata Card (no wrapper cards, direct display) -->
-                <div class="card dashboard-panel" style="position: relative; margin-bottom: 24px; padding: 20px 24px; max-width: none; width: 100%;">
+                <div class="card dashboard-panel"
+                    style="position: relative; margin-bottom: 24px; padding: 20px 24px; max-width: none; width: 100%;">
                     <div>
                         <h2 class="section-title" id="groupNameTitle" style="display: none;">Group Name</h2>
-                        <p id="groupDescription" style="margin: 0 40px 8px 0; font-size: 15px; color: var(--text-main); font-weight: 500;"></p>
-                        <p class="helper-text" style="margin: 0; font-size: 13px; color: var(--muted); display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
-                            Invite code: <strong id="groupInviteCode" tabindex="0" role="button" aria-label="Group invite code, press enter or space to copy" style="color: var(--primary); text-decoration: underline; cursor: pointer;">-</strong>
+                        <p id="groupDescription"
+                            style="margin: 0 40px 8px 0; font-size: 15px; color: var(--text-main); font-weight: 500;">
+                        </p>
+                        <p class="helper-text"
+                            style="margin: 0; font-size: 13px; color: var(--muted); display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
+                            Invite code: <strong id="groupInviteCode" tabindex="0" role="button"
+                                aria-label="Group invite code, press enter or space to copy"
+                                style="color: var(--primary); text-decoration: underline; cursor: pointer;">-</strong>
                             <span style="color: var(--border); margin: 0 4px;">•</span>
                             Your role: <span id="groupMyRole" class="badge-role-member">-</span>
                             <span id="groupCounts" style="color: var(--text-muted);"></span>
@@ -184,12 +197,11 @@
                     <button type="button" id="editGroupBtn" class="btn btn-secondary"
                         style="display:none; position: absolute; top: 16px; right: 16px; width: 32px !important; height: 32px !important; padding: 0 !important; align-items: center; justify-content: center; border-radius: 50%;">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"
-                            id="Pencil--Streamline-Core" height="14" width="14" aria-hidden="true"
-                            focusable="false" style="margin: 0;">
+                            id="Pencil--Streamline-Core" height="14" width="14" aria-hidden="true" focusable="false"
+                            style="margin: 0;">
                             <desc>Pencil Streamline Icon: https://streamlinehq.com</desc>
                             <g id="pencil--change-edit-modify-pencil-write-writing">
-                                <path id="Vector" stroke="currentColor" stroke-linecap="round"
-                                    stroke-linejoin="round"
+                                <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                                     d="M5 12.24 0.5 13.5l1.26 -4.49998L10 0.800021c0.0931 -0.095246 0.2044 -0.170925 0.3271 -0.222592 0.1228 -0.051668 0.2547 -0.078283 0.3879 -0.078283 0.1332 0 0.2651 0.026615 0.3879 0.078283 0.1227 0.051667 0.234 0.127346 0.3271 0.222592L13.2 2.58002c0.0937 0.09296 0.1681 0.20357 0.2189 0.32542 0.0508 0.12186 0.0769 0.25257 0.0769 0.38458 0 0.13201 -0.0261 0.26272 -0.0769 0.38458 -0.0508 0.12186 -0.1252 0.23246 -0.2189 0.32542L5 12.24Z"
                                     stroke-width="1.2"></path>
                             </g>
@@ -201,8 +213,10 @@
                 <div class="dashboard-panel" style="margin-bottom: 32px;">
                     <div class="section-header" style="margin-bottom: 12px;">
                         <div>
-                            <h2 class="section-title" id="memberSectionTitle" style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Members</h2>
-                            <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">People who belong to this study group.</p>
+                            <h2 class="section-title" id="memberSectionTitle"
+                                style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Members</h2>
+                            <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">People who belong to
+                                this study group.</p>
                         </div>
                     </div>
                     <div id="memberList" class="member-list"></div>
@@ -212,12 +226,16 @@
                 <div class="dashboard-panel" style="margin-bottom: 32px;">
                     <div class="section-header" style="margin-bottom: 12px;">
                         <div>
-                            <h2 class="section-title" id="docSectionTitle" style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Shared Documents</h2>
-                            <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Documents shared into this group by its members.</p>
+                            <h2 class="section-title" id="docSectionTitle"
+                                style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Shared
+                                Documents</h2>
+                            <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Documents shared into
+                                this group by its members.</p>
                         </div>
                     </div>
 
-                    <div id="docLoader" class="document-state" style="display: none; justify-content: center; padding: 24px;">
+                    <div id="docLoader" class="document-state"
+                        style="display: none; justify-content: center; padding: 24px;">
                         <span>Loading documents...</span>
                     </div>
 
@@ -227,12 +245,18 @@
 
                     <div id="docEmpty" class="empty-state" style="display: none;">
                         <div class="empty-state-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="New-File--Streamline-Core" height="24" width="24" aria-hidden="true" focusable="false">
-                              <desc>New File Streamline Icon: https://streamlinehq.com</desc>
-                              <g id="new-file--empty-common-file-content">
-                                <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12.5 12.5c0 0.2652 -0.1054 0.5196 -0.2929 0.7071s-0.4419 0.2929 -0.7071 0.2929h-9c-0.26522 0 -0.51957 -0.1054 -0.70711 -0.2929C1.60536 13.0196 1.5 12.7652 1.5 12.5v-11c0 -0.26522 0.10536 -0.51957 0.29289 -0.707107C1.98043 0.605357 2.23478 0.5 2.5 0.5H9L12.5 4v8.5Z" stroke-width="1"></path>
-                                <path id="Vector 2529" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8.5 0.5v4h4" stroke-width="1"></path>
-                              </g>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"
+                                id="New-File--Streamline-Core" height="24" width="24" aria-hidden="true"
+                                focusable="false">
+                                <desc>New File Streamline Icon: https://streamlinehq.com</desc>
+                                <g id="new-file--empty-common-file-content">
+                                    <path id="Vector" stroke="currentColor" stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M12.5 12.5c0 0.2652 -0.1054 0.5196 -0.2929 0.7071s-0.4419 0.2929 -0.7071 0.2929h-9c-0.26522 0 -0.51957 -0.1054 -0.70711 -0.2929C1.60536 13.0196 1.5 12.7652 1.5 12.5v-11c0 -0.26522 0.10536 -0.51957 0.29289 -0.707107C1.98043 0.605357 2.23478 0.5 2.5 0.5H9L12.5 4v8.5Z"
+                                        stroke-width="1"></path>
+                                    <path id="Vector 2529" stroke="currentColor" stroke-linecap="round"
+                                        stroke-linejoin="round" d="M8.5 0.5v4h4" stroke-width="1"></path>
+                                </g>
                             </svg>
                         </div>
                         <div class="empty-title">No documents shared yet</div>
@@ -244,12 +268,16 @@
                 <div class="dashboard-panel" style="margin-bottom: 32px;">
                     <div class="section-header" style="margin-bottom: 12px;">
                         <div>
-                            <h2 class="section-title" id="folderSectionTitle" style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Shared Folders</h2>
-                            <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Folders shared into this group by its members.</p>
+                            <h2 class="section-title" id="folderSectionTitle"
+                                style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Shared Folders
+                            </h2>
+                            <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Folders shared into this
+                                group by its members.</p>
                         </div>
                     </div>
 
-                    <div id="folderLoader" class="document-state" style="display: none; justify-content: center; padding: 24px;">
+                    <div id="folderLoader" class="document-state"
+                        style="display: none; justify-content: center; padding: 24px;">
                         <span>Loading folders...</span>
                     </div>
 
@@ -259,30 +287,88 @@
 
                     <div id="folderEmpty" class="empty-state" style="display: none;">
                         <div class="empty-state-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="New-Folder--Streamline-Core" height="24" width="24" aria-hidden="true" focusable="false">
-                              <desc>New Folder Streamline Icon: https://streamlinehq.com</desc>
-                              <g id="new-folder--empty-folder">
-                                <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.2499V1.74994c0 -0.26522 0.105357 -0.51957 0.292893 -0.70711C0.98043 0.855293 1.23478 0.749936 1.5 0.749936h3.69c0.22843 -0.006655 0.45226 0.065133 0.63421 0.203414 0.18194 0.13828 0.31104 0.33471 0.36579 0.55659l0.31 1.24h6c0.2652 0 0.5196 0.10535 0.7071 0.29289 0.1875 0.18754 0.2929 0.70711v8.49996c0 0.2653 -0.1054 0.5196 -0.2929 0.7071 -0.1875 0.1876 -0.4419 0.2929 -0.7071 0.2929h-11c-0.26522 0 -0.51957 -0.1053 -0.707107 -0.2929C0.605357 12.7695 0.5 12.5152 0.5 12.2499Z" stroke-width="1"></path>
-                              </g>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"
+                                id="New-Folder--Streamline-Core" height="24" width="24" aria-hidden="true"
+                                focusable="false">
+                                <desc>New Folder Streamline Icon: https://streamlinehq.com</desc>
+                                <g id="new-folder--empty-folder">
+                                    <path id="Vector" stroke="currentColor" stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M0.5 12.2499V1.74994c0 -0.26522 0.105357 -0.51957 0.292893 -0.70711C0.98043 0.855293 1.23478 0.749936 1.5 0.749936h3.69c0.22843 -0.006655 0.45226 0.065133 0.63421 0.203414 0.18194 0.13828 0.31104 0.33471 0.36579 0.55659l0.31 1.24h6c0.2652 0 0.5196 0.10535 0.7071 0.29289 0.1875 0.18754 0.2929 0.70711v8.49996c0 0.2653 -0.1054 0.5196 -0.2929 0.7071 -0.1875 0.1876 -0.4419 0.2929 -0.7071 0.2929h-11c-0.26522 0 -0.51957 -0.1053 -0.707107 -0.2929C0.605357 12.7695 0.5 12.5152 0.5 12.2499Z"
+                                        stroke-width="1"></path>
+                                </g>
                             </svg>
                         </div>
                         <div class="empty-title">No folders shared yet</div>
                         <p>Members can share their own folders into this group from the Folders page.</p>
                         <div class="empty-actions" style="margin-top: 12px; display: flex; justify-content: center;">
-                            <a href="folders.html" class="btn btn-secondary" style="text-decoration: none;">Share a Folder</a>
+                            <a href="folders.html" class="btn btn-secondary" style="text-decoration: none;">Share a
+                                Folder</a>
                         </div>
                     </div>
                 </div>
 
-                <!-- Danger Zone Section at the bottom -->
-                <div id="dangerZoneSection" class="card dashboard-panel" style="display: none; border-color: var(--danger); margin-top: 32px; background: rgba(220, 38, 38, 0.02); max-width: none; width: 100%;">
-                    <div class="section-header" style="margin-bottom: 0; display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 16px;">
+                <!-- Group Chat Section (Step 12) -->
+                <div class="dashboard-panel" style="margin-bottom: 32px;">
+                    <div class="section-header" style="margin-bottom: 12px;">
                         <div>
-                            <h2 class="section-title" style="color: var(--danger); font-size: 18px; margin: 0 0 4px;">Danger Zone</h2>
-                            <p style="margin: 0; font-size: 13px; color: var(--text-muted);">Irreversible actions for group owners.</p>
+                            <h2 class="section-title"
+                                style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Chat</h2>
+                            <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Chat with active members
+                                of this group.</p>
+                        </div>
+                    </div>
+
+                    <div class="chat-panel">
+
+                        <div id="chatLoader" class="document-state"
+                            style="display: none; justify-content: center; padding: 24px;">
+                            <span>Loading messages...</span>
+                        </div>
+
+                        <p id="chatError" class="helper-text error" role="alert" style="display: none;"></p>
+
+                        <div id="chatEmpty" class="empty-state" style="display: none; padding: 40px 24px;">
+                            <div class="empty-state-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24"
+                                    width="24" aria-hidden="true" focusable="false">
+                                    <path stroke="currentColor"
+                                        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
+                                        stroke-width="1.2"></path>
+                                </svg>
+                            </div>
+                            <div class="empty-title">No messages yet</div>
+                            <p>Be the first to say something to the group.</p>
+                        </div>
+
+                        <div id="chatMessageList" class="chat-message-list" style="display: none;"></div>
+
+                        <div class="chat-input-row">
+                            <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..."
+                                maxlength="1000" autocomplete="off" />
+                            <button type="button" id="chatSendBtn" class="btn btn-primary chat-send-btn" disabled>
+                                Send
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+
+                <!-- Danger Zone Section at the bottom -->
+                <div id="dangerZoneSection" class="card dashboard-panel"
+                    style="display: none; border-color: var(--danger); margin-top: 32px; background: rgba(220, 38, 38, 0.02); max-width: none; width: 100%;">
+                    <div class="section-header"
+                        style="margin-bottom: 0; display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 16px;">
+                        <div>
+                            <h2 class="section-title" style="color: var(--danger); font-size: 18px; margin: 0 0 4px;">
+                                Danger Zone</h2>
+                            <p style="margin: 0; font-size: 13px; color: var(--text-muted);">Irreversible actions for
+                                group owners.</p>
                         </div>
                         <div>
-                            <button type="button" id="deleteGroupBtn" class="btn btn-danger" style="display: none; align-items: center; gap: 6px; padding: 10px 16px; width: auto !important;">
+                            <button type="button" id="deleteGroupBtn" class="btn btn-danger"
+                                style="display: none; align-items: center; gap: 6px; padding: 10px 16px; width: auto !important;">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     id="Bin--Streamline-Guidance-Free" height="14" width="14" aria-hidden="true"
                                     focusable="false">
@@ -340,6 +426,7 @@
     <script src="js/group-api.js"></script>
     <script src="js/share-api.js"></script>
     <script src="js/folder-share-api.js"></script>
+    <script src="js/group-chat-api.js"></script>
     <script src="js/navigation.js"></script>
     <script src="js/layout.js"></script>
     <script src="js/group-detail.js"></script>

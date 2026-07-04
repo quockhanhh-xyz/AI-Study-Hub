@@ -3177,3 +3177,115 @@ svg {
   font-family: 'Inter', Arial, sans-serif !important;
   color: var(--text-main) !important;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Group Chat (Step 12)
+───────────────────────────────────────────────────────────── */
+
+.chat-panel {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 4px 4px 4px 0;
+}
+
+.chat-message-row {
+  display: flex;
+  flex-direction: column;
+  max-width: 70%;
+  gap: 4px;
+}
+
+.chat-message-mine {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.chat-message-other {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.chat-message-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.chat-message-sender {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.chat-message-time {
+  color: var(--text-muted);
+}
+
+.chat-message-bubble {
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.chat-message-mine .chat-message-bubble {
+  background: var(--primary);
+  color: #ffffff;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-message-other .chat-message-bubble {
+  background: var(--primary-light);
+  color: var(--text-main);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.chat-input:focus {
+  border-color: var(--primary);
+}
+
+.chat-send-btn {
+  width: auto !important;
+  padding: 10px 20px !important;
+  white-space: nowrap;
+}
+
+.chat-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

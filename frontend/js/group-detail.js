@@ -44,6 +44,16 @@ document.addEventListener("DOMContentLoaded", async function () {
   const folderGrid = document.getElementById("folderGrid");
   const folderEmpty = document.getElementById("folderEmpty");
 
+  const chatLoader = document.getElementById("chatLoader");
+  const chatError = document.getElementById("chatError");
+  const chatEmpty = document.getElementById("chatEmpty");
+  const chatMessageList = document.getElementById("chatMessageList");
+  const chatInput = document.getElementById("chatInput");
+  const chatSendBtn = document.getElementById("chatSendBtn");
+
+  let chatMessages = [];
+  let isSendingMessage = false;
+
   // Edit modal
   const editModal = document.getElementById("editModal");
   const editGroupName = document.getElementById("editGroupName");
@@ -161,7 +171,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       groupInviteCode.title = "Click to copy invite code";
       groupInviteCode.tabIndex = 0;
 
-      groupInviteCode.onclick = function() {
+      groupInviteCode.onclick = function () {
         navigator.clipboard.writeText(group.inviteCode)
           .then(() => {
             showToast("Invitation code copied to clipboard!", "success");
@@ -172,7 +182,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           });
       };
 
-      groupInviteCode.onkeydown = function(e) {
+      groupInviteCode.onkeydown = function (e) {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           navigator.clipboard.writeText(group.inviteCode)
@@ -530,6 +540,129 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   // Load group detail (info + members)
+  // ─────────────────────────────────────────────────────────────
+  // GROUP CHAT (Step 12)
+  // ─────────────────────────────────────────────────────────────
+
+  function renderChatMessages() {
+    chatMessageList.innerHTML = "";
+
+    if (chatMessages.length === 0) {
+      chatEmpty.style.display = "flex";
+      chatMessageList.style.display = "none";
+      return;
+    }
+
+    chatEmpty.style.display = "none";
+    chatMessageList.style.display = "flex";
+
+    chatMessages.forEach(function (msg) {
+      chatMessageList.appendChild(createChatMessageRow(msg));
+    });
+
+    // Auto scroll to newest message
+    chatMessageList.scrollTop = chatMessageList.scrollHeight;
+  }
+
+  function createChatMessageRow(msg) {
+    const row = document.createElement("div");
+    row.className = "chat-message-row " + (msg.isMine ? "chat-message-mine" : "chat-message-other");
+    row.dataset.messageId = msg.messageId;
+
+    const meta = document.createElement("div");
+    meta.className = "chat-message-meta";
+
+    const senderName = document.createElement("span");
+    senderName.className = "chat-message-sender";
+    safeTextRender(senderName, msg.senderName || "Unknown");
+
+    const roleBadge = document.createElement("span");
+    roleBadge.className = msg.senderRole === "OWNER" ? "badge-role-owner" : "badge-role-member";
+    safeTextRender(roleBadge, msg.senderRole || "MEMBER");
+
+    const timeEl = document.createElement("span");
+    timeEl.className = "chat-message-time";
+    safeTextRender(timeEl, formatMessageTime(msg.createdAt));
+
+    meta.append(senderName, roleBadge, timeEl);
+
+    const bubble = document.createElement("div");
+    bubble.className = "chat-message-bubble";
+    safeTextRender(bubble, msg.content);
+
+    row.append(meta, bubble);
+    return row;
+  }
+
+  function updateSendButtonState() {
+    const hasContent = chatInput.value.trim().length > 0;
+    chatSendBtn.disabled = isSendingMessage || !hasContent;
+  }
+
+  async function loadChatMessages() {
+    chatLoader.style.display = "flex";
+    chatMessageList.style.display = "none";
+    chatEmpty.style.display = "none";
+    hideError(chatError);
+
+    try {
+      const result = await getGroupMessages(groupId, 50);
+      chatMessages = Array.isArray(result.data) ? result.data : [];
+      chatLoader.style.display = "none";
+      renderChatMessages();
+
+      // Only start polling after a successful initial load
+      startGroupChatPolling(groupId, handleIncomingMessages, handlePollingError);
+    } catch (error) {
+      chatLoader.style.display = "none";
+      showError(chatError, getGroupChatErrorMessage(error));
+      // Do not start polling if user has no permission or group not found
+    }
+  }
+
+  function handleIncomingMessages(incomingMessages) {
+    chatMessages = mergeMessagesById(chatMessages, incomingMessages);
+    renderChatMessages();
+  }
+
+  function handlePollingError(error) {
+    showError(chatError, getGroupChatErrorMessage(error));
+  }
+
+  async function handleSendMessage() {
+    const content = chatInput.value.trim();
+    if (!content || isSendingMessage) return;
+
+    isSendingMessage = true;
+    chatSendBtn.disabled = true;
+    hideError(chatError);
+
+    try {
+      const result = await sendGroupMessage(groupId, content);
+      chatMessages = mergeMessagesById(chatMessages, [result.data]);
+      renderChatMessages();
+      chatInput.value = "";
+    } catch (error) {
+      showError(chatError, getGroupChatErrorMessage(error));
+    } finally {
+      isSendingMessage = false;
+      updateSendButtonState();
+    }
+  }
+
+  chatSendBtn.addEventListener("click", handleSendMessage);
+
+  chatInput.addEventListener("input", updateSendButtonState);
+
+  chatInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  });
+
+  // Initial button state
+  updateSendButtonState();
 
   async function loadGroupDetail() {
     detailLoader.style.display = "flex";
@@ -666,4 +799,5 @@ document.addEventListener("DOMContentLoaded", async function () {
   await loadGroupDetail();
   await loadGroupDocuments();
   await loadGroupFolders();
+  await loadChatMessages();
 });
