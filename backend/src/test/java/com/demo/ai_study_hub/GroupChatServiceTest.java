@@ -195,15 +195,22 @@ class GroupChatServiceTest {
         when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(mockUser));
         when(studyGroupRepository.findById(10)).thenReturn(Optional.of(mockGroup));
         when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(mockGroup, mockUser, "ACTIVE"))
-                .thenReturn(true);
-        when(groupChatMessageRepository.findActiveMessagesAfter(mockGroup, 40L))
-                .thenReturn(Collections.emptyList());
+            .thenReturn(true);
+        when(groupChatMessageRepository.findActiveMessagesAfter(
+            eq(mockGroup),
+            eq(40L),
+            any(Pageable.class)
+        )).thenReturn(Collections.emptyList());
 
         groupChatService.getMessages(10, null, 40L, "user@test.com");
 
-        verify(groupChatMessageRepository).findActiveMessagesAfter(mockGroup, 40L);
+        verify(groupChatMessageRepository).findActiveMessagesAfter(
+            eq(mockGroup),
+            eq(40L),
+            argThat(pageable -> pageable.getPageSize() == 50)
+        );
         verify(groupChatMessageRepository, never())
-                .findLatestActiveMessages(any(), any(Pageable.class));
+            .findLatestActiveMessages(any(), any(Pageable.class));
     }
 
     @Test
