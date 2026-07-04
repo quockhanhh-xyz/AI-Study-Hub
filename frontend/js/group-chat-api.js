@@ -83,7 +83,8 @@ let _groupChatPollingSession = null;
  * Starts polling for new group messages every 3 seconds.
  * Prevents duplicate intervals — stops any existing session before starting a new one.
  * @param {string|number} groupId - The target group identifier.
- * @param {Function} callback - Called with the latest messages array on each successful poll.
+ * @param {Function} onMessages - Called with the latest messages array on each successful poll.
+ * @param {Function} onError - Called when a polling error occurs. Polling stops on 403/404.
  */
 function startGroupChatPolling(groupId, onMessages, onError) {
     if (!groupId) throw new Error("Group ID is required for polling.");
@@ -98,10 +99,7 @@ function startGroupChatPolling(groupId, onMessages, onError) {
         isRequestInFlight = true;
         try {
             const response = await getGroupMessages(groupId, 50);
-            const messages = Array.isArray(response.data) ? response.data : [];
-            if (typeof callback === "function") {
-                callback(messages);
-            }
+            onMessages?.(Array.isArray(response.data) ? response.data : []);
          } catch (error) {
       if (error.status === 403 || error.status === 404) {
         stopGroupChatPolling();
