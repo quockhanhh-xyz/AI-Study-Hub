@@ -121,7 +121,7 @@ class AiChatServiceTest {
     // 3. Quota FREE 5 câu/ngày -> 429
     // =========================================================================
     @Test
-    void ask_QuotaExceeded_ShouldThrow429() {
+    void ask_QuotaExceeded_ShouldThrow403() {
         DocumentContent content = new DocumentContent();
         content.setProcessingStatus(ProcessingStatus.COMPLETED);
         mockDocument.setDocumentContent(content);
@@ -140,8 +140,8 @@ class AiChatServiceTest {
             aiChatService.ask(1, "Test question", "user@test.com");
         });
 
-        assertEquals(HttpStatus.TOO_MANY_REQUESTS, exception.getStatusCode());
-        assertTrue(exception.getReason().contains("Daily AI question quota exhausted"));
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+        assertTrue(exception.getReason().contains("Daily AI Q&A question quota exceeded"));
 
         // Verify usage log was saved with countedAsQuestion = false and status QUOTA_EXCEEDED
         verify(aiUsageLogRepository, times(1)).save(argThat(log ->

@@ -13,6 +13,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.demo.ai_study_hub.service.TierPolicyService;
+import com.demo.ai_study_hub.service.UsageService;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,6 +43,10 @@ class FolderShareServiceTest {
     private StudyGroupMemberRepository studyGroupMemberRepository;
     @Mock
     private DocumentContentRepository documentContentRepository;
+    @Mock
+    private TierPolicyService tierPolicyService;
+    @Mock
+    private UsageService usageService;
 
     @InjectMocks
     private FolderShareServiceImpl folderShareService;
@@ -89,6 +96,12 @@ class FolderShareServiceTest {
         group.setGroupName("Study Group");
         group.setOwner(owner);
         group.setStatus("ACTIVE");
+
+        lenient().when(tierPolicyService.getLimitsForUser(any(User.class)))
+                 .thenReturn(new TierLimits(
+                     100L * 1024 * 1024, 30, 10L * 1024 * 1024, 20, 3, 3, 10, 30, 3, 30, 5, 500, 3, 500, "gemini-2.5-flash-lite", 1, 1, 1, 5
+                 ));
+        lenient().when(usageService.countActiveShares(any(User.class))).thenReturn(0L);
     }
 
     // =========================================================================
