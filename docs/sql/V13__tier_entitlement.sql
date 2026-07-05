@@ -14,7 +14,7 @@ CREATE TABLE ai_usage_reservations (
     released_at DATETIME NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
-    CONSTRAINT fk_ai_reservation_user FOREIGN KEY (user_id) REFERENCES users(user_id)
+    CONSTRAINT fk_ai_reservation_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- Add indexes
@@ -24,5 +24,5 @@ CREATE UNIQUE INDEX uk_ai_reservation_request_id ON ai_usage_reservations(reques
 
 -- Backfill tier_expires_at for existing PREMIUM users (set to 30 days from now)
 UPDATE users
-SET tier_expires_at = DATE_ADD(NOW(), INTERVAL 30 DAY)
+SET tier_expires_at = DATE_ADD(UTC_TIMESTAMP(), INTERVAL 30 DAY)
 WHERE tier = 'PREMIUM' AND tier_expires_at IS NULL;

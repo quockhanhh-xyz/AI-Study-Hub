@@ -93,7 +93,7 @@ Stores uploaded document metadata. The real file is stored in Cloudinary Storage
 - `owner_id` must be resolved from the authenticated JWT token / security session, not from frontend input.
 - The uploaded file must be validated by the backend before being stored.
 - Allowed file types are: `pdf`, `doc`, `docx`, `ppt`, `pptx`, `xls`, `xlsx`, `txt`, `jpg`, `jpeg`, `png` (case-insensitive).
-- Maximum file size is 10MB (10,485,760 bytes).
+- Maximum file size is resolved dynamically from the user's effective tier: FREE (10MB / 10,485,760 bytes), PREMIUM (50MB / 52,428,800 bytes), or ULTRA (100MB / 104,857,600 bytes).
 - Cloudinary Storage stores the real file; MySQL stores metadata only.
 - A document can optionally be assigned a `subject_id`.
 - In Step 5, a document can optionally be assigned to a `folder_id`. The folder must belong to the same user.

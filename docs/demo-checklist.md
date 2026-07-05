@@ -343,21 +343,21 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
 
 ### 10.2. Document and Storage Quota Enforcement
 - [ ] **Step 10.5**: While logged in as User A (FREE, already has 30 active + trashed documents), attempt to upload a new document.
-  - *Expected*: `403 Forbidden` with error code `QUOTA_DOCUMENTS_EXCEEDED` (soft-deleted files still consume quota).
+  - *Expected*: `403 Forbidden` with error code `DOCUMENT_LIMIT_EXCEEDED` (soft-deleted files still consume quota).
 - [ ] **Step 10.6**: Permanently delete a document from Trash, then attempt to upload a new document.
   - *Expected*: `200 OK`. Document is uploaded successfully (permanent deletion frees up document count quota).
 - [ ] **Step 10.7**: Attempt to upload a document exceeding 10 MB in size as User A (FREE).
-  - *Expected*: `400 Bad Request` with error code `QUOTA_FILE_SIZE_EXCEEDED` (Single file size exceeds max FREE limit).
+  - *Expected*: `400 Bad Request` with error code `FILE_SIZE_LIMIT_EXCEEDED` (Single file size exceeds max FREE limit).
 
 ### 10.3. Folder Subtree and Restoration Guard
 - [ ] **Step 10.8**: User A (FREE) has a folder `F` in Trash containing 5 subfolders. Restoring `F` would cause the user's total folder count to reach 21 (exceeding FREE limit of 20). Attempt to restore Folder `F`.
-  - *Expected*: `403 Forbidden` with error code `QUOTA_FOLDERS_EXCEEDED` (folder restoration evaluates entire descendant tree count).
+  - *Expected*: `403 Forbidden` with error code `FOLDER_LIMIT_EXCEEDED` (folder restoration evaluates entire descendant tree count).
 - [ ] **Step 10.9**: User A (FREE) has a folder tree with a depth of 2 in Trash. User A attempts to restore this folder tree under active Folder `G` (which has depth 2).
-  - *Expected*: `400 Bad Request` with error code `QUOTA_DEPTH_EXCEEDED` (total restored depth would be 4, exceeding FREE limit of 3).
+  - *Expected*: `400 Bad Request` with error code `DEPTH_LIMIT_EXCEEDED` (total restored depth would be 4, exceeding FREE limit of 3).
 
 ### 10.4. AI daily limits and Reservations
 - [ ] **Step 10.10**: Log in as User A (FREE) and attempt to ask an AI question exceeding 500 characters.
-  - *Expected*: `400 Bad Request` with error code `QUOTA_AI_QUESTION_CHARS_EXCEEDED`.
+  - *Expected*: `400 Bad Request` with error code `AI_QUESTION_CHARS_LIMIT_EXCEEDED`.
 - [ ] **Step 10.11**: Log in as User A (FREE) and submit a valid question.
   - *Expected*:
     - Backend creates a reservation record in the database with status `RESERVED`.
@@ -367,4 +367,4 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
     - Backend creates a reservation with status `RESERVED`.
     - Upon provider error, the reservation transitions to status `RELEASED` and the daily questions quota block is freed.
 - [ ] **Step 10.13**: Log in as User A (FREE) after having reached the daily limit of 5 questions. Attempt to ask another question.
-  - *Expected*: `403 Forbidden` with error code `QUOTA_AI_QUESTIONS_EXCEEDED`.
+  - *Expected*: `403 Forbidden` with error code `AI_QUESTIONS_LIMIT_EXCEEDED`.
