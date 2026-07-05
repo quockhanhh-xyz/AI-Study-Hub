@@ -647,6 +647,9 @@ window.UIHelper = UIHelper;
  * @returns {string} HTML badge string.
  */
 function getTierBadgeHTML(tier) {
+  if (tier === "ULTRA") {
+    return `<span class="tier-badge tier-badge-ultra">ULTRA</span>`;
+  }
   if (tier === "PREMIUM") {
     return `<span class="tier-badge tier-badge-premium">PREMIUM</span>`;
   }
