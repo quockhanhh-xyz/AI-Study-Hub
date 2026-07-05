@@ -2,7 +2,6 @@ package com.demo.ai_study_hub.service;
 
 import com.demo.ai_study_hub.dto.*;
 import com.demo.ai_study_hub.dto.PaymentResponse;
-import com.demo.ai_study_hub.dto.UserTier;
 import com.demo.ai_study_hub.entity.PaymentOrder;
 import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.repository.PaymentOrderRepository;
@@ -12,7 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
+import com.demo.ai_study_hub.dto.UserTier;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -50,7 +49,7 @@ public class PaymentService {
                 .build();
 
         paymentOrderRepository.save(order);
-        return toResponse(order, user.getTier());
+        return toResponse(order, user.getTier().name());
     }
 
     @Transactional
@@ -80,7 +79,7 @@ public class PaymentService {
         freshUser.setTier(UserTier.PREMIUM);
         userRepository.save(freshUser);
 
-        return toResponse(order, UserTier.PREMIUM);
+        return toResponse(order, "PREMIUM");
     }
 
     @Transactional
@@ -99,7 +98,7 @@ public class PaymentService {
         paymentOrderRepository.save(order);
 
         User freshUser = userRepository.findById(user.getUserId()).orElse(user);
-        return toResponse(order, freshUser.getTier());
+        return toResponse(order, freshUser.getTier().name());
     }
 
     @Transactional
@@ -118,7 +117,7 @@ public class PaymentService {
         paymentOrderRepository.save(order);
 
         User freshUser = userRepository.findById(user.getUserId()).orElse(user);
-        return toResponse(order, freshUser.getTier());
+        return toResponse(order, freshUser.getTier().name());
     }
 
     public List<PaymentResponse> getMyPayments(User user) {
@@ -128,7 +127,7 @@ public class PaymentService {
                 .collect(Collectors.toList());
     }
 
-    private PaymentResponse toResponse(PaymentOrder order, UserTier tier) {
+    private PaymentResponse toResponse(PaymentOrder order, String tier) {
         return PaymentResponse.builder()
                 .paymentId(order.getPaymentId())
                 .planCode(order.getPlanCode())
