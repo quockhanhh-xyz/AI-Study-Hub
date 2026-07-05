@@ -669,3 +669,23 @@ function renderTierBadge(element, tier) {
 // Expose globally for page scripts
 window.getTierBadgeHTML = getTierBadgeHTML;
 window.renderTierBadge = renderTierBadge;
+
+/**
+ * Displays a user-friendly quota error message.
+ * Uses getQuotaErrorMessage() from account-api.js if available.
+ * @param {Error} error - The error object from apiRequest().
+ */
+function showQuotaError(error) {
+  const message = typeof window.getQuotaErrorMessage === "function"
+    ? window.getQuotaErrorMessage(error)
+    : error.message || "You have reached your plan limit. Upgrade to continue.";
+
+  if (typeof window.showToast === "function") {
+    window.showToast(message, "error");
+  } else {
+    alert(message);
+  }
+}
+
+// Expose globally
+window.showQuotaError = showQuotaError;
