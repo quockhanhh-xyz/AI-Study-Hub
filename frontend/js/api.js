@@ -96,6 +96,8 @@ async function apiRequest(endpoint, options = {}) {
 
     const error = new Error(errorMessage);
     error.status = response.status;
+    error.code = data?.code;
+    error.data = data?.data;
     throw error;
   }
 
