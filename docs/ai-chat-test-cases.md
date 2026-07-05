@@ -52,9 +52,9 @@
 |---|---|---|
 | TC-AI-040 | FREE user with 0 questions used today | 200 OK — remainingQuestions = 5 |
 | TC-AI-041 | FREE user with 4 questions used today | 200 OK — remainingQuestions = 1 |
-| TC-AI-042 | FREE user with 5 questions used today | 429 Too Many Requests |
+| TC-AI-042 | FREE user with 5 questions used today | 403 Forbidden — AI_QUOTA_EXCEEDED |
 | TC-AI-043 | PREMIUM user with 49 questions used today | 200 OK — remainingQuestions = 1 |
-| TC-AI-044 | PREMIUM user with 50 questions used today | 429 Too Many Requests |
+| TC-AI-044 | PREMIUM user with 50 questions used today | 403 Forbidden — AI_QUOTA_EXCEEDED |
 | TC-AI-045 | No-context fallback answer | quota NOT consumed |
 | TC-AI-046 | AI provider error | quota NOT consumed |
 
@@ -139,7 +139,7 @@
 | TC-USAGE-004 | FREE user, 5 questions today (exhausted) | usedToday=5, remaining=0 |
 | TC-USAGE-005 | PREMIUM user | dailyLimit=50                              |
 | TC-USAGE-006 | Response includes provider and modelName | based on user tier and configured provider |
-| TC-USAGE-007 | Quota resets after midnight | usedToday = 0 next day                     |
+| TC-USAGE-007 | Quota resets at 00:00 Asia/Ho_Chi_Minh | usedToday = 0 next day                     |
 
 ---
 

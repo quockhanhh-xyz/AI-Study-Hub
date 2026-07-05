@@ -418,7 +418,7 @@ Uploads a document file for the currently authenticated user.
 - **Content-Type Header**: The frontend must send upload data with `FormData` and must **not** manually set `Content-Type` headers in JavaScript (allowing the browser to calculate the multipart boundary).
 - **Validation**: The backend must validate the file type and file size before uploading to Cloudinary.
 - **Allowed File Types**: `pdf`, `doc`, `docx`, `ppt`, `pptx`, `xls`, `xlsx`, `txt`, `jpg`, `jpeg`, `png` (case-insensitive).
-- **Maximum File Size**: **10MB** (10,485,760 bytes).
+- **Maximum File Size**: Resolved dynamically based on the user's effective tier: FREE (10MB / 10,485,760 bytes), PREMIUM (50MB / 52,428,800 bytes), or ULTRA (100MB / 104,857,600 bytes).
 - **Storage Target**: The real file is stored in Cloudinary Storage.
 - **Metadata Storage**: MySQL stores document metadata only.
 - **Secrets Management**: Under NO circumstances should any Cloudinary API Key, Secret, or credentials be pushed to Git or exposed to the frontend.
@@ -523,7 +523,8 @@ For unsupported file types such as `DOC`, `DOCX`, `PPT`, `PPTX`, `XLS`, and `XLS
 ```json
 {
   "success": false,
-  "message": "File size exceeds 10MB",
+  "code": "FILE_SIZE_LIMIT_EXCEEDED",
+  "message": "File size exceeds maximum tier limit",
   "data": null
 }
 ```
@@ -2958,8 +2959,9 @@ If `AI_PROVIDER=gemini` but `GEMINI_API_KEY` is missing, the app starts normally
 |---|---|---|---|---|
 | FREE | `gemini-2.5-flash-lite` | 5 questions/day | 3 chunks | 500 tokens |
 | PREMIUM | `gemini-2.5-flash` | 50 questions/day | 8 chunks | 1500 tokens |
+| ULTRA | `gemini-2.5-flash` | 200 questions/day | 15 chunks | 3000 tokens |
 
-Model is selected server-side based on `user.tier`. Controller never hardcodes model name.
+Model and AI limits are resolved from the user's effective tier through TierPolicyService. Controller never hardcodes model name.
 
 #### Quota Rule
 
@@ -2974,7 +2976,7 @@ The following do NOT consume quota:
 - AI provider error before response
 - AI key not configured (503)
 
-Quota resets daily at midnight (local server time). Count is derived from `ai_usage_logs` where `counted_as_question = true AND status = 'SUCCESS' AND created_at >= today_start`.
+Quota resets daily at 00:00 Asia/Ho_Chi_Minh. Count is derived from `ai_usage_logs` where `counted_as_question = true AND status = 'SUCCESS' AND created_at >= today_start`.
 
 #### Prompt Injection Defense
 
@@ -2997,6 +2999,7 @@ If the question is a general/summary intent (e.g., "Summarize", "Give me an over
 
 - FREE: first 3 chunks
 - PREMIUM: first 8 chunks
+- ULTRA: first 15 chunks
 
 #### No-Context Fallback Rule
 
@@ -3035,7 +3038,7 @@ Ask an AI question about a specific processed document.
 | Logged-in public document viewer | Yes |
 | Guest (unauthenticated) | No — 401 |
 | Outsider / revoked share | No — 403 |
-| User with exhausted daily quota | No — 429 |
+| User with exhausted daily quota | No — 403 |
 
 #### Request Headers
 
@@ -3114,7 +3117,7 @@ When no relevant chunks are found (not a summary intent):
 | 404 Not Found | Document does not exist or is in DELETED state |
 | 409 Conflict | `processingStatus = PENDING or PROCESSING` — document not ready yet |
 | 422 Unprocessable Entity | `processingStatus = FAILED, UNSUPPORTED, or EMPTY_CONTENT` — no usable AI content |
-| 429 Too Many Requests | User daily quota exhausted |
+| 403 Forbidden | User daily quota exhausted (returns code: `AI_QUOTA_EXCEEDED`) |
 | 503 Service Unavailable | `AI_PROVIDER=gemini` but `GEMINI_API_KEY` not configured |
 
 ---
@@ -3679,3 +3682,195 @@ Send a new chat message to the study group.
 | **403 Forbidden** | User is not an ACTIVE member of the study group (e.g., non-member, removed, or left) |
 | **404 Not Found** | Group does not exist OR group status is `DELETED` |
 | **500 Internal Server Error** | Unexpected backend failures |
+
+---
+
+# 17. Account Entitlements and Usage APIs (Step 13)
+
+> [!NOTE]
+> Step 13 implements the **Tier & Entitlement Foundation**.
+> - Enforces system resource limits across the application: Storage, Documents count, File size limits, Folders, Owned Groups, Members per group, Active Shares, and AI daily usage.
+> - Supports three account tiers: `FREE` (default), `PREMIUM`, and `ULTRA`.
+> - Paid tiers (`PREMIUM`, `ULTRA`) have a `tier_expires_at` timestamp. If expired, the **Effective Tier** falls back to `FREE`.
+> - All backend quota checks and frontend limit displays must reference this policy.
+> - Storage quota includes files stored in both active directories and the Trash folder. Only permanent deletion frees up storage quota.
+> - Folder restoration must recursively check all descendant folders, documents, storage, and maximum folder depth before restoration.
+> - No payment processing (VNPay) or checkout result screens are implemented in Step 13.
+
+## 17.1. Effective Tier Resolution Rule
+The system calculates the user's **Effective Tier** dynamically on each request as follows:
+- If `tier = FREE`: Effective Tier is `FREE`.
+- If `tier = PREMIUM` or `tier = ULTRA`:
+  - If `tier_expires_at` is not null and in the future: Effective Tier remains the corresponding paid tier (`PREMIUM` or `ULTRA`).
+  - If `tier_expires_at` is null or in the past: Effective Tier automatically reverts to `FREE` (preventing permanent unpaid paid tiers).
+
+## 17.2. Tier policy Limits table
+
+| Resource / Rule | FREE | PREMIUM | ULTRA |
+|:---|:---|:---|:---|
+| **Max Storage Space** | 100 MB (`104,857,600` bytes) | 2 GB (`2,147,483,648` bytes) | 10 GB (`10,737,418,240` bytes) |
+| **Max Documents Count** | 30 | 500 | 2,000 |
+| **Max Single File Size** | 10 MB (`10,485,760` bytes) | 50 MB (`52,428,800` bytes) | 100 MB (`104,857,600` bytes) |
+| **Max Folders Count** | 20 | 200 | 1,000 |
+| **Max Folder Depth** | 3 levels | 8 levels | 12 levels |
+| **Max Owned Study Groups** | 3 | 30 | 100 |
+| **Max Members per Group** | 10 | 100 | 300 |
+| **Max Active Shares** | 30 | 1,000 | 5,000 |
+| **Max AI Sessions per Doc** | 3 | 30 | 100 |
+| **Max Messages per Session** | 30 | 300 | 1,000 |
+| **Max AI Daily Questions** | 5 | 50 | 200 |
+| **Max Question Characters** | 500 characters | 2,000 characters | 5,000 characters |
+| **Max Summary/Day** | 1 | 10 | 50 |
+| **Max Flashcard Sets/Day** | 1 | 10 | 50 |
+| **Max Quiz Sets/Day** | 1 | 10 | 50 |
+| **Max Items per Set** | 5 | 15 | 30 |
+| **Max Context Chunks** | 3 | 8 | 15 |
+| **Max Output Tokens** | 500 | 1500 | 3000 |
+| **AI Model Selector** | `gemini-2.5-flash-lite` | `gemini-2.5-flash` | `gemini-2.5-flash` |
+
+---
+
+## 17.3. Get Account Entitlements
+
+### GET `/api/account/entitlements`
+
+Retrieve the current authenticated user's active tier, expiration timestamp, and system limits configuration.
+
+#### Request Headers
+- Cookie: `accessToken=jwt-token-value-here`
+
+#### Rules & Constraints
+- User must be logged in; otherwise returns **401 Unauthorized**.
+
+#### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Account entitlements retrieved successfully",
+  "data": {
+    "tier": "PREMIUM",
+    "effectiveTier": "PREMIUM",
+    "tierExpiresAt": "2026-08-04T10:00:00Z",
+    "limits": {
+      "maxStorageBytes": 2147483648,
+      "maxDocuments": 500,
+      "maxFileSizeBytes": 52428800,
+      "maxFolders": 200,
+      "maxFolderDepth": 8,
+      "maxOwnedGroups": 30,
+      "maxMembersPerGroup": 100,
+      "maxActiveShares": 1000,
+      "maxAiSessionsPerDocument": 30,
+      "maxMessagesPerSession": 300,
+      "maxAiDailyQuestions": 50,
+      "maxQuestionChars": 2000,
+      "maxSummaryQuotaPerDay": 10,
+      "maxFlashcardQuotaPerDay": 10,
+      "maxQuizQuotaPerDay": 10,
+      "maxItemsPerSet": 15,
+      "maxContextChunks": 8,
+      "maxOutputTokens": 1500,
+      "aiModel": "gemini-2.5-flash"
+    }
+  }
+}
+```
+
+---
+
+## 17.4. Get Resource Usage
+
+### GET `/api/account/usage`
+
+Retrieve current consumption, limits, remaining quota, and over-limit metrics for each resource.
+
+#### Request Headers
+- Cookie: `accessToken=jwt-token-value-here`
+
+#### Rules & Constraints
+- User must be logged in; otherwise returns **401 Unauthorized**.
+- Active files count and storage calculations include files and folders in both active directories and the Trash folder.
+- Metric calculations:
+  - `remaining = max(limit - used, 0)`
+  - `overLimit = used > limit`
+  - `overBy = max(used - limit, 0)`
+
+#### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Resource usage statistics retrieved successfully",
+  "data": {
+    "storage": {
+      "used": 419430400,
+      "limit": 2147483648,
+      "remaining": 1728053248,
+      "overLimit": false,
+      "overBy": 0
+    },
+    "documents": {
+      "used": 150,
+      "limit": 500,
+      "remaining": 350,
+      "overLimit": false,
+      "overBy": 0
+    },
+    "folders": {
+      "used": 20,
+      "limit": 200,
+      "remaining": 180,
+      "overLimit": false,
+      "overBy": 0
+    },
+    "ownedGroups": {
+      "used": 5,
+      "limit": 30,
+      "remaining": 25,
+      "overLimit": false,
+      "overBy": 0
+    },
+    "activeShares": {
+      "used": 12,
+      "limit": 1000,
+      "remaining": 988,
+      "overLimit": false,
+      "overBy": 0
+    },
+    "dailyAiQuestions": {
+      "used": 10,
+      "limit": 50,
+      "remaining": 40,
+      "overLimit": false,
+      "overBy": 0
+    }
+  }
+}
+```
+
+---
+
+## 17.5. Quota Error Code Reference Table
+
+When a user attempts to exceed a quota, the backend must abort the request and return the corresponding HTTP status with a descriptive code matching the chốt design:
+
+| HTTP Status | Error Payload Structure (JSON) | Cause / Scenario |
+|---|---|---|
+| **401 Unauthorized** | `{"success":false,"message":"Unauthorized"}` | User is not logged in |
+| **403 Forbidden** | `{"success":false,"code":"STORAGE_LIMIT_EXCEEDED","message":"Storage quota exceeded"}` | Total size of active + trash documents exceeds limit |
+| **403 Forbidden** | `{"success":false,"code":"DOCUMENT_LIMIT_EXCEEDED","message":"Documents count limit exceeded"}` | Number of active + trash documents exceeds limit |
+| **400 Bad Request** | `{"success":false,"code":"FILE_SIZE_LIMIT_EXCEEDED","message":"File size exceeds maximum tier limit"}` | Single uploaded file size exceeds max file size |
+| **403 Forbidden** | `{"success":false,"code":"FOLDER_LIMIT_EXCEEDED","message":"Folders count limit exceeded"}` | Number of active + trash folders exceeds limit |
+| **400 Bad Request** | `{"success":false,"code":"FOLDER_DEPTH_LIMIT_EXCEEDED","message":"Folder depth exceeds maximum level allowed"}` | Adding a subfolder or moving folders would exceed max depth |
+| **403 Forbidden** | `{"success":false,"code":"GROUP_LIMIT_EXCEEDED","message":"Owned groups limit exceeded"}` | Creating a new study group exceeds limit |
+| **403 Forbidden** | `{"success":false,"code":"GROUP_MEMBER_LIMIT_EXCEEDED","message":"Group members limit exceeded"}` | Inviting/adding members exceeds group size limit |
+| **403 Forbidden** | `{"success":false,"code":"SHARE_LIMIT_EXCEEDED","message":"Active share links limit exceeded"}` | Creating a new share exceeds active shares limit |
+| **403 Forbidden** | `{"success":false,"code":"AI_QUOTA_EXCEEDED","message":"Daily AI Q&A question quota exceeded"}` | Submitting a question exceeds daily limits |
+| **400 Bad Request** | `{"success":false,"code":"AI_QUESTION_CHARS_LIMIT_EXCEEDED","message":"Question text exceeds maximum tier length"}` | AI question character count exceeds maximum allowed |
+| **403 Forbidden** | `{"success":false,"code":"AI_SESSIONS_LIMIT_EXCEEDED","message":"AI Chat sessions per document limit exceeded"}` | Creating a new session exceeds document limits |
+| **403 Forbidden** | `{"success":false,"code":"SESSION_MESSAGES_LIMIT_EXCEEDED","message":"Messages per chat session limit exceeded"}` | Sending a message in session exceeds limit |
+| **403 Forbidden** | `{"success":false,"code":"SUMMARY_QUOTA_EXCEEDED","message":"Summary generations daily quota exceeded"}` | Initiating a new summary exceeds daily limits |
+| **403 Forbidden** | `{"success":false,"code":"FLASHCARD_QUOTA_EXCEEDED","message":"Flashcard sets daily quota exceeded"}` | Creating a new flashcard set exceeds daily limits |
+| **403 Forbidden** | `{"success":false,"code":"QUIZ_QUOTA_EXCEEDED","message":"Quiz sets daily quota exceeded"}` | Creating a new quiz set exceeds daily limits |
+| **400 Bad Request** | `{"success":false,"code":"ITEM_LIMIT_EXCEEDED","message":"Items count per set limit exceeded"}` | Adding cards/questions to a set exceeds maximum count |

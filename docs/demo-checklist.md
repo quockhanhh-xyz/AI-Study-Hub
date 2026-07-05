@@ -151,7 +151,7 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
 - [ ] **Step 7.2.3**: Ask User A 2 more questions.
   - *Expected*: Third question returns `remainingQuestions: 0`.
 - [ ] **Step 7.2.4**: Ask User A a 4th question (quota exhausted).
-  - *Expected*: `429 Too Many Requests`.
+  - *Expected*: `403 Forbidden` with error code `AI_QUOTA_EXCEEDED`.
 
 ### 7.3. Ask AI — Permission Checks
 
@@ -321,3 +321,50 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
   - *Expected*: `200 OK`.
 - [ ] **Step 9.13**: Log in as User B (removed member) and attempt to view Group `10` chat history (`GET /api/groups/10/messages`) or send a message.
   - *Expected*: `403 Forbidden` (Removed members cannot access old chat history anymore).
+
+---
+
+## 10. Flow 10: Tier Limits and Entitlement Enforcement (Step 13)
+
+### Setup & Preconditions
+- User A is registered and has `tier = FREE` (Effective Tier = `FREE`).
+- User B is registered and has `tier = PREMIUM` with `tier_expires_at` set to a future date (Effective Tier = `PREMIUM`).
+- User C is registered and has `tier = ULTRA` with `tier_expires_at` set to a past date (Effective Tier = `FREE`).
+
+### 10.1. Retrieve Entitlements and Usage
+- [ ] **Step 10.1**: Log in as User A and query entitlements (`GET /api/account/entitlements`).
+  - *Expected*: `200 OK`. Returns `"tier": "FREE"`, `"effectiveTier": "FREE"`, `"tierExpiresAt": null`, and FREE limits bounds (e.g., `maxStorageBytes = 104857600`, `maxDocuments = 30`).
+- [ ] **Step 10.2**: Log in as User B and query entitlements.
+  - *Expected*: `200 OK`. Returns `"tier": "PREMIUM"`, `"effectiveTier": "PREMIUM"`, `"tierExpiresAt": [future ISO datetime with Z suffix, e.g. 2026-08-04T10:00:00Z]`, and PREMIUM limits bounds (e.g., `maxStorageBytes = 2147483648`, `maxDocuments = 500`).
+- [ ] **Step 10.3**: Log in as User C (expired ULTRA user) and query entitlements.
+  - *Expected*: `200 OK`. Returns `"tier": "ULTRA"`, `"effectiveTier": "FREE"`, `"tierExpiresAt": [past ISO datetime with Z suffix, e.g. 2026-07-04T10:00:00Z]`, and FREE limits bounds. (Verifies that expired paid tiers automatically fallback to FREE limits).
+- [ ] **Step 10.4**: Log in as User A and query resource usage (`GET /api/account/usage`).
+  - *Expected*: `200 OK`. Returns a structured summary detailing the `used`, `limit`, `remaining` (`max(limit - used, 0)`), `overLimit` (`used > limit`), and `overBy` (`max(used - limit, 0)`) count for storage, documents, folders, ownedGroups, activeShares, and dailyAiQuestions.
+
+### 10.2. Document and Storage Quota Enforcement
+- [ ] **Step 10.5**: While logged in as User A (FREE, already has 30 active + trashed documents), attempt to upload a new document.
+  - *Expected*: `403 Forbidden` with error code `DOCUMENT_LIMIT_EXCEEDED` (soft-deleted files still consume quota).
+- [ ] **Step 10.6**: Permanently delete a document from Trash, then attempt to upload a new document.
+  - *Expected*: `200 OK`. Document is uploaded successfully (permanent deletion frees up document count quota).
+- [ ] **Step 10.7**: Attempt to upload a document exceeding 10 MB in size as User A (FREE).
+  - *Expected*: `400 Bad Request` with error code `FILE_SIZE_LIMIT_EXCEEDED` (Single file size exceeds max FREE limit).
+
+### 10.3. Folder Subtree and Restoration Guard
+- [ ] **Step 10.8**: User A (FREE) has a folder `F` in Trash containing 5 subfolders. Restoring `F` would cause the user's total folder count to reach 21 (exceeding FREE limit of 20). Attempt to restore Folder `F`.
+  - *Expected*: `403 Forbidden` with error code `FOLDER_LIMIT_EXCEEDED` (folder restoration evaluates entire descendant tree count).
+- [ ] **Step 10.9**: User A (FREE) has a folder tree with a depth of 2 in Trash. User A attempts to restore this folder tree under active Folder `G` (which has depth 2).
+  - *Expected*: `400 Bad Request` with error code `FOLDER_DEPTH_LIMIT_EXCEEDED` (total restored depth would be 4, exceeding FREE limit of 3).
+
+### 10.4. AI daily limits and Reservations
+- [ ] **Step 10.10**: Log in as User A (FREE) and attempt to ask an AI question exceeding 500 characters.
+  - *Expected*: `400 Bad Request` with error code `AI_QUESTION_CHARS_LIMIT_EXCEEDED`.
+- [ ] **Step 10.11**: Log in as User A (FREE) and submit a valid question.
+  - *Expected*:
+    - Backend creates a reservation record in the database with status `RESERVED`.
+    - If the mock AI provider completes successfully, the status changes to `CONFIRMED` and user's daily questions used count increments.
+- [ ] **Step 10.12**: Log in as User A (FREE). Mock the AI provider to throw an exception, then submit a question.
+  - *Expected*:
+    - Backend creates a reservation with status `RESERVED`.
+    - Upon provider error, the reservation transitions to status `RELEASED` and the daily questions quota block is freed.
+- [ ] **Step 10.13**: Log in as User A (FREE) after having reached the daily limit of 5 questions. Attempt to ask another question.
+  - *Expected*: `403 Forbidden` with error code `AI_QUOTA_EXCEEDED`.
