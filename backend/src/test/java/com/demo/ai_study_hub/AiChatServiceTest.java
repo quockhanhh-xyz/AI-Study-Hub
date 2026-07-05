@@ -59,7 +59,7 @@ class AiChatServiceTest {
         mockUser = new User();
         mockUser.setUserId(1);
         mockUser.setEmail("user@test.com");
-        mockUser.setTier("FREE");
+        mockUser.setTier(com.demo.ai_study_hub.dto.UserTier.FREE);
 
         mockDocument = new Document();
         mockDocument.setDocumentId(1);
