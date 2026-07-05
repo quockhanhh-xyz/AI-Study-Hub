@@ -151,7 +151,7 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
 - [ ] **Step 7.2.3**: Ask User A 2 more questions.
   - *Expected*: Third question returns `remainingQuestions: 0`.
 - [ ] **Step 7.2.4**: Ask User A a 4th question (quota exhausted).
-  - *Expected*: `429 Too Many Requests`.
+  - *Expected*: `403 Forbidden` with error code `AI_QUOTA_EXCEEDED`.
 
 ### 7.3. Ask AI — Permission Checks
 

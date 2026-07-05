@@ -52,9 +52,9 @@
 |---|---|---|
 | TC-AI-040 | FREE user with 0 questions used today | 200 OK — remainingQuestions = 5 |
 | TC-AI-041 | FREE user with 4 questions used today | 200 OK — remainingQuestions = 1 |
-| TC-AI-042 | FREE user with 5 questions used today | 429 Too Many Requests |
+| TC-AI-042 | FREE user with 5 questions used today | 403 Forbidden — AI_QUOTA_EXCEEDED |
 | TC-AI-043 | PREMIUM user with 49 questions used today | 200 OK — remainingQuestions = 1 |
-| TC-AI-044 | PREMIUM user with 50 questions used today | 429 Too Many Requests |
+| TC-AI-044 | PREMIUM user with 50 questions used today | 403 Forbidden — AI_QUOTA_EXCEEDED |
 | TC-AI-045 | No-context fallback answer | quota NOT consumed |
 | TC-AI-046 | AI provider error | quota NOT consumed |
 

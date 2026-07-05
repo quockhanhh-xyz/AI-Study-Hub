@@ -2976,7 +2976,7 @@ The following do NOT consume quota:
 - AI provider error before response
 - AI key not configured (503)
 
-Quota resets daily at midnight (local server time). Count is derived from `ai_usage_logs` where `counted_as_question = true AND status = 'SUCCESS' AND created_at >= today_start`.
+Quota resets daily at 00:00 Asia/Ho_Chi_Minh. Count is derived from `ai_usage_logs` where `counted_as_question = true AND status = 'SUCCESS' AND created_at >= today_start`.
 
 #### Prompt Injection Defense
 
@@ -3037,7 +3037,7 @@ Ask an AI question about a specific processed document.
 | Logged-in public document viewer | Yes |
 | Guest (unauthenticated) | No — 401 |
 | Outsider / revoked share | No — 403 |
-| User with exhausted daily quota | No — 429 |
+| User with exhausted daily quota | No — 403 |
 
 #### Request Headers
 
@@ -3116,7 +3116,7 @@ When no relevant chunks are found (not a summary intent):
 | 404 Not Found | Document does not exist or is in DELETED state |
 | 409 Conflict | `processingStatus = PENDING or PROCESSING` — document not ready yet |
 | 422 Unprocessable Entity | `processingStatus = FAILED, UNSUPPORTED, or EMPTY_CONTENT` — no usable AI content |
-| 429 Too Many Requests | User daily quota exhausted |
+| 403 Forbidden | User daily quota exhausted (returns code: `AI_QUOTA_EXCEEDED`) |
 | 503 Service Unavailable | `AI_PROVIDER=gemini` but `GEMINI_API_KEY` not configured |
 
 ---
