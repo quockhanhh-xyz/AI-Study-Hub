@@ -686,14 +686,32 @@ window.formatTierBadge = getTierBadgeHTML;
  * @param {Error} error - The error object from apiRequest().
  */
 function showQuotaError(error) {
-  const message = typeof window.getQuotaErrorMessage === "function"
-    ? window.getQuotaErrorMessage(error)
-    : error.message || "You have reached your plan limit. Upgrade to continue.";
+  const status = error.status || error.statusCode;
+  const code = error.code || "";
+  const message = error.message || "";
+
+  let resolved;
+
+  if (code === "STORAGE_LIMIT_EXCEEDED" || (status === 403 && message.toLowerCase().includes("storage"))) {
+    resolved = "Storage quota exceeded. Please delete some files or upgrade your plan.";
+  } else if (code === "DOCUMENT_LIMIT_EXCEEDED" || (status === 403 && message.toLowerCase().includes("document"))) {
+    resolved = "Document limit reached. Upgrade your plan to upload more documents.";
+  } else if (code === "FOLDER_LIMIT_EXCEEDED" || (status === 403 && message.toLowerCase().includes("folder"))) {
+    resolved = "Folder limit reached. Upgrade your plan to create more folders.";
+  } else if (code === "GROUP_LIMIT_EXCEEDED" || (status === 403 && message.toLowerCase().includes("group"))) {
+    resolved = "Group limit reached. Upgrade your plan to create more groups.";
+  } else if (code === "SHARE_LIMIT_EXCEEDED" || (status === 403 && message.toLowerCase().includes("share"))) {
+    resolved = "Sharing limit reached. Upgrade your plan to share with more users.";
+  } else if (code === "AI_QUOTA_EXCEEDED" || status === 403) {
+    resolved = "You have reached your plan limit. Upgrade to continue.";
+  } else {
+    resolved = message || "You have reached your plan limit. Upgrade to continue.";
+  }
 
   if (typeof window.showToast === "function") {
-    window.showToast(message, "error");
+    window.showToast(resolved, "error");
   } else {
-    alert(message);
+    alert(resolved);
   }
 }
 
