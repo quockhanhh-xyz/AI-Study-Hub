@@ -13,3 +13,13 @@ async function getAccountEntitlements() {
     method: "GET"
   });
 }
+
+/**
+ * Retrieves the current user's usage statistics and remaining quota.
+ * @returns {Promise<Object>} Usage data including storageUsed, documentCount, remaining quotas.
+ */
+async function getAccountUsage() {
+  return await apiRequest("/api/account/usage", {
+    method: "GET"
+  });
+}
