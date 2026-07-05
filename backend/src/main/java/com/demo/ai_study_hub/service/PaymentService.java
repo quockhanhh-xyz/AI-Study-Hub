@@ -23,6 +23,7 @@ public class PaymentService {
     private final PaymentOrderRepository paymentOrderRepository;
     private final UserRepository userRepository;
     private final PlanService planService;
+    private final TierPolicyService tierPolicyService;
 
     @Transactional
     public PaymentResponse createMockPayment(User user, String planCode) {
@@ -34,7 +35,8 @@ public class PaymentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Cannot create payment for FREE plan");
         }
-        if (user.getTier() == UserTier.PREMIUM || user.getTier() == UserTier.ULTRA) {
+        UserTier effectiveTier = tierPolicyService.getEffectiveTier(user);
+        if (effectiveTier == UserTier.PREMIUM || effectiveTier == UserTier.ULTRA) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "User is already Premium.");
         }
@@ -67,7 +69,8 @@ public class PaymentService {
         User freshUser = userRepository.findById(user.getUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        if (freshUser.getTier() == UserTier.PREMIUM || freshUser.getTier() == UserTier.ULTRA) {
+        UserTier freshEffectiveTier = tierPolicyService.getEffectiveTier(freshUser);
+        if (freshEffectiveTier == UserTier.PREMIUM || freshEffectiveTier == UserTier.ULTRA) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "User is already Premium.");
         }
@@ -77,6 +80,7 @@ public class PaymentService {
         paymentOrderRepository.save(order);
 
         freshUser.setTier(UserTier.PREMIUM);
+        freshUser.setTierExpiresAt(LocalDateTime.now().plusDays(30));
         userRepository.save(freshUser);
 
         return toResponse(order, "PREMIUM");

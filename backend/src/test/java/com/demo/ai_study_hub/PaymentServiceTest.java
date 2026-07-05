@@ -12,6 +12,7 @@ import com.demo.ai_study_hub.repository.PaymentOrderRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
 import com.demo.ai_study_hub.service.PaymentService;
 import com.demo.ai_study_hub.service.PlanService;
+import com.demo.ai_study_hub.service.TierPolicyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +36,7 @@ class PaymentServiceTest {
     @Mock private PaymentOrderRepository paymentOrderRepository;
     @Mock private UserRepository userRepository;
     @Mock private PlanService planService;
+    @Mock private TierPolicyService tierPolicyService;
 
     @InjectMocks
     private PaymentService paymentService;
@@ -53,6 +55,11 @@ class PaymentServiceTest {
         premiumUser.setUserId(2);
         premiumUser.setEmail("premium@test.com");
         premiumUser.setTier(UserTier.PREMIUM);
+
+        lenient().when(tierPolicyService.getEffectiveTier(any(User.class))).thenAnswer(invocation -> {
+            User u = invocation.getArgument(0);
+            return u.getTier();
+        });
     }
 
     // =========================================================================
@@ -143,6 +150,33 @@ class PaymentServiceTest {
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
         assertTrue(ex.getReason().contains("already Premium"));
         verify(paymentOrderRepository, never()).save(any());
+    }
+
+    @Test
+    void createMockPayment_WhenUserExpiredPremium_ShouldAllowUpgrade() {
+        // user is premium in database but effective tier has expired to FREE
+        User expiredUser = new User();
+        expiredUser.setUserId(3);
+        expiredUser.setEmail("expired@test.com");
+        expiredUser.setTier(UserTier.PREMIUM);
+        expiredUser.setTierExpiresAt(LocalDateTime.now().minusDays(1));
+
+        when(planService.isValidPlanCode(PlanCode.PREMIUM)).thenReturn(true);
+        when(planService.getPrice(PlanCode.PREMIUM)).thenReturn(199000L);
+        when(tierPolicyService.getEffectiveTier(expiredUser)).thenReturn(UserTier.FREE);
+        when(paymentOrderRepository.save(any(PaymentOrder.class))).thenAnswer(inv -> {
+            PaymentOrder order = inv.getArgument(0);
+            order.setPaymentId(99L);
+            return order;
+        });
+
+        PaymentResponse response = paymentService.createMockPayment(expiredUser, PlanCode.PREMIUM);
+
+        assertNotNull(response);
+        assertEquals(PlanCode.PREMIUM, response.getPlanCode());
+        assertEquals(199000L, response.getAmount());
+        assertEquals(PaymentStatus.PENDING, response.getStatus());
+        verify(paymentOrderRepository, times(1)).save(any(PaymentOrder.class));
     }
 
     @Test
