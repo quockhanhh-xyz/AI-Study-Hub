@@ -558,7 +558,7 @@ const AIUIHelper = {
     const status = typeof errorOrStatus === "number" ? errorOrStatus : errorOrStatus?.status;
     const code = typeof errorOrStatus === "object" ? (errorOrStatus?.code || errorOrStatus?.data?.code) : "";
 
-    // Priority 1: Explicit error code check for quota exhaustion
+    // Priority 1: Explicit error code check for quota exhaustion (Step 13 Contract)
     if (code === "AI_QUOTA_EXCEEDED") {
       return "You have reached your daily AI question limit. Upgrade to PREMIUM or ULTRA for more.";
     }
