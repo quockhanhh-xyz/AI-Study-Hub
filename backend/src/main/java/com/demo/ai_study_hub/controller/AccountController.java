@@ -30,21 +30,22 @@ public class AccountController {
             TierLimits limits = tierPolicyService.getLimits(effectiveTier);
 
             EntitlementResponse response = EntitlementResponse.builder()
-                    .tier(effectiveTier.name())
+                    .tier(user.getTier().name())
+                    .effectiveTier(effectiveTier.name())
                     .tierExpiresAt(user.getTierExpiresAt())
                     .limits(EntitlementResponse.LimitsDto.builder()
-                            .storageBytes(limits.storageBytes())
-                            .documents(limits.maxDocuments())
-                            .maxFileBytes(limits.maxFileBytes())
-                            .folders(limits.maxFolders())
-                            .folderDepth(limits.maxFolderDepth())
-                            .ownedGroups(limits.maxOwnedGroups())
-                            .membersPerGroup(limits.maxMembersPerGroup())
-                            .activeShares(limits.maxActiveShares())
+                            .maxStorageBytes(limits.storageBytes())
+                            .maxDocuments(limits.maxDocuments())
+                            .maxFileSizeBytes(limits.maxFileBytes())
+                            .maxFolders(limits.maxFolders())
+                            .maxFolderDepth(limits.maxFolderDepth())
+                            .maxOwnedGroups(limits.maxOwnedGroups())
+                            .maxMembersPerGroup(limits.maxMembersPerGroup())
+                            .maxActiveShares(limits.maxActiveShares())
                             .aiQuestionsPerDay(limits.aiQuestionsPerDay())
                             .maxQuestionChars(limits.maxQuestionChars())
-                            .contextChunks(limits.maxContextChunks())
-                            .outputTokens(limits.maxOutputTokens())
+                            .maxContextChunks(limits.maxContextChunks())
+                            .maxOutputTokens(limits.maxOutputTokens())
                             .aiModel(limits.aiModel())
                             .summaryGenerationsPerDay(limits.summaryGenerationsPerDay())
                             .flashcardSetsPerDay(limits.flashcardSetsPerDay())
@@ -74,47 +75,15 @@ public class AccountController {
             long usedAiToday = usageService.countAiQuestionsToday(user);
 
             AccountUsageResponse response = AccountUsageResponse.builder()
-                    .tier(effectiveTier.name())
+                    .tier(user.getTier().name())
+                    .effectiveTier(effectiveTier.name())
                     .tierExpiresAt(user.getTierExpiresAt())
-                    .limits(AccountUsageResponse.UsageSnapshot.builder()
-                            .storageBytes(limits.storageBytes())
-                            .documents(limits.maxDocuments())
-                            .folders(limits.maxFolders())
-                            .ownedGroups(limits.maxOwnedGroups())
-                            .activeShares(limits.maxActiveShares())
-                            .aiQuestionsToday(limits.aiQuestionsPerDay())
-                            .build())
-                    .usage(AccountUsageResponse.UsageSnapshot.builder()
-                            .storageBytes(usedStorage)
-                            .documents(usedDocs)
-                            .folders(usedFolders)
-                            .ownedGroups(usedGroups)
-                            .activeShares(usedShares)
-                            .aiQuestionsToday(usedAiToday)
-                            .build())
-                    .remaining(AccountUsageResponse.UsageSnapshot.builder()
-                            .storageBytes(Math.max(limits.storageBytes() - usedStorage, 0))
-                            .documents(Math.max(limits.maxDocuments() - usedDocs, 0))
-                            .folders(Math.max(limits.maxFolders() - usedFolders, 0))
-                            .ownedGroups(Math.max(limits.maxOwnedGroups() - usedGroups, 0))
-                            .activeShares(Math.max(limits.maxActiveShares() - usedShares, 0))
-                            .aiQuestionsToday(Math.max(limits.aiQuestionsPerDay() - usedAiToday, 0))
-                            .build())
-                    .overLimit(AccountUsageResponse.OverLimitSnapshot.builder()
-                            .storageBytes(usedStorage > limits.storageBytes())
-                            .documents(usedDocs > limits.maxDocuments())
-                            .folders(usedFolders > limits.maxFolders())
-                            .ownedGroups(usedGroups > limits.maxOwnedGroups())
-                            .activeShares(usedShares > limits.maxActiveShares())
-                            .build())
-                    .overBy(AccountUsageResponse.UsageSnapshot.builder()
-                            .storageBytes(Math.max(usedStorage - limits.storageBytes(), 0))
-                            .documents(Math.max(usedDocs - limits.maxDocuments(), 0))
-                            .folders(Math.max(usedFolders - limits.maxFolders(), 0))
-                            .ownedGroups(Math.max(usedGroups - limits.maxOwnedGroups(), 0))
-                            .activeShares(Math.max(usedShares - limits.maxActiveShares(), 0))
-                            .aiQuestionsToday(0)
-                            .build())
+                    .storage(build(limits.storageBytes(), usedStorage))
+                    .documents(build(limits.maxDocuments(), usedDocs))
+                    .folders(build(limits.maxFolders(), usedFolders))
+                    .ownedGroups(build(limits.maxOwnedGroups(), usedGroups))
+                    .activeShares(build(limits.maxActiveShares(), usedShares))
+                    .aiQuestionsToday(build(limits.aiQuestionsPerDay(), usedAiToday))
                     .build();
 
             return ResponseEntity.ok(ApiResponse.success(response, "Usage retrieved successfully"));
@@ -123,6 +92,18 @@ public class AccountController {
         }
     }
 
+    private AccountUsageResponse.ResourceUsage build(long limit, long used) {
+        long remaining = Math.max(limit - used, 0);
+        boolean overLimit = used > limit;
+        long overBy = overLimit ? used - limit : 0;
+        return AccountUsageResponse.ResourceUsage.builder()
+                .limit(limit)
+                .used(used)
+                .remaining(remaining)
+                .overLimit(overLimit)
+                .overBy(overBy)
+                .build();
+    }
     private User getUser(Principal principal) {
         return userRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
