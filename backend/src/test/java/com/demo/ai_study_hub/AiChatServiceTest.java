@@ -46,6 +46,7 @@ class AiChatServiceTest {
     @Mock private DocumentChunkRetrievalService chunkRetrievalService;
     @Mock private PromptBuilderService promptBuilderService;
     @Mock private AiProperties aiProperties;
+    @Mock private TierPolicyService tierPolicyService;
     @Spy private ObjectMapper objectMapper = new ObjectMapper();
 
     @InjectMocks
@@ -66,6 +67,11 @@ class AiChatServiceTest {
         mockDocument.setTitle("Test Doc");
         mockDocument.setStatus("ACTIVE");
         mockDocument.setOwner(mockUser);
+
+        lenient().when(tierPolicyService.getEffectiveTier(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            return u.getTier();
+        });
     }
 
     // =========================================================================

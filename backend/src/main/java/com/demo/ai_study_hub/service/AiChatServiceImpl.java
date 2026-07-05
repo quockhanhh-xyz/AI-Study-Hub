@@ -48,6 +48,7 @@ public class AiChatServiceImpl implements AiChatService {
     private final DocumentChunkRetrievalService chunkRetrievalService;
     private final PromptBuilderService promptBuilderService;
     private final AiProperties aiProperties;
+    private final TierPolicyService tierPolicyService;
 
     private final ObjectMapper objectMapper;
 
@@ -74,7 +75,7 @@ public class AiChatServiceImpl implements AiChatService {
         validateViewPermission(doc, user);
 
         // 4. Validate question input
-        String tier = user.getTier().name();
+        String tier = tierPolicyService.getEffectiveTier(user).name();
         int maxChars = aiModelSelector.getMaxQuestionChars(tier);
         if (question == null || question.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -268,7 +269,7 @@ public class AiChatServiceImpl implements AiChatService {
     @Transactional(readOnly = true)
     public AiUsageSummaryResponse getUsageSummary(String userEmail) {
         User user = loadUser(userEmail);
-        String tier = user.getTier().name();
+        String tier = tierPolicyService.getEffectiveTier(user).name();
         int dailyLimit = aiModelSelector.getDailyQuestionLimit(tier);
         long usedToday = countUsedToday(user);
         int remaining = (int) Math.max(0, dailyLimit - usedToday);
