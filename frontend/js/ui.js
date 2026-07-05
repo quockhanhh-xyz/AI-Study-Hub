@@ -677,6 +677,8 @@ function renderTierBadge(element, tier) {
 // Expose globally for page scripts
 window.getTierBadgeHTML = getTierBadgeHTML;
 window.renderTierBadge = renderTierBadge;
+// Alias per checklist requirement
+window.formatTierBadge = getTierBadgeHTML;
 
 /**
  * Displays a user-friendly quota error message.
