@@ -24,6 +24,8 @@ public class FolderServiceImpl implements FolderService {
     private final FolderRepository folderRepository;
     private final UserRepository userRepository;
     private final DocumentRepository documentRepository;
+    private final TierPolicyService tierPolicyService;
+    private final UsageService usageService;
 
     @Override
     @Transactional
@@ -36,6 +38,21 @@ public class FolderServiceImpl implements FolderService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parent folder not found"));
             if (!"ACTIVE".equals(parentFolder.getStatus())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create subfolder in a deleted folder");
+            }
+        }
+
+        com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(owner);
+        long folderCount = usageService.countFolders(owner);
+        if (folderCount >= limits.maxFolders()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Folder limit reached. Upgrade your plan to create more folders.");
+        }
+        if (parentFolder != null) {
+            Integer parentDepth = folderRepository.findFolderDepth(parentFolder.getFolderId());
+            int depth = parentDepth != null ? parentDepth + 1 : 1;
+            if (depth >= limits.maxFolderDepth()) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Maximum folder depth reached for your plan.");
             }
         }
 
