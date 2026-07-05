@@ -334,6 +334,7 @@ const UIHelper = {
   },
 
   convertInputToCustomDropdown(inputElement) {
+    const createNewValue = "__new__";
     if (!inputElement || inputElement.dataset.customized) return;
     inputElement.dataset.customized = "true";
 
@@ -430,7 +431,7 @@ const UIHelper = {
         const text = opt.value;
         const id = opt.dataset.id || "";
 
-        if (text === CREATE_NEW_VALUE || id === CREATE_NEW_VALUE) {
+        if (text === createNewValue || id === createNewValue) {
           return;
         }
 
@@ -460,16 +461,16 @@ const UIHelper = {
       });
 
       // Append create new inline trigger option at bottom if present
-      const hasCreateNew = options.some(opt => opt.value === CREATE_NEW_VALUE || opt.dataset.id === CREATE_NEW_VALUE);
+      const hasCreateNew = options.some(opt => opt.value === createNewValue || opt.dataset.id === createNewValue);
       if (hasCreateNew && !filterVal) {
-        const matchingOpt = options.find(opt => opt.value === CREATE_NEW_VALUE || opt.dataset.id === CREATE_NEW_VALUE);
+        const matchingOpt = options.find(opt => opt.value === createNewValue || opt.dataset.id === createNewValue);
         const createOpt = document.createElement("div");
         createOpt.className = "custom-select-option";
         createOpt.style.borderTop = "1px solid var(--border)";
         createOpt.style.color = "var(--primary)";
         createOpt.style.fontWeight = "600";
         createOpt.textContent = matchingOpt.textContent || "+ Create new subject…";
-        createOpt.dataset.value = CREATE_NEW_VALUE;
+        createOpt.dataset.value = createNewValue;
         createOpt.addEventListener("click", (e) => {
           e.stopPropagation();
           inputElement.value = CREATE_NEW_VALUE;
