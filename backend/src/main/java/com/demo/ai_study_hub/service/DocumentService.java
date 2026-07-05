@@ -35,6 +35,8 @@ public class DocumentService {
     private final StudyGroupMemberRepository studyGroupMemberRepository;
     private final DocumentContentRepository documentContentRepository;
     private final DocumentChunkRepository documentChunkRepository;
+    private final TierPolicyService tierPolicyService;
+    private final UsageService usageService;
 
     @Transactional
     public DocumentResponse uploadDocument(MultipartFile file, String title, String description, Integer subjectId, Integer folderId, String email) {
@@ -78,6 +80,22 @@ public class DocumentService {
         if (isDuplicate) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                 "A file with the same name already exists in this folder.");
+        }
+
+        com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(owner);
+        if (file.getSize() > limits.maxFileBytes()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "File size exceeds your plan limit of " + limits.maxFileBytes() / (1024 * 1024) + "MB");
+        }
+        long docCount = usageService.countDocuments(owner);
+        if (docCount >= limits.maxDocuments()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Document limit reached. Upgrade your plan to upload more documents.");
+        }
+        long usedStorage = usageService.countStorageBytes(owner);
+        if (usedStorage + file.getSize() > limits.storageBytes()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Storage limit reached. Upgrade your plan for more storage.");
         }
 
         FileUploadResult uploadResult;
