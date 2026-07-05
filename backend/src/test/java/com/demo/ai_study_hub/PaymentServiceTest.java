@@ -43,6 +43,7 @@ class PaymentServiceTest {
 
     private User freeUser;
     private User premiumUser;
+    private User ultraUser;
 
     @BeforeEach
     void setUp() {
@@ -55,7 +56,16 @@ class PaymentServiceTest {
         premiumUser.setUserId(2);
         premiumUser.setEmail("premium@test.com");
         premiumUser.setTier(UserTier.PREMIUM);
+        premiumUser.setTierExpiresAt(LocalDateTime.now().plusDays(10));
 
+        ultraUser = new User();
+        ultraUser.setUserId(3);
+        ultraUser.setEmail("ultra@test.com");
+        ultraUser.setTier(UserTier.ULTRA);
+        ultraUser.setTierExpiresAt(LocalDateTime.now().plusDays(10));
+
+        // Default: effective tier mirrors the raw stored tier unless a test
+        // overrides it explicitly (e.g. an expired premium/ultra user).
         lenient().when(tierPolicyService.getEffectiveTier(any(User.class))).thenAnswer(invocation -> {
             User u = invocation.getArgument(0);
             return u.getTier();
@@ -63,43 +73,62 @@ class PaymentServiceTest {
     }
 
     // =========================================================================
-    // 1. PlanService - TC-PAY-001, TC-PAY-002
+    // 1. PlanService - GET plans returns FREE, PREMIUM, ULTRA
     // =========================================================================
 
     @Test
-    void getPlans_ShouldReturnFreeAndPremiumPlans() {
-        PlanResponse freePlan = PlanResponse.builder()
-                .planCode(PlanCode.FREE).planName("Free")
-                .price(0).currency("VND").billingLabel("free").aiDailyLimit(5).build();
-        PlanResponse premiumPlan = PlanResponse.builder()
-                .planCode(PlanCode.PREMIUM).planName("Premium")
-                .price(199000).currency("VND").billingLabel("month").aiDailyLimit(50).build();
-
+    void getPlans_ShouldReturnFreePremiumAndUltraPlans() {
         PlanService realPlanService = new PlanService(new TierPolicyService());
         List<PlanResponse> plans = realPlanService.getAllPlans();
 
-        assertEquals(2, plans.size());
+        assertEquals(3, plans.size());
         PlanResponse free = plans.stream().filter(p -> PlanCode.FREE.equals(p.getPlanCode())).findFirst().orElseThrow();
         PlanResponse premium = plans.stream().filter(p -> PlanCode.PREMIUM.equals(p.getPlanCode())).findFirst().orElseThrow();
+        PlanResponse ultra = plans.stream().filter(p -> PlanCode.ULTRA.equals(p.getPlanCode())).findFirst().orElseThrow();
 
         assertEquals(0, free.getPrice());
         assertEquals("free", free.getBillingLabel());
-        assertEquals(5, free.getAiDailyLimit());
+        assertEquals("FREE", free.getTargetTier());
         assertEquals("VND", free.getCurrency());
 
         assertEquals(199000, premium.getPrice());
-        assertEquals("month", premium.getBillingLabel());
-        assertEquals(50, premium.getAiDailyLimit());
+        assertEquals("PREMIUM", premium.getTargetTier());
+        assertEquals(1, premium.getDurationMonths());
         assertEquals("VND", premium.getCurrency());
+
+        assertEquals(399000, ultra.getPrice());
+        assertEquals("ULTRA", ultra.getTargetTier());
+        assertEquals(1, ultra.getDurationMonths());
+        assertEquals("VND", ultra.getCurrency());
+    }
+
+    @Test
+    void getPlan_WhenInvalidCode_ShouldThrow400NotReturnZeroPrice() {
+        PlanService realPlanService = new PlanService(new TierPolicyService());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                realPlanService.getPrice("NOT_A_REAL_PLAN"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void isPurchasablePlanCode_ShouldOnlyAllowPremiumAndUltra() {
+        PlanService realPlanService = new PlanService(new TierPolicyService());
+
+        assertFalse(realPlanService.isPurchasablePlanCode(PlanCode.FREE));
+        assertTrue(realPlanService.isPurchasablePlanCode(PlanCode.PREMIUM));
+        assertTrue(realPlanService.isPurchasablePlanCode(PlanCode.ULTRA));
     }
 
     // =========================================================================
-    // 2. Create Payment - TC-PAY-011~016
+    // 2. Create Payment
     // =========================================================================
 
     @Test
     void createMockPayment_WhenFreeUserPremiumPlan_ShouldCreatePendingOrder() {
         when(planService.isValidPlanCode(PlanCode.PREMIUM)).thenReturn(true);
+        when(planService.getTargetTier(PlanCode.PREMIUM)).thenReturn(UserTier.PREMIUM);
         when(planService.getPrice(PlanCode.PREMIUM)).thenReturn(199000L);
         when(paymentOrderRepository.save(any(PaymentOrder.class))).thenAnswer(inv -> {
             PaymentOrder order = inv.getArgument(0);
@@ -115,6 +144,26 @@ class PaymentServiceTest {
         assertEquals("VND", response.getCurrency());
         assertEquals(PaymentStatus.PENDING, response.getStatus());
         assertEquals(PaymentMethod.MOCK, response.getPaymentMethod());
+        verify(paymentOrderRepository, times(1)).save(any(PaymentOrder.class));
+    }
+
+    @Test
+    void createMockPayment_WhenFreeUserUltraPlan_ShouldCreatePendingOrder() {
+        when(planService.isValidPlanCode(PlanCode.ULTRA)).thenReturn(true);
+        when(planService.getTargetTier(PlanCode.ULTRA)).thenReturn(UserTier.ULTRA);
+        when(planService.getPrice(PlanCode.ULTRA)).thenReturn(399000L);
+        when(paymentOrderRepository.save(any(PaymentOrder.class))).thenAnswer(inv -> {
+            PaymentOrder order = inv.getArgument(0);
+            order.setPaymentId(2L);
+            return order;
+        });
+
+        PaymentResponse response = paymentService.createMockPayment(freeUser, PlanCode.ULTRA);
+
+        assertNotNull(response);
+        assertEquals(PlanCode.ULTRA, response.getPlanCode());
+        assertEquals(399000L, response.getAmount());
+        assertEquals(PaymentStatus.PENDING, response.getStatus());
         verify(paymentOrderRepository, times(1)).save(any(PaymentOrder.class));
     }
 
@@ -141,27 +190,93 @@ class PaymentServiceTest {
     }
 
     @Test
-    void createMockPayment_WhenUserAlreadyPremium_ShouldThrow409() {
-        when(planService.isValidPlanCode(PlanCode.PREMIUM)).thenReturn(true);
+    void createMockPayment_WhenNullPlanCode_ShouldThrow400() {
+        when(planService.isValidPlanCode(null)).thenReturn(false);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-            paymentService.createMockPayment(premiumUser, PlanCode.PREMIUM));
+                paymentService.createMockPayment(freeUser, null));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void createMockPayment_WhenPremiumUserRenewsPremium_ShouldSucceed() {
+        // PREMIUM -> PREMIUM is a renewal under the new rules, no longer blocked.
+        when(planService.isValidPlanCode(PlanCode.PREMIUM)).thenReturn(true);
+        when(planService.getTargetTier(PlanCode.PREMIUM)).thenReturn(UserTier.PREMIUM);
+        when(planService.getPrice(PlanCode.PREMIUM)).thenReturn(199000L);
+        when(paymentOrderRepository.save(any(PaymentOrder.class))).thenAnswer(inv -> {
+            PaymentOrder order = inv.getArgument(0);
+            order.setPaymentId(5L);
+            return order;
+        });
+
+        PaymentResponse response = paymentService.createMockPayment(premiumUser, PlanCode.PREMIUM);
+
+        assertNotNull(response);
+        assertEquals(PaymentStatus.PENDING, response.getStatus());
+        verify(paymentOrderRepository, times(1)).save(any(PaymentOrder.class));
+    }
+
+    @Test
+    void createMockPayment_WhenPremiumUserBuysUltra_ShouldSucceedAsUpgrade() {
+        when(planService.isValidPlanCode(PlanCode.ULTRA)).thenReturn(true);
+        when(planService.getTargetTier(PlanCode.ULTRA)).thenReturn(UserTier.ULTRA);
+        when(planService.getPrice(PlanCode.ULTRA)).thenReturn(399000L);
+        when(paymentOrderRepository.save(any(PaymentOrder.class))).thenAnswer(inv -> {
+            PaymentOrder order = inv.getArgument(0);
+            order.setPaymentId(6L);
+            return order;
+        });
+
+        PaymentResponse response = paymentService.createMockPayment(premiumUser, PlanCode.ULTRA);
+
+        assertNotNull(response);
+        assertEquals(PaymentStatus.PENDING, response.getStatus());
+        verify(paymentOrderRepository, times(1)).save(any(PaymentOrder.class));
+    }
+
+    @Test
+    void createMockPayment_WhenUltraUserBuysPremium_ShouldThrow409Downgrade() {
+        when(planService.isValidPlanCode(PlanCode.PREMIUM)).thenReturn(true);
+        when(planService.getTargetTier(PlanCode.PREMIUM)).thenReturn(UserTier.PREMIUM);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                paymentService.createMockPayment(ultraUser, PlanCode.PREMIUM));
 
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
-        assertTrue(ex.getReason().contains("already Premium"));
+        assertTrue(ex.getReason().contains("Downgrade from ULTRA to PREMIUM"));
         verify(paymentOrderRepository, never()).save(any());
+    }
+
+    @Test
+    void createMockPayment_WhenUltraUserRenewsUltra_ShouldSucceed() {
+        when(planService.isValidPlanCode(PlanCode.ULTRA)).thenReturn(true);
+        when(planService.getTargetTier(PlanCode.ULTRA)).thenReturn(UserTier.ULTRA);
+        when(planService.getPrice(PlanCode.ULTRA)).thenReturn(399000L);
+        when(paymentOrderRepository.save(any(PaymentOrder.class))).thenAnswer(inv -> {
+            PaymentOrder order = inv.getArgument(0);
+            order.setPaymentId(7L);
+            return order;
+        });
+
+        PaymentResponse response = paymentService.createMockPayment(ultraUser, PlanCode.ULTRA);
+
+        assertNotNull(response);
+        assertEquals(PaymentStatus.PENDING, response.getStatus());
     }
 
     @Test
     void createMockPayment_WhenUserExpiredPremium_ShouldAllowUpgrade() {
         // user is premium in database but effective tier has expired to FREE
         User expiredUser = new User();
-        expiredUser.setUserId(3);
+        expiredUser.setUserId(4);
         expiredUser.setEmail("expired@test.com");
         expiredUser.setTier(UserTier.PREMIUM);
         expiredUser.setTierExpiresAt(LocalDateTime.now().minusDays(1));
 
         when(planService.isValidPlanCode(PlanCode.PREMIUM)).thenReturn(true);
+        when(planService.getTargetTier(PlanCode.PREMIUM)).thenReturn(UserTier.PREMIUM);
         when(planService.getPrice(PlanCode.PREMIUM)).thenReturn(199000L);
         when(tierPolicyService.getEffectiveTier(expiredUser)).thenReturn(UserTier.FREE);
         when(paymentOrderRepository.save(any(PaymentOrder.class))).thenAnswer(inv -> {
@@ -179,22 +294,12 @@ class PaymentServiceTest {
         verify(paymentOrderRepository, times(1)).save(any(PaymentOrder.class));
     }
 
-    @Test
-    void createMockPayment_WhenNullPlanCode_ShouldThrow400() {
-        when(planService.isValidPlanCode(null)).thenReturn(false);
-
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                paymentService.createMockPayment(freeUser, null));
-
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
-    }
-
     // =========================================================================
-    // 3. Confirm Success - TC-PAY-020~028
+    // 3. Confirm Success
     // =========================================================================
 
     @Test
-    void markPaymentSuccess_WhenPendingOrder_ShouldUpgradeUserToPremium() {
+    void markPaymentSuccess_WhenFreeUserBuysPremium_ShouldUpgradeAndSetExpiryOneMonthFromNow() {
         PaymentOrder order = PaymentOrder.builder()
                 .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM)
                 .amount(199000L).currency("VND")
@@ -202,17 +307,140 @@ class PaymentServiceTest {
 
         when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, freeUser))
                 .thenReturn(Optional.of(order));
-        when(userRepository.findById(freeUser.getUserId())).thenReturn(Optional.of(freeUser));
+        when(userRepository.findByIdForUpdate(freeUser.getUserId())).thenReturn(Optional.of(freeUser));
+        when(planService.getTargetTier(PlanCode.PREMIUM)).thenReturn(UserTier.PREMIUM);
         when(paymentOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
+        LocalDateTime before = LocalDateTime.now();
         PaymentResponse response = paymentService.markPaymentSuccess(freeUser, 1L);
+        LocalDateTime after = LocalDateTime.now();
 
         assertEquals(PaymentStatus.SUCCESS, response.getStatus());
         assertEquals("PREMIUM", response.getTier());
         assertNotNull(response.getPaidAt());
         assertEquals(UserTier.PREMIUM, freeUser.getTier());
+        assertNotNull(freeUser.getTierExpiresAt());
+        assertTrue(freeUser.getTierExpiresAt().isAfter(before.plusMonths(1).minusMinutes(1)));
+        assertTrue(freeUser.getTierExpiresAt().isBefore(after.plusMonths(1).plusMinutes(1)));
         verify(userRepository, times(1)).save(freeUser);
+    }
+
+    @Test
+    void markPaymentSuccess_WhenFreeUserBuysUltra_ShouldUpgradeToUltra() {
+        PaymentOrder order = PaymentOrder.builder()
+                .paymentId(2L).user(freeUser).planCode(PlanCode.ULTRA)
+                .amount(399000L).currency("VND")
+                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
+
+        when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(2L, freeUser))
+                .thenReturn(Optional.of(order));
+        when(userRepository.findByIdForUpdate(freeUser.getUserId())).thenReturn(Optional.of(freeUser));
+        when(planService.getTargetTier(PlanCode.ULTRA)).thenReturn(UserTier.ULTRA);
+        when(paymentOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        PaymentResponse response = paymentService.markPaymentSuccess(freeUser, 2L);
+
+        assertEquals("ULTRA", response.getTier());
+        assertEquals(UserTier.ULTRA, freeUser.getTier());
+    }
+
+    @Test
+    void markPaymentSuccess_WhenPremiumRenewsPremium_ShouldAddOneMonthToExistingExpiry() {
+        LocalDateTime existingExpiry = LocalDateTime.now().plusDays(10);
+        premiumUser.setTierExpiresAt(existingExpiry);
+
+        PaymentOrder order = PaymentOrder.builder()
+                .paymentId(3L).user(premiumUser).planCode(PlanCode.PREMIUM)
+                .amount(199000L).currency("VND")
+                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
+
+        when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(3L, premiumUser))
+                .thenReturn(Optional.of(order));
+        when(userRepository.findByIdForUpdate(premiumUser.getUserId())).thenReturn(Optional.of(premiumUser));
+        when(planService.getTargetTier(PlanCode.PREMIUM)).thenReturn(UserTier.PREMIUM);
+        when(paymentOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        paymentService.markPaymentSuccess(premiumUser, 3L);
+
+        assertEquals(UserTier.PREMIUM, premiumUser.getTier());
+        assertEquals(existingExpiry.plusMonths(1), premiumUser.getTierExpiresAt());
+    }
+
+    @Test
+    void markPaymentSuccess_WhenUltraRenewsUltra_ShouldAddOneMonthToExistingExpiry() {
+        LocalDateTime existingExpiry = LocalDateTime.now().plusDays(5);
+        ultraUser.setTierExpiresAt(existingExpiry);
+
+        PaymentOrder order = PaymentOrder.builder()
+                .paymentId(4L).user(ultraUser).planCode(PlanCode.ULTRA)
+                .amount(399000L).currency("VND")
+                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
+
+        when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(4L, ultraUser))
+                .thenReturn(Optional.of(order));
+        when(userRepository.findByIdForUpdate(ultraUser.getUserId())).thenReturn(Optional.of(ultraUser));
+        when(planService.getTargetTier(PlanCode.ULTRA)).thenReturn(UserTier.ULTRA);
+        when(paymentOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        paymentService.markPaymentSuccess(ultraUser, 4L);
+
+        assertEquals(UserTier.ULTRA, ultraUser.getTier());
+        assertEquals(existingExpiry.plusMonths(1), ultraUser.getTierExpiresAt());
+    }
+
+    @Test
+    void markPaymentSuccess_WhenPremiumUpgradesToUltra_ShouldResetExpiryToOneMonthFromNow() {
+        // Premium still has 20 days left — this remaining time must NOT be
+        // carried over into Ultra (would be free Ultra time).
+        LocalDateTime remainingPremiumExpiry = LocalDateTime.now().plusDays(20);
+        premiumUser.setTierExpiresAt(remainingPremiumExpiry);
+
+        PaymentOrder order = PaymentOrder.builder()
+                .paymentId(8L).user(premiumUser).planCode(PlanCode.ULTRA)
+                .amount(399000L).currency("VND")
+                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
+
+        when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(8L, premiumUser))
+                .thenReturn(Optional.of(order));
+        when(userRepository.findByIdForUpdate(premiumUser.getUserId())).thenReturn(Optional.of(premiumUser));
+        when(planService.getTargetTier(PlanCode.ULTRA)).thenReturn(UserTier.ULTRA);
+        when(paymentOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        LocalDateTime before = LocalDateTime.now();
+        paymentService.markPaymentSuccess(premiumUser, 8L);
+        LocalDateTime after = LocalDateTime.now();
+
+        assertEquals(UserTier.ULTRA, premiumUser.getTier());
+        // New expiry must be ~now + 1 month, NOT remainingPremiumExpiry + 1 month
+        assertTrue(premiumUser.getTierExpiresAt().isAfter(before.plusMonths(1).minusMinutes(1)));
+        assertTrue(premiumUser.getTierExpiresAt().isBefore(after.plusMonths(1).plusMinutes(1)));
+        assertTrue(premiumUser.getTierExpiresAt().isBefore(remainingPremiumExpiry.plusMonths(1).minusDays(1)));
+    }
+
+    @Test
+    void markPaymentSuccess_WhenUltraOrderButUserAlreadyDowngradedIntentToPremium_ShouldThrow409() {
+        // Order was created for PREMIUM while user is (still) effectively ULTRA.
+        PaymentOrder order = PaymentOrder.builder()
+                .paymentId(9L).user(ultraUser).planCode(PlanCode.PREMIUM)
+                .amount(199000L).currency("VND")
+                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
+
+        when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(9L, ultraUser))
+                .thenReturn(Optional.of(order));
+        when(userRepository.findByIdForUpdate(ultraUser.getUserId())).thenReturn(Optional.of(ultraUser));
+        when(planService.getTargetTier(PlanCode.PREMIUM)).thenReturn(UserTier.PREMIUM);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                paymentService.markPaymentSuccess(ultraUser, 9L));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        assertTrue(ex.getReason().contains("Downgrade from ULTRA to PREMIUM"));
+        verify(userRepository, never()).save(any());
     }
 
     @Test
@@ -239,6 +467,7 @@ class PaymentServiceTest {
                 paymentService.markPaymentSuccess(premiumUser, 1L));
 
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        verify(userRepository, never()).save(any());
     }
 
     @Test
@@ -271,27 +500,8 @@ class PaymentServiceTest {
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
     }
 
-    @Test
-    void markPaymentSuccess_WhenUserAlreadyPremium_ShouldThrow409() {
-        // User đã PREMIUM nhưng còn payment PENDING cũ
-        PaymentOrder order = PaymentOrder.builder()
-                .paymentId(1L).user(premiumUser).planCode(PlanCode.PREMIUM)
-                .status(PaymentStatus.PENDING).build();
-
-        when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, premiumUser))
-                .thenReturn(Optional.of(order));
-        when(userRepository.findById(premiumUser.getUserId())).thenReturn(Optional.of(premiumUser));
-
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                paymentService.markPaymentSuccess(premiumUser, 1L));
-
-        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
-        assertTrue(ex.getReason().contains("already Premium"));
-        verify(userRepository, never()).save(any());
-    }
-
     // =========================================================================
-    // 4. Confirm Fail - TC-PAY-030~034
+    // 4. Confirm Fail
     // =========================================================================
 
     @Test
@@ -311,7 +521,7 @@ class PaymentServiceTest {
         assertEquals(PaymentStatus.FAILED, response.getStatus());
         assertEquals("FREE", response.getTier());
         assertNull(response.getPaidAt());
-        assertEquals(UserTier.FREE, freeUser.getTier()); // tier không đổi
+        assertEquals(UserTier.FREE, freeUser.getTier());
         verify(userRepository, never()).save(any());
     }
 
@@ -343,7 +553,6 @@ class PaymentServiceTest {
 
     @Test
     void markPaymentFailed_WhenUserAlreadyPremium_ShouldStillAllowAndReturnPremiumTier() {
-        // TC-PAY-034: PREMIUM user fail payment cũ → vẫn được, tier vẫn PREMIUM
         PaymentOrder order = PaymentOrder.builder()
                 .paymentId(1L).user(premiumUser).planCode(PlanCode.PREMIUM)
                 .amount(199000L).currency("VND")
@@ -362,7 +571,7 @@ class PaymentServiceTest {
     }
 
     // =========================================================================
-    // 5. Cancel Payment - TC-PAY-040~044
+    // 5. Cancel Payment
     // =========================================================================
 
     @Test
@@ -414,7 +623,6 @@ class PaymentServiceTest {
 
     @Test
     void cancelPayment_WhenUserAlreadyPremium_ShouldStillAllowAndReturnPremiumTier() {
-        // TC-PAY-044: PREMIUM user cancel payment cũ → vẫn được, tier vẫn PREMIUM
         PaymentOrder order = PaymentOrder.builder()
                 .paymentId(1L).user(premiumUser).planCode(PlanCode.PREMIUM)
                 .amount(199000L).currency("VND")
@@ -433,7 +641,7 @@ class PaymentServiceTest {
     }
 
     // =========================================================================
-    // 6. Get My Payments - TC-PAY-050~052
+    // 6. Get My Payments
     // =========================================================================
 
     @Test
@@ -458,9 +666,29 @@ class PaymentServiceTest {
         assertEquals(2, responses.size());
         assertEquals(PaymentStatus.SUCCESS, responses.get(0).getStatus());
         assertEquals(PaymentStatus.FAILED, responses.get(1).getStatus());
-        // tier không có trong history list
         assertNull(responses.get(0).getTier());
         assertNull(responses.get(1).getTier());
+    }
+
+    @Test
+    void getMyPayments_ShouldShowCorrectPlanNamePerOrder() {
+        PaymentOrder premiumOrder = PaymentOrder.builder()
+                .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM)
+                .amount(199000L).currency("VND").status(PaymentStatus.SUCCESS)
+                .paymentMethod(PaymentMethod.MOCK).createdAt(LocalDateTime.now()).build();
+
+        PaymentOrder ultraOrder = PaymentOrder.builder()
+                .paymentId(2L).user(freeUser).planCode(PlanCode.ULTRA)
+                .amount(399000L).currency("VND").status(PaymentStatus.SUCCESS)
+                .paymentMethod(PaymentMethod.MOCK).createdAt(LocalDateTime.now()).build();
+
+        when(paymentOrderRepository.findByUserOrderByCreatedAtDesc(freeUser))
+                .thenReturn(List.of(ultraOrder, premiumOrder));
+
+        List<PaymentResponse> responses = paymentService.getMyPayments(freeUser);
+
+        assertEquals("Ultra", responses.get(0).getPlanName());
+        assertEquals("Premium", responses.get(1).getPlanName());
     }
 
     @Test
@@ -475,7 +703,7 @@ class PaymentServiceTest {
     }
 
     // =========================================================================
-    // 7. PlanService tier limits - TC-PAY-061, TC-PAY-063
+    // 7. TierPolicyService limits / effective tier
     // =========================================================================
 
     @Test
@@ -498,5 +726,45 @@ class PaymentServiceTest {
         assertEquals(8, limits.maxContextChunks());
         assertEquals(1500, limits.maxOutputTokens());
         assertEquals("gemini-2.5-flash", limits.aiModel());
+    }
+
+    @Test
+    void planService_UltraTierLimits_ShouldMatchSpec() {
+        TierPolicyService tps = new TierPolicyService();
+        com.demo.ai_study_hub.dto.TierLimits limits = tps.getLimits(UserTier.ULTRA);
+        assertEquals(200, limits.aiQuestionsPerDay());
+        assertEquals(5000, limits.maxQuestionChars());
+        assertEquals(15, limits.maxContextChunks());
+        assertEquals(3000, limits.maxOutputTokens());
+    }
+
+    @Test
+    void effectiveTier_WhenPremiumNotExpired_ShouldReturnPremium() {
+        TierPolicyService tps = new TierPolicyService();
+        User u = new User();
+        u.setTier(UserTier.PREMIUM);
+        u.setTierExpiresAt(LocalDateTime.now().plusDays(5));
+
+        assertEquals(UserTier.PREMIUM, tps.getEffectiveTier(u));
+    }
+
+    @Test
+    void effectiveTier_WhenUltraNotExpired_ShouldReturnUltra() {
+        TierPolicyService tps = new TierPolicyService();
+        User u = new User();
+        u.setTier(UserTier.ULTRA);
+        u.setTierExpiresAt(LocalDateTime.now().plusDays(5));
+
+        assertEquals(UserTier.ULTRA, tps.getEffectiveTier(u));
+    }
+
+    @Test
+    void effectiveTier_WhenPaidTierExpired_ShouldReturnFree() {
+        TierPolicyService tps = new TierPolicyService();
+        User u = new User();
+        u.setTier(UserTier.ULTRA);
+        u.setTierExpiresAt(LocalDateTime.now().minusDays(1));
+
+        assertEquals(UserTier.FREE, tps.getEffectiveTier(u));
     }
 }
