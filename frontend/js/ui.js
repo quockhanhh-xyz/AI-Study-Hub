@@ -689,3 +689,27 @@ function showQuotaError(error) {
 
 // Expose globally
 window.showQuotaError = showQuotaError;
+
+/**
+ * Formats usage progress as a human-readable string.
+ * @param {number} used - Amount used (in bytes for storage, or count for others).
+ * @param {number} limit - Maximum allowed amount.
+ * @param {string} type - "storage" | "count" (default "count").
+ * @returns {string} Formatted string e.g. "2.97 MB / 100 MB" or "3 / 10".
+ */
+function formatUsageProgress(used, limit, type = "count") {
+  if (type === "storage") {
+    const formatBytes = (bytes) => {
+      if (!bytes || bytes === 0) return "0 B";
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+      return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+    };
+    return `${formatBytes(used)} / ${formatBytes(limit)}`;
+  }
+  return `${used ?? 0} / ${limit ?? "∞"}`;
+}
+
+// Expose globally
+window.formatUsageProgress = formatUsageProgress;
