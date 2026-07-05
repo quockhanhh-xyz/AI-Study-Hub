@@ -550,11 +550,18 @@ window.initCustomDropdowns = UIHelper.initCustomDropdowns;
 const AIUIHelper = {
   /**
    * 19.2. Error mapping helper
-   * Standardizes HTTP status codes into user-friendly error messages.
-   * @param {number} status - The HTTP status code.
+   * Standardizes HTTP status codes or error codes into user-friendly error messages.
+   * @param {number|object} errorOrStatus - The HTTP status code or error object.
    * @returns {string} The standardized error message.
    */
-  mapAiError(status) {
+  mapAiError(errorOrStatus) {
+    const status = typeof errorOrStatus === "number" ? errorOrStatus : errorOrStatus?.status;
+    const code = typeof errorOrStatus === "object" ? errorOrStatus?.code : "";
+
+    if (code === "AI_QUOTA_EXCEEDED") {
+      return "You have reached your daily AI question limit. Upgrade to PREMIUM or ULTRA for more.";
+    }
+
     const errorMap = {
       400: "Your question is empty or too long.",
       401: "Please log in to use AI Q&A.",
@@ -562,7 +569,7 @@ const AIUIHelper = {
       404: "This document is not available.",
       409: "This document is not ready for AI yet. Please process it first.",
       422: "This document has no usable AI content.",
-      429: "You have reached your daily AI question limit.",
+      429: "You have reached your daily AI question limit. Upgrade to PREMIUM or ULTRA for more.",
       503: "AI service is currently unavailable."
     };
     return errorMap[status] || "An unexpected AI error occurred. Please try again.";
