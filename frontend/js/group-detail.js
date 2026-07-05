@@ -147,6 +147,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     el.style.display = "none";
   }
 
+  // Step 13: detects backend quota errors (e.g. owned group limit) so we can
+  // route them through the shared showQuotaError() helper.
+  function isQuotaError(error) {
+    return !!(error && error.status === 403 && typeof error.code === "string" && /LIMIT_EXCEEDED|QUOTA_EXCEEDED/.test(error.code));
+  }
+
   // Resolves current user's id from session storage cached by layout.js / auth.js.
   function getCurrentUserId() {
     try {
@@ -783,7 +789,12 @@ document.addEventListener("DOMContentLoaded", async function () {
       showToast("Group updated.", "success");
       await loadGroupDetail();
     } catch (error) {
-      showError(editError, error.message || "Failed to update group.");
+      if (isQuotaError(error) && typeof window.showQuotaError === "function") {
+        window.showQuotaError(error);
+        showError(editError, window.getQuotaErrorMessage ? window.getQuotaErrorMessage(error) : error.message);
+      } else {
+        showError(editError, error.message || "Failed to update group.");
+      }
     } finally {
       editConfirmBtn.disabled = false;
     }
