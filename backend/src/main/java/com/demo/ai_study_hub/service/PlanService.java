@@ -2,6 +2,7 @@ package com.demo.ai_study_hub.service;
 
 import com.demo.ai_study_hub.dto.PlanCode;
 import com.demo.ai_study_hub.dto.PlanResponse;
+import com.demo.ai_study_hub.dto.UserTier;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -52,28 +53,55 @@ public class PlanService {
             .build();
     }
 
+    // String overloads (used by DefaultAiModelSelector)
     public int getDailyLimit(String tier) {
-        if ("PREMIUM".equalsIgnoreCase(tier)) return PREMIUM_DAILY_LIMIT;
+        if ("PREMIUM".equalsIgnoreCase(tier) || "ULTRA".equalsIgnoreCase(tier)) return PREMIUM_DAILY_LIMIT;
         return FREE_DAILY_LIMIT;
     }
 
     public int getMaxQuestionChars(String tier) {
-        if ("PREMIUM".equalsIgnoreCase(tier)) return PREMIUM_MAX_QUESTION_CHARS;
+        if ("PREMIUM".equalsIgnoreCase(tier) || "ULTRA".equalsIgnoreCase(tier)) return PREMIUM_MAX_QUESTION_CHARS;
         return FREE_MAX_QUESTION_CHARS;
     }
 
     public int getMaxContextChunks(String tier) {
-        if ("PREMIUM".equalsIgnoreCase(tier)) return PREMIUM_MAX_CONTEXT_CHUNKS;
+        if ("PREMIUM".equalsIgnoreCase(tier) || "ULTRA".equalsIgnoreCase(tier)) return PREMIUM_MAX_CONTEXT_CHUNKS;
         return FREE_MAX_CONTEXT_CHUNKS;
     }
 
     public int getMaxOutputTokens(String tier) {
-        if ("PREMIUM".equalsIgnoreCase(tier)) return PREMIUM_MAX_OUTPUT_TOKENS;
+        if ("PREMIUM".equalsIgnoreCase(tier) || "ULTRA".equalsIgnoreCase(tier)) return PREMIUM_MAX_OUTPUT_TOKENS;
         return FREE_MAX_OUTPUT_TOKENS;
     }
 
     public String getModel(String tier) {
-        if ("PREMIUM".equalsIgnoreCase(tier)) return PREMIUM_MODEL;
+        if ("PREMIUM".equalsIgnoreCase(tier) || "ULTRA".equalsIgnoreCase(tier)) return PREMIUM_MODEL;
+        return FREE_MODEL;
+    }
+
+    // UserTier enum overloads (used by PaymentServiceTest)
+    public int getDailyLimit(UserTier tier) {
+        if (tier == UserTier.PREMIUM || tier == UserTier.ULTRA) return PREMIUM_DAILY_LIMIT;
+        return FREE_DAILY_LIMIT;
+    }
+
+    public int getMaxQuestionChars(UserTier tier) {
+        if (tier == UserTier.PREMIUM || tier == UserTier.ULTRA) return PREMIUM_MAX_QUESTION_CHARS;
+        return FREE_MAX_QUESTION_CHARS;
+    }
+
+    public int getMaxContextChunks(UserTier tier) {
+        if (tier == UserTier.PREMIUM || tier == UserTier.ULTRA) return PREMIUM_MAX_CONTEXT_CHUNKS;
+        return FREE_MAX_CONTEXT_CHUNKS;
+    }
+
+    public int getMaxOutputTokens(UserTier tier) {
+        if (tier == UserTier.PREMIUM || tier == UserTier.ULTRA) return PREMIUM_MAX_OUTPUT_TOKENS;
+        return FREE_MAX_OUTPUT_TOKENS;
+    }
+
+    public String getModel(UserTier tier) {
+        if (tier == UserTier.PREMIUM || tier == UserTier.ULTRA) return PREMIUM_MODEL;
         return FREE_MODEL;
     }
 
