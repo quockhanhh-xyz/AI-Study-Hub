@@ -357,6 +357,13 @@ function resolveUploadError(err) {
   return msg || "Upload failed. Please try again.";
 }
 
+// Step 13: detects backend quota errors (storage/document/file-size limits)
+// so we can route them through the shared showQuotaError() helper instead
+// of the generic upload error resolver above.
+function isQuotaError(err) {
+  return !!(err && err.status === 403 && typeof err.code === "string" && /LIMIT_EXCEEDED|QUOTA_EXCEEDED/.test(err.code));
+}
+
 
 /* ==========================================================================
    STEP 6D: INLINE "CREATE NEW SUBJECT" / "CREATE NEW FOLDER" UX
@@ -567,7 +574,17 @@ uploadForm.addEventListener("submit", async (e) => {
       return;
     }
 
-    showMessage(resolveUploadError(err), "error");
+    // Step 13: quota errors (storage/document/file-size limit exceeded) get the
+    // shared quota toast + a matching inline message, instead of the generic resolver.
+    if (isQuotaError(err) && typeof window.showQuotaError === "function") {
+      window.showQuotaError(err);
+      const quotaMessage = typeof window.getQuotaErrorMessage === "function"
+        ? window.getQuotaErrorMessage(err)
+        : resolveUploadError(err);
+      showMessage(quotaMessage, "error");
+    } else {
+      showMessage(resolveUploadError(err), "error");
+    }
 
   } finally {
     if (cancelUploadBtn && onCancel) {
