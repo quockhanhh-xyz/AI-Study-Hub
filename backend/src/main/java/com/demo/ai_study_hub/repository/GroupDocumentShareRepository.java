@@ -28,4 +28,6 @@ public interface GroupDocumentShareRepository extends JpaRepository<GroupDocumen
     List<Object[]> countActiveSharesByGroupIds(@Param("groupIds") List<Integer> groupIds);
 
     void deleteByDocument(Document document);
+
+    long countBySharedByAndStatus(User sharedBy, String status);
 }

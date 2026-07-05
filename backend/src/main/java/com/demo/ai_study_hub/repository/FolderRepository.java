@@ -37,4 +37,7 @@ public interface FolderRepository extends JpaRepository<Folder, Integer> {
         "  JOIN ancestor_chain ac ON f.folder_id = ac.parent_folder_id " +
         ") SELECT MAX(depth) FROM ancestor_chain", nativeQuery = true)
     Integer findFolderDepth(@Param("folderId") Integer folderId);
+
+    @Query("SELECT COUNT(f) FROM Folder f WHERE f.owner = :owner AND f.status IN :statuses")
+    long countByOwnerAndStatusIn(@Param("owner") User owner, @Param("statuses") List<String> statuses);
 }
