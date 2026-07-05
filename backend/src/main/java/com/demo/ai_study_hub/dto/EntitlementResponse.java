@@ -26,14 +26,16 @@ public class EntitlementResponse {
         private int maxOwnedGroups;
         private int maxMembersPerGroup;
         private int maxActiveShares;
-        private int aiQuestionsPerDay;
+        private int maxAiSessionsPerDocument;
+        private int maxMessagesPerSession;
+        private int maxAiDailyQuestions;
         private int maxQuestionChars;
         private int maxContextChunks;
         private int maxOutputTokens;
         private String aiModel;
-        private int summaryGenerationsPerDay;
-        private int flashcardSetsPerDay;
-        private int quizSetsPerDay;
-        private int itemsPerSet;
+        private int maxSummaryQuotaPerDay;
+        private int maxFlashcardQuotaPerDay;
+        private int maxQuizQuotaPerDay;
+        private int maxItemsPerSet;
     }
 }

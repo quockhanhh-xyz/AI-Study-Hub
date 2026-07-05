@@ -42,15 +42,17 @@ public class AccountController {
                             .maxOwnedGroups(limits.maxOwnedGroups())
                             .maxMembersPerGroup(limits.maxMembersPerGroup())
                             .maxActiveShares(limits.maxActiveShares())
-                            .aiQuestionsPerDay(limits.aiQuestionsPerDay())
+                            .maxAiSessionsPerDocument(limits.maxAiSessionsPerDocument())
+                            .maxMessagesPerSession(limits.maxMessagesPerSession())
+                            .maxAiDailyQuestions(limits.aiQuestionsPerDay())
                             .maxQuestionChars(limits.maxQuestionChars())
                             .maxContextChunks(limits.maxContextChunks())
                             .maxOutputTokens(limits.maxOutputTokens())
                             .aiModel(limits.aiModel())
-                            .summaryGenerationsPerDay(limits.summaryGenerationsPerDay())
-                            .flashcardSetsPerDay(limits.flashcardSetsPerDay())
-                            .quizSetsPerDay(limits.quizSetsPerDay())
-                            .itemsPerSet(limits.itemsPerSet())
+                            .maxSummaryQuotaPerDay(limits.summaryGenerationsPerDay())
+                            .maxFlashcardQuotaPerDay(limits.flashcardSetsPerDay())
+                            .maxQuizQuotaPerDay(limits.quizSetsPerDay())
+                            .maxItemsPerSet(limits.itemsPerSet())
                             .build())
                     .build();
 
@@ -83,7 +85,7 @@ public class AccountController {
                     .folders(build(limits.maxFolders(), usedFolders))
                     .ownedGroups(build(limits.maxOwnedGroups(), usedGroups))
                     .activeShares(build(limits.maxActiveShares(), usedShares))
-                    .aiQuestionsToday(build(limits.aiQuestionsPerDay(), usedAiToday))
+                    .dailyAiQuestions(build(limits.aiQuestionsPerDay(), usedAiToday))
                     .build();
 
             return ResponseEntity.ok(ApiResponse.success(response, "Usage retrieved successfully"));

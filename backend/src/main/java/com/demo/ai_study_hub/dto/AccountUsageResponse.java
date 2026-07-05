@@ -16,7 +16,7 @@ public class AccountUsageResponse {
     private ResourceUsage folders;
     private ResourceUsage ownedGroups;
     private ResourceUsage activeShares;
-    private ResourceUsage aiQuestionsToday;
+    private ResourceUsage dailyAiQuestions;
 
     @Data
     @Builder
