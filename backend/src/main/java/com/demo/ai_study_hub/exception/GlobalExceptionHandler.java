@@ -25,9 +25,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
     public ResponseEntity<ApiResponse<Void>> handleResponseStatusException(
             org.springframework.web.server.ResponseStatusException ex) {
+        String code = null;
+        if (ex instanceof QuotaExceededException qe) {
+            code = qe.getCode();
+        }
         return ResponseEntity.status(ex.getStatusCode())
                 .body(ApiResponse.<Void>builder()
                         .success(false)
+                        .code(code)
                         .message(ex.getReason())
                         .data(null)
                         .build());

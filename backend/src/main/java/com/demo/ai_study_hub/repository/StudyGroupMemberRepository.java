@@ -26,4 +26,12 @@ public interface StudyGroupMemberRepository extends JpaRepository<StudyGroupMemb
 
     @Query("SELECT m.group.groupId AS groupId, COUNT(m) AS cnt FROM StudyGroupMember m WHERE m.group.groupId IN :groupIds AND m.status = 'ACTIVE' GROUP BY m.group.groupId")
     List<Object[]> countActiveMembersByGroupIds(@Param("groupIds") List<Integer> groupIds);
+
+    @Query("SELECT COUNT(m) FROM StudyGroupMember m WHERE m.user = :user AND m.role = :role AND m.group.status = :groupStatus")
+    long countByUserAndRoleAndGroupStatus(
+        @Param("user") User user,
+        @Param("role") String role,
+        @Param("groupStatus") String groupStatus);
+
+    long countByGroupAndStatus(StudyGroup group, String status);
 }

@@ -13,6 +13,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import com.demo.ai_study_hub.service.TierPolicyService;
+import com.demo.ai_study_hub.service.UsageService;
+import com.demo.ai_study_hub.dto.TierLimits;
+import static org.mockito.ArgumentMatchers.any;
 
 import java.util.Optional;
 
@@ -32,6 +36,10 @@ class StudyGroupServiceTest {
     private GroupDocumentShareRepository groupDocumentShareRepository;
     @Mock
     private GroupFolderShareRepository groupFolderShareRepository;
+    @Mock
+    private TierPolicyService tierPolicyService;
+    @Mock
+    private UsageService usageService;
 
     @InjectMocks
     private StudyGroupServiceImpl studyGroupService;
@@ -56,6 +64,13 @@ class StudyGroupServiceTest {
         group.setInviteCode("ABCD1234");
         group.setOwner(owner);
         group.setStatus("ACTIVE");
+
+        TierLimits mockLimits = new TierLimits(
+                100L * 1024 * 1024, 30, 10L * 1024 * 1024, 20, 3, 3, 10, 30, 3, 500, 5, 500, 3, 500,
+                "gemini-2.5-flash-lite", 1, 1, 1, 5
+        );
+        lenient().when(tierPolicyService.getLimitsForUser(any())).thenReturn(mockLimits);
+        lenient().when(usageService.countOwnedGroups(any())).thenReturn(0L);
     }
 
     @Test
@@ -64,7 +79,7 @@ class StudyGroupServiceTest {
         request.setInviteCode("ABCD1234");
 
         when(userRepository.findByEmail("member@gmail.com")).thenReturn(Optional.of(member));
-        when(studyGroupRepository.findByInviteCode("ABCD1234")).thenReturn(Optional.of(group));
+        when(studyGroupRepository.findByInviteCodeForUpdate("ABCD1234")).thenReturn(Optional.of(group));
         when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(group, member, "ACTIVE")).thenReturn(true);
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
@@ -307,6 +322,7 @@ class StudyGroupServiceTest {
         request.setDescription("Java description");
 
         when(userRepository.findByEmail("owner@gmail.com")).thenReturn(Optional.of(owner));
+        when(userRepository.findByIdForUpdate(1)).thenReturn(Optional.of(owner));
         when(studyGroupRepository.save(any(StudyGroup.class))).thenAnswer(invocation -> {
             StudyGroup saved = invocation.getArgument(0);
             saved.setGroupId(1);

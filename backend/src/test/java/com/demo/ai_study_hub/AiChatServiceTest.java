@@ -25,8 +25,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+
 @ExtendWith(MockitoExtension.class)
 class AiChatServiceTest {
+
+    @Mock private PlatformTransactionManager transactionManager;
 
     @Mock private UserRepository userRepository;
     @Mock private DocumentRepository documentRepository;
@@ -39,6 +44,7 @@ class AiChatServiceTest {
     @Mock private AiChatSessionRepository aiChatSessionRepository;
     @Mock private AiChatMessageRepository aiChatMessageRepository;
     @Mock private AiUsageLogRepository aiUsageLogRepository;
+    @Mock private AiUsageReservationRepository aiUsageReservationRepository;
 
     @Mock private AiProviderRouter aiProviderRouter;
     @Mock private AiModelSelector aiModelSelector;
@@ -46,6 +52,7 @@ class AiChatServiceTest {
     @Mock private DocumentChunkRetrievalService chunkRetrievalService;
     @Mock private PromptBuilderService promptBuilderService;
     @Mock private AiProperties aiProperties;
+    @Mock private TierPolicyService tierPolicyService;
     @Spy private ObjectMapper objectMapper = new ObjectMapper();
 
     @InjectMocks
@@ -56,16 +63,71 @@ class AiChatServiceTest {
 
     @BeforeEach
     void setUp() {
+        TransactionStatus mockStatus = mock(TransactionStatus.class);
+        lenient().when(transactionManager.getTransaction(any())).thenReturn(mockStatus);
+
         mockUser = new User();
         mockUser.setUserId(1);
         mockUser.setEmail("user@test.com");
-        mockUser.setTier("FREE");
+        mockUser.setTier(com.demo.ai_study_hub.enums.UserTier.FREE);
 
         mockDocument = new Document();
         mockDocument.setDocumentId(1);
         mockDocument.setTitle("Test Doc");
         mockDocument.setStatus("ACTIVE");
         mockDocument.setOwner(mockUser);
+
+        lenient().when(tierPolicyService.getEffectiveTier(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            return u.getTier();
+        });
+
+        TierLimits defaultLimits = new TierLimits(
+            100L * 1024 * 1024,
+            30,
+            50L * 1024 * 1024,
+            50,
+            5,
+            5,
+            50,
+            100,
+            3,      // maxAiSessionsPerDocument
+            30,     // maxMessagesPerSession
+            5,      // aiQuestionsPerDay
+            500,    // maxQuestionChars
+            3,      // maxContextChunks
+            500,    // maxOutputTokens
+            "gemini-2.5-flash-lite",
+            3,
+            3,
+            3,
+            5
+        );
+        lenient().when(tierPolicyService.getLimitsForUser(any())).thenReturn(defaultLimits);
+        lenient().when(tierPolicyService.getLimits(any())).thenReturn(defaultLimits);
+
+        lenient().when(userRepository.findByIdForUpdate(anyInt())).thenReturn(Optional.of(mockUser));
+        lenient().when(aiUsageReservationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(aiUsageReservationRepository.countActiveReservations(any(), any())).thenReturn(0L);
+        lenient().when(aiChatMessageRepository.countBySession_SessionId(any())).thenReturn(0L);
+        lenient().when(aiChatSessionRepository.countByUser_UserIdAndDocument_DocumentIdAndStatus(anyInt(), anyInt(), anyString())).thenReturn(0L);
+        lenient().when(aiChatSessionRepository.save(any())).thenAnswer(inv -> {
+            AiChatSession s = inv.getArgument(0);
+            if (s.getSessionId() == null) {
+                s.setSessionId(999L);
+            }
+            return s;
+        });
+        lenient().when(aiChatSessionRepository.findByUser_UserIdAndDocument_DocumentIdAndStatus(anyInt(), anyInt(), anyString()))
+                .thenReturn(Optional.empty());
+        lenient().when(aiUsageReservationRepository.findByRequestId(anyString())).thenAnswer(inv -> {
+            String reqId = inv.getArgument(0);
+            return Optional.of(AiUsageReservation.builder()
+                    .requestId(reqId)
+                    .user(mockUser)
+                    .status("RESERVED")
+                    .build());
+        });
     }
 
     // =========================================================================
@@ -121,7 +183,7 @@ class AiChatServiceTest {
     // 3. Quota FREE 5 câu/ngày -> 429
     // =========================================================================
     @Test
-    void ask_QuotaExceeded_ShouldThrow429() {
+    void ask_QuotaExceeded_ShouldThrow403() {
         DocumentContent content = new DocumentContent();
         content.setProcessingStatus(ProcessingStatus.COMPLETED);
         mockDocument.setDocumentContent(content);
@@ -140,8 +202,8 @@ class AiChatServiceTest {
             aiChatService.ask(1, "Test question", "user@test.com");
         });
 
-        assertEquals(HttpStatus.TOO_MANY_REQUESTS, exception.getStatusCode());
-        assertTrue(exception.getReason().contains("Daily AI question quota exhausted"));
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+        assertTrue(exception.getReason().contains("Daily AI Q&A question quota exceeded"));
 
         // Verify usage log was saved with countedAsQuestion = false and status QUOTA_EXCEEDED
         verify(aiUsageLogRepository, times(1)).save(argThat(log ->

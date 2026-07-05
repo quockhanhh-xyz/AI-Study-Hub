@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.demo.ai_study_hub.exception.QuotaExceededException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,11 +25,14 @@ public class FolderServiceImpl implements FolderService {
     private final FolderRepository folderRepository;
     private final UserRepository userRepository;
     private final DocumentRepository documentRepository;
+    private final TierPolicyService tierPolicyService;
+    private final UsageService usageService;
 
     @Override
     @Transactional
     public FolderResponse createFolder(FolderRequest request, String email) {
         User owner = getUser(email);
+        owner = userRepository.findByIdForUpdate(owner.getUserId()).orElse(owner);
 
         Folder parentFolder = null;
         if (request.getParentFolderId() != null) {
@@ -36,6 +40,21 @@ public class FolderServiceImpl implements FolderService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parent folder not found"));
             if (!"ACTIVE".equals(parentFolder.getStatus())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create subfolder in a deleted folder");
+            }
+        }
+
+        com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(owner);
+        long folderCount = usageService.countFolders(owner);
+        if (folderCount >= limits.maxFolders()) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Folders count limit exceeded", "FOLDER_LIMIT_EXCEEDED");
+        }
+        if (parentFolder != null) {
+            Integer parentDepth = folderRepository.findFolderDepth(parentFolder.getFolderId());
+            int depth = parentDepth != null ? parentDepth + 1 : 1;
+            if (depth >= limits.maxFolderDepth()) {
+                throw new QuotaExceededException(HttpStatus.BAD_REQUEST,
+                        "Folder depth exceeds maximum level allowed", "FOLDER_DEPTH_LIMIT_EXCEEDED");
             }
         }
 

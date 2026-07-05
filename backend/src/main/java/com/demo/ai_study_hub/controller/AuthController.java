@@ -25,6 +25,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final JwtUtil jwtUtil;
+    private final com.demo.ai_study_hub.service.TierPolicyService tierPolicyService;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<Object>> register(@RequestBody RegisterRequest request) {
@@ -97,14 +98,15 @@ public class AuthController {
         }
         try {
             User user = authService.getUserByEmail(authentication.getName());
-            Map<String, Object> data = Map.of(
-                    "userId", user.getUserId(),
-                    "email", user.getEmail(),
-                    "fullName", user.getFullName(),
-                    "role", user.getRole(),
-                    "tier", user.getTier(),
-                    "status", user.getStatus()
-            );
+            Map<String, Object> data = new java.util.LinkedHashMap<>();
+            data.put("userId", user.getUserId());
+            data.put("email", user.getEmail());
+            data.put("fullName", user.getFullName());
+            data.put("role", user.getRole());
+            data.put("tier", user.getTier());
+            data.put("status", user.getStatus());
+            data.put("effectiveTier", tierPolicyService.getEffectiveTier(user));
+            data.put("tierExpiresAt", user.getTierExpiresAt());
             return ResponseEntity.ok(new ApiResponse<>(true, "Current user retrieved successfully", data));
         } catch (RuntimeException e) {
             return ResponseEntity.status(401).body(new ApiResponse<>(false, e.getMessage(), null));

@@ -12,6 +12,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.TransactionDefinition;
+import com.demo.ai_study_hub.exception.QuotaExceededException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -40,6 +44,7 @@ public class AiChatServiceImpl implements AiChatService {
     private final AiChatSessionRepository aiChatSessionRepository;
     private final AiChatMessageRepository aiChatMessageRepository;
     private final AiUsageLogRepository aiUsageLogRepository;
+    private final AiUsageReservationRepository aiUsageReservationRepository;
 
     private final AiProviderRouter aiProviderRouter;
     private final AiModelSelector aiModelSelector;
@@ -47,73 +52,88 @@ public class AiChatServiceImpl implements AiChatService {
     private final DocumentChunkRetrievalService chunkRetrievalService;
     private final PromptBuilderService promptBuilderService;
     private final AiProperties aiProperties;
+    private final TierPolicyService tierPolicyService;
 
     private final ObjectMapper objectMapper;
+    private final PlatformTransactionManager transactionManager;
 
     // -------------------------------------------------------------------------
     // ASK
     // -------------------------------------------------------------------------
 
     @Override
-    @Transactional
     public AiAskResponse ask(Integer documentId, String question, String userEmail) {
+        String requestId = UUID.randomUUID().toString();
+        TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
+        txTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
-        // 1. Load user
-        User user = loadUser(userEmail);
+        // 1. Check constraints and reserve quota in an independent REQUIRES_NEW transaction
+        AiReservationResult reserveResult = txTemplate.execute(status -> {
+            User user = loadUser(userEmail);
+            user = userRepository.findByIdForUpdate(user.getUserId()).orElse(user);
 
-        // 2. Load document — 404 if not found or DELETED
-        Document doc = documentRepository.findById(documentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Document not found"));
-        if ("DELETED".equals(doc.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
-        }
+            Document doc = documentRepository.findById(documentId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+            if ("DELETED".equals(doc.getStatus())) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+            }
 
-        // 3. Check view permission — 403 if no access
-        validateViewPermission(doc, user);
+            validateViewPermission(doc, user);
 
-        // 4. Validate question input
-        String tier = user.getTier();
-        int maxChars = aiModelSelector.getMaxQuestionChars(tier);
-        if (question == null || question.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Question must not be blank");
-        }
-        if (question.length() > maxChars) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Question exceeds maximum length of " + maxChars + " characters for your tier");
-        }
+            String tier = tierPolicyService.getEffectiveTier(user).name();
+            int maxChars = aiModelSelector.getMaxQuestionChars(tier);
+            if (question == null || question.isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Question must not be blank");
+            }
+            if (question.length() > maxChars) {
+                throw new QuotaExceededException(HttpStatus.BAD_REQUEST,
+                        "Question text exceeds maximum tier length", "AI_QUESTION_CHARS_LIMIT_EXCEEDED");
+            }
 
-        // 5. Check document processingStatus
-        validateProcessingStatus(doc);
+            validateProcessingStatus(doc);
 
-        // 6. Check chunks exist
-        int chunkCount = documentChunkRepository.countByDocument_DocumentId(documentId);
-        if (chunkCount == 0) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                    "Document has no usable AI content");
-        }
+            int chunkCount = documentChunkRepository.countByDocument_DocumentId(documentId);
+            if (chunkCount == 0) {
+                throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Document has no usable AI content");
+            }
 
-        // 7. Check AI provider configured
-        if (!aiProviderRouter.isConfigured()) {
-            saveUsageLog(user, doc, "ASK", null, null, 0, 0, 0,
-                    false, false, "AI_NOT_CONFIGURED");
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "AI service is not configured");
-        }
+            AiChatSession session = findOrCreateSession(user, doc, question);
+            long messageCount = aiChatMessageRepository.countBySession_SessionId(session.getSessionId());
+            com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(user);
+            if (messageCount >= limits.maxMessagesPerSession()) {
+                throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                        "Messages limit per session exceeded", "AI_MESSAGE_LIMIT_EXCEEDED");
+            }
 
-        // 8. Check quota
-        int dailyLimit = aiModelSelector.getDailyQuestionLimit(tier);
-        long usedToday = countUsedToday(user);
-        if (usedToday >= dailyLimit) {
-            saveUsageLog(user, doc, "ASK", null, null, 0, 0, 0,
-                    false, false, "QUOTA_EXCEEDED");
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
-                    "Daily AI question quota exhausted. Limit: " + dailyLimit + " questions/day.");
-        }
+            if (!aiProviderRouter.isConfigured()) {
+                saveUsageLog(user, doc, "ASK", null, null, 0, 0, 0, false, false, "AI_NOT_CONFIGURED");
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "AI service is not configured");
+            }
 
-        // 9. Detect summary intent and retrieve chunks
-        int maxChunks = aiModelSelector.getMaxContextChunks(tier);
+            int dailyLimit = aiModelSelector.getDailyQuestionLimit(tier);
+            long usedToday = countUsedToday(user);
+            long activeReservations = aiUsageReservationRepository.countActiveReservations(user, LocalDateTime.now());
+            if (usedToday + activeReservations >= dailyLimit) {
+                saveUsageLog(user, doc, "ASK", null, null, 0, 0, 0, false, false, "QUOTA_EXCEEDED");
+                throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                        "Daily AI Q&A question quota exceeded", "AI_QUOTA_EXCEEDED");
+            }
+
+            AiUsageReservation reservation = AiUsageReservation.builder()
+                    .requestId(requestId)
+                    .user(user)
+                    .requestType("QA")
+                    .status("RESERVED")
+                    .reservedAt(LocalDateTime.now())
+                    .expiresAt(LocalDateTime.now().plusSeconds(60)) // Unified 60 seconds as requested
+                    .build();
+            reservation = aiUsageReservationRepository.save(reservation);
+
+            return new AiReservationResult(user, doc, session, reservation, tier, dailyLimit, usedToday);
+        });
+
+        // 2. Perform intent detection and chunk retrieval outside transaction
+        int maxChunks = aiModelSelector.getMaxContextChunks(reserveResult.tier);
         boolean isSummary = summaryIntentDetector.isSummaryIntent(question);
         List<DocumentChunkDto> chunks;
         if (isSummary) {
@@ -122,19 +142,24 @@ public class AiChatServiceImpl implements AiChatService {
             chunks = chunkRetrievalService.retrieveByKeyword(documentId, question, maxChunks);
         }
 
-        // 10. No-context fallback (non-summary questions with no matching chunks)
+        // 3. Handle no-context fallback outside provider invocation
         if (!isSummary && chunks.isEmpty()) {
-            String fallback = "I could not find this information in the selected document.";
-            AiChatSession session = findOrCreateSession(user, doc);
-            saveMessage(session, "USER", question, null, null, null, null, null, null, null);
-            saveMessage(session, "ASSISTANT", fallback, null, null, null, null, null, null, "[]");
+            txTemplate.executeWithoutResult(status -> {
+                AiUsageReservation res = aiUsageReservationRepository.findByRequestId(requestId).orElseThrow();
+                res.setStatus("RELEASED");
+                res.setReleasedAt(LocalDateTime.now());
+                aiUsageReservationRepository.save(res);
 
-            saveUsageLog(user, doc, "ASK", null, null, 0, 0, 0,
-                    false, false, "SKIPPED_NO_CONTEXT");
+                saveMessage(reserveResult.session, "USER", question, null, null, null, null, null, null, null);
+                saveMessage(reserveResult.session, "ASSISTANT", "I could not find this information in the selected document.", null, null, null, null, null, null, "[]");
 
-            long remaining = dailyLimit - usedToday;
+                saveUsageLog(reserveResult.user, reserveResult.doc, "ASK", null, null, 0, 0, 0,
+                        false, false, "SKIPPED_NO_CONTEXT");
+            });
+
+            long remaining = reserveResult.dailyLimit - reserveResult.usedToday;
             return AiAskResponse.builder()
-                    .answer(fallback)
+                    .answer("I could not find this information in the selected document.")
                     .sourceChunks(Collections.emptyList())
                     .provider(null)
                     .modelName(null)
@@ -146,36 +171,47 @@ public class AiChatServiceImpl implements AiChatService {
                     .build();
         }
 
-        // 11. Select model by tier
-        String modelName = aiModelSelector.selectModel(tier);
-        int maxOutputTokens = aiModelSelector.getMaxOutputTokens(tier);
-
-        // 12. Build prompt
+        // 4. Call AI provider outside transaction to prevent DB lock starvation
+        String modelName = aiModelSelector.selectModel(reserveResult.tier);
+        int maxOutputTokens = aiModelSelector.getMaxOutputTokens(reserveResult.tier);
         String prompt = promptBuilderService.buildPrompt(question, chunks, isSummary);
 
-        // 13. Call AI provider
-        AiAnswer aiAnswer = callProvider(prompt, modelName, maxOutputTokens, user, doc);
+        AiAnswer aiAnswer;
+        try {
+            aiAnswer = callProvider(prompt, modelName, maxOutputTokens, reserveResult.user, reserveResult.doc);
 
-        // 14. Find or create ACTIVE session
-        AiChatSession session = findOrCreateSession(user, doc, question);
+            // Confirm reservation in an independent REQUIRES_NEW transaction
+            txTemplate.executeWithoutResult(status -> {
+                AiUsageReservation res = aiUsageReservationRepository.findByRequestId(requestId).orElseThrow();
+                res.setStatus("CONFIRMED");
+                res.setConfirmedAt(LocalDateTime.now());
+                aiUsageReservationRepository.save(res);
 
-        // 15. Save user message
-        saveMessage(session, "USER", question, null, null, null, null, null, null, null);
+                saveMessage(reserveResult.session, "USER", question, null, null, null, null, null, null, null);
 
-        // 16. Save assistant message
-        String sourceChunksJson = buildSourceChunksJson(chunks);
-        saveMessage(session, "ASSISTANT", aiAnswer.getText(),
-                aiAnswer.getProvider(), aiAnswer.getModelName(),
-                aiAnswer.getInputTokens(), aiAnswer.getOutputTokens(), aiAnswer.getTotalTokens(),
-                aiAnswer.isTokenUsageEstimated(), sourceChunksJson);
+                String sourceChunksJson = buildSourceChunksJson(chunks);
+                saveMessage(reserveResult.session, "ASSISTANT", aiAnswer.getText(),
+                        aiAnswer.getProvider(), aiAnswer.getModelName(),
+                        aiAnswer.getInputTokens(), aiAnswer.getOutputTokens(), aiAnswer.getTotalTokens(),
+                        aiAnswer.isTokenUsageEstimated(), sourceChunksJson);
 
-        // 17. Record usage log (counted = true, status = SUCCESS)
-        saveUsageLog(user, doc, "ASK",
-                aiAnswer.getProvider(), aiAnswer.getModelName(),
-                aiAnswer.getInputTokens(), aiAnswer.getOutputTokens(), aiAnswer.getTotalTokens(),
-                aiAnswer.isTokenUsageEstimated(), true, "SUCCESS");
+                saveUsageLog(reserveResult.user, reserveResult.doc, "ASK",
+                        aiAnswer.getProvider(), aiAnswer.getModelName(),
+                        aiAnswer.getInputTokens(), aiAnswer.getOutputTokens(), aiAnswer.getTotalTokens(),
+                        aiAnswer.isTokenUsageEstimated(), true, "SUCCESS");
+            });
+        } catch (Exception e) {
+            // Release reservation in a separate transaction block on failure
+            txTemplate.executeWithoutResult(status -> {
+                AiUsageReservation res = aiUsageReservationRepository.findByRequestId(requestId).orElseThrow();
+                res.setStatus("RELEASED");
+                res.setReleasedAt(LocalDateTime.now());
+                aiUsageReservationRepository.save(res);
+            });
+            throw e;
+        }
 
-        long remaining = dailyLimit - usedToday - 1;
+        long remaining = reserveResult.dailyLimit - reserveResult.usedToday - 1;
         List<AiSourceChunk> sourceChunks = chunks.stream()
                 .map(c -> AiSourceChunk.builder()
                         .chunkIndex(c.getChunkIndex())
@@ -267,7 +303,7 @@ public class AiChatServiceImpl implements AiChatService {
     @Transactional(readOnly = true)
     public AiUsageSummaryResponse getUsageSummary(String userEmail) {
         User user = loadUser(userEmail);
-        String tier = user.getTier();
+        String tier = tierPolicyService.getEffectiveTier(user).name();
         int dailyLimit = aiModelSelector.getDailyQuestionLimit(tier);
         long usedToday = countUsedToday(user);
         int remaining = (int) Math.max(0, dailyLimit - usedToday);
@@ -358,6 +394,13 @@ public class AiChatServiceImpl implements AiChatService {
                 .findByUser_UserIdAndDocument_DocumentIdAndStatus(
                         user.getUserId(), doc.getDocumentId(), "ACTIVE")
                 .orElseGet(() -> {
+                    com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(user);
+                    long activeSessions = aiChatSessionRepository.countByUser_UserIdAndDocument_DocumentIdAndStatus(
+                            user.getUserId(), doc.getDocumentId(), "ACTIVE");
+                    if (activeSessions >= limits.maxAiSessionsPerDocument()) {
+                        throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                                "AI sessions limit per document exceeded", "AI_SESSION_LIMIT_EXCEEDED");
+                    }
                     String title = firstQuestion != null
                             ? (firstQuestion.length() > 100
                                     ? firstQuestion.substring(0, 100) + "..."
@@ -464,5 +507,27 @@ public class AiChatServiceImpl implements AiChatService {
                 .sourceChunks(sourceChunks)
                 .createdAt(msg.getCreatedAt())
                 .build();
+    }
+
+    private static class AiReservationResult {
+        final User user;
+        final Document doc;
+        final AiChatSession session;
+        final AiUsageReservation reservation;
+        final String tier;
+        final int dailyLimit;
+        final long usedToday;
+
+        AiReservationResult(User user, Document doc, AiChatSession session,
+                            AiUsageReservation reservation, String tier,
+                            int dailyLimit, long usedToday) {
+            this.user = user;
+            this.doc = doc;
+            this.session = session;
+            this.reservation = reservation;
+            this.tier = tier;
+            this.dailyLimit = dailyLimit;
+            this.usedToday = usedToday;
+        }
     }
 }

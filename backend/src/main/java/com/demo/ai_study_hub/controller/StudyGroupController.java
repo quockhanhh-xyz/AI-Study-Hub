@@ -27,6 +27,9 @@ public class StudyGroupController {
             GroupResponse data = studyGroupService.createGroup(request, principal.getName());
             return ResponseEntity.ok(ApiResponse.success(data, "Study group created successfully"));
         } catch (ResponseStatusException e) {
+            if (e instanceof com.demo.ai_study_hub.exception.QuotaExceededException qe) {
+                return ResponseEntity.status(qe.getStatusCode()).body(ApiResponse.error(qe.getReason(), qe.getCode()));
+            }
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
@@ -67,6 +70,9 @@ public class StudyGroupController {
             GroupResponse data = studyGroupService.joinGroup(request, principal.getName());
             return ResponseEntity.ok(ApiResponse.success(data, "Joined group successfully"));
         } catch (ResponseStatusException e) {
+            if (e instanceof com.demo.ai_study_hub.exception.QuotaExceededException qe) {
+                return ResponseEntity.status(qe.getStatusCode()).body(ApiResponse.error(qe.getReason(), qe.getCode()));
+            }
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));

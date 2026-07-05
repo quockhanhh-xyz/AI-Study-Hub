@@ -87,4 +87,10 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT d FROM Document d WHERE d.documentId = :id")
     java.util.Optional<Document> findByIdForWrite(@Param("id") Integer id);
+
+    @Query("SELECT COUNT(d) FROM Document d WHERE d.owner = :owner AND d.status IN :statuses")
+    long countByOwnerAndStatusIn(@Param("owner") User owner, @Param("statuses") List<String> statuses);
+
+    @Query("SELECT COALESCE(SUM(d.fileSize), 0) FROM Document d WHERE d.owner = :owner AND d.status IN :statuses")
+    Long sumFileSizeByOwnerAndStatusIn(@Param("owner") User owner, @Param("statuses") List<String> statuses);
 }

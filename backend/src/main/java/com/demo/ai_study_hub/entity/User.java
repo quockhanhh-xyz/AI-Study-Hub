@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import com.demo.ai_study_hub.enums.UserTier;
 
 import java.time.LocalDateTime;
 
@@ -31,8 +32,12 @@ public class User {
     @Column(name = "role", nullable = false, length = 20)
     private String role = "USER";
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "tier", nullable = false, length = 20)
-    private String tier = "FREE";
+    private UserTier tier = UserTier.FREE;
+
+    @Column(name = "tier_expires_at")
+    private LocalDateTime tierExpiresAt;
 
     @Column(name = "status", nullable = false, length = 30)
     private String status = "INACTIVE";

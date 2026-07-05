@@ -42,4 +42,6 @@ public interface GroupFolderShareRepository extends JpaRepository<GroupFolderSha
     List<Object[]> countActiveSharesByGroupIds(@Param("groupIds") List<Integer> groupIds);
 
     void deleteByFolder(Folder folder);
+
+    long countBySharedByAndStatus(User sharedBy, String status);
 }

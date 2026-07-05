@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.demo.ai_study_hub.exception.QuotaExceededException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,15 +23,25 @@ public class SharingServiceImpl implements SharingService {
     private final StudyGroupRepository studyGroupRepository;
     private final StudyGroupMemberRepository studyGroupMemberRepository;
     private final GroupDocumentShareRepository groupDocumentShareRepository;
+    private final TierPolicyService tierPolicyService;
+    private final UsageService usageService;
 
     @Override
     @Transactional
     public DocumentShareResponse shareDocumentDirect(Integer documentId, DocumentShareRequest request, String email) {
         User owner = getUser(email);
+        owner = userRepository.findByIdForUpdate(owner.getUserId()).orElse(owner);
         Document document = getActiveDocument(documentId);
 
         if (!document.getOwner().getUserId().equals(owner.getUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+
+        com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(owner);
+        long activeShares = usageService.countActiveShares(owner);
+        if (activeShares >= limits.maxActiveShares()) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Active share links limit exceeded", "SHARE_LIMIT_EXCEEDED");
         }
 
         User recipient = userRepository.findByEmail(request.getEmail())
@@ -131,10 +142,17 @@ public class SharingServiceImpl implements SharingService {
     @Transactional
     public GroupDocumentShareResponse shareDocumentToGroup(Integer documentId, GroupDocumentShareRequest request, String email) {
         User owner = getUser(email);
+        owner = userRepository.findByIdForUpdate(owner.getUserId()).orElse(owner);
         Document document = getActiveDocument(documentId);
 
         if (!document.getOwner().getUserId().equals(owner.getUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+        com.demo.ai_study_hub.dto.TierLimits limitsGroup = tierPolicyService.getLimitsForUser(owner);
+        long activeSharesGroup = usageService.countActiveShares(owner);
+        if (activeSharesGroup >= limitsGroup.maxActiveShares()) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Active share links limit exceeded", "SHARE_LIMIT_EXCEEDED");
         }
 
         StudyGroup group = studyGroupRepository.findById(request.getGroupId())

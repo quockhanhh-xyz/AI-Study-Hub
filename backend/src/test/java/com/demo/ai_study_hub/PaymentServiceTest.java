@@ -3,7 +3,7 @@ package com.demo.ai_study_hub;
 import com.demo.ai_study_hub.dto.PaymentStatus;
 import com.demo.ai_study_hub.dto.PaymentMethod;
 import com.demo.ai_study_hub.dto.PlanCode;
-import com.demo.ai_study_hub.dto.UserTier;
+import com.demo.ai_study_hub.enums.UserTier;
 import com.demo.ai_study_hub.dto.PaymentResponse;
 import com.demo.ai_study_hub.dto.PlanResponse;
 import com.demo.ai_study_hub.entity.PaymentOrder;
@@ -12,6 +12,7 @@ import com.demo.ai_study_hub.repository.PaymentOrderRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
 import com.demo.ai_study_hub.service.PaymentService;
 import com.demo.ai_study_hub.service.PlanService;
+import com.demo.ai_study_hub.service.TierPolicyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +36,7 @@ class PaymentServiceTest {
     @Mock private PaymentOrderRepository paymentOrderRepository;
     @Mock private UserRepository userRepository;
     @Mock private PlanService planService;
+    @Mock private TierPolicyService tierPolicyService;
 
     @InjectMocks
     private PaymentService paymentService;
@@ -53,6 +55,11 @@ class PaymentServiceTest {
         premiumUser.setUserId(2);
         premiumUser.setEmail("premium@test.com");
         premiumUser.setTier(UserTier.PREMIUM);
+
+        lenient().when(tierPolicyService.getEffectiveTier(any(User.class))).thenAnswer(invocation -> {
+            User u = invocation.getArgument(0);
+            return u.getTier();
+        });
     }
 
     // =========================================================================
@@ -68,7 +75,7 @@ class PaymentServiceTest {
                 .planCode(PlanCode.PREMIUM).planName("Premium")
                 .price(199000).currency("VND").billingLabel("month").aiDailyLimit(50).build();
 
-        PlanService realPlanService = new PlanService();
+        PlanService realPlanService = new PlanService(new TierPolicyService());
         List<PlanResponse> plans = realPlanService.getAllPlans();
 
         assertEquals(2, plans.size());
@@ -146,6 +153,33 @@ class PaymentServiceTest {
     }
 
     @Test
+    void createMockPayment_WhenUserExpiredPremium_ShouldAllowUpgrade() {
+        // user is premium in database but effective tier has expired to FREE
+        User expiredUser = new User();
+        expiredUser.setUserId(3);
+        expiredUser.setEmail("expired@test.com");
+        expiredUser.setTier(UserTier.PREMIUM);
+        expiredUser.setTierExpiresAt(LocalDateTime.now().minusDays(1));
+
+        when(planService.isValidPlanCode(PlanCode.PREMIUM)).thenReturn(true);
+        when(planService.getPrice(PlanCode.PREMIUM)).thenReturn(199000L);
+        when(tierPolicyService.getEffectiveTier(expiredUser)).thenReturn(UserTier.FREE);
+        when(paymentOrderRepository.save(any(PaymentOrder.class))).thenAnswer(inv -> {
+            PaymentOrder order = inv.getArgument(0);
+            order.setPaymentId(99L);
+            return order;
+        });
+
+        PaymentResponse response = paymentService.createMockPayment(expiredUser, PlanCode.PREMIUM);
+
+        assertNotNull(response);
+        assertEquals(PlanCode.PREMIUM, response.getPlanCode());
+        assertEquals(199000L, response.getAmount());
+        assertEquals(PaymentStatus.PENDING, response.getStatus());
+        verify(paymentOrderRepository, times(1)).save(any(PaymentOrder.class));
+    }
+
+    @Test
     void createMockPayment_WhenNullPlanCode_ShouldThrow400() {
         when(planService.isValidPlanCode(null)).thenReturn(false);
 
@@ -175,7 +209,7 @@ class PaymentServiceTest {
         PaymentResponse response = paymentService.markPaymentSuccess(freeUser, 1L);
 
         assertEquals(PaymentStatus.SUCCESS, response.getStatus());
-        assertEquals(UserTier.PREMIUM, response.getTier());
+        assertEquals("PREMIUM", response.getTier());
         assertNotNull(response.getPaidAt());
         assertEquals(UserTier.PREMIUM, freeUser.getTier());
         verify(userRepository, times(1)).save(freeUser);
@@ -275,7 +309,7 @@ class PaymentServiceTest {
         PaymentResponse response = paymentService.markPaymentFailed(freeUser, 1L);
 
         assertEquals(PaymentStatus.FAILED, response.getStatus());
-        assertEquals(UserTier.FREE, response.getTier());
+        assertEquals("FREE", response.getTier());
         assertNull(response.getPaidAt());
         assertEquals(UserTier.FREE, freeUser.getTier()); // tier không đổi
         verify(userRepository, never()).save(any());
@@ -323,7 +357,7 @@ class PaymentServiceTest {
         PaymentResponse response = paymentService.markPaymentFailed(premiumUser, 1L);
 
         assertEquals(PaymentStatus.FAILED, response.getStatus());
-        assertEquals(UserTier.PREMIUM, response.getTier()); // vẫn PREMIUM
+        assertEquals("PREMIUM", response.getTier());
         assertNull(response.getPaidAt());
     }
 
@@ -346,7 +380,7 @@ class PaymentServiceTest {
         PaymentResponse response = paymentService.cancelPayment(freeUser, 1L);
 
         assertEquals(PaymentStatus.CANCELLED, response.getStatus());
-        assertEquals(UserTier.FREE, response.getTier());
+        assertEquals("FREE", response.getTier());
         assertNull(response.getPaidAt());
         assertEquals(UserTier.FREE, freeUser.getTier());
         verify(userRepository, never()).save(any());
@@ -394,7 +428,7 @@ class PaymentServiceTest {
         PaymentResponse response = paymentService.cancelPayment(premiumUser, 1L);
 
         assertEquals(PaymentStatus.CANCELLED, response.getStatus());
-        assertEquals(UserTier.PREMIUM, response.getTier()); // vẫn PREMIUM
+        assertEquals("PREMIUM", response.getTier());
         assertNull(response.getPaidAt());
     }
 
@@ -446,21 +480,23 @@ class PaymentServiceTest {
 
     @Test
     void planService_FreeTierLimits_ShouldMatchSpec() {
-        PlanService ps = new PlanService();
-        assertEquals(5, ps.getDailyLimit(UserTier.FREE));
-        assertEquals(500, ps.getMaxQuestionChars(UserTier.FREE));
-        assertEquals(3, ps.getMaxContextChunks(UserTier.FREE));
-        assertEquals(500, ps.getMaxOutputTokens(UserTier.FREE));
-        assertEquals("gemini-2.5-flash-lite", ps.getModel(UserTier.FREE));
+        TierPolicyService tps = new TierPolicyService();
+        com.demo.ai_study_hub.dto.TierLimits limits = tps.getLimits(UserTier.FREE);
+        assertEquals(5, limits.aiQuestionsPerDay());
+        assertEquals(500, limits.maxQuestionChars());
+        assertEquals(3, limits.maxContextChunks());
+        assertEquals(500, limits.maxOutputTokens());
+        assertEquals("gemini-2.5-flash-lite", limits.aiModel());
     }
 
     @Test
     void planService_PremiumTierLimits_ShouldMatchSpec() {
-        PlanService ps = new PlanService();
-        assertEquals(50, ps.getDailyLimit(UserTier.PREMIUM));
-        assertEquals(2000, ps.getMaxQuestionChars(UserTier.PREMIUM));
-        assertEquals(8, ps.getMaxContextChunks(UserTier.PREMIUM));
-        assertEquals(1500, ps.getMaxOutputTokens(UserTier.PREMIUM));
-        assertEquals("gemini-2.5-flash", ps.getModel(UserTier.PREMIUM));
+        TierPolicyService tps = new TierPolicyService();
+        com.demo.ai_study_hub.dto.TierLimits limits = tps.getLimits(UserTier.PREMIUM);
+        assertEquals(50, limits.aiQuestionsPerDay());
+        assertEquals(2000, limits.maxQuestionChars());
+        assertEquals(8, limits.maxContextChunks());
+        assertEquals(1500, limits.maxOutputTokens());
+        assertEquals("gemini-2.5-flash", limits.aiModel());
     }
 }

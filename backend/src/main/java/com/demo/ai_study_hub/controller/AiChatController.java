@@ -46,6 +46,10 @@ public class AiChatController {
             AiAskResponse response = aiChatService.ask(documentId, request.getQuestion(), principal.getName());
             return ResponseEntity.ok(ApiResponse.success(response, "AI answer generated successfully"));
         } catch (ResponseStatusException e) {
+            if (e instanceof com.demo.ai_study_hub.exception.QuotaExceededException qe) {
+                return ResponseEntity.status(qe.getStatusCode())
+                        .body(ApiResponse.error(qe.getReason(), qe.getCode()));
+            }
             return ResponseEntity.status(e.getStatusCode())
                     .body(ApiResponse.error(e.getReason()));
         }

@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.demo.ai_study_hub.exception.QuotaExceededException;
 
 import java.security.SecureRandom;
 import java.util.List;
@@ -22,6 +23,8 @@ public class StudyGroupServiceImpl implements StudyGroupService {
     private final UserRepository userRepository;
     private final GroupDocumentShareRepository groupDocumentShareRepository;
     private final GroupFolderShareRepository groupFolderShareRepository;
+    private final TierPolicyService tierPolicyService;
+    private final UsageService usageService;
 
     private static final String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private final SecureRandom random = new SecureRandom();
@@ -30,7 +33,13 @@ public class StudyGroupServiceImpl implements StudyGroupService {
     @Transactional
     public GroupResponse createGroup(CreateGroupRequest request, String email) {
         User owner = getUser(email);
-
+        owner = userRepository.findByIdForUpdate(owner.getUserId()).orElse(owner);
+        com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(owner);
+        long ownedGroups = usageService.countOwnedGroups(owner);
+        if (ownedGroups >= limits.maxOwnedGroups()) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Owned groups limit exceeded", "GROUP_LIMIT_EXCEEDED");
+        }
         StudyGroup group = new StudyGroup();
         group.setGroupName(request.getGroupName());
         group.setDescription(request.getDescription());
@@ -145,7 +154,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
     public GroupResponse joinGroup(JoinGroupRequest request, String email) {
         User user = getUser(email);
 
-        StudyGroup group = studyGroupRepository.findByInviteCode(request.getInviteCode())
+        StudyGroup group = studyGroupRepository.findByInviteCodeForUpdate(request.getInviteCode())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid invite code"));
 
         if (!"ACTIVE".equals(group.getStatus())) {
@@ -155,6 +164,14 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         boolean alreadyActive = studyGroupMemberRepository.existsByGroupAndUserAndStatus(group, user, "ACTIVE");
         if (alreadyActive) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You are already a member of this group");
+        }
+
+        User groupOwner = group.getOwner();
+        com.demo.ai_study_hub.dto.TierLimits ownerLimits = tierPolicyService.getLimitsForUser(groupOwner);
+        long memberCount = studyGroupMemberRepository.countByGroupAndStatus(group, "ACTIVE");
+        if (memberCount >= ownerLimits.maxMembersPerGroup()) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Group members limit exceeded", "GROUP_MEMBER_LIMIT_EXCEEDED");
         }
 
         StudyGroupMember existing = studyGroupMemberRepository.findByGroupAndUser(group, user).orElse(null);

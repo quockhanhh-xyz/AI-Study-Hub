@@ -67,7 +67,7 @@ class DocumentProcessingIntegrationTest {
             testUser.setEmail("integration@gmail.com");
             testUser.setPasswordHash("hashedpassword");
             testUser.setRole("USER");
-            testUser.setTier("FREE");
+            testUser.setTier(com.demo.ai_study_hub.enums.UserTier.FREE);
             testUser.setStatus("ACTIVE");
             testUser = userRepository.save(testUser);
 

@@ -33,4 +33,5 @@ public interface AiChatSessionRepository extends JpaRepository<AiChatSession, Lo
      * Check if user owns a session (for delete permission check).
      */
     Optional<AiChatSession> findBySessionIdAndUser_UserId(Long sessionId, Integer userId);
+    long countByUser_UserIdAndDocument_DocumentIdAndStatus(Integer userId, Integer documentId, String status);
 }

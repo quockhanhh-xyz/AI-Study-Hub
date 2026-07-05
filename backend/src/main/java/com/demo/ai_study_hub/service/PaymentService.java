@@ -11,7 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
+import com.demo.ai_study_hub.enums.UserTier;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,6 +23,7 @@ public class PaymentService {
     private final PaymentOrderRepository paymentOrderRepository;
     private final UserRepository userRepository;
     private final PlanService planService;
+    private final TierPolicyService tierPolicyService;
 
     @Transactional
     public PaymentResponse createMockPayment(User user, String planCode) {
@@ -34,7 +35,8 @@ public class PaymentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Cannot create payment for FREE plan");
         }
-        if (UserTier.PREMIUM.equalsIgnoreCase(user.getTier())) {
+        UserTier effectiveTier = tierPolicyService.getEffectiveTier(user);
+        if (effectiveTier == UserTier.PREMIUM || effectiveTier == UserTier.ULTRA) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "User is already Premium.");
         }
@@ -49,7 +51,7 @@ public class PaymentService {
                 .build();
 
         paymentOrderRepository.save(order);
-        return toResponse(order, user.getTier());
+        return toResponse(order, user.getTier().name());
     }
 
     @Transactional
@@ -64,11 +66,11 @@ public class PaymentService {
                     "Payment is no longer pending");
         }
 
-        // Re-check user tier inside transaction
         User freshUser = userRepository.findById(user.getUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        if (UserTier.PREMIUM.equalsIgnoreCase(freshUser.getTier())) {
+        UserTier freshEffectiveTier = tierPolicyService.getEffectiveTier(freshUser);
+        if (freshEffectiveTier == UserTier.PREMIUM || freshEffectiveTier == UserTier.ULTRA) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "User is already Premium.");
         }
@@ -78,9 +80,10 @@ public class PaymentService {
         paymentOrderRepository.save(order);
 
         freshUser.setTier(UserTier.PREMIUM);
+        freshUser.setTierExpiresAt(LocalDateTime.now().plusDays(30));
         userRepository.save(freshUser);
 
-        return toResponse(order, UserTier.PREMIUM);
+        return toResponse(order, "PREMIUM");
     }
 
     @Transactional
@@ -98,9 +101,8 @@ public class PaymentService {
         order.setStatus(PaymentStatus.FAILED);
         paymentOrderRepository.save(order);
 
-        // Reload user for fresh tier
         User freshUser = userRepository.findById(user.getUserId()).orElse(user);
-        return toResponse(order, freshUser.getTier());
+        return toResponse(order, freshUser.getTier().name());
     }
 
     @Transactional
@@ -119,7 +121,7 @@ public class PaymentService {
         paymentOrderRepository.save(order);
 
         User freshUser = userRepository.findById(user.getUserId()).orElse(user);
-        return toResponse(order, freshUser.getTier());
+        return toResponse(order, freshUser.getTier().name());
     }
 
     public List<PaymentResponse> getMyPayments(User user) {
