@@ -9,35 +9,24 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class AccountUsageResponse {
     private String tier;
+    private String effectiveTier;
     private LocalDateTime tierExpiresAt;
-    private UsageSnapshot limits;
-    private UsageSnapshot usage;
-    private UsageSnapshot remaining;
-    private OverLimitSnapshot overLimit;
-    private UsageSnapshot overBy;
+    private ResourceUsage storage;
+    private ResourceUsage documents;
+    private ResourceUsage folders;
+    private ResourceUsage ownedGroups;
+    private ResourceUsage activeShares;
+    private ResourceUsage aiQuestionsToday;
 
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class UsageSnapshot {
-        private long storageBytes;
-        private long documents;
-        private long folders;
-        private long ownedGroups;
-        private long activeShares;
-        private long aiQuestionsToday;
-    }
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class OverLimitSnapshot {
-        private boolean storageBytes;
-        private boolean documents;
-        private boolean folders;
-        private boolean ownedGroups;
-        private boolean activeShares;
+    public static class ResourceUsage {
+        private long limit;
+        private long used;
+        private long remaining;
+        private boolean overLimit;
+        private long overBy;
     }
 }

@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class EntitlementResponse {
     private String tier;
+    private String effectiveTier;
     private LocalDateTime tierExpiresAt;
     private LimitsDto limits;
 
@@ -17,18 +18,18 @@ public class EntitlementResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class LimitsDto {
-        private long storageBytes;
-        private int documents;
-        private long maxFileBytes;
-        private int folders;
-        private int folderDepth;
-        private int ownedGroups;
-        private int membersPerGroup;
-        private int activeShares;
+        private long maxStorageBytes;
+        private int maxDocuments;
+        private long maxFileSizeBytes;
+        private int maxFolders;
+        private int maxFolderDepth;
+        private int maxOwnedGroups;
+        private int maxMembersPerGroup;
+        private int maxActiveShares;
         private int aiQuestionsPerDay;
         private int maxQuestionChars;
-        private int contextChunks;
-        private int outputTokens;
+        private int maxContextChunks;
+        private int maxOutputTokens;
         private String aiModel;
         private int summaryGenerationsPerDay;
         private int flashcardSetsPerDay;
