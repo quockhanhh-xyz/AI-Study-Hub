@@ -1483,7 +1483,7 @@ async function sendAiQaQuestion(question) {
         }
     } catch (err) {
         if (loadingBubble) loadingBubble.remove();
-        // Pass the entire error object instead of just the status code to allow advanced mapping of explicit error codes
+        // Pass the entire error object to support advanced error code extraction
         const message = window.mapAiError(err);
         showAiQaBanner(message, "error");
     } finally {
