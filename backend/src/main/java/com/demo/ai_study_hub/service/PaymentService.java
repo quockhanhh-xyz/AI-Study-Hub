@@ -2,6 +2,7 @@ package com.demo.ai_study_hub.service;
 
 import com.demo.ai_study_hub.dto.*;
 import com.demo.ai_study_hub.dto.PaymentResponse;
+import com.demo.ai_study_hub.dto.UserTier;
 import com.demo.ai_study_hub.entity.PaymentOrder;
 import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.repository.PaymentOrderRepository;
@@ -34,7 +35,7 @@ public class PaymentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Cannot create payment for FREE plan");
         }
-        if (UserTier.PREMIUM.equalsIgnoreCase(user.getTier())) {
+        if (user.getTier() == UserTier.PREMIUM || user.getTier() == UserTier.ULTRA) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "User is already Premium.");
         }
@@ -64,11 +65,10 @@ public class PaymentService {
                     "Payment is no longer pending");
         }
 
-        // Re-check user tier inside transaction
         User freshUser = userRepository.findById(user.getUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        if (UserTier.PREMIUM.equalsIgnoreCase(freshUser.getTier())) {
+        if (freshUser.getTier() == UserTier.PREMIUM || freshUser.getTier() == UserTier.ULTRA) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "User is already Premium.");
         }
@@ -98,7 +98,6 @@ public class PaymentService {
         order.setStatus(PaymentStatus.FAILED);
         paymentOrderRepository.save(order);
 
-        // Reload user for fresh tier
         User freshUser = userRepository.findById(user.getUserId()).orElse(user);
         return toResponse(order, freshUser.getTier());
     }
@@ -129,7 +128,7 @@ public class PaymentService {
                 .collect(Collectors.toList());
     }
 
-    private PaymentResponse toResponse(PaymentOrder order, String tier) {
+    private PaymentResponse toResponse(PaymentOrder order, UserTier tier) {
         return PaymentResponse.builder()
                 .paymentId(order.getPaymentId())
                 .planCode(order.getPlanCode())
