@@ -22,6 +22,8 @@ public class SharingServiceImpl implements SharingService {
     private final StudyGroupRepository studyGroupRepository;
     private final StudyGroupMemberRepository studyGroupMemberRepository;
     private final GroupDocumentShareRepository groupDocumentShareRepository;
+    private final TierPolicyService tierPolicyService;
+    private final UsageService usageService;
 
     @Override
     @Transactional
@@ -31,6 +33,13 @@ public class SharingServiceImpl implements SharingService {
 
         if (!document.getOwner().getUserId().equals(owner.getUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+
+        com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(owner);
+        long activeShares = usageService.countActiveShares(owner);
+        if (activeShares >= limits.maxActiveShares()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Active share limit reached. Upgrade your plan to share more.");
         }
 
         User recipient = userRepository.findByEmail(request.getEmail())
@@ -135,6 +144,12 @@ public class SharingServiceImpl implements SharingService {
 
         if (!document.getOwner().getUserId().equals(owner.getUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+        com.demo.ai_study_hub.dto.TierLimits limitsGroup = tierPolicyService.getLimitsForUser(owner);
+        long activeSharesGroup = usageService.countActiveShares(owner);
+        if (activeSharesGroup >= limitsGroup.maxActiveShares()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Active share limit reached. Upgrade your plan to share more.");
         }
 
         StudyGroup group = studyGroupRepository.findById(request.getGroupId())
