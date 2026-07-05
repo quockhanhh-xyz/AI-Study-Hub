@@ -2999,6 +2999,7 @@ If the question is a general/summary intent (e.g., "Summarize", "Give me an over
 
 - FREE: first 3 chunks
 - PREMIUM: first 8 chunks
+- ULTRA: first 15 chunks
 
 #### No-Context Fallback Rule
 

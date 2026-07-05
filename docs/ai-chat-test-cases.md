@@ -139,7 +139,7 @@
 | TC-USAGE-004 | FREE user, 5 questions today (exhausted) | usedToday=5, remaining=0 |
 | TC-USAGE-005 | PREMIUM user | dailyLimit=50                              |
 | TC-USAGE-006 | Response includes provider and modelName | based on user tier and configured provider |
-| TC-USAGE-007 | Quota resets after midnight | usedToday = 0 next day                     |
+| TC-USAGE-007 | Quota resets at 00:00 Asia/Ho_Chi_Minh | usedToday = 0 next day                     |
 
 ---
 
