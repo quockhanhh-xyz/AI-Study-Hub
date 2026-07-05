@@ -148,7 +148,7 @@ This document defines the backend validation, database migration, and entitlemen
 
 | TC | Scenario | Expected HTTP | Expected JSON Payload |
 |---|---|---|---|
-| TC-TIER-090 | Authenticated request (Effective Tier = PREMIUM) | 200 OK | Returns `"tier": "PREMIUM"`, `"effectiveTier": "PREMIUM"`, `"tierExpiresAt": "2026-08-04T10:00:00Z"` (with timezone suffix), and correct max limit bounds matching the PREMIUM policy (including `maxAiSessionsPerDocument = 30`, `maxMessagesPerSession = 300`, `maxSummaryQuotaPerDay = 10`, `maxContextChunks = 10`, `maxOutputTokens = 4096`, `aiModel = "gemini-2.5-flash"`). |
+| TC-TIER-090 | Authenticated request (Effective Tier = PREMIUM) | 200 OK | Returns `"tier": "PREMIUM"`, `"effectiveTier": "PREMIUM"`, `"tierExpiresAt": "2026-08-04T10:00:00Z"` (with timezone suffix), and correct max limit bounds matching the PREMIUM policy (including `maxAiSessionsPerDocument = 30`, `maxMessagesPerSession = 300`, `maxSummaryQuotaPerDay = 10`, `maxContextChunks = 8`, `maxOutputTokens = 1500`, `aiModel = "gemini-2.5-flash"`). |
 | TC-TIER-091 | Unauthenticated request | 401 Unauthorized | Returns `{"success":false,"message":"Unauthorized"}`. |
 
 ### 4.2. Usage Statistics Endpoint (GET /api/account/usage)

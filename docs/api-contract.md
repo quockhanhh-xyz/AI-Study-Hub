@@ -2959,8 +2959,9 @@ If `AI_PROVIDER=gemini` but `GEMINI_API_KEY` is missing, the app starts normally
 |---|---|---|---|---|
 | FREE | `gemini-2.5-flash-lite` | 5 questions/day | 3 chunks | 500 tokens |
 | PREMIUM | `gemini-2.5-flash` | 50 questions/day | 8 chunks | 1500 tokens |
+| ULTRA | `gemini-2.5-flash` | 200 questions/day | 15 chunks | 3000 tokens |
 
-Model is selected server-side based on `user.tier`. Controller never hardcodes model name.
+Model and AI limits are resolved from the user's effective tier through TierPolicyService. Controller never hardcodes model name.
 
 #### Quota Rule
 
@@ -3722,8 +3723,8 @@ The system calculates the user's **Effective Tier** dynamically on each request 
 | **Max Flashcard Sets/Day** | 1 | 10 | 50 |
 | **Max Quiz Sets/Day** | 1 | 10 | 50 |
 | **Max Items per Set** | 5 | 15 | 30 |
-| **Max Context Chunks** | 3 | 10 | 30 |
-| **Max Output Tokens** | 1024 | 4096 | 8192 |
+| **Max Context Chunks** | 3 | 8 | 15 |
+| **Max Output Tokens** | 500 | 1500 | 3000 |
 | **AI Model Selector** | `gemini-2.5-flash-lite` | `gemini-2.5-flash` | `gemini-2.5-flash` |
 
 ---
@@ -3767,8 +3768,8 @@ Retrieve the current authenticated user's active tier, expiration timestamp, and
       "maxFlashcardQuotaPerDay": 10,
       "maxQuizQuotaPerDay": 10,
       "maxItemsPerSet": 15,
-      "maxContextChunks": 10,
-      "maxOutputTokens": 4096,
+      "maxContextChunks": 8,
+      "maxOutputTokens": 1500,
       "aiModel": "gemini-2.5-flash"
     }
   }
@@ -3860,15 +3861,15 @@ When a user attempts to exceed a quota, the backend must abort the request and r
 | **403 Forbidden** | `{"success":false,"code":"DOCUMENT_LIMIT_EXCEEDED","message":"Documents count limit exceeded"}` | Number of active + trash documents exceeds limit |
 | **400 Bad Request** | `{"success":false,"code":"FILE_SIZE_LIMIT_EXCEEDED","message":"File size exceeds maximum tier limit"}` | Single uploaded file size exceeds max file size |
 | **403 Forbidden** | `{"success":false,"code":"FOLDER_LIMIT_EXCEEDED","message":"Folders count limit exceeded"}` | Number of active + trash folders exceeds limit |
-| **400 Bad Request** | `{"success":false,"code":"DEPTH_LIMIT_EXCEEDED","message":"Folder depth exceeds maximum level allowed"}` | Adding a subfolder or moving folders would exceed max depth |
-| **403 Forbidden** | `{"success":false,"code":"GROUPS_LIMIT_EXCEEDED","message":"Owned groups limit exceeded"}` | Creating a new study group exceeds limit |
-| **403 Forbidden** | `{"success":false,"code":"GROUP_MEMBERS_LIMIT_EXCEEDED","message":"Group members limit exceeded"}` | Inviting/adding members exceeds group size limit |
-| **403 Forbidden** | `{"success":false,"code":"SHARES_LIMIT_EXCEEDED","message":"Active share links limit exceeded"}` | Creating a new share exceeds active shares limit |
-| **403 Forbidden** | `{"success":false,"code":"AI_QUESTIONS_LIMIT_EXCEEDED","message":"Daily AI Q&A question quota exceeded"}` | Submitting a question exceeds daily limits |
+| **400 Bad Request** | `{"success":false,"code":"FOLDER_DEPTH_LIMIT_EXCEEDED","message":"Folder depth exceeds maximum level allowed"}` | Adding a subfolder or moving folders would exceed max depth |
+| **403 Forbidden** | `{"success":false,"code":"GROUP_LIMIT_EXCEEDED","message":"Owned groups limit exceeded"}` | Creating a new study group exceeds limit |
+| **403 Forbidden** | `{"success":false,"code":"GROUP_MEMBER_LIMIT_EXCEEDED","message":"Group members limit exceeded"}` | Inviting/adding members exceeds group size limit |
+| **403 Forbidden** | `{"success":false,"code":"SHARE_LIMIT_EXCEEDED","message":"Active share links limit exceeded"}` | Creating a new share exceeds active shares limit |
+| **403 Forbidden** | `{"success":false,"code":"AI_QUOTA_EXCEEDED","message":"Daily AI Q&A question quota exceeded"}` | Submitting a question exceeds daily limits |
 | **400 Bad Request** | `{"success":false,"code":"AI_QUESTION_CHARS_LIMIT_EXCEEDED","message":"Question text exceeds maximum tier length"}` | AI question character count exceeds maximum allowed |
 | **403 Forbidden** | `{"success":false,"code":"AI_SESSIONS_LIMIT_EXCEEDED","message":"AI Chat sessions per document limit exceeded"}` | Creating a new session exceeds document limits |
 | **403 Forbidden** | `{"success":false,"code":"SESSION_MESSAGES_LIMIT_EXCEEDED","message":"Messages per chat session limit exceeded"}` | Sending a message in session exceeds limit |
-| **403 Forbidden** | `{"success":false,"code":"SUMMARY_LIMIT_EXCEEDED","message":"Summary generations daily quota exceeded"}` | Initiating a new summary exceeds daily limits |
-| **403 Forbidden** | `{"success":false,"code":"FLASHCARD_LIMIT_EXCEEDED","message":"Flashcard sets daily quota exceeded"}` | Creating a new flashcard set exceeds daily limits |
-| **403 Forbidden** | `{"success":false,"code":"QUIZ_LIMIT_EXCEEDED","message":"Quiz sets daily quota exceeded"}` | Creating a new quiz set exceeds daily limits |
-| **400 Bad Request** | `{"success":false,"code":"ITEMS_LIMIT_EXCEEDED","message":"Items count per set limit exceeded"}` | Adding cards/questions to a set exceeds maximum count |
+| **403 Forbidden** | `{"success":false,"code":"SUMMARY_QUOTA_EXCEEDED","message":"Summary generations daily quota exceeded"}` | Initiating a new summary exceeds daily limits |
+| **403 Forbidden** | `{"success":false,"code":"FLASHCARD_QUOTA_EXCEEDED","message":"Flashcard sets daily quota exceeded"}` | Creating a new flashcard set exceeds daily limits |
+| **403 Forbidden** | `{"success":false,"code":"QUIZ_QUOTA_EXCEEDED","message":"Quiz sets daily quota exceeded"}` | Creating a new quiz set exceeds daily limits |
+| **400 Bad Request** | `{"success":false,"code":"ITEM_LIMIT_EXCEEDED","message":"Items count per set limit exceeded"}` | Adding cards/questions to a set exceeds maximum count |
