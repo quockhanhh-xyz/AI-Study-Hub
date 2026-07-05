@@ -34,8 +34,8 @@ async function getPaymentPlans() {
 
 /**
  * Creates a mock payment session for the given plan code.
- * Only PREMIUM planCode should be passed from the UI flow.
- * @param {string} planCode - The plan to purchase (e.g. "PREMIUM").
+ * Supported plan codes: PREMIUM, ULTRA.
+ * @param {string} planCode - The plan to purchase (e.g. "PREMIUM" or "ULTRA").
  * @returns {Promise<Object>} Created payment session data.
  */
 async function createMockPayment(planCode) {
