@@ -175,7 +175,7 @@ class PaymentServiceTest {
         PaymentResponse response = paymentService.markPaymentSuccess(freeUser, 1L);
 
         assertEquals(PaymentStatus.SUCCESS, response.getStatus());
-        assertEquals(UserTier.PREMIUM, response.getTier());
+        assertEquals("PREMIUM", response.getTier());
         assertNotNull(response.getPaidAt());
         assertEquals(UserTier.PREMIUM, freeUser.getTier());
         verify(userRepository, times(1)).save(freeUser);
@@ -275,7 +275,7 @@ class PaymentServiceTest {
         PaymentResponse response = paymentService.markPaymentFailed(freeUser, 1L);
 
         assertEquals(PaymentStatus.FAILED, response.getStatus());
-        assertEquals(UserTier.FREE, response.getTier());
+        assertEquals("FREE", response.getTier());
         assertNull(response.getPaidAt());
         assertEquals(UserTier.FREE, freeUser.getTier()); // tier không đổi
         verify(userRepository, never()).save(any());
@@ -323,7 +323,7 @@ class PaymentServiceTest {
         PaymentResponse response = paymentService.markPaymentFailed(premiumUser, 1L);
 
         assertEquals(PaymentStatus.FAILED, response.getStatus());
-        assertEquals(UserTier.PREMIUM, response.getTier()); // vẫn PREMIUM
+        assertEquals("PREMIUM", response.getTier());
         assertNull(response.getPaidAt());
     }
 
@@ -346,7 +346,7 @@ class PaymentServiceTest {
         PaymentResponse response = paymentService.cancelPayment(freeUser, 1L);
 
         assertEquals(PaymentStatus.CANCELLED, response.getStatus());
-        assertEquals(UserTier.FREE, response.getTier());
+        assertEquals("FREE", response.getTier());
         assertNull(response.getPaidAt());
         assertEquals(UserTier.FREE, freeUser.getTier());
         verify(userRepository, never()).save(any());
@@ -394,7 +394,7 @@ class PaymentServiceTest {
         PaymentResponse response = paymentService.cancelPayment(premiumUser, 1L);
 
         assertEquals(PaymentStatus.CANCELLED, response.getStatus());
-        assertEquals(UserTier.PREMIUM, response.getTier()); // vẫn PREMIUM
+        assertEquals("PREMIUM", response.getTier());
         assertNull(response.getPaidAt());
     }
 

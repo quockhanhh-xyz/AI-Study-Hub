@@ -18,6 +18,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import com.demo.ai_study_hub.service.TierPolicyService;
+import com.demo.ai_study_hub.service.UsageService;
+import com.demo.ai_study_hub.dto.TierLimits;
+import static org.mockito.ArgumentMatchers.any;
 
 import java.util.List;
 import java.util.Optional;
@@ -50,6 +54,10 @@ class DocumentServiceTest {
     private DocumentContentRepository documentContentRepository;
     @Mock
     private DocumentChunkRepository documentChunkRepository;
+    @Mock
+    private TierPolicyService tierPolicyService;
+    @Mock
+    private UsageService usageService;
 
     @InjectMocks
     private DocumentService documentService;
@@ -83,7 +91,15 @@ class DocumentServiceTest {
         mockDocument.setStatus("ACTIVE");
         mockDocument.setOwner(mockOwner);
         mockDocument.setSubject(mockSubject);
+
+        TierLimits mockLimits = new TierLimits(
+                100L * 1024 * 1024, 30, 10L * 1024 * 1024, 20, 3, 3, 10, 30, 3, 500, 5, 500, 3, 500,
+                "gemini-2.5-flash-lite", 1, 1, 1, 5
+        );
+        lenient().when(tierPolicyService.getLimitsForUser(any())).thenReturn(mockLimits);
+        lenient().when(usageService.countActiveShares(any())).thenReturn(0L);
     }
+
 
     @Test
     void getDocumentDetail_WhenDocumentNotFound_ShouldThrow404() {
