@@ -10,7 +10,7 @@ This document defines the backend validation, database migration, and entitlemen
 
 | TC | Scenario | Action | Expected Behavior |
 |---|---|---|---|
-| TC-TIER-001 | Manual SQL Migration | Run SQL script `V13__tier_entitlement.sql` | - Column `tier_expires_at` is added to `users` table.<br>- Table `ai_usage_reservations` is created with unique request constraints and indexes.<br>- Passes without breaking existing data records. |
+| TC-TIER-001 | Manual SQL Migration | Run SQL script `V13__tier_entitlement.sql` | - Column `tier_expires_at` is added to `users` table.<br>- Column `tier` type is modified to `VARCHAR(20) NOT NULL DEFAULT 'FREE'`.<br>- Table `ai_usage_reservations` is created with unique request constraints and indexes.<br>- Passes without breaking existing data records. |
 | TC-TIER-002 | String to Enum UserTier Check | Attempt to load existing users with string values 'FREE' or 'PREMIUM' into Hibernate User entity using new `UserTier` Enum | Legacy string values map correctly to Enum constants `UserTier.FREE` and `UserTier.PREMIUM` without throwing mapping exceptions. |
 | TC-TIER-003 | FREE User Expiration | Query newly migrated or registered FREE user | `tier_expires_at` must be `NULL` by default. |
 | TC-TIER-004 | PREMIUM User Backfill | Query existing PREMIUM users after migration | `tier_expires_at` is backfilled to a future date (UTC-based) using `DATE_ADD(UTC_TIMESTAMP(), INTERVAL 30 DAY)`, preserving active paid status. |
@@ -45,20 +45,20 @@ This document defines the backend validation, database migration, and entitlemen
 
 | TC | Effective Tier | Current Groups / Members count | Action | Expected HTTP | Expected Action / Error Code |
 |---|---|---|---|---|---|
-| TC-TIER-020 | FREE | Owns 3 active study groups | Create new study group | 403 Forbidden | Blocked with code `GROUPS_LIMIT_EXCEEDED`. |
-| TC-TIER-021 | FREE | Group has 10 members | Invite or add member to group | 403 Forbidden | Blocked with code `GROUP_MEMBERS_LIMIT_EXCEEDED`. |
-| TC-TIER-022 | PREMIUM | Owns 30 active study groups | Create new study group | 403 Forbidden | Blocked with code `GROUPS_LIMIT_EXCEEDED`. |
-| TC-TIER-023 | PREMIUM | Group has 100 members | Invite or add member to group | 403 Forbidden | Blocked with code `GROUP_MEMBERS_LIMIT_EXCEEDED`. |
-| TC-TIER-024 | ULTRA | Owns 100 active study groups | Create new study group | 403 Forbidden | Blocked with code `GROUPS_LIMIT_EXCEEDED`. |
-| TC-TIER-025 | ULTRA | Group has 300 members | Invite or add member to group | 403 Forbidden | Blocked with code `GROUP_MEMBERS_LIMIT_EXCEEDED`. |
+| TC-TIER-020 | FREE | Owns 3 active study groups | Create new study group | 403 Forbidden | Blocked with code `GROUP_LIMIT_EXCEEDED`. |
+| TC-TIER-021 | FREE | Group has 10 members | Invite or add member to group | 403 Forbidden | Blocked with code `GROUP_MEMBER_LIMIT_EXCEEDED`. |
+| TC-TIER-022 | PREMIUM | Owns 30 active study groups | Create new study group | 403 Forbidden | Blocked with code `GROUP_LIMIT_EXCEEDED`. |
+| TC-TIER-023 | PREMIUM | Group has 100 members | Invite or add member to group | 403 Forbidden | Blocked with code `GROUP_MEMBER_LIMIT_EXCEEDED`. |
+| TC-TIER-024 | ULTRA | Owns 100 active study groups | Create new study group | 403 Forbidden | Blocked with code `GROUP_LIMIT_EXCEEDED`. |
+| TC-TIER-025 | ULTRA | Group has 300 members | Invite or add member to group | 403 Forbidden | Blocked with code `GROUP_MEMBER_LIMIT_EXCEEDED`. |
 
-### 2.3. Active Share Limits (Covers all 4 share types)
+### 2.3. Active Share Limits (Covers 4 active share types)
 
 | TC | Effective Tier | Current Active Shares | Action | Expected HTTP | Expected Action / Error Code |
 |---|---|---|---|---|---|
-| TC-TIER-030 | FREE | 30 active shares (combination of document public publishing, folder shares, subject shares, group shares) | Share another resource | 403 Forbidden | Blocked with code `SHARES_LIMIT_EXCEEDED`. |
-| TC-TIER-031 | PREMIUM | 1,000 active shares | Share another resource | 403 Forbidden | Blocked with code `SHARES_LIMIT_EXCEEDED`. |
-| TC-TIER-032 | ULTRA | 5,000 active shares | Share another resource | 403 Forbidden | Blocked with code `SHARES_LIMIT_EXCEEDED`. |
+| TC-TIER-030 | FREE | 30 active shares (combination of direct document shares, group document shares, direct folder shares, and group folder shares) | Share another resource | 403 Forbidden | Blocked with code `SHARE_LIMIT_EXCEEDED`. |
+| TC-TIER-031 | PREMIUM | 1,000 active shares | Share another resource | 403 Forbidden | Blocked with code `SHARE_LIMIT_EXCEEDED`. |
+| TC-TIER-032 | ULTRA | 5,000 active shares | Share another resource | 403 Forbidden | Blocked with code `SHARE_LIMIT_EXCEEDED`. |
 
 ### 2.4. Documents Count & Storage Limits
 
@@ -74,7 +74,7 @@ This document defines the backend validation, database migration, and entitlemen
 | TC | Effective Tier | Subtree Configuration | Action | Expected HTTP | Expected Behavior / Error Code |
 |---|---|---|---|---|---|
 | TC-TIER-040 | FREE | Folder `F` in Trash contains 5 subfolders and 3 documents | Restore Folder `F` when user has 18 folders and 28 documents | 403 Forbidden | Blocked with code `FOLDER_LIMIT_EXCEEDED` or `DOCUMENT_LIMIT_EXCEEDED`. The entire descendant tree is evaluated before permitting restore. |
-| TC-TIER-041 | FREE | Folder `F` in Trash has depth of 2. User attempts to restore under Folder `G` (depth 2) | Restore Folder `F` under `G` | 400 Bad Request | Blocked with code `DEPTH_LIMIT_EXCEEDED` (cumulative depth of restored tree `2 + 2 = 4` levels exceeds FREE limit of 3). |
+| TC-TIER-041 | FREE | Folder `F` in Trash has depth of 2. User attempts to restore under Folder `G` (depth 2) | Restore Folder `F` under `G` | 400 Bad Request | Blocked with code `FOLDER_DEPTH_LIMIT_EXCEEDED` (cumulative depth of restored tree `2 + 2 = 4` levels exceeds FREE limit of 3). |
 
 ### 2.6. Cloudinary Cleanup on DB Save Failure
 
@@ -84,9 +84,14 @@ This document defines the backend validation, database migration, and entitlemen
 
 ### 2.7. Concurrency Protection Tests
 
-| TC | Scenario | Concurrent Actions | Expected Outcome |
+| TC | Action | Concurrent Requests | Expected Outcome |
 |---|---|---|---|
-| TC-TIER-048 | Concurrent Requests | Submit 5 concurrent folder creation requests for a FREE user with 19 active folders. | Exactly 1 folder creation succeeds, other 4 requests fail and return `403 Forbidden` with code `FOLDER_LIMIT_EXCEEDED`. |
+| TC-TIER-046 | Concurrent Folder Creation | Submit 5 concurrent folder creation requests for a FREE user with 19 active folders. | Exactly 1 folder creation succeeds, other 4 requests fail with `FOLDER_LIMIT_EXCEEDED` (403). |
+| TC-TIER-047 | Concurrent Document Uploads | Submit 3 concurrent document uploads for a FREE user with 29 active documents. | Exactly 1 upload succeeds, other 2 requests roll back and trigger Cloudinary file deletion; returns `DOCUMENT_LIMIT_EXCEEDED` (403). |
+| TC-TIER-048 | Concurrent Group Creation | Submit 4 concurrent group creation requests for a FREE user with 2 active groups. | Exactly 1 group succeeds, other 3 requests fail with `GROUP_LIMIT_EXCEEDED` (403). |
+| TC-TIER-049 | Concurrent Group Joins | Submit 5 concurrent group join requests to a group that has 9 members. | Exactly 1 join succeeds, other 4 requests fail with `GROUP_MEMBER_LIMIT_EXCEEDED` (403). |
+| TC-TIER-050 | Concurrent Share Creation | Submit 3 concurrent share creation requests for a FREE user with 29 active shares. | Exactly 1 share succeeds, other 2 requests fail with `SHARE_LIMIT_EXCEEDED` (403). |
+| TC-TIER-051 | Concurrent AI Questions | Submit 3 concurrent AI question requests for a FREE user who has asked 4 questions. | Exactly 1 question is successfully reserved and resolved; other 2 requests fail with `AI_QUOTA_EXCEEDED` (403). |
 
 ---
 
@@ -96,21 +101,44 @@ This document defines the backend validation, database migration, and entitlemen
 
 | TC | Effective Tier | Question Payload | Expected Model Route | Expected HTTP | Expected Action / Error Code |
 |---|---|---|---|---|---|
-| TC-TIER-050 | FREE | 500 characters | `gemini-2.5-flash-lite` | 200 OK | Question resolved via `DefaultAiModelSelector` calling `TierPolicyService`. |
-| TC-TIER-051 | FREE | 501 characters | - | 400 Bad Request | Blocked with code `AI_QUESTION_CHARS_LIMIT_EXCEEDED`. |
-| TC-TIER-052 | PREMIUM | 2,000 characters | `gemini-2.5-flash` | 200 OK | Question resolved via `DefaultAiModelSelector` calling `TierPolicyService`. |
-| TC-TIER-053 | PREMIUM | 2,001 characters | - | 400 Bad Request | Blocked with code `AI_QUESTION_CHARS_LIMIT_EXCEEDED`. |
-| TC-TIER-054 | ULTRA | 5,000 characters | `gemini-2.5-flash` | 200 OK | Question resolved via `DefaultAiModelSelector` calling `TierPolicyService`. |
-| TC-TIER-055 | ULTRA | 5,001 characters | - | 400 Bad Request | Blocked with code `AI_QUESTION_CHARS_LIMIT_EXCEEDED`. |
+| TC-TIER-052 | FREE | 500 characters | `gemini-2.5-flash-lite` | 200 OK | Question resolved via `DefaultAiModelSelector` calling `TierPolicyService`. |
+| TC-TIER-053 | FREE | 501 characters | - | 400 Bad Request | Blocked with code `AI_QUESTION_CHARS_LIMIT_EXCEEDED`. |
+| TC-TIER-054 | PREMIUM | 2,000 characters | `gemini-2.5-flash` | 200 OK | Question resolved via `DefaultAiModelSelector` calling `TierPolicyService`. |
+| TC-TIER-055 | PREMIUM | 2,001 characters | - | 400 Bad Request | Blocked with code `AI_QUESTION_CHARS_LIMIT_EXCEEDED`. |
+| TC-TIER-056 | ULTRA | 5,000 characters | `gemini-2.5-flash` | 200 OK | Question resolved via `DefaultAiModelSelector` calling `TierPolicyService`. |
+| TC-TIER-057 | ULTRA | 5,001 characters | - | 400 Bad Request | Blocked with code `AI_QUESTION_CHARS_LIMIT_EXCEEDED`. |
 
-### 3.2. AI Reservation State Transitions
+### 3.2. Detailed AI limit boundaries
+
+| TC | Effective Tier | Limit Type | Quota Configuration | Action | Expected Outcome |
+|---|---|---|---|---|---|
+| TC-TIER-060 | FREE | AI Chat Sessions | 3 sessions owned | Create 4th chat session | Blocked with `AI_SESSIONS_LIMIT_EXCEEDED` (403). |
+| TC-TIER-061 | FREE | Messages/Session | 30 messages in session | Send 31st message | Blocked with `SESSION_MESSAGES_LIMIT_EXCEEDED` (403). |
+| TC-TIER-062 | FREE | Summary quota | 1 summary/day | Request 2nd summary | Blocked with `SUMMARY_QUOTA_EXCEEDED` (403). |
+| TC-TIER-063 | FREE | Flashcard quota | 1 card set/day | Create 2nd card set | Blocked with `FLASHCARD_QUOTA_EXCEEDED` (403). |
+| TC-TIER-064 | FREE | Quiz quota | 1 quiz set/day | Create 2nd quiz set | Blocked with `QUIZ_QUOTA_EXCEEDED` (403). |
+| TC-TIER-065 | FREE | Items per set | 5 items in set | Add 6th item to set | Blocked with `ITEM_LIMIT_EXCEEDED` (400). |
+| TC-TIER-066 | PREMIUM | AI Chat Sessions | 30 sessions owned | Create 31st chat session | Blocked with `AI_SESSIONS_LIMIT_EXCEEDED` (403). |
+| TC-TIER-067 | PREMIUM | Messages/Session | 300 messages in session | Send 301st message | Blocked with `SESSION_MESSAGES_LIMIT_EXCEEDED` (403). |
+| TC-TIER-068 | PREMIUM | Summary quota | 10 summaries/day | Request 11th summary | Blocked with `SUMMARY_QUOTA_EXCEEDED` (403). |
+| TC-TIER-069 | PREMIUM | Flashcard quota | 10 card sets/day | Create 11th card set | Blocked with `FLASHCARD_QUOTA_EXCEEDED` (403). |
+| TC-TIER-070 | PREMIUM | Quiz quota | 10 quiz sets/day | Create 11th quiz set | Blocked with `QUIZ_QUOTA_EXCEEDED` (403). |
+| TC-TIER-071 | PREMIUM | Items per set | 15 items in set | Add 16th item to set | Blocked with `ITEM_LIMIT_EXCEEDED` (400). |
+| TC-TIER-072 | ULTRA | AI Chat Sessions | 100 sessions owned | Create 101st chat session | Blocked with `AI_SESSIONS_LIMIT_EXCEEDED` (403). |
+| TC-TIER-073 | ULTRA | Messages/Session | 1000 messages in session | Send 1001st message | Blocked with `SESSION_MESSAGES_LIMIT_EXCEEDED` (403). |
+| TC-TIER-074 | ULTRA | Summary quota | 50 summaries/day | Request 51st summary | Blocked with `SUMMARY_QUOTA_EXCEEDED` (403). |
+| TC-TIER-075 | ULTRA | Flashcard quota | 50 card sets/day | Create 51st card set | Blocked with `FLASHCARD_QUOTA_EXCEEDED` (403). |
+| TC-TIER-076 | ULTRA | Quiz quota | 50 quiz sets/day | Create 51st quiz set | Blocked with `QUIZ_QUOTA_EXCEEDED` (403). |
+| TC-TIER-077 | ULTRA | Items per set | 30 items in set | Add 31st item to set | Blocked with `ITEM_LIMIT_EXCEEDED` (400). |
+
+### 3.3. AI Reservation State Transitions
 
 | TC | Initial State | Action / Expiry Check | Expected State | Quota Counting Effect |
 |---|---|---|---|---|
-| TC-TIER-060 | User submits Q&A | Create reservation | `RESERVED` | Temporarily decrements remaining questions quota. |
-| TC-TIER-061 | `RESERVED` | AI Provider returns success | `CONFIRMED` | Confirmed as a permanent daily count decrement. |
-| TC-TIER-062 | `RESERVED` | AI Provider throws exception | `RELEASED` | Daily quota reservation is reversed immediately. |
-| TC-TIER-063 | `RESERVED` | Expired in DB (`expiresAt <= NOW()`) | Still `RESERVED` | **Ignored in active quota checks**: Logic counting daily usage filters out expired reservations, freeing up the daily questions slot without needing database updates. |
+| TC-TIER-080 | User submits Q&A | Create reservation | `RESERVED` | Temporarily decrements remaining questions quota. |
+| TC-TIER-081 | `RESERVED` | AI Provider returns success | `CONFIRMED` | Confirmed as a permanent daily count decrement. |
+| TC-TIER-082 | `RESERVED` | AI Provider throws exception | `RELEASED` | Daily quota reservation is reversed immediately. |
+| TC-TIER-083 | `RESERVED` | No provider response, time exceeds 60s | Ignored / `EXPIRED` | **Ignored in active quota checks**: Logic counting daily usage filters out reservations where `status = 'RESERVED' AND expiresAt <= NOW()`, freeing up the daily questions slot without needing database updates. Reservation record may also be marked as `EXPIRED` in DB during cron garbage collection. |
 
 ---
 
@@ -120,12 +148,12 @@ This document defines the backend validation, database migration, and entitlemen
 
 | TC | Scenario | Expected HTTP | Expected JSON Payload |
 |---|---|---|---|
-| TC-TIER-070 | Authenticated request (Effective Tier = PREMIUM) | 200 OK | Returns `"tier": "PREMIUM"`, `"effectiveTier": "PREMIUM"`, valid `tierExpiresAt` date, and correct max limit bounds matching the PREMIUM policy (including `maxAiSessionsPerDocument = 20`, `maxMessagesPerSession = 100`, `aiModel = "gemini-2.5-flash"`). |
-| TC-TIER-071 | Unauthenticated request | 401 Unauthorized | Returns `{"success":false,"message":"Unauthorized"}`. |
+| TC-TIER-090 | Authenticated request (Effective Tier = PREMIUM) | 200 OK | Returns `"tier": "PREMIUM"`, `"effectiveTier": "PREMIUM"`, `"tierExpiresAt": "2026-08-04T10:00:00Z"` (with timezone suffix), and correct max limit bounds matching the PREMIUM policy (including `maxAiSessionsPerDocument = 30`, `maxMessagesPerSession = 300`, `maxSummaryQuotaPerDay = 10`, `maxContextChunks = 10`, `maxOutputTokens = 4096`, `aiModel = "gemini-2.5-flash"`). |
+| TC-TIER-091 | Unauthenticated request | 401 Unauthorized | Returns `{"success":false,"message":"Unauthorized"}`. |
 
 ### 4.2. Usage Statistics Endpoint (GET /api/account/usage)
 
 | TC | Scenario | Expected HTTP | Expected JSON Payload |
 |---|---|---|---|
-| TC-TIER-080 | Authenticated request (FREE user with 2 documents, 4.5MB space used) | 200 OK | Returns correct `used`, `limit`, `remaining` (`max(limit - used, 0)`), `overLimit` (`used > limit`), and `overBy` (`max(used - limit, 0)`) stats for all resources. |
-| TC-TIER-081 | PREMIUM user expired back to FREE, with 150 documents remaining | 200 OK | Returns: `"documents": {"used": 150, "limit": 30, "remaining": 0, "overLimit": true, "overBy": 120}`. (Verifies that user is flagged as over-limit but existing files are not deleted). |
+| TC-TIER-100 | Authenticated request (FREE user with 2 documents, 4.5MB space used) | 200 OK | Returns correct `used`, `limit`, `remaining` (`max(limit - used, 0)`), `overLimit` (`used > limit`), and `overBy` (`max(used - limit, 0)`) stats for all resources. |
+| TC-TIER-101 | PREMIUM user expired back to FREE, with 150 documents remaining | 200 OK | Returns: `"documents": {"used": 150, "limit": 30, "remaining": 0, "overLimit": true, "overBy": 120}`. (Verifies that user is flagged as over-limit but existing files are not deleted). |

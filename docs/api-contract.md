@@ -3714,14 +3714,16 @@ The system calculates the user's **Effective Tier** dynamically on each request 
 | **Max Owned Study Groups** | 3 | 30 | 100 |
 | **Max Members per Group** | 10 | 100 | 300 |
 | **Max Active Shares** | 30 | 1,000 | 5,000 |
-| **Max AI Sessions per Doc** | 3 | 20 | 100 |
-| **Max Messages per Session** | 10 | 100 | 500 |
+| **Max AI Sessions per Doc** | 3 | 30 | 100 |
+| **Max Messages per Session** | 30 | 300 | 1,000 |
 | **Max AI Daily Questions** | 5 | 50 | 200 |
 | **Max Question Characters** | 500 characters | 2,000 characters | 5,000 characters |
-| **Max Summary/Day** | 3 | 30 | 100 |
-| **Max Flashcard Sets/Day** | 3 | 30 | 100 |
-| **Max Quiz Sets/Day** | 3 | 30 | 100 |
-| **Max Items per Set** | 10 | 50 | 100 |
+| **Max Summary/Day** | 1 | 10 | 50 |
+| **Max Flashcard Sets/Day** | 1 | 10 | 50 |
+| **Max Quiz Sets/Day** | 1 | 10 | 50 |
+| **Max Items per Set** | 5 | 15 | 30 |
+| **Max Context Chunks** | 3 | 10 | 30 |
+| **Max Output Tokens** | 1024 | 4096 | 8192 |
 | **AI Model Selector** | `gemini-2.5-flash-lite` | `gemini-2.5-flash` | `gemini-2.5-flash` |
 
 ---
@@ -3747,7 +3749,7 @@ Retrieve the current authenticated user's active tier, expiration timestamp, and
   "data": {
     "tier": "PREMIUM",
     "effectiveTier": "PREMIUM",
-    "tierExpiresAt": "2026-08-04T10:00:00",
+    "tierExpiresAt": "2026-08-04T10:00:00Z",
     "limits": {
       "maxStorageBytes": 2147483648,
       "maxDocuments": 500,
@@ -3757,14 +3759,16 @@ Retrieve the current authenticated user's active tier, expiration timestamp, and
       "maxOwnedGroups": 30,
       "maxMembersPerGroup": 100,
       "maxActiveShares": 1000,
-      "maxAiSessionsPerDocument": 20,
-      "maxMessagesPerSession": 100,
+      "maxAiSessionsPerDocument": 30,
+      "maxMessagesPerSession": 300,
       "maxAiDailyQuestions": 50,
       "maxQuestionChars": 2000,
-      "maxSummaryQuotaPerDay": 30,
-      "maxFlashcardQuotaPerDay": 30,
-      "maxQuizQuotaPerDay": 30,
-      "maxItemsPerSet": 50,
+      "maxSummaryQuotaPerDay": 10,
+      "maxFlashcardQuotaPerDay": 10,
+      "maxQuizQuotaPerDay": 10,
+      "maxItemsPerSet": 15,
+      "maxContextChunks": 10,
+      "maxOutputTokens": 4096,
       "aiModel": "gemini-2.5-flash"
     }
   }

@@ -335,11 +335,11 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
 - [ ] **Step 10.1**: Log in as User A and query entitlements (`GET /api/account/entitlements`).
   - *Expected*: `200 OK`. Returns `"tier": "FREE"`, `"effectiveTier": "FREE"`, `"tierExpiresAt": null`, and FREE limits bounds (e.g., `maxStorageBytes = 104857600`, `maxDocuments = 30`).
 - [ ] **Step 10.2**: Log in as User B and query entitlements.
-  - *Expected*: `200 OK`. Returns `"tier": "PREMIUM"`, `"effectiveTier": "PREMIUM"`, `"tierExpiresAt": [future ISO datetime]`, and PREMIUM limits bounds (e.g., `maxStorageBytes = 2147483648`, `maxDocuments = 500`).
+  - *Expected*: `200 OK`. Returns `"tier": "PREMIUM"`, `"effectiveTier": "PREMIUM"`, `"tierExpiresAt": [future ISO datetime with Z suffix, e.g. 2026-08-04T10:00:00Z]`, and PREMIUM limits bounds (e.g., `maxStorageBytes = 2147483648`, `maxDocuments = 500`).
 - [ ] **Step 10.3**: Log in as User C (expired ULTRA user) and query entitlements.
-  - *Expected*: `200 OK`. Returns `"tier": "ULTRA"`, `"effectiveTier": "FREE"`, `"tierExpiresAt": [past ISO datetime]`, and FREE limits bounds. (Verifies that expired paid tiers automatically fallback to FREE limits).
+  - *Expected*: `200 OK`. Returns `"tier": "ULTRA"`, `"effectiveTier": "FREE"`, `"tierExpiresAt": [past ISO datetime with Z suffix, e.g. 2026-07-04T10:00:00Z]`, and FREE limits bounds. (Verifies that expired paid tiers automatically fallback to FREE limits).
 - [ ] **Step 10.4**: Log in as User A and query resource usage (`GET /api/account/usage`).
-  - *Expected*: `200 OK`. Returns a structured summary detailing the `used`, `limit`, and `remaining` count for storage, documents, folders, ownedGroups, activeShares, and dailyAiQuestions.
+  - *Expected*: `200 OK`. Returns a structured summary detailing the `used`, `limit`, `remaining` (`max(limit - used, 0)`), `overLimit` (`used > limit`), and `overBy` (`max(used - limit, 0)`) count for storage, documents, folders, ownedGroups, activeShares, and dailyAiQuestions.
 
 ### 10.2. Document and Storage Quota Enforcement
 - [ ] **Step 10.5**: While logged in as User A (FREE, already has 30 active + trashed documents), attempt to upload a new document.
@@ -353,7 +353,7 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
 - [ ] **Step 10.8**: User A (FREE) has a folder `F` in Trash containing 5 subfolders. Restoring `F` would cause the user's total folder count to reach 21 (exceeding FREE limit of 20). Attempt to restore Folder `F`.
   - *Expected*: `403 Forbidden` with error code `FOLDER_LIMIT_EXCEEDED` (folder restoration evaluates entire descendant tree count).
 - [ ] **Step 10.9**: User A (FREE) has a folder tree with a depth of 2 in Trash. User A attempts to restore this folder tree under active Folder `G` (which has depth 2).
-  - *Expected*: `400 Bad Request` with error code `DEPTH_LIMIT_EXCEEDED` (total restored depth would be 4, exceeding FREE limit of 3).
+  - *Expected*: `400 Bad Request` with error code `FOLDER_DEPTH_LIMIT_EXCEEDED` (total restored depth would be 4, exceeding FREE limit of 3).
 
 ### 10.4. AI daily limits and Reservations
 - [ ] **Step 10.10**: Log in as User A (FREE) and attempt to ask an AI question exceeding 500 characters.
@@ -367,4 +367,4 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
     - Backend creates a reservation with status `RESERVED`.
     - Upon provider error, the reservation transitions to status `RELEASED` and the daily questions quota block is freed.
 - [ ] **Step 10.13**: Log in as User A (FREE) after having reached the daily limit of 5 questions. Attempt to ask another question.
-  - *Expected*: `403 Forbidden` with error code `AI_QUESTIONS_LIMIT_EXCEEDED`.
+  - *Expected*: `403 Forbidden` with error code `AI_QUOTA_EXCEEDED`.
