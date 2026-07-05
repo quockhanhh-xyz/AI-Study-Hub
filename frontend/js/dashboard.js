@@ -238,9 +238,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 5. Storage Quota Calculation (Step 13: prefer backend usage data, fallback to local calc)
     const usageData = await loadAccountTierAndUsage();
 
-    if (usageData && usageData.usage && usageData.limits) {
-      const usedBytes = usageData.usage.storageBytes ?? 0;
-      const limitBytes = usageData.limits.storageBytes ?? 0;
+    if (usageData && usageData.storage) {
+      const usedBytes = usageData.storage.used ?? 0;
+      const limitBytes = usageData.storage.limit ?? 0;
 
       if (usageRemainingElement && typeof formatUsageProgress === "function") {
         usageRemainingElement.textContent = formatUsageProgress(usedBytes, limitBytes, "storage");
