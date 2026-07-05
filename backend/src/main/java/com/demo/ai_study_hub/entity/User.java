@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import com.demo.ai_study_hub.dto.UserTier;
+import com.demo.ai_study_hub.enums.UserTier;
 
 import java.time.LocalDateTime;
 

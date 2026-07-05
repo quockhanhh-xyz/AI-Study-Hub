@@ -37,6 +37,7 @@ public class FolderShareServiceImpl implements FolderShareService {
     @Transactional
     public FolderShareResponse shareFolderToUser(Integer folderId, ShareFolderRequest request, String email) {
         User owner = getUser(email);
+        owner = userRepository.findByIdForUpdate(owner.getUserId()).orElse(owner);
         Folder folder = getActiveOwnedFolder(folderId, owner);
 
         com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(owner);
@@ -357,6 +358,7 @@ public class FolderShareServiceImpl implements FolderShareService {
     @Transactional
     public FolderShareResponse shareFolderToGroup(Integer folderId, GroupFolderShareRequest request, String email) {
         User owner = getUser(email);
+        owner = userRepository.findByIdForUpdate(owner.getUserId()).orElse(owner);
         Folder folder = getActiveOwnedFolder(folderId, owner);
 
         com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(owner);

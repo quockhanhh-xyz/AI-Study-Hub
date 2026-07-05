@@ -1,7 +1,7 @@
 package com.demo.ai_study_hub.service;
 
 import com.demo.ai_study_hub.dto.TierLimits;
-import com.demo.ai_study_hub.dto.UserTier;
+import com.demo.ai_study_hub.enums.UserTier;
 import com.demo.ai_study_hub.entity.User;
 import org.springframework.stereotype.Service;
 

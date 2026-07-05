@@ -79,7 +79,7 @@ class StudyGroupServiceTest {
         request.setInviteCode("ABCD1234");
 
         when(userRepository.findByEmail("member@gmail.com")).thenReturn(Optional.of(member));
-        when(studyGroupRepository.findByInviteCode("ABCD1234")).thenReturn(Optional.of(group));
+        when(studyGroupRepository.findByInviteCodeForUpdate("ABCD1234")).thenReturn(Optional.of(group));
         when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(group, member, "ACTIVE")).thenReturn(true);
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
@@ -322,6 +322,7 @@ class StudyGroupServiceTest {
         request.setDescription("Java description");
 
         when(userRepository.findByEmail("owner@gmail.com")).thenReturn(Optional.of(owner));
+        when(userRepository.findByIdForUpdate(1)).thenReturn(Optional.of(owner));
         when(studyGroupRepository.save(any(StudyGroup.class))).thenAnswer(invocation -> {
             StudyGroup saved = invocation.getArgument(0);
             saved.setGroupId(1);

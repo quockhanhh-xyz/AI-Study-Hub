@@ -2,7 +2,7 @@ package com.demo.ai_study_hub.service;
 
 import com.demo.ai_study_hub.config.AiProperties;
 import com.demo.ai_study_hub.dto.TierLimits;
-import com.demo.ai_study_hub.dto.UserTier;
+import com.demo.ai_study_hub.enums.UserTier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -33,6 +33,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
     @Transactional
     public GroupResponse createGroup(CreateGroupRequest request, String email) {
         User owner = getUser(email);
+        owner = userRepository.findByIdForUpdate(owner.getUserId()).orElse(owner);
         com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(owner);
         long ownedGroups = usageService.countOwnedGroups(owner);
         if (ownedGroups >= limits.maxOwnedGroups()) {
@@ -153,7 +154,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
     public GroupResponse joinGroup(JoinGroupRequest request, String email) {
         User user = getUser(email);
 
-        StudyGroup group = studyGroupRepository.findByInviteCode(request.getInviteCode())
+        StudyGroup group = studyGroupRepository.findByInviteCodeForUpdate(request.getInviteCode())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid invite code"));
 
         if (!"ACTIVE".equals(group.getStatus())) {

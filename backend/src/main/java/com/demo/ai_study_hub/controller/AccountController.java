@@ -1,6 +1,7 @@
 package com.demo.ai_study_hub.controller;
 
 import com.demo.ai_study_hub.dto.*;
+import com.demo.ai_study_hub.enums.UserTier;
 import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.repository.UserRepository;
 import com.demo.ai_study_hub.service.TierPolicyService;

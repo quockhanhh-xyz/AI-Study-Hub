@@ -39,6 +39,7 @@ class AiChatServiceTest {
     @Mock private AiChatSessionRepository aiChatSessionRepository;
     @Mock private AiChatMessageRepository aiChatMessageRepository;
     @Mock private AiUsageLogRepository aiUsageLogRepository;
+    @Mock private AiUsageReservationRepository aiUsageReservationRepository;
 
     @Mock private AiProviderRouter aiProviderRouter;
     @Mock private AiModelSelector aiModelSelector;
@@ -60,7 +61,7 @@ class AiChatServiceTest {
         mockUser = new User();
         mockUser.setUserId(1);
         mockUser.setEmail("user@test.com");
-        mockUser.setTier(com.demo.ai_study_hub.dto.UserTier.FREE);
+        mockUser.setTier(com.demo.ai_study_hub.enums.UserTier.FREE);
 
         mockDocument = new Document();
         mockDocument.setDocumentId(1);
@@ -72,6 +73,45 @@ class AiChatServiceTest {
             User u = inv.getArgument(0);
             return u.getTier();
         });
+
+        TierLimits defaultLimits = new TierLimits(
+            100L * 1024 * 1024,
+            30,
+            50L * 1024 * 1024,
+            50,
+            5,
+            5,
+            50,
+            100,
+            3,      // maxAiSessionsPerDocument
+            30,     // maxMessagesPerSession
+            5,      // aiQuestionsPerDay
+            500,    // maxQuestionChars
+            3,      // maxContextChunks
+            500,    // maxOutputTokens
+            "gemini-2.5-flash-lite",
+            3,
+            3,
+            3,
+            5
+        );
+        lenient().when(tierPolicyService.getLimitsForUser(any())).thenReturn(defaultLimits);
+        lenient().when(tierPolicyService.getLimits(any())).thenReturn(defaultLimits);
+
+        lenient().when(userRepository.findByIdForUpdate(anyInt())).thenReturn(Optional.of(mockUser));
+        lenient().when(aiUsageReservationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(aiUsageReservationRepository.countActiveReservations(any(), any())).thenReturn(0L);
+        lenient().when(aiChatMessageRepository.countBySession_SessionId(any())).thenReturn(0L);
+        lenient().when(aiChatSessionRepository.countByUser_UserIdAndDocument_DocumentIdAndStatus(anyInt(), anyInt(), anyString())).thenReturn(0L);
+        lenient().when(aiChatSessionRepository.save(any())).thenAnswer(inv -> {
+            AiChatSession s = inv.getArgument(0);
+            if (s.getSessionId() == null) {
+                s.setSessionId(999L);
+            }
+            return s;
+        });
+        lenient().when(aiChatSessionRepository.findByUser_UserIdAndDocument_DocumentIdAndStatus(anyInt(), anyInt(), anyString()))
+                .thenReturn(Optional.empty());
     }
 
     // =========================================================================

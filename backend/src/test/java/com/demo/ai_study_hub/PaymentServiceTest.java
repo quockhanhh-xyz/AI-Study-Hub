@@ -3,7 +3,7 @@ package com.demo.ai_study_hub;
 import com.demo.ai_study_hub.dto.PaymentStatus;
 import com.demo.ai_study_hub.dto.PaymentMethod;
 import com.demo.ai_study_hub.dto.PlanCode;
-import com.demo.ai_study_hub.dto.UserTier;
+import com.demo.ai_study_hub.enums.UserTier;
 import com.demo.ai_study_hub.dto.PaymentResponse;
 import com.demo.ai_study_hub.dto.PlanResponse;
 import com.demo.ai_study_hub.entity.PaymentOrder;
@@ -75,7 +75,7 @@ class PaymentServiceTest {
                 .planCode(PlanCode.PREMIUM).planName("Premium")
                 .price(199000).currency("VND").billingLabel("month").aiDailyLimit(50).build();
 
-        PlanService realPlanService = new PlanService();
+        PlanService realPlanService = new PlanService(new TierPolicyService());
         List<PlanResponse> plans = realPlanService.getAllPlans();
 
         assertEquals(2, plans.size());
@@ -480,21 +480,23 @@ class PaymentServiceTest {
 
     @Test
     void planService_FreeTierLimits_ShouldMatchSpec() {
-        PlanService ps = new PlanService();
-        assertEquals(5, ps.getDailyLimit(UserTier.FREE));
-        assertEquals(500, ps.getMaxQuestionChars(UserTier.FREE));
-        assertEquals(3, ps.getMaxContextChunks(UserTier.FREE));
-        assertEquals(500, ps.getMaxOutputTokens(UserTier.FREE));
-        assertEquals("gemini-2.5-flash-lite", ps.getModel(UserTier.FREE));
+        TierPolicyService tps = new TierPolicyService();
+        com.demo.ai_study_hub.dto.TierLimits limits = tps.getLimits(UserTier.FREE);
+        assertEquals(5, limits.aiQuestionsPerDay());
+        assertEquals(500, limits.maxQuestionChars());
+        assertEquals(3, limits.maxContextChunks());
+        assertEquals(500, limits.maxOutputTokens());
+        assertEquals("gemini-2.5-flash-lite", limits.aiModel());
     }
 
     @Test
     void planService_PremiumTierLimits_ShouldMatchSpec() {
-        PlanService ps = new PlanService();
-        assertEquals(50, ps.getDailyLimit(UserTier.PREMIUM));
-        assertEquals(2000, ps.getMaxQuestionChars(UserTier.PREMIUM));
-        assertEquals(8, ps.getMaxContextChunks(UserTier.PREMIUM));
-        assertEquals(1500, ps.getMaxOutputTokens(UserTier.PREMIUM));
-        assertEquals("gemini-2.5-flash", ps.getModel(UserTier.PREMIUM));
+        TierPolicyService tps = new TierPolicyService();
+        com.demo.ai_study_hub.dto.TierLimits limits = tps.getLimits(UserTier.PREMIUM);
+        assertEquals(50, limits.aiQuestionsPerDay());
+        assertEquals(2000, limits.maxQuestionChars());
+        assertEquals(8, limits.maxContextChunks());
+        assertEquals(1500, limits.maxOutputTokens());
+        assertEquals("gemini-2.5-flash", limits.aiModel());
     }
 }

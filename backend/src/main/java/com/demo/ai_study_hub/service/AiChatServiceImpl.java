@@ -41,6 +41,7 @@ public class AiChatServiceImpl implements AiChatService {
     private final AiChatSessionRepository aiChatSessionRepository;
     private final AiChatMessageRepository aiChatMessageRepository;
     private final AiUsageLogRepository aiUsageLogRepository;
+    private final AiUsageReservationRepository aiUsageReservationRepository;
 
     private final AiProviderRouter aiProviderRouter;
     private final AiModelSelector aiModelSelector;
@@ -60,8 +61,9 @@ public class AiChatServiceImpl implements AiChatService {
     @Transactional
     public AiAskResponse ask(Integer documentId, String question, String userEmail) {
 
-        // 1. Load user
+        // 1. Load user and lock for update to prevent concurrent mutations/checks
         User user = loadUser(userEmail);
+        user = userRepository.findByIdForUpdate(user.getUserId()).orElse(user);
 
         // 2. Load document — 404 if not found or DELETED
         Document doc = documentRepository.findById(documentId)
@@ -96,6 +98,15 @@ public class AiChatServiceImpl implements AiChatService {
                     "Document has no usable AI content");
         }
 
+        // Initialize active session and check message limit
+        AiChatSession session = findOrCreateSession(user, doc, question);
+        long messageCount = aiChatMessageRepository.countBySession_SessionId(session.getSessionId());
+        com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(user);
+        if (messageCount >= limits.maxMessagesPerSession()) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Messages limit per session exceeded", "AI_MESSAGE_LIMIT_EXCEEDED");
+        }
+
         // 7. Check AI provider configured
         if (!aiProviderRouter.isConfigured()) {
             saveUsageLog(user, doc, "ASK", null, null, 0, 0, 0,
@@ -104,15 +115,28 @@ public class AiChatServiceImpl implements AiChatService {
                     "AI service is not configured");
         }
 
-        // 8. Check quota
+        // 8. Check quota (used today + active reservations)
         int dailyLimit = aiModelSelector.getDailyQuestionLimit(tier);
         long usedToday = countUsedToday(user);
-        if (usedToday >= dailyLimit) {
+        long activeReservations = aiUsageReservationRepository.countActiveReservations(user, LocalDateTime.now());
+        if (usedToday + activeReservations >= dailyLimit) {
             saveUsageLog(user, doc, "ASK", null, null, 0, 0, 0,
                     false, false, "QUOTA_EXCEEDED");
             throw new QuotaExceededException(HttpStatus.FORBIDDEN,
                     "Daily AI Q&A question quota exceeded", "AI_QUOTA_EXCEEDED");
         }
+
+        // Create and save AI Reservation to prevent concurrent requests bypass
+        String requestId = UUID.randomUUID().toString();
+        AiUsageReservation reservation = AiUsageReservation.builder()
+                .requestId(requestId)
+                .user(user)
+                .requestType("QA")
+                .status("RESERVED")
+                .reservedAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusSeconds(30))
+                .build();
+        reservation = aiUsageReservationRepository.save(reservation);
 
         // 9. Detect summary intent and retrieve chunks
         int maxChunks = aiModelSelector.getMaxContextChunks(tier);
@@ -126,8 +150,12 @@ public class AiChatServiceImpl implements AiChatService {
 
         // 10. No-context fallback (non-summary questions with no matching chunks)
         if (!isSummary && chunks.isEmpty()) {
+            // Release the reservation since no provider request is made
+            reservation.setStatus("RELEASED");
+            reservation.setReleasedAt(LocalDateTime.now());
+            aiUsageReservationRepository.save(reservation);
+
             String fallback = "I could not find this information in the selected document.";
-            AiChatSession session = findOrCreateSession(user, doc);
             saveMessage(session, "USER", question, null, null, null, null, null, null, null);
             saveMessage(session, "ASSISTANT", fallback, null, null, null, null, null, null, "[]");
 
@@ -155,13 +183,23 @@ public class AiChatServiceImpl implements AiChatService {
         // 12. Build prompt
         String prompt = promptBuilderService.buildPrompt(question, chunks, isSummary);
 
-        // 13. Call AI provider
-        AiAnswer aiAnswer = callProvider(prompt, modelName, maxOutputTokens, user, doc);
+        // 13. Call AI provider with active reservation confirm/release lifecycle
+        AiAnswer aiAnswer;
+        try {
+            aiAnswer = callProvider(prompt, modelName, maxOutputTokens, user, doc);
+            // Confirm reservation
+            reservation.setStatus("CONFIRMED");
+            reservation.setConfirmedAt(LocalDateTime.now());
+            aiUsageReservationRepository.save(reservation);
+        } catch (Exception e) {
+            // Release reservation on failure
+            reservation.setStatus("RELEASED");
+            reservation.setReleasedAt(LocalDateTime.now());
+            aiUsageReservationRepository.save(reservation);
+            throw e;
+        }
 
-        // 14. Find or create ACTIVE session
-        AiChatSession session = findOrCreateSession(user, doc, question);
-
-        // 15. Save user message
+        // 14. Save user message
         saveMessage(session, "USER", question, null, null, null, null, null, null, null);
 
         // 16. Save assistant message
@@ -360,6 +398,13 @@ public class AiChatServiceImpl implements AiChatService {
                 .findByUser_UserIdAndDocument_DocumentIdAndStatus(
                         user.getUserId(), doc.getDocumentId(), "ACTIVE")
                 .orElseGet(() -> {
+                    com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(user);
+                    long activeSessions = aiChatSessionRepository.countByUser_UserIdAndDocument_DocumentIdAndStatus(
+                            user.getUserId(), doc.getDocumentId(), "ACTIVE");
+                    if (activeSessions >= limits.maxAiSessionsPerDocument()) {
+                        throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                                "AI sessions limit per document exceeded", "AI_SESSION_LIMIT_EXCEEDED");
+                    }
                     String title = firstQuestion != null
                             ? (firstQuestion.length() > 100
                                     ? firstQuestion.substring(0, 100) + "..."

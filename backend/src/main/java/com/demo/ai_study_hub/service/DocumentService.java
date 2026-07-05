@@ -47,6 +47,7 @@ public class DocumentService {
         }
 
         User owner = userRepository.findByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        owner = userRepository.findByIdForUpdate(owner.getUserId()).orElse(owner);
 
         if (subjectId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Subject is required");

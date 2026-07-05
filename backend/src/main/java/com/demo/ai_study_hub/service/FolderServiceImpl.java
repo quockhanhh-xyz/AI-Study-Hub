@@ -32,6 +32,7 @@ public class FolderServiceImpl implements FolderService {
     @Transactional
     public FolderResponse createFolder(FolderRequest request, String email) {
         User owner = getUser(email);
+        owner = userRepository.findByIdForUpdate(owner.getUserId()).orElse(owner);
 
         Folder parentFolder = null;
         if (request.getParentFolderId() != null) {

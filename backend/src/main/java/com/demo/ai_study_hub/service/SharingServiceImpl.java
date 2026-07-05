@@ -30,6 +30,7 @@ public class SharingServiceImpl implements SharingService {
     @Transactional
     public DocumentShareResponse shareDocumentDirect(Integer documentId, DocumentShareRequest request, String email) {
         User owner = getUser(email);
+        owner = userRepository.findByIdForUpdate(owner.getUserId()).orElse(owner);
         Document document = getActiveDocument(documentId);
 
         if (!document.getOwner().getUserId().equals(owner.getUserId())) {
@@ -141,6 +142,7 @@ public class SharingServiceImpl implements SharingService {
     @Transactional
     public GroupDocumentShareResponse shareDocumentToGroup(Integer documentId, GroupDocumentShareRequest request, String email) {
         User owner = getUser(email);
+        owner = userRepository.findByIdForUpdate(owner.getUserId()).orElse(owner);
         Document document = getActiveDocument(documentId);
 
         if (!document.getOwner().getUserId().equals(owner.getUserId())) {

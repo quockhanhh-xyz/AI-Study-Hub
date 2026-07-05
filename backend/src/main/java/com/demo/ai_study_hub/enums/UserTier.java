@@ -1,4 +1,4 @@
-package com.demo.ai_study_hub.dto;
+package com.demo.ai_study_hub.enums;
 
 public enum UserTier {
     FREE,

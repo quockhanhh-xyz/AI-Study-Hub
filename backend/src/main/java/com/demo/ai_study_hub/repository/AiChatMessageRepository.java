@@ -13,4 +13,5 @@ public interface AiChatMessageRepository extends JpaRepository<AiChatMessage, Lo
      * Retrieve all messages in a chat session ordered chronologically.
      */
     List<AiChatMessage> findBySession_SessionIdOrderByCreatedAtAsc(Long sessionId);
+    long countBySession_SessionId(Long sessionId);
 }

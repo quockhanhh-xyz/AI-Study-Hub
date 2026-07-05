@@ -12,6 +12,7 @@ import com.demo.ai_study_hub.repository.FolderShareRepository;
 import com.demo.ai_study_hub.repository.GroupDocumentShareRepository;
 import com.demo.ai_study_hub.repository.GroupFolderShareRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
+import com.demo.ai_study_hub.exception.QuotaExceededException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,8 @@ public class TrashService {
     private final DocumentShareRepository documentShareRepository;
     private final GroupDocumentShareRepository groupDocumentShareRepository;
     private final PlatformTransactionManager transactionManager;
+    private final TierPolicyService tierPolicyService;
+    private final UsageService usageService;
 
     private User getUser(String email) {
         return userRepository.findByEmail(email)
@@ -126,6 +129,8 @@ public class TrashService {
     @Transactional
     public void restoreFolder(Integer folderId, String email) {
         User user = getUser(email);
+        user = userRepository.findByIdForUpdate(user.getUserId()).orElse(user);
+
         Folder folder = folderRepository.findByFolderIdAndOwner(folderId, user)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found in trash"));
 
@@ -137,9 +142,84 @@ public class TrashService {
             folder.setParentFolder(null);
         }
 
-        folder.setStatus("ACTIVE");
-        folder.setDeletedAt(null);
-        folderRepository.save(folder);
+        // Collect descendant folders and documents that are currently in status DELETED
+        List<Folder> toRestoreFolders = new ArrayList<>();
+        List<Document> toRestoreDocuments = new ArrayList<>();
+        toRestoreFolders.add(folder);
+        collectSubtree(folder, toRestoreFolders, toRestoreDocuments);
+
+        com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(user);
+
+        // 1. Check folder count limit
+        long currentFolders = usageService.countFolders(user);
+        if (currentFolders + toRestoreFolders.size() > limits.maxFolders()) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Restoring this folder would exceed your folder count limit", "FOLDER_LIMIT_EXCEEDED");
+        }
+
+        // 2. Check document count limit
+        long currentDocs = usageService.countDocuments(user);
+        if (currentDocs + toRestoreDocuments.size() > limits.maxDocuments()) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Restoring this folder would exceed your document count limit", "DOCUMENT_LIMIT_EXCEEDED");
+        }
+
+        // 3. Check storage limit
+        long currentStorage = usageService.countStorageBytes(user);
+        long restoreStorage = 0;
+        for (Document d : toRestoreDocuments) {
+            restoreStorage += d.getFileSize() != null ? d.getFileSize() : 0;
+        }
+        if (currentStorage + restoreStorage > limits.storageBytes()) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Restoring this folder would exceed your storage quota limit", "STORAGE_LIMIT_EXCEEDED");
+        }
+
+        // 4. Check folder depth limit
+        int parentDepth = 0;
+        if (folder.getParentFolder() != null) {
+            Integer pd = folderRepository.findFolderDepth(folder.getParentFolder().getFolderId());
+            parentDepth = (pd != null) ? pd + 1 : 1;
+        }
+        int maxSubtreeHeight = getSubtreeHeight(folder);
+        int finalMaxDepth = parentDepth + maxSubtreeHeight;
+        if (finalMaxDepth >= limits.maxFolderDepth()) {
+            throw new QuotaExceededException(HttpStatus.BAD_REQUEST,
+                    "Restoring this folder would exceed the maximum folder depth allowed", "FOLDER_DEPTH_LIMIT_EXCEEDED");
+        }
+
+        // Apply restoration cascadingly to entire collected subtree
+        for (Folder f : toRestoreFolders) {
+            f.setStatus("ACTIVE");
+            f.setDeletedAt(null);
+            folderRepository.save(f);
+        }
+        for (Document d : toRestoreDocuments) {
+            d.setStatus("ACTIVE");
+            d.setDeletedAt(null);
+            documentRepository.save(d);
+        }
+    }
+
+    private void collectSubtree(Folder current, List<Folder> toRestoreFolders, List<Document> toRestoreDocuments) {
+        List<Folder> subfolders = folderRepository.findByOwnerAndStatusAndParentFolder(current.getOwner(), "DELETED", current);
+        for (Folder sub : subfolders) {
+            toRestoreFolders.add(sub);
+            collectSubtree(sub, toRestoreFolders, toRestoreDocuments);
+        }
+        List<Document> docs = documentRepository.findByFolder(current).stream()
+                .filter(d -> "DELETED".equals(d.getStatus()))
+                .collect(Collectors.toList());
+        toRestoreDocuments.addAll(docs);
+    }
+
+    private int getSubtreeHeight(Folder current) {
+        List<Folder> subfolders = folderRepository.findByOwnerAndStatusAndParentFolder(current.getOwner(), "DELETED", current);
+        int maxSubHeight = 0;
+        for (Folder sub : subfolders) {
+            maxSubHeight = Math.max(maxSubHeight, getSubtreeHeight(sub));
+        }
+        return subfolders.isEmpty() ? 0 : 1 + maxSubHeight;
     }
 
     @Transactional
