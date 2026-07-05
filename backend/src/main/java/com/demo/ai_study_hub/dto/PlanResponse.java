@@ -9,8 +9,10 @@ import lombok.*;
 public class PlanResponse {
     private String planCode;
     private String planName;
+    private String targetTier;
     private long price;
     private String currency;
     private String billingLabel;
+    private int durationMonths;
     private int aiDailyLimit;
 }
