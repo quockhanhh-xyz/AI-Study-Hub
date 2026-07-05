@@ -473,7 +473,7 @@ const UIHelper = {
         createOpt.dataset.value = createNewValue;
         createOpt.addEventListener("click", (e) => {
           e.stopPropagation();
-          inputElement.value = CREATE_NEW_VALUE;
+          inputElement.value = createNewValue;
           searchInput.value = "";
           container.classList.remove("active");
           inputElement.dispatchEvent(new Event("change", { bubbles: true }));
