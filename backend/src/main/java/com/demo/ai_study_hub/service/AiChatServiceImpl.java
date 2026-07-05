@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.demo.ai_study_hub.exception.QuotaExceededException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -80,8 +81,8 @@ public class AiChatServiceImpl implements AiChatService {
                     "Question must not be blank");
         }
         if (question.length() > maxChars) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Question exceeds maximum length of " + maxChars + " characters for your tier");
+            throw new QuotaExceededException(HttpStatus.BAD_REQUEST,
+                    "Question text exceeds maximum tier length", "AI_QUESTION_CHARS_LIMIT_EXCEEDED");
         }
 
         // 5. Check document processingStatus
@@ -108,8 +109,8 @@ public class AiChatServiceImpl implements AiChatService {
         if (usedToday >= dailyLimit) {
             saveUsageLog(user, doc, "ASK", null, null, 0, 0, 0,
                     false, false, "QUOTA_EXCEEDED");
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
-                    "Daily AI question quota exhausted. Limit: " + dailyLimit + " questions/day.");
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Daily AI Q&A question quota exceeded", "AI_QUOTA_EXCEEDED");
         }
 
         // 9. Detect summary intent and retrieve chunks

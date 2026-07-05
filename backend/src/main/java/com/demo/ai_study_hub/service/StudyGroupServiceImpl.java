@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.demo.ai_study_hub.exception.QuotaExceededException;
 
 import java.security.SecureRandom;
 import java.util.List;
@@ -35,8 +36,8 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(owner);
         long ownedGroups = usageService.countOwnedGroups(owner);
         if (ownedGroups >= limits.maxOwnedGroups()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Owned group limit reached. Upgrade your plan to create more groups.");
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Owned groups limit exceeded", "GROUP_LIMIT_EXCEEDED");
         }
         StudyGroup group = new StudyGroup();
         group.setGroupName(request.getGroupName());
@@ -168,8 +169,8 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         com.demo.ai_study_hub.dto.TierLimits ownerLimits = tierPolicyService.getLimitsForUser(groupOwner);
         long memberCount = studyGroupMemberRepository.countByGroupAndStatus(group, "ACTIVE");
         if (memberCount >= ownerLimits.maxMembersPerGroup()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "This group has reached its maximum member limit.");
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Group members limit exceeded", "GROUP_MEMBER_LIMIT_EXCEEDED");
         }
 
         StudyGroupMember existing = studyGroupMemberRepository.findByGroupAndUser(group, user).orElse(null);

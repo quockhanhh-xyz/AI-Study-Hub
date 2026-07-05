@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.demo.ai_study_hub.exception.QuotaExceededException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -44,15 +45,15 @@ public class FolderServiceImpl implements FolderService {
         com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(owner);
         long folderCount = usageService.countFolders(owner);
         if (folderCount >= limits.maxFolders()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Folder limit reached. Upgrade your plan to create more folders.");
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Folders count limit exceeded", "FOLDER_LIMIT_EXCEEDED");
         }
         if (parentFolder != null) {
             Integer parentDepth = folderRepository.findFolderDepth(parentFolder.getFolderId());
             int depth = parentDepth != null ? parentDepth + 1 : 1;
             if (depth >= limits.maxFolderDepth()) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "Maximum folder depth reached for your plan.");
+                throw new QuotaExceededException(HttpStatus.BAD_REQUEST,
+                        "Folder depth exceeds maximum level allowed", "FOLDER_DEPTH_LIMIT_EXCEEDED");
             }
         }
 

@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.demo.ai_study_hub.exception.QuotaExceededException;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -84,18 +86,18 @@ public class DocumentService {
 
         com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(owner);
         if (file.getSize() > limits.maxFileBytes()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "File size exceeds your plan limit of " + limits.maxFileBytes() / (1024 * 1024) + "MB");
+            throw new QuotaExceededException(HttpStatus.BAD_REQUEST,
+                    "File size exceeds maximum tier limit", "FILE_SIZE_LIMIT_EXCEEDED");
         }
         long docCount = usageService.countDocuments(owner);
         if (docCount >= limits.maxDocuments()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Document limit reached. Upgrade your plan to upload more documents.");
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Documents count limit exceeded", "DOCUMENT_LIMIT_EXCEEDED");
         }
         long usedStorage = usageService.countStorageBytes(owner);
         if (usedStorage + file.getSize() > limits.storageBytes()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Storage limit reached. Upgrade your plan for more storage.");
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Storage quota exceeded", "STORAGE_LIMIT_EXCEEDED");
         }
 
         FileUploadResult uploadResult;
