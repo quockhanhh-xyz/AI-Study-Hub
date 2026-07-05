@@ -13,6 +13,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -39,15 +41,16 @@ public class DocumentService {
     private final DocumentChunkRepository documentChunkRepository;
     private final TierPolicyService tierPolicyService;
     private final UsageService usageService;
+    private final PlatformTransactionManager transactionManager;
 
-    @Transactional
     public DocumentResponse uploadDocument(MultipartFile file, String title, String description, Integer subjectId, Integer folderId, String email) {
         if (title == null || title.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Title is required");
         }
 
-        User owner = userRepository.findByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        owner = userRepository.findByIdForUpdate(owner.getUserId()).orElse(owner);
+        // 1. Initial validation (no lock)
+        User owner = userRepository.findByEmail(email)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         if (subjectId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Subject is required");
@@ -74,6 +77,13 @@ public class DocumentService {
             }
         }
 
+        // Check file size limits initially
+        com.demo.ai_study_hub.dto.TierLimits initialLimits = tierPolicyService.getLimitsForUser(owner);
+        if (file.getSize() > initialLimits.maxFileBytes()) {
+            throw new QuotaExceededException(HttpStatus.BAD_REQUEST,
+                    "File size exceeds maximum tier limit", "FILE_SIZE_LIMIT_EXCEEDED");
+        }
+
         boolean isDuplicate = documentRepository.existsDuplicate(
             owner,
             file.getOriginalFilename(),
@@ -85,22 +95,7 @@ public class DocumentService {
                 "A file with the same name already exists in this folder.");
         }
 
-        com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(owner);
-        if (file.getSize() > limits.maxFileBytes()) {
-            throw new QuotaExceededException(HttpStatus.BAD_REQUEST,
-                    "File size exceeds maximum tier limit", "FILE_SIZE_LIMIT_EXCEEDED");
-        }
-        long docCount = usageService.countDocuments(owner);
-        if (docCount >= limits.maxDocuments()) {
-            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
-                    "Documents count limit exceeded", "DOCUMENT_LIMIT_EXCEEDED");
-        }
-        long usedStorage = usageService.countStorageBytes(owner);
-        if (usedStorage + file.getSize() > limits.storageBytes()) {
-            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
-                    "Storage quota exceeded", "STORAGE_LIMIT_EXCEEDED");
-        }
-
+        // 2. Upload to Cloudinary (outside transaction/lock)
         FileUploadResult uploadResult;
         try {
             uploadResult = cloudinaryStorageService.uploadFile(file, owner.getUserId());
@@ -119,57 +114,100 @@ public class DocumentService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to generate file URL or storage ID from Cloudinary");
         }
 
-        Document doc = new Document();
-        doc.setTitle(title);
-        doc.setDescription(description);
-        doc.setOriginalFileName(uploadResult.getOriginalFileName());
-        doc.setFileType(uploadResult.getFileType());
-        doc.setFileSize(uploadResult.getFileSize());
-        doc.setFileUrl(url);
-        doc.setPublicId(uploadResult.getPublicId());
-        doc.setOwner(owner);
-        doc.setStatus("ACTIVE");
-        doc.setSubject(subject);
-        doc.setFolder(folder);
-
-        Document savedDoc;
+        // 3. Open transaction, lock user, check quota, and save metadata
+        TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
         try {
-            savedDoc = documentRepository.saveAndFlush(doc);
-            DocumentContent content = DocumentContent.builder()
-                    .document(savedDoc)
-                    .processingStatus(ProcessingStatus.PENDING)
-                    .characterCount(0)
-                    .originalCharacterCount(0)
-                    .wordCount(0)
-                    .isTruncated(false)
-                    .build();
-            Optional<DocumentContent> existingContent = documentContentRepository.findByDocument_DocumentId(savedDoc.getDocumentId());
-            if (existingContent.isPresent()) {
-                savedDoc.setDocumentContent(existingContent.get());
-                log.warn("Document content already exists for documentId={}, reusing existing record.", savedDoc.getDocumentId());
-            } else {
-                try {
-                    DocumentContent savedContent = documentContentRepository.saveAndFlush(content);
-                    savedDoc.setDocumentContent(savedContent != null ? savedContent : content);
-                } catch (DataAccessException contentException) {
-                    DocumentContent recoveredContent = documentContentRepository
-                            .findByDocument_DocumentId(savedDoc.getDocumentId())
-                            .orElseThrow(() -> contentException);
-                    savedDoc.setDocumentContent(recoveredContent);
-                    log.warn("Document content already exists for documentId={}, reusing existing record.", savedDoc.getDocumentId());
+            return txTemplate.execute(status -> {
+                // Lock user for update
+                User lockedOwner = userRepository.findByIdForUpdate(owner.getUserId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+                // Re-validate subject and folder in current hibernate session
+                Subject txSubject = subjectRepository.findById(subjectId).orElseThrow();
+                Folder txFolder = folderId != null ? folderRepository.findById(folderId).orElseThrow() : null;
+
+                // Re-run duplicate check
+                boolean isDup = documentRepository.existsDuplicate(
+                    lockedOwner,
+                    file.getOriginalFilename(),
+                    file.getSize(),
+                    folderId
+                );
+                if (isDup) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "A file with the same name already exists in this folder.");
                 }
+
+                // Final check on quota limits
+                com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(lockedOwner);
+                long docCount = usageService.countDocuments(lockedOwner);
+                if (docCount >= limits.maxDocuments()) {
+                    throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                            "Documents count limit exceeded", "DOCUMENT_LIMIT_EXCEEDED");
+                }
+                long usedStorage = usageService.countStorageBytes(lockedOwner);
+                if (usedStorage + file.getSize() > limits.storageBytes()) {
+                    throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                            "Storage quota exceeded", "STORAGE_LIMIT_EXCEEDED");
+                }
+
+                Document doc = new Document();
+                doc.setTitle(title);
+                doc.setDescription(description);
+                doc.setOriginalFileName(uploadResult.getOriginalFileName());
+                doc.setFileType(uploadResult.getFileType());
+                doc.setFileSize(uploadResult.getFileSize());
+                doc.setFileUrl(url);
+                doc.setPublicId(publicId);
+                doc.setOwner(lockedOwner);
+                doc.setStatus("ACTIVE");
+                doc.setSubject(txSubject);
+                doc.setFolder(txFolder);
+
+                Document savedDoc = documentRepository.saveAndFlush(doc);
+                DocumentContent content = DocumentContent.builder()
+                        .document(savedDoc)
+                        .processingStatus(ProcessingStatus.PENDING)
+                        .characterCount(0)
+                        .originalCharacterCount(0)
+                        .wordCount(0)
+                        .isTruncated(false)
+                        .build();
+                Optional<DocumentContent> existingContent = documentContentRepository.findByDocument_DocumentId(savedDoc.getDocumentId());
+                if (existingContent.isPresent()) {
+                    savedDoc.setDocumentContent(existingContent.get());
+                    log.warn("Document content already exists for documentId={}, reusing existing record.", savedDoc.getDocumentId());
+                } else {
+                    try {
+                        DocumentContent savedContent = documentContentRepository.saveAndFlush(content);
+                        savedDoc.setDocumentContent(savedContent != null ? savedContent : content);
+                    } catch (DataAccessException contentException) {
+                        DocumentContent recoveredContent = documentContentRepository
+                                .findByDocument_DocumentId(savedDoc.getDocumentId())
+                                .orElseThrow(() -> contentException);
+                        savedDoc.setDocumentContent(recoveredContent);
+                        log.warn("Document content already exists for documentId={}, reusing existing record.", savedDoc.getDocumentId());
+                    }
+                }
+
+                return mapToResponse(savedDoc);
+            });
+        } catch (Exception e) {
+            // Rollback happened, clean up Cloudinary file
+            try {
+                cloudinaryStorageService.deleteFile(publicId, fileTypeForCleanup);
+            } catch (Exception ex) {
+                log.error("Failed to clean up file from Cloudinary after metadata transaction rollback", ex);
             }
-        } catch (Exception persistenceException) {
-            log.error("Failed to persist document metadata, rolling back Cloudinary upload. publicId={}", publicId, persistenceException);
-            boolean cleaned = cloudinaryStorageService.deleteFile(publicId, fileTypeForCleanup);
-            if (!cleaned) {
-                log.warn("Cloudinary cleanup failed for orphaned file. publicId={}", publicId);
+            if (e instanceof ResponseStatusException) {
+                throw (ResponseStatusException) e;
+            }
+            if (e instanceof QuotaExceededException) {
+                throw (QuotaExceededException) e;
             }
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                 "Failed to save document metadata. Upload has been rolled back.");
         }
-
-        return mapToResponse(savedDoc);
     }
 
     public List<DocumentResponse> getMyDocumentsWithFilters(

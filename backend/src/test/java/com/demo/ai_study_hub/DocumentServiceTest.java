@@ -21,6 +21,8 @@ import org.springframework.web.server.ResponseStatusException;
 import com.demo.ai_study_hub.service.TierPolicyService;
 import com.demo.ai_study_hub.service.UsageService;
 import com.demo.ai_study_hub.dto.TierLimits;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 import static org.mockito.ArgumentMatchers.any;
 
 import java.util.List;
@@ -58,6 +60,8 @@ class DocumentServiceTest {
     private TierPolicyService tierPolicyService;
     @Mock
     private UsageService usageService;
+    @Mock
+    private PlatformTransactionManager transactionManager;
 
     @InjectMocks
     private DocumentService documentService;
@@ -69,6 +73,9 @@ class DocumentServiceTest {
 
     @BeforeEach
     void setUp() {
+        TransactionStatus mockStatus = mock(TransactionStatus.class);
+        lenient().when(transactionManager.getTransaction(any())).thenReturn(mockStatus);
+
         mockOwner = new User();
         mockOwner.setUserId(1);
         mockOwner.setEmail("doantam785@gmail.com");
@@ -98,6 +105,15 @@ class DocumentServiceTest {
         );
         lenient().when(tierPolicyService.getLimitsForUser(any())).thenReturn(mockLimits);
         lenient().when(usageService.countActiveShares(any())).thenReturn(0L);
+        lenient().when(userRepository.findByIdForUpdate(anyInt())).thenAnswer(inv -> {
+            Integer userId = inv.getArgument(0);
+            if (userId.equals(1)) {
+                return Optional.of(mockOwner);
+            } else if (userId.equals(2)) {
+                return Optional.of(mockHacker);
+            }
+            return Optional.empty();
+        });
     }
 
 

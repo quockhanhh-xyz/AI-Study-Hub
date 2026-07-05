@@ -152,25 +152,21 @@ public class TrashService {
 
         // 1. Check folder count limit
         long currentFolders = usageService.countFolders(user);
-        if (currentFolders + toRestoreFolders.size() > limits.maxFolders()) {
+        if (currentFolders > limits.maxFolders()) {
             throw new QuotaExceededException(HttpStatus.FORBIDDEN,
                     "Restoring this folder would exceed your folder count limit", "FOLDER_LIMIT_EXCEEDED");
         }
 
         // 2. Check document count limit
         long currentDocs = usageService.countDocuments(user);
-        if (currentDocs + toRestoreDocuments.size() > limits.maxDocuments()) {
+        if (currentDocs > limits.maxDocuments()) {
             throw new QuotaExceededException(HttpStatus.FORBIDDEN,
                     "Restoring this folder would exceed your document count limit", "DOCUMENT_LIMIT_EXCEEDED");
         }
 
         // 3. Check storage limit
         long currentStorage = usageService.countStorageBytes(user);
-        long restoreStorage = 0;
-        for (Document d : toRestoreDocuments) {
-            restoreStorage += d.getFileSize() != null ? d.getFileSize() : 0;
-        }
-        if (currentStorage + restoreStorage > limits.storageBytes()) {
+        if (currentStorage > limits.storageBytes()) {
             throw new QuotaExceededException(HttpStatus.FORBIDDEN,
                     "Restoring this folder would exceed your storage quota limit", "STORAGE_LIMIT_EXCEEDED");
         }

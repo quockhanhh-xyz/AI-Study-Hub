@@ -25,8 +25,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+
 @ExtendWith(MockitoExtension.class)
 class AiChatServiceTest {
+
+    @Mock private PlatformTransactionManager transactionManager;
 
     @Mock private UserRepository userRepository;
     @Mock private DocumentRepository documentRepository;
@@ -58,6 +63,9 @@ class AiChatServiceTest {
 
     @BeforeEach
     void setUp() {
+        TransactionStatus mockStatus = mock(TransactionStatus.class);
+        lenient().when(transactionManager.getTransaction(any())).thenReturn(mockStatus);
+
         mockUser = new User();
         mockUser.setUserId(1);
         mockUser.setEmail("user@test.com");
@@ -112,6 +120,14 @@ class AiChatServiceTest {
         });
         lenient().when(aiChatSessionRepository.findByUser_UserIdAndDocument_DocumentIdAndStatus(anyInt(), anyInt(), anyString()))
                 .thenReturn(Optional.empty());
+        lenient().when(aiUsageReservationRepository.findByRequestId(anyString())).thenAnswer(inv -> {
+            String reqId = inv.getArgument(0);
+            return Optional.of(AiUsageReservation.builder()
+                    .requestId(reqId)
+                    .user(mockUser)
+                    .status("RESERVED")
+                    .build());
+        });
     }
 
     // =========================================================================
