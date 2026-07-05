@@ -184,6 +184,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     el.style.display = "none";
   }
 
+  // Step 13: detects backend quota errors (folder/depth/share limits) so we can
+  // route them through the shared showQuotaError() helper.
+  function isQuotaError(error) {
+    return !!(error && error.status === 403 && typeof error.code === "string" && /LIMIT_EXCEEDED|QUOTA_EXCEEDED/.test(error.code));
+  }
+
   // Folder list rendering
 
   function createFolderCard(folder) {
@@ -517,7 +523,12 @@ document.addEventListener("DOMContentLoaded", async function () {
       showToast("Folder created successfully.", "success");
       await loadFolders();
     } catch (error) {
-      showError(createError, error.message || "Failed to create folder.");
+      if (isQuotaError(error) && typeof window.showQuotaError === "function") {
+        window.showQuotaError(error);
+        showError(createError, window.getQuotaErrorMessage ? window.getQuotaErrorMessage(error) : error.message);
+      } else {
+        showError(createError, error.message || "Failed to create folder.");
+      }
     } finally {
       createConfirmBtn.disabled = false;
     }
@@ -831,7 +842,12 @@ document.addEventListener("DOMContentLoaded", async function () {
       showToast("Folder shared with user.", "success");
       await loadFolderShares();
     } catch (err) {
-      showError(shareUserError, err.message || "Failed to share folder with user.");
+      if (isQuotaError(err) && typeof window.showQuotaError === "function") {
+        window.showQuotaError(err);
+        showError(shareUserError, window.getQuotaErrorMessage ? window.getQuotaErrorMessage(err) : err.message);
+      } else {
+        showError(shareUserError, err.message || "Failed to share folder with user.");
+      }
     } finally {
       shareUserConfirmBtn.disabled = false;
     }
@@ -858,7 +874,12 @@ document.addEventListener("DOMContentLoaded", async function () {
       showToast("Folder shared with group.", "success");
       await loadFolderShares();
     } catch (err) {
-      showError(shareGroupError, err.message || "Failed to share folder with group.");
+      if (isQuotaError(err) && typeof window.showQuotaError === "function") {
+        window.showQuotaError(err);
+        showError(shareGroupError, window.getQuotaErrorMessage ? window.getQuotaErrorMessage(err) : err.message);
+      } else {
+        showError(shareGroupError, err.message || "Failed to share folder with group.");
+      }
     } finally {
       shareGroupConfirmBtn.disabled = false;
     }
