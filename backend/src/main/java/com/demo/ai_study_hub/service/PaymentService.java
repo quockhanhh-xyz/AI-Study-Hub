@@ -80,7 +80,7 @@ public class PaymentService {
         paymentOrderRepository.save(order);
 
         freshUser.setTier(UserTier.PREMIUM);
-        freshUser.setTierExpiresAt(LocalDateTime.now().plusDays(30));
+        freshUser.setTierExpiresAt(LocalDateTime.now(java.time.ZoneOffset.UTC).plusDays(30));
         userRepository.save(freshUser);
 
         return toResponse(order, "PREMIUM");

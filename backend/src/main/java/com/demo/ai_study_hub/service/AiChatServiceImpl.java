@@ -102,7 +102,7 @@ public class AiChatServiceImpl implements AiChatService {
             com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(user);
             if (messageCount >= limits.maxMessagesPerSession()) {
                 throw new QuotaExceededException(HttpStatus.FORBIDDEN,
-                        "Messages limit per session exceeded", "AI_MESSAGE_LIMIT_EXCEEDED");
+                        "Messages limit per session exceeded", "SESSION_MESSAGES_LIMIT_EXCEEDED");
             }
 
             if (!aiProviderRouter.isConfigured()) {
@@ -399,7 +399,7 @@ public class AiChatServiceImpl implements AiChatService {
                             user.getUserId(), doc.getDocumentId(), "ACTIVE");
                     if (activeSessions >= limits.maxAiSessionsPerDocument()) {
                         throw new QuotaExceededException(HttpStatus.FORBIDDEN,
-                                "AI sessions limit per document exceeded", "AI_SESSION_LIMIT_EXCEEDED");
+                                "AI sessions limit per document exceeded", "AI_SESSIONS_LIMIT_EXCEEDED");
                     }
                     String title = firstQuestion != null
                             ? (firstQuestion.length() > 100

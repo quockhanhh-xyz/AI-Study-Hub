@@ -5,10 +5,15 @@ import com.demo.ai_study_hub.enums.UserTier;
 import com.demo.ai_study_hub.entity.User;
 import org.springframework.stereotype.Service;
 
+import com.demo.ai_study_hub.config.AiProperties;
+import lombok.RequiredArgsConstructor;
 import java.time.LocalDateTime;
 
 @Service
+@RequiredArgsConstructor
 public class TierPolicyService {
+
+    private final AiProperties aiProperties;
 
     private static final TierLimits FREE_LIMITS = new TierLimits(
         100L * 1024 * 1024,        // storageBytes: 100MB
@@ -25,7 +30,7 @@ public class TierPolicyService {
         500,                        // maxQuestionChars
         3,                          // maxContextChunks
         500,                        // maxOutputTokens
-        "gemini-2.5-flash-lite",   // aiModel
+        null,                       // aiModel (dynamic)
         1,                          // summaryGenerationsPerDay
         1,                          // flashcardSetsPerDay
         1,                          // quizSetsPerDay
@@ -47,7 +52,7 @@ public class TierPolicyService {
         2000,                        // maxQuestionChars
         8,                           // maxContextChunks
         1500,                        // maxOutputTokens
-        "gemini-2.5-flash",         // aiModel
+        null,                       // aiModel (dynamic)
         10,                          // summaryGenerationsPerDay
         10,                          // flashcardSetsPerDay
         10,                          // quizSetsPerDay
@@ -69,7 +74,7 @@ public class TierPolicyService {
         5000,                        // maxQuestionChars
         15,                          // maxContextChunks
         3000,                        // maxOutputTokens
-        "gemini-2.5-flash",         // aiModel
+        null,                       // aiModel (dynamic)
         50,                          // summaryGenerationsPerDay
         50,                          // flashcardSetsPerDay
         50,                          // quizSetsPerDay
@@ -79,17 +84,56 @@ public class TierPolicyService {
     public UserTier getEffectiveTier(User user) {
         if (user.getTier() == UserTier.FREE) return UserTier.FREE;
         LocalDateTime expiresAt = user.getTierExpiresAt();
-        if (expiresAt != null && expiresAt.isAfter(LocalDateTime.now())) {
+        if (expiresAt != null && expiresAt.isAfter(LocalDateTime.now(java.time.ZoneOffset.UTC))) {
             return user.getTier();
         }
         return UserTier.FREE;
     }
 
     public TierLimits getLimits(UserTier tier) {
-        return switch (tier) {
+        TierLimits base = switch (tier) {
             case PREMIUM -> PREMIUM_LIMITS;
             case ULTRA -> ULTRA_LIMITS;
             default -> FREE_LIMITS;
+        };
+        String model = getModelForTier(tier);
+        return new TierLimits(
+            base.storageBytes(),
+            base.maxDocuments(),
+            base.maxFileBytes(),
+            base.maxFolders(),
+            base.maxFolderDepth(),
+            base.maxOwnedGroups(),
+            base.maxMembersPerGroup(),
+            base.maxActiveShares(),
+            base.maxAiSessionsPerDocument(),
+            base.maxMessagesPerSession(),
+            base.aiQuestionsPerDay(),
+            base.maxQuestionChars(),
+            base.maxContextChunks(),
+            base.maxOutputTokens(),
+            model,
+            base.summaryGenerationsPerDay(),
+            base.flashcardSetsPerDay(),
+            base.quizSetsPerDay(),
+            base.itemsPerSet()
+        );
+    }
+
+    private String getModelForTier(UserTier tier) {
+        if (aiProperties == null) {
+            return switch (tier) {
+                case PREMIUM, ULTRA -> "gemini-2.5-flash";
+                default -> "gemini-2.5-flash-lite";
+            };
+        }
+        if ("mock".equalsIgnoreCase(aiProperties.getProvider())) {
+            return "mock";
+        }
+        return switch (tier) {
+            case PREMIUM -> aiProperties.getGemini().getPremiumModel();
+            case ULTRA -> aiProperties.getGemini().getUltraModel();
+            default -> aiProperties.getGemini().getFreeModel();
         };
     }
 

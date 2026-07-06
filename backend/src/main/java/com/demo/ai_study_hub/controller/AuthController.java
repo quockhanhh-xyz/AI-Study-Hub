@@ -106,7 +106,7 @@ public class AuthController {
             data.put("tier", user.getTier());
             data.put("status", user.getStatus());
             data.put("effectiveTier", tierPolicyService.getEffectiveTier(user));
-            data.put("tierExpiresAt", user.getTierExpiresAt());
+            data.put("tierExpiresAt", user.getTierExpiresAt() != null ? user.getTierExpiresAt().atZone(java.time.ZoneOffset.UTC).format(java.time.format.DateTimeFormatter.ISO_INSTANT) : null);
             return ResponseEntity.ok(new ApiResponse<>(true, "Current user retrieved successfully", data));
         } catch (RuntimeException e) {
             return ResponseEntity.status(401).body(new ApiResponse<>(false, e.getMessage(), null));

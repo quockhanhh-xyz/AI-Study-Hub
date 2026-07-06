@@ -75,7 +75,7 @@ class PaymentServiceTest {
                 .planCode(PlanCode.PREMIUM).planName("Premium")
                 .price(199000).currency("VND").billingLabel("month").aiDailyLimit(50).build();
 
-        PlanService realPlanService = new PlanService(new TierPolicyService());
+        PlanService realPlanService = new PlanService(new TierPolicyService(new com.demo.ai_study_hub.config.AiProperties()));
         List<PlanResponse> plans = realPlanService.getAllPlans();
 
         assertEquals(2, plans.size());
@@ -480,7 +480,9 @@ class PaymentServiceTest {
 
     @Test
     void planService_FreeTierLimits_ShouldMatchSpec() {
-        TierPolicyService tps = new TierPolicyService();
+        com.demo.ai_study_hub.config.AiProperties props = new com.demo.ai_study_hub.config.AiProperties();
+        props.setProvider("gemini");
+        TierPolicyService tps = new TierPolicyService(props);
         com.demo.ai_study_hub.dto.TierLimits limits = tps.getLimits(UserTier.FREE);
         assertEquals(5, limits.aiQuestionsPerDay());
         assertEquals(500, limits.maxQuestionChars());
@@ -491,7 +493,9 @@ class PaymentServiceTest {
 
     @Test
     void planService_PremiumTierLimits_ShouldMatchSpec() {
-        TierPolicyService tps = new TierPolicyService();
+        com.demo.ai_study_hub.config.AiProperties props = new com.demo.ai_study_hub.config.AiProperties();
+        props.setProvider("gemini");
+        TierPolicyService tps = new TierPolicyService(props);
         com.demo.ai_study_hub.dto.TierLimits limits = tps.getLimits(UserTier.PREMIUM);
         assertEquals(50, limits.aiQuestionsPerDay());
         assertEquals(2000, limits.maxQuestionChars());

@@ -49,7 +49,9 @@ public class UsageService {
     }
 
     public long countAiQuestionsToday(User user) {
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        java.time.ZonedDateTime nowHcm = java.time.ZonedDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
+        java.time.ZonedDateTime startOfHcmDay = nowHcm.toLocalDate().atStartOfDay(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
+        LocalDateTime startOfDay = startOfHcmDay.withZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime();
         return aiUsageLogRepository.countSuccessfulQuestionsAfter(user.getUserId(), startOfDay);
     }
 }

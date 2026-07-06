@@ -32,6 +32,7 @@ public class AiProperties {
         private String apiKey = "";
         private String freeModel = "gemini-2.5-flash-lite";
         private String premiumModel = "gemini-2.5-flash";
+        private String ultraModel = "gemini-2.5-flash";
         private String fallbackModel = "gemini-2.5-pro";
         private int connectTimeoutMs = 5000;
         private int readTimeoutMs = 30000;
