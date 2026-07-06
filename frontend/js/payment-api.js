@@ -43,7 +43,9 @@ async function getPaymentPlans() {
 
 /**
  * Creates a mock payment session for the given plan code.
- * Supported plan codes: PREMIUM, ULTRA.
+ * Supported purchasable plan codes: PREMIUM, ULTRA.
+ * FREE is display-only and cannot be purchased.
+ * Both paid plans currently have a one-month duration.
  * @param {string} planCode - The plan to purchase (e.g. "PREMIUM" or "ULTRA").
  * @returns {Promise<Object>} Created payment session data.
  */
