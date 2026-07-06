@@ -101,6 +101,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     el.style.display = "none";
   }
 
+  // Step 13: detects backend quota errors (owned group limit) so we can
+  // route them through the shared showQuotaError() helper.
+  function isQuotaError(error) {
+    return !!(error && error.status === 403 && typeof error.code === "string" && /LIMIT_EXCEEDED|QUOTA_EXCEEDED/.test(error.code));
+  }
+
   // Global Keyboard Navigation Escape key capture routing pipeline
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
@@ -223,7 +229,12 @@ document.addEventListener("DOMContentLoaded", async function () {
       showToast("Group created successfully.", "success");
       await loadGroups();
     } catch (error) {
-      showError(createError, error.message || "Failed to create group.");
+      if (isQuotaError(error) && typeof window.showQuotaError === "function") {
+        window.showQuotaError(error);
+        showError(createError, window.getQuotaErrorMessage ? window.getQuotaErrorMessage(error) : error.message);
+      } else {
+        showError(createError, error.message || "Failed to create group.");
+      }
     } finally {
       createConfirmBtn.disabled = false;
     }
