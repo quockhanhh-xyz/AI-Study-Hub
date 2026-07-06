@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,4 +25,30 @@ public interface PaymentOrderRepository extends JpaRepository<PaymentOrder, Long
     Optional<PaymentOrder> findByPaymentIdAndUserForUpdate(
             @Param("paymentId") Long paymentId,
             @Param("user") User user);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM PaymentOrder p WHERE p.paymentId = :paymentId")
+    Optional<PaymentOrder> findByIdForUpdate(@Param("paymentId") Long paymentId);
+
+    Optional<PaymentOrder> findByVnpTxnRef(String vnpTxnRef);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM PaymentOrder p WHERE p.vnpTxnRef = :vnpTxnRef")
+    Optional<PaymentOrder> findByVnpTxnRefForUpdate(@Param("vnpTxnRef") String vnpTxnRef);
+
+    /** Any currently-active pending order for this user, locked for update. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM PaymentOrder p WHERE p.user = :user AND p.status = 'PENDING' " +
+            "AND (p.expiredAt IS NULL OR p.expiredAt > :now) ORDER BY p.createdAt DESC")
+    List<PaymentOrder> findActivePendingForUpdate(@Param("user") User user, @Param("now") LocalDateTime now);
+
+    /** Stale PENDING orders (past expiry) for this user, locked so they can be flipped to EXPIRED. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM PaymentOrder p WHERE p.user = :user AND p.status = 'PENDING' " +
+            "AND p.expiredAt IS NOT NULL AND p.expiredAt <= :now")
+    List<PaymentOrder> findStalePendingForUpdate(@Param("user") User user, @Param("now") LocalDateTime now);
+
+    @Query("SELECT p FROM PaymentOrder p WHERE p.user = :user AND p.status = 'REVIEW_REQUIRED' " +
+            "ORDER BY p.createdAt DESC")
+    List<PaymentOrder> findUnresolvedReviewForUser(@Param("user") User user);
 }
