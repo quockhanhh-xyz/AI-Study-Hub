@@ -54,9 +54,11 @@ function getQuotaErrorMessage(error) {
     case "SHARE_LIMIT_EXCEEDED":
       return "Sharing limit reached. Upgrade your plan to share with more users.";
     case "AI_QUOTA_EXCEEDED":
+      return "You have reached your daily AI question limit.";
     case "AI_SESSION_LIMIT_EXCEEDED":
+      return "You have reached the AI session limit for this document.";
     case "AI_MESSAGE_LIMIT_EXCEEDED":
-      return "You have reached your daily AI question limit. Upgrade to PREMIUM or ULTRA for more.";
+      return "This AI session has reached its message limit. Start a new session.";
     case "AI_QUESTION_CHARS_LIMIT_EXCEEDED":
       return "Your question exceeds the character limit for your current plan. Upgrade to ask longer questions.";
     case "QUOTA_EXCEEDED":
