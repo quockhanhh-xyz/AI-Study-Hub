@@ -3,7 +3,7 @@
  * Branch: feature/step-13-tier-entitlement-api-helper
  * All functions use apiRequest() — no raw fetch allowed in page scripts.
  * * IMPORTANT DEPENDENCY ORDER FOR FE2:
- * This script MUST be loaded in the following specific order in HTML files 
+ * This script MUST be loaded in the following specific order in HTML files
  * to ensure showQuotaError() and entitlement APIs function correctly:
  * * <script src="js/api.js"></script>
  * <script src="js/account-api.js"></script>
@@ -38,8 +38,8 @@ async function getAccountUsage() {
  * @returns {string} Human-readable quota error message.
  */
 function getQuotaErrorMessage(error) {
-  const errorCode = error.code || "";
-  const message = error.message || "";
+  const errorCode = error?.code || "";
+  const message = error?.message || "";
 
   // Map by backend error code first — independent of HTTP status
   switch (errorCode) {
