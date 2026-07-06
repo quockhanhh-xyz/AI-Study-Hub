@@ -22,8 +22,6 @@ public class AiProperties {
     private String provider = "mock";
 
     private Gemini gemini = new Gemini();
-    private Tier free = new Tier();
-    private Tier premium = new Tier();
     private double temperature = 0.2;
 
     @Getter
@@ -36,14 +34,5 @@ public class AiProperties {
         private String fallbackModel = "gemini-2.5-pro";
         private int connectTimeoutMs = 5000;
         private int readTimeoutMs = 30000;
-    }
-
-    @Getter
-    @Setter
-    public static class Tier {
-        private int dailyQuestionLimit = 3;
-        private int maxQuestionChars = 500;
-        private int maxContextChunks = 3;
-        private int maxOutputTokens = 500;
     }
 }
