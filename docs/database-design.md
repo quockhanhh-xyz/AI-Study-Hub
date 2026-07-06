@@ -557,44 +557,68 @@ INDEX idx_ai_usage_logs_user_status (user_id, status, counted_as_question)
 
 ---
 
-# Payment & Account Tier Tables (Step 11)
+# Payment & Account Tier Tables (Step 11 & Step 13B)
 
 ## 17. Table `payment_orders`
 
-Stores user payment order records for plan subscriptions.
+Stores user payment order records for plan subscriptions and VNPay integration auditing.
 
 | Column Name | Data Type | Constraints | Description |
 |:---|:---|:---|:---|
 | `payment_id` | BIGINT | PRIMARY KEY, AUTO_INCREMENT, NOT NULL | Unique payment order ID |
 | `user_id` | INT | FOREIGN KEY REFERENCES `users(user_id)`, NOT NULL | User who placed the order |
-| `plan_code` | VARCHAR(50) | NOT NULL | Target plan code (e.g. `PREMIUM`) |
-| `amount` | BIGINT | NOT NULL | Price in currency (uses `BIGINT` since VND has no decimals) |
+| `plan_code` | VARCHAR(50) | NOT NULL | Billing plan code (e.g. `PREMIUM_1_MONTH`, `ULTRA_1_MONTH`) |
+| `target_tier` | VARCHAR(20) | NULLABLE | Target tier level user receives (e.g. `PREMIUM`, `ULTRA`) |
+| `duration_months` | INT | NULLABLE | Duration of plan subscription in months |
+| `amount` | BIGINT | NOT NULL | Price in currency ( VND - no decimals) |
 | `currency` | VARCHAR(10) | DEFAULT `'VND'`, NOT NULL | Currency code |
-| `status` | VARCHAR(30) | DEFAULT `'PENDING'`, NOT NULL | Order status: `PENDING` \| `SUCCESS` \| `FAILED` \| `CANCELLED` |
-| `payment_method` | VARCHAR(50) | DEFAULT `'MOCK'`, NOT NULL | Payment method |
-| `created_at` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Order creation time |
-| `paid_at` | DATETIME | NULLABLE | Timestamp when the order was successfully completed |
-| `updated_at` | DATETIME | NULLABLE, ON UPDATE CURRENT_TIMESTAMP | Last status update time |
+| `status` | VARCHAR(30) | DEFAULT `'PENDING'`, NOT NULL | Order status: `PENDING` \| `SUCCESS` \| `FAILED` \| `CANCELLED` \| `EXPIRED` \| `REVIEW_REQUIRED` |
+| `payment_method` | VARCHAR(50) | DEFAULT `'MOCK'`, NOT NULL | Payment method representation (e.g. `MOCK`, `VNPAY`) |
+| `payment_provider` | VARCHAR(30) | DEFAULT `'MOCK'`, NOT NULL | Payment provider deciding logic (e.g. `MOCK`, `VNPAY_SANDBOX`) |
+| `payment_url` | TEXT | NULLABLE | Generated sandbox gateway URL for pending orders |
+| `vnp_txn_ref` | VARCHAR(100) | UNIQUE, NULLABLE | VNPay unique transaction reference identifier |
+| `vnp_transaction_no` | VARCHAR(100) | NULLABLE | VNPay internal transaction sequence number |
+| `vnp_response_code` | VARCHAR(20) | NULLABLE | Response status returned by VNPay |
+| `vnp_transaction_status` | VARCHAR(20) | NULLABLE | Transaction status returned by VNPay |
+| `vnp_bank_code` | VARCHAR(50) | NULLABLE | Bank code utilized for the transaction |
+| `vnp_pay_date` | VARCHAR(30) | NULLABLE | Raw payment date string returned by VNPay (GMT+7 format) |
+| `provider_paid_at` | DATETIME | NULLABLE | Converted UTC payment date parsed from provider response |
+| `review_reason` | VARCHAR(100) | NULLABLE | Audit reason why the payment requires manual intervention |
+| `review_required_at` | DATETIME | NULLABLE | Timestamp when order was pushed into review state |
+| `created_at` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Order creation timestamp |
+| `paid_at` | DATETIME | NULLABLE | Timestamp when order was successfully finalized (UTC) |
+| `expired_at` | DATETIME | NULLABLE | Expiration time of the pending transaction session (typically created_at + 15m) |
+| `updated_at` | DATETIME | NULLABLE, ON UPDATE CURRENT_TIMESTAMP | Last status update timestamp |
 
 ### Business Rules
 
-- **MVP Limit**: The subscription upgrade (Premium) is permanent for the MVP demo (no expiration, no auto-renew).
-- **Price Resolution**: Price is resolved dynamically by the backend from a central shared config/PlanService, not sent by the frontend.
-- **Paid Date**: The `paid_at` timestamp is set ONLY when the payment status changes to `SUCCESS`. For `FAILED` or `CANCELLED` statuses, it remains `null`.
-- **Excluded Columns (NOT added in Step 11)**: To keep the MVP simple, the following subscription/auto-renew fields are **not** present in the schema:
-  - `expired_at`
-  - `failed_at`
-  - `cancelled_at`
-  - `subscription_cycle`
-  - `auto_renew`
-- **Amount Representation**: `amount` is stored as a `BIGINT` since the currency is VND (price = `199000` VND), eliminating decimal rounding risks.
+- **State Machine Status Definitions**:
+  * `PENDING`: Payment is initiated and waiting for client actions.
+  * `SUCCESS`: Payment verified successfully; user tier has been upgraded or renewed.
+  * `FAILED`: Payment failed at checkout or rejected by provider.
+  * `CANCELLED`: Payment cancelled manually by the user.
+  * `EXPIRED`: Pending time window (`15 minutes`) has lapsed. Checked dynamically or during new order initiation.
+  * `REVIEW_REQUIRED`: Discrepancy detected (e.g., late callback or downgrade mismatch). Tier updates are suspended.
+- **Provider & Method Separation**:
+  * `MOCK` ➔ method = `MOCK`, provider = `MOCK`.
+  * `VNPAY_SANDBOX` ➔ method = `VNPAY`, provider = `VNPAY_SANDBOX`.
+- **Review Reason Registry**:
+  * `PAY_DATE_AFTER_EXPIRY`: Pay Date parsed from callback is past order `expiredAt`.
+  * `PAY_DATE_PARSE_FAILED`: `vnp_PayDate` query payload has invalid syntax.
+  * `AMOUNT_REQUIRES_REVIEW`: Callback amount does not match snapshot amount.
+  * `PROVIDER_DATA_INCONSISTENT`: General discrepancy in provider query hash payload.
+  * `TARGET_TIER_LOWER_THAN_CURRENT_TIER`: Callback targets `PREMIUM` but the user upgraded to `ULTRA` concurrently.
+- **Expiry Rules**:
+  * Only one pending order is allowed per user at a time.
+  * Creating a new order or fetching details on an existing pending order forces expiration transitions if `now > expiredAt`.
 
 ### Indexes
 
 ```sql
-INDEX idx_payment_orders_user (user_id)
-INDEX idx_payment_orders_status (status)
-INDEX idx_payment_orders_user_created_at (user_id, created_at)
+CREATE UNIQUE INDEX uk_payment_orders_vnp_txn_ref ON payment_orders(vnp_txn_ref);
+CREATE INDEX idx_payment_orders_user ON payment_orders(user_id);
+CREATE INDEX idx_payment_orders_status ON payment_orders(status);
+CREATE INDEX idx_payment_orders_user_status_expired ON payment_orders(user_id, status, expired_at);
 ```
 
 ---

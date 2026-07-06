@@ -3256,24 +3256,20 @@ Retrieve current user's AI usage statistics and remaining quota for today.
 
 | Status | Condition |
 |---|---|
-| 401 Unauthorized | Not logged in |
-
----
-
-# 15. Payment and Account Tier MVP APIs
+| 401 Unauthorized | Not logged# 15. Payment and Account Tier MVP & Sandbox APIs (Step 13B)
 
 > [!NOTE]
-> Step 11 implements a **Mock Payment / Account Tier** flow for demonstration purposes.
-> - No real payment gateway integration is performed.
-> - No real money is processed.
-> - Three account tiers are supported: `FREE`, `PREMIUM`, and `ULTRA`.
-> - `PREMIUM` and `ULTRA` are paid tiers with a **1-month duration** (`tier_expires_at = now + 1 month` on purchase/renewal). They are **not** permanent — once `tier_expires_at` passes, the user's **Effective Tier** falls back to `FREE` automatically (see section 18, Account Entitlements).
-> - Renewing the same tier (`PREMIUM` → `PREMIUM`, `ULTRA` → `ULTRA`) extends the expiry by one month from the current expiry (or from now, if already expired).
-> - Upgrading `PREMIUM` → `ULTRA` is allowed; the new expiry is `now + 1 month` (any remaining Premium time is **not** carried over, to avoid free Ultra time). The frontend should warn the user of this before confirming an upgrade.
-> - Downgrading `ULTRA` → `PREMIUM` via payment is **not supported** and returns **409 Conflict**.
+> Step 13B implements **VNPay Sandbox Monthly Payment** alongside **Mock Monthly Payment**.
+> - Processes real-time mock and sandbox payment flows without handling actual money.
+> - Supports three account tiers: `FREE`, `PREMIUM`, and `ULTRA`.
+> - `PREMIUM` and `ULTRA` are paid tiers with a **1-month duration**. Expiry is resolved as `tier_expires_at = paidAt + 1 month` (or `currentExpiry + 1 month` on renewals). Effective Tier falls back to `FREE` automatically if expired.
+> - Renewing the same tier (`PREMIUM` ➔ `PREMIUM`, `ULTRA` ➔ `ULTRA`) extends the expiry by 1 calendar month (`plusMonths(1)`) from the current expiry (or from now, if already expired).
+> - Upgrading `PREMIUM` ➔ `ULTRA` resets expiration to `now + 1 calendar month` (`plusMonths(1)`). Remaining Premium time is **not** carried over.
+> - Downgrading `ULTRA` ➔ `PREMIUM` via payment is **not supported** and returns **409 Conflict**.
 > - Daily AI questions limits: **FREE = 5**, **PREMIUM = 50**, **ULTRA = 200**.
 > - Pricing and quota values (price, currency, tier quota limits) are defined dynamically in a central `PlanService` as the single source of truth. The frontend only ever sends a `planCode`; price, target tier, and duration are always resolved by the backend.
-> - **Mock VNPay-style Checkout**: After creating a mock payment order, the frontend (FE) may redirect to a mock VNPay-style checkout screen. This screen is UI-only and does NOT call the actual VNPay API. Confirming Success, Failure, or Cancellation from this screen still calls the respective mock payment endpoints listed below. No VNPay secret keys are required.
+> - **VNPay Return URL & IPN**: Verify checksums. IPN handles status changes, late payments, and target tier validity checks dynamically.
+> - **Review Queue**: Payments needing human oversight transition to `REVIEW_REQUIRED`.
 
 ## 15.1. Get Plans
 
@@ -3289,34 +3285,40 @@ Retrieve list of available billing plans. This is a public API and does not requ
   "message": "Billing plans retrieved successfully",
   "data": [
     {
+      "tier": "FREE",
       "planCode": "FREE",
       "planName": "Free",
       "targetTier": "FREE",
       "price": 0,
       "currency": "VND",
-      "billingLabel": "free",
+      "billingLabel": "Free",
       "durationMonths": 0,
-      "aiDailyLimit": 5
+      "aiDailyLimit": 5,
+      "purchasable": false
     },
     {
-      "planCode": "PREMIUM",
+      "tier": "PREMIUM",
+      "planCode": "PREMIUM_1_MONTH",
       "planName": "Premium",
       "targetTier": "PREMIUM",
       "price": 199000,
       "currency": "VND",
       "billingLabel": "1 month",
       "durationMonths": 1,
-      "aiDailyLimit": 50
+      "aiDailyLimit": 50,
+      "purchasable": true
     },
     {
-      "planCode": "ULTRA",
+      "tier": "ULTRA",
+      "planCode": "ULTRA_1_MONTH",
       "planName": "Ultra",
       "targetTier": "ULTRA",
       "price": 399000,
       "currency": "VND",
       "billingLabel": "1 month",
       "durationMonths": 1,
-      "aiDailyLimit": 200
+      "aiDailyLimit": 200,
+      "purchasable": true
     }
   ]
 }
@@ -3324,95 +3326,233 @@ Retrieve list of available billing plans. This is a public API and does not requ
 
 ---
 
-## 15.2. Create Mock Payment
+## 15.2. Create VNPay Payment Order
 
-### POST `/api/payments/mock/create`
+### POST `/api/payments/vnpay/create`
 
-Create a new pending payment order for a plan.
+Create a new pending payment order for a plan using the VNPay Sandbox gateway.
 
 #### Request Headers
-
 - Cookie: `accessToken=jwt-token-value-here`
 
 #### Request Body
-
 ```json
 {
-  "planCode": "PREMIUM"
+  "planCode": "PREMIUM_1_MONTH",
+  "bankCode": "NCB"
 }
 ```
 
-`planCode` may be `PREMIUM` or `ULTRA`.
+* `planCode` must be `PREMIUM_1_MONTH` or `ULTRA_1_MONTH`.
+* `bankCode` is optional. If provided, must be a valid VNPay supported bank code (e.g. `NCB`, `AGRIBANK`, `SCB`).
 
 #### Rules & Constraints
-- `planCode` must be `PREMIUM` or `ULTRA`. `planCode = FREE` returns **400 Bad Request** ("Cannot create payment for FREE plan").
-- Invalid/unknown `planCode` values return **400 Bad Request**.
-- User must be logged in; otherwise returns **401 Unauthorized**.
-- Upgrade path rules (based on the user's current **Effective Tier**, not the raw stored tier):
-  - `FREE` → `PREMIUM`: allowed.
-  - `FREE` → `ULTRA`: allowed.
-  - `PREMIUM` → `PREMIUM`: allowed (renewal).
-  - `ULTRA` → `ULTRA`: allowed (renewal).
-  - `PREMIUM` → `ULTRA`: allowed (upgrade).
-  - `ULTRA` → `PREMIUM`: **not allowed**, returns **409 Conflict** ("Downgrade from ULTRA to PREMIUM is not supported.").
-- Frontend does not specify the price, currency, target tier, or duration in the request body; the backend resolves all of these from `PlanService` based solely on `planCode`.
+* **Validation**:
+  * `planCode` must be `PREMIUM_1_MONTH` or `ULTRA_1_MONTH`. `FREE` returns **400 Bad Request**.
+  * If `bankCode` is provided and invalid, returns **400 Bad Request** with code `INVALID_BANK_CODE`.
+  * User must be logged in; otherwise returns **401 Unauthorized**.
+* **Upgrade Path Enforcement**:
+  * `FREE` ➔ `PREMIUM`: allowed.
+  * `FREE` ➔ `ULTRA`: allowed.
+  * `PREMIUM` ➔ `PREMIUM` (renewal): allowed.
+  * `ULTRA` ➔ `ULTRA` (renewal): allowed.
+  * `PREMIUM` ➔ `ULTRA` (upgrade): allowed.
+  * `ULTRA` ➔ `PREMIUM` (downgrade): **not allowed**, returns **409 Conflict**.
+* **Order Processing Flow**:
+  1. Acquire a pessimistic lock on the User row.
+  2. Transition any existing user `PENDING` orders whose `expiredAt` has passed to `EXPIRED`.
+  3. Search for any active `PENDING` order. If one exists, return **409 Conflict** with code `PAYMENT_ALREADY_PENDING`.
+  4. Search for any unresolved `REVIEW_REQUIRED` orders. If one exists, return **409 Conflict** with code `PAYMENT_REQUIRES_MANUAL_REVIEW`.
+  5. Create a new `PaymentOrder` metadata record:
+     * `status = PENDING`
+     * `paymentMethod = VNPAY`
+     * `paymentProvider = VNPAY_SANDBOX`
+     * `expiredAt = now + 15 minutes`
+  6. Generate the unique transaction identifier (`vnp_TxnRef`) and signed checkout redirection link `paymentUrl` utilizing the gateway coordinates in config (`VNPAY_PAYMENT_URL`, `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET`, `VNPAY_RETURN_URL`).
+  7. Save and commit.
 
 #### Success Response (200 OK)
-
 ```json
 {
   "success": true,
-  "message": "Mock payment order created successfully",
+  "message": "Payment order created successfully",
   "data": {
-    "paymentId": 15,
-    "planCode": "PREMIUM",
+    "paymentId": 10,
+    "planCode": "PREMIUM_1_MONTH",
     "planName": "Premium",
+    "targetTier": "PREMIUM",
     "amount": 199000,
     "currency": "VND",
     "billingLabel": "1 month",
-    "paymentMethod": "MOCK",
     "status": "PENDING",
-    "createdAt": "2026-07-02T10:30:00"
+    "paymentMethod": "VNPAY",
+    "paymentProvider": "VNPAY_SANDBOX",
+    "paymentUrl": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Amount=19900000&...",
+    "createdAt": "2026-07-05T10:30:00Z",
+    "expiredAt": "2026-07-05T10:45:00Z",
+    "reviewReason": null,
+    "reviewRequiredAt": null
   }
 }
 ```
 
 ---
 
-## 15.3. Confirm Success
+## 15.3. Create Mock Payment Order
 
-### POST `/api/payments/mock/{paymentId}/success`
+### POST `/api/payments/mock/create`
 
-Mock confirmation of a successful payment.
+Create a new pending payment order for mock checkout simulation.
 
 #### Request Headers
+- Cookie: `accessToken=jwt-token-value-here`
 
+#### Request Body
+```json
+{
+  "planCode": "PREMIUM_1_MONTH"
+}
+```
+
+* `planCode` must be `PREMIUM_1_MONTH` or `ULTRA_1_MONTH`.
+
+#### Rules & Constraints
+* Same validation and upgrade path rules as VNPay creation.
+* If configuration parameter `payment.mock-enabled = false` (derived from `PAYMENT_MOCK_ENABLED`), returns **400 Bad Request** with code `PAYMENT_PROVIDER_DISABLED`.
+* Generates a pending order with `paymentMethod = MOCK`, `paymentProvider = MOCK`, and `paymentUrl = null`.
+
+#### Success Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "Payment order created successfully",
+  "data": {
+    "paymentId": 15,
+    "planCode": "PREMIUM_1_MONTH",
+    "planName": "Premium",
+    "targetTier": "PREMIUM",
+    "amount": 199000,
+    "currency": "VND",
+    "billingLabel": "1 month",
+    "status": "PENDING",
+    "paymentMethod": "MOCK",
+    "paymentProvider": "MOCK",
+    "paymentUrl": null,
+    "createdAt": "2026-07-02T10:30:00Z",
+    "expiredAt": "2026-07-02T10:45:00Z",
+    "reviewReason": null,
+    "reviewRequiredAt": null
+  }
+}
+```
+
+---
+
+## 15.4. Get Payment Detail
+
+### GET `/api/payments/{paymentId}`
+
+Retrieve details of a specific payment order.
+
+#### Request Headers
 - Cookie: `accessToken=jwt-token-value-here`
 
 #### Rules & Constraints
-- User must be logged in; otherwise returns **401 Unauthorized**.
-- The payment order must belong to the current user.
-- If the payment order does not exist or does not belong to the current user, the server must return **404 Not Found** (do not return 403, to prevent leaking paymentId details).
-- The payment order must have `PENDING` status.
-- If the payment is not `PENDING` (already SUCCESS, FAILED, or CANCELLED), returns **409 Conflict** (handles double-clicks or duplicate requests gracefully).
-- The target tier is always resolved from the payment order's own `planCode` (via `PlanService.getTargetTier`), never hardcoded.
-- If the user's current **Effective Tier** is `ULTRA` and the order's target tier is `PREMIUM`, this is rejected as a downgrade and returns **409 Conflict** ("Downgrade from ULTRA to PREMIUM is not supported.").
-- Expiry (`tierExpiresAt`) calculation:
-  - Same-tier renewal (Effective Tier == target tier): `max(currentExpiry, now) + 1 month`.
-  - Different tier (`FREE` → target, or `PREMIUM` → `ULTRA`): `now + 1 month`. Remaining time on the previous tier is **not** carried over.
-- **Transactional Atomicity**: The success operation must be transactional (`@Transactional`). Updating the payment status to `SUCCESS` and the user's tier/expiry must occur atomically within the same database transaction.
-- **Concurrency safety**: the user row is locked (`SELECT ... FOR UPDATE`) before computing the new expiry, so two payments for the same user confirmed at the same time cannot silently overwrite each other's renewal.
-- Upon success, the user's `tier` is updated to the order's target tier, `tierExpiresAt` is set per the calculation above, and the payment's `paidAt` field is set to the current timestamp.
+* User must be logged in; otherwise returns **401 Unauthorized**.
+* If the order does not exist or belongs to another user, returns **404 Not Found** (prevents ID enumeration).
+* **State Transition Check**: If the order status is `PENDING` and the current time exceeds `expiredAt`, the order status is dynamically transitioned to `EXPIRED` in the database before the response is returned.
 
 #### Success Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "Payment retrieved successfully",
+  "data": {
+    "paymentId": 10,
+    "planCode": "PREMIUM_1_MONTH",
+    "planName": "Premium",
+    "targetTier": "PREMIUM",
+    "amount": 199000,
+    "currency": "VND",
+    "billingLabel": "1 month",
+    "status": "PENDING",
+    "paymentMethod": "VNPAY",
+    "paymentProvider": "VNPAY_SANDBOX",
+    "paymentUrl": "https://sandbox.vnpayment.vn/...",
+    "createdAt": "2026-07-05T10:30:00Z",
+    "paidAt": null,
+    "expiredAt": "2026-07-05T10:45:00Z",
+    "reviewReason": null,
+    "reviewRequiredAt": null
+  }
+}
+```
 
+---
+
+## 15.5. Get My Payments
+
+### GET `/api/payments/my`
+
+Retrieve the current user's payment history sorted by `createdAt` descending.
+
+#### Request Headers
+- Cookie: `accessToken=jwt-token-value-here`
+
+#### Rules & Constraints
+* User must be logged in; otherwise returns **401 Unauthorized**.
+* Returns only payment orders belonging to the current user.
+* Orders must be sorted newest first (sorted by `createdAt` descending).
+* Exposes all payment statuses: `PENDING`, `SUCCESS`, `FAILED`, `CANCELLED`, `EXPIRED`, and `REVIEW_REQUIRED`.
+
+#### Success Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "Payments retrieved successfully",
+  "data": [
+    {
+      "paymentId": 12,
+      "planCode": "ULTRA_1_MONTH",
+      "planName": "Ultra",
+      "targetTier": "ULTRA",
+      "amount": 399000,
+      "currency": "VND",
+      "billingLabel": "1 month",
+      "status": "SUCCESS",
+      "paymentMethod": "VNPAY",
+      "paymentProvider": "VNPAY_SANDBOX",
+      "paymentUrl": null,
+      "createdAt": "2026-07-05T11:00:00Z",
+      "paidAt": "2026-07-05T11:05:00Z",
+      "expiredAt": "2026-07-05T11:15:00Z",
+      "reviewReason": null,
+      "reviewRequiredAt": null
+    }
+  ]
+}
+```
+
+---
+
+## 15.6. Mock Payment Processing Endpoints
+
+The following mock confirmation endpoints are enabled only when properties configuration `payment.mock-enabled = true`. If disabled, they return **400 Bad Request** with code `PAYMENT_PROVIDER_DISABLED`.
+Mock endpoints strictly process orders with `paymentProvider = MOCK`. If called with a `VNPAY_SANDBOX` order, they return **400 Bad Request** with code `MOCK_CONFIRM_NOT_ALLOWED`.
+
+### POST `/api/payments/mock/{paymentId}/success` (Confirm Success)
+### POST `/api/payments/mock/{paymentId}/confirm` (Confirm Success Alias)
+
+Transition the mock payment status to `SUCCESS` and update the user's tier.
+
+#### Success Response (200 OK)
 ```json
 {
   "success": true,
   "message": "Payment confirmed successfully",
   "data": {
     "paymentId": 15,
-    "planCode": "PREMIUM",
+    "planCode": "PREMIUM_1_MONTH",
     "planName": "Premium",
     "amount": 199000,
     "currency": "VND",
@@ -3420,42 +3560,23 @@ Mock confirmation of a successful payment.
     "paymentMethod": "MOCK",
     "status": "SUCCESS",
     "tier": "PREMIUM",
-    "paidAt": "2026-07-02T10:35:00"
+    "paidAt": "2026-07-02T10:35:00Z"
   }
 }
 ```
 
----
-
-## 15.4. Confirm Fail
-
 ### POST `/api/payments/mock/{paymentId}/fail`
 
-Mock confirmation of a failed payment.
-
-#### Request Headers
-
-- Cookie: `accessToken=jwt-token-value-here`
-
-#### Rules & Constraints
-- User must be logged in; otherwise returns **401 Unauthorized**.
-- The payment order must belong to the current user.
-- If the payment order does not exist or does not belong to the current user, returns **404 Not Found**.
-- The payment order must have `PENDING` status.
-- If the payment is not `PENDING`, returns **409 Conflict**.
-- Marking a payment as failed does not change the user's tier, and the `paidAt` timestamp remains `null`.
-- The response returns the user's current **Effective Tier** (e.g. `FREE`, or `PREMIUM`/`ULTRA` if they are already upgraded via another payment — expired paid tiers are reported as `FREE`).
-- Already-upgraded users are still allowed to mark their old stale `PENDING` payments as failed.
+Transition the mock payment status to `FAILED`.
 
 #### Success Response (200 OK)
-
 ```json
 {
   "success": true,
   "message": "Payment marked as failed",
   "data": {
     "paymentId": 15,
-    "planCode": "PREMIUM",
+    "planCode": "PREMIUM_1_MONTH",
     "planName": "Premium",
     "amount": 199000,
     "currency": "VND",
@@ -3468,37 +3589,18 @@ Mock confirmation of a failed payment.
 }
 ```
 
----
-
-## 15.5. Cancel Payment
-
 ### POST `/api/payments/mock/{paymentId}/cancel`
 
-Cancel a pending payment order.
-
-#### Request Headers
-
-- Cookie: `accessToken=jwt-token-value-here`
-
-#### Rules & Constraints
-- User must be logged in; otherwise returns **401 Unauthorized**.
-- The payment order must belong to the current user.
-- If the payment order does not exist or does not belong to the current user, returns **404 Not Found**.
-- The payment order must have `PENDING` status.
-- If the payment is not `PENDING`, returns **409 Conflict**.
-- Cancelling a payment does not change the user's tier, and the `paidAt` timestamp remains `null`.
-- The response returns the user's current **Effective Tier**.
-- Already-upgraded users are still allowed to cancel their old stale `PENDING` payments.
+Cancel a pending mock payment order.
 
 #### Success Response (200 OK)
-
 ```json
 {
   "success": true,
   "message": "Payment cancelled successfully",
   "data": {
     "paymentId": 15,
-    "planCode": "PREMIUM",
+    "planCode": "PREMIUM_1_MONTH",
     "planName": "Premium",
     "amount": 199000,
     "currency": "VND",
@@ -3513,83 +3615,87 @@ Cancel a pending payment order.
 
 ---
 
-## 15.6. Get My Payments
+## 15.7. VNPay Gateway Integration Endpoints
 
-### GET `/api/payments/my`
+### GET `/api/payments/vnpay/return` (Return URL Endpoint)
 
-Retrieve the current user's payment history.
+Receives the client-side redirect from VNPay. Performs signature verification and parses parameters. Enabled only when `vnpay.enabled = true` (derived from `VNPAY_ENABLED`).
 
-#### Request Headers
-
-- Cookie: `accessToken=jwt-token-value-here`
+#### Query Parameters
+Standard VNPay parameters: `vnp_Amount`, `vnp_BankCode`, `vnp_CardType`, `vnp_OrderInfo`, `vnp_PayDate`, `vnp_ResponseCode`, `vnp_TmnCode`, `vnp_TransactionNo`, `vnp_TxnRef`, `vnp_SecureHash`.
 
 #### Rules & Constraints
-- User must be logged in; otherwise returns **401 Unauthorized**.
-- Only returns payment orders belonging to the current user.
-- Orders must be sorted newest first (sorted by `createdAt` descending).
-- Displays all payment statuses: `PENDING`, `SUCCESS`, `FAILED`, and `CANCELLED`.
-- No hard delete is allowed; all historical payments must remain visible.
-
-#### Success Response (200 OK)
-
-```json
-{
-  "success": true,
-  "message": "Payment history retrieved successfully",
-  "data": [
-    {
-      "paymentId": 16,
-      "planCode": "ULTRA",
-      "planName": "Ultra",
-      "amount": 399000,
-      "currency": "VND",
-      "billingLabel": "1 month",
-      "paymentMethod": "MOCK",
-      "status": "SUCCESS",
-      "createdAt": "2026-07-03T09:00:00",
-      "paidAt": "2026-07-03T09:05:00"
-    },
-    {
-      "paymentId": 15,
-      "planCode": "PREMIUM",
-      "planName": "Premium",
-      "amount": 199000,
-      "currency": "VND",
-      "billingLabel": "1 month",
-      "paymentMethod": "MOCK",
-      "status": "SUCCESS",
-      "createdAt": "2026-07-02T10:30:00",
-      "paidAt": "2026-07-02T10:35:00"
-    },
-    {
-      "paymentId": 14,
-      "planCode": "PREMIUM",
-      "planName": "Premium",
-      "amount": 199000,
-      "currency": "VND",
-      "billingLabel": "1 month",
-      "paymentMethod": "MOCK",
-      "status": "FAILED",
-      "createdAt": "2026-07-02T10:00:00",
-      "paidAt": null
-    }
-  ]
-}
-```
+* **Checksum Verification**: The signature must be verified using the local VNPay hash secret. If the checksum verification fails, redirect the user to `{FRONTEND_PAYMENT_RESULT_URL}?error=payment_return_invalid`.
+* **Database Updates**: The return URL is client-controlled and untrusted. Therefore, **it must not perform any updates to the database (order status, user tier, or expiration dates)**.
+* **Redirect Mapping**: If checksum verification succeeds, extract `vnp_TxnRef`, map it to `paymentId`, and redirect the client browser to `{FRONTEND_PAYMENT_RESULT_URL}?paymentId={paymentId}`.
 
 ---
 
-## 15.7. Error Code Reference Table
+### GET `/api/payments/vnpay/ipn` (Instant Payment Notification)
 
-| HTTP Status | Condition |
-|---|---|
-| **400 Bad Request** | Invalid `planCode` / creating payment for `planCode = FREE` |
-| **401 Unauthorized** | User is not logged in / missing accessToken cookie |
-| **404 Not Found** | Payment order does not exist OR does not belong to the current user |
-| **409 Conflict** | Downgrade attempt (`ULTRA` → `PREMIUM`, on payment creation or confirmation) OR payment order is not in `PENDING` status (double confirmation / double-click prevention) |
-| **500 Internal Server Error** | Unexpected backend failures |
+Un-authenticated backend-to-backend callback from VNPay. Performs final order processing, user tier updates, and transaction logging. Enabled only when `vnpay.enabled = true` (derived from `VNPAY_ENABLED`). The endpoint URL configured in VNPay Portal must be a public HTTPS address (`VNPAY_IPN_URL`, e.g. ngrok address), not localhost.
+
+#### Rules & Constraints
+1. **Validate request signature**: Verify `vnp_SecureHash`. If verification fails, return response `{"RspCode":"97","Message":"Invalid signature"}` immediately (do NOT acquire database locks first).
+2. **Lock Order**: Locate the order using `vnp_TxnRef`. If not found, return `{"RspCode":"01","Message":"Order not found"}`. Lock the order row (`SELECT FOR UPDATE`).
+3. **Verify amount**: Verify `vnp_Amount` (converted to base currency value) matches the stored database amount. If incorrect, return `{"RspCode":"04","Message":"Invalid amount"}`.
+4. **Idempotency Check**: If the order is already in a terminal state (`SUCCESS`, `FAILED`, `CANCELLED`, `REVIEW_REQUIRED`), return `{"RspCode":"02","Message":"Order already confirmed"}`.
+5. **EXPIRED Status Transition Rule**: `EXPIRED` is NOT a terminal status. If an order has status = `EXPIRED` but a valid callback arrives where `vnp_ResponseCode = "00"` and the parsed pay date is before or equal to the order's `expiredAt`, the order is allowed to transition to `SUCCESS` (exclusively once) and the user receives the tier upgrade.
+6. **Handle failed payments**: If `vnp_ResponseCode` or `vnp_TransactionStatus` is not `"00"`, transition the order to `FAILED` (unless it was already resolved), save changes, and return `{"RspCode":"00","Message":"Confirm success"}`.
+7. **Timezone Conversion**: Parse `vnp_PayDate` (format `yyyyMMddHHmmss` in Asia/Ho_Chi_Minh time zone) and convert it to UTC `LocalDateTime`.
+8. **Expiry & Validation rules**:
+   * If `vnp_PayDate` parsing fails or the payment occurred after the order `expiredAt`:
+     * Set `reviewReason = "PAY_DATE_PARSE_FAILED"` or `"PAY_DATE_AFTER_EXPIRY"`.
+     * Set `reviewRequiredAt = now`.
+     * Transition the order to `REVIEW_REQUIRED` (suspends automatic tier upgrades).
+     * Save order, return `{"RspCode":"00","Message":"Confirm success"}`.
+9. **Lock User**: Acquire a pessimistic lock on the user row (`SELECT FOR UPDATE`).
+10. **Upgrade Safety Checks**: If the user's current effective tier is `ULTRA` and the target tier of this order is `PREMIUM`, transition the order to `REVIEW_REQUIRED` (setting `reviewReason = "TARGET_TIER_LOWER_THAN_CURRENT_TIER"`). Do NOT downgrade the user's tier. Save order, return `{"RspCode":"00","Message":"Confirm success"}`.
+11. **Finalize Payment**: 
+    * Update order status to `SUCCESS` and set `paidAt = parsedPayDate`.
+    * Update user tier to target tier.
+    * Compute `tierExpiresAt` (renewing extends expiration by 1 calendar month `plusMonths(1)`; upgrading sets to `now + 1 calendar month` `plusMonths(1)`).
+    * Save user, return `{"RspCode":"00","Message":"Confirm success"}`.
+
+#### IPN Response Code Matrix
+
+| Case | RspCode | Message |
+|---|---|---|
+| Handled successfully (SUCCESS, FAILED, REVIEW_REQUIRED) | `00` | Confirm success |
+| Order does not exist | `01` | Order not found |
+| Duplicate request (order already terminal) | `02` | Order already confirmed |
+| Amount mismatch | `04` | Invalid amount |
+| Signature verification failed | `97` | Invalid signature |
+| Unexpected server/database exceptions | `99` | Input data format error |
 
 ---
+
+## 15.8. Payment Error Code Reference Table
+
+| HTTP Status | Error Payload Structure (JSON) | Cause / Scenario |
+|---|---|---|
+| **400 Bad Request** | `{"success":false,"code":"PAYMENT_PROVIDER_DISABLED","message":"Mock payment provider is disabled.","data":{"provider":"MOCK"}}` | Call to mock endpoint when mock is disabled |
+| **400 Bad Request** | `{"success":false,"code":"MOCK_CONFIRM_NOT_ALLOWED","message":"Mock payment action is not allowed for this payment provider.","data":{"paymentProvider":"VNPAY_SANDBOX"}}` | Call mock endpoint on a sandbox order |
+| **400 Bad Request** | `{"success":false,"code":"INVALID_PLAN","message":"Cannot create payment for FREE plan"}` | Call create with FREE planCode |
+| **400 Bad Request** | `{"success":false,"code":"INVALID_BANK_CODE","message":"Unsupported bank code provided"}` | Call vnpay create with invalid bank code |
+| **400 Bad Request** | `{"success":false,"code":"INVALID_PAYMENT_SIGNATURE","message":"Checksum verification failed"}` | Invalid checksum detected during hash check |
+| **401 Unauthorized** | `{"success":false,"message":"Unauthorized"}` | User not logged in |
+| **404 Not Found** | `{"success":false,"code":"PAYMENT_NOT_FOUND","message":"Payment order not found"}` | Payment ID does not exist or belongs to another user |
+| **409 Conflict** | `{"success":false,"code":"PAYMENT_ALREADY_PENDING","message":"You already have a pending payment. Please complete it before creating a new one.","data":{"paymentId":10,"paymentProvider":"VNPAY_SANDBOX",...}}` | Create payment when another pending order is still active |
+| **409 Conflict** | `{"success":false,"code":"PAYMENT_REQUIRES_MANUAL_REVIEW","message":"Your account has an order requiring manual review. New payments are suspended."}` | Create payment when manual review order is unresolved |
+| **409 Conflict** | `{"success":false,"code":"DOWNGRADE_NOT_SUPPORTED","message":"Downgrade from ULTRA to PREMIUM is not supported."}` | Requesting downgrade on creation or confirmation |
+| **409 Conflict** | `{"success":false,"code":"ORDER_NOT_PENDING","message":"Payment is no longer pending"}` | Confirming non-pending order |
+| **409 Conflict** | `{"success":false,"code":"PAYMENT_AMOUNT_MISMATCH","message":"Verification failed: Amount mismatch detected"}` | Paid amount in callback does not match snapshot amount |
+| **500 Internal Server Error** | `{"success":false,"message":"Unexpected backend failures"}` | General unexpected server/database exceptions |
+
+> [!IMPORTANT]
+> **IPN Callback Return Protocol Clarification**:
+> The `INVALID_PAYMENT_SIGNATURE` and `PAYMENT_AMOUNT_MISMATCH` codes listed in this reference table represent internal exception/error types handled within core business logic.
+> - The public IPN callback endpoint (`GET /api/payments/vnpay/ipn`) **never** exposes standard JSON exception blocks to VNPay.
+> - Instead, it catches these exceptions and maps them directly to the **IPN Response Code Matrix** (returning `{"RspCode":"97","Message":"Invalid signature"}` and `{"RspCode":"04","Message":"Invalid amount"}` respectively as a standard plain JSON response).
+
+---
+
 
 # 16. Persistent Study Group Chat APIs
 
