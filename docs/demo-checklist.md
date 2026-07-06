@@ -366,5 +366,65 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
   - *Expected*:
     - Backend creates a reservation with status `RESERVED`.
     - Upon provider error, the reservation transitions to status `RELEASED` and the daily questions quota block is freed.
-- [ ] **Step 10.13**: Log in as User A (FREE) after having reached the daily limit of 5 questions. Attempt to ask another question.
+- [ ] **Step 10.13**: Log in as User A (FREE). after having reached the daily limit of 5 questions. Attempt to ask another question.
   - *Expected*: `403 Forbidden` with error code `AI_QUOTA_EXCEEDED`.
+
+---
+
+## 11. Flow 11: VNPay Sandbox Monthly Payment Integration (Step 13B)
+
+### Preconditions
+- User A is registered with raw tier `FREE` (Effective Tier = `FREE`).
+- User B is registered with raw tier `PREMIUM` (Effective Tier = `PREMIUM`).
+- Configuration variable `payment.mock-enabled = true` on start.
+
+### 11.1. Plan API and Mock Checkout Creation
+- [ ] **Step 11.1**: Call `GET /api/payments/plans` to fetch all available plans.
+  - *Expected*: Returns `200 OK` listing `FREE`, `PREMIUM_1_MONTH` (199,000 VND), and `ULTRA_1_MONTH` (399,000 VND) plans. Each paid plan has `purchasable: true` and `aiDailyLimit` populated.
+- [ ] **Step 11.2**: Log in as User A, request mock checkout creation (`POST /api/payments/create` with body `{"planCode": "PREMIUM_1_MONTH", "paymentProvider": "MOCK"}`).
+  - *Expected*: Returns `200 OK` with order details. `paymentMethod` is `MOCK`, `paymentProvider` is `MOCK`, `status` is `PENDING`, and `paymentUrl` is `null`.
+- [ ] **Step 11.3**: Call the legacy mock endpoint (`POST /api/payments/mock/create` with body `{"planCode": "PREMIUM_1_MONTH"}`).
+  - *Expected*: Returns `200 OK`, creating a `PENDING` mock order.
+
+### 11.2. Mock Checkout Processing Flow
+- [ ] **Step 11.4**: Call mock success confirmation endpoint (`POST /api/payments/mock/{paymentId}/success`) for the created mock order.
+  - *Expected*: Returns `200 OK`. Order status becomes `SUCCESS`, user's tier becomes `PREMIUM`, and `paidAt` is updated.
+- [ ] **Step 11.5**: Attempt to confirm success for the same order again.
+  - *Expected*: Returns `409 Conflict` with error code `ORDER_NOT_PENDING` (idempotency safety).
+- [ ] **Step 11.6**: Call `POST /api/payments/mock/{paymentId}/fail` or `/cancel` on a different pending mock order.
+  - *Expected*: Returns `200 OK` with order status transitioning to `FAILED` or `CANCELLED`. User tier remains `FREE`.
+
+### 11.3. VNPay Checkout Order Creation
+- [ ] **Step 11.7**: Log in as User A, request VNPay sandbox checkout creation (`POST /api/payments/create` with body `{"planCode": "ULTRA_1_MONTH", "paymentProvider": "VNPAY_SANDBOX"}`).
+  - *Expected*: Returns `200 OK` with `paymentMethod = 'VNPAY'`, `paymentProvider = 'VNPAY_SANDBOX'`, `status = 'PENDING'`, and a signed `paymentUrl` targeting the VNPay sandbox checkout gateway.
+- [ ] **Step 11.8**: With the previous order still pending, call checkout creation again.
+  - *Expected*: Returns `409 Conflict` with code `PAYMENT_ALREADY_PENDING` containing the pending order `paymentProvider` and `paymentUrl` in the response payload.
+- [ ] **Step 11.9**: Attempt to call the mock success confirmation endpoint (`POST /api/payments/mock/{paymentId}/success`) on this VNPay sandbox order.
+  - *Expected*: Returns `400 Bad Request` with code `MOCK_CONFIRM_NOT_ALLOWED`.
+
+### 11.4. Dynamic Order Expiration
+- [ ] **Step 11.10**: Wait 15 minutes for the pending order `expiredAt` to pass. Query details (`GET /api/payments/{paymentId}`).
+  - *Expected*: Order status dynamically transitions to `EXPIRED` in the database. Returns `200 OK` with status `EXPIRED` and `paymentUrl = null`.
+- [ ] **Step 11.11**: Log in as User A. With an expired order in history, request checkout creation.
+  - *Expected*: Returns `200 OK`, generating a new active `PENDING` checkout order.
+
+### 11.5. VNPay Return URL and IPN Verification
+- [ ] **Step 11.12**: Request client-side return URL with a mutated checksum parameter (`GET /api/payments/vnpay/return?vnp_SecureHash=invalid...`).
+  - *Expected*: Redirects to `{FRONTEND_PAYMENT_RESULT_URL}?error=payment_return_invalid`. No database updates occur.
+- [ ] **Step 11.13**: Request client-side return URL with a valid signature.
+  - *Expected*: Redirects to `{FRONTEND_PAYMENT_RESULT_URL}?paymentId={paymentId}`. No database updates occur.
+- [ ] **Step 11.14**: Trigger VNPay callback IPN with an invalid signature (`GET /api/payments/vnpay/ipn?vnp_SecureHash=invalid...`).
+  - *Expected*: Returns IPN payload `{"RspCode":"97","Message":"Invalid signature"}`. No database updates occur.
+- [ ] **Step 11.15**: Trigger VNPay callback IPN with a mismatched transaction amount.
+  - *Expected*: Returns IPN payload `{"RspCode":"04","Message":"Invalid amount"}`.
+- [ ] **Step 11.16**: Trigger VNPay callback IPN with `vnp_ResponseCode = '00'` after the order `expiredAt` has passed.
+  - *Expected*: Returns IPN payload `{"RspCode":"00","Message":"Confirm success"}`. Order status becomes `REVIEW_REQUIRED`, setting `reviewReason = 'PAY_DATE_AFTER_EXPIRY'`. User tier is NOT upgraded.
+- [ ] **Step 11.17**: Log in as User B (PREMIUM). Trigger a late concurrent VNPay callback IPN for a lower target tier (e.g. PREMIUM order callback arriving after user has upgraded to ULTRA).
+  - *Expected*: Returns `{"RspCode":"00","Message":"Confirm success"}`. Order becomes `REVIEW_REQUIRED` with `reviewReason = 'TARGET_TIER_LOWER_THAN_CURRENT_TIER'`. User tier remains `ULTRA`.
+- [ ] **Step 11.18**: Reset the REVIEW_REQUIRED flags using the manual reset script. Trigger a normal successful IPN.
+  - *Expected*: Returns `{"RspCode":"00","Message":"Confirm success"}`. Order transitions to `SUCCESS`. User tier is upgraded, and the new expiration date is calculated and saved in UTC.
+
+### 11.6. Configuration Disabling
+- [ ] **Step 11.19**: Set `payment.mock-enabled = false` in `application.properties`. Call a mock checkout processing endpoint.
+  - *Expected*: Returns `400 Bad Request` with code `PAYMENT_PROVIDER_DISABLED`.
+
