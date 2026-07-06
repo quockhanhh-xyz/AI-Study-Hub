@@ -550,11 +550,19 @@ window.initCustomDropdowns = UIHelper.initCustomDropdowns;
 const AIUIHelper = {
   /**
    * 19.2. Error mapping helper
-   * Standardizes HTTP status codes into user-friendly error messages.
-   * @param {number} status - The HTTP status code.
+   * Standardizes HTTP status codes or error codes into user-friendly error messages.
+   * @param {number|object} errorOrStatus - The HTTP status code or error object.
    * @returns {string} The standardized error message.
    */
-  mapAiError(status) {
+  mapAiError(errorOrStatus) {
+    const status = typeof errorOrStatus === "number" ? errorOrStatus : errorOrStatus?.status;
+    const code = typeof errorOrStatus === "object" ? (errorOrStatus?.code || errorOrStatus?.data?.code) : "";
+
+    // Priority 1: Explicit error code check for quota exhaustion (Step 13 Contract)
+    if (code === "AI_QUOTA_EXCEEDED") {
+      return "You have reached your daily AI question limit. Upgrade to PREMIUM or ULTRA for more.";
+    }
+
     const errorMap = {
       400: "Your question is empty or too long.",
       401: "Please log in to use AI Q&A.",
@@ -562,7 +570,7 @@ const AIUIHelper = {
       404: "This document is not available.",
       409: "This document is not ready for AI yet. Please process it first.",
       422: "This document has no usable AI content.",
-      429: "You have reached your daily AI question limit.",
+      429: "You have reached your daily AI question limit. Upgrade to PREMIUM or ULTRA for more.",
       503: "AI service is currently unavailable."
     };
     return errorMap[status] || "An unexpected AI error occurred. Please try again.";
@@ -642,11 +650,14 @@ window.UIHelper = UIHelper;
 // ─────────────────────────────────────────────────────────────
 
 /**
- * Returns an HTML string for a tier badge (FREE or PREMIUM).
- * @param {string} tier - "FREE" or "PREMIUM"
+ * Returns an HTML string for a tier badge (FREE, PREMIUM, or ULTRA).
+ * @param {string} tier - "FREE", "PREMIUM", or "ULTRA"
  * @returns {string} HTML badge string.
  */
 function getTierBadgeHTML(tier) {
+  if (tier === "ULTRA") {
+    return `<span class="tier-badge tier-badge-ultra">ULTRA</span>`;
+  }
   if (tier === "PREMIUM") {
     return `<span class="tier-badge tier-badge-premium">PREMIUM</span>`;
   }
@@ -656,7 +667,7 @@ function getTierBadgeHTML(tier) {
 /**
  * Renders a tier badge into a given DOM element.
  * @param {HTMLElement} element - The container element to render into.
- * @param {string} tier - "FREE" or "PREMIUM"
+ * @param {string} tier - "FREE", "PREMIUM", or "ULTRA"
  */
 function renderTierBadge(element, tier) {
   if (!element) return;
@@ -666,3 +677,50 @@ function renderTierBadge(element, tier) {
 // Expose globally for page scripts
 window.getTierBadgeHTML = getTierBadgeHTML;
 window.renderTierBadge = renderTierBadge;
+// Alias per checklist requirement
+window.formatTierBadge = getTierBadgeHTML;
+
+/**
+ * Displays a user-friendly quota error message.
+ * Uses getQuotaErrorMessage() from account-api.js if available.
+ * @param {Error} error - The error object from apiRequest().
+ */
+function showQuotaError(error) {
+  // Delegate to getQuotaErrorMessage if account-api.js is loaded
+  const resolved = typeof window.getQuotaErrorMessage === "function"
+    ? window.getQuotaErrorMessage(error)
+    : error.message || "You have reached your plan limit. Upgrade to continue.";
+
+  if (typeof window.showToast === "function") {
+    window.showToast(resolved, "error");
+  } else {
+    alert(resolved);
+  }
+}
+
+// Expose globally
+window.showQuotaError = showQuotaError;
+
+/**
+ * Formats usage progress as a human-readable string.
+ * @param {number} used - Amount used (in bytes for storage, or count for others).
+ * @param {number} limit - Maximum allowed amount.
+ * @param {string} type - "storage" | "count" (default "count").
+ * @returns {string} Formatted string e.g. "2.97 MB / 100 MB" or "3 / 10".
+ */
+function formatUsageProgress(used, limit, type = "count") {
+  if (type === "storage") {
+    const formatBytes = (bytes) => {
+      if (!bytes || bytes === 0) return "0 B";
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+      return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+    };
+    return `${formatBytes(used)} / ${formatBytes(limit)}`;
+  }
+  return `${used ?? 0} / ${limit ?? "∞"}`;
+}
+
+// Expose globally
+window.formatUsageProgress = formatUsageProgress;

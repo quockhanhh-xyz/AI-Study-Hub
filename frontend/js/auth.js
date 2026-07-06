@@ -287,9 +287,9 @@
   // AUTH REFRESH HELPER
   // ─────────────────────────────────────────────────────────────
 
-  /**
+   /**
    * Re-fetches the current user from backend and updates localStorage.
-   * Call this after payment success to sync the updated tier (FREE → PREMIUM).
+   * Refresh current user after payment or tier changes.
    * @returns {Promise<Object|null>} Updated user data or null on failure.
    */
   async function refreshCurrentUser() {
