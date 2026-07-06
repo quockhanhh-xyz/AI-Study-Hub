@@ -43,17 +43,47 @@ document.addEventListener("DOMContentLoaded", async function () {
   const documentGrid = document.getElementById("documentGrid");
   const emptyState = document.getElementById("emptyState");
 
-  // Account tier styling
+  // Account tier & entitlements (Step 13)
   const dashboardUpgradeCta = document.getElementById("dashboardUpgradeCta");
-  if (accountTierElement) {
-    const tier = currentUser.tier || "FREE";
-    accountTierElement.textContent = tier;
-    accountTierElement.classList.remove("badge-tier-free", "badge-tier-premium");
-    accountTierElement.classList.add(tier === "PREMIUM" ? "badge-tier-premium" : "badge-tier-free");
 
-    if (dashboardUpgradeCta) {
-      dashboardUpgradeCta.style.display = tier === "PREMIUM" ? "none" : "inline-flex";
+  async function loadAccountTierAndUsage() {
+    // Fallback tier from localStorage, in case entitlements API isn't ready yet
+    let tier = currentUser.tier || "FREE";
+    let usageData = null;
+
+    try {
+      const entitlementsRes = await getAccountEntitlements();
+      const entitlements = entitlementsRes.data || entitlementsRes;
+      tier = entitlements.tier || tier;
+    } catch (error) {
+      // Backend entitlements API may not be deployed yet — silently fall back
+      console.warn("Entitlements API unavailable, using cached tier:", error.message);
     }
+
+    // Render tier badge using FE3's shared helper (supports FREE / PREMIUM / ULTRA)
+    if (accountTierElement && typeof renderTierBadge === "function") {
+      renderTierBadge(accountTierElement, tier);
+    } else if (accountTierElement) {
+      accountTierElement.textContent = tier;
+    }
+
+    // CTA Upgrade: hide only for ULTRA (top tier); show for FREE and PREMIUM
+    if (dashboardUpgradeCta) {
+      dashboardUpgradeCta.style.display = tier === "ULTRA" ? "none" : "inline-flex";
+    }
+
+    // Usage data (storage, documents, etc.)
+    try {
+      const usageRes = await getAccountUsage();
+      usageData = usageRes.data || usageRes;
+    } catch (error) {
+      console.warn("Usage API unavailable:", error.message);
+      if (error.status === 403 && typeof showQuotaError === "function") {
+        showQuotaError(error);
+      }
+    }
+
+    return usageData;
   }
 
   function setDocumentsLoading() {
@@ -205,13 +235,39 @@ document.addEventListener("DOMContentLoaded", async function () {
       if (groupCountElement) groupCountElement.textContent = "0";
     }
 
-    // 5. Storage Quota Calculation
-    const totalBytesUsed = documents.reduce((sum, doc) => sum + (doc.fileSize || 0), 0);
-    if (usageRemainingElement) {
-      usageRemainingElement.textContent = formatFileSize(totalBytesUsed);
-    }
-    if (quotaProgressContainer) {
-      quotaProgressContainer.style.display = "none";
+    // 5. Storage Quota Calculation (Step 13: only show real backend usage/limits;
+    // never compute or estimate quota locally, per the "FE does not hardcode
+    // quota" rule — if the backend usage API is unavailable, say so plainly
+    // instead of silently substituting a locally-computed number).
+    const usageData = await loadAccountTierAndUsage();
+
+    if (usageData && usageData.storage) {
+      const usedBytes = usageData.storage.used ?? 0;
+      const limitBytes = usageData.storage.limit ?? 0;
+
+      if (usageRemainingElement && typeof formatUsageProgress === "function") {
+        usageRemainingElement.textContent = formatUsageProgress(usedBytes, limitBytes, "storage");
+      } else if (usageRemainingElement) {
+        usageRemainingElement.textContent = formatFileSize(usedBytes);
+      }
+
+      if (quotaProgressContainer && limitBytes > 0) {
+        const percent = Math.min((usedBytes / limitBytes) * 100, 100);
+        const bar = document.getElementById("usageProgressBar");
+        if (bar) bar.style.width = `${percent}%`;
+        quotaProgressContainer.style.display = "block";
+      } else if (quotaProgressContainer) {
+        quotaProgressContainer.style.display = "none";
+      }
+    } else {
+      // Backend usage API unavailable — show an explicit unavailable state
+      // rather than a locally-estimated number.
+      if (usageRemainingElement) {
+        usageRemainingElement.textContent = "Usage unavailable";
+      }
+      if (quotaProgressContainer) {
+        quotaProgressContainer.style.display = "none";
+      }
     }
   }
 

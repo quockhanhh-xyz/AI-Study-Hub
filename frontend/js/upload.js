@@ -60,7 +60,27 @@ const ALLOWED_TYPES = [
   "image/png",
   "image/jpeg"
 ];
-const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+// Step 13: fallback only while entitlements are loading; real limit comes from
+// getAccountEntitlements().limits.maxFileBytes via loadUploadLimits() below.
+let maxFileSizeBytes = 10 * 1024 * 1024;
+
+async function loadUploadLimits() {
+  try {
+    const res = await getAccountEntitlements();
+    const entitlements = res.data || res;
+    if (entitlements.limits && typeof entitlements.limits.maxFileBytes === "number") {
+      maxFileSizeBytes = entitlements.limits.maxFileBytes;
+    }
+  } catch (err) {
+    console.warn("Could not load account entitlements, using default file size limit:", err);
+  } finally {
+    // Re-render the drop-zone hint text with the real limit, but only if no
+    // file is currently selected (so we don't overwrite an active file preview).
+    if (!fileInput.files || fileInput.files.length === 0) {
+      updateDropZone(null);
+    }
+  }
+}
 
 // Populates the folder select with all folder levels.
 // Upload is not blocked if folder loading fails because folder selection is optional.
@@ -244,7 +264,7 @@ function updateDropZone(file) {
         </div>
         <span class="drop-zone-text" id="dropZoneText">
             Drag & drop or click to select a file<br />
-            <small>(PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG — max 10MB)</small>
+            <small>(PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG — max ${formatFileSize(maxFileSizeBytes)})</small>
         </span>
     `;
   }
@@ -261,8 +281,8 @@ function validateFile(file) {
   if (!ALLOWED_TYPES.includes(file.type)) {
     return "Invalid file type. Only accepts: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG, JPEG.";
   }
-  if (file.size > MAX_SIZE_BYTES) {
-    return `File is too large (${formatFileSize(file.size)}). Maximum size is 10MB.`;
+  if (file.size > maxFileSizeBytes) {
+    return `File is too large (${formatFileSize(file.size)}). Maximum size is ${formatFileSize(maxFileSizeBytes)}.`;
   }
   return null;
 }
@@ -355,6 +375,13 @@ function resolveUploadError(err) {
     return "Upload failed due to a server error. Please try again or contact support if it persists.";
   }
   return msg || "Upload failed. Please try again.";
+}
+
+// Step 13: detects backend quota errors (storage/document/file-size limits)
+// so we can route them through the shared showQuotaError() helper instead
+// of the generic upload error resolver above.
+function isQuotaError(err) {
+  return !!(err && typeof err.code === "string" && /LIMIT_EXCEEDED|QUOTA_EXCEEDED/.test(err.code));
 }
 
 
@@ -567,7 +594,17 @@ uploadForm.addEventListener("submit", async (e) => {
       return;
     }
 
-    showMessage(resolveUploadError(err), "error");
+    // Step 13: quota errors (storage/document/file-size limit exceeded) get the
+    // shared quota toast + a matching inline message, instead of the generic resolver.
+    if (isQuotaError(err) && typeof window.showQuotaError === "function") {
+      window.showQuotaError(err);
+      const quotaMessage = typeof window.getQuotaErrorMessage === "function"
+        ? window.getQuotaErrorMessage(err)
+        : resolveUploadError(err);
+      showMessage(quotaMessage, "error");
+    } else {
+      showMessage(resolveUploadError(err), "error");
+    }
 
   } finally {
     if (cancelUploadBtn && onCancel) {
@@ -602,3 +639,4 @@ document.addEventListener("DOMContentLoaded", function () {
 
 loadFolderOptions();
 loadSubjectOptions();
+loadUploadLimits();
