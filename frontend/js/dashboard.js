@@ -235,7 +235,10 @@ document.addEventListener("DOMContentLoaded", async function () {
       if (groupCountElement) groupCountElement.textContent = "0";
     }
 
-    // 5. Storage Quota Calculation (Step 13: prefer backend usage data, fallback to local calc)
+    // 5. Storage Quota Calculation (Step 13: only show real backend usage/limits;
+    // never compute or estimate quota locally, per the "FE does not hardcode
+    // quota" rule — if the backend usage API is unavailable, say so plainly
+    // instead of silently substituting a locally-computed number).
     const usageData = await loadAccountTierAndUsage();
 
     if (usageData && usageData.storage) {
@@ -257,10 +260,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         quotaProgressContainer.style.display = "none";
       }
     } else {
-      // Fallback: backend usage API not available yet, use local document sum like before
-      const totalBytesUsed = documents.reduce((sum, doc) => sum + (doc.fileSize || 0), 0);
+      // Backend usage API unavailable — show an explicit unavailable state
+      // rather than a locally-estimated number.
       if (usageRemainingElement) {
-        usageRemainingElement.textContent = formatFileSize(totalBytesUsed);
+        usageRemainingElement.textContent = "Usage unavailable";
       }
       if (quotaProgressContainer) {
         quotaProgressContainer.style.display = "none";
