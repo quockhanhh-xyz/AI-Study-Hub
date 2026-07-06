@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.demo.ai_study_hub.config.AiProperties;
 import lombok.RequiredArgsConstructor;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Service
 @RequiredArgsConstructor
@@ -15,76 +16,83 @@ public class TierPolicyService {
 
     private final AiProperties aiProperties;
 
+    // Quota/business limits per tier are fixed and hardcoded here — they are
+    // NOT sourced from AiProperties (that class only configures the AI
+    // provider/model, never business quota values).
     private static final TierLimits FREE_LIMITS = new TierLimits(
-        100L * 1024 * 1024,        // storageBytes: 100MB
-        30,                         // maxDocuments
-        10L * 1024 * 1024,         // maxFileBytes: 10MB
-        20,                         // maxFolders
-        3,                          // maxFolderDepth
-        3,                          // maxOwnedGroups
-        10,                         // maxMembersPerGroup
-        30,                         // maxActiveShares
-        3,                          // maxAiSessionsPerDocument
-        30,                         // maxMessagesPerSession
-        5,                          // aiQuestionsPerDay
-        500,                        // maxQuestionChars
-        3,                          // maxContextChunks
-        500,                        // maxOutputTokens
-        null,                       // aiModel (dynamic)
-        1,                          // summaryGenerationsPerDay
-        1,                          // flashcardSetsPerDay
-        1,                          // quizSetsPerDay
-        5                           // itemsPerSet
+            100L * 1024 * 1024,        // storageBytes: 100MB
+            30,                         // maxDocuments
+            10L * 1024 * 1024,         // maxFileBytes: 10MB
+            20,                         // maxFolders
+            3,                          // maxFolderDepth
+            3,                          // maxOwnedGroups
+            10,                         // maxMembersPerGroup
+            30,                         // maxActiveShares
+            3,                          // maxAiSessionsPerDocument
+            30,                         // maxMessagesPerSession
+            5,                          // aiQuestionsPerDay
+            500,                        // maxQuestionChars
+            3,                          // maxContextChunks
+            500,                        // maxOutputTokens
+            null,                       // aiModel (resolved dynamically, see getModelForTier)
+            1,                          // summaryGenerationsPerDay
+            1,                          // flashcardSetsPerDay
+            1,                          // quizSetsPerDay
+            5                           // itemsPerSet
     );
 
     private static final TierLimits PREMIUM_LIMITS = new TierLimits(
-        2L * 1024 * 1024 * 1024,   // storageBytes: 2GB
-        500,                         // maxDocuments
-        50L * 1024 * 1024,          // maxFileBytes: 50MB
-        200,                         // maxFolders
-        8,                           // maxFolderDepth
-        30,                          // maxOwnedGroups
-        100,                         // maxMembersPerGroup
-        1000,                        // maxActiveShares
-        30,                          // maxAiSessionsPerDocument
-        300,                         // maxMessagesPerSession
-        50,                          // aiQuestionsPerDay
-        2000,                        // maxQuestionChars
-        8,                           // maxContextChunks
-        1500,                        // maxOutputTokens
-        null,                       // aiModel (dynamic)
-        10,                          // summaryGenerationsPerDay
-        10,                          // flashcardSetsPerDay
-        10,                          // quizSetsPerDay
-        15                           // itemsPerSet
+            2L * 1024 * 1024 * 1024,   // storageBytes: 2GB
+            500,                         // maxDocuments
+            50L * 1024 * 1024,          // maxFileBytes: 50MB
+            200,                         // maxFolders
+            8,                           // maxFolderDepth
+            30,                          // maxOwnedGroups
+            100,                         // maxMembersPerGroup
+            1000,                        // maxActiveShares
+            30,                          // maxAiSessionsPerDocument
+            300,                         // maxMessagesPerSession
+            50,                          // aiQuestionsPerDay
+            2000,                        // maxQuestionChars
+            8,                           // maxContextChunks
+            1500,                        // maxOutputTokens
+            null,                       // aiModel (resolved dynamically)
+            10,                          // summaryGenerationsPerDay
+            10,                          // flashcardSetsPerDay
+            10,                          // quizSetsPerDay
+            15                           // itemsPerSet
     );
 
     private static final TierLimits ULTRA_LIMITS = new TierLimits(
-        10L * 1024 * 1024 * 1024,  // storageBytes: 10GB
-        2000,                        // maxDocuments
-        100L * 1024 * 1024,         // maxFileBytes: 100MB
-        1000,                        // maxFolders
-        12,                          // maxFolderDepth
-        100,                         // maxOwnedGroups
-        300,                         // maxMembersPerGroup
-        5000,                        // maxActiveShares
-        100,                         // maxAiSessionsPerDocument
-        1000,                        // maxMessagesPerSession
-        200,                         // aiQuestionsPerDay
-        5000,                        // maxQuestionChars
-        15,                          // maxContextChunks
-        3000,                        // maxOutputTokens
-        null,                       // aiModel (dynamic)
-        50,                          // summaryGenerationsPerDay
-        50,                          // flashcardSetsPerDay
-        50,                          // quizSetsPerDay
-        30                           // itemsPerSet
+            10L * 1024 * 1024 * 1024,  // storageBytes: 10GB
+            2000,                        // maxDocuments
+            100L * 1024 * 1024,         // maxFileBytes: 100MB
+            1000,                        // maxFolders
+            12,                          // maxFolderDepth
+            100,                         // maxOwnedGroups
+            300,                         // maxMembersPerGroup
+            5000,                        // maxActiveShares
+            100,                         // maxAiSessionsPerDocument
+            1000,                        // maxMessagesPerSession
+            200,                         // aiQuestionsPerDay
+            5000,                        // maxQuestionChars
+            15,                          // maxContextChunks
+            3000,                        // maxOutputTokens
+            null,                       // aiModel (resolved dynamically)
+            50,                          // summaryGenerationsPerDay
+            50,                          // flashcardSetsPerDay
+            50,                          // quizSetsPerDay
+            30                           // itemsPerSet
     );
 
+    /**
+     * Effective tier: falls back to FREE once tierExpiresAt has passed.
+     * Comparison is always done in UTC to avoid server-timezone drift.
+     */
     public UserTier getEffectiveTier(User user) {
         if (user.getTier() == UserTier.FREE) return UserTier.FREE;
         LocalDateTime expiresAt = user.getTierExpiresAt();
-        if (expiresAt != null && expiresAt.isAfter(LocalDateTime.now(java.time.ZoneOffset.UTC))) {
+        if (expiresAt != null && expiresAt.isAfter(LocalDateTime.now(ZoneOffset.UTC))) {
             return user.getTier();
         }
         return UserTier.FREE;
@@ -98,25 +106,25 @@ public class TierPolicyService {
         };
         String model = getModelForTier(tier);
         return new TierLimits(
-            base.storageBytes(),
-            base.maxDocuments(),
-            base.maxFileBytes(),
-            base.maxFolders(),
-            base.maxFolderDepth(),
-            base.maxOwnedGroups(),
-            base.maxMembersPerGroup(),
-            base.maxActiveShares(),
-            base.maxAiSessionsPerDocument(),
-            base.maxMessagesPerSession(),
-            base.aiQuestionsPerDay(),
-            base.maxQuestionChars(),
-            base.maxContextChunks(),
-            base.maxOutputTokens(),
-            model,
-            base.summaryGenerationsPerDay(),
-            base.flashcardSetsPerDay(),
-            base.quizSetsPerDay(),
-            base.itemsPerSet()
+                base.storageBytes(),
+                base.maxDocuments(),
+                base.maxFileBytes(),
+                base.maxFolders(),
+                base.maxFolderDepth(),
+                base.maxOwnedGroups(),
+                base.maxMembersPerGroup(),
+                base.maxActiveShares(),
+                base.maxAiSessionsPerDocument(),
+                base.maxMessagesPerSession(),
+                base.aiQuestionsPerDay(),
+                base.maxQuestionChars(),
+                base.maxContextChunks(),
+                base.maxOutputTokens(),
+                model,
+                base.summaryGenerationsPerDay(),
+                base.flashcardSetsPerDay(),
+                base.quizSetsPerDay(),
+                base.itemsPerSet()
         );
     }
 

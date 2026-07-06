@@ -10,14 +10,23 @@
  * @returns {string} Human-readable error message.
  */
 function getPaymentErrorMessage(error) {
-  const status = error.status || error.statusCode;
-  switch (status) {
-    case 400: return "Invalid plan selected.";
-    case 401: return "Please log in to upgrade your account.";
-    case 404: return "Payment not found.";
-    case 409: return "User is already Premium or this payment is no longer pending.";
-    case 500: return "Payment service is currently unavailable.";
-    default:  return error.message || "An unexpected error occurred.";
+  if (error?.message) {
+    return error.message;
+  }
+
+  switch (error?.status) {
+    case 400:
+      return "The selected plan is invalid.";
+    case 401:
+      return "Please log in to upgrade your account.";
+    case 404:
+      return "Payment not found.";
+    case 409:
+      return "This payment action is no longer available.";
+    case 500:
+      return "Payment service is currently unavailable.";
+    default:
+      return "An unexpected payment error occurred.";
   }
 }
 
@@ -34,8 +43,10 @@ async function getPaymentPlans() {
 
 /**
  * Creates a mock payment session for the given plan code.
- * Only PREMIUM planCode should be passed from the UI flow.
- * @param {string} planCode - The plan to purchase (e.g. "PREMIUM").
+ * Supported purchasable plan codes: PREMIUM, ULTRA.
+ * FREE is display-only and cannot be purchased.
+ * Both paid plans currently have a one-month duration.
+ * @param {string} planCode - The plan to purchase (e.g. "PREMIUM" or "ULTRA").
  * @returns {Promise<Object>} Created payment session data.
  */
 async function createMockPayment(planCode) {

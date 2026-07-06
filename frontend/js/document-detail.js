@@ -82,6 +82,12 @@ let aiQaSending = false;
 let aiQaProcessingStatus = "PENDING";
 let aiQaUsageInfo = null;
 
+// Step 13: detects backend quota errors (e.g. share limit) so we can route
+// them through the shared showQuotaError() helper.
+function isQuotaError(error) {
+    return !!(error && typeof error.code === "string" && /LIMIT_EXCEEDED|QUOTA_EXCEEDED/.test(error.code));
+}
+
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
     const isAuthenticated = window.authReady
@@ -1070,7 +1076,12 @@ function initSharingUI() {
             window.showToast("Document shared successfully.", "success");
             loadSharingInfo(currentDocumentId);
         } catch (err) {
-            errorEl.textContent = err.message || "Failed to share document.";
+            if (isQuotaError(err) && typeof window.showQuotaError === "function") {
+                window.showQuotaError(err);
+                errorEl.textContent = window.getQuotaErrorMessage ? window.getQuotaErrorMessage(err) : err.message;
+            } else {
+                errorEl.textContent = err.message || "Failed to share document.";
+            }
             errorEl.style.display = "block";
         }
     });
@@ -1090,7 +1101,12 @@ function initSharingUI() {
             window.showToast("Document shared to group successfully.", "success");
             loadSharingInfo(currentDocumentId);
         } catch (err) {
-            errorEl.textContent = err.message || "Failed to share to group.";
+            if (isQuotaError(err) && typeof window.showQuotaError === "function") {
+                window.showQuotaError(err);
+                errorEl.textContent = window.getQuotaErrorMessage ? window.getQuotaErrorMessage(err) : err.message;
+            } else {
+                errorEl.textContent = err.message || "Failed to share to group.";
+            }
             errorEl.style.display = "block";
         }
     });
@@ -1483,7 +1499,8 @@ async function sendAiQaQuestion(question) {
         }
     } catch (err) {
         if (loadingBubble) loadingBubble.remove();
-        const message = window.mapAiError(err.status);
+        // Pass the entire error object instead of just the status code to allow advanced mapping of explicit error codes
+        const message = window.mapAiError(err);
         showAiQaBanner(message, "error");
     } finally {
         aiQaSending = false;

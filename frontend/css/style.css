@@ -634,6 +634,14 @@ textarea.success {
   border: 1px solid #f59e0b;
 }
 
+.tier-badge-ultra {
+  background: linear-gradient(135deg, #1e1b4b, #311042, #1e1b4b);
+  color: #ffffff;
+  border: 1px solid #c084fc;
+  box-shadow: 0 0 8px rgba(192, 132, 252, 0.4);
+  font-weight: bold;
+}
+
 .stat-placeholder-note {
   margin-top: 6px;
   font-size: 11px;

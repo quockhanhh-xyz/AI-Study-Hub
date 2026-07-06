@@ -11,6 +11,12 @@ import org.springframework.context.annotation.Configuration;
  *
  * Default profile: AI_PROVIDER=mock (no API key required).
  * Production profile: AI_PROVIDER=gemini + GEMINI_API_KEY env var.
+ *
+ * NOTE: per-tier quota values (daily question limit, max question chars,
+ * max context chunks, max output tokens) are NOT configured here — they are
+ * owned entirely by TierPolicyService as fixed, hardcoded values per tier.
+ * This class only configures the AI *provider* (which model backs each tier,
+ * API key, timeouts), never quota/business limits.
  */
 @Configuration
 @ConfigurationProperties(prefix = "ai")
