@@ -22,6 +22,18 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(message));
     }
 
+    @ExceptionHandler(PaymentException.class)
+    @SuppressWarnings("unchecked")
+    public ResponseEntity<ApiResponse<Object>> handlePaymentException(PaymentException ex) {
+        return ResponseEntity.status(ex.getStatusCode())
+                .body(ApiResponse.builder()
+                        .success(false)
+                        .code(ex.getCode())
+                        .message(ex.getReason())
+                        .data(ex.getData())
+                        .build());
+    }
+
     @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
     public ResponseEntity<ApiResponse<Void>> handleResponseStatusException(
             org.springframework.web.server.ResponseStatusException ex) {
