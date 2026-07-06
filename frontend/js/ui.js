@@ -650,8 +650,8 @@ window.UIHelper = UIHelper;
 // ─────────────────────────────────────────────────────────────
 
 /**
- * Returns an HTML string for a tier badge (FREE or PREMIUM).
- * @param {string} tier - "FREE" or "PREMIUM"
+ * Returns an HTML string for a tier badge (FREE, PREMIUM, or ULTRA).
+ * @param {string} tier - "FREE", "PREMIUM", or "ULTRA"
  * @returns {string} HTML badge string.
  */
 function getTierBadgeHTML(tier) {
