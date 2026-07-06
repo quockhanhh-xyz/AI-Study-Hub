@@ -667,7 +667,7 @@ function getTierBadgeHTML(tier) {
 /**
  * Renders a tier badge into a given DOM element.
  * @param {HTMLElement} element - The container element to render into.
- * @param {string} tier - "FREE" or "PREMIUM"
+ * @param {string} tier - "FREE", "PREMIUM", or "ULTRA"
  */
 function renderTierBadge(element, tier) {
   if (!element) return;
