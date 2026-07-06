@@ -7,6 +7,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PlanResponse {
+    private String tier;
     private String planCode;
     private String planName;
     private String targetTier;
@@ -15,4 +16,5 @@ public class PlanResponse {
     private String billingLabel;
     private int durationMonths;
     private int aiDailyLimit;
+    private boolean purchasable;
 }

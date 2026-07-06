@@ -13,12 +13,18 @@ public class PaymentResponse {
     private Long paymentId;
     private String planCode;
     private String planName;
+    private String targetTier;
     private long amount;
     private String currency;
     private String billingLabel;
     private String status;
     private String paymentMethod;
+    private String paymentProvider;
+    private String paymentUrl;
     private String tier;
     private LocalDateTime createdAt;
     private LocalDateTime paidAt;
+    private LocalDateTime expiredAt;
+    private String reviewReason;
+    private LocalDateTime reviewRequiredAt;
 }
