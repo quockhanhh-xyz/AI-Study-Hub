@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 public class EntitlementResponse {
     private String tier;
     private String effectiveTier;
-    private LocalDateTime tierExpiresAt;
+    private String tierExpiresAt;
     private LimitsDto limits;
 
     @Data

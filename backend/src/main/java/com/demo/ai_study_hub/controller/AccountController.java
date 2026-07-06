@@ -30,10 +30,12 @@ public class AccountController {
             UserTier effectiveTier = tierPolicyService.getEffectiveTier(user);
             TierLimits limits = tierPolicyService.getLimits(effectiveTier);
 
+            String tierExpiresAtStr = user.getTierExpiresAt() != null ? user.getTierExpiresAt().atZone(java.time.ZoneOffset.UTC).format(java.time.format.DateTimeFormatter.ISO_INSTANT) : null;
+
             EntitlementResponse response = EntitlementResponse.builder()
                     .tier(user.getTier().name())
                     .effectiveTier(effectiveTier.name())
-                    .tierExpiresAt(user.getTierExpiresAt())
+                    .tierExpiresAt(tierExpiresAtStr)
                     .limits(EntitlementResponse.LimitsDto.builder()
                             .maxStorageBytes(limits.storageBytes())
                             .maxDocuments(limits.maxDocuments())
@@ -77,10 +79,12 @@ public class AccountController {
             long usedShares = usageService.countActiveShares(user);
             long usedAiToday = usageService.countAiQuestionsToday(user);
 
+            String tierExpiresAtStr = user.getTierExpiresAt() != null ? user.getTierExpiresAt().atZone(java.time.ZoneOffset.UTC).format(java.time.format.DateTimeFormatter.ISO_INSTANT) : null;
+
             AccountUsageResponse response = AccountUsageResponse.builder()
                     .tier(user.getTier().name())
                     .effectiveTier(effectiveTier.name())
-                    .tierExpiresAt(user.getTierExpiresAt())
+                    .tierExpiresAt(tierExpiresAtStr)
                     .storage(build(limits.storageBytes(), usedStorage))
                     .documents(build(limits.maxDocuments(), usedDocs))
                     .folders(build(limits.maxFolders(), usedFolders))

@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 public class AccountUsageResponse {
     private String tier;
     private String effectiveTier;
-    private LocalDateTime tierExpiresAt;
+    private String tierExpiresAt;
     private ResourceUsage storage;
     private ResourceUsage documents;
     private ResourceUsage folders;
