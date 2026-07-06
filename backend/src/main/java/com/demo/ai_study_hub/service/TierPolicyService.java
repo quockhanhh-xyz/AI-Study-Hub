@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.demo.ai_study_hub.config.AiProperties;
 import lombok.RequiredArgsConstructor;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Service
 @RequiredArgsConstructor
@@ -15,6 +16,9 @@ public class TierPolicyService {
 
     private final AiProperties aiProperties;
 
+    // Quota/business limits per tier are fixed and hardcoded here — they are
+    // NOT sourced from AiProperties (that class only configures the AI
+    // provider/model, never business quota values).
     private static final TierLimits FREE_LIMITS = new TierLimits(
             100L * 1024 * 1024,        // storageBytes: 100MB
             30,                         // maxDocuments
@@ -30,7 +34,7 @@ public class TierPolicyService {
             500,                        // maxQuestionChars
             3,                          // maxContextChunks
             500,                        // maxOutputTokens
-            null,                       // aiModel (dynamic)
+            null,                       // aiModel (resolved dynamically, see getModelForTier)
             1,                          // summaryGenerationsPerDay
             1,                          // flashcardSetsPerDay
             1,                          // quizSetsPerDay
@@ -52,7 +56,7 @@ public class TierPolicyService {
             2000,                        // maxQuestionChars
             8,                           // maxContextChunks
             1500,                        // maxOutputTokens
-            null,                       // aiModel (dynamic)
+            null,                       // aiModel (resolved dynamically)
             10,                          // summaryGenerationsPerDay
             10,                          // flashcardSetsPerDay
             10,                          // quizSetsPerDay
@@ -74,17 +78,21 @@ public class TierPolicyService {
             5000,                        // maxQuestionChars
             15,                          // maxContextChunks
             3000,                        // maxOutputTokens
-            null,                       // aiModel (dynamic)
+            null,                       // aiModel (resolved dynamically)
             50,                          // summaryGenerationsPerDay
             50,                          // flashcardSetsPerDay
             50,                          // quizSetsPerDay
             30                           // itemsPerSet
     );
 
+    /**
+     * Effective tier: falls back to FREE once tierExpiresAt has passed.
+     * Comparison is always done in UTC to avoid server-timezone drift.
+     */
     public UserTier getEffectiveTier(User user) {
         if (user.getTier() == UserTier.FREE) return UserTier.FREE;
         LocalDateTime expiresAt = user.getTierExpiresAt();
-        if (expiresAt != null && expiresAt.isAfter(LocalDateTime.now(java.time.ZoneOffset.UTC))) {
+        if (expiresAt != null && expiresAt.isAfter(LocalDateTime.now(ZoneOffset.UTC))) {
             return user.getTier();
         }
         return UserTier.FREE;
