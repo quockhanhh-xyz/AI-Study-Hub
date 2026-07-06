@@ -182,7 +182,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       pricingGrid.style.display = "grid";
     } catch (error) {
       pricingLoader.style.display = "none";
-      pricingError.textContent = getPaymentErrorMessage(error);
+      pricingError.textContent = mapPaymentError(error);
       pricingError.style.display = "flex";
     }
   }
@@ -208,7 +208,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       showToast("Mock payment created. Please simulate an outcome.", "info");
     } catch (error) {
-      showToast(getPaymentErrorMessage(error), "error");
+      showToast(mapPaymentError(error), "error");
     } finally {
       setButtonLoading(btn, false);
     }
@@ -237,20 +237,20 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       showToast(result.message || "Payment processed.", payment.status === "SUCCESS" ? "success" : "info");
     } catch (error) {
-      showToast(getPaymentErrorMessage(error), "error");
+      showToast(mapPaymentError(error), "error");
     } finally {
       setButtonLoading(btn, false);
     }
   }
 
   simulateSuccessBtn.addEventListener("click", function (e) {
-    handleCheckoutAction("success", markMockPaymentSuccess, e.target);
+    handleCheckoutAction("success", mockPaymentSuccess, e.target);
   });
   simulateFailBtn.addEventListener("click", function (e) {
-    handleCheckoutAction("fail", markMockPaymentFail, e.target);
+    handleCheckoutAction("fail", mockPaymentFail, e.target);
   });
   cancelPaymentBtn.addEventListener("click", function (e) {
-    handleCheckoutAction("cancel", cancelMockPayment, e.target);
+    handleCheckoutAction("cancel", mockPaymentCancel, e.target);
   });
 
   // ─────────────────────────────────────────────
@@ -333,7 +333,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       historyList.style.display = "flex";
     } catch (error) {
       historyLoader.style.display = "none";
-      historyError.textContent = getPaymentErrorMessage(error);
+      historyError.textContent = mapPaymentError(error);
       historyError.style.display = "flex";
     }
   }
