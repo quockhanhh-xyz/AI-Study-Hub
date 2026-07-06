@@ -2,6 +2,7 @@ package com.demo.ai_study_hub;
 
 import com.demo.ai_study_hub.dto.PaymentStatus;
 import com.demo.ai_study_hub.dto.PlanCode;
+import com.demo.ai_study_hub.dto.PaymentProvider;
 import com.demo.ai_study_hub.entity.PaymentOrder;
 import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.enums.UserTier;
@@ -87,11 +88,12 @@ class PaymentServiceIntegrationTest {
         Long orderId1 = transactionTemplate.execute(status -> {
             PaymentOrder order = PaymentOrder.builder()
                     .user(testUser)
-                    .planCode(PlanCode.PREMIUM)
+                    .planCode(PlanCode.PREMIUM_1_MONTH)
                     .amount(199000L)
                     .currency("VND")
                     .status(PaymentStatus.PENDING)
                     .paymentMethod("MOCK")
+                    .paymentProvider(PaymentProvider.MOCK)
                     .build();
             return paymentOrderRepository.save(order).getPaymentId();
         });
@@ -99,11 +101,12 @@ class PaymentServiceIntegrationTest {
         Long orderId2 = transactionTemplate.execute(status -> {
             PaymentOrder order = PaymentOrder.builder()
                     .user(testUser)
-                    .planCode(PlanCode.PREMIUM)
+                    .planCode(PlanCode.PREMIUM_1_MONTH)
                     .amount(199000L)
                     .currency("VND")
                     .status(PaymentStatus.PENDING)
                     .paymentMethod("MOCK")
+                    .paymentProvider(PaymentProvider.MOCK)
                     .build();
             return paymentOrderRepository.save(order).getPaymentId();
         });
@@ -196,11 +199,12 @@ class PaymentServiceIntegrationTest {
         Long premiumOrderId = transactionTemplate.execute(status -> {
             PaymentOrder order = PaymentOrder.builder()
                     .user(testUser)
-                    .planCode(PlanCode.PREMIUM)
+                    .planCode(PlanCode.PREMIUM_1_MONTH)
                     .amount(199000L)
                     .currency("VND")
                     .status(PaymentStatus.PENDING)
                     .paymentMethod("MOCK")
+                    .paymentProvider(PaymentProvider.MOCK)
                     .build();
             return paymentOrderRepository.save(order).getPaymentId();
         });
@@ -208,11 +212,12 @@ class PaymentServiceIntegrationTest {
         Long ultraOrderId = transactionTemplate.execute(status -> {
             PaymentOrder order = PaymentOrder.builder()
                     .user(testUser)
-                    .planCode(PlanCode.ULTRA)
+                    .planCode(PlanCode.ULTRA_1_MONTH)
                     .amount(399000L)
                     .currency("VND")
                     .status(PaymentStatus.PENDING)
                     .paymentMethod("MOCK")
+                    .paymentProvider(PaymentProvider.MOCK)
                     .build();
             return paymentOrderRepository.save(order).getPaymentId();
         });

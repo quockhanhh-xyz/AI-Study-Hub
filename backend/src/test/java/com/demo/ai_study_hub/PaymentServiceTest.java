@@ -39,6 +39,7 @@ class PaymentServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private PlanService planService;
     @Mock private TierPolicyService tierPolicyService;
+    @Mock private com.demo.ai_study_hub.config.PaymentProperties paymentProperties;
 
     @InjectMocks
     private PaymentService paymentService;
@@ -46,6 +47,20 @@ class PaymentServiceTest {
     private User freeUser;
     private User premiumUser;
     private User ultraUser;
+
+
+    private com.demo.ai_study_hub.service.PlanService.PaymentPlan buildPaymentPlan(
+            String planCode, UserTier targetTier, long price) {
+        return com.demo.ai_study_hub.service.PlanService.PaymentPlan.builder()
+                .planCode(planCode)
+                .planName(targetTier.name())
+                .targetTier(targetTier)
+                .price(price)
+                .durationMonths(1)
+                .billingLabel("1 month")
+                .purchasable(true)
+                .build();
+    }
 
     @BeforeEach
     void setUp() {
@@ -72,6 +87,13 @@ class PaymentServiceTest {
             User u = invocation.getArgument(0);
             return u.getTier();
         });
+        lenient().when(paymentProperties.isMockEnabled()).thenReturn(true);
+
+        // createOrderCommon() locks the user row via findByIdForUpdate before
+        // checking pending/review state — stub it for the standard fixtures.
+        lenient().when(userRepository.findByIdForUpdate(freeUser.getUserId())).thenReturn(Optional.of(freeUser));
+        lenient().when(userRepository.findByIdForUpdate(premiumUser.getUserId())).thenReturn(Optional.of(premiumUser));
+        lenient().when(userRepository.findByIdForUpdate(ultraUser.getUserId())).thenReturn(Optional.of(ultraUser));
     }
 
     // =========================================================================
@@ -87,11 +109,11 @@ class PaymentServiceTest {
 
         assertEquals(3, plans.size());
         PlanResponse free = plans.stream().filter(p -> PlanCode.FREE.equals(p.getPlanCode())).findFirst().orElseThrow();
-        PlanResponse premium = plans.stream().filter(p -> PlanCode.PREMIUM.equals(p.getPlanCode())).findFirst().orElseThrow();
-        PlanResponse ultra = plans.stream().filter(p -> PlanCode.ULTRA.equals(p.getPlanCode())).findFirst().orElseThrow();
+        PlanResponse premium = plans.stream().filter(p -> PlanCode.PREMIUM_1_MONTH.equals(p.getPlanCode())).findFirst().orElseThrow();
+        PlanResponse ultra = plans.stream().filter(p -> PlanCode.ULTRA_1_MONTH.equals(p.getPlanCode())).findFirst().orElseThrow();
 
         assertEquals(0, free.getPrice());
-        assertEquals("free", free.getBillingLabel());
+        assertEquals("Free", free.getBillingLabel());
         assertEquals("FREE", free.getTargetTier());
         assertEquals("VND", free.getCurrency());
 
@@ -121,8 +143,8 @@ class PaymentServiceTest {
         PlanService realPlanService = new PlanService(new TierPolicyService(new AiProperties()));
 
         assertFalse(realPlanService.isPurchasablePlanCode(PlanCode.FREE));
-        assertTrue(realPlanService.isPurchasablePlanCode(PlanCode.PREMIUM));
-        assertTrue(realPlanService.isPurchasablePlanCode(PlanCode.ULTRA));
+        assertTrue(realPlanService.isPurchasablePlanCode(PlanCode.PREMIUM_1_MONTH));
+        assertTrue(realPlanService.isPurchasablePlanCode(PlanCode.ULTRA_1_MONTH));
     }
 
     // =========================================================================
@@ -131,19 +153,19 @@ class PaymentServiceTest {
 
     @Test
     void createMockPayment_WhenFreeUserPremiumPlan_ShouldCreatePendingOrder() {
-        when(planService.isValidPlanCode(PlanCode.PREMIUM)).thenReturn(true);
-        when(planService.getTargetTier(PlanCode.PREMIUM)).thenReturn(UserTier.PREMIUM);
-        when(planService.getPrice(PlanCode.PREMIUM)).thenReturn(199000L);
+        when(planService.isValidPlanCode(PlanCode.PREMIUM_1_MONTH)).thenReturn(true);
+        when(planService.isPurchasablePlanCode(PlanCode.PREMIUM_1_MONTH)).thenReturn(true);
+        when(planService.getPlan(PlanCode.PREMIUM_1_MONTH)).thenReturn(buildPaymentPlan(PlanCode.PREMIUM_1_MONTH, UserTier.PREMIUM, 199000L));
         when(paymentOrderRepository.save(any(PaymentOrder.class))).thenAnswer(inv -> {
             PaymentOrder order = inv.getArgument(0);
             order.setPaymentId(1L);
             return order;
         });
 
-        PaymentResponse response = paymentService.createMockPayment(freeUser, PlanCode.PREMIUM);
+        PaymentResponse response = paymentService.createMockPayment(freeUser, PlanCode.PREMIUM_1_MONTH);
 
         assertNotNull(response);
-        assertEquals(PlanCode.PREMIUM, response.getPlanCode());
+        assertEquals(PlanCode.PREMIUM_1_MONTH, response.getPlanCode());
         assertEquals(199000L, response.getAmount());
         assertEquals("VND", response.getCurrency());
         assertEquals(PaymentStatus.PENDING, response.getStatus());
@@ -153,19 +175,19 @@ class PaymentServiceTest {
 
     @Test
     void createMockPayment_WhenFreeUserUltraPlan_ShouldCreatePendingOrder() {
-        when(planService.isValidPlanCode(PlanCode.ULTRA)).thenReturn(true);
-        when(planService.getTargetTier(PlanCode.ULTRA)).thenReturn(UserTier.ULTRA);
-        when(planService.getPrice(PlanCode.ULTRA)).thenReturn(399000L);
+        when(planService.isValidPlanCode(PlanCode.ULTRA_1_MONTH)).thenReturn(true);
+        when(planService.isPurchasablePlanCode(PlanCode.ULTRA_1_MONTH)).thenReturn(true);
+        when(planService.getPlan(PlanCode.ULTRA_1_MONTH)).thenReturn(buildPaymentPlan(PlanCode.ULTRA_1_MONTH, UserTier.ULTRA, 399000L));
         when(paymentOrderRepository.save(any(PaymentOrder.class))).thenAnswer(inv -> {
             PaymentOrder order = inv.getArgument(0);
             order.setPaymentId(2L);
             return order;
         });
 
-        PaymentResponse response = paymentService.createMockPayment(freeUser, PlanCode.ULTRA);
+        PaymentResponse response = paymentService.createMockPayment(freeUser, PlanCode.ULTRA_1_MONTH);
 
         assertNotNull(response);
-        assertEquals(PlanCode.ULTRA, response.getPlanCode());
+        assertEquals(PlanCode.ULTRA_1_MONTH, response.getPlanCode());
         assertEquals(399000L, response.getAmount());
         assertEquals(PaymentStatus.PENDING, response.getStatus());
         verify(paymentOrderRepository, times(1)).save(any(PaymentOrder.class));
@@ -206,16 +228,16 @@ class PaymentServiceTest {
     @Test
     void createMockPayment_WhenPremiumUserRenewsPremium_ShouldSucceed() {
         // PREMIUM -> PREMIUM is a renewal under the new rules, no longer blocked.
-        when(planService.isValidPlanCode(PlanCode.PREMIUM)).thenReturn(true);
-        when(planService.getTargetTier(PlanCode.PREMIUM)).thenReturn(UserTier.PREMIUM);
-        when(planService.getPrice(PlanCode.PREMIUM)).thenReturn(199000L);
+        when(planService.isValidPlanCode(PlanCode.PREMIUM_1_MONTH)).thenReturn(true);
+        when(planService.isPurchasablePlanCode(PlanCode.PREMIUM_1_MONTH)).thenReturn(true);
+        when(planService.getPlan(PlanCode.PREMIUM_1_MONTH)).thenReturn(buildPaymentPlan(PlanCode.PREMIUM_1_MONTH, UserTier.PREMIUM, 199000L));
         when(paymentOrderRepository.save(any(PaymentOrder.class))).thenAnswer(inv -> {
             PaymentOrder order = inv.getArgument(0);
             order.setPaymentId(5L);
             return order;
         });
 
-        PaymentResponse response = paymentService.createMockPayment(premiumUser, PlanCode.PREMIUM);
+        PaymentResponse response = paymentService.createMockPayment(premiumUser, PlanCode.PREMIUM_1_MONTH);
 
         assertNotNull(response);
         assertEquals(PaymentStatus.PENDING, response.getStatus());
@@ -224,16 +246,16 @@ class PaymentServiceTest {
 
     @Test
     void createMockPayment_WhenPremiumUserBuysUltra_ShouldSucceedAsUpgrade() {
-        when(planService.isValidPlanCode(PlanCode.ULTRA)).thenReturn(true);
-        when(planService.getTargetTier(PlanCode.ULTRA)).thenReturn(UserTier.ULTRA);
-        when(planService.getPrice(PlanCode.ULTRA)).thenReturn(399000L);
+        when(planService.isValidPlanCode(PlanCode.ULTRA_1_MONTH)).thenReturn(true);
+        when(planService.isPurchasablePlanCode(PlanCode.ULTRA_1_MONTH)).thenReturn(true);
+        when(planService.getPlan(PlanCode.ULTRA_1_MONTH)).thenReturn(buildPaymentPlan(PlanCode.ULTRA_1_MONTH, UserTier.ULTRA, 399000L));
         when(paymentOrderRepository.save(any(PaymentOrder.class))).thenAnswer(inv -> {
             PaymentOrder order = inv.getArgument(0);
             order.setPaymentId(6L);
             return order;
         });
 
-        PaymentResponse response = paymentService.createMockPayment(premiumUser, PlanCode.ULTRA);
+        PaymentResponse response = paymentService.createMockPayment(premiumUser, PlanCode.ULTRA_1_MONTH);
 
         assertNotNull(response);
         assertEquals(PaymentStatus.PENDING, response.getStatus());
@@ -242,11 +264,12 @@ class PaymentServiceTest {
 
     @Test
     void createMockPayment_WhenUltraUserBuysPremium_ShouldThrow409Downgrade() {
-        when(planService.isValidPlanCode(PlanCode.PREMIUM)).thenReturn(true);
-        when(planService.getTargetTier(PlanCode.PREMIUM)).thenReturn(UserTier.PREMIUM);
+        when(planService.isValidPlanCode(PlanCode.PREMIUM_1_MONTH)).thenReturn(true);
+        when(planService.isPurchasablePlanCode(PlanCode.PREMIUM_1_MONTH)).thenReturn(true);
+        when(planService.getTargetTier(PlanCode.PREMIUM_1_MONTH)).thenReturn(UserTier.PREMIUM);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                paymentService.createMockPayment(ultraUser, PlanCode.PREMIUM));
+                paymentService.createMockPayment(ultraUser, PlanCode.PREMIUM_1_MONTH));
 
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
         assertTrue(ex.getReason().contains("Downgrade from ULTRA to PREMIUM"));
@@ -255,16 +278,16 @@ class PaymentServiceTest {
 
     @Test
     void createMockPayment_WhenUltraUserRenewsUltra_ShouldSucceed() {
-        when(planService.isValidPlanCode(PlanCode.ULTRA)).thenReturn(true);
-        when(planService.getTargetTier(PlanCode.ULTRA)).thenReturn(UserTier.ULTRA);
-        when(planService.getPrice(PlanCode.ULTRA)).thenReturn(399000L);
+        when(planService.isValidPlanCode(PlanCode.ULTRA_1_MONTH)).thenReturn(true);
+        when(planService.isPurchasablePlanCode(PlanCode.ULTRA_1_MONTH)).thenReturn(true);
+        when(planService.getPlan(PlanCode.ULTRA_1_MONTH)).thenReturn(buildPaymentPlan(PlanCode.ULTRA_1_MONTH, UserTier.ULTRA, 399000L));
         when(paymentOrderRepository.save(any(PaymentOrder.class))).thenAnswer(inv -> {
             PaymentOrder order = inv.getArgument(0);
             order.setPaymentId(7L);
             return order;
         });
 
-        PaymentResponse response = paymentService.createMockPayment(ultraUser, PlanCode.ULTRA);
+        PaymentResponse response = paymentService.createMockPayment(ultraUser, PlanCode.ULTRA_1_MONTH);
 
         assertNotNull(response);
         assertEquals(PaymentStatus.PENDING, response.getStatus());
@@ -279,9 +302,10 @@ class PaymentServiceTest {
         expiredUser.setTier(UserTier.PREMIUM);
         expiredUser.setTierExpiresAt(LocalDateTime.now(ZoneOffset.UTC).minusDays(1));
 
-        when(planService.isValidPlanCode(PlanCode.PREMIUM)).thenReturn(true);
-        when(planService.getTargetTier(PlanCode.PREMIUM)).thenReturn(UserTier.PREMIUM);
-        when(planService.getPrice(PlanCode.PREMIUM)).thenReturn(199000L);
+        when(planService.isValidPlanCode(PlanCode.PREMIUM_1_MONTH)).thenReturn(true);
+        when(planService.isPurchasablePlanCode(PlanCode.PREMIUM_1_MONTH)).thenReturn(true);
+        when(planService.getPlan(PlanCode.PREMIUM_1_MONTH)).thenReturn(buildPaymentPlan(PlanCode.PREMIUM_1_MONTH, UserTier.PREMIUM, 199000L));
+        when(userRepository.findByIdForUpdate(expiredUser.getUserId())).thenReturn(Optional.of(expiredUser));
         when(tierPolicyService.getEffectiveTier(expiredUser)).thenReturn(UserTier.FREE);
         when(paymentOrderRepository.save(any(PaymentOrder.class))).thenAnswer(inv -> {
             PaymentOrder order = inv.getArgument(0);
@@ -289,10 +313,10 @@ class PaymentServiceTest {
             return order;
         });
 
-        PaymentResponse response = paymentService.createMockPayment(expiredUser, PlanCode.PREMIUM);
+        PaymentResponse response = paymentService.createMockPayment(expiredUser, PlanCode.PREMIUM_1_MONTH);
 
         assertNotNull(response);
-        assertEquals(PlanCode.PREMIUM, response.getPlanCode());
+        assertEquals(PlanCode.PREMIUM_1_MONTH, response.getPlanCode());
         assertEquals(199000L, response.getAmount());
         assertEquals(PaymentStatus.PENDING, response.getStatus());
         verify(paymentOrderRepository, times(1)).save(any(PaymentOrder.class));
@@ -305,14 +329,14 @@ class PaymentServiceTest {
     @Test
     void markPaymentSuccess_WhenFreeUserBuysPremium_ShouldUpgradeAndSetExpiryOneMonthFromNow() {
         PaymentOrder order = PaymentOrder.builder()
-                .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM)
+                .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM_1_MONTH)
                 .amount(199000L).currency("VND")
-                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
+                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK).build();
 
         when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, freeUser))
                 .thenReturn(Optional.of(order));
         when(userRepository.findByIdForUpdate(freeUser.getUserId())).thenReturn(Optional.of(freeUser));
-        when(planService.getTargetTier(PlanCode.PREMIUM)).thenReturn(UserTier.PREMIUM);
+        when(planService.getTargetTier(PlanCode.PREMIUM_1_MONTH)).thenReturn(UserTier.PREMIUM);
         when(paymentOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -333,14 +357,14 @@ class PaymentServiceTest {
     @Test
     void markPaymentSuccess_WhenFreeUserBuysUltra_ShouldUpgradeToUltra() {
         PaymentOrder order = PaymentOrder.builder()
-                .paymentId(2L).user(freeUser).planCode(PlanCode.ULTRA)
+                .paymentId(2L).user(freeUser).planCode(PlanCode.ULTRA_1_MONTH)
                 .amount(399000L).currency("VND")
-                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
+                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK).build();
 
         when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(2L, freeUser))
                 .thenReturn(Optional.of(order));
         when(userRepository.findByIdForUpdate(freeUser.getUserId())).thenReturn(Optional.of(freeUser));
-        when(planService.getTargetTier(PlanCode.ULTRA)).thenReturn(UserTier.ULTRA);
+        when(planService.getTargetTier(PlanCode.ULTRA_1_MONTH)).thenReturn(UserTier.ULTRA);
         when(paymentOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -356,14 +380,14 @@ class PaymentServiceTest {
         premiumUser.setTierExpiresAt(existingExpiry);
 
         PaymentOrder order = PaymentOrder.builder()
-                .paymentId(3L).user(premiumUser).planCode(PlanCode.PREMIUM)
+                .paymentId(3L).user(premiumUser).planCode(PlanCode.PREMIUM_1_MONTH)
                 .amount(199000L).currency("VND")
-                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
+                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK).build();
 
         when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(3L, premiumUser))
                 .thenReturn(Optional.of(order));
         when(userRepository.findByIdForUpdate(premiumUser.getUserId())).thenReturn(Optional.of(premiumUser));
-        when(planService.getTargetTier(PlanCode.PREMIUM)).thenReturn(UserTier.PREMIUM);
+        when(planService.getTargetTier(PlanCode.PREMIUM_1_MONTH)).thenReturn(UserTier.PREMIUM);
         when(paymentOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -379,14 +403,14 @@ class PaymentServiceTest {
         ultraUser.setTierExpiresAt(existingExpiry);
 
         PaymentOrder order = PaymentOrder.builder()
-                .paymentId(4L).user(ultraUser).planCode(PlanCode.ULTRA)
+                .paymentId(4L).user(ultraUser).planCode(PlanCode.ULTRA_1_MONTH)
                 .amount(399000L).currency("VND")
-                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
+                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK).build();
 
         when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(4L, ultraUser))
                 .thenReturn(Optional.of(order));
         when(userRepository.findByIdForUpdate(ultraUser.getUserId())).thenReturn(Optional.of(ultraUser));
-        when(planService.getTargetTier(PlanCode.ULTRA)).thenReturn(UserTier.ULTRA);
+        when(planService.getTargetTier(PlanCode.ULTRA_1_MONTH)).thenReturn(UserTier.ULTRA);
         when(paymentOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -404,14 +428,14 @@ class PaymentServiceTest {
         premiumUser.setTierExpiresAt(remainingPremiumExpiry);
 
         PaymentOrder order = PaymentOrder.builder()
-                .paymentId(8L).user(premiumUser).planCode(PlanCode.ULTRA)
+                .paymentId(8L).user(premiumUser).planCode(PlanCode.ULTRA_1_MONTH)
                 .amount(399000L).currency("VND")
-                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
+                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK).build();
 
         when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(8L, premiumUser))
                 .thenReturn(Optional.of(order));
         when(userRepository.findByIdForUpdate(premiumUser.getUserId())).thenReturn(Optional.of(premiumUser));
-        when(planService.getTargetTier(PlanCode.ULTRA)).thenReturn(UserTier.ULTRA);
+        when(planService.getTargetTier(PlanCode.ULTRA_1_MONTH)).thenReturn(UserTier.ULTRA);
         when(paymentOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -430,14 +454,14 @@ class PaymentServiceTest {
     void markPaymentSuccess_WhenUltraOrderButUserAlreadyDowngradedIntentToPremium_ShouldThrow409() {
         // Order was created for PREMIUM while user is (still) effectively ULTRA.
         PaymentOrder order = PaymentOrder.builder()
-                .paymentId(9L).user(ultraUser).planCode(PlanCode.PREMIUM)
+                .paymentId(9L).user(ultraUser).planCode(PlanCode.PREMIUM_1_MONTH)
                 .amount(199000L).currency("VND")
-                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
+                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK).build();
 
         when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(9L, ultraUser))
                 .thenReturn(Optional.of(order));
         when(userRepository.findByIdForUpdate(ultraUser.getUserId())).thenReturn(Optional.of(ultraUser));
-        when(planService.getTargetTier(PlanCode.PREMIUM)).thenReturn(UserTier.PREMIUM);
+        when(planService.getTargetTier(PlanCode.PREMIUM_1_MONTH)).thenReturn(UserTier.PREMIUM);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
                 paymentService.markPaymentSuccess(ultraUser, 9L));
@@ -461,8 +485,8 @@ class PaymentServiceTest {
     @Test
     void markPaymentSuccess_WhenPaymentAlreadySuccess_ShouldThrow409() {
         PaymentOrder order = PaymentOrder.builder()
-                .paymentId(1L).user(premiumUser).planCode(PlanCode.PREMIUM)
-                .status(PaymentStatus.SUCCESS).build();
+                .paymentId(1L).user(premiumUser).planCode(PlanCode.PREMIUM_1_MONTH)
+                .status(PaymentStatus.SUCCESS).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK).build();
 
         when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, premiumUser))
                 .thenReturn(Optional.of(order));
@@ -477,8 +501,8 @@ class PaymentServiceTest {
     @Test
     void markPaymentSuccess_WhenPaymentAlreadyFailed_ShouldThrow409() {
         PaymentOrder order = PaymentOrder.builder()
-                .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM)
-                .status(PaymentStatus.FAILED).build();
+                .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM_1_MONTH)
+                .status(PaymentStatus.FAILED).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK).build();
 
         when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, freeUser))
                 .thenReturn(Optional.of(order));
@@ -492,8 +516,8 @@ class PaymentServiceTest {
     @Test
     void markPaymentSuccess_WhenPaymentAlreadyCancelled_ShouldThrow409() {
         PaymentOrder order = PaymentOrder.builder()
-                .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM)
-                .status(PaymentStatus.CANCELLED).build();
+                .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM_1_MONTH)
+                .status(PaymentStatus.CANCELLED).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK).build();
 
         when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, freeUser))
                 .thenReturn(Optional.of(order));
@@ -511,9 +535,9 @@ class PaymentServiceTest {
     @Test
     void markPaymentFailed_WhenPendingOrder_ShouldSetFailedAndNotChangeTier() {
         PaymentOrder order = PaymentOrder.builder()
-                .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM)
+                .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM_1_MONTH)
                 .amount(199000L).currency("VND")
-                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
+                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK).build();
 
         when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, freeUser))
                 .thenReturn(Optional.of(order));
@@ -544,7 +568,7 @@ class PaymentServiceTest {
     void markPaymentFailed_WhenPaymentNotPending_ShouldThrow409() {
         PaymentOrder order = PaymentOrder.builder()
                 .paymentId(1L).user(freeUser)
-                .status(PaymentStatus.SUCCESS).build();
+                .status(PaymentStatus.SUCCESS).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK).build();
 
         when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, freeUser))
                 .thenReturn(Optional.of(order));
@@ -558,9 +582,9 @@ class PaymentServiceTest {
     @Test
     void markPaymentFailed_WhenUserAlreadyPremium_ShouldStillAllowAndReturnPremiumTier() {
         PaymentOrder order = PaymentOrder.builder()
-                .paymentId(1L).user(premiumUser).planCode(PlanCode.PREMIUM)
+                .paymentId(1L).user(premiumUser).planCode(PlanCode.PREMIUM_1_MONTH)
                 .amount(199000L).currency("VND")
-                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
+                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK).build();
 
         when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, premiumUser))
                 .thenReturn(Optional.of(order));
@@ -581,9 +605,9 @@ class PaymentServiceTest {
     @Test
     void cancelPayment_WhenPendingOrder_ShouldSetCancelledAndNotChangeTier() {
         PaymentOrder order = PaymentOrder.builder()
-                .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM)
+                .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM_1_MONTH)
                 .amount(199000L).currency("VND")
-                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
+                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK).build();
 
         when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, freeUser))
                 .thenReturn(Optional.of(order));
@@ -614,7 +638,7 @@ class PaymentServiceTest {
     void cancelPayment_WhenPaymentNotPending_ShouldThrow409() {
         PaymentOrder order = PaymentOrder.builder()
                 .paymentId(1L).user(freeUser)
-                .status(PaymentStatus.SUCCESS).build();
+                .status(PaymentStatus.SUCCESS).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK).build();
 
         when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, freeUser))
                 .thenReturn(Optional.of(order));
@@ -628,9 +652,9 @@ class PaymentServiceTest {
     @Test
     void cancelPayment_WhenUserAlreadyPremium_ShouldStillAllowAndReturnPremiumTier() {
         PaymentOrder order = PaymentOrder.builder()
-                .paymentId(1L).user(premiumUser).planCode(PlanCode.PREMIUM)
+                .paymentId(1L).user(premiumUser).planCode(PlanCode.PREMIUM_1_MONTH)
                 .amount(199000L).currency("VND")
-                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).build();
+                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.MOCK).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK).build();
 
         when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(1L, premiumUser))
                 .thenReturn(Optional.of(order));
@@ -651,15 +675,15 @@ class PaymentServiceTest {
     @Test
     void getMyPayments_ShouldReturnAllStatusesNewestFirst() {
         PaymentOrder success = PaymentOrder.builder()
-                .paymentId(2L).user(freeUser).planCode(PlanCode.PREMIUM)
+                .paymentId(2L).user(freeUser).planCode(PlanCode.PREMIUM_1_MONTH)
                 .amount(199000L).currency("VND").status(PaymentStatus.SUCCESS)
-                .paymentMethod(PaymentMethod.MOCK)
+                .paymentMethod(PaymentMethod.MOCK).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK)
                 .createdAt(LocalDateTime.now(ZoneOffset.UTC)).paidAt(LocalDateTime.now(ZoneOffset.UTC)).build();
 
         PaymentOrder failed = PaymentOrder.builder()
-                .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM)
+                .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM_1_MONTH)
                 .amount(199000L).currency("VND").status(PaymentStatus.FAILED)
-                .paymentMethod(PaymentMethod.MOCK)
+                .paymentMethod(PaymentMethod.MOCK).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK)
                 .createdAt(LocalDateTime.now(ZoneOffset.UTC).minusHours(1)).build();
 
         when(paymentOrderRepository.findByUserOrderByCreatedAtDesc(freeUser))
@@ -677,14 +701,14 @@ class PaymentServiceTest {
     @Test
     void getMyPayments_ShouldShowCorrectPlanNamePerOrder() {
         PaymentOrder premiumOrder = PaymentOrder.builder()
-                .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM)
+                .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM_1_MONTH)
                 .amount(199000L).currency("VND").status(PaymentStatus.SUCCESS)
-                .paymentMethod(PaymentMethod.MOCK).createdAt(LocalDateTime.now(ZoneOffset.UTC)).build();
+                .paymentMethod(PaymentMethod.MOCK).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK).createdAt(LocalDateTime.now(ZoneOffset.UTC)).build();
 
         PaymentOrder ultraOrder = PaymentOrder.builder()
-                .paymentId(2L).user(freeUser).planCode(PlanCode.ULTRA)
+                .paymentId(2L).user(freeUser).planCode(PlanCode.ULTRA_1_MONTH)
                 .amount(399000L).currency("VND").status(PaymentStatus.SUCCESS)
-                .paymentMethod(PaymentMethod.MOCK).createdAt(LocalDateTime.now(ZoneOffset.UTC)).build();
+                .paymentMethod(PaymentMethod.MOCK).paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK).createdAt(LocalDateTime.now(ZoneOffset.UTC)).build();
 
         when(paymentOrderRepository.findByUserOrderByCreatedAtDesc(freeUser))
                 .thenReturn(List.of(ultraOrder, premiumOrder));
