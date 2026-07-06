@@ -18,6 +18,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     return;
   }
 
+  if (typeof refreshCurrentUser === "function") {
+    const refreshedUser = await refreshCurrentUser();
+    if (refreshedUser) {
+      currentUser = refreshedUser;
+    }
+  }
+
   // Elements
   const currentTierBadge = document.getElementById("currentTierBadge");
   const alreadyPremiumBanner = document.getElementById("alreadyPremiumBanner");
@@ -40,6 +47,11 @@ document.addEventListener("DOMContentLoaded", async function () {
   const historyEmpty = document.getElementById("historyEmpty");
 
   let activePaymentId = null;
+  const TIER_RANK = {
+    FREE: 0,
+    PREMIUM: 1,
+    ULTRA: 2
+  };
 
   // ─────────────────────────────────────────────
   // Utilities
@@ -48,6 +60,19 @@ document.addEventListener("DOMContentLoaded", async function () {
   function formatCurrency(amount, currency) {
     const formatted = Number(amount || 0).toLocaleString("en-US");
     return `${formatted} ${currency || "VND"}`;
+  }
+
+  function normalizeTier(tier) {
+    const normalized = String(tier || "FREE").toUpperCase();
+    return Object.prototype.hasOwnProperty.call(TIER_RANK, normalized) ? normalized : "FREE";
+  }
+
+  function getCurrentTier() {
+    return normalizeTier(currentUser.effectiveTier || currentUser.tier);
+  }
+
+  function getPlanTier(plan) {
+    return normalizeTier(plan.targetTier || plan.planCode);
   }
 
   function formatDate(value) {
@@ -64,18 +89,25 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   function updateTierUI(tier) {
-    const normalizedTier = tier === "PREMIUM" ? "PREMIUM" : "FREE";
+    const normalizedTier = normalizeTier(tier);
     currentUser.tier = normalizedTier;
+    currentUser.effectiveTier = normalizedTier;
     localStorage.setItem("currentUser", JSON.stringify(currentUser));
 
     if (currentTierBadge) {
       currentTierBadge.textContent = normalizedTier;
-      currentTierBadge.classList.remove("badge-tier-free", "badge-tier-premium");
-      currentTierBadge.classList.add(normalizedTier === "PREMIUM" ? "badge-tier-premium" : "badge-tier-free");
+      currentTierBadge.classList.remove("badge-tier-free", "badge-tier-premium", "badge-tier-ultra");
+      currentTierBadge.classList.add(`badge-tier-${normalizedTier.toLowerCase()}`);
     }
 
     if (alreadyPremiumBanner) {
-      alreadyPremiumBanner.style.display = normalizedTier === "PREMIUM" ? "flex" : "none";
+      const message = alreadyPremiumBanner.querySelector("span");
+      if (message) {
+        message.textContent = normalizedTier === "ULTRA"
+          ? "You are already on Ultra. You can renew your plan before it expires."
+          : "Your Premium plan is active. You can renew it or upgrade to Ultra.";
+      }
+      alreadyPremiumBanner.style.display = normalizedTier === "FREE" ? "none" : "flex";
     }
   }
 
@@ -94,12 +126,19 @@ document.addEventListener("DOMContentLoaded", async function () {
   // ─────────────────────────────────────────────
 
   function createPlanCard(plan) {
+    const planTier = getPlanTier(plan);
+    const currentTier = getCurrentTier();
+    const planRank = TIER_RANK[planTier];
+    const currentRank = TIER_RANK[currentTier];
+
     const card = document.createElement("div");
     card.className = "card";
     card.style.maxWidth = "none";
 
-    if (plan.planCode === "PREMIUM") {
+    if (planTier === "PREMIUM") {
       card.classList.add("stat-card-premium");
+    } else if (planTier === "ULTRA") {
+      card.classList.add("stat-card-ultra");
     }
 
     const title = document.createElement("h2");
@@ -110,7 +149,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     price.style.textAlign = "center";
     price.style.fontSize = "24px";
     price.style.fontWeight = "700";
-    price.style.color = plan.planCode === "PREMIUM" ? "#b45309" : "var(--text-main)";
+    price.style.color = planTier === "PREMIUM"
+      ? "#b45309"
+      : planTier === "ULTRA"
+        ? "#7c3aed"
+        : "var(--text-main)";
     if (plan.price > 0) {
       price.textContent = `${formatCurrency(plan.price, plan.currency)} / ${plan.billingLabel || "month"}`;
     } else {
@@ -141,9 +184,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     // Action area
-    const isCurrentPlan =
-      (currentUser.tier !== "PREMIUM" && plan.planCode === "FREE") ||
-      (currentUser.tier === "PREMIUM" && plan.planCode === "PREMIUM");
+    const isCurrentPlan = planTier === currentTier;
+    const isPaidPlan = planTier !== "FREE";
+    const isHigherPlan = planRank > currentRank;
+    const isLowerPlan = planRank < currentRank;
 
     if (isCurrentPlan) {
       const currentBadge = document.createElement("div");
@@ -151,14 +195,36 @@ document.addEventListener("DOMContentLoaded", async function () {
       currentBadge.style.marginTop = "16px";
       currentBadge.textContent = "Current Plan";
       card.appendChild(currentBadge);
-    } else if (plan.planCode === "PREMIUM" && currentUser.tier !== "PREMIUM") {
+
+      if (isPaidPlan) {
+        const renewBtn = document.createElement("button");
+        renewBtn.type = "button";
+        renewBtn.className = "btn btn-secondary";
+        renewBtn.style.marginTop = "12px";
+        renewBtn.textContent = `Renew ${plan.planName || planTier}`;
+        renewBtn.addEventListener("click", function (event) {
+          handleUpgradeClick(event, planTier);
+        });
+        card.appendChild(renewBtn);
+      }
+    } else if (isHigherPlan && isPaidPlan) {
       const upgradeBtn = document.createElement("button");
       upgradeBtn.type = "button";
       upgradeBtn.className = "btn btn-primary";
       upgradeBtn.style.marginTop = "16px";
-      upgradeBtn.textContent = "Upgrade to Premium";
-      upgradeBtn.addEventListener("click", handleUpgradeClick);
+      upgradeBtn.textContent = `Upgrade to ${plan.planName || planTier}`;
+      upgradeBtn.addEventListener("click", function (event) {
+        handleUpgradeClick(event, planTier);
+      });
       card.appendChild(upgradeBtn);
+    } else if (isLowerPlan) {
+      const lowerPlanNote = document.createElement("div");
+      lowerPlanNote.className = "helper-text";
+      lowerPlanNote.style.marginTop = "16px";
+      lowerPlanNote.textContent = planTier === "FREE"
+        ? "Included with every account"
+        : "Downgrade is not available in mock checkout";
+      card.appendChild(lowerPlanNote);
     }
 
     return card;
@@ -191,12 +257,12 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Mock Payment Flow
   // ─────────────────────────────────────────────
 
-  async function handleUpgradeClick(event) {
+  async function handleUpgradeClick(event, planCode) {
     const btn = event.target;
     setButtonLoading(btn, true, "Creating payment...");
 
     try {
-      const result = await createMockPayment("PREMIUM");
+      const result = await createMockPayment(planCode);
       const payment = result.data;
       activePaymentId = payment.paymentId;
 
@@ -229,7 +295,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       // Response tier rule: always use tier returned by backend, never assume.
       updateTierUI(payment.tier);
-      await refreshCurrentUser();
+      if (typeof refreshCurrentUser === "function") {
+        const refreshedUser = await refreshCurrentUser();
+        if (refreshedUser) {
+          currentUser = refreshedUser;
+          updateTierUI(getCurrentTier());
+        }
+      }
 
       activePaymentId = null;
       await loadPlans();
