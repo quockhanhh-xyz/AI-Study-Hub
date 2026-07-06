@@ -2,7 +2,13 @@
  * Account & Entitlement API Helper
  * Branch: feature/step-13-tier-entitlement-api-helper
  * All functions use apiRequest() — no raw fetch allowed in page scripts.
- */
+ * * IMPORTANT DEPENDENCY ORDER FOR FE2:
+ * This script MUST be loaded in the following specific order in HTML files 
+ * to ensure showQuotaError() and entitlement APIs function correctly:
+ * * <script src="js/api.js"></script>
+ * <script src="js/account-api.js"></script>
+ * <script src="js/ui.js"></script>
+ * <script src="js/upgrade.js"></script> */
 
 /**
  * Retrieves the current user's tier entitlements and quota limits.
