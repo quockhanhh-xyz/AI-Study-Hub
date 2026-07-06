@@ -27,7 +27,7 @@ public class PlanService {
     public static final int PAID_DURATION_MONTHS = 1;
     public static final String CURRENCY = "VND";
     public static final String PREMIUM_BILLING_LABEL = "1 month";
-    public static final String FREE_BILLING_LABEL = "free";
+    public static final String FREE_BILLING_LABEL = "Free";
 
     /**
      * Backend's single source of truth for a plan's price/target tier/duration.
@@ -42,6 +42,7 @@ public class PlanService {
         private final long price;
         private final int durationMonths;
         private final String billingLabel;
+        private final boolean purchasable;
     }
 
     private Map<String, PaymentPlan> plans() {
@@ -53,22 +54,25 @@ public class PlanService {
                 .price(FREE_PRICE)
                 .durationMonths(0)
                 .billingLabel(FREE_BILLING_LABEL)
+                .purchasable(false)
                 .build());
-        map.put(PlanCode.PREMIUM, PaymentPlan.builder()
-                .planCode(PlanCode.PREMIUM)
+        map.put(PlanCode.PREMIUM_1_MONTH, PaymentPlan.builder()
+                .planCode(PlanCode.PREMIUM_1_MONTH)
                 .planName("Premium")
                 .targetTier(UserTier.PREMIUM)
                 .price(PREMIUM_PRICE)
                 .durationMonths(PAID_DURATION_MONTHS)
                 .billingLabel(PREMIUM_BILLING_LABEL)
+                .purchasable(true)
                 .build());
-        map.put(PlanCode.ULTRA, PaymentPlan.builder()
-                .planCode(PlanCode.ULTRA)
+        map.put(PlanCode.ULTRA_1_MONTH, PaymentPlan.builder()
+                .planCode(PlanCode.ULTRA_1_MONTH)
                 .planName("Ultra")
                 .targetTier(UserTier.ULTRA)
                 .price(ULTRA_PRICE)
                 .durationMonths(PAID_DURATION_MONTHS)
                 .billingLabel(PREMIUM_BILLING_LABEL)
+                .purchasable(true)
                 .build());
         return map;
     }
@@ -81,6 +85,7 @@ public class PlanService {
 
     private PlanResponse toResponse(PaymentPlan plan) {
         return PlanResponse.builder()
+                .tier(plan.getTargetTier().name())
                 .planCode(plan.getPlanCode())
                 .planName(plan.getPlanName())
                 .targetTier(plan.getTargetTier().name())
@@ -89,6 +94,7 @@ public class PlanService {
                 .billingLabel(plan.getBillingLabel())
                 .durationMonths(plan.getDurationMonths())
                 .aiDailyLimit(tierPolicyService.getLimits(plan.getTargetTier()).aiQuestionsPerDay())
+                .purchasable(plan.isPurchasable())
                 .build();
     }
 
@@ -121,6 +127,6 @@ public class PlanService {
     }
 
     public boolean isPurchasablePlanCode(String planCode) {
-        return PlanCode.PREMIUM.equalsIgnoreCase(planCode) || PlanCode.ULTRA.equalsIgnoreCase(planCode);
+        return isValidPlanCode(planCode) && getPlan(planCode).isPurchasable();
     }
 }
