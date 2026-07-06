@@ -171,4 +171,112 @@ class PaymentServiceIntegrationTest {
         assertTrue(finalUser.getTierExpiresAt().isBefore(maxExpected),
                 "Expected expiry before " + maxExpected + " but was " + finalUser.getTierExpiresAt());
     }
+
+    /**
+     * Mixed-tier concurrency case: one PREMIUM order and one ULTRA order for
+     * the same user confirmed at (almost) the same time.
+     *
+     * The outcome is intentionally order-dependent (documented, not a bug):
+     *   - If PREMIUM commits first, the user becomes PREMIUM, then ULTRA
+     *     commits and upgrades to ULTRA (expiry reset to now + 1 month per
+     *     the upgrade rule). Final tier = ULTRA, PREMIUM order still SUCCESS.
+     *   - If ULTRA commits first, the user becomes ULTRA. The PREMIUM
+     *     transaction then blocks on the user lock, re-reads the now-ULTRA
+     *     effective tier, and is correctly rejected as a downgrade (409).
+     *     That PREMIUM order remains PENDING.
+     *
+     * Either outcome is acceptable: what must NEVER happen is the user
+     * ending up on PREMIUM after an ULTRA payment succeeded (a real
+     * downgrade slipping through), or both transactions silently
+     * succeeding with inconsistent final state.
+     */
+    @Test
+    void markPaymentSuccess_PremiumAndUltraOrdersConcurrently_ShouldNeverEndOnADowngrade() throws Exception {
+        Long premiumOrderId = transactionTemplate.execute(status -> {
+            PaymentOrder order = PaymentOrder.builder()
+                    .user(testUser)
+                    .planCode(PlanCode.PREMIUM)
+                    .amount(199000L)
+                    .currency("VND")
+                    .status(PaymentStatus.PENDING)
+                    .paymentMethod("MOCK")
+                    .build();
+            return paymentOrderRepository.save(order).getPaymentId();
+        });
+
+        Long ultraOrderId = transactionTemplate.execute(status -> {
+            PaymentOrder order = PaymentOrder.builder()
+                    .user(testUser)
+                    .planCode(PlanCode.ULTRA)
+                    .amount(399000L)
+                    .currency("VND")
+                    .status(PaymentStatus.PENDING)
+                    .paymentMethod("MOCK")
+                    .build();
+            return paymentOrderRepository.save(order).getPaymentId();
+        });
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch endLatch = new CountDownLatch(2);
+
+        Runnable confirmPremium = () -> {
+            try {
+                startLatch.await();
+                User user = userRepository.findById(testUser.getUserId()).orElseThrow();
+                paymentService.markPaymentSuccess(user, premiumOrderId);
+            } catch (Exception ignored) {
+                // Expected possible outcome: rejected as a downgrade if ULTRA won the race.
+            } finally {
+                endLatch.countDown();
+            }
+        };
+
+        Runnable confirmUltra = () -> {
+            try {
+                startLatch.await();
+                User user = userRepository.findById(testUser.getUserId()).orElseThrow();
+                paymentService.markPaymentSuccess(user, ultraOrderId);
+            } catch (Exception ignored) {
+                // Should not normally happen for a valid ULTRA order, but
+                // don't let a stray failure hang the test.
+            } finally {
+                endLatch.countDown();
+            }
+        };
+
+        executor.submit(confirmPremium);
+        executor.submit(confirmUltra);
+        startLatch.countDown();
+
+        boolean finished = endLatch.await(10, TimeUnit.SECONDS);
+        executor.shutdownNow();
+
+        assertTrue(finished, "Both concurrent confirmations should complete within timeout");
+
+        PaymentOrder finalUltraOrder = paymentOrderRepository.findById(ultraOrderId).orElseThrow();
+        PaymentOrder finalPremiumOrder = paymentOrderRepository.findById(premiumOrderId).orElseThrow();
+        User finalUser = userRepository.findById(testUser.getUserId()).orElseThrow();
+
+        // The ULTRA order must always end up SUCCESS regardless of ordering —
+        // nothing in this scenario should ever cause a valid ULTRA purchase
+        // to fail.
+        assertEquals(PaymentStatus.SUCCESS, finalUltraOrder.getStatus());
+
+        // The critical invariant: the user must never end up on PREMIUM
+        // while an ULTRA payment has succeeded. Final tier must be ULTRA.
+        assertEquals(UserTier.ULTRA, finalUser.getTier(),
+                "User must never remain on/downgrade to PREMIUM once an ULTRA payment has succeeded");
+
+        // The PREMIUM order either succeeded (if it committed first and was
+        // later superseded by the ULTRA upgrade) or was correctly rejected
+        // as a downgrade attempt (if ULTRA committed first). Both are valid;
+        // an unhandled exception or a status other than these two is not.
+        assertTrue(
+                finalPremiumOrder.getStatus().equals(PaymentStatus.SUCCESS)
+                        || finalPremiumOrder.getStatus().equals(PaymentStatus.PENDING),
+                "Premium order must end up either SUCCESS (won the race) or still PENDING (rejected as downgrade), was: "
+                        + finalPremiumOrder.getStatus()
+        );
+    }
 }

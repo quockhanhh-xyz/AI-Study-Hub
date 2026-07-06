@@ -55,7 +55,7 @@ public class PaymentService {
                 .build();
 
         paymentOrderRepository.save(order);
-        return toResponse(order, user.getTier().name());
+        return toResponse(order, tierPolicyService.getEffectiveTier(user).name());
     }
 
     @Transactional
@@ -127,7 +127,7 @@ public class PaymentService {
         paymentOrderRepository.save(order);
 
         User freshUser = userRepository.findById(user.getUserId()).orElse(user);
-        return toResponse(order, freshUser.getTier().name());
+        return toResponse(order, tierPolicyService.getEffectiveTier(freshUser).name());
     }
 
     @Transactional
@@ -146,7 +146,7 @@ public class PaymentService {
         paymentOrderRepository.save(order);
 
         User freshUser = userRepository.findById(user.getUserId()).orElse(user);
-        return toResponse(order, freshUser.getTier().name());
+        return toResponse(order, tierPolicyService.getEffectiveTier(freshUser).name());
     }
 
     public List<PaymentResponse> getMyPayments(User user) {
@@ -159,14 +159,18 @@ public class PaymentService {
     private String planNameForCode(String planCode) {
         if (PlanCode.ULTRA.equalsIgnoreCase(planCode)) return "Ultra";
         if (PlanCode.PREMIUM.equalsIgnoreCase(planCode)) return "Premium";
-        return "Free";
+        if (PlanCode.FREE.equalsIgnoreCase(planCode)) return "Free";
+        return "Unknown";
     }
 
     private String billingLabelForCode(String planCode) {
         if (PlanCode.PREMIUM.equalsIgnoreCase(planCode) || PlanCode.ULTRA.equalsIgnoreCase(planCode)) {
             return PlanService.PREMIUM_BILLING_LABEL;
         }
-        return PlanService.FREE_BILLING_LABEL;
+        if (PlanCode.FREE.equalsIgnoreCase(planCode)) {
+            return PlanService.FREE_BILLING_LABEL;
+        }
+        return "Unknown";
     }
 
     private PaymentResponse toResponse(PaymentOrder order, String tier) {
