@@ -36,6 +36,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/documents/public", "/api/documents/public/**").permitAll()
                         .requestMatchers("/api/subjects/public").permitAll()
                         .requestMatchers("/api/payments/plans").permitAll()
+                        // Step 13B: only these two VNPay endpoints are public — never /vnpay/** wholesale.
+                        .requestMatchers("/api/payments/vnpay/return").permitAll()
+                        .requestMatchers("/api/payments/vnpay/ipn").permitAll()
                         .requestMatchers("/api/health").permitAll()
                         .anyRequest().authenticated()
                 )
