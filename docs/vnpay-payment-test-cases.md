@@ -25,33 +25,34 @@ This document specifies the complete test suite and verification scenarios for S
 
 ---
 
-### 1.2. Checkout Creation API (`POST /api/payments/create`)
+### 1.2. Checkout Creation API
 * **TC-CREATE-01: Create Mock Checkout**
-  * **Action**: Request `POST /api/payments/create` with body `{"planCode": "PREMIUM_1_MONTH", "paymentProvider": "MOCK"}`.
+  * **Action**: Request `POST /api/payments/mock/create` with body `{"planCode": "PREMIUM_1_MONTH"}`.
   * **Expected Output**:
     * HTTP `200 OK`.
     * A database order record is generated with `payment_method = 'MOCK'`, `payment_provider = 'MOCK'`, `status = 'PENDING'`, and `paymentUrl = null`.
 * **TC-CREATE-02: Create VNPay Sandbox Checkout**
-  * **Action**: Request `POST /api/payments/create` with body `{"planCode": "PREMIUM_1_MONTH", "paymentProvider": "VNPAY_SANDBOX"}`.
+  * **Action**: Request `POST /api/payments/vnpay/create` with body `{"planCode": "PREMIUM_1_MONTH", "bankCode": "NCB"}`.
   * **Expected Output**:
     * HTTP `200 OK`.
     * A database order record is generated with `payment_method = 'VNPAY'`, `payment_provider = 'VNPAY_SANDBOX'`, `status = 'PENDING'`, and `paymentUrl` pointing to the VNPay Sandbox gateway with valid signed query parameters.
-* **TC-CREATE-03: Legacy Mock API Support**
-  * **Action**: Call legacy endpoint `POST /api/payments/mock/create` with body `{"planCode": "PREMIUM_1_MONTH"}`.
+* **TC-CREATE-03: VNPay Invalid Bank Code**
+  * **Action**: Request `POST /api/payments/vnpay/create` with body `{"planCode": "PREMIUM_1_MONTH", "bankCode": "INVALID_BANK"}`.
   * **Expected Output**:
-    * HTTP `200 OK`. Flow identical to `TC-CREATE-01`.
+    * HTTP `400 Bad Request`.
+    * Error payload contains code `INVALID_BANK_CODE`.
 * **TC-CREATE-04: Mock Provider Disabling**
-  * **Action**: Set `payment.mock-enabled = false` in config. Call `POST /api/payments/create` with `paymentProvider = MOCK` or call `POST /api/payments/mock/create`.
+  * **Action**: Set `payment.mock-enabled = false` in config. Call `POST /api/payments/mock/create`.
   * **Expected Output**:
     * HTTP `400 Bad Request`.
     * Error payload contains code `PAYMENT_PROVIDER_DISABLED`.
 * **TC-CREATE-05: Downgrade Attempt Rejection**
-  * **Action**: Upgrade user to `ULTRA`. Call `POST /api/payments/create` with `planCode = PREMIUM_1_MONTH`.
+  * **Action**: Upgrade user to `ULTRA`. Call `POST /api/payments/vnpay/create` with `planCode = PREMIUM_1_MONTH`.
   * **Expected Output**:
     * HTTP `409 Conflict`.
     * Error payload contains code `DOWNGRADE_NOT_SUPPORTED`.
 * **TC-CREATE-06: Already Pending Lock**
-  * **Action**: Create a checkout order. While it is still active (`now < expiredAt`), call checkout creation again.
+  * **Action**: Create a checkout order. While it is still active (`now < expiredAt`), call checkout creation.
   * **Expected Output**:
     * HTTP `409 Conflict`.
     * Error payload contains code `PAYMENT_ALREADY_PENDING` and includes the current pending `paymentId`, `paymentProvider`, and `paymentUrl` in the `data` block.
@@ -91,7 +92,7 @@ This document specifies the complete test suite and verification scenarios for S
   * **Expected Output**:
     * Returns HTTP `200 OK` containing all historical orders.
     * Orders are sorted by `createdAt` in descending order (newest first).
-    * `paymentUrl` is populated ONLY for `PENDING` orders where `now <= expiredAt`. Terminal statuses (`SUCCESS`, `FAILED`, `CANCELLED`, `EXPIRED`, `REVIEW_REQUIRED`) return `paymentUrl = null`.
+    * `paymentUrl` is populated ONLY for `PENDING` orders where `now <= expiredAt`. Terminal statuses (`SUCCESS`, `FAILED`, `CANCELLED`, `REVIEW_REQUIRED`) return `paymentUrl = null`. `EXPIRED` also returns `paymentUrl = null`.
 
 ---
 
@@ -122,7 +123,7 @@ This document specifies the complete test suite and verification scenarios for S
 * **TC-IPN-01: Signature Check Priority**
   * **Action**: Send IPN request with invalid signature.
   * **Expected Output**:
-    * Response `{"RspCode":"97","Message":"Invalid signature"}`.
+    * Response `{"RspCode":"97","Message":"Invalid signature"}` (error code: `INVALID_PAYMENT_SIGNATURE`).
     * No database locks or updates are performed.
 * **TC-IPN-02: Order Exists Check**
   * **Action**: Send IPN with non-existent transaction reference `vnp_TxnRef`.
@@ -131,7 +132,7 @@ This document specifies the complete test suite and verification scenarios for S
 * **TC-IPN-03: Amount Snapshot Match**
   * **Action**: Send IPN with modified `vnp_Amount` query parameter.
   * **Expected Output**:
-    * Response `{"RspCode":"04","Message":"Invalid amount"}`.
+    * Response `{"RspCode":"04","Message":"Invalid amount"}` (error code: `PAYMENT_AMOUNT_MISMATCH`).
 * **TC-IPN-04: Idempotent Double Processing**
   * **Action**: Send IPN for an order that is already `SUCCESS` or `FAILED`.
   * **Expected Output**:
@@ -153,8 +154,18 @@ This document specifies the complete test suite and verification scenarios for S
   * **Expected Output**:
     * Response `{"RspCode":"00","Message":"Confirm success"}`.
     * Order status transitions to `SUCCESS`.
-    * User tier is updated to the plan's `targetTier`.
-    * Expiration is computed and saved as UTC datetime.
+    * User tier is upgraded to the plan's `targetTier`.
+    * Expiration is computed using a calendar month: `plusMonths(1)` in UTC.
+* **TC-IPN-08: Late Paid on Expired Order Transition**
+  * **Action**: Order `status = EXPIRED`. Late callback arrives where `vnp_PayDate <= expiredAt`.
+  * **Expected Output**:
+    * Response `{"RspCode":"00","Message":"Confirm success"}`.
+    * Order status successfully transitions to `SUCCESS` and user's tier is upgraded (exactly once).
+* **TC-IPN-09: Overdue Paid on Expired Order Rejection**
+  * **Action**: Order `status = EXPIRED`. Overdue callback arrives where `vnp_PayDate > expiredAt`.
+  * **Expected Output**:
+    * Response `{"RspCode":"00","Message":"Confirm success"}`.
+    * Order transitions to `REVIEW_REQUIRED` with `reviewReason = 'PAY_DATE_AFTER_EXPIRY'`. Tier remains unchanged.
 
 ---
 
@@ -163,7 +174,7 @@ This document specifies the complete test suite and verification scenarios for S
   * **Action**: Trigger two concurrent IPN success requests for the same user renewal.
   * **Expected Output**:
     * Pessimistic row locking on User table serializes execution.
-    * One request succeeds, updating tier and adding 30 days. The other is ignored or returns duplicate code. The tier expiration is extended by exactly 30 days once, preventing double increments.
+    * One request succeeds, updating tier and adding 1 calendar month (`plusMonths(1)`). The other is ignored or returns duplicate code. The tier expiration is extended by exactly 1 calendar month once, preventing double increments.
 * **TC-CONC-02: Simultaneous Checkout Creation**
   * **Action**: Trigger two concurrent checkout requests for the same user.
   * **Expected Output**:
