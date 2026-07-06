@@ -1,5 +1,6 @@
 package com.demo.ai_study_hub;
 
+import com.demo.ai_study_hub.config.AiProperties;
 import com.demo.ai_study_hub.dto.PaymentStatus;
 import com.demo.ai_study_hub.dto.PaymentMethod;
 import com.demo.ai_study_hub.dto.PlanCode;
@@ -23,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,13 +58,13 @@ class PaymentServiceTest {
         premiumUser.setUserId(2);
         premiumUser.setEmail("premium@test.com");
         premiumUser.setTier(UserTier.PREMIUM);
-        premiumUser.setTierExpiresAt(LocalDateTime.now().plusDays(10));
+        premiumUser.setTierExpiresAt(LocalDateTime.now(ZoneOffset.UTC).plusDays(10));
 
         ultraUser = new User();
         ultraUser.setUserId(3);
         ultraUser.setEmail("ultra@test.com");
         ultraUser.setTier(UserTier.ULTRA);
-        ultraUser.setTierExpiresAt(LocalDateTime.now().plusDays(10));
+        ultraUser.setTierExpiresAt(LocalDateTime.now(ZoneOffset.UTC).plusDays(10));
 
         // Default: effective tier mirrors the raw stored tier unless a test
         // overrides it explicitly (e.g. an expired premium/ultra user).
@@ -78,7 +80,9 @@ class PaymentServiceTest {
 
     @Test
     void getPlans_ShouldReturnFreePremiumAndUltraPlans() {
-        PlanService realPlanService = new PlanService(new TierPolicyService());
+        AiProperties props = new AiProperties();
+        props.setProvider("gemini");
+        PlanService realPlanService = new PlanService(new TierPolicyService(props));
         List<PlanResponse> plans = realPlanService.getAllPlans();
 
         assertEquals(3, plans.size());
@@ -104,7 +108,7 @@ class PaymentServiceTest {
 
     @Test
     void getPlan_WhenInvalidCode_ShouldThrow400NotReturnZeroPrice() {
-        PlanService realPlanService = new PlanService(new TierPolicyService());
+        PlanService realPlanService = new PlanService(new TierPolicyService(new AiProperties()));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
                 realPlanService.getPrice("NOT_A_REAL_PLAN"));
@@ -114,7 +118,7 @@ class PaymentServiceTest {
 
     @Test
     void isPurchasablePlanCode_ShouldOnlyAllowPremiumAndUltra() {
-        PlanService realPlanService = new PlanService(new TierPolicyService());
+        PlanService realPlanService = new PlanService(new TierPolicyService(new AiProperties()));
 
         assertFalse(realPlanService.isPurchasablePlanCode(PlanCode.FREE));
         assertTrue(realPlanService.isPurchasablePlanCode(PlanCode.PREMIUM));
@@ -273,7 +277,7 @@ class PaymentServiceTest {
         expiredUser.setUserId(4);
         expiredUser.setEmail("expired@test.com");
         expiredUser.setTier(UserTier.PREMIUM);
-        expiredUser.setTierExpiresAt(LocalDateTime.now().minusDays(1));
+        expiredUser.setTierExpiresAt(LocalDateTime.now(ZoneOffset.UTC).minusDays(1));
 
         when(planService.isValidPlanCode(PlanCode.PREMIUM)).thenReturn(true);
         when(planService.getTargetTier(PlanCode.PREMIUM)).thenReturn(UserTier.PREMIUM);
@@ -312,9 +316,9 @@ class PaymentServiceTest {
         when(paymentOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        LocalDateTime before = LocalDateTime.now();
+        LocalDateTime before = LocalDateTime.now(ZoneOffset.UTC);
         PaymentResponse response = paymentService.markPaymentSuccess(freeUser, 1L);
-        LocalDateTime after = LocalDateTime.now();
+        LocalDateTime after = LocalDateTime.now(ZoneOffset.UTC);
 
         assertEquals(PaymentStatus.SUCCESS, response.getStatus());
         assertEquals("PREMIUM", response.getTier());
@@ -348,7 +352,7 @@ class PaymentServiceTest {
 
     @Test
     void markPaymentSuccess_WhenPremiumRenewsPremium_ShouldAddOneMonthToExistingExpiry() {
-        LocalDateTime existingExpiry = LocalDateTime.now().plusDays(10);
+        LocalDateTime existingExpiry = LocalDateTime.now(ZoneOffset.UTC).plusDays(10);
         premiumUser.setTierExpiresAt(existingExpiry);
 
         PaymentOrder order = PaymentOrder.builder()
@@ -371,7 +375,7 @@ class PaymentServiceTest {
 
     @Test
     void markPaymentSuccess_WhenUltraRenewsUltra_ShouldAddOneMonthToExistingExpiry() {
-        LocalDateTime existingExpiry = LocalDateTime.now().plusDays(5);
+        LocalDateTime existingExpiry = LocalDateTime.now(ZoneOffset.UTC).plusDays(5);
         ultraUser.setTierExpiresAt(existingExpiry);
 
         PaymentOrder order = PaymentOrder.builder()
@@ -396,7 +400,7 @@ class PaymentServiceTest {
     void markPaymentSuccess_WhenPremiumUpgradesToUltra_ShouldResetExpiryToOneMonthFromNow() {
         // Premium still has 20 days left — this remaining time must NOT be
         // carried over into Ultra (would be free Ultra time).
-        LocalDateTime remainingPremiumExpiry = LocalDateTime.now().plusDays(20);
+        LocalDateTime remainingPremiumExpiry = LocalDateTime.now(ZoneOffset.UTC).plusDays(20);
         premiumUser.setTierExpiresAt(remainingPremiumExpiry);
 
         PaymentOrder order = PaymentOrder.builder()
@@ -411,9 +415,9 @@ class PaymentServiceTest {
         when(paymentOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        LocalDateTime before = LocalDateTime.now();
+        LocalDateTime before = LocalDateTime.now(ZoneOffset.UTC);
         paymentService.markPaymentSuccess(premiumUser, 8L);
-        LocalDateTime after = LocalDateTime.now();
+        LocalDateTime after = LocalDateTime.now(ZoneOffset.UTC);
 
         assertEquals(UserTier.ULTRA, premiumUser.getTier());
         // New expiry must be ~now + 1 month, NOT remainingPremiumExpiry + 1 month
@@ -650,13 +654,13 @@ class PaymentServiceTest {
                 .paymentId(2L).user(freeUser).planCode(PlanCode.PREMIUM)
                 .amount(199000L).currency("VND").status(PaymentStatus.SUCCESS)
                 .paymentMethod(PaymentMethod.MOCK)
-                .createdAt(LocalDateTime.now()).paidAt(LocalDateTime.now()).build();
+                .createdAt(LocalDateTime.now(ZoneOffset.UTC)).paidAt(LocalDateTime.now(ZoneOffset.UTC)).build();
 
         PaymentOrder failed = PaymentOrder.builder()
                 .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM)
                 .amount(199000L).currency("VND").status(PaymentStatus.FAILED)
                 .paymentMethod(PaymentMethod.MOCK)
-                .createdAt(LocalDateTime.now().minusHours(1)).build();
+                .createdAt(LocalDateTime.now(ZoneOffset.UTC).minusHours(1)).build();
 
         when(paymentOrderRepository.findByUserOrderByCreatedAtDesc(freeUser))
                 .thenReturn(List.of(success, failed));
@@ -675,12 +679,12 @@ class PaymentServiceTest {
         PaymentOrder premiumOrder = PaymentOrder.builder()
                 .paymentId(1L).user(freeUser).planCode(PlanCode.PREMIUM)
                 .amount(199000L).currency("VND").status(PaymentStatus.SUCCESS)
-                .paymentMethod(PaymentMethod.MOCK).createdAt(LocalDateTime.now()).build();
+                .paymentMethod(PaymentMethod.MOCK).createdAt(LocalDateTime.now(ZoneOffset.UTC)).build();
 
         PaymentOrder ultraOrder = PaymentOrder.builder()
                 .paymentId(2L).user(freeUser).planCode(PlanCode.ULTRA)
                 .amount(399000L).currency("VND").status(PaymentStatus.SUCCESS)
-                .paymentMethod(PaymentMethod.MOCK).createdAt(LocalDateTime.now()).build();
+                .paymentMethod(PaymentMethod.MOCK).createdAt(LocalDateTime.now(ZoneOffset.UTC)).build();
 
         when(paymentOrderRepository.findByUserOrderByCreatedAtDesc(freeUser))
                 .thenReturn(List.of(ultraOrder, premiumOrder));
@@ -708,7 +712,9 @@ class PaymentServiceTest {
 
     @Test
     void planService_FreeTierLimits_ShouldMatchSpec() {
-        TierPolicyService tps = new TierPolicyService();
+        AiProperties props = new AiProperties();
+        props.setProvider("gemini");
+        TierPolicyService tps = new TierPolicyService(props);
         com.demo.ai_study_hub.dto.TierLimits limits = tps.getLimits(UserTier.FREE);
         assertEquals(5, limits.aiQuestionsPerDay());
         assertEquals(500, limits.maxQuestionChars());
@@ -719,7 +725,9 @@ class PaymentServiceTest {
 
     @Test
     void planService_PremiumTierLimits_ShouldMatchSpec() {
-        TierPolicyService tps = new TierPolicyService();
+        AiProperties props = new AiProperties();
+        props.setProvider("gemini");
+        TierPolicyService tps = new TierPolicyService(props);
         com.demo.ai_study_hub.dto.TierLimits limits = tps.getLimits(UserTier.PREMIUM);
         assertEquals(50, limits.aiQuestionsPerDay());
         assertEquals(2000, limits.maxQuestionChars());
@@ -730,7 +738,9 @@ class PaymentServiceTest {
 
     @Test
     void planService_UltraTierLimits_ShouldMatchSpec() {
-        TierPolicyService tps = new TierPolicyService();
+        AiProperties props = new AiProperties();
+        props.setProvider("gemini");
+        TierPolicyService tps = new TierPolicyService(props);
         com.demo.ai_study_hub.dto.TierLimits limits = tps.getLimits(UserTier.ULTRA);
         assertEquals(200, limits.aiQuestionsPerDay());
         assertEquals(5000, limits.maxQuestionChars());
@@ -740,30 +750,30 @@ class PaymentServiceTest {
 
     @Test
     void effectiveTier_WhenPremiumNotExpired_ShouldReturnPremium() {
-        TierPolicyService tps = new TierPolicyService();
+        TierPolicyService tps = new TierPolicyService(new AiProperties());
         User u = new User();
         u.setTier(UserTier.PREMIUM);
-        u.setTierExpiresAt(LocalDateTime.now().plusDays(5));
+        u.setTierExpiresAt(LocalDateTime.now(ZoneOffset.UTC).plusDays(5));
 
         assertEquals(UserTier.PREMIUM, tps.getEffectiveTier(u));
     }
 
     @Test
     void effectiveTier_WhenUltraNotExpired_ShouldReturnUltra() {
-        TierPolicyService tps = new TierPolicyService();
+        TierPolicyService tps = new TierPolicyService(new AiProperties());
         User u = new User();
         u.setTier(UserTier.ULTRA);
-        u.setTierExpiresAt(LocalDateTime.now().plusDays(5));
+        u.setTierExpiresAt(LocalDateTime.now(ZoneOffset.UTC).plusDays(5));
 
         assertEquals(UserTier.ULTRA, tps.getEffectiveTier(u));
     }
 
     @Test
     void effectiveTier_WhenPaidTierExpired_ShouldReturnFree() {
-        TierPolicyService tps = new TierPolicyService();
+        TierPolicyService tps = new TierPolicyService(new AiProperties());
         User u = new User();
         u.setTier(UserTier.ULTRA);
-        u.setTierExpiresAt(LocalDateTime.now().minusDays(1));
+        u.setTierExpiresAt(LocalDateTime.now(ZoneOffset.UTC).minusDays(1));
 
         assertEquals(UserTier.FREE, tps.getEffectiveTier(u));
     }

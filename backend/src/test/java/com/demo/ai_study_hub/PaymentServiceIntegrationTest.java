@@ -17,6 +17,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -139,14 +140,14 @@ class PaymentServiceIntegrationTest {
             }
         };
 
-        LocalDateTime before = LocalDateTime.now();
+        LocalDateTime before = LocalDateTime.now(ZoneOffset.UTC);
         executor.submit(confirmOrder1);
         executor.submit(confirmOrder2);
         startLatch.countDown();
 
         boolean finished = endLatch.await(10, TimeUnit.SECONDS);
         executor.shutdownNow();
-        LocalDateTime after = LocalDateTime.now();
+        LocalDateTime after = LocalDateTime.now(ZoneOffset.UTC);
 
         assertTrue(finished, "Both concurrent confirmations should complete within timeout");
         assertEquals(2, successCount.get(), "Both independent payment orders should succeed");
