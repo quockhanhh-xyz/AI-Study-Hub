@@ -400,7 +400,7 @@ Uploads a document file for the currently authenticated user.
 ### Request Headers
 
 - Cookie: `accessToken=jwt-token-value-here`
-*(Note: Do not manually set `Content-Type` header when sending `FormData` in JavaScript; let the browser automatically generate the header with boundary.)*
+  *(Note: Do not manually set `Content-Type` header when sending `FormData` in JavaScript; let the browser automatically generate the header with boundary.)*
 
 ### Form Data (FormData)
 
@@ -2811,22 +2811,22 @@ Initiates the text extraction and chunking processing flow for the specified doc
 
 ```json
 {
-  "success": true,
-  "message": "Document processing started",
-  "data": {
-    "documentId": 25,
-    "processingStatus": "PROCESSING",
-    "characterCount": 0,
-    "originalCharacterCount": 0,
-    "wordCount": 0,
-    "chunkCount": 0,
-    "isTruncated": false,
-    "processingStartedAt": "2026-06-29T16:00:00",
-    "processedAt": null,
-    "lastAttemptStatus": null,
-    "lastAttemptError": null,
-    "lastAttemptedAt": null
-  }
+"success": true,
+"message": "Document processing started",
+"data": {
+"documentId": 25,
+"processingStatus": "PROCESSING",
+"characterCount": 0,
+"originalCharacterCount": 0,
+"wordCount": 0,
+"chunkCount": 0,
+"isTruncated": false,
+"processingStartedAt": "2026-06-29T16:00:00",
+"processedAt": null,
+"lastAttemptStatus": null,
+"lastAttemptError": null,
+"lastAttemptedAt": null
+}
 }
 ```
 
@@ -3263,13 +3263,16 @@ Retrieve current user's AI usage statistics and remaining quota for today.
 # 15. Payment and Account Tier MVP APIs
 
 > [!NOTE]
-> Step 11 implements a **Mock Payment / Account Tier MVP** flow for demonstration purposes.
+> Step 11 implements a **Mock Payment / Account Tier** flow for demonstration purposes.
 > - No real payment gateway integration is performed.
 > - No real money is processed.
-> - No auto-renewal, subscription cycles, or automatic expiration logic is implemented in this step.
-> - Premium tier status remains permanent for the duration of the MVP demo.
-> - Daily AI questions limits: **FREE = 5**, **PREMIUM = 50**.
-> - Pricing and quota values (price, currency, tier quota limits) are defined dynamically in a central `PlanService` or shared configuration file (e.g. application properties) as the single source of truth.
+> - Three account tiers are supported: `FREE`, `PREMIUM`, and `ULTRA`.
+> - `PREMIUM` and `ULTRA` are paid tiers with a **1-month duration** (`tier_expires_at = now + 1 month` on purchase/renewal). They are **not** permanent — once `tier_expires_at` passes, the user's **Effective Tier** falls back to `FREE` automatically (see section 18, Account Entitlements).
+> - Renewing the same tier (`PREMIUM` → `PREMIUM`, `ULTRA` → `ULTRA`) extends the expiry by one month from the current expiry (or from now, if already expired).
+> - Upgrading `PREMIUM` → `ULTRA` is allowed; the new expiry is `now + 1 month` (any remaining Premium time is **not** carried over, to avoid free Ultra time). The frontend should warn the user of this before confirming an upgrade.
+> - Downgrading `ULTRA` → `PREMIUM` via payment is **not supported** and returns **409 Conflict**.
+> - Daily AI questions limits: **FREE = 5**, **PREMIUM = 50**, **ULTRA = 200**.
+> - Pricing and quota values (price, currency, tier quota limits) are defined dynamically in a central `PlanService` as the single source of truth. The frontend only ever sends a `planCode`; price, target tier, and duration are always resolved by the backend.
 > - **Mock VNPay-style Checkout**: After creating a mock payment order, the frontend (FE) may redirect to a mock VNPay-style checkout screen. This screen is UI-only and does NOT call the actual VNPay API. Confirming Success, Failure, or Cancellation from this screen still calls the respective mock payment endpoints listed below. No VNPay secret keys are required.
 
 ## 15.1. Get Plans
@@ -3288,18 +3291,32 @@ Retrieve list of available billing plans. This is a public API and does not requ
     {
       "planCode": "FREE",
       "planName": "Free",
+      "targetTier": "FREE",
       "price": 0,
       "currency": "VND",
       "billingLabel": "free",
+      "durationMonths": 0,
       "aiDailyLimit": 5
     },
     {
       "planCode": "PREMIUM",
       "planName": "Premium",
+      "targetTier": "PREMIUM",
       "price": 199000,
       "currency": "VND",
-      "billingLabel": "month",
+      "billingLabel": "1 month",
+      "durationMonths": 1,
       "aiDailyLimit": 50
+    },
+    {
+      "planCode": "ULTRA",
+      "planName": "Ultra",
+      "targetTier": "ULTRA",
+      "price": 399000,
+      "currency": "VND",
+      "billingLabel": "1 month",
+      "durationMonths": 1,
+      "aiDailyLimit": 200
     }
   ]
 }
@@ -3325,13 +3342,20 @@ Create a new pending payment order for a plan.
 }
 ```
 
+`planCode` may be `PREMIUM` or `ULTRA`.
+
 #### Rules & Constraints
-- Only `planCode = PREMIUM` is accepted.
-- Creating a payment order with `planCode = FREE` returns **400 Bad Request**.
-- Invalid `planCode` values return **400 Bad Request**.
+- `planCode` must be `PREMIUM` or `ULTRA`. `planCode = FREE` returns **400 Bad Request** ("Cannot create payment for FREE plan").
+- Invalid/unknown `planCode` values return **400 Bad Request**.
 - User must be logged in; otherwise returns **401 Unauthorized**.
-- If the user already has a `PREMIUM` tier, creating a new payment returns **409 Conflict**.
-- Frontend does not specify the price, currency, or tier in the request body; the backend resolves these details from `PlanService`.
+- Upgrade path rules (based on the user's current **Effective Tier**, not the raw stored tier):
+  - `FREE` → `PREMIUM`: allowed.
+  - `FREE` → `ULTRA`: allowed.
+  - `PREMIUM` → `PREMIUM`: allowed (renewal).
+  - `ULTRA` → `ULTRA`: allowed (renewal).
+  - `PREMIUM` → `ULTRA`: allowed (upgrade).
+  - `ULTRA` → `PREMIUM`: **not allowed**, returns **409 Conflict** ("Downgrade from ULTRA to PREMIUM is not supported.").
+- Frontend does not specify the price, currency, target tier, or duration in the request body; the backend resolves all of these from `PlanService` based solely on `planCode`.
 
 #### Success Response (200 OK)
 
@@ -3345,7 +3369,7 @@ Create a new pending payment order for a plan.
     "planName": "Premium",
     "amount": 199000,
     "currency": "VND",
-    "billingLabel": "month",
+    "billingLabel": "1 month",
     "paymentMethod": "MOCK",
     "status": "PENDING",
     "createdAt": "2026-07-02T10:30:00"
@@ -3371,9 +3395,14 @@ Mock confirmation of a successful payment.
 - If the payment order does not exist or does not belong to the current user, the server must return **404 Not Found** (do not return 403, to prevent leaking paymentId details).
 - The payment order must have `PENDING` status.
 - If the payment is not `PENDING` (already SUCCESS, FAILED, or CANCELLED), returns **409 Conflict** (handles double-clicks or duplicate requests gracefully).
-- If the user is already at the `PREMIUM` tier (e.g. upgraded via another payment order), they cannot success any old pending payment orders; returns **409 Conflict**.
-- **Transactional Atomicity**: The success operation must be transactional (`@Transactional`). Updating the payment status to `SUCCESS` and the user's tier to `PREMIUM` must occur atomically within the same database transaction.
-- Upon success, the user's tier is updated to `PREMIUM`, and the `paidAt` field is set to the current timestamp.
+- The target tier is always resolved from the payment order's own `planCode` (via `PlanService.getTargetTier`), never hardcoded.
+- If the user's current **Effective Tier** is `ULTRA` and the order's target tier is `PREMIUM`, this is rejected as a downgrade and returns **409 Conflict** ("Downgrade from ULTRA to PREMIUM is not supported.").
+- Expiry (`tierExpiresAt`) calculation:
+  - Same-tier renewal (Effective Tier == target tier): `max(currentExpiry, now) + 1 month`.
+  - Different tier (`FREE` → target, or `PREMIUM` → `ULTRA`): `now + 1 month`. Remaining time on the previous tier is **not** carried over.
+- **Transactional Atomicity**: The success operation must be transactional (`@Transactional`). Updating the payment status to `SUCCESS` and the user's tier/expiry must occur atomically within the same database transaction.
+- **Concurrency safety**: the user row is locked (`SELECT ... FOR UPDATE`) before computing the new expiry, so two payments for the same user confirmed at the same time cannot silently overwrite each other's renewal.
+- Upon success, the user's `tier` is updated to the order's target tier, `tierExpiresAt` is set per the calculation above, and the payment's `paidAt` field is set to the current timestamp.
 
 #### Success Response (200 OK)
 
@@ -3387,7 +3416,7 @@ Mock confirmation of a successful payment.
     "planName": "Premium",
     "amount": 199000,
     "currency": "VND",
-    "billingLabel": "month",
+    "billingLabel": "1 month",
     "paymentMethod": "MOCK",
     "status": "SUCCESS",
     "tier": "PREMIUM",
@@ -3415,8 +3444,8 @@ Mock confirmation of a failed payment.
 - The payment order must have `PENDING` status.
 - If the payment is not `PENDING`, returns **409 Conflict**.
 - Marking a payment as failed does not change the user's tier, and the `paidAt` timestamp remains `null`.
-- The response returns the user's current tier (e.g. `FREE`, or `PREMIUM` if they are already upgraded by another payment).
-- Already upgraded `PREMIUM` users are still allowed to mark their old stale `PENDING` payments as failed.
+- The response returns the user's current **Effective Tier** (e.g. `FREE`, or `PREMIUM`/`ULTRA` if they are already upgraded via another payment — expired paid tiers are reported as `FREE`).
+- Already-upgraded users are still allowed to mark their old stale `PENDING` payments as failed.
 
 #### Success Response (200 OK)
 
@@ -3430,7 +3459,7 @@ Mock confirmation of a failed payment.
     "planName": "Premium",
     "amount": 199000,
     "currency": "VND",
-    "billingLabel": "month",
+    "billingLabel": "1 month",
     "paymentMethod": "MOCK",
     "status": "FAILED",
     "tier": "FREE",
@@ -3458,8 +3487,8 @@ Cancel a pending payment order.
 - The payment order must have `PENDING` status.
 - If the payment is not `PENDING`, returns **409 Conflict**.
 - Cancelling a payment does not change the user's tier, and the `paidAt` timestamp remains `null`.
-- The response returns the user's current tier.
-- Already upgraded `PREMIUM` users are still allowed to cancel their old stale `PENDING` payments.
+- The response returns the user's current **Effective Tier**.
+- Already-upgraded users are still allowed to cancel their old stale `PENDING` payments.
 
 #### Success Response (200 OK)
 
@@ -3473,7 +3502,7 @@ Cancel a pending payment order.
     "planName": "Premium",
     "amount": 199000,
     "currency": "VND",
-    "billingLabel": "month",
+    "billingLabel": "1 month",
     "paymentMethod": "MOCK",
     "status": "CANCELLED",
     "tier": "FREE",
@@ -3509,12 +3538,24 @@ Retrieve the current user's payment history.
   "message": "Payment history retrieved successfully",
   "data": [
     {
+      "paymentId": 16,
+      "planCode": "ULTRA",
+      "planName": "Ultra",
+      "amount": 399000,
+      "currency": "VND",
+      "billingLabel": "1 month",
+      "paymentMethod": "MOCK",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-03T09:00:00",
+      "paidAt": "2026-07-03T09:05:00"
+    },
+    {
       "paymentId": 15,
       "planCode": "PREMIUM",
       "planName": "Premium",
       "amount": 199000,
       "currency": "VND",
-      "billingLabel": "month",
+      "billingLabel": "1 month",
       "paymentMethod": "MOCK",
       "status": "SUCCESS",
       "createdAt": "2026-07-02T10:30:00",
@@ -3526,7 +3567,7 @@ Retrieve the current user's payment history.
       "planName": "Premium",
       "amount": 199000,
       "currency": "VND",
-      "billingLabel": "month",
+      "billingLabel": "1 month",
       "paymentMethod": "MOCK",
       "status": "FAILED",
       "createdAt": "2026-07-02T10:00:00",
@@ -3545,7 +3586,7 @@ Retrieve the current user's payment history.
 | **400 Bad Request** | Invalid `planCode` / creating payment for `planCode = FREE` |
 | **401 Unauthorized** | User is not logged in / missing accessToken cookie |
 | **404 Not Found** | Payment order does not exist OR does not belong to the current user |
-| **409 Conflict** | User is already `PREMIUM` (on payment creation or confirmation) OR payment order is not in `PENDING` status (double confirmation / double-click prevention) |
+| **409 Conflict** | Downgrade attempt (`ULTRA` → `PREMIUM`, on payment creation or confirmation) OR payment order is not in `PENDING` status (double confirmation / double-click prevention) |
 | **500 Internal Server Error** | Unexpected backend failures |
 
 ---
