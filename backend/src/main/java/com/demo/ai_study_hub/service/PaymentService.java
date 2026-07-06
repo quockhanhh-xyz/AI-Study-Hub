@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import com.demo.ai_study_hub.enums.UserTier;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,23 +36,27 @@ public class PaymentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Cannot create payment for FREE plan");
         }
-        UserTier effectiveTier = tierPolicyService.getEffectiveTier(user);
-        if (effectiveTier == UserTier.PREMIUM || effectiveTier == UserTier.ULTRA) {
+
+        UserTier targetTier = planService.getTargetTier(planCode);
+        UserTier currentEffectiveTier = tierPolicyService.getEffectiveTier(user);
+
+        // Only disallowed upgrade path: ULTRA -> PREMIUM (downgrade via payment)
+        if (currentEffectiveTier == UserTier.ULTRA && targetTier == UserTier.PREMIUM) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "User is already Premium.");
+                    "Downgrade from ULTRA to PREMIUM is not supported.");
         }
 
         PaymentOrder order = PaymentOrder.builder()
                 .user(user)
-                .planCode(PlanCode.PREMIUM)
-                .amount(planService.getPrice(PlanCode.PREMIUM))
+                .planCode(planCode.toUpperCase())
+                .amount(planService.getPrice(planCode))
                 .currency(PlanService.CURRENCY)
                 .status(PaymentStatus.PENDING)
                 .paymentMethod(PaymentMethod.MOCK)
                 .build();
 
         paymentOrderRepository.save(order);
-        return toResponse(order, user.getTier().name());
+        return toResponse(order, tierPolicyService.getEffectiveTier(user).name());
     }
 
     @Transactional
@@ -66,24 +71,45 @@ public class PaymentService {
                     "Payment is no longer pending");
         }
 
-        User freshUser = userRepository.findById(user.getUserId())
+        // Lock the user row so two concurrent successful payments for the
+        // same user cannot both compute expiry from a stale snapshot.
+        User freshUser = userRepository.findByIdForUpdate(user.getUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        UserTier freshEffectiveTier = tierPolicyService.getEffectiveTier(freshUser);
-        if (freshEffectiveTier == UserTier.PREMIUM || freshEffectiveTier == UserTier.ULTRA) {
+        UserTier targetTier = planService.getTargetTier(order.getPlanCode());
+        UserTier currentEffectiveTier = tierPolicyService.getEffectiveTier(freshUser);
+
+        if (currentEffectiveTier == UserTier.ULTRA && targetTier == UserTier.PREMIUM) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "User is already Premium.");
+                    "Downgrade from ULTRA to PREMIUM is not supported.");
+        }
+
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+        LocalDateTime newExpiry;
+
+        if (currentEffectiveTier == targetTier) {
+            // Same-tier renewal: extend from current expiry if still active,
+            // otherwise from now (covers an already-expired same tier).
+            LocalDateTime currentExpiry = freshUser.getTierExpiresAt();
+            LocalDateTime base = (currentExpiry != null && currentExpiry.isAfter(now)) ? currentExpiry : now;
+            newExpiry = base.plusMonths(1);
+        } else {
+            // FREE -> target, or PREMIUM -> ULTRA upgrade: always starts fresh
+            // from now. Remaining Premium time is intentionally NOT carried
+            // over into Ultra to avoid free Ultra time; FE must warn the user
+            // before confirming an upgrade.
+            newExpiry = now.plusMonths(1);
         }
 
         order.setStatus(PaymentStatus.SUCCESS);
-        order.setPaidAt(LocalDateTime.now());
+        order.setPaidAt(now);
         paymentOrderRepository.save(order);
 
-        freshUser.setTier(UserTier.PREMIUM);
-        freshUser.setTierExpiresAt(LocalDateTime.now(java.time.ZoneOffset.UTC).plusDays(30));
+        freshUser.setTier(targetTier);
+        freshUser.setTierExpiresAt(newExpiry);
         userRepository.save(freshUser);
 
-        return toResponse(order, "PREMIUM");
+        return toResponse(order, targetTier.name());
     }
 
     @Transactional
@@ -102,7 +128,7 @@ public class PaymentService {
         paymentOrderRepository.save(order);
 
         User freshUser = userRepository.findById(user.getUserId()).orElse(user);
-        return toResponse(order, freshUser.getTier().name());
+        return toResponse(order, tierPolicyService.getEffectiveTier(freshUser).name());
     }
 
     @Transactional
@@ -121,7 +147,7 @@ public class PaymentService {
         paymentOrderRepository.save(order);
 
         User freshUser = userRepository.findById(user.getUserId()).orElse(user);
-        return toResponse(order, freshUser.getTier().name());
+        return toResponse(order, tierPolicyService.getEffectiveTier(freshUser).name());
     }
 
     public List<PaymentResponse> getMyPayments(User user) {
@@ -131,14 +157,31 @@ public class PaymentService {
                 .collect(Collectors.toList());
     }
 
+    private String planNameForCode(String planCode) {
+        if (PlanCode.ULTRA.equalsIgnoreCase(planCode)) return "Ultra";
+        if (PlanCode.PREMIUM.equalsIgnoreCase(planCode)) return "Premium";
+        if (PlanCode.FREE.equalsIgnoreCase(planCode)) return "Free";
+        return "Unknown";
+    }
+
+    private String billingLabelForCode(String planCode) {
+        if (PlanCode.PREMIUM.equalsIgnoreCase(planCode) || PlanCode.ULTRA.equalsIgnoreCase(planCode)) {
+            return PlanService.PREMIUM_BILLING_LABEL;
+        }
+        if (PlanCode.FREE.equalsIgnoreCase(planCode)) {
+            return PlanService.FREE_BILLING_LABEL;
+        }
+        return "Unknown";
+    }
+
     private PaymentResponse toResponse(PaymentOrder order, String tier) {
         return PaymentResponse.builder()
                 .paymentId(order.getPaymentId())
                 .planCode(order.getPlanCode())
-                .planName("Premium")
+                .planName(planNameForCode(order.getPlanCode()))
                 .amount(order.getAmount())
                 .currency(order.getCurrency())
-                .billingLabel(PlanService.PREMIUM_BILLING_LABEL)
+                .billingLabel(billingLabelForCode(order.getPlanCode()))
                 .status(order.getStatus())
                 .paymentMethod(order.getPaymentMethod())
                 .tier(tier)

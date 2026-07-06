@@ -3,10 +3,17 @@ package com.demo.ai_study_hub.service;
 import com.demo.ai_study_hub.dto.PlanCode;
 import com.demo.ai_study_hub.dto.PlanResponse;
 import com.demo.ai_study_hub.enums.UserTier;
+import lombok.Builder;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -14,44 +21,106 @@ public class PlanService {
 
     private final TierPolicyService tierPolicyService;
 
-    public static final long FREE_PRICE = 0;
-    public static final long PREMIUM_PRICE = 199000;
-    public static final String PREMIUM_BILLING_LABEL = "month";
+    public static final long FREE_PRICE = 0L;
+    public static final long PREMIUM_PRICE = 199_000L;
+    public static final long ULTRA_PRICE = 399_000L;
+    public static final int PAID_DURATION_MONTHS = 1;
     public static final String CURRENCY = "VND";
+    public static final String PREMIUM_BILLING_LABEL = "1 month";
+    public static final String FREE_BILLING_LABEL = "free";
+
+    /**
+     * Backend's single source of truth for a plan's price/target tier/duration.
+     * FE only ever sends a planCode; every other value here is decided by us.
+     */
+    @Getter
+    @Builder
+    public static class PaymentPlan {
+        private final String planCode;
+        private final String planName;
+        private final UserTier targetTier;
+        private final long price;
+        private final int durationMonths;
+        private final String billingLabel;
+    }
+
+    private Map<String, PaymentPlan> plans() {
+        Map<String, PaymentPlan> map = new LinkedHashMap<>();
+        map.put(PlanCode.FREE, PaymentPlan.builder()
+                .planCode(PlanCode.FREE)
+                .planName("Free")
+                .targetTier(UserTier.FREE)
+                .price(FREE_PRICE)
+                .durationMonths(0)
+                .billingLabel(FREE_BILLING_LABEL)
+                .build());
+        map.put(PlanCode.PREMIUM, PaymentPlan.builder()
+                .planCode(PlanCode.PREMIUM)
+                .planName("Premium")
+                .targetTier(UserTier.PREMIUM)
+                .price(PREMIUM_PRICE)
+                .durationMonths(PAID_DURATION_MONTHS)
+                .billingLabel(PREMIUM_BILLING_LABEL)
+                .build());
+        map.put(PlanCode.ULTRA, PaymentPlan.builder()
+                .planCode(PlanCode.ULTRA)
+                .planName("Ultra")
+                .targetTier(UserTier.ULTRA)
+                .price(ULTRA_PRICE)
+                .durationMonths(PAID_DURATION_MONTHS)
+                .billingLabel(PREMIUM_BILLING_LABEL)
+                .build());
+        return map;
+    }
 
     public List<PlanResponse> getAllPlans() {
-        return List.of(getFreePlan(), getPremiumPlan());
+        return plans().values().stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
-    public PlanResponse getFreePlan() {
+    private PlanResponse toResponse(PaymentPlan plan) {
         return PlanResponse.builder()
-            .planCode(PlanCode.FREE)
-            .planName("Free")
-            .price(FREE_PRICE)
-            .currency(CURRENCY)
-            .billingLabel("free")
-            .aiDailyLimit(tierPolicyService.getLimits(UserTier.FREE).aiQuestionsPerDay())
-            .build();
+                .planCode(plan.getPlanCode())
+                .planName(plan.getPlanName())
+                .targetTier(plan.getTargetTier().name())
+                .price(plan.getPrice())
+                .currency(CURRENCY)
+                .billingLabel(plan.getBillingLabel())
+                .durationMonths(plan.getDurationMonths())
+                .aiDailyLimit(tierPolicyService.getLimits(plan.getTargetTier()).aiQuestionsPerDay())
+                .build();
     }
 
-    public PlanResponse getPremiumPlan() {
-        return PlanResponse.builder()
-            .planCode(PlanCode.PREMIUM)
-            .planName("Premium")
-            .price(PREMIUM_PRICE)
-            .currency(CURRENCY)
-            .billingLabel(PREMIUM_BILLING_LABEL)
-            .aiDailyLimit(tierPolicyService.getLimits(UserTier.PREMIUM).aiQuestionsPerDay())
-            .build();
+    /**
+     * Looks up a plan by code. Throws 400 if the plan code does not exist —
+     * NEVER falls back to FREE pricing silently.
+     */
+    public PaymentPlan getPlan(String planCode) {
+        PaymentPlan plan = planCode == null ? null : plans().get(planCode.toUpperCase());
+        if (plan == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid plan code: " + planCode);
+        }
+        return plan;
     }
 
     public long getPrice(String planCode) {
-        if (PlanCode.PREMIUM.equalsIgnoreCase(planCode)) return PREMIUM_PRICE;
-        return FREE_PRICE;
+        return getPlan(planCode).getPrice();
+    }
+
+    public UserTier getTargetTier(String planCode) {
+        return getPlan(planCode).getTargetTier();
+    }
+
+    public int getDurationMonths(String planCode) {
+        return getPlan(planCode).getDurationMonths();
     }
 
     public boolean isValidPlanCode(String planCode) {
-        return PlanCode.PREMIUM.equalsIgnoreCase(planCode)
-                || PlanCode.FREE.equalsIgnoreCase(planCode);
+        return planCode != null && plans().containsKey(planCode.toUpperCase());
+    }
+
+    public boolean isPurchasablePlanCode(String planCode) {
+        return PlanCode.PREMIUM.equalsIgnoreCase(planCode) || PlanCode.ULTRA.equalsIgnoreCase(planCode);
     }
 }
