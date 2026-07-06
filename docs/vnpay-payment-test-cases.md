@@ -102,6 +102,12 @@ This document specifies the complete test suite and verification scenarios for S
   * **Expected Output**:
     * HTTP `400 Bad Request`.
     * Error payload contains code `MOCK_CONFIRM_NOT_ALLOWED`.
+* **TC-MOCK-02: Mock Provider Disabled Blocks All Actions**
+  * **Action**: Set `payment.mock-enabled = false` in config. Call mock endpoints: create (`POST /api/payments/mock/create`), success (`POST /api/payments/mock/{paymentId}/success`), fail (`POST /api/payments/mock/{paymentId}/fail`), and cancel (`POST /api/payments/mock/{paymentId}/cancel`).
+  * **Expected Output**:
+    * All endpoints return HTTP `400 Bad Request`.
+    * All error payloads contain code `PAYMENT_PROVIDER_DISABLED`.
+
 
 ---
 
@@ -166,8 +172,25 @@ This document specifies the complete test suite and verification scenarios for S
   * **Expected Output**:
     * Response `{"RspCode":"00","Message":"Confirm success"}`.
     * Order transitions to `REVIEW_REQUIRED` with `reviewReason = 'PAY_DATE_AFTER_EXPIRY'`. Tier remains unchanged.
+* **TC-IPN-10: Failed Response Code Callback**
+  * **Action**: Trigger IPN callback where `vnp_ResponseCode != '00'` (e.g. `vnp_ResponseCode = '24'`).
+  * **Expected Output**:
+    * Order transitions to `FAILED` (unless it was already SUCCESS).
+    * Returns response `{"RspCode":"00","Message":"Confirm success"}`.
+* **TC-IPN-11: Failed Transaction Status Callback**
+  * **Action**: Trigger IPN callback where `vnp_TransactionStatus != '00'` (e.g. `vnp_TransactionStatus = '02'`).
+  * **Expected Output**:
+    * Order transitions to `FAILED` (unless it was already SUCCESS).
+    * Returns response `{"RspCode":"00","Message":"Confirm success"}`.
+* **TC-IPN-12: Parse Failure Pay Date**
+  * **Action**: Trigger IPN callback with a corrupted `vnp_PayDate` value (e.g. `vnp_PayDate = 'invalid_format'`).
+  * **Expected Output**:
+    * Order transitions to `REVIEW_REQUIRED` with `reviewReason = 'PAY_DATE_PARSE_FAILED'`.
+    * Returns response `{"RspCode":"00","Message":"Confirm success"}`.
+    * User tier remains unchanged.
 
 ---
+
 
 ### 1.8. Concurrency & Integration
 * **TC-CONC-01: Double Concurrent IPN Processing**

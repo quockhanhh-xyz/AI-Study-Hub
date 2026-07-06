@@ -47,5 +47,11 @@ WHERE currency IS NULL;
 CREATE UNIQUE INDEX uk_payment_orders_vnp_txn_ref
 ON payment_orders(vnp_txn_ref);
 
+CREATE INDEX idx_payment_orders_user
+ON payment_orders(user_id);
+
+CREATE INDEX idx_payment_orders_status
+ON payment_orders(status);
+
 CREATE INDEX idx_payment_orders_user_status_expired
 ON payment_orders(user_id, status, expired_at);

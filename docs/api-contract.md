@@ -3688,7 +3688,14 @@ Un-authenticated backend-to-backend callback from VNPay. Performs final order pr
 | **409 Conflict** | `{"success":false,"code":"PAYMENT_AMOUNT_MISMATCH","message":"Verification failed: Amount mismatch detected"}` | Paid amount in callback does not match snapshot amount |
 | **500 Internal Server Error** | `{"success":false,"message":"Unexpected backend failures"}` | General unexpected server/database exceptions |
 
+> [!IMPORTANT]
+> **IPN Callback Return Protocol Clarification**:
+> The `INVALID_PAYMENT_SIGNATURE` and `PAYMENT_AMOUNT_MISMATCH` codes listed in this reference table represent internal exception/error types handled within core business logic.
+> - The public IPN callback endpoint (`GET /api/payments/vnpay/ipn`) **never** exposes standard JSON exception blocks to VNPay.
+> - Instead, it catches these exceptions and maps them directly to the **IPN Response Code Matrix** (returning `{"RspCode":"97","Message":"Invalid signature"}` and `{"RspCode":"04","Message":"Invalid amount"}` respectively as a standard plain JSON response).
+
 ---
+
 
 # 16. Persistent Study Group Chat APIs
 

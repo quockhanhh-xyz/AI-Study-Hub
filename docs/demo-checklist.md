@@ -438,5 +438,3 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
 ### 11.6. Configuration Disabling
 - [ ] **Step 11.19**: Set `payment.mock-enabled = false` in `application.properties`. Call a mock checkout processing endpoint.
   - *Expected*: Returns `400 Bad Request` with code `PAYMENT_PROVIDER_DISABLED`.
-
-
