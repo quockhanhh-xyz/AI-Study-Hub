@@ -381,7 +381,7 @@ function resolveUploadError(err) {
 // so we can route them through the shared showQuotaError() helper instead
 // of the generic upload error resolver above.
 function isQuotaError(err) {
-  return !!(err && err.status === 403 && typeof err.code === "string" && /LIMIT_EXCEEDED|QUOTA_EXCEEDED/.test(err.code));
+  return !!(err && typeof err.code === "string" && /LIMIT_EXCEEDED|QUOTA_EXCEEDED/.test(err.code));
 }
 
 

@@ -187,7 +187,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Step 13: detects backend quota errors (folder/depth/share limits) so we can
   // route them through the shared showQuotaError() helper.
   function isQuotaError(error) {
-    return !!(error && error.status === 403 && typeof error.code === "string" && /LIMIT_EXCEEDED|QUOTA_EXCEEDED/.test(error.code));
+    return !!(error && typeof error.code === "string" && /LIMIT_EXCEEDED|QUOTA_EXCEEDED/.test(error.code));
   }
 
   // Folder list rendering
