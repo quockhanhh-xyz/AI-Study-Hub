@@ -32,20 +32,37 @@ public class VNPayIpnService {
     private final FrontendProperties frontendProperties;
 
     /**
-     * Return URL: verify-only, redirect target. NEVER updates the DB —
-     * this channel is untrusted (browser redirect, no server-to-server trust).
+     * Return URL: redirect target. Stabilizes the flow by processing the payment
+     * callback directly on client redirection (if IPN has not already done so).
+     * Reuses processVnpayCallback under transaction context.
      */
+    @Transactional
     public String handleReturn(Map<String, String> params) {
-        boolean valid = vnPayService.verifyChecksum(params);
-        if (!valid) {
-            log.warn("VNPay return checksum invalid, txnRef={}", params.get("vnp_TxnRef"));
-            return frontendProperties.getPaymentResultUrl() + "?error=payment_return_invalid";
+        try {
+            PaymentOrder order = processVnpayCallback(params, "RETURN_CONFIRM");
+            return frontendProperties.getPaymentResultUrl() + "?paymentId=" + order.getPaymentId();
+        } catch (PaymentException e) {
+            log.warn("VNPay return validation failed, code={}, reason={}", e.getCode(), e.getReason());
+            String errorParam = mapPaymentExceptionToErrorParam(e);
+            return frontendProperties.getPaymentResultUrl() + "?error=" + errorParam;
+        } catch (Exception e) {
+            log.error("VNPay return unexpected error", e);
+            return frontendProperties.getPaymentResultUrl() + "?error=unknown_error";
         }
+    }
 
-        String txnRef = params.get("vnp_TxnRef");
-        return paymentOrderRepository.findByVnpTxnRef(txnRef)
-                .map(order -> frontendProperties.getPaymentResultUrl() + "?paymentId=" + order.getPaymentId())
-                .orElse(frontendProperties.getPaymentResultUrl() + "?error=payment_return_invalid");
+    private String mapPaymentExceptionToErrorParam(PaymentException e) {
+        String code = e.getCode();
+        if ("MISSING_PARAMS".equals(code) || "INVALID_SIGNATURE".equals(code)) {
+            return "payment_return_invalid";
+        }
+        if ("PAYMENT_NOT_FOUND".equals(code)) {
+            return "order_not_found";
+        }
+        if ("INVALID_AMOUNT".equals(code)) {
+            return "amount_mismatch";
+        }
+        return "payment_failed";
     }
 
     /**
@@ -134,7 +151,10 @@ public class VNPayIpnService {
                 order.setReviewRequiredAt(LocalDateTime.now(ZoneOffset.UTC));
                 return paymentOrderRepository.save(order);
             }
-            throw new PaymentException(HttpStatus.CONFLICT, "ORDER_ALREADY_CONFIRMED", "Order already confirmed");
+            if ("IPN".equals(source)) {
+                throw new PaymentException(HttpStatus.CONFLICT, "ORDER_ALREADY_CONFIRMED", "Order already confirmed");
+            }
+            return order;
         }
 
         // 5. Duplicate / already-terminal check — MUST happen before we

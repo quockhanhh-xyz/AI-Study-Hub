@@ -315,7 +315,11 @@ public class PaymentService {
 
         maybeExpire(order);
 
-        return toResponse(order, null);
+        String tier = null;
+        if (order.getUser() != null) {
+            tier = tierPolicyService.getEffectiveTier(order.getUser()).name();
+        }
+        return toResponse(order, tier);
     }
 
     public List<PaymentResponse> getMyPayments(User user) {
@@ -397,6 +401,10 @@ public class PaymentService {
     }
 
     public PaymentResponse mapToResponse(PaymentOrder order) {
-        return toResponse(order, null);
+        String tier = null;
+        if (order.getUser() != null) {
+            tier = tierPolicyService.getEffectiveTier(order.getUser()).name();
+        }
+        return toResponse(order, tier);
     }
 }

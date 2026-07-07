@@ -332,19 +332,23 @@ class VNPayIpnServiceTest {
         String redirect = vnPayIpnService.handleReturn(fullValidParams());
 
         assertEquals("https://fe.example.com/payment-result.html?error=payment_return_invalid", redirect);
-        verify(paymentOrderRepository, never()).findByVnpTxnRef(any());
+        verify(paymentOrderRepository, never()).findByVnpTxnRefForUpdate(any());
     }
 
     @Test
     void handleReturn_WhenChecksumValid_ShouldRedirectWithPaymentId() {
         when(vnPayService.verifyChecksum(any())).thenReturn(true);
-        when(paymentOrderRepository.findByVnpTxnRef("PAYTEST10")).thenReturn(Optional.of(pendingOrder));
+        when(paymentOrderRepository.findByVnpTxnRefForUpdate("PAYTEST10")).thenReturn(Optional.of(pendingOrder));
+        when(vnPayService.parsePayDateToUtc("20260706143000"))
+                .thenReturn(LocalDateTime.of(2026, 7, 6, 7, 30, 0));
+        when(userRepository.findByIdForUpdate(user.getUserId())).thenReturn(Optional.of(user));
+        when(tierPolicyService.getEffectiveTier(user)).thenReturn(UserTier.FREE);
         when(frontendProperties.getPaymentResultUrl()).thenReturn("https://fe.example.com/payment-result.html");
 
         String redirect = vnPayIpnService.handleReturn(fullValidParams());
 
         assertEquals("https://fe.example.com/payment-result.html?paymentId=10", redirect);
-        verify(paymentOrderRepository, never()).save(any());
+        verify(paymentService, times(1)).finalizeSuccessfulPayment(eq(pendingOrder), eq(UserTier.PREMIUM), any());
     }
 
     // =========================================================================
@@ -447,6 +451,22 @@ class VNPayIpnServiceTest {
         assertEquals(PaymentStatus.REVIEW_REQUIRED, result.getStatus());
         assertEquals("PAYMENT_RECEIVED_AFTER_LOCAL_CANCELLATION", result.getReviewReason());
         verify(paymentOrderRepository, times(1)).save(pendingOrder);
+    }
+
+    @Test
+    void confirmReturn_AfterLocalCancellationWithFailedVNPay_ShouldReturnCancelledIdempotently() {
+        pendingOrder.setStatus(PaymentStatus.CANCELLED);
+        when(vnPayService.verifyChecksum(any())).thenReturn(true);
+        when(paymentOrderRepository.findByVnpTxnRefForUpdate("PAYTEST10")).thenReturn(Optional.of(pendingOrder));
+
+        Map<String, String> params = fullValidParams();
+        params.put("vnp_ResponseCode", "02");
+
+        PaymentOrder result = vnPayIpnService.processVnpayCallback(params, "RETURN_CONFIRM");
+
+        assertNotNull(result);
+        assertEquals(PaymentStatus.CANCELLED, result.getStatus());
+        verify(paymentService, never()).finalizeSuccessfulPayment(any(), any(), any());
     }
 
     @Test
