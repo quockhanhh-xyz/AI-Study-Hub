@@ -134,6 +134,10 @@ class VNPayServiceTest {
     void isValidBankCode_ShouldAllowListedCodes() {
         assertTrue(vnPayService.isValidBankCode("NCB"));
         assertTrue(vnPayService.isValidBankCode("vnbank"));
+        // Bug fix verification: contract explicitly lists these as valid.
+        assertTrue(vnPayService.isValidBankCode("AGRIBANK"));
+        assertTrue(vnPayService.isValidBankCode("SCB"));
+        assertTrue(vnPayService.isValidBankCode("VIETCOMBANK"));
     }
 
     @Test

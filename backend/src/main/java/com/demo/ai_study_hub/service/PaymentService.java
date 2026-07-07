@@ -43,7 +43,8 @@ public class PaymentService {
                     "Mock payment provider is disabled.", Map.of("provider", "MOCK"));
         }
         PaymentOrder order = createOrderCommon(user, planCode, PaymentMethod.MOCK, PaymentProvider.MOCK, null);
-        return toResponse(order, tierPolicyService.getEffectiveTier(user).name());
+        // Contract's create response has no "tier" field — pass null so it's excluded (NON_NULL).
+        return toResponse(order, null);
     }
 
     @Transactional
@@ -128,12 +129,13 @@ public class PaymentService {
      * instead of leaving a PENDING order with no paymentUrl.
      */
     @Transactional
-    public void attachPaymentUrl(Long paymentId, String paymentUrl, String vnpTxnRef) {
+    public PaymentResponse attachPaymentUrl(Long paymentId, String paymentUrl, String vnpTxnRef) {
         PaymentOrder order = paymentOrderRepository.findById(paymentId)
                 .orElseThrow(() -> new PaymentException(HttpStatus.NOT_FOUND, "PAYMENT_NOT_FOUND", "Payment not found"));
         order.setPaymentUrl(paymentUrl);
         order.setVnpTxnRef(vnpTxnRef);
         paymentOrderRepository.save(order);
+        return toResponse(order, null);
     }
 
     /**

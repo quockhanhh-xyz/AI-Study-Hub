@@ -26,8 +26,24 @@ public class VNPayService {
 
     private final VNPayProperties vnPayProperties;
 
-    /** Allowlisted bank codes accepted for Step 13B MVP. */
-    private static final Set<String> ALLOWED_BANK_CODES = Set.of("VNPAYQR", "VNBANK", "INTCARD", "NCB");
+    /**
+     * Allowlisted bank/channel codes for Step 13B.
+     *
+     * VNPAYQR / VNBANK / INTCARD are payment CHANNEL selectors (QR wallet,
+     * domestic ATM card, international card) rather than specific banks —
+     * kept because VNPay accepts them directly as vnp_BankCode to route to
+     * that channel's selection screen. The rest are actual VNPay Sandbox
+     * test bank codes (per VNPay's official sandbox documentation).
+     */
+    private static final Set<String> ALLOWED_BANK_CODES = Set.of(
+            // Channel selectors
+            "VNPAYQR", "VNBANK", "INTCARD",
+            // VNPay Sandbox test banks
+            "NCB", "AGRIBANK", "SCB", "SACOMBANK", "EXIMBANK", "MSBANK",
+            "NAMABANK", "VIETINBANK", "VIETCOMBANK", "HDBANK", "DONGABANK",
+            "TPBANK", "OJB", "BIDV", "TECHCOMBANK", "VPBANK", "MBBANK",
+            "ACB", "OCB", "IVB", "SHB", "VIETABANK"
+    );
 
     public boolean isValidBankCode(String bankCode) {
         return bankCode == null || bankCode.isBlank() || ALLOWED_BANK_CODES.contains(bankCode.toUpperCase());

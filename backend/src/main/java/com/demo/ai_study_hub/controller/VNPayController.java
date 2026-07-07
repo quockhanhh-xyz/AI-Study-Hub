@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,7 +35,7 @@ public class VNPayController {
     private final UserRepository userRepository;
 
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> createVNPayPayment(
+    public ResponseEntity<ApiResponse<PaymentResponse>> createVNPayPayment(
             @Valid @RequestBody CreateVNPayPaymentRequest request,
             HttpServletRequest httpRequest,
             Principal principal) {
@@ -55,6 +54,7 @@ public class VNPayController {
 
         String paymentUrl;
         String txnRef;
+        PaymentResponse response;
         try {
             txnRef = vnPayService.generateTxnRef(order.getPaymentId());
             String ip = extractClientIp(httpRequest);
@@ -64,7 +64,7 @@ public class VNPayController {
                     txnRef, order.getAmount(), orderInfo, ip,
                     request.getBankCode(), "vn", order.getExpiredAt());
 
-            paymentService.attachPaymentUrl(order.getPaymentId(), paymentUrl, txnRef);
+            response = paymentService.attachPaymentUrl(order.getPaymentId(), paymentUrl, txnRef);
         } catch (Exception e) {
             // The order row already exists (PENDING) at this point. If URL/
             // signature generation blows up, it must NOT be left dangling —
@@ -76,13 +76,7 @@ public class VNPayController {
                     "Failed to create VNPay payment URL. Please try again.");
         }
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("paymentId", order.getPaymentId());
-        data.put("paymentUrl", paymentUrl);
-        data.put("expiresAt", order.getExpiredAt());
-        data.put("status", order.getStatus());
-
-        return ResponseEntity.ok(ApiResponse.success(data, "Payment created successfully"));
+        return ResponseEntity.ok(ApiResponse.success(response, "Payment order created successfully"));
     }
 
     /** Public — browser redirect only. Verify-only, no DB mutation happens here. */
