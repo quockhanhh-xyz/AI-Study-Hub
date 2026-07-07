@@ -117,6 +117,8 @@ document.addEventListener("DOMContentLoaded", async function () {
       case "PENDING": return "status-badge pending";
       case "FAILED": return "status-badge rejected";
       case "CANCELLED": return "status-badge private";
+      case "EXPIRED": return "status-badge private";
+      case "REVIEW_REQUIRED": return "status-badge pending";
       default: return "status-badge private";
     }
   }

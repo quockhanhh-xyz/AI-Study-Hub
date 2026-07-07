@@ -79,7 +79,7 @@ function formatPaymentStatus(status) {
  * @returns {boolean}
  */
 function isVnpayPayment(payment) {
-  return payment && payment.paymentProvider === "VNPAY_SANDBOX";
+  return !!(payment && payment.paymentProvider === "VNPAY_SANDBOX");
 }
 
 /**
@@ -88,7 +88,7 @@ function isVnpayPayment(payment) {
  * @returns {boolean}
  */
 function isMockPayment(payment) {
-  return payment && payment.paymentProvider === "MOCK";
+  return !!(payment && payment.paymentProvider === "MOCK");
 }
 
 /**
