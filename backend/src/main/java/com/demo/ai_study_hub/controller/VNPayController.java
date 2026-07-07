@@ -53,15 +53,28 @@ public class VNPayController {
         User user = getUser(principal);
         PaymentOrder order = paymentService.createVNPayOrder(user, request.getPlanCode());
 
-        String txnRef = vnPayService.generateTxnRef(order.getPaymentId());
-        String ip = extractClientIp(httpRequest);
-        String orderInfo = "Payment for order " + order.getPaymentId();
+        String paymentUrl;
+        String txnRef;
+        try {
+            txnRef = vnPayService.generateTxnRef(order.getPaymentId());
+            String ip = extractClientIp(httpRequest);
+            String orderInfo = "Payment for order " + order.getPaymentId();
 
-        String paymentUrl = vnPayService.buildPaymentUrl(
-                txnRef, order.getAmount(), orderInfo, ip,
-                request.getBankCode(), "vn", order.getExpiredAt());
+            paymentUrl = vnPayService.buildPaymentUrl(
+                    txnRef, order.getAmount(), orderInfo, ip,
+                    request.getBankCode(), "vn", order.getExpiredAt());
 
-        paymentService.attachPaymentUrl(order.getPaymentId(), paymentUrl, txnRef);
+            paymentService.attachPaymentUrl(order.getPaymentId(), paymentUrl, txnRef);
+        } catch (Exception e) {
+            // The order row already exists (PENDING) at this point. If URL/
+            // signature generation blows up, it must NOT be left dangling —
+            // that would silently block the user from creating a new order
+            // for 15 minutes with no way to pay. Mark it FAILED immediately
+            // and surface a clean error instead.
+            paymentService.markOrderFailed(order.getPaymentId());
+            throw new PaymentException(HttpStatus.INTERNAL_SERVER_ERROR, "VNPAY_URL_GENERATION_FAILED",
+                    "Failed to create VNPay payment URL. Please try again.");
+        }
 
         Map<String, Object> data = new HashMap<>();
         data.put("paymentId", order.getPaymentId());

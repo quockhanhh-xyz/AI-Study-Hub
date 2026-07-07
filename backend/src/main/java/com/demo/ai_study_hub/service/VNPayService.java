@@ -42,7 +42,7 @@ public class VNPayService {
      * @param ipAddr    client IP address
      * @param bankCode  optional bank code (nullable)
      * @param locale    "vn" or "en"
-     * @param expiresAt order expiry instant (UTC) — converted to GMT+7 for vnp_ExpireDate
+     * @param expiresAtUtc order expiry instant (UTC) — converted to GMT+7 for vnp_ExpireDate
      */
     public String buildPaymentUrl(String txnRef, long amount, String orderInfo,
                                   String ipAddr, String bankCode, String locale,
@@ -68,9 +68,8 @@ public class VNPayService {
             params.put("vnp_BankCode", bankCode.toUpperCase());
         }
 
-        String query = buildQueryString(params, true);
-        String hashData = buildQueryString(params, false);
-        String secureHash = hmacSha512(vnPayProperties.getHashSecret(), hashData);
+        String query = buildQueryString(params);
+        String secureHash = hmacSha512(vnPayProperties.getHashSecret(), query);
 
         return vnPayProperties.getPaymentUrl() + "?" + query + "&vnp_SecureHash=" + secureHash;
     }
@@ -88,7 +87,7 @@ public class VNPayService {
         toHash.remove("vnp_SecureHash");
         toHash.remove("vnp_SecureHashType");
 
-        String hashData = buildQueryString(toHash, false);
+        String hashData = buildQueryString(toHash);
         String computedHash = hmacSha512(vnPayProperties.getHashSecret(), hashData);
 
         return constantTimeEquals(computedHash, receivedHash);
@@ -111,23 +110,19 @@ public class VNPayService {
         }
     }
 
-    private String buildQueryString(Map<String, String> params, boolean urlEncode) {
+    private String buildQueryString(Map<String, String> params) {
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, String> entry : params.entrySet()) {
             if (entry.getValue() == null || entry.getValue().isEmpty()) continue;
-            if (sb.length() > 0) sb.append('&');
-            if (urlEncode) {
-                sb.append(urlEncode(entry.getKey())).append('=').append(urlEncode(entry.getValue()));
-            } else {
-                sb.append(entry.getKey()).append('=').append(entry.getValue());
-            }
+            if (!sb.isEmpty()) sb.append('&');
+            sb.append(urlEncode(entry.getKey())).append('=').append(urlEncode(entry.getValue()));
         }
         return sb.toString();
     }
 
     private String urlEncode(String value) {
         try {
-            return java.net.URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+            return java.net.URLEncoder.encode(value, StandardCharsets.UTF_8);
         } catch (Exception e) {
             return value;
         }

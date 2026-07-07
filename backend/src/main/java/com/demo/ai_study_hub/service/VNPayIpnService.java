@@ -53,10 +53,21 @@ public class VNPayIpnService {
      */
     @Transactional
     public Map<String, String> handleIpn(Map<String, String> params) {
-        // 1. Required params
+        // 1. Required params — a signed-but-incomplete callback must be
+        // rejected as malformed (99), never silently treated as a failure.
         String txnRef = params.get("vnp_TxnRef");
         String amountStr = params.get("vnp_Amount");
-        if (txnRef == null || txnRef.isBlank() || amountStr == null) {
+        String vnpResponseCode = params.get("vnp_ResponseCode");
+        String vnpTransactionStatus = params.get("vnp_TransactionStatus");
+        String vnpPayDateRaw = params.get("vnp_PayDate");
+        String vnpSecureHash = params.get("vnp_SecureHash");
+
+        if (txnRef == null || txnRef.isBlank()
+                || amountStr == null || amountStr.isBlank()
+                || vnpResponseCode == null || vnpResponseCode.isBlank()
+                || vnpTransactionStatus == null || vnpTransactionStatus.isBlank()
+                || vnpPayDateRaw == null || vnpPayDateRaw.isBlank()
+                || vnpSecureHash == null || vnpSecureHash.isBlank()) {
             return response("99", "Missing required parameters");
         }
 
@@ -83,21 +94,21 @@ public class VNPayIpnService {
             return response("04", "Invalid amount");
         }
 
-        // 5. Persist raw VNPay response fields (audit trail) regardless of outcome.
-        order.setVnpTransactionNo(params.get("vnp_TransactionNo"));
-        order.setVnpBankCode(params.get("vnp_BankCode"));
-        order.setVnpResponseCode(params.get("vnp_ResponseCode"));
-        order.setVnpTransactionStatus(params.get("vnp_TransactionStatus"));
-        order.setVnpPayDate(params.get("vnp_PayDate"));
-
-        // 6. Duplicate / already-terminal check.
+        // 5. Duplicate / already-terminal check — MUST happen before we
+        // overwrite any audit fields, so a repeated callback for an order
+        // that is already SUCCESS/FAILED/CANCELLED/REVIEW_REQUIRED never
+        // mutates data that has already been settled.
         if (isTerminal(order.getStatus())) {
-            paymentOrderRepository.save(order);
             return response("02", "Order already confirmed");
         }
 
-        String vnpResponseCode = params.get("vnp_ResponseCode");
-        String vnpTransactionStatus = params.get("vnp_TransactionStatus");
+        // 6. Persist raw VNPay response fields (audit trail) now that we
+        // know this order is still processable.
+        order.setVnpTransactionNo(params.get("vnp_TransactionNo"));
+        order.setVnpBankCode(params.get("vnp_BankCode"));
+        order.setVnpResponseCode(vnpResponseCode);
+        order.setVnpTransactionStatus(vnpTransactionStatus);
+        order.setVnpPayDate(vnpPayDateRaw);
 
         // 7. Provider-reported failure.
         if (!"00".equals(vnpResponseCode) || !"00".equals(vnpTransactionStatus)) {
@@ -107,7 +118,7 @@ public class VNPayIpnService {
         }
 
         // 8. Parse pay date to UTC.
-        LocalDateTime payDateUtc = vnPayService.parsePayDateToUtc(params.get("vnp_PayDate"));
+        LocalDateTime payDateUtc = vnPayService.parsePayDateToUtc(vnpPayDateRaw);
         if (payDateUtc == null) {
             order.setStatus(PaymentStatus.REVIEW_REQUIRED);
             order.setReviewReason("PAY_DATE_PARSE_FAILED");
@@ -115,6 +126,11 @@ public class VNPayIpnService {
             paymentOrderRepository.save(order);
             return response("00", "Confirm success");
         }
+
+        // Record providerPaidAt as soon as we successfully parse it — even
+        // if the order later gets routed to REVIEW_REQUIRED for being late,
+        // the actual provider-reported payment time must not be lost.
+        order.setProviderPaidAt(payDateUtc);
 
         // 9. Late payment check (pay date after order expiry).
         if (order.getExpiredAt() != null && payDateUtc.isAfter(order.getExpiredAt())) {
@@ -124,7 +140,6 @@ public class VNPayIpnService {
             paymentOrderRepository.save(order);
             return response("00", "Confirm success");
         }
-        order.setProviderPaidAt(payDateUtc);
 
         // 10. Downgrade protection — lock user, compare effective tier vs target.
         User lockedUser = userRepository.findByIdForUpdate(order.getUser().getUserId()).orElse(null);
@@ -147,17 +162,25 @@ public class VNPayIpnService {
             return response("00", "Confirm success");
         }
 
-        // 11. All checks passed — finalize.
+        // 11. All checks passed — finalize using the VNPay-reported pay date
+        // (not the time the backend happened to process the callback).
         paymentOrderRepository.save(order);
-        paymentService.finalizeSuccessfulPayment(order, targetTier);
+        paymentService.finalizeSuccessfulPayment(order, targetTier, payDateUtc);
 
         return response("00", "Confirm success");
     }
 
+    /**
+     * REVIEW_REQUIRED is terminal for IPN purposes: once an order has been
+     * flagged for manual review, a repeated callback must not silently
+     * re-process or overwrite it. Resolving a REVIEW_REQUIRED order is an
+     * explicit manual/admin action, not something a retried IPN should do.
+     */
     private boolean isTerminal(String status) {
         return PaymentStatus.SUCCESS.equals(status)
                 || PaymentStatus.FAILED.equals(status)
-                || PaymentStatus.CANCELLED.equals(status);
+                || PaymentStatus.CANCELLED.equals(status)
+                || PaymentStatus.REVIEW_REQUIRED.equals(status);
     }
 
     private Map<String, String> response(String rspCode, String message) {

@@ -56,11 +56,12 @@ public class PaymentService {
         requireMockProvider(order);
 
         if (!PaymentStatus.PENDING.equals(order.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Payment is no longer pending");
+            throw new PaymentException(HttpStatus.CONFLICT, "ORDER_NOT_PENDING", "Payment is no longer pending");
         }
 
         UserTier targetTier = resolveTargetTier(order);
-        User result = finalizeSuccessfulPayment(order, targetTier);
+        // Mock payments have no external provider timestamp — use now().
+        User result = finalizeSuccessfulPayment(order, targetTier, LocalDateTime.now(ZoneOffset.UTC));
         return toResponse(order, result.getTier().name());
     }
 
@@ -74,7 +75,7 @@ public class PaymentService {
         requireMockProvider(order);
 
         if (!PaymentStatus.PENDING.equals(order.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Payment is no longer pending");
+            throw new PaymentException(HttpStatus.CONFLICT, "ORDER_NOT_PENDING", "Payment is no longer pending");
         }
 
         order.setStatus(PaymentStatus.FAILED);
@@ -94,7 +95,7 @@ public class PaymentService {
         requireMockProvider(order);
 
         if (!PaymentStatus.PENDING.equals(order.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Payment is no longer pending");
+            throw new PaymentException(HttpStatus.CONFLICT, "ORDER_NOT_PENDING", "Payment is no longer pending");
         }
 
         order.setStatus(PaymentStatus.CANCELLED);
@@ -120,14 +121,34 @@ public class PaymentService {
         return createOrderCommon(user, planCode, PaymentMethod.VNPAY, PaymentProvider.VNPAY_SANDBOX, null);
     }
 
-    /** Called by the VNPay controller once the paymentUrl has been built, to persist it. */
+    /**
+     * Called by the VNPay controller once the paymentUrl has been built, to
+     * persist it. If URL/signature generation fails after the order row was
+     * already committed, the controller must call {@link #markOrderFailed}
+     * instead of leaving a PENDING order with no paymentUrl.
+     */
     @Transactional
     public void attachPaymentUrl(Long paymentId, String paymentUrl, String vnpTxnRef) {
         PaymentOrder order = paymentOrderRepository.findById(paymentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment not found"));
+                .orElseThrow(() -> new PaymentException(HttpStatus.NOT_FOUND, "PAYMENT_NOT_FOUND", "Payment not found"));
         order.setPaymentUrl(paymentUrl);
         order.setVnpTxnRef(vnpTxnRef);
         paymentOrderRepository.save(order);
+    }
+
+    /**
+     * Marks a just-created order as FAILED because URL/signature generation
+     * blew up before the user ever saw a paymentUrl. Prevents a dangling
+     * PENDING order from blocking new checkout attempts for 15 minutes.
+     */
+    @Transactional
+    public void markOrderFailed(Long paymentId) {
+        paymentOrderRepository.findById(paymentId).ifPresent(order -> {
+            if (PaymentStatus.PENDING.equals(order.getStatus())) {
+                order.setStatus(PaymentStatus.FAILED);
+                paymentOrderRepository.save(order);
+            }
+        });
     }
 
     // =========================================================================
@@ -137,10 +158,10 @@ public class PaymentService {
     private PaymentOrder createOrderCommon(User user, String planCode, String paymentMethod,
                                            String paymentProvider, String bankCode) {
         if (!planService.isValidPlanCode(planCode)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid plan code: " + planCode);
+            throw new PaymentException(HttpStatus.BAD_REQUEST, "INVALID_PLAN", "Invalid plan code: " + planCode);
         }
         if (!planService.isPurchasablePlanCode(planCode)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create payment for FREE plan");
+            throw new PaymentException(HttpStatus.BAD_REQUEST, "INVALID_PLAN", "Cannot create payment for FREE plan");
         }
 
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
@@ -211,6 +232,11 @@ public class PaymentService {
      * order SUCCESS. Must be called with the order already locked
      * (PESSIMISTIC_WRITE) and confirmed PENDING by the caller.
      *
+     * @param paidAt the actual moment the payment was confirmed as paid —
+     *               for Mock this is "now"; for VNPay this MUST be the
+     *               vnp_PayDate converted to UTC, never the time the backend
+     *               happened to process the IPN callback.
+     *
      * Locks the user row internally before computing expiry, so concurrent
      * successful payments for the same user are serialized (no lost update).
      *
@@ -220,7 +246,7 @@ public class PaymentService {
      * already passed, but re-validates as a safety net.
      */
     @Transactional
-    public User finalizeSuccessfulPayment(PaymentOrder order, UserTier targetTier) {
+    public User finalizeSuccessfulPayment(PaymentOrder order, UserTier targetTier, LocalDateTime paidAt) {
         User freshUser = userRepository.findByIdForUpdate(order.getUser().getUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
@@ -244,7 +270,7 @@ public class PaymentService {
         }
 
         order.setStatus(PaymentStatus.SUCCESS);
-        order.setPaidAt(now);
+        order.setPaidAt(paidAt);
         paymentOrderRepository.save(order);
 
         freshUser.setTier(targetTier);
@@ -298,7 +324,7 @@ public class PaymentService {
 
     private PaymentOrder lockOwnedOrderOrThrow(User user, Long paymentId) {
         return paymentOrderRepository.findByPaymentIdAndUserForUpdate(paymentId, user)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment not found"));
+                .orElseThrow(() -> new PaymentException(HttpStatus.NOT_FOUND, "PAYMENT_NOT_FOUND", "Payment not found"));
     }
 
     // =========================================================================
