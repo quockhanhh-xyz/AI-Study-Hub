@@ -88,7 +88,7 @@ public class VNPayController {
                 .build();
     }
 
-    /** Public — server-to-server. This is the source of truth for finalizing payments. */
+    /** Public — server-to-server. Main VNPay confirmation channel. */
     @GetMapping("/ipn")
     public ResponseEntity<Map<String, String>> handleIpn(@RequestParam Map<String, String> allParams) {
         try {
