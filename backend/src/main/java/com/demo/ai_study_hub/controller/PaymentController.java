@@ -36,7 +36,7 @@ public class PaymentController {
             Principal principal) {
         User user = getUser(principal);
         PaymentResponse response = paymentService.createMockPayment(user, request.getPlanCode());
-        return ResponseEntity.ok(ApiResponse.success(response, "Mock payment order created successfully"));
+        return ResponseEntity.ok(ApiResponse.success(response, "Payment order created successfully"));
     }
 
     @PostMapping({"/mock/{paymentId}/success", "/mock/{paymentId}/confirm"})
@@ -70,7 +70,7 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<List<PaymentResponse>>> getMyPayments(Principal principal) {
         User user = getUser(principal);
         List<PaymentResponse> response = paymentService.getMyPayments(user);
-        return ResponseEntity.ok(ApiResponse.success(response, "Payment history retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(response, "Payments retrieved successfully"));
     }
 
     @GetMapping("/{paymentId}")
