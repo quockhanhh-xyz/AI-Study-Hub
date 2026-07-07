@@ -321,7 +321,7 @@ class VNPayIpnServiceTest {
     }
 
     // =========================================================================
-    // Return URL — verify-only, must never touch the DB
+    // Return URL — processes callback using same core logic as confirm-return
     // =========================================================================
 
     @Test

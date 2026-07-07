@@ -3635,9 +3635,9 @@ Receives the client-side redirect from VNPay. Performs signature verification an
 Standard VNPay parameters: `vnp_Amount`, `vnp_BankCode`, `vnp_CardType`, `vnp_OrderInfo`, `vnp_PayDate`, `vnp_ResponseCode`, `vnp_TmnCode`, `vnp_TransactionNo`, `vnp_TxnRef`, `vnp_SecureHash`.
 
 #### Rules & Constraints
-* **Checksum Verification**: The signature must be verified using the local VNPay hash secret. If the checksum verification fails, redirect the user to `{FRONTEND_PAYMENT_RESULT_URL}?error=payment_return_invalid`.
-* **Database Updates**: The return URL is client-controlled and untrusted. Therefore, **it must not perform any updates to the database (order status, user tier, or expiration dates)**.
-* **Redirect Mapping**: If checksum verification succeeds, extract `vnp_TxnRef`, map it to `paymentId`, and redirect the client browser to `{FRONTEND_PAYMENT_RESULT_URL}?paymentId={paymentId}`.
+* **Checksum Verification**: The signature must be verified using the local VNPay hash secret. If verification fails, redirect the user to `{FRONTEND_PAYMENT_RESULT_URL}?error=payment_return_invalid`.
+* **Database Updates**: The Return URL processes the callback using the same core logic as confirm-return. It may update the payment status and user tier in the database if the callback is valid and the order is still processable (serving as a prompt client fallback if the IPN callback has not yet arrived).
+* **Redirect Mapping**: If processing succeeds, extract `vnp_TxnRef`, map it to `paymentId`, and redirect the client browser to `{FRONTEND_PAYMENT_RESULT_URL}?paymentId={paymentId}`.
 
 ---
 
