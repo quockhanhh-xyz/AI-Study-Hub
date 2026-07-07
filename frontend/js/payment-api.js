@@ -29,6 +29,14 @@ function mapPaymentError(error) {
       return "Downgrading from ULTRA to PREMIUM is not supported.";
     case "MOCK_CONFIRM_NOT_ALLOWED":
       return "A VNPay payment cannot be confirmed through the mock flow.";
+    case "INVALID_PLAN":
+      return "The selected payment plan is invalid.";
+    case "PAYMENT_NOT_FOUND":
+      return "The requested payment could not be found.";
+    case "ORDER_NOT_PENDING":
+      return "This payment order is no longer in a pending state.";
+    case "VNPAY_URL_GENERATION_FAILED":
+      return "Failed to generate VNPay payment URL. Please try again later.";
   }
 
   const status = error && (error.status || error.statusCode);
