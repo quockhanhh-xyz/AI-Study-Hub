@@ -195,7 +195,6 @@ document.addEventListener("DOMContentLoaded", async function () {
       currentBadge.style.marginTop = "16px";
       currentBadge.textContent = "Current Plan";
       card.appendChild(currentBadge);
-
       if (isPaidPlan) {
         const renewBtn = document.createElement("button");
         renewBtn.type = "button";
@@ -203,7 +202,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         renewBtn.style.marginTop = "12px";
         renewBtn.textContent = `Renew ${plan.planName || planTier}`;
         renewBtn.addEventListener("click", function (event) {
-          handleUpgradeClick(event, planTier);
+          handleUpgradeClick(event, plan.planCode);
         });
         card.appendChild(renewBtn);
       }
@@ -214,7 +213,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       upgradeBtn.style.marginTop = "16px";
       upgradeBtn.textContent = `Upgrade to ${plan.planName || planTier}`;
       upgradeBtn.addEventListener("click", function (event) {
-        handleUpgradeClick(event, planTier);
+        handleUpgradeClick(event, plan.planCode);
       });
       card.appendChild(upgradeBtn);
     } else if (isLowerPlan) {
@@ -361,19 +360,30 @@ document.addEventListener("DOMContentLoaded", async function () {
     meta.appendChild(dateInfo);
 
     if (payment.status === "PENDING") {
-      const continueBtn = document.createElement("button");
-      continueBtn.type = "button";
-      continueBtn.className = "btn btn-secondary btn-sm";
-      continueBtn.textContent = "Continue Mock Checkout";
-      continueBtn.addEventListener("click", function () {
-        activePaymentId = payment.paymentId;
-        checkoutPlanInfo.textContent = `${payment.planName} — ${formatCurrency(payment.amount, payment.currency)} / ${payment.billingLabel}`;
-        checkoutResultMessage.style.display = "none";
-        checkoutActions.style.display = "flex";
-        checkoutSection.style.display = "block";
-        checkoutSection.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-      meta.appendChild(continueBtn);
+      if (isMockPayment(payment)) {
+        const continueBtn = document.createElement("button");
+        continueBtn.type = "button";
+        continueBtn.className = "btn btn-secondary btn-sm";
+        continueBtn.textContent = "Continue Mock Checkout";
+        continueBtn.addEventListener("click", function () {
+          activePaymentId = payment.paymentId;
+          checkoutPlanInfo.textContent = `${payment.planName} — ${formatCurrency(payment.amount, payment.currency)} / ${payment.billingLabel}`;
+          checkoutResultMessage.style.display = "none";
+          checkoutActions.style.display = "flex";
+          checkoutSection.style.display = "block";
+          checkoutSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+        meta.appendChild(continueBtn);
+      } else if (canContinueVNPay(payment)) {
+        const continueBtn = document.createElement("button");
+        continueBtn.type = "button";
+        continueBtn.className = "btn btn-secondary btn-sm";
+        continueBtn.textContent = "Continue VNPay";
+        continueBtn.addEventListener("click", function () {
+          window.location.href = payment.paymentUrl;
+        });
+        meta.appendChild(continueBtn);
+      }
     }
 
     row.append(main, meta);
