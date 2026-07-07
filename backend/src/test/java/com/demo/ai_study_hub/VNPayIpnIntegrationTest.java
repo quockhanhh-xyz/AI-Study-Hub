@@ -253,6 +253,76 @@ class VNPayIpnIntegrationTest {
                 "User must never end up on PREMIUM once an ULTRA IPN has succeeded");
     }
 
+    @Test
+    void handleIpnAndConfirmReturn_Concurrently_ShouldSucceedAndNotDoubleUpgrade() throws Exception {
+        Long paymentId = transactionTemplate.execute(status -> {
+            PaymentOrder order = PaymentOrder.builder()
+                    .user(testUser)
+                    .planCode("PREMIUM_1_MONTH")
+                    .targetTier("PREMIUM")
+                    .durationMonths(1)
+                    .amount(199000L)
+                    .currency("VND")
+                    .status(PaymentStatus.PENDING)
+                    .paymentMethod("VNPAY")
+                    .paymentProvider("VNPAY_SANDBOX")
+                    .vnpTxnRef("CONCURTEST" + System.nanoTime())
+                    .expiredAt(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(15))
+                    .build();
+            return paymentOrderRepository.save(order).getPaymentId();
+        });
+
+        PaymentOrder savedOrder = paymentOrderRepository.findById(paymentId).orElseThrow();
+        Map<String, String> callbackParams = buildSignedIpnParams(savedOrder);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch endLatch = new CountDownLatch(2);
+        AtomicInteger ipnSuccess = new AtomicInteger(0);
+        AtomicInteger confirmReturnSuccess = new AtomicInteger(0);
+        AtomicReference<Exception> unexpectedError = new AtomicReference<>();
+
+        Runnable deliverIpn = () -> {
+            try {
+                startLatch.await();
+                Map<String, String> result = vnPayIpnService.handleIpn(callbackParams);
+                if ("00".equals(result.get("RspCode"))) {
+                    ipnSuccess.incrementAndGet();
+                }
+            } catch (Exception e) {
+                unexpectedError.set(e);
+            } finally {
+                endLatch.countDown();
+            }
+        };
+
+        Runnable deliverConfirmReturn = () -> {
+            try {
+                startLatch.await();
+                vnPayIpnService.processVnpayCallback(callbackParams, "RETURN_CONFIRM");
+                confirmReturnSuccess.incrementAndGet();
+            } catch (Exception e) {
+                unexpectedError.set(e);
+            } finally {
+                endLatch.countDown();
+            }
+        };
+
+        executor.submit(deliverIpn);
+        executor.submit(deliverConfirmReturn);
+        startLatch.countDown();
+
+        boolean finished = endLatch.await(10, TimeUnit.SECONDS);
+        executor.shutdownNow();
+
+        assertNull(unexpectedError.get(), "No unexpected error should occur: " + unexpectedError.get());
+        assertTrue(finished, "Both concurrent callbacks should complete within timeout");
+
+        // Reload user to verify tier is PREMIUM
+        User finalUser = userRepository.findById(testUser.getUserId()).orElseThrow();
+        assertEquals(UserTier.PREMIUM, finalUser.getTier());
+    }
+
     /**
      * Builds a fully-signed IPN parameter map for the given order, using the
      * SAME encoding/signing algorithm VNPayService uses (URL-encoded,

@@ -11,6 +11,8 @@ import com.demo.ai_study_hub.service.PaymentService;
 import com.demo.ai_study_hub.service.TierPolicyService;
 import com.demo.ai_study_hub.service.VNPayIpnService;
 import com.demo.ai_study_hub.service.VNPayService;
+import com.demo.ai_study_hub.exception.PaymentException;
+import org.springframework.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,6 +65,8 @@ class VNPayIpnServiceTest {
                 .vnpTxnRef("PAYTEST10")
                 .expiredAt(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(15))
                 .build();
+
+        lenient().when(paymentOrderRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     private Map<String, String> fullValidParams() {
@@ -341,5 +345,147 @@ class VNPayIpnServiceTest {
 
         assertEquals("https://fe.example.com/payment-result.html?paymentId=10", redirect);
         verify(paymentOrderRepository, never()).save(any());
+    }
+
+    // =========================================================================
+    // Confirm Return Tests (RETURN_CONFIRM flow)
+    // =========================================================================
+
+    @Test
+    void confirmReturn_WhenSuccess_ShouldFinalizePaymentAndReturnOrder() {
+        when(vnPayService.verifyChecksum(any())).thenReturn(true);
+        when(paymentOrderRepository.findByVnpTxnRefForUpdate("PAYTEST10")).thenReturn(Optional.of(pendingOrder));
+        when(vnPayService.parsePayDateToUtc("20260706143000"))
+                .thenReturn(LocalDateTime.of(2026, 7, 6, 7, 30, 0));
+        when(userRepository.findByIdForUpdate(user.getUserId())).thenReturn(Optional.of(user));
+        when(tierPolicyService.getEffectiveTier(user)).thenReturn(UserTier.FREE);
+
+        PaymentOrder result = vnPayIpnService.processVnpayCallback(fullValidParams(), "RETURN_CONFIRM");
+
+        assertNotNull(result);
+        assertEquals(PaymentStatus.PENDING, result.getStatus());
+        verify(paymentService, times(1)).finalizeSuccessfulPayment(eq(pendingOrder), eq(UserTier.PREMIUM), any());
+    }
+
+    @Test
+    void confirmReturn_WhenInvalidHash_ShouldThrowInvalidSignature() {
+        when(vnPayService.verifyChecksum(any())).thenReturn(false);
+
+        PaymentException ex = assertThrows(PaymentException.class, () ->
+                vnPayIpnService.processVnpayCallback(fullValidParams(), "RETURN_CONFIRM"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("INVALID_SIGNATURE", ex.getCode());
+    }
+
+    @Test
+    void confirmReturn_WhenAmountMismatch_ShouldThrowInvalidAmount() {
+        when(vnPayService.verifyChecksum(any())).thenReturn(true);
+        when(paymentOrderRepository.findByVnpTxnRefForUpdate("PAYTEST10")).thenReturn(Optional.of(pendingOrder));
+
+        Map<String, String> params = fullValidParams();
+        params.put("vnp_Amount", "9999900");
+
+        PaymentException ex = assertThrows(PaymentException.class, () ->
+                vnPayIpnService.processVnpayCallback(params, "RETURN_CONFIRM"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("INVALID_AMOUNT", ex.getCode());
+    }
+
+    @Test
+    void confirmReturn_WhenUnknownTxnRef_ShouldThrowPaymentNotFound() {
+        when(vnPayService.verifyChecksum(any())).thenReturn(true);
+        when(paymentOrderRepository.findByVnpTxnRefForUpdate("PAYTEST10")).thenReturn(Optional.empty());
+
+        PaymentException ex = assertThrows(PaymentException.class, () ->
+                vnPayIpnService.processVnpayCallback(fullValidParams(), "RETURN_CONFIRM"));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("PAYMENT_NOT_FOUND", ex.getCode());
+    }
+
+    @Test
+    void confirmReturn_WhenDuplicateSuccess_ShouldReturnCurrentOrderStateIdempotently() {
+        pendingOrder.setStatus(PaymentStatus.SUCCESS);
+        when(vnPayService.verifyChecksum(any())).thenReturn(true);
+        when(paymentOrderRepository.findByVnpTxnRefForUpdate("PAYTEST10")).thenReturn(Optional.of(pendingOrder));
+
+        PaymentOrder result = vnPayIpnService.processVnpayCallback(fullValidParams(), "RETURN_CONFIRM");
+
+        assertNotNull(result);
+        assertEquals(PaymentStatus.SUCCESS, result.getStatus());
+        verify(paymentService, never()).finalizeSuccessfulPayment(any(), any(), any());
+    }
+
+    @Test
+    void confirmReturn_WhenFailedVNPay_ShouldMarkFailedAndReturn() {
+        when(vnPayService.verifyChecksum(any())).thenReturn(true);
+        when(paymentOrderRepository.findByVnpTxnRefForUpdate("PAYTEST10")).thenReturn(Optional.of(pendingOrder));
+
+        Map<String, String> params = fullValidParams();
+        params.put("vnp_ResponseCode", "02");
+
+        PaymentOrder result = vnPayIpnService.processVnpayCallback(params, "RETURN_CONFIRM");
+
+        assertNotNull(result);
+        assertEquals(PaymentStatus.FAILED, result.getStatus());
+        verify(paymentOrderRepository, times(1)).save(pendingOrder);
+    }
+
+    @Test
+    void confirmReturn_AfterLocalCancellation_ShouldMarkReviewRequiredAndReturn() {
+        pendingOrder.setStatus(PaymentStatus.CANCELLED);
+        when(vnPayService.verifyChecksum(any())).thenReturn(true);
+        when(paymentOrderRepository.findByVnpTxnRefForUpdate("PAYTEST10")).thenReturn(Optional.of(pendingOrder));
+        when(vnPayService.parsePayDateToUtc("20260706143000"))
+                .thenReturn(LocalDateTime.of(2026, 7, 6, 7, 30, 0));
+
+        PaymentOrder result = vnPayIpnService.processVnpayCallback(fullValidParams(), "RETURN_CONFIRM");
+
+        assertNotNull(result);
+        assertEquals(PaymentStatus.REVIEW_REQUIRED, result.getStatus());
+        assertEquals("PAYMENT_RECEIVED_AFTER_LOCAL_CANCELLATION", result.getReviewReason());
+        verify(paymentOrderRepository, times(1)).save(pendingOrder);
+    }
+
+    @Test
+    void confirmReturn_WhenPayDateParseError_ShouldMarkReviewRequired() {
+        when(vnPayService.verifyChecksum(any())).thenReturn(true);
+        when(paymentOrderRepository.findByVnpTxnRefForUpdate("PAYTEST10")).thenReturn(Optional.of(pendingOrder));
+        when(vnPayService.parsePayDateToUtc("20260706143000")).thenReturn(null);
+
+        PaymentOrder result = vnPayIpnService.processVnpayCallback(fullValidParams(), "RETURN_CONFIRM");
+
+        assertNotNull(result);
+        assertEquals(PaymentStatus.REVIEW_REQUIRED, result.getStatus());
+        assertEquals("PAY_DATE_PARSE_FAILED", result.getReviewReason());
+    }
+
+    @Test
+    void confirmReturn_WhenPayDateAfterExpiry_ShouldMarkReviewRequired() {
+        pendingOrder.setExpiredAt(LocalDateTime.of(2026, 7, 6, 7, 0, 0));
+        when(vnPayService.verifyChecksum(any())).thenReturn(true);
+        when(paymentOrderRepository.findByVnpTxnRefForUpdate("PAYTEST10")).thenReturn(Optional.of(pendingOrder));
+        when(vnPayService.parsePayDateToUtc("20260706143000"))
+                .thenReturn(LocalDateTime.of(2026, 7, 6, 7, 30, 0));
+
+        PaymentOrder result = vnPayIpnService.processVnpayCallback(fullValidParams(), "RETURN_CONFIRM");
+
+        assertNotNull(result);
+        assertEquals(PaymentStatus.REVIEW_REQUIRED, result.getStatus());
+        assertEquals("PAY_DATE_AFTER_EXPIRY", result.getReviewReason());
+    }
+
+    @Test
+    void confirmReturn_WhenMissingParams_ShouldThrowMissingParams() {
+        Map<String, String> params = fullValidParams();
+        params.remove("vnp_TxnRef");
+
+        PaymentException ex = assertThrows(PaymentException.class, () ->
+                vnPayIpnService.processVnpayCallback(params, "RETURN_CONFIRM"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("MISSING_PARAMS", ex.getCode());
     }
 }

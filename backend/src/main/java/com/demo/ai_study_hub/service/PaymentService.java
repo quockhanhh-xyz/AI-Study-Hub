@@ -395,4 +395,8 @@ public class PaymentService {
                 .reviewRequiredAt(order.getReviewRequiredAt())
                 .build();
     }
+
+    public PaymentResponse mapToResponse(PaymentOrder order) {
+        return toResponse(order, null);
+    }
 }

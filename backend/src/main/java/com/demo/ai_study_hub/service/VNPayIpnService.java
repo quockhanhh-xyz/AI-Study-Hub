@@ -7,6 +7,8 @@ import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.enums.UserTier;
 import com.demo.ai_study_hub.repository.PaymentOrderRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
+import com.demo.ai_study_hub.exception.PaymentException;
+import org.springframework.http.HttpStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -53,6 +55,30 @@ public class VNPayIpnService {
      */
     @Transactional
     public Map<String, String> handleIpn(Map<String, String> params) {
+        try {
+            processVnpayCallback(params, "IPN");
+            return response("00", "Confirm success");
+        } catch (PaymentException e) {
+            String code = e.getCode();
+            if ("MISSING_PARAMS".equals(code)) {
+                return response("99", e.getReason());
+            } else if ("INVALID_SIGNATURE".equals(code)) {
+                return response("97", e.getReason());
+            } else if ("PAYMENT_NOT_FOUND".equals(code)) {
+                return response("01", e.getReason());
+            } else if ("INVALID_AMOUNT".equals(code)) {
+                return response("04", e.getReason());
+            } else if ("ORDER_ALREADY_CONFIRMED".equals(code)) {
+                return response("02", e.getReason());
+            }
+            return response("99", e.getReason());
+        } catch (Exception e) {
+            return response("99", "Unknown error");
+        }
+    }
+
+    @Transactional
+    public PaymentOrder processVnpayCallback(Map<String, String> params, String source) {
         // 1. Required params — a signed-but-incomplete callback must be
         // rejected as malformed (99), never silently treated as a failure.
         String txnRef = params.get("vnp_TxnRef");
@@ -68,30 +94,28 @@ public class VNPayIpnService {
                 || vnpTransactionStatus == null || vnpTransactionStatus.isBlank()
                 || vnpPayDateRaw == null || vnpPayDateRaw.isBlank()
                 || vnpSecureHash == null || vnpSecureHash.isBlank()) {
-            return response("99", "Missing required parameters");
+            throw new PaymentException(HttpStatus.BAD_REQUEST, "MISSING_PARAMS", "Missing required parameters");
         }
 
         // 2. Verify checksum BEFORE any DB lock.
         if (!vnPayService.verifyChecksum(params)) {
-            return response("97", "Invalid signature");
+            throw new PaymentException(HttpStatus.BAD_REQUEST, "INVALID_SIGNATURE", "Invalid signature");
         }
 
         // 3. Lookup + lock order by txnRef.
-        PaymentOrder order = paymentOrderRepository.findByVnpTxnRefForUpdate(txnRef).orElse(null);
-        if (order == null) {
-            return response("01", "Order not found");
-        }
+        PaymentOrder order = paymentOrderRepository.findByVnpTxnRefForUpdate(txnRef)
+                .orElseThrow(() -> new PaymentException(HttpStatus.NOT_FOUND, "PAYMENT_NOT_FOUND", "Order not found"));
 
         // 4. Verify amount vs snapshot.
         long receivedAmount;
         try {
             receivedAmount = Long.parseLong(amountStr);
         } catch (NumberFormatException e) {
-            return response("04", "Invalid amount");
+            throw new PaymentException(HttpStatus.BAD_REQUEST, "INVALID_AMOUNT", "Invalid amount format");
         }
         long expectedAmount = order.getAmount() * 100;
         if (receivedAmount != expectedAmount) {
-            return response("04", "Invalid amount");
+            throw new PaymentException(HttpStatus.BAD_REQUEST, "INVALID_AMOUNT", "Invalid amount");
         }
 
         // A VNPay checkout URL can still complete after the user cancels the
@@ -108,10 +132,9 @@ public class VNPayIpnService {
                 order.setStatus(PaymentStatus.REVIEW_REQUIRED);
                 order.setReviewReason("PAYMENT_RECEIVED_AFTER_LOCAL_CANCELLATION");
                 order.setReviewRequiredAt(LocalDateTime.now(ZoneOffset.UTC));
-                paymentOrderRepository.save(order);
-                return response("00", "Confirm success");
+                return paymentOrderRepository.save(order);
             }
-            return response("02", "Order already confirmed");
+            throw new PaymentException(HttpStatus.CONFLICT, "ORDER_ALREADY_CONFIRMED", "Order already confirmed");
         }
 
         // 5. Duplicate / already-terminal check — MUST happen before we
@@ -119,7 +142,10 @@ public class VNPayIpnService {
         // that is already SUCCESS/FAILED/CANCELLED/REVIEW_REQUIRED never
         // mutates data that has already been settled.
         if (isTerminal(order.getStatus())) {
-            return response("02", "Order already confirmed");
+            if ("IPN".equals(source)) {
+                throw new PaymentException(HttpStatus.CONFLICT, "ORDER_ALREADY_CONFIRMED", "Order already confirmed");
+            }
+            return order;
         }
 
         // 6. Persist raw VNPay response fields (audit trail) now that we
@@ -133,8 +159,7 @@ public class VNPayIpnService {
         // 7. Provider-reported failure.
         if (!"00".equals(vnpResponseCode) || !"00".equals(vnpTransactionStatus)) {
             order.setStatus(PaymentStatus.FAILED);
-            paymentOrderRepository.save(order);
-            return response("00", "Confirm success");
+            return paymentOrderRepository.save(order);
         }
 
         // 8. Parse pay date to UTC.
@@ -143,8 +168,7 @@ public class VNPayIpnService {
             order.setStatus(PaymentStatus.REVIEW_REQUIRED);
             order.setReviewReason("PAY_DATE_PARSE_FAILED");
             order.setReviewRequiredAt(LocalDateTime.now(ZoneOffset.UTC));
-            paymentOrderRepository.save(order);
-            return response("00", "Confirm success");
+            return paymentOrderRepository.save(order);
         }
 
         // Record providerPaidAt as soon as we successfully parse it — even
@@ -157,8 +181,7 @@ public class VNPayIpnService {
             order.setStatus(PaymentStatus.REVIEW_REQUIRED);
             order.setReviewReason("PAY_DATE_AFTER_EXPIRY");
             order.setReviewRequiredAt(LocalDateTime.now(ZoneOffset.UTC));
-            paymentOrderRepository.save(order);
-            return response("00", "Confirm success");
+            return paymentOrderRepository.save(order);
         }
 
         // 10. Downgrade protection — lock user, compare effective tier vs target.
@@ -167,8 +190,7 @@ public class VNPayIpnService {
             order.setStatus(PaymentStatus.REVIEW_REQUIRED);
             order.setReviewReason("PROVIDER_DATA_INCONSISTENT");
             order.setReviewRequiredAt(LocalDateTime.now(ZoneOffset.UTC));
-            paymentOrderRepository.save(order);
-            return response("00", "Confirm success");
+            return paymentOrderRepository.save(order);
         }
 
         UserTier targetTier = UserTier.valueOf(order.getTargetTier());
@@ -178,8 +200,7 @@ public class VNPayIpnService {
             order.setStatus(PaymentStatus.REVIEW_REQUIRED);
             order.setReviewReason("TARGET_TIER_LOWER_THAN_CURRENT_TIER");
             order.setReviewRequiredAt(LocalDateTime.now(ZoneOffset.UTC));
-            paymentOrderRepository.save(order);
-            return response("00", "Confirm success");
+            return paymentOrderRepository.save(order);
         }
 
         // 11. All checks passed — finalize using the VNPay-reported pay date
@@ -187,7 +208,7 @@ public class VNPayIpnService {
         paymentOrderRepository.save(order);
         paymentService.finalizeSuccessfulPayment(order, targetTier, payDateUtc);
 
-        return response("00", "Confirm success");
+        return order;
     }
 
     /**

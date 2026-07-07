@@ -216,6 +216,40 @@ This document specifies the complete test suite and verification scenarios for S
 
 ---
 
+### 1.10. Client Return Confirmation (confirm-return)
+* **TC-CONFIRM-01: Success Confirmation**
+  * **Action**: Request `POST /api/payments/vnpay/confirm-return` with valid signature, correct amount, and `vnp_ResponseCode = '00'`.
+  * **Expected Output**: HTTP `200 OK` with status `SUCCESS` and user tier upgraded.
+* **TC-CONFIRM-02: Invalid Signature Rejection**
+  * **Action**: Request `POST /api/payments/vnpay/confirm-return` with invalid `vnp_SecureHash`.
+  * **Expected Output**: HTTP `400 Bad Request` with error code `INVALID_SIGNATURE`.
+* **TC-CONFIRM-03: Amount Snapshot Match**
+  * **Action**: Request `POST /api/payments/vnpay/confirm-return` with a modified amount.
+  * **Expected Output**: HTTP `400 Bad Request` with error code `INVALID_AMOUNT`.
+* **TC-CONFIRM-04: Order Exists Check**
+  * **Action**: Request `POST /api/payments/vnpay/confirm-return` with unknown `vnp_TxnRef`.
+  * **Expected Output**: HTTP `404 Not Found` with error code `PAYMENT_NOT_FOUND`.
+* **TC-CONFIRM-05: Idempotent Double Processing**
+  * **Action**: Request `POST /api/payments/vnpay/confirm-return` for an order that is already terminal (`SUCCESS`).
+  * **Expected Output**: HTTP `200 OK` with the current order details without double-upgrading or throwing errors.
+* **TC-CONFIRM-06: Failed Response Code Callback**
+  * **Action**: Request `POST /api/payments/vnpay/confirm-return` where `vnp_ResponseCode = '24'`.
+  * **Expected Output**: HTTP `200 OK` with order status transitioned to `FAILED`.
+* **TC-CONFIRM-07: Cancellation Reconciliation**
+  * **Action**: Request `POST /api/payments/vnpay/confirm-return` for a locally `CANCELLED` order but with VNPay sandbox success parameters.
+  * **Expected Output**: HTTP `200 OK` with status transitioned to `REVIEW_REQUIRED` and `reviewReason = 'PAYMENT_RECEIVED_AFTER_LOCAL_CANCELLATION'`.
+* **TC-CONFIRM-08: Parse Failure Pay Date**
+  * **Action**: Request `POST /api/payments/vnpay/confirm-return` with malformed `vnp_PayDate`.
+  * **Expected Output**: HTTP `200 OK` with status transitioned to `REVIEW_REQUIRED` and `reviewReason = 'PAY_DATE_PARSE_FAILED'`.
+* **TC-CONFIRM-09: Overdue Paid on Expired Order Rejection**
+  * **Action**: Request `POST /api/payments/vnpay/confirm-return` where payment occurred after the order `expiredAt`.
+  * **Expected Output**: HTTP `200 OK` with status transitioned to `REVIEW_REQUIRED` and `reviewReason = 'PAY_DATE_AFTER_EXPIRY'`.
+* **TC-CONFIRM-10: Missing Parameters Validation**
+  * **Action**: Request `POST /api/payments/vnpay/confirm-return` with missing parameters (e.g. `vnp_TxnRef` omitted).
+  * **Expected Output**: HTTP `400 Bad Request` with error code `MISSING_PARAMS`.
+
+---
+
 ## 2. VNPay Security Guidelines
 * **Secrets Protection**: Do NOT log, hardcode, or expose the `vnp_HashSecret` key in code, logs, or error responses.
 * **Secure Hash Algorithm**: Utilize HMAC-SHA512 for verifying and generating signatures in compliance with VNPay gateway specifications.

@@ -3681,6 +3681,62 @@ Un-authenticated backend-to-backend callback from VNPay. Performs final order pr
 
 ---
 
+### POST `/api/payments/vnpay/confirm-return` (Confirm Return Endpoint)
+
+Performs client-side payment confirmation for VNPay Sandbox redirects when the IPN callback has not yet arrived or is delayed. This endpoint is public (does not require user login) and resolves the user strictly from the matching order row in the database.
+
+#### Request Body
+```json
+{
+  "vnp_Amount": "19900000",
+  "vnp_BankCode": "NCB",
+  "vnp_BankTranNo": "...",
+  "vnp_CardType": "ATM",
+  "vnp_OrderInfo": "Payment for order 23",
+  "vnp_PayDate": "20260707211218",
+  "vnp_ResponseCode": "00",
+  "vnp_TmnCode": "KQ8F2Z36",
+  "vnp_TransactionNo": "...",
+  "vnp_TransactionStatus": "00",
+  "vnp_TxnRef": "PAY...",
+  "vnp_SecureHash": "..."
+}
+```
+
+#### Rules & Constraints
+* **Checksum Verification**: The signature must be verified using the local VNPay hash secret. If verification fails, returns **400 Bad Request** (`INVALID_SIGNATURE`).
+* **Order Lookup**: Locates the order using `vnp_TxnRef`. If not found, returns **404 Not Found** (`PAYMENT_NOT_FOUND`).
+* **Amount Verification**: Checks if received amount == order amount * 100. If mismatch, returns **400 Bad Request** (`INVALID_AMOUNT`).
+* **Cancellation Reconciliation**: If order was locally `CANCELLED` and VNPay success arrives, transitions the status to `REVIEW_REQUIRED` (reason: `PAYMENT_RECEIVED_AFTER_LOCAL_CANCELLATION`).
+* **Idempotency**: If the order is already in a terminal state (`SUCCESS`, `FAILED`, `CANCELLED`, `REVIEW_REQUIRED`), returns the current payment details without modifications.
+* **Success Processing**: If order is still `PENDING` and VNPay response/transaction status are `"00"`:
+  * Audits raw response parameters.
+  * Parses pay date (handles parse error and late checks by routing to `REVIEW_REQUIRED`).
+  * Finalizes successful payment and upgrades user tier.
+  * Returns the updated `PaymentResponse`.
+
+#### Success Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "VNPay payment confirm-return processed successfully",
+  "data": {
+    "paymentId": 23,
+    "planCode": "PREMIUM_1_MONTH",
+    "planName": "Premium",
+    "amount": 199000,
+    "currency": "VND",
+    "billingLabel": "1 month",
+    "paymentMethod": "VNPAY",
+    "status": "SUCCESS",
+    "tier": "PREMIUM",
+    "paidAt": "2026-07-07T14:12:18Z"
+  }
+}
+```
+
+---
+
 ## 15.8. Payment Error Code Reference Table
 
 | HTTP Status | Error Payload Structure (JSON) | Cause / Scenario |

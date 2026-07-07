@@ -102,6 +102,13 @@ public class VNPayController {
         }
     }
 
+    @PostMapping("/confirm-return")
+    public ResponseEntity<ApiResponse<PaymentResponse>> confirmReturn(@RequestBody Map<String, String> allParams) {
+        PaymentOrder order = vnPayIpnService.processVnpayCallback(allParams, "RETURN_CONFIRM");
+        PaymentResponse response = paymentService.mapToResponse(order);
+        return ResponseEntity.ok(ApiResponse.success(response, "VNPay payment confirm-return processed successfully"));
+    }
+
     private String extractClientIp(HttpServletRequest request) {
         String xff = request.getHeader("X-Forwarded-For");
         if (xff != null && !xff.isBlank()) {
