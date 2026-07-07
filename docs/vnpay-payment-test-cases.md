@@ -132,7 +132,7 @@ This document specifies the complete test suite and verification scenarios for S
   * **Action**: Call return URL with correct parameters and signature.
   * **Expected Output**:
     * Redirection to `{FRONTEND_PAYMENT_RESULT_URL}?paymentId={paymentId}`.
-    * **No database updates are made** (untrusted client channel).
+    * Database is processed and updated (payment order finalized and user tier upgraded) if the callback is valid and the order is still processable. If already terminal, returns current state idempotently.
 
 ---
 

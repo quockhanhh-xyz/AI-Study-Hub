@@ -66,9 +66,8 @@ public class VNPayIpnService {
     }
 
     /**
-     * IPN: server-to-server. This is the ONLY source of truth for finalizing
-     * a VNPay payment. Order of operations matters — do not lock DB before
-     * verifying the signature.
+     * IPN: server-to-server. Main server-to-server confirmation channel.
+     * Order of operations matters — do not lock DB before verifying the signature.
      */
     @Transactional
     public Map<String, String> handleIpn(Map<String, String> params) {

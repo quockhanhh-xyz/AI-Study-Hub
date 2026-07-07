@@ -79,7 +79,7 @@ public class VNPayController {
         return ResponseEntity.ok(ApiResponse.success(response, "Payment order created successfully"));
     }
 
-    /** Public — browser redirect only. Verify-only, no DB mutation happens here. */
+    /** Public — browser redirect. Verifies checksum and processes payment callback (may update DB). */
     @GetMapping("/return")
     public ResponseEntity<Void> handleReturn(@RequestParam Map<String, String> allParams) {
         String redirectUrl = vnPayIpnService.handleReturn(allParams);

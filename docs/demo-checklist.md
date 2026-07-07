@@ -414,7 +414,7 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
 - [ ] **Step 11.13**: Request client-side return URL with a mutated checksum parameter (`GET /api/payments/vnpay/return?vnp_SecureHash=invalid...`).
   - *Expected*: Redirects to `{FRONTEND_PAYMENT_RESULT_URL}?error=payment_return_invalid`. No database updates occur.
 - [ ] **Step 11.14**: Request client-side return URL with a valid signature.
-  - *Expected*: Redirects to `{FRONTEND_PAYMENT_RESULT_URL}?paymentId={paymentId}`. No database updates occur.
+  - *Expected*: Redirects to `{FRONTEND_PAYMENT_RESULT_URL}?paymentId={paymentId}`. Database is processed and updated (payment order finalized and user tier upgraded) if the callback is valid and the order is still processable. If already terminal, returns current state idempotently.
 - [ ] **Step 11.15**: Trigger VNPay callback IPN with an invalid signature (`GET /api/payments/vnpay/ipn?vnp_SecureHash=invalid...`).
   - *Expected*: Returns IPN payload `{"RspCode":"97","Message":"Invalid signature"}` (internally throwing `INVALID_PAYMENT_SIGNATURE`). No database updates occur.
 - [ ] **Step 11.16**: Trigger VNPay callback IPN with a mismatched transaction amount.
