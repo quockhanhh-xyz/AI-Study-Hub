@@ -172,15 +172,14 @@ document.addEventListener("DOMContentLoaded", async function () {
       } else if (data.paymentProvider === "MOCK") {
         paymentStatusBannerAction.textContent = "Continue Mock Checkout";
         paymentStatusBannerAction.style.display = "inline-flex";
-        paymentStatusBannerAction.onclick = function (e) {
+        paymentStatusBannerAction.onclick = async function (e) {
           e.preventDefault();
-          openMockCheckout({
-            paymentId: data.paymentId,
-            planName: data.planName || "your plan",
-            amount: data.amount,
-            currency: data.currency,
-            billingLabel: data.billingLabel
-          });
+          try {
+            const result = await getPayment(data.paymentId);
+            openMockCheckout(result.data);
+          } catch (fetchError) {
+            showToast(mapPaymentError(fetchError), "error");
+          }
         };
       }
     } else if (code === "PAYMENT_REQUIRES_MANUAL_REVIEW") {
