@@ -178,6 +178,18 @@ async function getMyPayments() {
   });
 }
 
+/**
+ * Cancels a pending payment order for either VNPay Sandbox or Mock.
+ * @param {string|number} paymentId - The payment identifier.
+ * @returns {Promise<Object>} Updated payment data with CANCELLED status.
+ */
+async function cancelPendingPayment(paymentId) {
+  if (!paymentId) throw new Error("Payment ID is required.");
+  return await apiRequest(`/api/payments/${paymentId}/cancel`, {
+    method: "POST"
+  });
+}
+
 // ─────────────────────────────────────────────────────────────
 // MOCK PAYMENT ACTIONS
 // ─────────────────────────────────────────────────────────────
@@ -241,6 +253,7 @@ window.createVNPayPayment = createVNPayPayment;
 window.createMockPayment = createMockPayment;
 window.getPayment = getPayment;
 window.getMyPayments = getMyPayments;
+window.cancelPendingPayment = cancelPendingPayment;
 window.mockPaymentSuccess = mockPaymentSuccess;
 window.mockPaymentConfirm = mockPaymentConfirm;
 window.mockPaymentFail = mockPaymentFail;

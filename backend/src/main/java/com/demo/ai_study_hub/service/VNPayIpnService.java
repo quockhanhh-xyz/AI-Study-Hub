@@ -94,6 +94,26 @@ public class VNPayIpnService {
             return response("04", "Invalid amount");
         }
 
+        // A VNPay checkout URL can still complete after the user cancels the
+        // local order. Preserve a signed successful callback for audit and
+        // require manual review instead of silently discarding paid money.
+        if (PaymentStatus.CANCELLED.equals(order.getStatus())) {
+            if ("00".equals(vnpResponseCode) && "00".equals(vnpTransactionStatus)) {
+                order.setVnpTransactionNo(params.get("vnp_TransactionNo"));
+                order.setVnpBankCode(params.get("vnp_BankCode"));
+                order.setVnpResponseCode(vnpResponseCode);
+                order.setVnpTransactionStatus(vnpTransactionStatus);
+                order.setVnpPayDate(vnpPayDateRaw);
+                order.setProviderPaidAt(vnPayService.parsePayDateToUtc(vnpPayDateRaw));
+                order.setStatus(PaymentStatus.REVIEW_REQUIRED);
+                order.setReviewReason("PAYMENT_RECEIVED_AFTER_LOCAL_CANCELLATION");
+                order.setReviewRequiredAt(LocalDateTime.now(ZoneOffset.UTC));
+                paymentOrderRepository.save(order);
+                return response("00", "Confirm success");
+            }
+            return response("02", "Order already confirmed");
+        }
+
         // 5. Duplicate / already-terminal check — MUST happen before we
         // overwrite any audit fields, so a repeated callback for an order
         // that is already SUCCESS/FAILED/CANCELLED/REVIEW_REQUIRED never

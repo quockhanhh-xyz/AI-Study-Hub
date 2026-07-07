@@ -3589,9 +3589,19 @@ Transition the mock payment status to `FAILED`.
 }
 ```
 
+### POST `/api/payments/{paymentId}/cancel`
+
+Cancel an owned pending payment order for either Mock or VNPay Sandbox. For a
+VNPay order, this closes only the local checkout attempt; it cannot invalidate
+an already issued gateway URL. If VNPay later reports a successful payment for
+the cancelled order, the backend changes it to `REVIEW_REQUIRED` with reason
+`PAYMENT_RECEIVED_AFTER_LOCAL_CANCELLATION` instead of upgrading automatically.
+
+Only the owner can cancel an order and only while its status is `PENDING`.
+
 ### POST `/api/payments/mock/{paymentId}/cancel`
 
-Cancel a pending mock payment order.
+Backward-compatible Mock-only alias for cancelling a pending mock payment order.
 
 #### Success Response (200 OK)
 ```json
@@ -3639,19 +3649,20 @@ Un-authenticated backend-to-backend callback from VNPay. Performs final order pr
 1. **Validate request signature**: Verify `vnp_SecureHash`. If verification fails, return response `{"RspCode":"97","Message":"Invalid signature"}` immediately (do NOT acquire database locks first).
 2. **Lock Order**: Locate the order using `vnp_TxnRef`. If not found, return `{"RspCode":"01","Message":"Order not found"}`. Lock the order row (`SELECT FOR UPDATE`).
 3. **Verify amount**: Verify `vnp_Amount` (converted to base currency value) matches the stored database amount. If incorrect, return `{"RspCode":"04","Message":"Invalid amount"}`.
-4. **Idempotency Check**: If the order is already in a terminal state (`SUCCESS`, `FAILED`, `CANCELLED`, `REVIEW_REQUIRED`), return `{"RspCode":"02","Message":"Order already confirmed"}`.
-5. **EXPIRED Status Transition Rule**: `EXPIRED` is NOT a terminal status. If an order has status = `EXPIRED` but a valid callback arrives where `vnp_ResponseCode = "00"` and the parsed pay date is before or equal to the order's `expiredAt`, the order is allowed to transition to `SUCCESS` (exclusively once) and the user receives the tier upgrade.
-6. **Handle failed payments**: If `vnp_ResponseCode` or `vnp_TransactionStatus` is not `"00"`, transition the order to `FAILED` (unless it was already resolved), save changes, and return `{"RspCode":"00","Message":"Confirm success"}`.
-7. **Timezone Conversion**: Parse `vnp_PayDate` (format `yyyyMMddHHmmss` in Asia/Ho_Chi_Minh time zone) and convert it to UTC `LocalDateTime`.
-8. **Expiry & Validation rules**:
+4. **Cancellation Reconciliation**: If a signed successful callback arrives for a locally `CANCELLED` order, preserve the provider audit fields and transition it to `REVIEW_REQUIRED` with reason `PAYMENT_RECEIVED_AFTER_LOCAL_CANCELLATION`. Do not upgrade automatically.
+5. **Idempotency Check**: If the order is already in another terminal state (`SUCCESS`, `FAILED`, `REVIEW_REQUIRED`), return `{"RspCode":"02","Message":"Order already confirmed"}`.
+6. **EXPIRED Status Transition Rule**: `EXPIRED` is NOT a terminal status. If an order has status = `EXPIRED` but a valid callback arrives where `vnp_ResponseCode = "00"` and the parsed pay date is before or equal to the order's `expiredAt`, the order is allowed to transition to `SUCCESS` (exclusively once) and the user receives the tier upgrade.
+7. **Handle failed payments**: If `vnp_ResponseCode` or `vnp_TransactionStatus` is not `"00"`, transition the order to `FAILED` (unless it was already resolved), save changes, and return `{"RspCode":"00","Message":"Confirm success"}`.
+8. **Timezone Conversion**: Parse `vnp_PayDate` (format `yyyyMMddHHmmss` in Asia/Ho_Chi_Minh time zone) and convert it to UTC `LocalDateTime`.
+9. **Expiry & Validation rules**:
    * If `vnp_PayDate` parsing fails or the payment occurred after the order `expiredAt`:
      * Set `reviewReason = "PAY_DATE_PARSE_FAILED"` or `"PAY_DATE_AFTER_EXPIRY"`.
      * Set `reviewRequiredAt = now`.
      * Transition the order to `REVIEW_REQUIRED` (suspends automatic tier upgrades).
      * Save order, return `{"RspCode":"00","Message":"Confirm success"}`.
-9. **Lock User**: Acquire a pessimistic lock on the user row (`SELECT FOR UPDATE`).
-10. **Upgrade Safety Checks**: If the user's current effective tier is `ULTRA` and the target tier of this order is `PREMIUM`, transition the order to `REVIEW_REQUIRED` (setting `reviewReason = "TARGET_TIER_LOWER_THAN_CURRENT_TIER"`). Do NOT downgrade the user's tier. Save order, return `{"RspCode":"00","Message":"Confirm success"}`.
-11. **Finalize Payment**: 
+10. **Lock User**: Acquire a pessimistic lock on the user row (`SELECT FOR UPDATE`).
+11. **Upgrade Safety Checks**: If the user's current effective tier is `ULTRA` and the target tier of this order is `PREMIUM`, transition the order to `REVIEW_REQUIRED` (setting `reviewReason = "TARGET_TIER_LOWER_THAN_CURRENT_TIER"`). Do NOT downgrade the user's tier. Save order, return `{"RspCode":"00","Message":"Confirm success"}`.
+12. **Finalize Payment**:
     * Update order status to `SUCCESS` and set `paidAt = parsedPayDate`.
     * Update user tier to target tier.
     * Compute `tierExpiresAt` (renewing extends expiration by 1 calendar month `plusMonths(1)`; upgrading sets to `now + 1 calendar month` `plusMonths(1)`).

@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const paymentStatusBanner = document.getElementById("paymentStatusBanner");
   const paymentStatusBannerText = document.getElementById("paymentStatusBannerText");
   const paymentStatusBannerAction = document.getElementById("paymentStatusBannerAction");
+  const paymentStatusBannerCancel = document.getElementById("paymentStatusBannerCancel");
 
   const pricingLoader = document.getElementById("pricingLoader");
   const pricingError = document.getElementById("pricingError");
@@ -147,6 +148,32 @@ document.addEventListener("DOMContentLoaded", async function () {
     paymentStatusBanner.style.display = "none";
     paymentStatusBannerAction.style.display = "none";
     paymentStatusBannerAction.onclick = null;
+    paymentStatusBannerCancel.style.display = "none";
+    paymentStatusBannerCancel.onclick = null;
+  }
+
+  async function cancelPaymentOrder(paymentId, button) {
+    const confirmed = typeof confirmAction === "function"
+      ? await confirmAction({
+          title: "Cancel payment?",
+          message: "This closes the pending checkout so you can create a new payment. Do not cancel if you have already completed payment at VNPay.",
+          confirmText: "Cancel payment",
+          danger: true
+        })
+      : window.confirm("Cancel this pending payment?");
+
+    if (!confirmed) return;
+    setButtonLoading(button, true, "Cancelling...");
+    try {
+      const result = await cancelPendingPayment(paymentId);
+      hidePaymentBanner();
+      await loadHistory();
+      showToast(result.message || "Payment cancelled successfully.", "success");
+    } catch (error) {
+      showToast(mapPaymentError(error), "error");
+    } finally {
+      setButtonLoading(button, false);
+    }
   }
 
   function showPaymentBanner(error) {
@@ -157,6 +184,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     paymentStatusBannerText.textContent = mapPaymentError(error);
     paymentStatusBannerAction.style.display = "none";
     paymentStatusBannerAction.onclick = null;
+    paymentStatusBannerCancel.style.display = "none";
+    paymentStatusBannerCancel.onclick = null;
 
     if (code === "PAYMENT_ALREADY_PENDING") {
       paymentStatusBanner.style.background = "#fffbeb";
@@ -180,6 +209,13 @@ document.addEventListener("DOMContentLoaded", async function () {
           } catch (fetchError) {
             showToast(mapPaymentError(fetchError), "error");
           }
+        };
+      }
+
+      if (data.paymentId) {
+        paymentStatusBannerCancel.style.display = "inline-flex";
+        paymentStatusBannerCancel.onclick = function () {
+          cancelPaymentOrder(data.paymentId, paymentStatusBannerCancel);
         };
       }
     } else if (code === "PAYMENT_REQUIRES_MANUAL_REVIEW") {
@@ -483,6 +519,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         window.location.href = payment.paymentUrl;
       });
       meta.appendChild(continueBtn);
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.className = "btn btn-danger btn-sm";
+      cancelBtn.textContent = "Cancel payment";
+      cancelBtn.addEventListener("click", function () {
+        cancelPaymentOrder(payment.paymentId, cancelBtn);
+      });
+      meta.appendChild(cancelBtn);
     } else if (isMockPayment(payment) && payment.status === "PENDING") {
       const continueBtn = document.createElement("button");
       continueBtn.type = "button";
@@ -492,6 +537,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         openMockCheckout(payment);
       });
       meta.appendChild(continueBtn);
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.className = "btn btn-danger btn-sm";
+      cancelBtn.textContent = "Cancel payment";
+      cancelBtn.addEventListener("click", function () {
+        cancelPaymentOrder(payment.paymentId, cancelBtn);
+      });
+      meta.appendChild(cancelBtn);
     }
 
     row.append(main, meta);

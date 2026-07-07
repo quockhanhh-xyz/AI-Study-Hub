@@ -86,7 +86,18 @@ This document specifies the complete test suite and verification scenarios for S
 
 ---
 
-### 1.4. History & Sorting
+### 1.4. Pending Payment Cancellation
+* **TC-CANCEL-01: Cancel Pending VNPay Checkout**
+  * **Action**: Create a VNPay checkout, leave the gateway, then call `POST /api/payments/{paymentId}/cancel` as its owner.
+  * **Expected Output**: HTTP `200 OK`, order status becomes `CANCELLED`, and a new checkout can be created immediately.
+* **TC-CANCEL-02: Ownership and State Protection**
+  * **Action**: Cancel another user's order or an order that is no longer `PENDING`.
+  * **Expected Output**: `404 PAYMENT_NOT_FOUND` for another owner, or `409 ORDER_NOT_PENDING` for a terminal order.
+* **TC-CANCEL-03: Successful IPN After Local Cancellation**
+  * **Action**: Send a valid signed successful IPN for a locally cancelled VNPay order.
+  * **Expected Output**: IPN returns `RspCode=00`; order becomes `REVIEW_REQUIRED` with reason `PAYMENT_RECEIVED_AFTER_LOCAL_CANCELLATION`; tier is not upgraded automatically.
+
+### 1.5. History & Sorting
 * **TC-HISTORY-01: History Visibility & Sorting**
   * **Action**: Call `GET /api/payments/my`.
   * **Expected Output**:
@@ -96,7 +107,7 @@ This document specifies the complete test suite and verification scenarios for S
 
 ---
 
-### 1.5. Mock Processing Guardrails
+### 1.6. Mock Processing Guardrails
 * **TC-MOCK-01: Reject Mocking VNPay Orders**
   * **Action**: Create a VNPay sandbox order. Call mock success endpoint `/api/payments/mock/{paymentId}/success`.
   * **Expected Output**:
@@ -111,7 +122,7 @@ This document specifies the complete test suite and verification scenarios for S
 
 ---
 
-### 1.6. VNPay Callback Verification (Return URL)
+### 1.7. VNPay Callback Verification (Return URL)
 * **TC-RETURN-01: Checksum Failure Rejection**
   * **Action**: Call `GET /api/payments/vnpay/return` with modified `vnp_SecureHash`.
   * **Expected Output**:
@@ -125,7 +136,7 @@ This document specifies the complete test suite and verification scenarios for S
 
 ---
 
-### 1.7. Instant Payment Notification (IPN Callback)
+### 1.8. Instant Payment Notification (IPN Callback)
 * **TC-IPN-01: Signature Check Priority**
   * **Action**: Send IPN request with invalid signature.
   * **Expected Output**:
@@ -192,7 +203,7 @@ This document specifies the complete test suite and verification scenarios for S
 ---
 
 
-### 1.8. Concurrency & Integration
+### 1.9. Concurrency & Integration
 * **TC-CONC-01: Double Concurrent IPN Processing**
   * **Action**: Trigger two concurrent IPN success requests for the same user renewal.
   * **Expected Output**:

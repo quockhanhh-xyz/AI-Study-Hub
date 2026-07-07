@@ -649,6 +649,26 @@ class PaymentServiceTest {
     }
 
     @Test
+    void cancelPendingPayment_WhenVNPayOrderPending_ShouldAllowNewCheckout() {
+        PaymentOrder order = PaymentOrder.builder()
+                .paymentId(2L).user(freeUser).planCode(PlanCode.PREMIUM_1_MONTH)
+                .amount(199000L).currency("VND")
+                .status(PaymentStatus.PENDING).paymentMethod(PaymentMethod.VNPAY)
+                .paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.VNPAY_SANDBOX).build();
+
+        when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(2L, freeUser))
+                .thenReturn(Optional.of(order));
+        when(userRepository.findById(freeUser.getUserId())).thenReturn(Optional.of(freeUser));
+        when(paymentOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        PaymentResponse response = paymentService.cancelPendingPayment(freeUser, 2L);
+
+        assertEquals(PaymentStatus.CANCELLED, response.getStatus());
+        assertEquals("FREE", response.getTier());
+        verify(paymentOrderRepository).save(order);
+    }
+
+    @Test
     void cancelPayment_WhenPaymentNotFound_ShouldThrow404() {
         when(paymentOrderRepository.findByPaymentIdAndUserForUpdate(99L, freeUser))
                 .thenReturn(Optional.empty());

@@ -95,6 +95,21 @@ public class PaymentService {
         PaymentOrder order = lockOwnedOrderOrThrow(user, paymentId);
         requireMockProvider(order);
 
+        return cancelLockedOrder(user, order);
+    }
+
+    /**
+     * Cancels a pending order owned by the current user for either provider.
+     * A later successful VNPay callback is routed to manual review.
+     */
+    @Transactional
+    public PaymentResponse cancelPendingPayment(User user, Long paymentId) {
+        PaymentOrder order = lockOwnedOrderOrThrow(user, paymentId);
+        return cancelLockedOrder(user, order);
+    }
+
+    private PaymentResponse cancelLockedOrder(User user, PaymentOrder order) {
+
         if (!PaymentStatus.PENDING.equals(order.getStatus())) {
             throw new PaymentException(HttpStatus.CONFLICT, "ORDER_NOT_PENDING", "Payment is no longer pending");
         }

@@ -37,8 +37,12 @@
             <div id="paymentStatusBanner" class="community-guest-banner"
                 style="display: none; border-radius: 12px; padding: 12px 16px; align-items: center; justify-content: space-between; gap: 12px;">
                 <span id="paymentStatusBannerText"></span>
-                <a id="paymentStatusBannerAction" href="#" class="btn btn-secondary btn-sm"
-                    style="display: none; white-space: nowrap;">Continue payment</a>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+                    <a id="paymentStatusBannerAction" href="#" class="btn btn-secondary btn-sm"
+                        style="display: none; white-space: nowrap;">Continue payment</a>
+                    <button id="paymentStatusBannerCancel" type="button" class="btn btn-danger btn-sm"
+                        style="display: none; white-space: nowrap;">Cancel payment</button>
+                </div>
             </div>
 
             <section class="dashboard-section">

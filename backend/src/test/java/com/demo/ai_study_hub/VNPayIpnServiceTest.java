@@ -185,6 +185,26 @@ class VNPayIpnServiceTest {
         assertEquals("02", vnPayIpnService.handleIpn(fullValidParams()).get("RspCode"));
     }
 
+    @Test
+    void handleIpn_WhenCancelledOrderWasActuallyPaid_ShouldRequireManualReview() {
+        pendingOrder.setStatus(PaymentStatus.CANCELLED);
+        LocalDateTime payDate = LocalDateTime.of(2026, 7, 6, 7, 30, 0);
+
+        when(vnPayService.verifyChecksum(any())).thenReturn(true);
+        when(paymentOrderRepository.findByVnpTxnRefForUpdate("PAYTEST10")).thenReturn(Optional.of(pendingOrder));
+        when(vnPayService.parsePayDateToUtc("20260706143000")).thenReturn(payDate);
+
+        Map<String, String> result = vnPayIpnService.handleIpn(fullValidParams());
+
+        assertEquals("00", result.get("RspCode"));
+        assertEquals(PaymentStatus.REVIEW_REQUIRED, pendingOrder.getStatus());
+        assertEquals("PAYMENT_RECEIVED_AFTER_LOCAL_CANCELLATION", pendingOrder.getReviewReason());
+        assertEquals(payDate, pendingOrder.getProviderPaidAt());
+        assertEquals("VNP123", pendingOrder.getVnpTransactionNo());
+        verify(paymentOrderRepository).save(pendingOrder);
+        verify(paymentService, never()).finalizeSuccessfulPayment(any(), any(), any());
+    }
+
     // =========================================================================
     // 6. EXPIRED -> SUCCESS: late-but-within-window payment must still finalize
     // =========================================================================

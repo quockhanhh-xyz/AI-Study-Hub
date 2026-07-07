@@ -66,6 +66,15 @@ public class PaymentController {
         return ResponseEntity.ok(ApiResponse.success(response, "Payment cancelled successfully"));
     }
 
+    @PostMapping("/{paymentId}/cancel")
+    public ResponseEntity<ApiResponse<PaymentResponse>> cancelPendingPayment(
+            @PathVariable Long paymentId,
+            Principal principal) {
+        User user = getUser(principal);
+        PaymentResponse response = paymentService.cancelPendingPayment(user, paymentId);
+        return ResponseEntity.ok(ApiResponse.success(response, "Payment cancelled successfully"));
+    }
+
     @GetMapping("/my")
     public ResponseEntity<ApiResponse<List<PaymentResponse>>> getMyPayments(Principal principal) {
         User user = getUser(principal);
