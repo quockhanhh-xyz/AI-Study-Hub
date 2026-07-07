@@ -183,25 +183,26 @@ Not Run
 
 ---
 
-### TC-DOC-006 - Upload File Larger Than 10MB
+### TC-DOC-006 - Upload File Larger Than User's Tier Limit
 
 Precondition:
 
 - User is logged in.
-- A file larger than 10MB is available.
+- A file larger than the user's tier limit (e.g. 10MB for FREE, 50MB for PREMIUM, 100MB for ULTRA) is available.
 
 Steps:
 
 1. Send `POST /api/documents/upload`.
-2. Include file larger than 10MB and valid `title`.
+2. Include file exceeding the tier size limit and valid `title`.
 
 Expected Result:
 
 - Response status is `400 Bad Request`.
 - Response has `success=false`.
-- Message is `File size exceeds 10MB`.
+- Message is `File size exceeds maximum tier limit` (returns error code `FILE_SIZE_LIMIT_EXCEEDED`).
 - No metadata is saved.
 - File is not uploaded to Cloudinary Storage.
+
 
 Status:
 

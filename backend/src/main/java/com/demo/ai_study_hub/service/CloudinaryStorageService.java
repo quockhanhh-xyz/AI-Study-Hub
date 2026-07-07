@@ -23,7 +23,7 @@ public class CloudinaryStorageService {
     @Value("${cloudinary.enabled:false}")
     private boolean cloudinaryEnabled;
 
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
+    private static final long MAX_FILE_SIZE = 100L * 1024 * 1024;
     private static final List<String> ALLOWED_TYPES = List.of(
             "application/pdf",
             "application/msword",
@@ -52,10 +52,11 @@ public class CloudinaryStorageService {
         }
 
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new RuntimeException("File size exceeds 10MB");
+            throw new RuntimeException("File size exceeds 100MB");
         }
 
         String contentType = file.getContentType();
+
         if (!ALLOWED_TYPES.contains(contentType)) {
             throw new RuntimeException("Invalid file type");
         }

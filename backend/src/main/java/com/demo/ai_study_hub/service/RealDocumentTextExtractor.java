@@ -50,15 +50,19 @@ public class RealDocumentTextExtractor implements DocumentTextExtractor {
             fileBytes = secureFileDownloader.download(doc.getFileUrl());
         } catch (SecureFileDownloader.DownloadException e) {
             log.warn("Failed to download file for documentId={}: {}", doc.getDocumentId(), e.getMessage());
+            String errorMsg = (e.getMessage() != null && e.getMessage().contains("exceeds"))
+                    ? "File size exceeds the 15MB limit for AI processing"
+                    : "Failed to download file for extraction";
             return ExtractionResult.builder()
                     .status(ProcessingStatus.FAILED)
-                    .error("Failed to download file for extraction")
+                    .error(errorMsg)
                     .originalCharacterCount(0)
                     .isTruncated(false)
                     .build();
         }
 
         String cleanedText;
+
         List<Integer> pageStartOffsets = null;
         int originalCharacterCount;
         boolean isTruncated;
