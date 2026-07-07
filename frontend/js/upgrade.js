@@ -1,6 +1,6 @@
 /**
- * Upgrade / Pricing Page Controller (FE2 - Step 11).
- * Handles plan display, mock payment flow, and payment history.
+ * Upgrade / Pricing Page Controller (FE2 - Step 13B).
+ * Handles plan display, VNPay + Mock payment flow, and payment history.
  */
 document.addEventListener("DOMContentLoaded", async function () {
   if (window.authReady) {
@@ -28,6 +28,10 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Elements
   const currentTierBadge = document.getElementById("currentTierBadge");
   const alreadyPremiumBanner = document.getElementById("alreadyPremiumBanner");
+
+  const paymentStatusBanner = document.getElementById("paymentStatusBanner");
+  const paymentStatusBannerText = document.getElementById("paymentStatusBannerText");
+  const paymentStatusBannerAction = document.getElementById("paymentStatusBannerAction");
 
   const pricingLoader = document.getElementById("pricingLoader");
   const pricingError = document.getElementById("pricingError");
@@ -72,7 +76,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   function getPlanTier(plan) {
-    return normalizeTier(plan.targetTier || plan.planCode);
+    // targetTier is always present per Step 13B contract (FREE/PREMIUM/ULTRA)
+    return normalizeTier(plan.targetTier);
   }
 
   function formatDate(value) {
@@ -121,6 +126,73 @@ document.addEventListener("DOMContentLoaded", async function () {
       case "REVIEW_REQUIRED": return "status-badge pending";
       default: return "status-badge private";
     }
+  }
+
+  async function refreshTierFromServer() {
+    if (typeof refreshCurrentUser === "function") {
+      const refreshedUser = await refreshCurrentUser();
+      if (refreshedUser) {
+        currentUser = refreshedUser;
+        updateTierUI(getCurrentTier());
+      }
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // Payment status banner (PAYMENT_ALREADY_PENDING / REVIEW_REQUIRED)
+  // ─────────────────────────────────────────────
+
+  function hidePaymentBanner() {
+    if (!paymentStatusBanner) return;
+    paymentStatusBanner.style.display = "none";
+    paymentStatusBannerAction.style.display = "none";
+    paymentStatusBannerAction.onclick = null;
+  }
+
+  function showPaymentBanner(error) {
+    if (!paymentStatusBanner) return;
+    const code = error && error.code;
+    const data = (error && error.data) || {};
+
+    paymentStatusBannerText.textContent = mapPaymentError(error);
+    paymentStatusBannerAction.style.display = "none";
+    paymentStatusBannerAction.onclick = null;
+
+    if (code === "PAYMENT_ALREADY_PENDING") {
+      paymentStatusBanner.style.background = "#fffbeb";
+      paymentStatusBanner.style.borderColor = "#fde68a";
+
+      if (data.paymentProvider === "VNPAY_SANDBOX" && data.paymentUrl) {
+        paymentStatusBannerAction.textContent = "Continue payment";
+        paymentStatusBannerAction.style.display = "inline-flex";
+        paymentStatusBannerAction.onclick = function (e) {
+          e.preventDefault();
+          window.location.href = data.paymentUrl;
+        };
+      } else if (data.paymentProvider === "MOCK") {
+        paymentStatusBannerAction.textContent = "Continue Mock Checkout";
+        paymentStatusBannerAction.style.display = "inline-flex";
+        paymentStatusBannerAction.onclick = function (e) {
+          e.preventDefault();
+          openMockCheckout({
+            paymentId: data.paymentId,
+            planName: data.planName || "your plan",
+            amount: data.amount,
+            currency: data.currency,
+            billingLabel: data.billingLabel
+          });
+        };
+      }
+    } else if (code === "PAYMENT_REQUIRES_MANUAL_REVIEW") {
+      paymentStatusBanner.style.background = "#fef2f2";
+      paymentStatusBanner.style.borderColor = "#fecaca";
+    } else {
+      paymentStatusBanner.style.background = "#fef2f2";
+      paymentStatusBanner.style.borderColor = "#fecaca";
+    }
+
+    paymentStatusBanner.style.display = "flex";
+    paymentStatusBanner.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   // ─────────────────────────────────────────────
@@ -187,7 +259,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Action area
     const isCurrentPlan = planTier === currentTier;
-    const isPaidPlan = planTier !== "FREE";
+    const isPurchasable = plan.purchasable === true;
     const isHigherPlan = planRank > currentRank;
     const isLowerPlan = planRank < currentRank;
 
@@ -197,38 +269,58 @@ document.addEventListener("DOMContentLoaded", async function () {
       currentBadge.style.marginTop = "16px";
       currentBadge.textContent = "Current Plan";
       card.appendChild(currentBadge);
-      if (isPaidPlan) {
-        const renewBtn = document.createElement("button");
-        renewBtn.type = "button";
-        renewBtn.className = "btn btn-secondary";
-        renewBtn.style.marginTop = "12px";
-        renewBtn.textContent = `Renew ${plan.planName || planTier}`;
-        renewBtn.addEventListener("click", function (event) {
-          handleUpgradeClick(event, plan.planCode);
-        });
-        card.appendChild(renewBtn);
+
+      if (isPurchasable) {
+        card.appendChild(buildPurchaseButtons(plan, planTier, `Renew ${plan.planName || planTier}`));
       }
-    } else if (isHigherPlan && isPaidPlan) {
-      const upgradeBtn = document.createElement("button");
-      upgradeBtn.type = "button";
-      upgradeBtn.className = "btn btn-primary";
-      upgradeBtn.style.marginTop = "16px";
-      upgradeBtn.textContent = `Upgrade to ${plan.planName || planTier}`;
-      upgradeBtn.addEventListener("click", function (event) {
-        handleUpgradeClick(event, plan.planCode);
-      });
-      card.appendChild(upgradeBtn);
+    } else if (isHigherPlan && isPurchasable) {
+      card.appendChild(buildPurchaseButtons(plan, planTier, `Upgrade to ${plan.planName || planTier}`));
     } else if (isLowerPlan) {
       const lowerPlanNote = document.createElement("div");
       lowerPlanNote.className = "helper-text";
       lowerPlanNote.style.marginTop = "16px";
       lowerPlanNote.textContent = planTier === "FREE"
         ? "Included with every account"
-        : "Downgrade is not available in mock checkout";
+        : "Downgrade is not supported";
       card.appendChild(lowerPlanNote);
     }
 
     return card;
+  }
+
+  function buildPurchaseButtons(plan, planTier, actionLabel) {
+    const wrapper = document.createElement("div");
+    wrapper.style.marginTop = "16px";
+    wrapper.style.display = "flex";
+    wrapper.style.flexDirection = "column";
+    wrapper.style.gap = "8px";
+
+    const label = document.createElement("div");
+    label.className = "helper-text";
+    label.style.textAlign = "center";
+    label.style.marginBottom = "4px";
+    label.textContent = actionLabel;
+    wrapper.appendChild(label);
+
+    const vnpayBtn = document.createElement("button");
+    vnpayBtn.type = "button";
+    vnpayBtn.className = "btn btn-primary";
+    vnpayBtn.textContent = "Pay with VNPay";
+    vnpayBtn.addEventListener("click", function (event) {
+      handleVNPayClick(event, plan.planCode);
+    });
+    wrapper.appendChild(vnpayBtn);
+
+    const mockBtn = document.createElement("button");
+    mockBtn.type = "button";
+    mockBtn.className = "btn btn-secondary";
+    mockBtn.textContent = "Mock Checkout (Demo)";
+    mockBtn.addEventListener("click", function (event) {
+      handleMockClick(event, plan.planCode);
+    });
+    wrapper.appendChild(mockBtn);
+
+    return wrapper;
   }
 
   async function loadPlans() {
@@ -255,33 +347,63 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   // ─────────────────────────────────────────────
+  // VNPay Flow
+  // ─────────────────────────────────────────────
+
+  async function handleVNPayClick(event, planCode) {
+    const btn = event.target;
+    hidePaymentBanner();
+    setButtonLoading(btn, true, "Creating payment...");
+
+    try {
+      const result = await createVNPayPayment(planCode);
+      const payment = result.data;
+      window.location.href = payment.paymentUrl;
+      // No need to reset button state — navigating away.
+    } catch (error) {
+      setButtonLoading(btn, false);
+      if (error && (error.code === "PAYMENT_ALREADY_PENDING" || error.code === "PAYMENT_REQUIRES_MANUAL_REVIEW")) {
+        showPaymentBanner(error);
+      } else {
+        showToast(mapPaymentError(error), "error");
+      }
+    }
+  }
+
+  // ─────────────────────────────────────────────
   // Mock Payment Flow
   // ─────────────────────────────────────────────
 
-  async function handleUpgradeClick(event, planCode) {
+  function openMockCheckout(payment) {
+    activePaymentId = payment.paymentId;
+    checkoutPlanInfo.textContent = `${payment.planName} — ${formatCurrency(payment.amount, payment.currency)} / ${payment.billingLabel}`;
+    checkoutResultMessage.style.display = "none";
+    checkoutActions.style.display = "flex";
+    checkoutSection.style.display = "block";
+    checkoutSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  async function handleMockClick(event, planCode) {
     const btn = event.target;
+    hidePaymentBanner();
     setButtonLoading(btn, true, "Creating payment...");
 
     try {
       const result = await createMockPayment(planCode);
-      const payment = result.data;
-      activePaymentId = payment.paymentId;
-
-      checkoutPlanInfo.textContent = `${payment.planName} — ${formatCurrency(payment.amount, payment.currency)} / ${payment.billingLabel}`;
-      checkoutResultMessage.style.display = "none";
-      checkoutActions.style.display = "flex";
-      checkoutSection.style.display = "block";
-      checkoutSection.scrollIntoView({ behavior: "smooth", block: "start" });
-
+      openMockCheckout(result.data);
       showToast("Mock payment created. Please simulate an outcome.", "info");
     } catch (error) {
-      showToast(mapPaymentError(error), "error");
+      if (error && (error.code === "PAYMENT_ALREADY_PENDING" || error.code === "PAYMENT_REQUIRES_MANUAL_REVIEW")) {
+        showPaymentBanner(error);
+      } else {
+        showToast(mapPaymentError(error), "error");
+      }
     } finally {
       setButtonLoading(btn, false);
     }
   }
 
-  async function handleCheckoutAction(action, actionFn, btn) {
+  async function handleCheckoutAction(actionFn, btn) {
     if (!activePaymentId) return;
     setButtonLoading(btn, true, "Processing...");
 
@@ -294,17 +416,8 @@ document.addEventListener("DOMContentLoaded", async function () {
       checkoutResultMessage.style.display = "flex";
       checkoutActions.style.display = "none";
 
-      // Response tier rule: always use tier returned by backend, never assume.
-      updateTierUI(payment.tier);
-      if (typeof refreshCurrentUser === "function") {
-        const refreshedUser = await refreshCurrentUser();
-        if (refreshedUser) {
-          currentUser = refreshedUser;
-          updateTierUI(getCurrentTier());
-        }
-      }
-
       activePaymentId = null;
+      await refreshTierFromServer();
       await loadPlans();
       await loadHistory();
 
@@ -317,13 +430,13 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   simulateSuccessBtn.addEventListener("click", function (e) {
-    handleCheckoutAction("success", mockPaymentSuccess, e.target);
+    handleCheckoutAction(mockPaymentSuccess, e.target);
   });
   simulateFailBtn.addEventListener("click", function (e) {
-    handleCheckoutAction("fail", mockPaymentFail, e.target);
+    handleCheckoutAction(mockPaymentFail, e.target);
   });
   cancelPaymentBtn.addEventListener("click", function (e) {
-    handleCheckoutAction("cancel", mockPaymentCancel, e.target);
+    handleCheckoutAction(mockPaymentCancel, e.target);
   });
 
   // ─────────────────────────────────────────────
@@ -341,9 +454,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     name.className = "member-row-name";
     name.textContent = `${payment.planName || payment.planCode} — ${formatCurrency(payment.amount, payment.currency)}`;
 
+    const statusInfo = formatPaymentStatus(payment.status);
     const statusBadge = document.createElement("span");
-    statusBadge.className = statusBadgeClass(payment.status);
-    statusBadge.textContent = payment.status;
+    statusBadge.className = `status-badge ${statusInfo.class}`;
+    statusBadge.textContent = statusInfo.label;
 
     main.append(name, statusBadge);
 
@@ -361,31 +475,24 @@ document.addEventListener("DOMContentLoaded", async function () {
       : `Created: ${formatDate(payment.createdAt)}`;
     meta.appendChild(dateInfo);
 
-    if (payment.status === "PENDING") {
-      if (isMockPayment(payment)) {
-        const continueBtn = document.createElement("button");
-        continueBtn.type = "button";
-        continueBtn.className = "btn btn-secondary btn-sm";
-        continueBtn.textContent = "Continue Mock Checkout";
-        continueBtn.addEventListener("click", function () {
-          activePaymentId = payment.paymentId;
-          checkoutPlanInfo.textContent = `${payment.planName} — ${formatCurrency(payment.amount, payment.currency)} / ${payment.billingLabel}`;
-          checkoutResultMessage.style.display = "none";
-          checkoutActions.style.display = "flex";
-          checkoutSection.style.display = "block";
-          checkoutSection.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-        meta.appendChild(continueBtn);
-      } else if (canContinueVNPay(payment)) {
-        const continueBtn = document.createElement("button");
-        continueBtn.type = "button";
-        continueBtn.className = "btn btn-secondary btn-sm";
-        continueBtn.textContent = "Continue VNPay";
-        continueBtn.addEventListener("click", function () {
-          window.location.href = payment.paymentUrl;
-        });
-        meta.appendChild(continueBtn);
-      }
+    if (canContinueVNPay(payment)) {
+      const continueBtn = document.createElement("button");
+      continueBtn.type = "button";
+      continueBtn.className = "btn btn-secondary btn-sm";
+      continueBtn.textContent = "Continue payment";
+      continueBtn.addEventListener("click", function () {
+        window.location.href = payment.paymentUrl;
+      });
+      meta.appendChild(continueBtn);
+    } else if (isMockPayment(payment) && payment.status === "PENDING") {
+      const continueBtn = document.createElement("button");
+      continueBtn.type = "button";
+      continueBtn.className = "btn btn-secondary btn-sm";
+      continueBtn.textContent = "Continue Mock Checkout";
+      continueBtn.addEventListener("click", function () {
+        openMockCheckout(payment);
+      });
+      meta.appendChild(continueBtn);
     }
 
     row.append(main, meta);
