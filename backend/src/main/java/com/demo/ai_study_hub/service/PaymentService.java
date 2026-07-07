@@ -184,13 +184,15 @@ public class PaymentService {
         List<PaymentOrder> activePending = paymentOrderRepository.findActivePendingForUpdate(lockedUser, now);
         if (!activePending.isEmpty()) {
             PaymentOrder existing = activePending.get(0);
+            java.util.Map<String, Object> errorData = new java.util.HashMap<>();
+            errorData.put("paymentId", existing.getPaymentId());
+            errorData.put("paymentProvider", existing.getPaymentProvider());
+            if (existing.getPaymentUrl() != null) {
+                errorData.put("paymentUrl", existing.getPaymentUrl());
+            }
             throw new PaymentException(HttpStatus.CONFLICT, "PAYMENT_ALREADY_PENDING",
                     "You already have a pending payment. Please complete it before creating a new one.",
-                    Map.of(
-                            "paymentId", existing.getPaymentId(),
-                            "paymentProvider", existing.getPaymentProvider(),
-                            "paymentUrl", existing.getPaymentUrl()
-                    ));
+                    errorData);
         }
 
         List<PaymentOrder> unresolvedReview = paymentOrderRepository.findUnresolvedReviewForUser(lockedUser);

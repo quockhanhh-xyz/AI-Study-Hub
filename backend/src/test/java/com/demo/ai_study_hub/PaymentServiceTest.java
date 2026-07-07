@@ -277,6 +277,31 @@ class PaymentServiceTest {
     }
 
     @Test
+    void createMockPayment_WhenPendingPaymentExists_ShouldThrow409PaymentAlreadyPending() {
+        PaymentOrder pendingOrder = PaymentOrder.builder()
+                .paymentId(101L)
+                .paymentProvider(com.demo.ai_study_hub.dto.PaymentProvider.MOCK)
+                .paymentUrl(null)
+                .status(PaymentStatus.PENDING)
+                .build();
+        when(planService.isValidPlanCode(PlanCode.PREMIUM_1_MONTH)).thenReturn(true);
+        when(planService.isPurchasablePlanCode(PlanCode.PREMIUM_1_MONTH)).thenReturn(true);
+        when(paymentOrderRepository.findActivePendingForUpdate(eq(freeUser), any(LocalDateTime.class)))
+                .thenReturn(List.of(pendingOrder));
+
+        com.demo.ai_study_hub.exception.PaymentException ex = assertThrows(com.demo.ai_study_hub.exception.PaymentException.class, () ->
+                paymentService.createMockPayment(freeUser, PlanCode.PREMIUM_1_MONTH));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        assertEquals("PAYMENT_ALREADY_PENDING", ex.getCode());
+        java.util.Map<?, ?> errorData = (java.util.Map<?, ?>) ex.getData();
+        assertNotNull(errorData);
+        assertEquals(101L, errorData.get("paymentId"));
+        assertEquals(com.demo.ai_study_hub.dto.PaymentProvider.MOCK, errorData.get("paymentProvider"));
+        assertFalse(errorData.containsKey("paymentUrl"));
+    }
+
+    @Test
     void createMockPayment_WhenUltraUserRenewsUltra_ShouldSucceed() {
         when(planService.isValidPlanCode(PlanCode.ULTRA_1_MONTH)).thenReturn(true);
         when(planService.isPurchasablePlanCode(PlanCode.ULTRA_1_MONTH)).thenReturn(true);
