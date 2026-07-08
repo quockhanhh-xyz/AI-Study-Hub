@@ -4420,4 +4420,3 @@ If the client submits count params outside validation ranges, returns HTTP `400 
 | **404 Not Found** | `SUMMARY_NOT_FOUND` | Summary does not exist or does not belong to user |
 | **502 Bad Gateway** | `AI_OUTPUT_INVALID` | Model failed to output expected JSON schema format after 1 retry |
 | **502 Bad Gateway** | `AI_PROVIDER_ERROR` | Upstream AI model API provider failure |
-
