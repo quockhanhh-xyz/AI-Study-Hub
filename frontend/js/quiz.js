@@ -28,7 +28,7 @@ async function loadQuizSet(setId) {
     const viewer = document.getElementById("quizViewer");
 
     try {
-        const res = await getQuizSet(setId);
+        const res = await AiLearningAPI.getQuizSet(setId);
         currentQuizSet = res.data;
 
         if (!currentQuizSet || !Array.isArray(currentQuizSet.questions) || currentQuizSet.questions.length === 0) {

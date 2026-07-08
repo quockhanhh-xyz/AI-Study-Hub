@@ -85,6 +85,7 @@ let aiQaUsageInfo = null;
 // Step 14 — AI Tools (Summary / Quiz / Flashcard) tab state
 let aiToolsLoaded = false;
 let aiToolsProcessingStatus = "PENDING";
+let summaryExists = false;
 
 // Step 13: detects backend quota errors (e.g. share limit) so we can route
 // them through the shared showQuotaError() helper.
@@ -388,6 +389,11 @@ function renderDocument(doc) {
             tabPanes.style.display = "none";
         }
     }
+}
+
+function updateSummaryButtonLabel() {
+    const btn = document.getElementById("summaryGenerateBtn");
+    if (btn) btn.textContent = summaryExists ? "Regenerate Summary" : "Generate Summary";
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -1589,6 +1595,9 @@ function renderAiToolsTab(doc) {
     aiToolsLoaded = false; // force reload of summary/quiz/flashcard data for the (possibly new) document
     aiToolsProcessingStatus = doc.processingStatus || "PENDING";
 
+    summaryExists = false;
+    updateSummaryButtonLabel();
+
     const notReadyMsg = document.getElementById("aiToolsNotReadyMessage");
     const content = document.getElementById("aiToolsContent");
     const ready = aiToolsProcessingStatus === "COMPLETED";
@@ -1637,12 +1646,14 @@ async function loadSummary() {
     if (errorEl) errorEl.style.display = "none";
 
     try {
-        const res = await getLatestSummary(currentDocumentId);
+        const res = await AiLearningAPI.getLatestSummary(currentDocumentId);
         if (loader) loader.style.display = "none";
         renderSummary(res.data || null);
     } catch (err) {
         if (loader) loader.style.display = "none";
         if (err.code === "SUMMARY_NOT_FOUND" || err.status === 404) {
+            summaryExists = false;
+            updateSummaryButtonLabel();
             if (empty) empty.style.display = "block";
         } else {
             console.error("Failed to load summary", err);
@@ -1659,10 +1670,15 @@ function renderSummary(summary) {
     const contentEl = document.getElementById("summaryContent");
 
     if (!summary) {
+        summaryExists = false;
+        updateSummaryButtonLabel();
         if (empty) empty.style.display = "block";
         if (contentEl) contentEl.style.display = "none";
         return;
     }
+
+    summaryExists = true;
+    updateSummaryButtonLabel();
 
     if (empty) empty.style.display = "none";
     if (contentEl) contentEl.style.display = "block";
@@ -1727,10 +1743,11 @@ async function handleGenerateSummary() {
     if (!btn || btn.disabled) return;
 
     if (errorEl) errorEl.style.display = "none";
-    setButtonLoading(btn, true, "Generating...");
+    const loadingLabel = summaryExists ? "Regenerating..." : "Generating...";
+    setButtonLoading(btn, true, loadingLabel);
 
     try {
-        const res = await generateSummary(currentDocumentId, true);
+        const res = await AiLearningAPI.generateSummary(currentDocumentId, true);
         renderSummary(res.data || null);
         showToast("Summary generated successfully", "success");
     } catch (err) {
@@ -1743,6 +1760,7 @@ async function handleGenerateSummary() {
         }
     } finally {
         setButtonLoading(btn, false);
+        updateSummaryButtonLabel();
     }
 }
 
@@ -1757,7 +1775,7 @@ async function loadFlashcardSets() {
     if (list) list.innerHTML = "";
 
     try {
-        const res = await getFlashcardSets(currentDocumentId);
+        const res = await AiLearningAPI.getFlashcardSets(currentDocumentId);
         if (loader) loader.style.display = "none";
         renderSetList(list, empty, res.data || [], "flashcards.html?setId=", set =>
             `${set.title || "Flashcard set"} — ${set.itemCount || 0} cards`
@@ -1782,8 +1800,9 @@ async function handleGenerateFlashcardSet() {
     setButtonLoading(btn, true, "Generating...");
 
     try {
-        const count = countInput ? countInput.value.trim() : "";
-        await generateFlashcardSet(currentDocumentId, count || undefined);
+        const rawCount = countInput ? countInput.value.trim() : "";
+        const count = rawCount ? parseInt(rawCount, 10) : undefined;
+        await AiLearningAPI.generateFlashcardSet(currentDocumentId, Number.isNaN(count) ? undefined : count);
         showToast("Flashcard set generated successfully", "success");
         await loadFlashcardSets();
     } catch (err) {
@@ -1810,7 +1829,7 @@ async function loadQuizSets() {
     if (list) list.innerHTML = "";
 
     try {
-        const res = await getQuizSets(currentDocumentId);
+        const res = await AiLearningAPI.getQuizSets(currentDocumentId);
         if (loader) loader.style.display = "none";
         renderSetList(list, empty, res.data || [], "quiz.html?setId=", set =>
             `${set.title || "Quiz"} — ${set.questionCount || 0} questions`
@@ -1836,9 +1855,10 @@ async function handleGenerateQuizSet() {
     setButtonLoading(btn, true, "Generating...");
 
     try {
-        const count = countInput ? countInput.value.trim() : "";
+        const rawCount = countInput ? countInput.value.trim() : "";
+        const count = rawCount ? parseInt(rawCount, 10) : undefined;
         const difficulty = difficultySelect ? difficultySelect.value : "MIXED";
-        await generateQuizSet(currentDocumentId, count || undefined, difficulty);
+        await AiLearningAPI.generateQuizSet(currentDocumentId, Number.isNaN(count) ? undefined : count, difficulty);
         showToast("Quiz generated successfully", "success");
         await loadQuizSets();
     } catch (err) {
