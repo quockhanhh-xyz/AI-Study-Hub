@@ -4099,7 +4099,7 @@ Provides endpoint contracts for generating study summaries, flashcards, and quiz
 
 1. **Active/Ready Check**: Generation requests will check both the document's state and its content extraction status:
    * Document `status` must be `"ACTIVE"` (fails with `DOCUMENT_DELETED` otherwise).
-   * Document content's `processingStatus` must be `COMPLETED` (fails with `DOCUMENT_NOT_READY_FOR_AI` if `PENDING` / `PROCESSING`, or `DOCUMENT_PROCESS_FAILED` if `FAILED` / `EMPTY_CONTENT` / `UNSUPPORTED`).
+   * Document content's `processingStatus` must be `COMPLETED` (fails with `DOCUMENT_NOT_READY_FOR_AI` if `PENDING`, `DOCUMENT_PROCESSING` if `PROCESSING`, or `DOCUMENT_PROCESS_FAILED` if `FAILED` / `EMPTY_CONTENT` / `UNSUPPORTED`).
 2. **AI Extracted Content Constraints**:
    * AI prompts utilize only the extracted text stored in `document_contents` or `document_chunks`.
    * Raw files are not read from Cloudinary again. Prompts must instruct the model to use only the provided context and strictly reject hallucinating facts outside the source material.
@@ -4405,7 +4405,7 @@ If the client submits count params outside validation ranges, returns HTTP `400 
 | :--- | :--- | :--- |
 | **404 Not Found** | `DOCUMENT_NOT_FOUND` | Document does not exist |
 | **403 Forbidden** | `DOCUMENT_ACCESS_DENIED` | User has no read permissions for the document |
-| **400 Bad Request** | `DOCUMENT_NOT_READY_FOR_AI` | Document content is PENDING or PROCESSING |
+| **400 Bad Request** | `DOCUMENT_NOT_READY_FOR_AI` | Document content is PENDING |
 | **400 Bad Request** | `DOCUMENT_PROCESSING` | Document is currently being processed |
 | **400 Bad Request** | `DOCUMENT_PROCESS_FAILED` | Document failed parsing/extraction |
 | **400 Bad Request** | `DOCUMENT_DELETED` | Document has been soft-deleted / trashed |
