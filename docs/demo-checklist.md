@@ -438,3 +438,53 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
 ### 11.6. Configuration Disabling
 - [ ] **Step 11.19**: Set `payment.mock-enabled = false` in `application.properties`. Call a mock checkout processing endpoint.
   - *Expected*: Returns `400 Bad Request` with code `PAYMENT_PROVIDER_DISABLED`.
+
+---
+
+# 12. AI Learning Tools (Step 14)
+
+Provides demo and verification steps for AI study tools (Summary, Flashcard, and Quiz multiple choice).
+
+### 12.1. Document Readiness and Permission Guards
+- [ ] **Step 12.1**: Log in as User A (FREE). Open a document with extraction status `COMPLETED` and request Summary generation.
+  - *Expected*: Request succeeds (returns `200 OK`) and displays study overview, key points, terms, and suggested review questions.
+- [ ] **Step 12.2**: Attempt to request Summary generation on a document with extraction status `PENDING` or `PROCESSING`.
+  - *Expected*: Returns `400 Bad Request` with code `DOCUMENT_NOT_READY_FOR_AI` (or `DOCUMENT_PROCESSING`). Button is disabled or shows processing warning.
+- [ ] **Step 12.3**: Attempt to request Summary generation on a document with extraction status `FAILED`.
+  - *Expected*: Returns `400 Bad Request` with code `DOCUMENT_PROCESS_FAILED`. System prompts the user to trigger document re-extraction.
+- [ ] **Step 12.4**: Log in as User B. Try to trigger or view Summary/Quiz/Flashcard generation on User A's private document (`documentId`).
+  - *Expected*: Returns `403 Forbidden` with code `DOCUMENT_ACCESS_DENIED`.
+- [ ] **Step 12.5**: Log in as User B. Trigger Quiz generation on User A's `PUBLIC` (approved) or shared document.
+  - *Expected*: Request succeeds, generating multiple-choice quiz questions.
+
+### 12.2. Content Separation and Ownership
+- [ ] **Step 12.6**: Log in as User A and query generated quiz sets (`GET /api/ai/documents/{documentId}/quiz-sets`) for the document User B generated a quiz for.
+  - *Expected*: Returns `200 OK` with an empty array or does not list User B's generated quiz. User B's generated quiz belongs strictly to User B.
+- [ ] **Step 12.7**: Attempt to query details of User B's generated quiz set directly (`GET /api/ai/quiz-sets/{quizSetId}`) using User A's credentials.
+  - *Expected*: Returns `404 Not Found` with code `QUIZ_SET_NOT_FOUND`.
+
+### 12.3. Summary Regeneration (Immutability)
+- [ ] **Step 12.8**: Trigger Summary generation twice for the same document under User A.
+  - *Expected*: Both requests succeed. Checking the `ai_summaries` database table shows two separate records created with distinct `summary_id`s. Querying `GET /api/ai/documents/{documentId}/summaries/latest` returns the latest success summary.
+
+### 12.4. Multiple Choice Quizzes & Flashcards
+- [ ] **Step 12.9**: Generate a Quiz Set. Inspect the questions and frontend page display.
+  - *Expected*: Quiz consists only of multiple-choice questions. Each question has exactly 4 options (keys A, B, C, D). Frontend hides correct options/explanations until the user picks an option.
+- [ ] **Step 12.10**: Generate a Flashcard Set. Flipping/clicking cards on the UI.
+  - *Expected*: Each card contains `frontText` and `backText` based on the document. Clicking rotates the card to display the back face.
+
+### 12.5. Quota Constraints & Validation Range Limits
+- [ ] **Step 12.11**: As User A (FREE), request flashcard sets 3 times on the same calendar day.
+  - *Expected*: First 2 requests succeed; the 3rd request returns `403 Forbidden` with code `FLASHCARD_QUOTA_EXCEEDED`.
+- [ ] **Step 12.12**: As User A (FREE), request Quiz generation with `questionCount = 6`.
+  - *Expected*: Returns `400 Bad Request` with code `INVALID_QUIZ_QUESTION_COUNT` (FREE max limit is 5).
+- [ ] **Step 12.13**: As User A (FREE), request Quiz generation without specifying `questionCount` parameter.
+  - *Expected*: Generates a quiz with exactly 5 questions (FREE default value).
+
+### 12.6. Invalid AI JSON Recovery
+- [ ] **Step 12.14**: Inject malformed JSON mockup in test harness to simulate AI response parsing failure.
+  - *Expected*: Backend catches error, attempts a single retry call to AI model. If retry fails, returns `502 Bad Gateway` with code `AI_OUTPUT_INVALID` and does not deduct quota.
+
+### 12.7. Feature Restriction Check
+- [ ] **Step 12.15**: Verify that no UI options or backend API endpoints exist for editing summary key points, deleting individual flashcard sets, or deleting quiz sets.
+  - *Expected*: No modification/deletion routes are registered. Step 14 features are read-only.
