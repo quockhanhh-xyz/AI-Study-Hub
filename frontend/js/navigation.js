@@ -44,7 +44,11 @@ const NAVIGATION_MENU = [
   { name: "Upload", icon: ICON_UPLOAD, url: "upload.html", requiresAuth: true, hidden: true },
   { name: "Document Detail", icon: ICON_DOCS, url: "document-detail.html", requiresAuth: false, hidden: true },
   { name: "Group Detail", icon: ICON_GROUPS, url: "group-detail.html", requiresAuth: true, hidden: true },
-  { name: "Shared Folder Detail", icon: ICON_FOLDER, url: "shared-folder-detail.html", requiresAuth: true, hidden: true }
+  { name: "Shared Folder Detail", icon: ICON_FOLDER, url: "shared-folder-detail.html", requiresAuth: true, hidden: true },
+
+  // Step 14: AI Tools child routes (Flashcards / Quiz)
+  { name: "Flashcards", icon: ICON_DOCS, url: "flashcards.html", requiresAuth: true, hidden: true },
+  { name: "Quiz", icon: ICON_DOCS, url: "quiz.html", requiresAuth: true, hidden: true }
 ];
 
 /**
@@ -78,6 +82,10 @@ function initializeActiveMenu() {
 
   if (currentPage === "shared-folder-detail.html") {
     currentPage = "shared-with-me.html";
+  }
+
+  if (currentPage === "flashcards.html" || currentPage === "quiz.html") {
+    currentPage = "documents.html";
   }
 
   navLinks.forEach(link => {
