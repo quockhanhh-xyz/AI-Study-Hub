@@ -5,6 +5,7 @@ import com.demo.ai_study_hub.dto.QuizDtos.*;
 import com.demo.ai_study_hub.entity.*;
 import com.demo.ai_study_hub.enums.UserTier;
 import com.demo.ai_study_hub.exception.QuotaExceededException;
+import com.demo.ai_study_hub.exception.AiProviderException;
 import com.demo.ai_study_hub.service.*;
 import com.demo.ai_study_hub.repository.DocumentChunkRepository;
 import com.demo.ai_study_hub.repository.QuizSetRepository;
@@ -284,5 +285,21 @@ class QuizServiceTest {
 
         verify(quizSetRepository, times(1))
                 .findByDocument_DocumentIdAndUser_UserIdOrderByCreatedAtDesc(10, 1);
+    }
+
+    @Test
+    void generate_WhenAiProviderException_ShouldThrowImmediatelyWithoutRetry() {
+        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class), anyBoolean()))
+                .thenThrow(new AiProviderException(HttpStatus.TOO_MANY_REQUESTS, "Rate limit", "AI_PROVIDER_RATE_LIMITED"));
+
+        GenerateQuizRequest req = new GenerateQuizRequest();
+        req.setQuestionCount(3);
+
+        AiProviderException ex = assertThrows(AiProviderException.class,
+                () -> quizService.generate(10, req, "user@test.com"));
+
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, ex.getStatusCode());
+        assertEquals("AI_PROVIDER_RATE_LIMITED", ex.getCode());
+        verify(aiProviderService, times(1)).call(any(), any(), anyInt(), any(Double.class), anyBoolean());
     }
 }

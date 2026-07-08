@@ -16,37 +16,61 @@ public class LearningContextBuilder {
 
     /**
      * Builds a limited context string based on user tier and attempt count.
-     * If chunks are unavailable, returns null to allow fallback to full text.
+     * If chunks are unavailable, falls back to a limited length slice of fullExtractedText.
      */
-    public String buildLimitedContext(Integer documentId, String tier, int attempt) {
+    public String buildLimitedContext(Integer documentId, String tier, int attempt, String fullExtractedText) {
         List<DocumentChunk> chunks = documentChunkRepository.findByDocument_DocumentIdOrderByChunkIndexAsc(documentId);
-        if (chunks == null || chunks.isEmpty()) {
-            return null;
+        if (chunks != null && !chunks.isEmpty()) {
+            int maxChunks;
+            if (attempt == 1) {
+                if ("ULTRA".equalsIgnoreCase(tier)) {
+                    maxChunks = 15;
+                } else if ("PREMIUM".equalsIgnoreCase(tier)) {
+                    maxChunks = 8;
+                } else {
+                    maxChunks = 3;
+                }
+            } else {
+                // Attempt 2 (fallback with shorter context)
+                if ("ULTRA".equalsIgnoreCase(tier)) {
+                    maxChunks = 5;
+                } else if ("PREMIUM".equalsIgnoreCase(tier)) {
+                    maxChunks = 3;
+                } else {
+                    maxChunks = 1;
+                }
+            }
+
+            return chunks.stream()
+                    .limit(maxChunks)
+                    .map(DocumentChunk::getChunkText)
+                    .collect(Collectors.joining("\n\n"));
         }
 
-        int maxChunks;
+        if (fullExtractedText == null || fullExtractedText.isEmpty()) {
+            return "";
+        }
+
+        // Fallback by slicing the fullExtractedText to limit characters based on tier and attempt
+        int limit;
         if (attempt == 1) {
             if ("ULTRA".equalsIgnoreCase(tier)) {
-                maxChunks = 15;
+                limit = 30000;
             } else if ("PREMIUM".equalsIgnoreCase(tier)) {
-                maxChunks = 8;
+                limit = 15000;
             } else {
-                maxChunks = 3;
+                limit = 6000;
             }
         } else {
-            // Attempt 2 (fallback with shorter context)
             if ("ULTRA".equalsIgnoreCase(tier)) {
-                maxChunks = 5;
+                limit = 10000;
             } else if ("PREMIUM".equalsIgnoreCase(tier)) {
-                maxChunks = 3;
+                limit = 6000;
             } else {
-                maxChunks = 1;
+                limit = 2000;
             }
         }
 
-        return chunks.stream()
-                .limit(maxChunks)
-                .map(DocumentChunk::getChunkText)
-                .collect(Collectors.joining("\n\n"));
+        return fullExtractedText.substring(0, Math.min(fullExtractedText.length(), limit));
     }
 }

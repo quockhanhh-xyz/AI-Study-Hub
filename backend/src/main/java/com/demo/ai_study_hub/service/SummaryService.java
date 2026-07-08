@@ -133,7 +133,12 @@ public class SummaryService {
                 res.setReleasedAt(LocalDateTime.now());
                 aiUsageReservationRepository.save(res);
 
-                String errorCode = (e instanceof QuotaExceededException) ? ((QuotaExceededException) e).getCode() : "FAILED";
+                String errorCode = "FAILED";
+                if (e instanceof QuotaExceededException qe) {
+                    errorCode = qe.getCode();
+                } else if (e instanceof AiProviderException ape) {
+                    errorCode = ape.getCode();
+                }
                 saveUsageLog(reserveResult.user, reserveResult.doc, "SUMMARY",
                         null, null, 0, 0, 0, false, false, errorCode);
             });
@@ -150,10 +155,7 @@ public class SummaryService {
     private AiSummaryOutput callAndValidateWithRetry(Integer documentId, String tier, String extractedText, String model, int maxTokens) {
         boolean lastFailureWasProviderCall = false;
         for (int attempt = 1; attempt <= 2; attempt++) {
-            String context = learningContextBuilder.buildLimitedContext(documentId, tier, attempt);
-            if (context == null) {
-                context = extractedText;
-            }
+            String context = learningContextBuilder.buildLimitedContext(documentId, tier, attempt, extractedText);
             String prompt = promptBuilder.buildSummaryPrompt(context);
             String rawText;
             try {

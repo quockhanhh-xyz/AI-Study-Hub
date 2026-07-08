@@ -141,7 +141,12 @@ public class QuizService {
                 res.setReleasedAt(LocalDateTime.now());
                 aiUsageReservationRepository.save(res);
 
-                String errorCode = (e instanceof QuotaExceededException) ? ((QuotaExceededException) e).getCode() : "FAILED";
+                String errorCode = "FAILED";
+                if (e instanceof QuotaExceededException qe) {
+                    errorCode = qe.getCode();
+                } else if (e instanceof AiProviderException ape) {
+                    errorCode = ape.getCode();
+                }
                 saveUsageLog(reserveResult.user, reserveResult.doc, "QUIZ",
                         null, null, 0, 0, 0, false, false, errorCode);
             });
@@ -172,10 +177,7 @@ public class QuizService {
     private List<AiQuizQuestionOutput> callAndValidateWithRetry(Integer documentId, String tier, String extractedText, String model, int maxTokens, int count, String difficulty) {
         boolean lastFailureWasProviderCall = false;
         for (int attempt = 1; attempt <= 2; attempt++) {
-            String context = learningContextBuilder.buildLimitedContext(documentId, tier, attempt);
-            if (context == null) {
-                context = extractedText;
-            }
+            String context = learningContextBuilder.buildLimitedContext(documentId, tier, attempt, extractedText);
             int currentCount = (attempt == 1) ? count : Math.max(3, count / 2);
             String prompt = promptBuilder.buildQuizPrompt(context, currentCount, difficulty);
             String rawText;
