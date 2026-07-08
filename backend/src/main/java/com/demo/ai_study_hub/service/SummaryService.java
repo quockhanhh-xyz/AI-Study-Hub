@@ -102,7 +102,7 @@ public class SummaryService {
         // 2. Call AI provider outside transaction to prevent holding database locks too long
         String prompt = promptBuilder.buildSummaryPrompt(reserveResult.content.getExtractedText());
         String model = aiModelSelector.selectModel(reserveResult.tier.name());
-        int maxTokens = Math.max(1500, aiModelSelector.getMaxOutputTokens(reserveResult.tier.name()));
+        int maxTokens = aiModelSelector.getMaxLearningOutputTokens(reserveResult.tier.name());
 
         AiSummaryOutput output;
         try {

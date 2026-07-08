@@ -106,7 +106,7 @@ public class FlashcardService {
         // 2. Call AI provider outside transaction
         String prompt = promptBuilder.buildFlashcardPrompt(reserveResult.content.getExtractedText(), reserveResult.count);
         String model = aiModelSelector.selectModel(reserveResult.tier.name());
-        int maxTokens = Math.max(2000, aiModelSelector.getMaxOutputTokens(reserveResult.tier.name()));
+        int maxTokens = aiModelSelector.getMaxLearningOutputTokens(reserveResult.tier.name());
 
         try {
             List<AiFlashcardOutput> cards = callAndValidateWithRetry(prompt, model, maxTokens, reserveResult.count);

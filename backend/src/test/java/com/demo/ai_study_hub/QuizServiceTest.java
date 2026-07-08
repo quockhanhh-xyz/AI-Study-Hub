@@ -139,7 +139,7 @@ class QuizServiceTest {
         lenient().when(aiProviderRouter.isConfigured()).thenReturn(true);
         lenient().when(aiProviderRouter.route()).thenReturn(aiProviderService);
         lenient().when(aiModelSelector.selectModel("FREE")).thenReturn("gemini-2.5-flash-lite");
-        lenient().when(aiModelSelector.getMaxOutputTokens("FREE")).thenReturn(500);
+        lenient().when(aiModelSelector.getMaxLearningOutputTokens("FREE")).thenReturn(2500);
         lenient().when(promptBuilder.buildQuizPrompt(any(), anyInt(), anyString())).thenReturn("PROMPT");
         lenient().when(documentChunkRepository.findByDocument_DocumentIdOrderByChunkIndexAsc(10))
                 .thenReturn(List.of());

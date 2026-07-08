@@ -105,7 +105,7 @@ class FlashcardServiceTest {
         lenient().when(aiProviderRouter.isConfigured()).thenReturn(true);
         lenient().when(aiProviderRouter.route()).thenReturn(aiProviderService);
         lenient().when(aiModelSelector.selectModel("FREE")).thenReturn("gemini-2.5-flash-lite");
-        lenient().when(aiModelSelector.getMaxOutputTokens("FREE")).thenReturn(500);
+        lenient().when(aiModelSelector.getMaxLearningOutputTokens("FREE")).thenReturn(2000);
         lenient().when(promptBuilder.buildFlashcardPrompt(any(), anyInt())).thenReturn("PROMPT");
         lenient().when(documentChunkRepository.findByDocument_DocumentIdOrderByChunkIndexAsc(10))
                 .thenReturn(List.of());

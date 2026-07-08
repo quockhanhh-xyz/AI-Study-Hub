@@ -35,6 +35,13 @@ public class DefaultAiModelSelector implements AiModelSelector {
     }
 
     @Override
+    public int getMaxLearningOutputTokens(String userTier) {
+        if ("ULTRA".equalsIgnoreCase(userTier)) return 4000;
+        if ("PREMIUM".equalsIgnoreCase(userTier)) return 2500;
+        return 1500;
+    }
+
+    @Override
     public int getMaxContextChunks(String userTier) {
         return limits(userTier).maxContextChunks();
     }

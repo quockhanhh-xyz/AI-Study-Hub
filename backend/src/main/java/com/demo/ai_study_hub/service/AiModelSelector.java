@@ -27,6 +27,12 @@ public interface AiModelSelector {
     int getMaxOutputTokens(String userTier);
 
     /**
+     * Return the max learning output tokens allowed for the given user tier.
+     * FREE: 1500, PREMIUM: 2500, ULTRA: 4000
+     */
+    int getMaxLearningOutputTokens(String userTier);
+
+    /**
      * Return the max context chunks allowed for the given user tier.
      *
      * @param userTier User account tier: "FREE" | "PREMIUM"

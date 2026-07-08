@@ -111,7 +111,7 @@ public class QuizService {
         // 2. Call AI provider outside transaction
         String prompt = promptBuilder.buildQuizPrompt(reserveResult.content.getExtractedText(), reserveResult.count, reserveResult.difficulty);
         String model = aiModelSelector.selectModel(reserveResult.tier.name());
-        int maxTokens = Math.max(2500, aiModelSelector.getMaxOutputTokens(reserveResult.tier.name()));
+        int maxTokens = aiModelSelector.getMaxLearningOutputTokens(reserveResult.tier.name());
 
         try {
             List<AiQuizQuestionOutput> questions = callAndValidateWithRetry(prompt, model, maxTokens, reserveResult.count);
