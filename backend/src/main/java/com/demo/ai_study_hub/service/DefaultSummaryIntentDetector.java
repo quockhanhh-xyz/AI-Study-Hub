@@ -34,7 +34,11 @@ public class DefaultSummaryIntentDetector implements SummaryIntentDetector {
             "outline",
             "what is covered in this document",
             "explain in simple words",
-            "explain simply"
+            "explain simply",
+            "key arguments", "main arguments", "important arguments",
+            "exam review", "review for an exam", "what should i review",
+            "study guide", "revision tips", "give me examples",
+            "examples from the document"
     ));
 
     @Override

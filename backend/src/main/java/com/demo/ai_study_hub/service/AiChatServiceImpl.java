@@ -135,12 +135,16 @@ public class AiChatServiceImpl implements AiChatService {
         // 2. Perform intent detection and chunk retrieval outside transaction
         int maxChunks = aiModelSelector.getMaxContextChunks(reserveResult.tier);
         boolean isSummary = summaryIntentDetector.isSummaryIntent(question);
-        List<DocumentChunkDto> chunks;
+        List<DocumentChunkDto> retrievedChunks;
         if (isSummary) {
-            chunks = chunkRetrievalService.retrieveFirstChunks(documentId, maxChunks);
+            retrievedChunks = chunkRetrievalService.retrieveFirstChunks(documentId, maxChunks);
         } else {
-            chunks = chunkRetrievalService.retrieveByKeyword(documentId, question, maxChunks);
+            retrievedChunks = chunkRetrievalService.retrieveByKeyword(documentId, question, maxChunks);
+            if (retrievedChunks.isEmpty() && isGeneralLearningQuestion(question)) {
+                retrievedChunks = chunkRetrievalService.retrieveFirstChunks(documentId, maxChunks);
+            }
         }
+        final List<DocumentChunkDto> chunks = retrievedChunks;
 
         // 3. Handle no-context fallback outside provider invocation
         if (!isSummary && chunks.isEmpty()) {
@@ -507,6 +511,25 @@ public class AiChatServiceImpl implements AiChatService {
                 .sourceChunks(sourceChunks)
                 .createdAt(msg.getCreatedAt())
                 .build();
+    }
+
+    private boolean isGeneralLearningQuestion(String question) {
+        if (question == null) return false;
+        String normalized = question.toLowerCase().trim();
+        return normalized.contains("explain")
+                || normalized.contains("what")
+                || normalized.contains("how")
+                || normalized.contains("why")
+                || normalized.contains("concept")
+                || normalized.contains("example")
+                || normalized.contains("argument")
+                || normalized.contains("review")
+                || normalized.contains("exam")
+                || normalized.contains("study")
+                || normalized.contains("define")
+                || normalized.contains("definition")
+                || normalized.contains("summar")
+                || normalized.contains("key");
     }
 
     private static class AiReservationResult {
