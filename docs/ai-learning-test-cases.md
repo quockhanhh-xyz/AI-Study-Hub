@@ -27,13 +27,13 @@ This document specifies the comprehensive test suite and verification scenarios 
 
 ### 1.3. Visibility & Sharing Permissions
 * **TC-LEARN-06: Read Access Denied**
-  * **Action**: Request generation on a document owned by User A (PRIVATE visibility) using User B's token (no share link or shared folder access exists).
+  * **Action**: Request generation on a document owned by User A (PRIVATE visibility) using User B's token (no direct user share, group document share, direct folder share, or group folder share exists).
   * **Expected Output**: HTTP `403 Forbidden` with error code `DOCUMENT_ACCESS_DENIED`.
 * **TC-LEARN-07: Public Document Access Allowed**
   * **Action**: Request generation on a document owned by User A with `visibility = "PUBLIC"` and `approvalStatus = "APPROVED"` using User B's token.
   * **Expected Output**: HTTP `200 OK`. Generation succeeds.
 * **TC-LEARN-08: Shared Document Access Allowed**
-  * **Action**: Request generation using User B's token on a document owned by User A that has been shared with User B (via individual folder share, group share, or active share link).
+  * **Action**: Request generation using User B's token on a document owned by User A that has been shared with User B (via direct user share, group document share, direct folder share, or group folder share).
   * **Expected Output**: HTTP `200 OK`. Generation succeeds.
 
 ---
