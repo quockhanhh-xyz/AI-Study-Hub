@@ -85,6 +85,7 @@ let aiQaUsageInfo = null;
 // Step 14 — AI Tools (Summary / Quiz / Flashcard) tab state
 let aiToolsLoaded = false;
 let aiToolsProcessingStatus = "PENDING";
+let summaryExists = false;
 
 // Step 13: detects backend quota errors (e.g. share limit) so we can route
 // them through the shared showQuotaError() helper.
@@ -388,6 +389,11 @@ function renderDocument(doc) {
             tabPanes.style.display = "none";
         }
     }
+}
+
+function updateSummaryButtonLabel() {
+    const btn = document.getElementById("summaryGenerateBtn");
+    if (btn) btn.textContent = summaryExists ? "Regenerate Summary" : "Generate Summary";
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -1589,6 +1595,9 @@ function renderAiToolsTab(doc) {
     aiToolsLoaded = false; // force reload of summary/quiz/flashcard data for the (possibly new) document
     aiToolsProcessingStatus = doc.processingStatus || "PENDING";
 
+    summaryExists = false;
+    updateSummaryButtonLabel();
+
     const notReadyMsg = document.getElementById("aiToolsNotReadyMessage");
     const content = document.getElementById("aiToolsContent");
     const ready = aiToolsProcessingStatus === "COMPLETED";
@@ -1643,6 +1652,8 @@ async function loadSummary() {
     } catch (err) {
         if (loader) loader.style.display = "none";
         if (err.code === "SUMMARY_NOT_FOUND" || err.status === 404) {
+            summaryExists = false;
+            updateSummaryButtonLabel();
             if (empty) empty.style.display = "block";
         } else {
             console.error("Failed to load summary", err);
@@ -1659,10 +1670,15 @@ function renderSummary(summary) {
     const contentEl = document.getElementById("summaryContent");
 
     if (!summary) {
+        summaryExists = false;
+        updateSummaryButtonLabel();
         if (empty) empty.style.display = "block";
         if (contentEl) contentEl.style.display = "none";
         return;
     }
+
+    summaryExists = true;
+    updateSummaryButtonLabel();
 
     if (empty) empty.style.display = "none";
     if (contentEl) contentEl.style.display = "block";
@@ -1727,7 +1743,8 @@ async function handleGenerateSummary() {
     if (!btn || btn.disabled) return;
 
     if (errorEl) errorEl.style.display = "none";
-    setButtonLoading(btn, true, "Generating...");
+    const loadingLabel = summaryExists ? "Regenerating..." : "Generating...";
+    setButtonLoading(btn, true, loadingLabel);
 
     try {
         const res = await AiLearningAPI.generateSummary(currentDocumentId, true);
@@ -1743,6 +1760,7 @@ async function handleGenerateSummary() {
         }
     } finally {
         setButtonLoading(btn, false);
+        updateSummaryButtonLabel();
     }
 }
 
