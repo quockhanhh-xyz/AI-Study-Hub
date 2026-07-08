@@ -724,3 +724,110 @@ function formatUsageProgress(used, limit, type = "count") {
 
 // Expose globally
 window.formatUsageProgress = formatUsageProgress;
+
+// ─────────────────────────────────────────────────────────────
+// AI LEARNING UI HELPERS (Step 14)
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Maps AI Learning specific errors (Summary, Flashcard, Quiz).
+ * Handles quota limits, invalid configurations, and readiness states.
+ * @param {Error|object} error 
+ * @returns {string} User-friendly error message.
+ */
+function mapAiLearningError(error) {
+  const code = error?.code || error?.data?.code || "";
+  const status = error?.status;
+
+  // Document states
+  if (status === 409 || code === "DOCUMENT_NOT_READY") {
+    return "This document is not ready for AI generation yet. Please process it first.";
+  }
+
+  // Quota errors
+  if (code === "SUMMARY_QUOTA_EXCEEDED") {
+    return "You have reached your daily summary generation limit. Please upgrade your tier for more.";
+  }
+  if (code === "FLASHCARD_QUOTA_EXCEEDED") {
+    return "You have reached your daily flashcard generation limit. Please upgrade your tier for more.";
+  }
+  if (code === "QUIZ_QUOTA_EXCEEDED") {
+    return "You have reached your daily quiz generation limit. Please upgrade your tier for more.";
+  }
+
+  // Validation errors
+  if (code === "INVALID_FLASHCARD_COUNT") {
+    return "Invalid flashcard count. Must be between 3 and your tier's maximum limit.";
+  }
+  if (code === "INVALID_QUIZ_QUESTION_COUNT") {
+    return "Invalid quiz question count. Must be between 3 and your tier's maximum limit.";
+  }
+
+  // Provider or server errors
+  if (status === 500 || status === 503 || code === "PROVIDER_ERROR") {
+    return "The AI service is currently unavailable or encountered an error. Please try again later.";
+  }
+  
+  if (status === 403) {
+    return "You do not have permission to generate AI content for this document.";
+  }
+  if (status === 404) {
+    return "The requested AI content or document was not found.";
+  }
+
+  return error?.message || "An unexpected error occurred during AI generation.";
+}
+
+/**
+ * Formats the generatedAt timestamp into a readable format.
+ * @param {string} isoString 
+ * @returns {string} 
+ */
+function formatGeneratedAt(isoString) {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return isoString;
+  return date.toLocaleString(undefined, {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+/**
+ * Formats difficulty enum to title case (e.g. EASY -> Easy).
+ * @param {string} difficulty 
+ * @returns {string} 
+ */
+function formatDifficulty(difficulty) {
+  if (!difficulty) return "Normal";
+  const str = String(difficulty).toLowerCase();
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * Helper loading state / disable button khi generating.
+ * @param {HTMLButtonElement} button 
+ * @param {boolean} isGenerating 
+ * @param {string} loadingText 
+ */
+function setGeneratingState(button, isGenerating, loadingText = 'Generating...') {
+  if (typeof window.setButtonLoading === 'function') {
+    window.setButtonLoading(button, isGenerating, loadingText);
+  } else if (button) {
+    if (isGenerating) {
+      button.dataset.originalText = button.innerHTML;
+      button.disabled = true;
+      button.textContent = loadingText;
+    } else {
+      button.disabled = false;
+      if (button.dataset.originalText) {
+        button.innerHTML = button.dataset.originalText;
+      }
+    }
+  }
+}
+
+window.mapAiLearningError = mapAiLearningError;
+window.formatGeneratedAt = formatGeneratedAt;
+window.formatDifficulty = formatDifficulty;
+window.setGeneratingState = setGeneratingState;
