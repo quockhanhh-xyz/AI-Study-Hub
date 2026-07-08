@@ -40,19 +40,8 @@ public class GlobalExceptionHandler {
         String code = null;
         if (ex instanceof QuotaExceededException qe) {
             code = qe.getCode();
-        } else {
-            int status = ex.getStatusCode().value();
-            if (status == 429) {
-                code = "AI_PROVIDER_RATE_LIMITED";
-            } else if (status == 401 || status == 403) {
-                code = "AI_PROVIDER_AUTH_FAILED";
-            } else if (status == 504 || status == 408) {
-                code = "AI_PROVIDER_TIMEOUT";
-            } else if (status == 400) {
-                code = "AI_PROVIDER_BAD_REQUEST";
-            } else if (status == 503 || status == 502) {
-                code = "AI_PROVIDER_UNAVAILABLE";
-            }
+        } else if (ex instanceof AiProviderException ape) {
+            code = ape.getCode();
         }
         return ResponseEntity.status(ex.getStatusCode())
                 .body(ApiResponse.<Void>builder()

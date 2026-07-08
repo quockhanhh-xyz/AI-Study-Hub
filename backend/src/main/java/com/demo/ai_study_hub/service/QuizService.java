@@ -327,7 +327,7 @@ public class QuizService {
                 .document(doc)
                 .user(user)
                 .title("Quiz from " + doc.getTitle())
-                .questionCount(count)
+                .questionCount(questions.size())
                 .model(model)
                 .sourceProcessedAt(content.getProcessedAt())
                 .sourceChunkCount((int) chunkCount)

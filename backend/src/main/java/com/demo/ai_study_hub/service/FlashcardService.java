@@ -298,7 +298,7 @@ public class FlashcardService {
                 .document(doc)
                 .user(user)
                 .title("Flashcards from " + doc.getTitle())
-                .itemCount(count)
+                .itemCount(cards.size())
                 .model(model)
                 .sourceProcessedAt(content.getProcessedAt())
                 .sourceChunkCount((int) chunkCount)

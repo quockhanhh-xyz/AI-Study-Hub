@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.server.ResponseStatusException;
+import com.demo.ai_study_hub.exception.AiProviderException;
 
 import java.util.List;
 import java.util.Map;
@@ -102,29 +103,33 @@ public class GeminiAiProviderService implements AiProviderService {
             log.error("Gemini API call failed with status {} {}. Body: {}", e.getStatusCode(), e.getStatusText(), sanitizeMessage(errorBody));
             HttpStatus status = HttpStatus.SERVICE_UNAVAILABLE;
             String reason = "AI service is temporarily unavailable";
+            String code = "AI_PROVIDER_UNAVAILABLE";
             if (e.getStatusCode().value() == 429) {
                 status = HttpStatus.TOO_MANY_REQUESTS;
                 reason = "AI provider rate limit reached";
+                code = "AI_PROVIDER_RATE_LIMITED";
             } else if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403) {
                 status = HttpStatus.UNAUTHORIZED;
                 reason = "AI provider authentication failed";
+                code = "AI_PROVIDER_AUTH_FAILED";
             } else if (e.getStatusCode().value() == 400) {
                 status = HttpStatus.BAD_REQUEST;
                 reason = "AI provider rejected the request as invalid";
+                code = "AI_PROVIDER_BAD_REQUEST";
             }
-            throw new ResponseStatusException(status, reason);
+            throw new AiProviderException(status, reason, code);
         } catch (org.springframework.web.client.ResourceAccessException e) {
             log.error("Gemini API call timed out: {}", sanitizeMessage(e.getMessage()));
-            throw new ResponseStatusException(HttpStatus.GATEWAY_TIMEOUT,
-                    "AI provider read/connect timeout");
+            throw new AiProviderException(HttpStatus.GATEWAY_TIMEOUT,
+                    "AI provider read/connect timeout", "AI_PROVIDER_TIMEOUT");
         } catch (RestClientException e) {
             log.error("Gemini API call failed: {}", sanitizeMessage(e.getMessage()));
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "AI service is temporarily unavailable");
+            throw new AiProviderException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "AI service is temporarily unavailable", "AI_PROVIDER_UNAVAILABLE");
         } catch (Exception e) {
             log.error("Unexpected error calling Gemini: {}", sanitizeMessage(e.getMessage()));
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "AI service is temporarily unavailable");
+            throw new AiProviderException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "AI service is temporarily unavailable", "AI_PROVIDER_UNAVAILABLE");
         }
     }
 
