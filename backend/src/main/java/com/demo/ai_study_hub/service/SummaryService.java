@@ -20,6 +20,12 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.UUID;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.TransactionDefinition;
+import com.demo.ai_study_hub.repository.AiUsageLogRepository;
+import com.demo.ai_study_hub.repository.AiUsageReservationRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -38,46 +44,98 @@ public class SummaryService {
     private final AiProviderRouter aiProviderRouter;
     private final AiModelSelector aiModelSelector;
     private final ObjectMapper objectMapper;
+    private final AiUsageLogRepository aiUsageLogRepository;
+    private final AiUsageReservationRepository aiUsageReservationRepository;
+    private final PlatformTransactionManager transactionManager;
 
-    @Transactional
-    public SummaryResponse generate(Integer documentId, String userEmail) {
-        User user = loadUser(userEmail);
-        // Lock this user's row for the duration of generate(). This does NOT
-        // block other users (row-level lock, not table-level) — it only
-        // serializes concurrent generate() calls from the SAME user, which
-        // is exactly what's needed to close the double-click / concurrent
-        // request race: the second call must wait for the first call's
-        // count-check + AI call + save to fully commit before it can even
-        // read the daily count, so it will correctly see the updated total.
-        user = userRepository.findByIdForUpdate(user.getUserId()).orElse(user);
+    private static class AiReservationResult {
+        final User user;
+        final Document doc;
+        final DocumentContent content;
+        final UserTier tier;
 
-        AiLearningAccessGuard.ReadyDocument ready = accessGuard.requireReadyDocument(documentId, user);
-        Document doc = ready.document();
-        DocumentContent content = ready.content();
-
-        UserTier tier = tierPolicyService.getEffectiveTier(user);
-
-        // Fallback MVP quota mode (no ai_usage_reservations table for Step 14):
-        // pre-check the daily count BEFORE calling the AI provider. Combined
-        // with the per-user lock above, this closes the race a plain
-        // pre-check alone would have (TC-LEARN-22).
-        checkDailyQuota(user, tier);
-
-        if (!aiProviderRouter.isConfigured()) {
-            throw new QuotaExceededException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "AI service is not configured", "AI_PROVIDER_ERROR");
+        AiReservationResult(User user, Document doc, DocumentContent content, UserTier tier) {
+            this.user = user;
+            this.doc = doc;
+            this.content = content;
+            this.tier = tier;
         }
+    }
 
-        String prompt = promptBuilder.buildSummaryPrompt(content.getExtractedText());
-        String model = aiModelSelector.selectModel(tier.name());
-        int maxTokens = aiModelSelector.getMaxOutputTokens(tier.name());
+    public SummaryResponse generate(Integer documentId, String userEmail) {
+        String requestId = UUID.randomUUID().toString();
+        TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
+        txTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
-        AiSummaryOutput output = callAndValidateWithRetry(prompt, model, maxTokens);
+        // 1. Lock user, check quota and create reservation in REQUIRES_NEW transaction
+        AiReservationResult reserveResult = txTemplate.execute(status -> {
+            User user = loadUser(userEmail);
+            user = userRepository.findByIdForUpdate(user.getUserId()).orElse(user);
 
-        long chunkCount = documentChunkRepository.findByDocument_DocumentIdOrderByChunkIndexAsc(documentId).size();
+            AiLearningAccessGuard.ReadyDocument ready = accessGuard.requireReadyDocument(documentId, user);
+            Document doc = ready.document();
+            DocumentContent content = ready.content();
+            UserTier tier = tierPolicyService.getEffectiveTier(user);
 
-        AiSummary entity = persist(doc, user, output, model, content, chunkCount);
-        return toResponse(entity);
+            checkDailyQuota(user, tier);
+
+            if (!aiProviderRouter.isConfigured()) {
+                saveUsageLog(user, doc, "SUMMARY", null, null, 0, 0, 0, false, false, "AI_NOT_CONFIGURED");
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "AI service is not configured");
+            }
+
+            AiUsageReservation reservation = AiUsageReservation.builder()
+                    .requestId(requestId)
+                    .user(user)
+                    .requestType("SUMMARY")
+                    .status("RESERVED")
+                    .reservedAt(LocalDateTime.now())
+                    .expiresAt(LocalDateTime.now().plusSeconds(60))
+                    .build();
+            aiUsageReservationRepository.save(reservation);
+
+            return new AiReservationResult(user, doc, content, tier);
+        });
+
+        // 2. Call AI provider outside transaction to prevent holding database locks too long
+        String prompt = promptBuilder.buildSummaryPrompt(reserveResult.content.getExtractedText());
+        String model = aiModelSelector.selectModel(reserveResult.tier.name());
+        int maxTokens = aiModelSelector.getMaxOutputTokens(reserveResult.tier.name());
+
+        AiSummaryOutput output;
+        try {
+            output = callAndValidateWithRetry(prompt, model, maxTokens);
+
+            // 3. Confirm reservation, save result, and log success in REQUIRES_NEW transaction
+            return txTemplate.execute(status -> {
+                AiUsageReservation res = aiUsageReservationRepository.findByRequestId(requestId).orElseThrow();
+                res.setStatus("CONFIRMED");
+                res.setConfirmedAt(LocalDateTime.now());
+                aiUsageReservationRepository.save(res);
+
+                long chunkCount = documentChunkRepository.findByDocument_DocumentIdOrderByChunkIndexAsc(documentId).size();
+                AiSummary entity = persist(reserveResult.doc, reserveResult.user, output, model, reserveResult.content, chunkCount);
+
+                saveUsageLog(reserveResult.user, reserveResult.doc, "SUMMARY",
+                        aiProviderRouter.route().getProviderName(), model,
+                        0, 0, 0, false, true, "SUCCESS");
+
+                return toResponse(entity);
+            });
+        } catch (Exception e) {
+            // 4. Release reservation and log error on failure in a separate transaction block
+            txTemplate.executeWithoutResult(status -> {
+                AiUsageReservation res = aiUsageReservationRepository.findByRequestId(requestId).orElseThrow();
+                res.setStatus("RELEASED");
+                res.setReleasedAt(LocalDateTime.now());
+                aiUsageReservationRepository.save(res);
+
+                String errorCode = (e instanceof QuotaExceededException) ? ((QuotaExceededException) e).getCode() : "FAILED";
+                saveUsageLog(reserveResult.user, reserveResult.doc, "SUMMARY",
+                        null, null, 0, 0, 0, false, false, errorCode);
+            });
+            throw e;
+        }
     }
 
     /**
@@ -138,11 +196,36 @@ public class SummaryService {
     private void checkDailyQuota(User user, UserTier tier) {
         int limit = quotaPolicy.summaryDailyLimit(tier);
         LocalDateTime[] window = todayWindowUtc();
-        long usedToday = aiSummaryRepository.countByUserAndCreatedAtBetween(
-                user.getUserId(), window[0], window[1]);
-        if (usedToday >= limit) {
+        long usedToday = aiUsageLogRepository.countSuccessfulLogsByTypeAfter(
+                user.getUserId(), "SUMMARY", window[0]);
+        long activeReservations = aiUsageReservationRepository.countActiveReservationsByType(
+                user, "SUMMARY", LocalDateTime.now());
+        if (usedToday + activeReservations >= limit) {
             throw new QuotaExceededException(HttpStatus.FORBIDDEN,
                     "Summary generations daily quota exceeded", "SUMMARY_QUOTA_EXCEEDED");
+        }
+    }
+
+    private void saveUsageLog(User user, Document doc, String requestType, String provider, String model,
+                              int inputTokens, int outputTokens, int totalTokens,
+                              boolean estimated, boolean counted, String status) {
+        try {
+            AiUsageLog log = AiUsageLog.builder()
+                    .user(user)
+                    .document(doc)
+                    .requestType(requestType)
+                    .provider(provider)
+                    .modelName(model)
+                    .inputTokens(inputTokens)
+                    .outputTokens(outputTokens)
+                    .totalTokens(totalTokens)
+                    .tokenUsageEstimated(estimated)
+                    .countedAsQuestion(counted)
+                    .status(status)
+                    .build();
+            aiUsageLogRepository.save(log);
+        } catch (Exception e) {
+            // Log warning but don't fail generation
         }
     }
 

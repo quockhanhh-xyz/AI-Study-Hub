@@ -21,6 +21,13 @@ public interface AiUsageReservationRepository extends JpaRepository<AiUsageReser
             @Param("user") User user,
             @Param("now") LocalDateTime now);
 
+    @Query("SELECT COUNT(r) FROM AiUsageReservation r WHERE r.user = :user " +
+           "AND r.requestType = :requestType AND r.status = 'RESERVED' AND r.expiresAt > :now")
+    long countActiveReservationsByType(
+            @Param("user") User user,
+            @Param("requestType") String requestType,
+            @Param("now") LocalDateTime now);
+
     Optional<AiUsageReservation> findByRequestId(String requestId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

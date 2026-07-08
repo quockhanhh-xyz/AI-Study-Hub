@@ -44,6 +44,9 @@ class QuizServiceTest {
     @Mock private AiProviderRouter aiProviderRouter;
     @Mock private AiModelSelector aiModelSelector;
     @Mock private AiProviderService aiProviderService;
+    @Mock private com.demo.ai_study_hub.repository.AiUsageReservationRepository aiUsageReservationRepository;
+    @Mock private com.demo.ai_study_hub.repository.AiUsageLogRepository aiUsageLogRepository;
+    @Mock private org.springframework.transaction.PlatformTransactionManager transactionManager;
 
     private QuizService quizService;
 
@@ -99,10 +102,14 @@ class QuizServiceTest {
     void setUp() {
         ObjectMapper objectMapper = new ObjectMapper();
 
+        org.springframework.transaction.TransactionStatus mockStatus = mock(org.springframework.transaction.TransactionStatus.class);
+        lenient().when(transactionManager.getTransaction(any())).thenReturn(mockStatus);
+
         quizService = new QuizService(
                 quizSetRepository, documentChunkRepository, userRepository,
                 accessGuard, quotaPolicy, promptBuilder, validator,
-                tierPolicyService, aiProviderRouter, aiModelSelector, objectMapper);
+                tierPolicyService, aiProviderRouter, aiModelSelector, objectMapper,
+                aiUsageLogRepository, aiUsageReservationRepository, transactionManager);
 
         user = new User();
         user.setUserId(1);
@@ -141,11 +148,20 @@ class QuizServiceTest {
             s.setQuizSetId(1L);
             return s;
         });
+        lenient().when(aiUsageReservationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(aiUsageReservationRepository.findByRequestId(any())).thenAnswer(inv -> {
+            String rId = inv.getArgument(0);
+            return Optional.of(AiUsageReservation.builder()
+                    .requestId(rId)
+                    .status("RESERVED")
+                    .build());
+        });
+        lenient().when(aiUsageLogRepository.countSuccessfulLogsByTypeAfter(anyInt(), anyString(), any())).thenReturn(0L);
+        lenient().when(aiUsageReservationRepository.countActiveReservationsByType(any(), anyString(), any())).thenReturn(0L);
     }
 
     @Test
     void generate_WhenValidRequest_ShouldSaveQuizWith4OptionsPerQuestion() {
-        when(quizSetRepository.countByUserAndCreatedAtBetween(eq(1), any(), any())).thenReturn(0L);
         when(aiProviderService.call(any(), any(), anyInt(), any(Double.class)))
                 .thenReturn(AiAnswer.builder().text(VALID_JSON).build());
         doNothing().when(validator).validateQuiz(any(), eq(3));
@@ -203,7 +219,6 @@ class QuizServiceTest {
 
     @Test
     void generate_WhenDifficultyOmitted_ShouldDefaultToMixed() {
-        when(quizSetRepository.countByUserAndCreatedAtBetween(eq(1), any(), any())).thenReturn(0L);
         when(aiProviderService.call(any(), any(), anyInt(), any(Double.class)))
                 .thenReturn(AiAnswer.builder().text(VALID_JSON).build());
         doNothing().when(validator).validateQuiz(any(), eq(3));
@@ -219,7 +234,7 @@ class QuizServiceTest {
 
     @Test
     void generate_WhenDailyQuotaExceeded_ShouldThrow403() {
-        when(quizSetRepository.countByUserAndCreatedAtBetween(eq(1), any(), any())).thenReturn(2L);
+        when(aiUsageLogRepository.countSuccessfulLogsByTypeAfter(eq(1), eq("QUIZ"), any())).thenReturn(2L);
         GenerateQuizRequest req = new GenerateQuizRequest();
         req.setQuestionCount(3);
 
@@ -233,7 +248,6 @@ class QuizServiceTest {
 
     @Test
     void generate_WhenAiOutputMalformedTwice_ShouldThrow502AndNotSave() {
-        when(quizSetRepository.countByUserAndCreatedAtBetween(eq(1), any(), any())).thenReturn(0L);
         when(aiProviderService.call(any(), any(), anyInt(), any(Double.class)))
                 .thenReturn(AiAnswer.builder().text("not json at all").build());
 

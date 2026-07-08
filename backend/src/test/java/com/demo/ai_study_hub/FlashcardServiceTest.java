@@ -43,6 +43,9 @@ class FlashcardServiceTest {
     @Mock private AiProviderRouter aiProviderRouter;
     @Mock private AiModelSelector aiModelSelector;
     @Mock private AiProviderService aiProviderService;
+    @Mock private com.demo.ai_study_hub.repository.AiUsageReservationRepository aiUsageReservationRepository;
+    @Mock private com.demo.ai_study_hub.repository.AiUsageLogRepository aiUsageLogRepository;
+    @Mock private org.springframework.transaction.PlatformTransactionManager transactionManager;
 
     private FlashcardService flashcardService;
 
@@ -65,10 +68,14 @@ class FlashcardServiceTest {
     void setUp() {
         ObjectMapper objectMapper = new ObjectMapper();
 
+        org.springframework.transaction.TransactionStatus mockStatus = mock(org.springframework.transaction.TransactionStatus.class);
+        lenient().when(transactionManager.getTransaction(any())).thenReturn(mockStatus);
+
         flashcardService = new FlashcardService(
                 flashcardSetRepository, documentChunkRepository, userRepository,
                 accessGuard, quotaPolicy, promptBuilder, validator,
-                tierPolicyService, aiProviderRouter, aiModelSelector, objectMapper);
+                tierPolicyService, aiProviderRouter, aiModelSelector, objectMapper,
+                aiUsageLogRepository, aiUsageReservationRepository, transactionManager);
 
         user = new User();
         user.setUserId(1);
@@ -107,6 +114,16 @@ class FlashcardServiceTest {
             s.setFlashcardSetId(1L);
             return s;
         });
+        lenient().when(aiUsageReservationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(aiUsageReservationRepository.findByRequestId(any())).thenAnswer(inv -> {
+            String rId = inv.getArgument(0);
+            return Optional.of(AiUsageReservation.builder()
+                    .requestId(rId)
+                    .status("RESERVED")
+                    .build());
+        });
+        lenient().when(aiUsageLogRepository.countSuccessfulLogsByTypeAfter(anyInt(), anyString(), any())).thenReturn(0L);
+        lenient().when(aiUsageReservationRepository.countActiveReservationsByType(any(), anyString(), any())).thenReturn(0L);
     }
 
     @Test
@@ -115,7 +132,6 @@ class FlashcardServiceTest {
         // the 3-card VALID_JSON sample used across this test class.
         when(quotaPolicy.flashcardCountRange(UserTier.FREE))
                 .thenReturn(new AiLearningQuotaPolicy.CountRange(3, 3, 8));
-        when(flashcardSetRepository.countByUserAndCreatedAtBetween(eq(1), any(), any())).thenReturn(0L);
         when(aiProviderService.call(any(), any(), anyInt(), any(Double.class)))
                 .thenReturn(AiAnswer.builder().text(VALID_JSON).build());
         doNothing().when(validator).validateFlashcards(any(), eq(3));
@@ -156,7 +172,7 @@ class FlashcardServiceTest {
 
     @Test
     void generate_WhenDailyQuotaExceeded_ShouldThrow403() {
-        when(flashcardSetRepository.countByUserAndCreatedAtBetween(eq(1), any(), any())).thenReturn(2L);
+        when(aiUsageLogRepository.countSuccessfulLogsByTypeAfter(eq(1), eq("FLASHCARD"), any())).thenReturn(2L);
         GenerateFlashcardRequest req = new GenerateFlashcardRequest();
         req.setCount(3);
 
@@ -170,7 +186,6 @@ class FlashcardServiceTest {
 
     @Test
     void generate_WhenAiCardCountMismatch_ShouldRetryThenFail() {
-        when(flashcardSetRepository.countByUserAndCreatedAtBetween(eq(1), any(), any())).thenReturn(0L);
         when(aiProviderService.call(any(), any(), anyInt(), any(Double.class)))
                 .thenReturn(AiAnswer.builder().text(VALID_JSON).build());
         doThrow(new IllegalArgumentException("expected 5 cards but got 3"))
@@ -189,7 +204,6 @@ class FlashcardServiceTest {
 
     @Test
     void generate_ShouldPersistCardsWithSequentialPositions() {
-        when(flashcardSetRepository.countByUserAndCreatedAtBetween(eq(1), any(), any())).thenReturn(0L);
         when(aiProviderService.call(any(), any(), anyInt(), any(Double.class)))
                 .thenReturn(AiAnswer.builder().text(VALID_JSON).build());
         doNothing().when(validator).validateFlashcards(any(), eq(3));

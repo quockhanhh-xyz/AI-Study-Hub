@@ -20,6 +20,12 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.UUID;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.TransactionDefinition;
+import com.demo.ai_study_hub.repository.AiUsageLogRepository;
+import com.demo.ai_study_hub.repository.AiUsageReservationRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -39,40 +45,105 @@ public class QuizService {
     private final AiProviderRouter aiProviderRouter;
     private final AiModelSelector aiModelSelector;
     private final ObjectMapper objectMapper;
+    private final AiUsageLogRepository aiUsageLogRepository;
+    private final AiUsageReservationRepository aiUsageReservationRepository;
+    private final PlatformTransactionManager transactionManager;
 
-    @Transactional
-    public QuizSetResponse generate(Integer documentId, GenerateQuizRequest request, String userEmail) {
-        User user = loadUser(userEmail);
-        // Row-level lock on this user only — serializes concurrent generate()
-        // calls from the SAME user (closes the double-click race,
-        // TC-LEARN-22), never blocks other users.
-        user = userRepository.findByIdForUpdate(user.getUserId()).orElse(user);
+    private static class AiReservationResult {
+        final User user;
+        final Document doc;
+        final DocumentContent content;
+        final UserTier tier;
+        final int count;
+        final String difficulty;
 
-        AiLearningAccessGuard.ReadyDocument ready = accessGuard.requireReadyDocument(documentId, user);
-        Document doc = ready.document();
-        DocumentContent content = ready.content();
-
-        UserTier tier = tierPolicyService.getEffectiveTier(user);
-        AiLearningQuotaPolicy.CountRange range = quotaPolicy.quizQuestionCountRange(tier);
-        int count = resolveCount(request.getQuestionCount(), range);
-        String difficulty = resolveDifficulty(request.getDifficulty());
-
-        checkDailyQuota(user, tier);
-
-        if (!aiProviderRouter.isConfigured()) {
-            throw new QuotaExceededException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "AI service is not configured", "AI_PROVIDER_ERROR");
+        AiReservationResult(User user, Document doc, DocumentContent content, UserTier tier, int count, String difficulty) {
+            this.user = user;
+            this.doc = doc;
+            this.content = content;
+            this.tier = tier;
+            this.count = count;
+            this.difficulty = difficulty;
         }
+    }
 
-        String prompt = promptBuilder.buildQuizPrompt(content.getExtractedText(), count, difficulty);
-        String model = aiModelSelector.selectModel(tier.name());
-        int maxTokens = aiModelSelector.getMaxOutputTokens(tier.name());
+    public QuizSetResponse generate(Integer documentId, GenerateQuizRequest request, String userEmail) {
+        String requestId = UUID.randomUUID().toString();
+        TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
+        txTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
-        List<AiQuizQuestionOutput> questions = callAndValidateWithRetry(prompt, model, maxTokens, count);
+        // 1. Lock user, check quota and create reservation in REQUIRES_NEW transaction
+        AiReservationResult reserveResult = txTemplate.execute(status -> {
+            User user = loadUser(userEmail);
+            user = userRepository.findByIdForUpdate(user.getUserId()).orElse(user);
 
-        long chunkCount = documentChunkRepository.findByDocument_DocumentIdOrderByChunkIndexAsc(documentId).size();
-        QuizSet entity = persist(doc, user, questions, model, content, chunkCount, count);
-        return toResponse(entity);
+            AiLearningAccessGuard.ReadyDocument ready = accessGuard.requireReadyDocument(documentId, user);
+            Document doc = ready.document();
+            DocumentContent content = ready.content();
+            UserTier tier = tierPolicyService.getEffectiveTier(user);
+
+            AiLearningQuotaPolicy.CountRange range = quotaPolicy.quizQuestionCountRange(tier);
+            int count = resolveCount(request.getQuestionCount(), range);
+            String difficulty = resolveDifficulty(request.getDifficulty());
+
+            checkDailyQuota(user, tier);
+
+            if (!aiProviderRouter.isConfigured()) {
+                saveUsageLog(user, doc, "QUIZ", null, null, 0, 0, 0, false, false, "AI_NOT_CONFIGURED");
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "AI service is not configured");
+            }
+
+            AiUsageReservation reservation = AiUsageReservation.builder()
+                    .requestId(requestId)
+                    .user(user)
+                    .requestType("QUIZ")
+                    .status("RESERVED")
+                    .reservedAt(LocalDateTime.now())
+                    .expiresAt(LocalDateTime.now().plusSeconds(60))
+                    .build();
+            aiUsageReservationRepository.save(reservation);
+
+            return new AiReservationResult(user, doc, content, tier, count, difficulty);
+        });
+
+        // 2. Call AI provider outside transaction
+        String prompt = promptBuilder.buildQuizPrompt(reserveResult.content.getExtractedText(), reserveResult.count, reserveResult.difficulty);
+        String model = aiModelSelector.selectModel(reserveResult.tier.name());
+        int maxTokens = aiModelSelector.getMaxOutputTokens(reserveResult.tier.name());
+
+        List<AiQuizQuestionOutput> questions = callAndValidateWithRetry(prompt, model, maxTokens, reserveResult.count);
+
+        try {
+            // 3. Confirm reservation, save result, and log success in REQUIRES_NEW transaction
+            return txTemplate.execute(status -> {
+                AiUsageReservation res = aiUsageReservationRepository.findByRequestId(requestId).orElseThrow();
+                res.setStatus("CONFIRMED");
+                res.setConfirmedAt(LocalDateTime.now());
+                aiUsageReservationRepository.save(res);
+
+                long chunkCount = documentChunkRepository.findByDocument_DocumentIdOrderByChunkIndexAsc(documentId).size();
+                QuizSet entity = persist(reserveResult.doc, reserveResult.user, questions, model, reserveResult.content, chunkCount, reserveResult.count);
+
+                saveUsageLog(reserveResult.user, reserveResult.doc, "QUIZ",
+                        aiProviderRouter.route().getProviderName(), model,
+                        0, 0, 0, false, true, "SUCCESS");
+
+                return toResponse(entity);
+            });
+        } catch (Exception e) {
+            // 4. Release reservation and log error on failure in a separate transaction block
+            txTemplate.executeWithoutResult(status -> {
+                AiUsageReservation res = aiUsageReservationRepository.findByRequestId(requestId).orElseThrow();
+                res.setStatus("RELEASED");
+                res.setReleasedAt(LocalDateTime.now());
+                aiUsageReservationRepository.save(res);
+
+                String errorCode = (e instanceof QuotaExceededException) ? ((QuotaExceededException) e).getCode() : "FAILED";
+                saveUsageLog(reserveResult.user, reserveResult.doc, "QUIZ",
+                        null, null, 0, 0, 0, false, false, errorCode);
+            });
+            throw e;
+        }
     }
 
     private int resolveCount(Integer requested, AiLearningQuotaPolicy.CountRange range) {
@@ -138,10 +209,36 @@ public class QuizService {
     private void checkDailyQuota(User user, UserTier tier) {
         int limit = quotaPolicy.quizSetDailyLimit(tier);
         LocalDateTime[] window = todayWindowUtc();
-        long usedToday = quizSetRepository.countByUserAndCreatedAtBetween(user.getUserId(), window[0], window[1]);
-        if (usedToday >= limit) {
+        long usedToday = aiUsageLogRepository.countSuccessfulLogsByTypeAfter(
+                user.getUserId(), "QUIZ", window[0]);
+        long activeReservations = aiUsageReservationRepository.countActiveReservationsByType(
+                user, "QUIZ", LocalDateTime.now());
+        if (usedToday + activeReservations >= limit) {
             throw new QuotaExceededException(HttpStatus.FORBIDDEN,
                     "Quiz sets daily quota exceeded", "QUIZ_QUOTA_EXCEEDED");
+        }
+    }
+
+    private void saveUsageLog(User user, Document doc, String requestType, String provider, String model,
+                              int inputTokens, int outputTokens, int totalTokens,
+                              boolean estimated, boolean counted, String status) {
+        try {
+            AiUsageLog log = AiUsageLog.builder()
+                    .user(user)
+                    .document(doc)
+                    .requestType(requestType)
+                    .provider(provider)
+                    .modelName(model)
+                    .inputTokens(inputTokens)
+                    .outputTokens(outputTokens)
+                    .totalTokens(totalTokens)
+                    .tokenUsageEstimated(estimated)
+                    .countedAsQuestion(counted)
+                    .status(status)
+                    .build();
+            aiUsageLogRepository.save(log);
+        } catch (Exception e) {
+            // Log warning but don't fail generation
         }
     }
 
