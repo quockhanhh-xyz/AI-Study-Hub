@@ -28,7 +28,7 @@ async function loadFlashcardSet(setId) {
     const viewer = document.getElementById("flashcardViewer");
 
     try {
-        const res = await getFlashcardSet(setId);
+        const res = await AiLearningAPI.getFlashcardSet(setId);
         currentFlashcardSet = res.data;
 
         if (!currentFlashcardSet || !Array.isArray(currentFlashcardSet.flashcards) || currentFlashcardSet.flashcards.length === 0) {
