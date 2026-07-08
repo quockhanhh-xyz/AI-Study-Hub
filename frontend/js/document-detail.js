@@ -82,6 +82,10 @@ let aiQaSending = false;
 let aiQaProcessingStatus = "PENDING";
 let aiQaUsageInfo = null;
 
+// Step 14 — AI Tools (Summary / Quiz / Flashcard) tab state
+let aiToolsLoaded = false;
+let aiToolsProcessingStatus = "PENDING";
+
 // Step 13: detects backend quota errors (e.g. share limit) so we can route
 // them through the shared showQuotaError() helper.
 function isQuotaError(error) {
@@ -342,10 +346,17 @@ function renderDocument(doc) {
     // if the user actually can't ask, askDocumentQuestion() will fail with a
     // mapped error (401/403/409/422) shown inline in the chat panel.
     const showAiTab = currentIsAuthenticated;
-    const hasInspector = showDetailsTab || showSharingTab || showAiTab;
+    // AI Tools tab: same audience as AI Q&A (any logged-in user with read
+    // access). Backend permission check (DOCUMENT_ACCESS_DENIED) is the
+    // final authority; generate calls will fail cleanly if not allowed.
+    const showToolsTab = currentIsAuthenticated;
+    const hasInspector = showDetailsTab || showSharingTab || showAiTab || showToolsTab;
 
     // Step 10: reset + (re)populate the AI Q&A tab for this document
     renderAIQaTab(doc);
+
+    // Step 14: reset + (re)populate the AI Tools tab for this document
+    renderAiToolsTab(doc);
 
     if (tabsContainer && tabPanes) {
         if (hasInspector) {
@@ -355,10 +366,12 @@ function renderDocument(doc) {
             const tabDetails = document.getElementById("inspectorTabDetails");
             const tabSharing = document.getElementById("inspectorTabSharing");
             const tabAI = document.getElementById("inspectorTabAI");
+            const tabTools = document.getElementById("inspectorTabTools");
 
             if (tabDetails) tabDetails.style.display = showDetailsTab ? "block" : "none";
             if (tabSharing) tabSharing.style.display = showSharingTab ? "block" : "none";
             if (tabAI) tabAI.style.display = showAiTab ? "block" : "none";
+            if (tabTools) tabTools.style.display = showToolsTab ? "block" : "none";
 
             // Default active state
             if (showDetailsTab) {
@@ -367,6 +380,8 @@ function renderDocument(doc) {
                 setActiveTab("sharing", false);
             } else if (showAiTab) {
                 setActiveTab("ai", false);
+            } else if (showToolsTab) {
+                setActiveTab("tools", false);
             }
         } else {
             tabsContainer.style.display = "none";
@@ -855,14 +870,16 @@ function setActiveTab(tabId, focus = true) {
     const tabDetails = document.getElementById("inspectorTabDetails");
     const tabSharing = document.getElementById("inspectorTabSharing");
     const tabAI = document.getElementById("inspectorTabAI");
+    const tabTools = document.getElementById("inspectorTabTools");
     const paneDetails = document.getElementById("inspectorPaneDetails");
     const paneSharing = document.getElementById("inspectorPaneSharing");
     const paneAI = document.getElementById("inspectorPaneAI");
+    const paneTools = document.getElementById("inspectorPaneTools");
 
-    if (!tabDetails || !tabSharing || !tabAI || !paneDetails || !paneSharing || !paneAI) return;
+    if (!tabDetails || !tabSharing || !tabAI || !tabTools || !paneDetails || !paneSharing || !paneAI || !paneTools) return;
 
-    const tabs = [tabDetails, tabSharing, tabAI];
-    const panes = [paneDetails, paneSharing, paneAI];
+    const tabs = [tabDetails, tabSharing, tabAI, tabTools];
+    const panes = [paneDetails, paneSharing, paneAI, paneTools];
 
     tabs.forEach(t => {
         t.classList.remove("active");
@@ -882,6 +899,9 @@ function setActiveTab(tabId, focus = true) {
     } else if (tabId === "ai") {
         activeTab = tabAI;
         activePane = paneAI;
+    } else if (tabId === "tools") {
+        activeTab = tabTools;
+        activePane = paneTools;
     }
 
     activeTab.classList.add("active");
@@ -893,6 +913,11 @@ function setActiveTab(tabId, focus = true) {
         loadAiQaChatHistory();
     }
 
+    // Lazily load Summary/Quiz/Flashcard data the first time AI Tools tab is opened
+    if (tabId === "tools") {
+        loadAiToolsData();
+    }
+
     if (focus) {
         activeTab.focus();
     }
@@ -902,11 +927,13 @@ function initInspectorTabs() {
     const tabDetails = document.getElementById("inspectorTabDetails");
     const tabSharing = document.getElementById("inspectorTabSharing");
     const tabAI = document.getElementById("inspectorTabAI");
+    const tabTools = document.getElementById("inspectorTabTools");
     const paneDetails = document.getElementById("inspectorPaneDetails");
     const paneSharing = document.getElementById("inspectorPaneSharing");
     const paneAI = document.getElementById("inspectorPaneAI");
+    const paneTools = document.getElementById("inspectorPaneTools");
 
-    if (!tabDetails || !tabSharing || !tabAI || !paneDetails || !paneSharing || !paneAI) return;
+    if (!tabDetails || !tabSharing || !tabAI || !tabTools || !paneDetails || !paneSharing || !paneAI || !paneTools) return;
 
     // Accessibility attributes
     tabDetails.setAttribute("role", "tab");
@@ -918,17 +945,21 @@ function initInspectorTabs() {
     tabAI.setAttribute("role", "tab");
     tabAI.setAttribute("aria-selected", "false");
     tabAI.setAttribute("aria-controls", "inspectorPaneAI");
+    tabTools.setAttribute("role", "tab");
+    tabTools.setAttribute("aria-selected", "false");
+    tabTools.setAttribute("aria-controls", "inspectorPaneTools");
 
     paneDetails.setAttribute("role", "tabpanel");
     paneSharing.setAttribute("role", "tabpanel");
     paneAI.setAttribute("role", "tabpanel");
+    paneTools.setAttribute("role", "tabpanel");
 
-    const tabIds = ["details", "sharing", "ai"];
-    const tabs = [tabDetails, tabSharing, tabAI];
+    const tabs = [tabDetails, tabSharing, tabAI, tabTools];
 
     tabDetails.addEventListener("click", () => setActiveTab("details", true));
     tabSharing.addEventListener("click", () => setActiveTab("sharing", true));
     tabAI.addEventListener("click", () => setActiveTab("ai", true));
+    tabTools.addEventListener("click", () => setActiveTab("tools", true));
 
     // Keyboard support: Left/Right arrows (skipping hidden tabs)
     const getVisibleTabs = () => {
@@ -941,6 +972,9 @@ function initInspectorTabs() {
         }
         if (tabAI.offsetWidth > 0 || tabAI.offsetHeight > 0) {
             list.push({ id: "ai", element: tabAI });
+        }
+        if (tabTools.offsetWidth > 0 || tabTools.offsetHeight > 0) {
+            list.push({ id: "tools", element: tabTools });
         }
         return list;
     };
@@ -1534,3 +1568,331 @@ function initAiQaHandlers() {
 }
 
 document.addEventListener("DOMContentLoaded", initAiQaHandlers);
+
+// ══════════════════════════════════════════════════════════════════════════
+// AI TOOLS TAB — Summary / Quiz / Flashcard (Step 14)
+// Uses js/ai-learning-api.js helpers. Reuses the same processingStatus
+// gating established in Step 9 (doc.processingStatus === "COMPLETED").
+// ══════════════════════════════════════════════════════════════════════════
+
+const AI_TOOLS_NOT_READY_MESSAGES = {
+    PENDING: "Please process this document before using AI tools.",
+    PROCESSING: "This document is being processed. Please wait…",
+    FAILED: "Document processing failed. Please process this document before using AI tools.",
+    UNSUPPORTED: "This file type is not supported for AI tools.",
+    EMPTY_CONTENT: "No readable text was found in this document."
+};
+
+// Resets the tab state and gates generate buttons based on processingStatus.
+// Called every time renderDocument() runs (initial load, after Save/Move/Publish).
+function renderAiToolsTab(doc) {
+    aiToolsLoaded = false; // force reload of summary/quiz/flashcard data for the (possibly new) document
+    aiToolsProcessingStatus = doc.processingStatus || "PENDING";
+
+    const notReadyMsg = document.getElementById("aiToolsNotReadyMessage");
+    const content = document.getElementById("aiToolsContent");
+    const ready = aiToolsProcessingStatus === "COMPLETED";
+
+    if (notReadyMsg) {
+        if (ready) {
+            notReadyMsg.style.display = "none";
+            notReadyMsg.textContent = "";
+        } else {
+            notReadyMsg.style.display = "block";
+            notReadyMsg.textContent =
+                AI_TOOLS_NOT_READY_MESSAGES[aiToolsProcessingStatus] ||
+                "This document is not ready for AI tools yet.";
+        }
+    }
+    if (content) content.style.display = ready ? "block" : "none";
+
+    ["summaryGenerateBtn", "flashcardGenerateBtn", "quizGenerateBtn"].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.disabled = !ready || !currentIsAuthenticated;
+    });
+}
+
+// Lazily loads Summary + Flashcard sets + Quiz sets the first time the tab opens.
+async function loadAiToolsData() {
+    if (aiToolsLoaded || !currentDocumentId) return;
+    aiToolsLoaded = true;
+
+    await Promise.all([
+        loadSummary(),
+        loadFlashcardSets(),
+        loadQuizSets()
+    ]);
+}
+
+// ── Summary ──────────────────────────────────────────────────────────────
+async function loadSummary() {
+    const loader = document.getElementById("summaryLoader");
+    const empty = document.getElementById("summaryEmptyState");
+    const contentEl = document.getElementById("summaryContent");
+    const errorEl = document.getElementById("summaryError");
+
+    if (loader) loader.style.display = "block";
+    if (empty) empty.style.display = "none";
+    if (contentEl) contentEl.style.display = "none";
+    if (errorEl) errorEl.style.display = "none";
+
+    try {
+        const res = await getLatestSummary(currentDocumentId);
+        if (loader) loader.style.display = "none";
+        renderSummary(res.data || null);
+    } catch (err) {
+        if (loader) loader.style.display = "none";
+        if (err.code === "SUMMARY_NOT_FOUND" || err.status === 404) {
+            if (empty) empty.style.display = "block";
+        } else {
+            console.error("Failed to load summary", err);
+            if (errorEl) {
+                errorEl.textContent = mapAiLearningError(err);
+                errorEl.style.display = "block";
+            }
+        }
+    }
+}
+
+function renderSummary(summary) {
+    const empty = document.getElementById("summaryEmptyState");
+    const contentEl = document.getElementById("summaryContent");
+
+    if (!summary) {
+        if (empty) empty.style.display = "block";
+        if (contentEl) contentEl.style.display = "none";
+        return;
+    }
+
+    if (empty) empty.style.display = "none";
+    if (contentEl) contentEl.style.display = "block";
+
+    const meta = document.getElementById("summaryMeta");
+    if (meta) meta.textContent = `Generated ${formatGeneratedAt(summary.createdAt)}`;
+
+    const overview = document.getElementById("summaryOverview");
+    if (overview) overview.textContent = summary.overview || "";
+
+    const keyPointsList = document.getElementById("summaryKeyPoints");
+    if (keyPointsList) {
+        keyPointsList.innerHTML = "";
+        (summary.keyPoints || []).forEach(point => {
+            const li = document.createElement("li");
+            li.textContent = point;
+            keyPointsList.appendChild(li);
+        });
+    }
+
+    const termsBlock = document.getElementById("summaryTermsBlock");
+    const termsList = document.getElementById("summaryTerms");
+    if (termsList) {
+        termsList.innerHTML = "";
+        const terms = summary.importantTerms || [];
+        if (terms.length > 0) {
+            terms.forEach(t => {
+                const dt = document.createElement("dt");
+                dt.textContent = t.term;
+                const dd = document.createElement("dd");
+                dd.textContent = t.definition;
+                termsList.appendChild(dt);
+                termsList.appendChild(dd);
+            });
+            if (termsBlock) termsBlock.style.display = "block";
+        } else if (termsBlock) {
+            termsBlock.style.display = "none";
+        }
+    }
+
+    const questionsBlock = document.getElementById("summaryQuestionsBlock");
+    const questionsList = document.getElementById("summaryQuestions");
+    if (questionsList) {
+        questionsList.innerHTML = "";
+        const questions = summary.suggestedReviewQuestions || [];
+        if (questions.length > 0) {
+            questions.forEach(q => {
+                const li = document.createElement("li");
+                li.textContent = q;
+                questionsList.appendChild(li);
+            });
+            if (questionsBlock) questionsBlock.style.display = "block";
+        } else if (questionsBlock) {
+            questionsBlock.style.display = "none";
+        }
+    }
+}
+
+async function handleGenerateSummary() {
+    const btn = document.getElementById("summaryGenerateBtn");
+    const errorEl = document.getElementById("summaryError");
+    if (!btn || btn.disabled) return;
+
+    if (errorEl) errorEl.style.display = "none";
+    setButtonLoading(btn, true, "Generating...");
+
+    try {
+        const res = await generateSummary(currentDocumentId, true);
+        renderSummary(res.data || null);
+        showToast("Summary generated successfully", "success");
+    } catch (err) {
+        console.error("Failed to generate summary", err);
+        if (isQuotaError(err) || err.code === "SUMMARY_QUOTA_EXCEEDED") {
+            showQuotaError(err);
+        } else if (errorEl) {
+            errorEl.textContent = mapAiLearningError(err);
+            errorEl.style.display = "block";
+        }
+    } finally {
+        setButtonLoading(btn, false);
+    }
+}
+
+// ── Flashcards ───────────────────────────────────────────────────────────
+async function loadFlashcardSets() {
+    const loader = document.getElementById("flashcardSetsLoader");
+    const empty = document.getElementById("flashcardSetsEmpty");
+    const list = document.getElementById("flashcardSetsList");
+
+    if (loader) loader.style.display = "block";
+    if (empty) empty.style.display = "none";
+    if (list) list.innerHTML = "";
+
+    try {
+        const res = await getFlashcardSets(currentDocumentId);
+        if (loader) loader.style.display = "none";
+        renderSetList(list, empty, res.data || [], "flashcards.html?setId=", set =>
+            `${set.title || "Flashcard set"} — ${set.itemCount || 0} cards`
+        );
+    } catch (err) {
+        if (loader) loader.style.display = "none";
+        console.error("Failed to load flashcard sets", err);
+        if (empty) {
+            empty.textContent = mapAiLearningError(err);
+            empty.style.display = "block";
+        }
+    }
+}
+
+async function handleGenerateFlashcardSet() {
+    const btn = document.getElementById("flashcardGenerateBtn");
+    const errorEl = document.getElementById("flashcardError");
+    const countInput = document.getElementById("flashcardCountInput");
+    if (!btn || btn.disabled) return;
+
+    if (errorEl) errorEl.style.display = "none";
+    setButtonLoading(btn, true, "Generating...");
+
+    try {
+        const count = countInput ? countInput.value.trim() : "";
+        await generateFlashcardSet(currentDocumentId, count || undefined);
+        showToast("Flashcard set generated successfully", "success");
+        await loadFlashcardSets();
+    } catch (err) {
+        console.error("Failed to generate flashcard set", err);
+        if (isQuotaError(err) || err.code === "FLASHCARD_QUOTA_EXCEEDED") {
+            showQuotaError(err);
+        } else if (errorEl) {
+            errorEl.textContent = mapAiLearningError(err);
+            errorEl.style.display = "block";
+        }
+    } finally {
+        setButtonLoading(btn, false);
+    }
+}
+
+// ── Quiz ─────────────────────────────────────────────────────────────────
+async function loadQuizSets() {
+    const loader = document.getElementById("quizSetsLoader");
+    const empty = document.getElementById("quizSetsEmpty");
+    const list = document.getElementById("quizSetsList");
+
+    if (loader) loader.style.display = "block";
+    if (empty) empty.style.display = "none";
+    if (list) list.innerHTML = "";
+
+    try {
+        const res = await getQuizSets(currentDocumentId);
+        if (loader) loader.style.display = "none";
+        renderSetList(list, empty, res.data || [], "quiz.html?setId=", set =>
+            `${set.title || "Quiz"} — ${set.questionCount || 0} questions`
+        );
+    } catch (err) {
+        if (loader) loader.style.display = "none";
+        console.error("Failed to load quiz sets", err);
+        if (empty) {
+            empty.textContent = mapAiLearningError(err);
+            empty.style.display = "block";
+        }
+    }
+}
+
+async function handleGenerateQuizSet() {
+    const btn = document.getElementById("quizGenerateBtn");
+    const errorEl = document.getElementById("quizError");
+    const countInput = document.getElementById("quizCountInput");
+    const difficultySelect = document.getElementById("quizDifficultySelect");
+    if (!btn || btn.disabled) return;
+
+    if (errorEl) errorEl.style.display = "none";
+    setButtonLoading(btn, true, "Generating...");
+
+    try {
+        const count = countInput ? countInput.value.trim() : "";
+        const difficulty = difficultySelect ? difficultySelect.value : "MIXED";
+        await generateQuizSet(currentDocumentId, count || undefined, difficulty);
+        showToast("Quiz generated successfully", "success");
+        await loadQuizSets();
+    } catch (err) {
+        console.error("Failed to generate quiz set", err);
+        if (isQuotaError(err) || err.code === "QUIZ_QUOTA_EXCEEDED") {
+            showQuotaError(err);
+        } else if (errorEl) {
+            errorEl.textContent = mapAiLearningError(err);
+            errorEl.style.display = "block";
+        }
+    } finally {
+        setButtonLoading(btn, false);
+    }
+}
+
+// Shared renderer for the flashcard-set / quiz-set list items.
+// XSS-safe: uses textContent, never innerHTML, for backend-provided strings.
+function renderSetList(listEl, emptyEl, sets, detailUrlPrefix, labelFn) {
+    if (!listEl) return;
+    listEl.innerHTML = "";
+
+    if (!sets || sets.length === 0) {
+        if (emptyEl) emptyEl.style.display = "block";
+        return;
+    }
+    if (emptyEl) emptyEl.style.display = "none";
+
+    sets.forEach(set => {
+        const li = document.createElement("li");
+        li.className = "ai-tools-set-item";
+
+        const link = document.createElement("a");
+        const setId = set.flashcardSetId || set.quizSetId;
+        link.href = `${detailUrlPrefix}${setId}`;
+        link.textContent = labelFn(set);
+
+        const meta = document.createElement("span");
+        meta.className = "ai-tools-set-meta";
+        meta.textContent = formatGeneratedAt(set.createdAt);
+
+        li.appendChild(link);
+        li.appendChild(meta);
+        listEl.appendChild(li);
+    });
+}
+
+function initAiToolsHandlers() {
+    const summaryBtn = document.getElementById("summaryGenerateBtn");
+    const flashcardBtn = document.getElementById("flashcardGenerateBtn");
+    const quizBtn = document.getElementById("quizGenerateBtn");
+
+    if (summaryBtn) summaryBtn.addEventListener("click", handleGenerateSummary);
+    if (flashcardBtn) flashcardBtn.addEventListener("click", handleGenerateFlashcardSet);
+    if (quizBtn) quizBtn.addEventListener("click", handleGenerateQuizSet);
+}
+
+document.addEventListener("DOMContentLoaded", initAiToolsHandlers);
