@@ -100,3 +100,5 @@ const AiLearningAPI = {
     });
   }
 };
+
+window.AiLearningAPI = AiLearningAPI;
