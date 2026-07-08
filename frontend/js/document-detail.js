@@ -1637,7 +1637,7 @@ async function loadSummary() {
     if (errorEl) errorEl.style.display = "none";
 
     try {
-        const res = await getLatestSummary(currentDocumentId);
+        const res = await AiLearningAPI.getLatestSummary(currentDocumentId);
         if (loader) loader.style.display = "none";
         renderSummary(res.data || null);
     } catch (err) {
@@ -1730,7 +1730,7 @@ async function handleGenerateSummary() {
     setButtonLoading(btn, true, "Generating...");
 
     try {
-        const res = await generateSummary(currentDocumentId, true);
+        const res = await AiLearningAPI.generateSummary(currentDocumentId, true);
         renderSummary(res.data || null);
         showToast("Summary generated successfully", "success");
     } catch (err) {
@@ -1757,7 +1757,7 @@ async function loadFlashcardSets() {
     if (list) list.innerHTML = "";
 
     try {
-        const res = await getFlashcardSets(currentDocumentId);
+        const res = await AiLearningAPI.getFlashcardSets(currentDocumentId);
         if (loader) loader.style.display = "none";
         renderSetList(list, empty, res.data || [], "flashcards.html?setId=", set =>
             `${set.title || "Flashcard set"} — ${set.itemCount || 0} cards`
@@ -1782,8 +1782,9 @@ async function handleGenerateFlashcardSet() {
     setButtonLoading(btn, true, "Generating...");
 
     try {
-        const count = countInput ? countInput.value.trim() : "";
-        await generateFlashcardSet(currentDocumentId, count || undefined);
+        const rawCount = countInput ? countInput.value.trim() : "";
+        const count = rawCount ? parseInt(rawCount, 10) : undefined;
+        await AiLearningAPI.generateFlashcardSet(currentDocumentId, Number.isNaN(count) ? undefined : count);
         showToast("Flashcard set generated successfully", "success");
         await loadFlashcardSets();
     } catch (err) {
@@ -1810,7 +1811,7 @@ async function loadQuizSets() {
     if (list) list.innerHTML = "";
 
     try {
-        const res = await getQuizSets(currentDocumentId);
+        const res = await AiLearningAPI.getQuizSets(currentDocumentId);
         if (loader) loader.style.display = "none";
         renderSetList(list, empty, res.data || [], "quiz.html?setId=", set =>
             `${set.title || "Quiz"} — ${set.questionCount || 0} questions`
@@ -1836,9 +1837,10 @@ async function handleGenerateQuizSet() {
     setButtonLoading(btn, true, "Generating...");
 
     try {
-        const count = countInput ? countInput.value.trim() : "";
+        const rawCount = countInput ? countInput.value.trim() : "";
+        const count = rawCount ? parseInt(rawCount, 10) : undefined;
         const difficulty = difficultySelect ? difficultySelect.value : "MIXED";
-        await generateQuizSet(currentDocumentId, count || undefined, difficulty);
+        await AiLearningAPI.generateQuizSet(currentDocumentId, Number.isNaN(count) ? undefined : count, difficulty);
         showToast("Quiz generated successfully", "success");
         await loadQuizSets();
     } catch (err) {
