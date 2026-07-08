@@ -5,10 +5,10 @@
 
 const AiLearningAPI = {
   // --- Summary APIs ---
-  
+
   /**
    * Get the latest summary for a document
-   * @param {number|string} documentId 
+   * @param {number|string} documentId
    * @returns {Promise<object>} response payload
    */
   getLatestSummary: async (documentId) => {
@@ -17,7 +17,7 @@ const AiLearningAPI = {
 
   /**
    * Get all summary history for a document
-   * @param {number|string} documentId 
+   * @param {number|string} documentId
    * @returns {Promise<object>} response payload
    */
   getSummaryHistory: async (documentId) => {
@@ -26,8 +26,8 @@ const AiLearningAPI = {
 
   /**
    * Generate a new summary for a document
-   * @param {number|string} documentId 
-   * @param {boolean} regenerate 
+   * @param {number|string} documentId
+   * @param {boolean} regenerate
    * @returns {Promise<object>} response payload
    */
   generateSummary: async (documentId, regenerate = false) => {
@@ -40,7 +40,7 @@ const AiLearningAPI = {
 
   /**
    * Get all flashcard sets for a document
-   * @param {number|string} documentId 
+   * @param {number|string} documentId
    * @returns {Promise<object>} response payload
    */
   getFlashcardSets: async (documentId) => {
@@ -49,7 +49,7 @@ const AiLearningAPI = {
 
   /**
    * Get a specific flashcard set detail
-   * @param {number|string} setId 
+   * @param {number|string} setId
    * @returns {Promise<object>} response payload
    */
   getFlashcardSet: async (setId) => {
@@ -58,8 +58,8 @@ const AiLearningAPI = {
 
   /**
    * Generate a new flashcard set
-   * @param {number|string} documentId 
-   * @param {number} count 
+   * @param {number|string} documentId
+   * @param {number} count
    * @returns {Promise<object>} response payload
    */
   generateFlashcardSet: async (documentId, count) => {
@@ -70,7 +70,7 @@ const AiLearningAPI = {
 
   /**
    * Get all quiz sets for a document
-   * @param {number|string} documentId 
+   * @param {number|string} documentId
    * @returns {Promise<object>} response payload
    */
   getQuizSets: async (documentId) => {
@@ -79,7 +79,7 @@ const AiLearningAPI = {
 
   /**
    * Get a specific quiz set detail
-   * @param {number|string} setId 
+   * @param {number|string} setId
    * @returns {Promise<object>} response payload
    */
   getQuizSet: async (setId) => {
@@ -88,8 +88,8 @@ const AiLearningAPI = {
 
   /**
    * Generate a new quiz set
-   * @param {number|string} documentId 
-   * @param {number} questionCount 
+   * @param {number|string} documentId
+   * @param {number} questionCount
    * @param {string} difficulty - EASY, MEDIUM, HARD
    * @returns {Promise<object>} response payload
    */

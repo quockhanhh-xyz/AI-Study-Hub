@@ -740,8 +740,18 @@ function mapAiLearningError(error) {
   const status = error?.status;
 
   // Document states
-  if (status === 409 || code === "DOCUMENT_NOT_READY") {
-    return "This document is not ready for AI generation yet. Please process it first.";
+  if (
+    status === 409 ||
+    code === "DOCUMENT_NOT_READY_FOR_AI" ||
+    code === "DOCUMENT_PROCESSING"
+  ) {
+    return "This document is not ready for AI generation yet. Please process it first or wait for processing to finish.";
+  }
+  if (code === "DOCUMENT_PROCESS_FAILED") {
+    return "This document failed processing. Please try processing it again.";
+  }
+  if (code === "DOCUMENT_CONTENT_EMPTY") {
+    return "This document has no readable content for AI generation.";
   }
 
   // Quota errors
@@ -762,10 +772,18 @@ function mapAiLearningError(error) {
   if (code === "INVALID_QUIZ_QUESTION_COUNT") {
     return "Invalid quiz question count. Must be between 3 and your tier's maximum limit.";
   }
+  if (code === "INVALID_QUIZ_DIFFICULTY") {
+    return "Invalid quiz difficulty selected. Please choose Easy, Medium, or Hard.";
+  }
 
   // Provider or server errors
-  if (status === 500 || status === 503 || code === "PROVIDER_ERROR") {
-    return "The AI service is currently unavailable or encountered an error. Please try again later.";
+  if (
+    status === 500 ||
+    status === 503 ||
+    code === "AI_PROVIDER_ERROR" ||
+    code === "AI_OUTPUT_INVALID"
+  ) {
+    return "The AI service is currently unavailable or returned an invalid response. Please try again later.";
   }
   
   if (status === 403) {
@@ -830,4 +848,4 @@ function setGeneratingState(button, isGenerating, loadingText = 'Generating...')
 window.mapAiLearningError = mapAiLearningError;
 window.formatGeneratedAt = formatGeneratedAt;
 window.formatDifficulty = formatDifficulty;
-window.setGeneratingState = setGeneratingState;
+window.setGeneratingState = setGeneratingState;
