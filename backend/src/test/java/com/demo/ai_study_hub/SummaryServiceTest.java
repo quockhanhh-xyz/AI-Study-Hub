@@ -124,7 +124,7 @@ class SummaryServiceTest {
 
     @Test
     void generate_WhenAiReturnsValidJson_ShouldSaveAndReturnSummary() {
-        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class)))
+        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class), anyBoolean()))
                 .thenReturn(AiAnswer.builder().text(VALID_JSON).build());
         doNothing().when(validator).validateSummary(any());
 
@@ -153,7 +153,7 @@ class SummaryServiceTest {
 
     @Test
     void generate_WhenFirstCallInvalid_ShouldRetryOnceThenSucceed() {
-        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class)))
+        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class), anyBoolean()))
                 .thenReturn(AiAnswer.builder().text("not valid json {{{").build())
                 .thenReturn(AiAnswer.builder().text(VALID_JSON).build());
         doNothing().when(validator).validateSummary(any());
@@ -161,26 +161,26 @@ class SummaryServiceTest {
         SummaryResponse response = summaryService.generate(10, "user@test.com");
 
         assertNotNull(response);
-        verify(aiProviderService, times(2)).call(any(), any(), anyInt(), any(Double.class));
+        verify(aiProviderService, times(2)).call(any(), any(), anyInt(), any(Double.class), anyBoolean());
         verify(aiSummaryRepository, times(1)).save(any());
     }
 
     @Test
     void generate_WhenBothAttemptsInvalid_ShouldThrow502_AndNeverSave() {
-        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class)))
+        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class), anyBoolean()))
                 .thenReturn(AiAnswer.builder().text("garbage").build());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> summaryService.generate(10, "user@test.com"));
 
         assertEquals(HttpStatus.BAD_GATEWAY, ex.getStatusCode());
-        verify(aiProviderService, times(2)).call(any(), any(), anyInt(), any(Double.class));
+        verify(aiProviderService, times(2)).call(any(), any(), anyInt(), any(Double.class), anyBoolean());
         verify(aiSummaryRepository, never()).save(any());
     }
 
     @Test
     void generate_WhenSchemaValidationFails_ShouldRetryThenFailCleanly() {
-        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class)))
+        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class), anyBoolean()))
                 .thenReturn(AiAnswer.builder().text(VALID_JSON).build());
         doThrow(new IllegalArgumentException("AI output validation failed: overview is blank"))
                 .when(validator).validateSummary(any());

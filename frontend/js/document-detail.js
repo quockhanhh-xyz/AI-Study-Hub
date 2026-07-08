@@ -1651,7 +1651,7 @@ async function loadSummary() {
         renderSummary(res.data || null);
     } catch (err) {
         if (loader) loader.style.display = "none";
-        if (err.code === "SUMMARY_NOT_FOUND" || err.status === 404) {
+        if (err.code === "SUMMARY_NOT_FOUND" || err.status === 404 || err.data?.code === "SUMMARY_NOT_FOUND") {
             summaryExists = false;
             updateSummaryButtonLabel();
             if (empty) empty.style.display = "block";

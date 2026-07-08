@@ -9,6 +9,7 @@ import com.demo.ai_study_hub.repository.DocumentChunkRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ import com.demo.ai_study_hub.repository.AiUsageReservationRepository;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SummaryService {
 
     private static final ZoneId VN_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
@@ -100,7 +102,7 @@ public class SummaryService {
         // 2. Call AI provider outside transaction to prevent holding database locks too long
         String prompt = promptBuilder.buildSummaryPrompt(reserveResult.content.getExtractedText());
         String model = aiModelSelector.selectModel(reserveResult.tier.name());
-        int maxTokens = aiModelSelector.getMaxOutputTokens(reserveResult.tier.name());
+        int maxTokens = Math.max(1500, aiModelSelector.getMaxOutputTokens(reserveResult.tier.name()));
 
         AiSummaryOutput output;
         try {
@@ -149,7 +151,7 @@ public class SummaryService {
         for (int attempt = 1; attempt <= 2; attempt++) {
             String rawText;
             try {
-                rawText = aiProviderRouter.route().call(prompt, model, maxTokens, 0.3).getText();
+                rawText = aiProviderRouter.route().call(prompt, model, maxTokens, 0.3, true).getText();
             } catch (Exception e) {
                 lastFailureWasProviderCall = true;
                 if (attempt == 2) {
@@ -177,20 +179,54 @@ public class SummaryService {
     }
 
     private <T> T parseJson(String rawText, Class<T> type) throws Exception {
-        String cleaned = stripMarkdownFences(rawText);
-        return objectMapper.readValue(cleaned, type);
+        String cleaned = extractJson(rawText);
+        try {
+            return objectMapper.readValue(cleaned, type);
+        } catch (Exception e) {
+            String snippet = rawText != null ? (rawText.length() > 200 ? rawText.substring(0, 200) + "..." : rawText) : "null";
+            log.warn("Failed to parse JSON. Raw snippet: {}. Error: {}", snippet, e.getMessage());
+            throw e;
+        }
     }
 
-    /** AI models sometimes wrap JSON in ```json ... ``` despite instructions not to. */
-    private String stripMarkdownFences(String text) {
-        String t = text.trim();
-        if (t.startsWith("```")) {
-            t = t.replaceFirst("^```[a-zA-Z]*\\s*", "");
-            if (t.endsWith("```")) {
-                t = t.substring(0, t.length() - 3);
+    private String extractJson(String text) {
+        if (text == null) return "";
+        String trimmed = text.trim();
+        if (trimmed.startsWith("```")) {
+            trimmed = trimmed.replaceFirst("^```[a-zA-Z]*\\s*", "");
+            if (trimmed.endsWith("```")) {
+                trimmed = trimmed.substring(0, trimmed.length() - 3);
+            }
+            trimmed = trimmed.trim();
+        }
+
+        int firstObj = trimmed.indexOf('{');
+        int firstArr = trimmed.indexOf('[');
+        int start = -1;
+        char endChar = ' ';
+        if (firstObj >= 0 && firstArr >= 0) {
+            if (firstObj < firstArr) {
+                start = firstObj;
+                endChar = '}';
+            } else {
+                start = firstArr;
+                endChar = ']';
+            }
+        } else if (firstObj >= 0) {
+            start = firstObj;
+            endChar = '}';
+        } else if (firstArr >= 0) {
+            start = firstArr;
+            endChar = ']';
+        }
+
+        if (start >= 0) {
+            int end = trimmed.lastIndexOf(endChar);
+            if (end > start) {
+                return trimmed.substring(start, end + 1);
             }
         }
-        return t.trim();
+        return trimmed;
     }
 
     private void checkDailyQuota(User user, UserTier tier) {

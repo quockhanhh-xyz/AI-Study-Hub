@@ -32,6 +32,13 @@ public interface AiProviderService {
     AiAnswer call(String prompt, String modelName, int maxOutputTokens, double temperature);
 
     /**
+     * Call the AI provider with JSON mode option.
+     */
+    default AiAnswer call(String prompt, String modelName, int maxOutputTokens, double temperature, boolean jsonMode) {
+        return call(prompt, modelName, maxOutputTokens, temperature);
+    }
+
+    /**
      * Returns the provider identifier string.
      * E.g.: "gemini" | "mock"
      */

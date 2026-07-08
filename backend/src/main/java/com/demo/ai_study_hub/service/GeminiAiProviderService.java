@@ -45,6 +45,11 @@ public class GeminiAiProviderService implements AiProviderService {
 
     @Override
     public AiAnswer call(String prompt, String modelName, int maxOutputTokens, double temperature) {
+        return call(prompt, modelName, maxOutputTokens, temperature, false);
+    }
+
+    @Override
+    public AiAnswer call(String prompt, String modelName, int maxOutputTokens, double temperature, boolean jsonMode) {
         String apiKey = aiProperties.getGemini().getApiKey();
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("Gemini API key not configured. Returning 503.");
@@ -54,15 +59,21 @@ public class GeminiAiProviderService implements AiProviderService {
 
         String url = String.format(GEMINI_URL_TEMPLATE, modelName, apiKey);
 
+        // Generation config map
+        Map<String, Object> genConfig = new java.util.HashMap<>(Map.of(
+                "maxOutputTokens", maxOutputTokens,
+                "temperature", temperature
+        ));
+        if (jsonMode) {
+            genConfig.put("responseMimeType", "application/json");
+        }
+
         // Request body following Gemini generateContent API structure
         Map<String, Object> requestBody = Map.of(
                 "contents", List.of(
                         Map.of("parts", List.of(Map.of("text", prompt)))
                 ),
-                "generationConfig", Map.of(
-                        "maxOutputTokens", maxOutputTokens,
-                        "temperature", temperature
-                )
+                "generationConfig", genConfig
         );
 
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();

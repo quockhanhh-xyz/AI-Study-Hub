@@ -30,6 +30,11 @@ public class MockAiProviderService implements AiProviderService {
 
     @Override
     public AiAnswer call(String prompt, String modelName, int maxOutputTokens, double temperature) {
+        return call(prompt, modelName, maxOutputTokens, temperature, false);
+    }
+
+    @Override
+    public AiAnswer call(String prompt, String modelName, int maxOutputTokens, double temperature, boolean jsonMode) {
         String mockAnswer = buildMockAnswer(prompt);
 
         int inputTokens = estimateTokens(prompt);

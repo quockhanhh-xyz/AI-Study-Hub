@@ -162,7 +162,7 @@ class QuizServiceTest {
 
     @Test
     void generate_WhenValidRequest_ShouldSaveQuizWith4OptionsPerQuestion() {
-        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class)))
+        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class), anyBoolean()))
                 .thenReturn(AiAnswer.builder().text(VALID_JSON).build());
         doNothing().when(validator).validateQuiz(any(), eq(3));
 
@@ -219,7 +219,7 @@ class QuizServiceTest {
 
     @Test
     void generate_WhenDifficultyOmitted_ShouldDefaultToMixed() {
-        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class)))
+        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class), anyBoolean()))
                 .thenReturn(AiAnswer.builder().text(VALID_JSON).build());
         doNothing().when(validator).validateQuiz(any(), eq(3));
 
@@ -248,7 +248,7 @@ class QuizServiceTest {
 
     @Test
     void generate_WhenAiOutputMalformedTwice_ShouldThrow502AndNotSave() {
-        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class)))
+        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class), anyBoolean()))
                 .thenReturn(AiAnswer.builder().text("not json at all").build());
 
         GenerateQuizRequest req = new GenerateQuizRequest();
@@ -258,7 +258,7 @@ class QuizServiceTest {
                 () -> quizService.generate(10, req, "user@test.com"));
 
         assertEquals(HttpStatus.BAD_GATEWAY, ex.getStatusCode());
-        verify(aiProviderService, times(2)).call(any(), any(), anyInt(), any(Double.class));
+        verify(aiProviderService, times(2)).call(any(), any(), anyInt(), any(Double.class), anyBoolean());
         verify(quizSetRepository, never()).save(any());
     }
 

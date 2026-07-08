@@ -132,7 +132,7 @@ class FlashcardServiceTest {
         // the 3-card VALID_JSON sample used across this test class.
         when(quotaPolicy.flashcardCountRange(UserTier.FREE))
                 .thenReturn(new AiLearningQuotaPolicy.CountRange(3, 3, 8));
-        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class)))
+        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class), anyBoolean()))
                 .thenReturn(AiAnswer.builder().text(VALID_JSON).build());
         doNothing().when(validator).validateFlashcards(any(), eq(3));
 
@@ -186,7 +186,7 @@ class FlashcardServiceTest {
 
     @Test
     void generate_WhenAiCardCountMismatch_ShouldRetryThenFail() {
-        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class)))
+        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class), anyBoolean()))
                 .thenReturn(AiAnswer.builder().text(VALID_JSON).build());
         doThrow(new IllegalArgumentException("expected 5 cards but got 3"))
                 .when(validator).validateFlashcards(any(), eq(3));
@@ -198,13 +198,13 @@ class FlashcardServiceTest {
                 () -> flashcardService.generate(10, req, "user@test.com"));
 
         assertEquals(HttpStatus.BAD_GATEWAY, ex.getStatusCode());
-        verify(aiProviderService, times(2)).call(any(), any(), anyInt(), any(Double.class));
+        verify(aiProviderService, times(2)).call(any(), any(), anyInt(), any(Double.class), anyBoolean());
         verify(flashcardSetRepository, never()).save(any());
     }
 
     @Test
     void generate_ShouldPersistCardsWithSequentialPositions() {
-        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class)))
+        when(aiProviderService.call(any(), any(), anyInt(), any(Double.class), anyBoolean()))
                 .thenReturn(AiAnswer.builder().text(VALID_JSON).build());
         doNothing().when(validator).validateFlashcards(any(), eq(3));
 
