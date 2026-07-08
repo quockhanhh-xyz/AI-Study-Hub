@@ -1,4 +1,215 @@
 package com.demo.ai_study_hub.service;
 
+import com.demo.ai_study_hub.dto.SummaryDtos.*;
+import com.demo.ai_study_hub.entity.*;
+import com.demo.ai_study_hub.enums.UserTier;
+import com.demo.ai_study_hub.exception.QuotaExceededException;
+import com.demo.ai_study_hub.repository.AiSummaryRepository;
+import com.demo.ai_study_hub.repository.DocumentChunkRepository;
+import com.demo.ai_study_hub.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
 public class SummaryService {
+
+    private static final ZoneId VN_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+
+    private final AiSummaryRepository aiSummaryRepository;
+    private final DocumentChunkRepository documentChunkRepository;
+    private final UserRepository userRepository;
+    private final AiLearningAccessGuard accessGuard;
+    private final AiLearningQuotaPolicy quotaPolicy;
+    private final AiLearningPromptBuilder promptBuilder;
+    private final AiLearningOutputValidator validator;
+    private final TierPolicyService tierPolicyService;
+    private final AiProviderRouter aiProviderRouter;
+    private final AiModelSelector aiModelSelector;
+    private final ObjectMapper objectMapper;
+
+    @Transactional
+    public SummaryResponse generate(Integer documentId, String userEmail) {
+        User user = loadUser(userEmail);
+
+        AiLearningAccessGuard.ReadyDocument ready = accessGuard.requireReadyDocument(documentId, user);
+        Document doc = ready.document();
+        DocumentContent content = ready.content();
+
+        UserTier tier = tierPolicyService.getEffectiveTier(user);
+
+        // Fallback MVP quota mode (no ai_usage_reservations table for Step 14):
+        // pre-check the daily count BEFORE calling the AI provider. A save
+        // only happens after a successful AI call, so usage == row count —
+        // no separate usage log needed, no reservation table needed.
+        checkDailyQuota(user, tier);
+
+        if (!aiProviderRouter.isConfigured()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "AI service is not configured");
+        }
+
+        String prompt = promptBuilder.buildSummaryPrompt(content.getExtractedText());
+        String model = aiModelSelector.selectModel(tier.name());
+        int maxTokens = aiModelSelector.getMaxOutputTokens(tier.name());
+
+        AiSummaryOutput output = callAndValidateWithRetry(prompt, model, maxTokens);
+
+        long chunkCount = documentChunkRepository.findByDocument_DocumentIdOrderByChunkIndexAsc(documentId).size();
+
+        AiSummary entity = persist(doc, user, output, model, content, chunkCount);
+        return toResponse(entity);
+    }
+
+    /**
+     * Calls the AI provider, parses + validates the JSON output. On
+     * malformed JSON or schema/count violation, retries EXACTLY ONCE
+     * (TC-LEARN-23). If the retry also fails, aborts with 502 and NOTHING
+     * is saved (TC-LEARN-24) — no partial/invalid data ever hits the DB.
+     */
+    private AiSummaryOutput callAndValidateWithRetry(String prompt, String model, int maxTokens) {
+        for (int attempt = 1; attempt <= 2; attempt++) {
+            try {
+                String rawText = aiProviderRouter.route().call(prompt, model, maxTokens, 0.3).getText();
+                AiSummaryOutput output = parseJson(rawText, AiSummaryOutput.class);
+                validator.validateSummary(output);
+                return output;
+            } catch (Exception e) {
+                if (attempt == 2) {
+                    throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                            "AI provider returned invalid output after retry");
+                }
+                // fall through to retry
+            }
+        }
+        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI output invalid");
+    }
+
+    private <T> T parseJson(String rawText, Class<T> type) throws Exception {
+        String cleaned = stripMarkdownFences(rawText);
+        return objectMapper.readValue(cleaned, type);
+    }
+
+    /** AI models sometimes wrap JSON in ```json ... ``` despite instructions not to. */
+    private String stripMarkdownFences(String text) {
+        String t = text.trim();
+        if (t.startsWith("```")) {
+            t = t.replaceFirst("^```[a-zA-Z]*\\s*", "");
+            if (t.endsWith("```")) {
+                t = t.substring(0, t.length() - 3);
+            }
+        }
+        return t.trim();
+    }
+
+    private void checkDailyQuota(User user, UserTier tier) {
+        int limit = quotaPolicy.summaryDailyLimit(tier);
+        LocalDateTime[] window = todayWindowUtc();
+        long usedToday = aiSummaryRepository.countByUserAndCreatedAtBetween(
+                user.getUserId(), window[0], window[1]);
+        if (usedToday >= limit) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Summary generations daily quota exceeded", "SUMMARY_QUOTA_EXCEEDED");
+        }
+    }
+
+    /** Daily quota resets on Asia/Ho_Chi_Minh calendar day, converted to the UTC window stored in DB timestamps. */
+    private LocalDateTime[] todayWindowUtc() {
+        LocalDate todayVn = LocalDate.now(VN_ZONE);
+        LocalDateTime startUtc = todayVn.atStartOfDay(VN_ZONE).withZoneSameInstant(java.time.ZoneOffset.UTC).toLocalDateTime();
+        LocalDateTime endUtc = todayVn.plusDays(1).atStartOfDay(VN_ZONE).withZoneSameInstant(java.time.ZoneOffset.UTC).toLocalDateTime();
+        return new LocalDateTime[]{startUtc, endUtc};
+    }
+
+    private AiSummary persist(Document doc, User user, AiSummaryOutput output, String model,
+                              DocumentContent content, long chunkCount) {
+        try {
+            LocalDateTime now = LocalDateTime.now(java.time.ZoneOffset.UTC);
+            AiSummary entity = AiSummary.builder()
+                    .document(doc)
+                    .user(user)
+                    .overview(output.getOverview())
+                    .keyPointsJson(objectMapper.writeValueAsString(output.getKeyPoints()))
+                    .importantTermsJson(objectMapper.writeValueAsString(output.getImportantTerms()))
+                    .reviewQuestionsJson(objectMapper.writeValueAsString(output.getSuggestedReviewQuestions()))
+                    .model(model)
+                    .status("SUCCESS")
+                    .sourceProcessedAt(content.getProcessedAt())
+                    .sourceChunkCount((int) chunkCount)
+                    .contentVersion(content.getContentId() != null ? content.getContentId().toString() : null)
+                    .createdAt(now)
+                    .updatedAt(now)
+                    .build();
+            return aiSummaryRepository.save(entity);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to save summary");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public SummaryResponse getLatest(Integer documentId, String userEmail) {
+        User user = loadUser(userEmail);
+        AiSummary summary = aiSummaryRepository
+                .findByDocument_DocumentIdAndUser_UserIdOrderByCreatedAtDesc(documentId, user.getUserId())
+                .orElseThrow(() -> new QuotaExceededException(HttpStatus.NOT_FOUND,
+                        "No summary found for this document", "SUMMARY_NOT_FOUND"));
+        return toResponse(summary);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SummaryHistoryItemResponse> getHistory(Integer documentId, String userEmail) {
+        User user = loadUser(userEmail);
+        return aiSummaryRepository
+                .findByDocument_DocumentIdAndUser_UserIdOrderByCreatedAtDesc(
+                        documentId, user.getUserId(), PageRequest.of(0, 50))
+                .stream()
+                .map(s -> SummaryHistoryItemResponse.builder()
+                        .summaryId(s.getSummaryId())
+                        .documentId(s.getDocument().getDocumentId())
+                        .overview(s.getOverview())
+                        .createdAt(s.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private SummaryResponse toResponse(AiSummary s) {
+        try {
+            List<String> keyPoints = objectMapper.readValue(s.getKeyPointsJson(),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
+            List<ImportantTerm> terms = objectMapper.readValue(s.getImportantTermsJson(),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, ImportantTerm.class));
+            List<String> questions = objectMapper.readValue(s.getReviewQuestionsJson(),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
+
+            return SummaryResponse.builder()
+                    .summaryId(s.getSummaryId())
+                    .documentId(s.getDocument().getDocumentId())
+                    .overview(s.getOverview())
+                    .keyPoints(keyPoints)
+                    .importantTerms(terms)
+                    .suggestedReviewQuestions(questions)
+                    .model(s.getModel())
+                    .sourceProcessedAt(s.getSourceProcessedAt())
+                    .sourceChunkCount(s.getSourceChunkCount())
+                    .createdAt(s.getCreatedAt())
+                    .build();
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to read stored summary");
+        }
+    }
+
+    private User loadUser(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+    }
 }
