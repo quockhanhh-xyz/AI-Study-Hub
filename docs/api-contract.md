@@ -3364,10 +3364,10 @@ Create a new pending payment order for a plan using the VNPay Sandbox gateway.
   3. Search for any active `PENDING` order. If one exists, return **409 Conflict** with code `PAYMENT_ALREADY_PENDING`.
   4. Search for any unresolved `REVIEW_REQUIRED` orders. If one exists, return **409 Conflict** with code `PAYMENT_REQUIRES_MANUAL_REVIEW`.
   5. Create a new `PaymentOrder` metadata record:
-     * `status = PENDING`
-     * `paymentMethod = VNPAY`
-     * `paymentProvider = VNPAY_SANDBOX`
-     * `expiredAt = now + 15 minutes`
+    * `status = PENDING`
+    * `paymentMethod = VNPAY`
+    * `paymentProvider = VNPAY_SANDBOX`
+    * `expiredAt = now + 15 minutes`
   6. Generate the unique transaction identifier (`vnp_TxnRef`) and signed checkout redirection link `paymentUrl` utilizing the gateway coordinates in config (`VNPAY_PAYMENT_URL`, `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET`, `VNPAY_RETURN_URL`).
   7. Save and commit.
 
@@ -3655,18 +3655,18 @@ Un-authenticated backend-to-backend callback from VNPay. Performs final order pr
 7. **Handle failed payments**: If `vnp_ResponseCode` or `vnp_TransactionStatus` is not `"00"`, transition the order to `FAILED` (unless it was already resolved), save changes, and return `{"RspCode":"00","Message":"Confirm success"}`.
 8. **Timezone Conversion**: Parse `vnp_PayDate` (format `yyyyMMddHHmmss` in Asia/Ho_Chi_Minh time zone) and convert it to UTC `LocalDateTime`.
 9. **Expiry & Validation rules**:
-   * If `vnp_PayDate` parsing fails or the payment occurred after the order `expiredAt`:
-     * Set `reviewReason = "PAY_DATE_PARSE_FAILED"` or `"PAY_DATE_AFTER_EXPIRY"`.
-     * Set `reviewRequiredAt = now`.
-     * Transition the order to `REVIEW_REQUIRED` (suspends automatic tier upgrades).
-     * Save order, return `{"RspCode":"00","Message":"Confirm success"}`.
+  * If `vnp_PayDate` parsing fails or the payment occurred after the order `expiredAt`:
+    * Set `reviewReason = "PAY_DATE_PARSE_FAILED"` or `"PAY_DATE_AFTER_EXPIRY"`.
+    * Set `reviewRequiredAt = now`.
+    * Transition the order to `REVIEW_REQUIRED` (suspends automatic tier upgrades).
+    * Save order, return `{"RspCode":"00","Message":"Confirm success"}`.
 10. **Lock User**: Acquire a pessimistic lock on the user row (`SELECT FOR UPDATE`).
 11. **Upgrade Safety Checks**: If the user's current effective tier is `ULTRA` and the target tier of this order is `PREMIUM`, transition the order to `REVIEW_REQUIRED` (setting `reviewReason = "TARGET_TIER_LOWER_THAN_CURRENT_TIER"`). Do NOT downgrade the user's tier. Save order, return `{"RspCode":"00","Message":"Confirm success"}`.
 12. **Finalize Payment**:
-    * Update order status to `SUCCESS` and set `paidAt = parsedPayDate`.
-    * Update user tier to target tier.
-    * Compute `tierExpiresAt` (renewing extends expiration by 1 calendar month `plusMonths(1)`; upgrading sets to `now + 1 calendar month` `plusMonths(1)`).
-    * Save user, return `{"RspCode":"00","Message":"Confirm success"}`.
+  * Update order status to `SUCCESS` and set `paidAt = parsedPayDate`.
+  * Update user tier to target tier.
+  * Compute `tierExpiresAt` (renewing extends expiration by 1 calendar month `plusMonths(1)`; upgrading sets to `now + 1 calendar month` `plusMonths(1)`).
+  * Save user, return `{"RspCode":"00","Message":"Confirm success"}`.
 
 #### IPN Response Code Matrix
 
@@ -4098,15 +4098,15 @@ Provides endpoint contracts for generating study summaries, flashcards, and quiz
 ## 18.1. General Scope and Processing Rules
 
 1. **Active/Ready Check**: Generation requests will check both the document's state and its content extraction status:
-   * Document `status` must be `"ACTIVE"` (fails with `DOCUMENT_DELETED` otherwise).
-   * Document content's `processingStatus` must be `COMPLETED` (fails with `DOCUMENT_NOT_READY_FOR_AI` if `PENDING`, `DOCUMENT_PROCESSING` if `PROCESSING`, or `DOCUMENT_PROCESS_FAILED` if `FAILED` / `EMPTY_CONTENT` / `UNSUPPORTED`).
+  * Document `status` must be `"ACTIVE"` (fails with `DOCUMENT_DELETED` otherwise).
+  * Document content's `processingStatus` must be `COMPLETED` (fails with `DOCUMENT_NOT_READY_FOR_AI` if `PENDING`, `DOCUMENT_PROCESSING` if `PROCESSING`, or `DOCUMENT_PROCESS_FAILED` if `FAILED` / `EMPTY_CONTENT` / `UNSUPPORTED`).
 2. **AI Extracted Content Constraints**:
-   * AI prompts utilize only the extracted text stored in `document_contents` or `document_chunks`.
-   * Raw files are not read from Cloudinary again. Prompts must instruct the model to use only the provided context and strictly reject hallucinating facts outside the source material.
+  * AI prompts utilize only the extracted text stored in `document_contents` or `document_chunks`.
+  * Raw files are not read from Cloudinary again. Prompts must instruct the model to use only the provided context and strictly reject hallucinating facts outside the source material.
 3. **Ownership**: Generated content belongs to the generating user (`user_id`). Users can only view summaries, flashcard sets, and quiz sets they generated themselves. Summaries generated on shared/public documents remain private to the user who ran the generation.
 4. **Limits & Immutability**:
-   * Summary: Regenerate actions create new `ai_summaries` records to preserve history. The latest summary endpoint resolves the highest `created_at` success record.
-   * Edit and Delete operations are not supported in Step 14.
+  * Summary: Regenerate actions create new `ai_summaries` records to preserve history. The latest summary endpoint resolves the highest `created_at` success record.
+  * Edit and Delete operations are not supported in Step 14.
 
 ---
 
@@ -4188,7 +4188,7 @@ Triggers AI Summary generation for a document.
 }
 ```
 * **Response `200 OK`**:
-Returns the generated summary payload (format matches GET latest).
+  Returns the generated summary payload (format matches GET latest).
 
 ---
 
@@ -4262,7 +4262,7 @@ Generates a new flashcard set.
 }
 ```
 * **Response `200 OK`**:
-Returns the generated flashcard set payload (format matches GET set detail).
+  Returns the generated flashcard set payload (format matches GET set detail).
 
 ---
 
@@ -4362,8 +4362,9 @@ Generates a new multiple-choice quiz set.
   "difficulty": "MIXED"
 }
 ```
+* **`difficulty`** (optional): one of `EASY`, `MEDIUM`, `HARD`, `MIXED` (case-insensitive). Omitted or `null` defaults to `MIXED`. Any other value returns **400 Bad Request** with code `INVALID_QUIZ_DIFFICULTY`.
 * **Response `200 OK`**:
-Returns the generated quiz set payload (format matches GET quiz set detail).
+  Returns the generated quiz set payload (format matches GET quiz set detail).
 
 ---
 
@@ -4415,6 +4416,7 @@ If the client submits count params outside validation ranges, returns HTTP `400 
 | **403 Forbidden** | `QUIZ_QUOTA_EXCEEDED` | Exceeds daily quiz set limit |
 | **400 Bad Request** | `INVALID_FLASHCARD_COUNT` | Requested count is less than 3 or exceeds tier limit |
 | **400 Bad Request** | `INVALID_QUIZ_QUESTION_COUNT` | Requested count is less than 3 or exceeds tier limit |
+| **400 Bad Request** | `INVALID_QUIZ_DIFFICULTY` | `difficulty` value is not one of `EASY`, `MEDIUM`, `HARD`, `MIXED` |
 | **404 Not Found** | `FLASHCARD_SET_NOT_FOUND` | Flashcard set does not exist or does not belong to user |
 | **404 Not Found** | `QUIZ_SET_NOT_FOUND` | Quiz set does not exist or does not belong to user |
 | **404 Not Found** | `SUMMARY_NOT_FOUND` | Summary does not exist or does not belong to user |
