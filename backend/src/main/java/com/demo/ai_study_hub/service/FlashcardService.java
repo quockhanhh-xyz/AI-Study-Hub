@@ -106,9 +106,9 @@ public class FlashcardService {
         String model = aiModelSelector.selectModel(reserveResult.tier.name());
         int maxTokens = aiModelSelector.getMaxOutputTokens(reserveResult.tier.name());
 
-        List<AiFlashcardOutput> cards = callAndValidateWithRetry(prompt, model, maxTokens, reserveResult.count);
-
         try {
+            List<AiFlashcardOutput> cards = callAndValidateWithRetry(prompt, model, maxTokens, reserveResult.count);
+
             // 3. Confirm reservation, save result, and log success in REQUIRES_NEW transaction
             return txTemplate.execute(status -> {
                 AiUsageReservation res = aiUsageReservationRepository.findByRequestId(requestId).orElseThrow();

@@ -111,9 +111,9 @@ public class QuizService {
         String model = aiModelSelector.selectModel(reserveResult.tier.name());
         int maxTokens = aiModelSelector.getMaxOutputTokens(reserveResult.tier.name());
 
-        List<AiQuizQuestionOutput> questions = callAndValidateWithRetry(prompt, model, maxTokens, reserveResult.count);
-
         try {
+            List<AiQuizQuestionOutput> questions = callAndValidateWithRetry(prompt, model, maxTokens, reserveResult.count);
+
             // 3. Confirm reservation, save result, and log success in REQUIRES_NEW transaction
             return txTemplate.execute(status -> {
                 AiUsageReservation res = aiUsageReservationRepository.findByRequestId(requestId).orElseThrow();
