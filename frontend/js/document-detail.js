@@ -1810,7 +1810,12 @@ async function handleGenerateFlashcardSet() {
         if (isQuotaError(err) || err.code === "FLASHCARD_QUOTA_EXCEEDED") {
             showQuotaError(err);
         } else if (errorEl) {
-            errorEl.textContent = mapAiLearningError(err);
+            let errorMsg = mapAiLearningError(err);
+            const code = err.code || err.data?.code || "";
+            if (code === "AI_PROVIDER_ERROR" || code === "AI_OUTPUT_INVALID" || code === "AI_PROVIDER_TIMEOUT") {
+                errorMsg += " Tip: Try choosing fewer cards (e.g. 3 or 5) for better stability.";
+            }
+            errorEl.textContent = errorMsg;
             errorEl.style.display = "block";
         }
     } finally {
@@ -1866,7 +1871,12 @@ async function handleGenerateQuizSet() {
         if (isQuotaError(err) || err.code === "QUIZ_QUOTA_EXCEEDED") {
             showQuotaError(err);
         } else if (errorEl) {
-            errorEl.textContent = mapAiLearningError(err);
+            let errorMsg = mapAiLearningError(err);
+            const code = err.code || err.data?.code || "";
+            if (code === "AI_PROVIDER_ERROR" || code === "AI_OUTPUT_INVALID" || code === "AI_PROVIDER_TIMEOUT") {
+                errorMsg += " Tip: Try choosing fewer questions (e.g. 3 or 5) for better stability.";
+            }
+            errorEl.textContent = errorMsg;
             errorEl.style.display = "block";
         }
     } finally {

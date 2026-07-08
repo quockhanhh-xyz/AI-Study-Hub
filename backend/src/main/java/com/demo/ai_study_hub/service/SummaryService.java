@@ -49,6 +49,7 @@ public class SummaryService {
     private final AiUsageLogRepository aiUsageLogRepository;
     private final AiUsageReservationRepository aiUsageReservationRepository;
     private final PlatformTransactionManager transactionManager;
+    private final LearningContextBuilder learningContextBuilder;
 
     private static class AiReservationResult {
         final User user;
@@ -100,13 +101,12 @@ public class SummaryService {
         });
 
         // 2. Call AI provider outside transaction to prevent holding database locks too long
-        String prompt = promptBuilder.buildSummaryPrompt(reserveResult.content.getExtractedText());
         String model = aiModelSelector.selectModel(reserveResult.tier.name());
         int maxTokens = aiModelSelector.getMaxLearningOutputTokens(reserveResult.tier.name());
 
         AiSummaryOutput output;
         try {
-            output = callAndValidateWithRetry(prompt, model, maxTokens);
+            output = callAndValidateWithRetry(documentId, reserveResult.tier.name(), reserveResult.content.getExtractedText(), model, maxTokens);
 
             // 3. Confirm reservation, save result, and log success in REQUIRES_NEW transaction
             return txTemplate.execute(status -> {
@@ -146,17 +146,21 @@ public class SummaryService {
      * (TC-LEARN-23). If the retry also fails, aborts with 502 and NOTHING
      * is saved (TC-LEARN-24) — no partial/invalid data ever hits the DB.
      */
-    private AiSummaryOutput callAndValidateWithRetry(String prompt, String model, int maxTokens) {
+    private AiSummaryOutput callAndValidateWithRetry(Integer documentId, String tier, String extractedText, String model, int maxTokens) {
         boolean lastFailureWasProviderCall = false;
         for (int attempt = 1; attempt <= 2; attempt++) {
+            String context = learningContextBuilder.buildLimitedContext(documentId, tier, attempt);
+            if (context == null) {
+                context = extractedText;
+            }
+            String prompt = promptBuilder.buildSummaryPrompt(context);
             String rawText;
             try {
                 rawText = aiProviderRouter.route().call(prompt, model, maxTokens, 0.3, true).getText();
             } catch (Exception e) {
                 lastFailureWasProviderCall = true;
                 if (attempt == 2) {
-                    throw new QuotaExceededException(HttpStatus.BAD_GATEWAY,
-                            "AI provider call failed after retry", "AI_PROVIDER_ERROR");
+                    throw e;
                 }
                 continue;
             }

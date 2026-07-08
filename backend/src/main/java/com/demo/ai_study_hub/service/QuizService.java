@@ -50,6 +50,7 @@ public class QuizService {
     private final AiUsageLogRepository aiUsageLogRepository;
     private final AiUsageReservationRepository aiUsageReservationRepository;
     private final PlatformTransactionManager transactionManager;
+    private final LearningContextBuilder learningContextBuilder;
 
     private static class AiReservationResult {
         final User user;
@@ -109,12 +110,11 @@ public class QuizService {
         });
 
         // 2. Call AI provider outside transaction
-        String prompt = promptBuilder.buildQuizPrompt(reserveResult.content.getExtractedText(), reserveResult.count, reserveResult.difficulty);
         String model = aiModelSelector.selectModel(reserveResult.tier.name());
         int maxTokens = aiModelSelector.getMaxLearningOutputTokens(reserveResult.tier.name());
 
         try {
-            List<AiQuizQuestionOutput> questions = callAndValidateWithRetry(prompt, model, maxTokens, reserveResult.count);
+            List<AiQuizQuestionOutput> questions = callAndValidateWithRetry(documentId, reserveResult.tier.name(), reserveResult.content.getExtractedText(), model, maxTokens, reserveResult.count, reserveResult.difficulty);
 
             // 3. Confirm reservation, save result, and log success in REQUIRES_NEW transaction
             return txTemplate.execute(status -> {
@@ -168,17 +168,22 @@ public class QuizService {
         return upper;
     }
 
-    private List<AiQuizQuestionOutput> callAndValidateWithRetry(String prompt, String model, int maxTokens, int count) {
+    private List<AiQuizQuestionOutput> callAndValidateWithRetry(Integer documentId, String tier, String extractedText, String model, int maxTokens, int count, String difficulty) {
         boolean lastFailureWasProviderCall = false;
         for (int attempt = 1; attempt <= 2; attempt++) {
+            String context = learningContextBuilder.buildLimitedContext(documentId, tier, attempt);
+            if (context == null) {
+                context = extractedText;
+            }
+            int currentCount = (attempt == 1) ? count : Math.max(3, count / 2);
+            String prompt = promptBuilder.buildQuizPrompt(context, currentCount, difficulty);
             String rawText;
             try {
                 rawText = aiProviderRouter.route().call(prompt, model, maxTokens, 0.3, true).getText();
             } catch (Exception e) {
                 lastFailureWasProviderCall = true;
                 if (attempt == 2) {
-                    throw new QuotaExceededException(HttpStatus.BAD_GATEWAY,
-                            "AI provider call failed after retry", "AI_PROVIDER_ERROR");
+                    throw e;
                 }
                 continue;
             }
@@ -205,7 +210,7 @@ public class QuizService {
                         }
                     }
                 }
-                validator.validateQuiz(wrapper.getQuestions(), count);
+                validator.validateQuiz(wrapper.getQuestions(), currentCount);
                 return wrapper.getQuestions();
             } catch (Exception e) {
                 log.warn("Invalid quiz AI output on attempt {}: {}", attempt, e.getMessage());

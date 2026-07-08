@@ -47,6 +47,7 @@ class QuizServiceTest {
     @Mock private com.demo.ai_study_hub.repository.AiUsageReservationRepository aiUsageReservationRepository;
     @Mock private com.demo.ai_study_hub.repository.AiUsageLogRepository aiUsageLogRepository;
     @Mock private org.springframework.transaction.PlatformTransactionManager transactionManager;
+    @Mock private LearningContextBuilder learningContextBuilder;
 
     private QuizService quizService;
 
@@ -109,7 +110,8 @@ class QuizServiceTest {
                 quizSetRepository, documentChunkRepository, userRepository,
                 accessGuard, quotaPolicy, promptBuilder, validator,
                 tierPolicyService, aiProviderRouter, aiModelSelector, objectMapper,
-                aiUsageLogRepository, aiUsageReservationRepository, transactionManager);
+                aiUsageLogRepository, aiUsageReservationRepository, transactionManager,
+                learningContextBuilder);
 
         user = new User();
         user.setUserId(1);

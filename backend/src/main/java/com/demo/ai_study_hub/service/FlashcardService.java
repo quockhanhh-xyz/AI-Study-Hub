@@ -48,6 +48,7 @@ public class FlashcardService {
     private final AiUsageLogRepository aiUsageLogRepository;
     private final AiUsageReservationRepository aiUsageReservationRepository;
     private final PlatformTransactionManager transactionManager;
+    private final LearningContextBuilder learningContextBuilder;
 
     private static class AiReservationResult {
         final User user;
@@ -104,12 +105,11 @@ public class FlashcardService {
         });
 
         // 2. Call AI provider outside transaction
-        String prompt = promptBuilder.buildFlashcardPrompt(reserveResult.content.getExtractedText(), reserveResult.count);
         String model = aiModelSelector.selectModel(reserveResult.tier.name());
         int maxTokens = aiModelSelector.getMaxLearningOutputTokens(reserveResult.tier.name());
 
         try {
-            List<AiFlashcardOutput> cards = callAndValidateWithRetry(prompt, model, maxTokens, reserveResult.count);
+            List<AiFlashcardOutput> cards = callAndValidateWithRetry(documentId, reserveResult.tier.name(), reserveResult.content.getExtractedText(), model, maxTokens, reserveResult.count);
 
             // 3. Confirm reservation, save result, and log success in REQUIRES_NEW transaction
             return txTemplate.execute(status -> {
@@ -153,17 +153,22 @@ public class FlashcardService {
         return requested;
     }
 
-    private List<AiFlashcardOutput> callAndValidateWithRetry(String prompt, String model, int maxTokens, int count) {
+    private List<AiFlashcardOutput> callAndValidateWithRetry(Integer documentId, String tier, String extractedText, String model, int maxTokens, int count) {
         boolean lastFailureWasProviderCall = false;
         for (int attempt = 1; attempt <= 2; attempt++) {
+            String context = learningContextBuilder.buildLimitedContext(documentId, tier, attempt);
+            if (context == null) {
+                context = extractedText;
+            }
+            int currentCount = (attempt == 1) ? count : Math.max(3, count / 2);
+            String prompt = promptBuilder.buildFlashcardPrompt(context, currentCount);
             String rawText;
             try {
                 rawText = aiProviderRouter.route().call(prompt, model, maxTokens, 0.3, true).getText();
             } catch (Exception e) {
                 lastFailureWasProviderCall = true;
                 if (attempt == 2) {
-                    throw new QuotaExceededException(HttpStatus.BAD_GATEWAY,
-                            "AI provider call failed after retry", "AI_PROVIDER_ERROR");
+                    throw e;
                 }
                 continue;
             }
@@ -176,7 +181,7 @@ public class FlashcardService {
                         }
                     }
                 }
-                validator.validateFlashcards(wrapper.getCards(), count);
+                validator.validateFlashcards(wrapper.getCards(), currentCount);
                 return wrapper.getCards();
             } catch (Exception e) {
                 log.warn("Invalid flashcard AI output on attempt {}: {}", attempt, e.getMessage());

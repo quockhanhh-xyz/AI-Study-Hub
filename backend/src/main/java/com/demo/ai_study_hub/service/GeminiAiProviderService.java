@@ -97,6 +97,26 @@ public class GeminiAiProviderService implements AiProviderService {
 
         } catch (ResponseStatusException e) {
             throw e;
+        } catch (org.springframework.web.client.RestClientResponseException e) {
+            String errorBody = e.getResponseBodyAsString();
+            log.error("Gemini API call failed with status {} {}. Body: {}", e.getStatusCode(), e.getStatusText(), sanitizeMessage(errorBody));
+            HttpStatus status = HttpStatus.SERVICE_UNAVAILABLE;
+            String reason = "AI service is temporarily unavailable";
+            if (e.getStatusCode().value() == 429) {
+                status = HttpStatus.TOO_MANY_REQUESTS;
+                reason = "AI provider rate limit reached";
+            } else if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403) {
+                status = HttpStatus.UNAUTHORIZED;
+                reason = "AI provider authentication failed";
+            } else if (e.getStatusCode().value() == 400) {
+                status = HttpStatus.BAD_REQUEST;
+                reason = "AI provider rejected the request as invalid";
+            }
+            throw new ResponseStatusException(status, reason);
+        } catch (org.springframework.web.client.ResourceAccessException e) {
+            log.error("Gemini API call timed out: {}", sanitizeMessage(e.getMessage()));
+            throw new ResponseStatusException(HttpStatus.GATEWAY_TIMEOUT,
+                    "AI provider read/connect timeout");
         } catch (RestClientException e) {
             log.error("Gemini API call failed: {}", sanitizeMessage(e.getMessage()));
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,

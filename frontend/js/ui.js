@@ -777,13 +777,29 @@ function mapAiLearningError(error) {
   }
 
   // Provider or server errors
+  if (code === "AI_PROVIDER_RATE_LIMITED") {
+    return "AI quota/rate limit reached. Please try later.";
+  }
+  if (code === "AI_PROVIDER_TIMEOUT") {
+    return "AI response timed out. Please try again with shorter content.";
+  }
+  if (code === "AI_PROVIDER_AUTH_FAILED") {
+    return "AI configuration or authentication failed. Please contact support.";
+  }
+  if (code === "AI_PROVIDER_BAD_REQUEST") {
+    return "AI provider rejected the request as invalid. Please check the document content.";
+  }
+  if (code === "AI_OUTPUT_INVALID") {
+    return "AI returned an invalid format. Try generating fewer questions/cards.";
+  }
   if (
     status === 500 ||
+    status === 502 ||
     status === 503 ||
     code === "AI_PROVIDER_ERROR" ||
-    code === "AI_OUTPUT_INVALID"
+    code === "AI_PROVIDER_UNAVAILABLE"
   ) {
-    return "The AI service is currently unavailable or returned an invalid response. Please try again later.";
+    return "Gemini is temporarily unavailable. Please wait a moment and try again.";
   }
 
   if (status === 403) {
