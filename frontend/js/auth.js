@@ -308,3 +308,25 @@
 
   // Expose globally so payment flow and other page scripts can call it
   window.refreshCurrentUser = refreshCurrentUser;
+
+  // ─────────────────────────────────────────────────────────────
+  // AUTH GUARD HELPER (Step 14)
+  // ─────────────────────────────────────────────────────────────
+
+  /**
+   * Client-side auth guard.
+   * Checks if user is logged in via localStorage. If not, redirects to login page.
+   * Note: The true source of truth is the HttpOnly cookie, so API calls will still 
+   * return 401 and trigger a redirect if the cookie is expired.
+   */
+  function requireAuth() {
+    const currentUser = localStorage.getItem("currentUser");
+    if (!currentUser) {
+      const currentUrl = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `login.html?redirect=${currentUrl}`;
+      return false;
+    }
+    return true;
+  }
+  
+  window.requireAuth = requireAuth;
