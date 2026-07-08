@@ -316,7 +316,7 @@
   /**
    * Client-side auth guard.
    * Checks if user is logged in via localStorage. If not, redirects to login page.
-   * Note: The true source of truth is the HttpOnly cookie, so API calls will still 
+   * Note: The true source of truth is the HttpOnly cookie, so API calls will still
    * return 401 and trigger a redirect if the cookie is expired.
    */
   function requireAuth() {
@@ -328,5 +328,5 @@
     }
     return true;
   }
-  
+
   window.requireAuth = requireAuth;

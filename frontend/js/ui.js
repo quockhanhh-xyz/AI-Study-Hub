@@ -732,7 +732,7 @@ window.formatUsageProgress = formatUsageProgress;
 /**
  * Maps AI Learning specific errors (Summary, Flashcard, Quiz).
  * Handles quota limits, invalid configurations, and readiness states.
- * @param {Error|object} error 
+ * @param {Error|object} error
  * @returns {string} User-friendly error message.
  */
 function mapAiLearningError(error) {
@@ -773,7 +773,7 @@ function mapAiLearningError(error) {
     return "Invalid quiz question count. Must be between 3 and your tier's maximum limit.";
   }
   if (code === "INVALID_QUIZ_DIFFICULTY") {
-    return "Invalid quiz difficulty selected. Please choose Easy, Medium, or Hard.";
+    return "Invalid quiz difficulty selected. Please choose Easy, Medium, Hard, or Mixed.";
   }
 
   // Provider or server errors
@@ -785,7 +785,7 @@ function mapAiLearningError(error) {
   ) {
     return "The AI service is currently unavailable or returned an invalid response. Please try again later.";
   }
-  
+
   if (status === 403) {
     return "You do not have permission to generate AI content for this document.";
   }
@@ -798,8 +798,8 @@ function mapAiLearningError(error) {
 
 /**
  * Formats the generatedAt timestamp into a readable format.
- * @param {string} isoString 
- * @returns {string} 
+ * @param {string} isoString
+ * @returns {string}
  */
 function formatGeneratedAt(isoString) {
   if (!isoString) return "";
@@ -813,8 +813,8 @@ function formatGeneratedAt(isoString) {
 
 /**
  * Formats difficulty enum to title case (e.g. EASY -> Easy).
- * @param {string} difficulty 
- * @returns {string} 
+ * @param {string} difficulty
+ * @returns {string}
  */
 function formatDifficulty(difficulty) {
   if (!difficulty) return "Normal";
@@ -824,9 +824,9 @@ function formatDifficulty(difficulty) {
 
 /**
  * Helper loading state / disable button khi generating.
- * @param {HTMLButtonElement} button 
- * @param {boolean} isGenerating 
- * @param {string} loadingText 
+ * @param {HTMLButtonElement} button
+ * @param {boolean} isGenerating
+ * @param {string} loadingText
  */
 function setGeneratingState(button, isGenerating, loadingText = 'Generating...') {
   if (typeof window.setButtonLoading === 'function') {
