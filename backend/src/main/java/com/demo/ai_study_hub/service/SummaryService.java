@@ -42,6 +42,14 @@ public class SummaryService {
     @Transactional
     public SummaryResponse generate(Integer documentId, String userEmail) {
         User user = loadUser(userEmail);
+        // Lock this user's row for the duration of generate(). This does NOT
+        // block other users (row-level lock, not table-level) — it only
+        // serializes concurrent generate() calls from the SAME user, which
+        // is exactly what's needed to close the double-click / concurrent
+        // request race: the second call must wait for the first call's
+        // count-check + AI call + save to fully commit before it can even
+        // read the daily count, so it will correctly see the updated total.
+        user = userRepository.findByIdForUpdate(user.getUserId()).orElse(user);
 
         AiLearningAccessGuard.ReadyDocument ready = accessGuard.requireReadyDocument(documentId, user);
         Document doc = ready.document();
@@ -50,13 +58,14 @@ public class SummaryService {
         UserTier tier = tierPolicyService.getEffectiveTier(user);
 
         // Fallback MVP quota mode (no ai_usage_reservations table for Step 14):
-        // pre-check the daily count BEFORE calling the AI provider. A save
-        // only happens after a successful AI call, so usage == row count —
-        // no separate usage log needed, no reservation table needed.
+        // pre-check the daily count BEFORE calling the AI provider. Combined
+        // with the per-user lock above, this closes the race a plain
+        // pre-check alone would have (TC-LEARN-22).
         checkDailyQuota(user, tier);
 
         if (!aiProviderRouter.isConfigured()) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "AI service is not configured");
+            throw new QuotaExceededException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "AI service is not configured", "AI_PROVIDER_ERROR");
         }
 
         String prompt = promptBuilder.buildSummaryPrompt(content.getExtractedText());
@@ -78,21 +87,35 @@ public class SummaryService {
      * is saved (TC-LEARN-24) — no partial/invalid data ever hits the DB.
      */
     private AiSummaryOutput callAndValidateWithRetry(String prompt, String model, int maxTokens) {
+        boolean lastFailureWasProviderCall = false;
         for (int attempt = 1; attempt <= 2; attempt++) {
+            String rawText;
             try {
-                String rawText = aiProviderRouter.route().call(prompt, model, maxTokens, 0.3).getText();
+                rawText = aiProviderRouter.route().call(prompt, model, maxTokens, 0.3).getText();
+            } catch (Exception e) {
+                lastFailureWasProviderCall = true;
+                if (attempt == 2) {
+                    throw new QuotaExceededException(HttpStatus.BAD_GATEWAY,
+                            "AI provider call failed after retry", "AI_PROVIDER_ERROR");
+                }
+                continue;
+            }
+            try {
                 AiSummaryOutput output = parseJson(rawText, AiSummaryOutput.class);
                 validator.validateSummary(output);
                 return output;
             } catch (Exception e) {
+                lastFailureWasProviderCall = false;
                 if (attempt == 2) {
-                    throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                            "AI provider returned invalid output after retry");
+                    throw new QuotaExceededException(HttpStatus.BAD_GATEWAY,
+                            "AI provider returned invalid output after retry", "AI_OUTPUT_INVALID");
                 }
                 // fall through to retry
             }
         }
-        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI output invalid");
+        throw new QuotaExceededException(HttpStatus.BAD_GATEWAY,
+                lastFailureWasProviderCall ? "AI provider call failed" : "AI output invalid",
+                lastFailureWasProviderCall ? "AI_PROVIDER_ERROR" : "AI_OUTPUT_INVALID");
     }
 
     private <T> T parseJson(String rawText, Class<T> type) throws Exception {

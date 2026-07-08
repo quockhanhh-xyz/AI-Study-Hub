@@ -41,6 +41,11 @@ public class FlashcardService {
     @Transactional
     public FlashcardSetResponse generate(Integer documentId, GenerateFlashcardRequest request, String userEmail) {
         User user = loadUser(userEmail);
+        // Row-level lock on this user only — serializes concurrent generate()
+        // calls from the SAME user (closes the double-click race,
+        // TC-LEARN-22), never blocks other users.
+        user = userRepository.findByIdForUpdate(user.getUserId()).orElse(user);
+
         AiLearningAccessGuard.ReadyDocument ready = accessGuard.requireReadyDocument(documentId, user);
         Document doc = ready.document();
         DocumentContent content = ready.content();
@@ -52,7 +57,8 @@ public class FlashcardService {
         checkDailyQuota(user, tier);
 
         if (!aiProviderRouter.isConfigured()) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "AI service is not configured");
+            throw new QuotaExceededException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "AI service is not configured", "AI_PROVIDER_ERROR");
         }
 
         String prompt = promptBuilder.buildFlashcardPrompt(content.getExtractedText(), count);
@@ -77,20 +83,34 @@ public class FlashcardService {
     }
 
     private List<AiFlashcardOutput> callAndValidateWithRetry(String prompt, String model, int maxTokens, int count) {
+        boolean lastFailureWasProviderCall = false;
         for (int attempt = 1; attempt <= 2; attempt++) {
+            String rawText;
             try {
-                String rawText = aiProviderRouter.route().call(prompt, model, maxTokens, 0.3).getText();
+                rawText = aiProviderRouter.route().call(prompt, model, maxTokens, 0.3).getText();
+            } catch (Exception e) {
+                lastFailureWasProviderCall = true;
+                if (attempt == 2) {
+                    throw new QuotaExceededException(HttpStatus.BAD_GATEWAY,
+                            "AI provider call failed after retry", "AI_PROVIDER_ERROR");
+                }
+                continue;
+            }
+            try {
                 AiFlashcardOutputWrapper wrapper = parseJson(rawText, AiFlashcardOutputWrapper.class);
                 validator.validateFlashcards(wrapper.getCards(), count);
                 return wrapper.getCards();
             } catch (Exception e) {
+                lastFailureWasProviderCall = false;
                 if (attempt == 2) {
-                    throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                            "AI provider returned invalid output after retry");
+                    throw new QuotaExceededException(HttpStatus.BAD_GATEWAY,
+                            "AI provider returned invalid output after retry", "AI_OUTPUT_INVALID");
                 }
             }
         }
-        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI output invalid");
+        throw new QuotaExceededException(HttpStatus.BAD_GATEWAY,
+                lastFailureWasProviderCall ? "AI provider call failed" : "AI output invalid",
+                lastFailureWasProviderCall ? "AI_PROVIDER_ERROR" : "AI_OUTPUT_INVALID");
     }
 
     private <T> T parseJson(String rawText, Class<T> type) throws Exception {

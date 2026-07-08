@@ -8,7 +8,14 @@ public class SummaryDtos {
 
     @Data
     public static class GenerateSummaryRequest {
-        /** Present for symmetry with contract; every call creates a new record regardless. */
+        /**
+         * Accepted for contract symmetry but intentionally unused: per
+         * api-contract.md 18.1.4, EVERY call to this endpoint — whether the
+         * client considers it a first "generate" or a later "regenerate" —
+         * always inserts a new ai_summaries row (history is preserved,
+         * nothing is ever overwritten). There is no code path where this
+         * flag would change behavior.
+         */
         private Boolean regenerate;
     }
 
