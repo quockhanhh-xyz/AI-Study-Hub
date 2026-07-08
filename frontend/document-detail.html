@@ -901,6 +901,7 @@
               <button type="button" id="inspectorTabDetails" class="inspector-tab-btn active">Details</button>
               <button type="button" id="inspectorTabSharing" class="inspector-tab-btn">Sharing</button>
               <button type="button" id="inspectorTabAI" class="inspector-tab-btn">AI Q&amp;A</button>
+              <button type="button" id="inspectorTabTools" class="inspector-tab-btn">AI Tools</button>
             </div>
 
             <div class="inspector-panes">
@@ -1009,6 +1010,95 @@
                   <div class="ai-qa-input-meta" id="aiQaInputMeta"></div>
                 </section>
               </div>
+
+              <div id="inspectorPaneTools" class="inspector-tab-pane">
+                <section class="ai-tools-panel" aria-label="AI Learning Tools">
+
+                  <p class="ai-tools-not-ready" id="aiToolsNotReadyMessage" style="display:none;"></p>
+
+                  <div id="aiToolsContent">
+                    <!-- ── AI Summary ── -->
+                    <section class="ai-tools-section" id="summarySection">
+                      <div class="ai-tools-section-header">
+                        <h3>AI Summary</h3>
+                        <button type="button" class="btn btn-secondary btn-sm" id="summaryGenerateBtn" disabled>Generate
+                          Summary</button>
+                      </div>
+                      <p class="ai-tools-quota-note">Generating or regenerating a summary uses one of your daily summary
+                        generations.</p>
+
+                      <div id="summaryLoader" class="helper-text" style="display:none;">Loading summary...</div>
+                      <div id="summaryEmptyState" class="helper-text">No summary generated yet.</div>
+
+                      <div id="summaryContent" style="display:none;">
+                        <p class="ai-tools-generated-meta" id="summaryMeta"></p>
+                        <p id="summaryOverview"></p>
+
+                        <div id="summaryKeyPointsBlock">
+                          <h4>Key points</h4>
+                          <ul id="summaryKeyPoints"></ul>
+                        </div>
+
+                        <div id="summaryTermsBlock" style="display:none;">
+                          <h4>Important terms</h4>
+                          <dl id="summaryTerms"></dl>
+                        </div>
+
+                        <div id="summaryQuestionsBlock" style="display:none;">
+                          <h4>Suggested review questions</h4>
+                          <ul id="summaryQuestions"></ul>
+                        </div>
+                      </div>
+
+                      <div class="ai-tools-error" id="summaryError" style="display:none;"></div>
+                    </section>
+
+                    <!-- ── AI Flashcards ── -->
+                    <section class="ai-tools-section" id="flashcardSection">
+                      <div class="ai-tools-section-header">
+                        <h3>AI Flashcards</h3>
+                      </div>
+                      <div class="ai-tools-generate-row">
+                        <label for="flashcardCountInput">Number of cards</label>
+                        <input type="number" id="flashcardCountInput" min="3" placeholder="Default" />
+                        <button type="button" class="btn btn-secondary btn-sm" id="flashcardGenerateBtn"
+                          disabled>Generate Flashcards</button>
+                      </div>
+                      <div class="ai-tools-error" id="flashcardError" style="display:none;"></div>
+
+                      <div id="flashcardSetsLoader" class="helper-text">Loading flashcard sets...</div>
+                      <div id="flashcardSetsEmpty" class="helper-text" style="display:none;">No flashcard sets yet.
+                      </div>
+                      <ul class="ai-tools-set-list" id="flashcardSetsList"></ul>
+                    </section>
+
+                    <!-- ── AI Quiz ── -->
+                    <section class="ai-tools-section" id="quizSection">
+                      <div class="ai-tools-section-header">
+                        <h3>AI Quiz</h3>
+                      </div>
+                      <div class="ai-tools-generate-row">
+                        <label for="quizCountInput">Number of questions</label>
+                        <input type="number" id="quizCountInput" min="3" placeholder="Default" />
+                        <label for="quizDifficultySelect">Difficulty</label>
+                        <select id="quizDifficultySelect">
+                          <option value="MIXED">Mixed</option>
+                          <option value="EASY">Easy</option>
+                          <option value="MEDIUM">Medium</option>
+                          <option value="HARD">Hard</option>
+                        </select>
+                        <button type="button" class="btn btn-secondary btn-sm" id="quizGenerateBtn" disabled>Generate
+                          Quiz</button>
+                      </div>
+                      <div class="ai-tools-error" id="quizError" style="display:none;"></div>
+
+                      <div id="quizSetsLoader" class="helper-text">Loading quiz sets...</div>
+                      <div id="quizSetsEmpty" class="helper-text" style="display:none;">No quiz sets yet.</div>
+                      <ul class="ai-tools-set-list" id="quizSetsList"></ul>
+                    </section>
+                  </div>
+                </section>
+              </div>
             </div>
           </div>
         </aside>
@@ -1088,6 +1178,7 @@
   <script src="js/folder-api.js"></script>
   <script src="js/document-preview.js"></script>
   <script src="js/ai-api.js"></script>
+  <script src="js/ai-learning-api.js"></script>
   <script src="js/document-detail.js"></script>
 </body>
 
