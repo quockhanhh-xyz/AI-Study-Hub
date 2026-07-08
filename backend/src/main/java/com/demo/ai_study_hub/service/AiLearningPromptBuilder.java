@@ -70,10 +70,9 @@ public class AiLearningPromptBuilder {
                 <<<DOCUMENT_CONTEXT_END>>>
                 """.formatted(count, count, documentContent);
     }
-
     public String buildQuizPrompt(String documentContent, int questionCount, String difficulty) {
         String difficultyInstruction = "MIXED".equalsIgnoreCase(difficulty)
-                ? "Mix difficulties across the set: include a blend of EASY, MEDIUM, and HARD questions."
+                ? "Mix difficulties across the set: include a blend of EASY, MEDIUM, and HARD questions. Each individual question must still use exactly one of EASY, MEDIUM, or HARD. Never output difficulty = \"MIXED\" inside a question."
                 : "Every question must have difficulty = \"" + difficulty + "\".";
 
         return INJECTION_GUARD + """
@@ -99,6 +98,7 @@ public class AiLearningPromptBuilder {
                 - Each question MUST have EXACTLY 4 options with keys "A", "B", "C", "D" in that order.
                 - "correctOption" MUST be one of "A", "B", "C", "D" and MUST match one of the option keys.
                 - "explanation" must never be empty.
+                - Each individual question's "difficulty" field MUST be one of: "EASY", "MEDIUM", "HARD". Never output "MIXED" as a question's difficulty.
 
                 <<<DOCUMENT_CONTEXT_START>>>
                 %s

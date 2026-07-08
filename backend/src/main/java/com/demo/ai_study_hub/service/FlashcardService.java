@@ -169,9 +169,17 @@ public class FlashcardService {
             }
             try {
                 AiFlashcardOutputWrapper wrapper = parseJson(rawText, AiFlashcardOutputWrapper.class);
+                if (wrapper != null && wrapper.getCards() != null) {
+                    for (AiFlashcardOutput c : wrapper.getCards()) {
+                        if (c != null && c.getDifficulty() != null) {
+                            c.setDifficulty(c.getDifficulty().trim().toUpperCase());
+                        }
+                    }
+                }
                 validator.validateFlashcards(wrapper.getCards(), count);
                 return wrapper.getCards();
             } catch (Exception e) {
+                log.warn("Invalid flashcard AI output on attempt {}: {}", attempt, e.getMessage());
                 lastFailureWasProviderCall = false;
                 if (attempt == 2) {
                     throw new QuotaExceededException(HttpStatus.BAD_GATEWAY,

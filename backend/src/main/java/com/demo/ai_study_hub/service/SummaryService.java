@@ -165,6 +165,7 @@ public class SummaryService {
                 validator.validateSummary(output);
                 return output;
             } catch (Exception e) {
+                log.warn("Invalid summary AI output on attempt {}: {}", attempt, e.getMessage());
                 lastFailureWasProviderCall = false;
                 if (attempt == 2) {
                     throw new QuotaExceededException(HttpStatus.BAD_GATEWAY,

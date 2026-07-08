@@ -184,9 +184,31 @@ public class QuizService {
             }
             try {
                 AiQuizOutputWrapper wrapper = parseJson(rawText, AiQuizOutputWrapper.class);
+                if (wrapper != null && wrapper.getQuestions() != null) {
+                    for (AiQuizQuestionOutput q : wrapper.getQuestions()) {
+                        if (q != null) {
+                            if (q.getDifficulty() == null || "MIXED".equalsIgnoreCase(q.getDifficulty().trim())) {
+                                q.setDifficulty("MEDIUM");
+                            } else {
+                                q.setDifficulty(q.getDifficulty().trim().toUpperCase());
+                            }
+                            if (q.getCorrectOption() != null) {
+                                q.setCorrectOption(q.getCorrectOption().trim().toUpperCase());
+                            }
+                            if (q.getOptions() != null) {
+                                for (AiQuizOptionOutput opt : q.getOptions()) {
+                                    if (opt != null && opt.getKey() != null) {
+                                        opt.setKey(opt.getKey().trim().toUpperCase());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 validator.validateQuiz(wrapper.getQuestions(), count);
                 return wrapper.getQuestions();
             } catch (Exception e) {
+                log.warn("Invalid quiz AI output on attempt {}: {}", attempt, e.getMessage());
                 lastFailureWasProviderCall = false;
                 if (attempt == 2) {
                     throw new QuotaExceededException(HttpStatus.BAD_GATEWAY,

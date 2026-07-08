@@ -1,6 +1,7 @@
 package com.demo.ai_study_hub.dto;
 
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -72,8 +73,10 @@ public class QuizDtos {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AiQuizQuestionOutput {
+        @JsonAlias({"questionText", "question_text", "question"})
         private String questionText;
         private List<AiQuizOptionOutput> options;
+        @JsonAlias({"correctOption", "correct_option", "answer"})
         private String correctOption;
         private String explanation;
         private String difficulty;
@@ -83,7 +86,9 @@ public class QuizDtos {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AiQuizOptionOutput {
+        @JsonAlias({"optionKey", "key"})
         private String key;
+        @JsonAlias({"optionText", "text"})
         private String text;
     }
 
@@ -92,6 +97,7 @@ public class QuizDtos {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AiQuizOutputWrapper {
+        @JsonAlias({"questions", "quiz"})
         private List<AiQuizQuestionOutput> questions;
     }
 }
