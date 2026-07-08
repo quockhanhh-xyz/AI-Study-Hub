@@ -4,6 +4,7 @@ import com.demo.ai_study_hub.dto.QuizDtos.*;
 import com.demo.ai_study_hub.entity.*;
 import com.demo.ai_study_hub.enums.UserTier;
 import com.demo.ai_study_hub.exception.QuotaExceededException;
+import com.demo.ai_study_hub.exception.AiProviderException;
 import com.demo.ai_study_hub.repository.DocumentChunkRepository;
 import com.demo.ai_study_hub.repository.QuizSetRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
@@ -180,6 +181,8 @@ public class QuizService {
             String rawText;
             try {
                 rawText = aiProviderRouter.route().call(prompt, model, maxTokens, 0.3, true).getText();
+            } catch (AiProviderException e) {
+                throw e;
             } catch (Exception e) {
                 lastFailureWasProviderCall = true;
                 if (attempt == 2) {

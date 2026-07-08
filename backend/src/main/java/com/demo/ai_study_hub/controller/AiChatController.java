@@ -42,17 +42,8 @@ public class AiChatController {
             @Valid @RequestBody AiAskRequest request,
             Principal principal
     ) {
-        try {
-            AiAskResponse response = aiChatService.ask(documentId, request.getQuestion(), principal.getName());
-            return ResponseEntity.ok(ApiResponse.success(response, "AI answer generated successfully"));
-        } catch (ResponseStatusException e) {
-            if (e instanceof com.demo.ai_study_hub.exception.QuotaExceededException qe) {
-                return ResponseEntity.status(qe.getStatusCode())
-                        .body(ApiResponse.error(qe.getReason(), qe.getCode()));
-            }
-            return ResponseEntity.status(e.getStatusCode())
-                    .body(ApiResponse.error(e.getReason()));
-        }
+        AiAskResponse response = aiChatService.ask(documentId, request.getQuestion(), principal.getName());
+        return ResponseEntity.ok(ApiResponse.success(response, "AI answer generated successfully"));
     }
 
     /**
@@ -66,13 +57,8 @@ public class AiChatController {
             @PathVariable Integer documentId,
             Principal principal
     ) {
-        try {
-            AiChatHistoryResponse response = aiChatService.getChatHistory(documentId, principal.getName());
-            return ResponseEntity.ok(ApiResponse.success(response, "Chat history retrieved successfully"));
-        } catch (ResponseStatusException e) {
-            return ResponseEntity.status(e.getStatusCode())
-                    .body(ApiResponse.error(e.getReason()));
-        }
+        AiChatHistoryResponse response = aiChatService.getChatHistory(documentId, principal.getName());
+        return ResponseEntity.ok(ApiResponse.success(response, "Chat history retrieved successfully"));
     }
 
     /**
@@ -85,13 +71,8 @@ public class AiChatController {
             @PathVariable Long chatId,
             Principal principal
     ) {
-        try {
-            aiChatService.deleteChat(chatId, principal.getName());
-            return ResponseEntity.ok(ApiResponse.success(null, "Chat session deleted successfully"));
-        } catch (ResponseStatusException e) {
-            return ResponseEntity.status(e.getStatusCode())
-                    .body(ApiResponse.error(e.getReason()));
-        }
+        aiChatService.deleteChat(chatId, principal.getName());
+        return ResponseEntity.ok(ApiResponse.success(null, "Chat session deleted successfully"));
     }
 
     /**
@@ -103,12 +84,7 @@ public class AiChatController {
     public ResponseEntity<ApiResponse<AiUsageSummaryResponse>> getMyUsage(
             Principal principal
     ) {
-        try {
-            AiUsageSummaryResponse response = aiChatService.getUsageSummary(principal.getName());
-            return ResponseEntity.ok(ApiResponse.success(response, "AI usage retrieved successfully"));
-        } catch (ResponseStatusException e) {
-            return ResponseEntity.status(e.getStatusCode())
-                    .body(ApiResponse.error(e.getReason()));
-        }
+        AiUsageSummaryResponse response = aiChatService.getUsageSummary(principal.getName());
+        return ResponseEntity.ok(ApiResponse.success(response, "AI usage retrieved successfully"));
     }
 }
