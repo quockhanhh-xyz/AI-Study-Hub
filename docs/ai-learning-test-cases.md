@@ -106,8 +106,9 @@ This document specifies the comprehensive test suite and verification scenarios 
 * **TC-LEARN-20: Pre-Check & Reserve**
   * **Action**: Trace reservation lifecycle: user requests generation.
   * **Expected Output**:
-    * A pending reservation is created in `ai_usage_reservations` with status `RESERVED`.
-    * If reservation fails due to quota limit, request aborts immediately before calling AI.
+    * Nếu dùng reservation mode: Một pending reservation được tạo trong `ai_usage_reservations` với trạng thái `RESERVED`.
+    * Nếu dùng fallback MVP: Lock/transaction hoặc quota pre-check phải đảm bảo không double charge và không vượt quota trước khi gọi AI provider.
+    * Nếu việc kiểm tra quota hoặc tạo reservation thất bại do vượt quá giới hạn, yêu cầu sẽ bị hủy ngay lập tức trước khi gọi AI.
 * **TC-LEARN-21: Fail Safe Release**
   * **Action**: Trigger generation, but simulate an upstream AI provider error (`AI_PROVIDER_ERROR`).
   * **Expected Output**:
