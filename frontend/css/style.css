@@ -1286,10 +1286,23 @@ textarea.success {
 .sidebar {
   display: flex;
   flex-direction: column;
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
   height: 100vh;
   overflow-y: auto;
+  z-index: 100;
+}
+
+/* Sidebar is now taken out of normal flex flow (fixed), so main-content
+   needs matching left margin to avoid being covered by it. */
+.main-content {
+  margin-left: 260px;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar.collapsed+.main-content {
+  margin-left: 80px;
 }
 
 
@@ -1348,6 +1361,11 @@ textarea.success {
     position: static;
     height: auto;
     overflow-y: visible;
+  }
+
+  .main-content,
+  .sidebar.collapsed+.main-content {
+    margin-left: 0;
   }
 
 
