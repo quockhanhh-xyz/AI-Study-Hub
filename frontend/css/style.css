@@ -61,7 +61,6 @@ a {
   min-height: 100vh;
 }
 
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -95,8 +94,8 @@ a {
   display: flex;
   align-items: center;
   gap: 8px;
+  transition: gap 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
 
 .page-header {
   margin-bottom: 32px;
@@ -1222,6 +1221,10 @@ textarea.success {
 
 .sidebar.no-transition,
 .sidebar.no-transition * {
+  transition: none !important;
+}
+
+.sidebar.no-transition + .main-content {
   transition: none !important;
 }
 
@@ -3751,4 +3754,74 @@ svg {
   display: flex;
   justify-content: space-between;
   gap: 12px;
+}
+
+/* ── Sharing Tab UX Polish Components ── */
+.btn-revoke {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-height: 32px;
+  padding: 6px 14px;
+  background-color: #ffffff;
+  color: var(--danger-text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.btn-revoke:hover {
+  border-color: var(--danger);
+  color: var(--danger-text);
+  background-color: var(--danger-light);
+}
+
+.shares-empty-state {
+  display: none; /* Controlled dynamically by JS (will be set to flex) */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 16px;
+  background-color: var(--surface-soft);
+  border: 1.5px dashed var(--border);
+  border-radius: 12px;
+  margin: 12px 0;
+}
+
+.shares-empty-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+  opacity: 0.7;
+}
+
+.shares-empty-text {
+  margin: 0 0 8px 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.shares-empty-action-link {
+  background: transparent;
+  border: 0;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  text-decoration: none;
+  font-family: inherit;
+  transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+.shares-empty-action-link:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
 }
