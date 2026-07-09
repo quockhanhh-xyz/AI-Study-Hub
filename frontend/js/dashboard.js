@@ -24,8 +24,16 @@ document.addEventListener("DOMContentLoaded", async function () {
     return;
   }
 
+  function getTimeBasedGreeting() {
+    const hour = new Date().getHours();
+    if (hour < 12) return { text: "Good morning", emoji: "☀️" };
+    if (hour < 18) return { text: "Good afternoon", emoji: "🌤️" };
+    return { text: "Good evening", emoji: "🌙" };
+  }
+
   if (userNameElement && currentUser.fullName) {
-    userNameElement.textContent = `Welcome, ${currentUser.fullName} (${currentUser.role})`;
+    const greeting = getTimeBasedGreeting();
+    userNameElement.textContent = `${greeting.text}, ${currentUser.fullName}! ${greeting.emoji}`;
   }
 
   // Stat elements
@@ -67,9 +75,20 @@ document.addEventListener("DOMContentLoaded", async function () {
       accountTierElement.textContent = tier;
     }
 
-    // CTA Upgrade: hide only for ULTRA (top tier); show for FREE and PREMIUM
     if (dashboardUpgradeCta) {
-      dashboardUpgradeCta.style.display = tier === "ULTRA" ? "none" : "inline-flex";
+      if (tier === "ULTRA") {
+        dashboardUpgradeCta.style.display = "none";
+      } else if (tier === "PREMIUM") {
+        dashboardUpgradeCta.textContent = "Manage Plan";
+        dashboardUpgradeCta.classList.remove("btn-primary");
+        dashboardUpgradeCta.classList.add("btn-secondary");
+        dashboardUpgradeCta.style.display = "inline-flex";
+      } else {
+        dashboardUpgradeCta.textContent = "Upgrade Plan";
+        dashboardUpgradeCta.classList.remove("btn-secondary");
+        dashboardUpgradeCta.classList.add("btn-primary");
+        dashboardUpgradeCta.style.display = "inline-flex";
+      }
     }
 
     // Usage data (storage, documents, etc.)
