@@ -1049,12 +1049,18 @@ function initSharingUI() {
         tabUserContent.style.display = "none";
     });
 
-    // Modal display
-    shareBtn.addEventListener("click", async () => {
+    // Helper to open modal and pre-select a tab
+    async function openShareModal(tabType = 'user') {
         shareUserEmail.value = "";
         document.getElementById("shareUserError").style.display = "none";
         document.getElementById("shareGroupError").style.display = "none";
         shareModal.classList.add("show");
+
+        if (tabType === 'user') {
+            tabUserBtn.click();
+        } else {
+            tabGroupBtn.click();
+        }
 
         // Populating dropdown groups
         shareGroupSelect.innerHTML = '<option value="" disabled selected>Loading groups...</option>';
@@ -1093,7 +1099,28 @@ function initSharingUI() {
                 shareGroupSelect.dispatchEvent(new Event("syncCustom"));
             }
         }
+    }
+
+    // Modal display
+    shareBtn.addEventListener("click", async () => {
+        await openShareModal('user');
     });
+
+    // Empty state link triggers
+    const emptyShareUserLink = document.getElementById("emptyShareUserLink");
+    const emptyShareGroupLink = document.getElementById("emptyShareGroupLink");
+
+    if (emptyShareUserLink) {
+        emptyShareUserLink.addEventListener("click", () => {
+            openShareModal('user');
+        });
+    }
+
+    if (emptyShareGroupLink) {
+        emptyShareGroupLink.addEventListener("click", () => {
+            openShareModal('group');
+        });
+    }
 
     // Close buttons
     document.getElementById("shareUserCancelBtn").addEventListener("click", () => {
@@ -1182,7 +1209,7 @@ async function loadSharingInfo(docId) {
         const noDirect = document.getElementById("noDirectShares");
         directList.innerHTML = "";
         if (userShares.length === 0) {
-            noDirect.style.display = "block";
+            noDirect.style.display = "flex";
         } else {
             noDirect.style.display = "none";
             userShares.forEach(item => {
@@ -1196,16 +1223,12 @@ async function loadSharingInfo(docId) {
                 name.className = "member-row-name";
                 name.textContent = item.sharedWithName || "Unknown User";
 
-                const badge = document.createElement("span");
-                badge.className = "badge badge-success";
-                badge.textContent = item.status;
-
-                main.append(name, badge);
+                main.append(name);
                 row.appendChild(main);
 
                 const btn = document.createElement("button");
                 btn.type = "button";
-                btn.className = "btn btn-danger btn-sm";
+                btn.className = "btn-revoke";
                 btn.textContent = "Revoke";
                 btn.addEventListener("click", () => handleRevokeDirect(item.shareId));
                 row.appendChild(btn);
@@ -1219,7 +1242,7 @@ async function loadSharingInfo(docId) {
         const noGroup = document.getElementById("noGroupShares");
         groupList.innerHTML = "";
         if (groupShares.length === 0) {
-            noGroup.style.display = "block";
+            noGroup.style.display = "flex";
         } else {
             noGroup.style.display = "none";
             groupShares.forEach(item => {
@@ -1233,16 +1256,12 @@ async function loadSharingInfo(docId) {
                 name.className = "member-row-name";
                 name.textContent = groupMap[item.groupId] || `Group (ID: ${item.groupId})`;
 
-                const badge = document.createElement("span");
-                badge.className = "badge badge-success";
-                badge.textContent = item.status;
-
-                main.append(name, badge);
+                main.append(name);
                 row.appendChild(main);
 
                 const btn = document.createElement("button");
                 btn.type = "button";
-                btn.className = "btn btn-danger btn-sm";
+                btn.className = "btn-revoke";
                 btn.textContent = "Revoke";
                 btn.addEventListener("click", () => handleRevokeGroup(item.shareId));
                 row.appendChild(btn);

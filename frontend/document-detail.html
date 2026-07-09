@@ -987,14 +987,21 @@
                   <div class="share-block">
                     <h3>Direct user shares</h3>
                     <div id="directSharesList" class="member-list"></div>
-                    <p id="noDirectShares" class="helper-text" style="display:none;">Not shared with any users directly.
-                    </p>
+                    <div id="noDirectShares" class="shares-empty-state" style="display:none;">
+                      <span class="shares-empty-icon">🔒</span>
+                      <p class="shares-empty-text">Not shared with any users directly.</p>
+                      <button type="button" class="shares-empty-action-link" id="emptyShareUserLink">+ Share with someone</button>
+                    </div>
                   </div>
 
                   <div class="share-block">
                     <h3>Group shares</h3>
                     <div id="groupSharesList" class="member-list"></div>
-                    <p id="noGroupShares" class="helper-text" style="display:none;">Not shared in any groups.</p>
+                    <div id="noGroupShares" class="shares-empty-state" style="display:none;">
+                      <span class="shares-empty-icon">👥</span>
+                      <p class="shares-empty-text">Not shared in any groups.</p>
+                      <button type="button" class="shares-empty-action-link" id="emptyShareGroupLink">+ Share with group</button>
+                    </div>
                   </div>
                 </section>
               </div>
