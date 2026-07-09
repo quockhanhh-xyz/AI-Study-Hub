@@ -106,8 +106,15 @@ a {
 
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .main-content {
@@ -604,11 +611,13 @@ textarea.success {
 }
 
 .badge-tier-free {
-  color: #334155 !important; /* High contrast dark grey */
+  color: #334155 !important;
+  /* High contrast dark grey */
 }
 
 .badge-tier-premium {
-  color: #b45309 !important; /* High contrast premium gold/amber */
+  color: #b45309 !important;
+  /* High contrast premium gold/amber */
 }
 
 .badge-tier-ultra {
@@ -2242,7 +2251,8 @@ textarea.success {
   box-shadow: 0 2px 8px rgba(23, 32, 51, 0.02);
   cursor: pointer;
   user-select: none;
-  height: 44px; /* match normal input height */
+  height: 44px;
+  /* match normal input height */
 }
 
 .custom-select-trigger:hover {
@@ -2807,10 +2817,18 @@ svg {
 }
 
 .quota-progress-bar {
-  background-color: var(--primary);
+  background-color: var(--success);
   height: 100%;
   width: 0%;
-  transition: width 0.4s ease-out;
+  transition: width 0.4s ease-out, background-color 0.2s ease-out;
+}
+
+.quota-progress-bar.quota-critical {
+  background-color: var(--danger);
+}
+
+.stat-value-danger {
+  color: var(--danger) !important;
 }
 
 .quick-links-grid {
@@ -2900,14 +2918,18 @@ svg {
 #documentTrashGrid {
   display: grid !important;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px; /* Establishes a consistent 20px grid spacing horizontally and vertically between cards */
-  margin-bottom: 24px; /* Creates explicit separation below each distinct trash section */
+  gap: 20px;
+  /* Establishes a consistent 20px grid spacing horizontally and vertically between cards */
+  margin-bottom: 24px;
+  /* Creates explicit separation below each distinct trash section */
 }
 
 .trash-actions {
   display: flex;
-  gap: 10px; /* Applies a 10px spacing threshold between the Restore and Permanent Delete buttons */
-  margin-top: 12px; /* Pushes the action button group safely away from the upper metadata text block */
+  gap: 10px;
+  /* Applies a 10px spacing threshold between the Restore and Permanent Delete buttons */
+  margin-top: 12px;
+  /* Pushes the action button group safely away from the upper metadata text block */
 }
 
 /* ===== STEP 8: COMMUNITY LIBRARY (FE2) ===== */
@@ -3025,8 +3047,15 @@ svg {
 }
 
 @keyframes pulse-badge {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 /* Enforce Full-Width layout on Trash panel */
@@ -3161,6 +3190,7 @@ svg {
   cursor: pointer;
   font-family: 'Inter', Arial, sans-serif;
 }
+
 .btn-back:hover {
   border-color: var(--primary);
   color: var(--primary);

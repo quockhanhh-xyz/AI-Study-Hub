@@ -253,8 +253,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       if (quotaProgressContainer && limitBytes > 0) {
         const percent = Math.min((usedBytes / limitBytes) * 100, 100);
+        const isCritical = percent >= 90;
         const bar = document.getElementById("usageProgressBar");
-        if (bar) bar.style.width = `${percent}%`;
+        if (bar) {
+          bar.style.width = `${percent}%`;
+          bar.classList.toggle("quota-critical", isCritical);
+        }
+        if (usageRemainingElement) {
+          usageRemainingElement.classList.toggle("stat-value-danger", isCritical);
+        }
         quotaProgressContainer.style.display = "block";
       } else if (quotaProgressContainer) {
         quotaProgressContainer.style.display = "none";
