@@ -304,6 +304,8 @@
     if (verifyOtpForm) verifyOtpForm.addEventListener("submit", handleVerifyOtp);
     if (resendOtpButton) resendOtpButton.addEventListener("click", handleResendOtp);
     if (loginForm) loginForm.addEventListener("submit", handleLogin);
+
+    setupPasswordToggles();
   });
 
 
