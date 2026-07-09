@@ -490,6 +490,14 @@ textarea:focus {
   background-color: var(--background);
 }
 
+/* Hide the native browser password-reveal/clear icons (Edge/IE) so they
+   don't visually collide with our own custom eye-toggle button. */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+::-ms-rev
 
 /* Input error state */
 input.error,
