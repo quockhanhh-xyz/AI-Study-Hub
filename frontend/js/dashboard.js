@@ -37,8 +37,17 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   if (userNameElement && currentUser.fullName) {
     const greeting = getTimeBasedGreeting();
-    userNameElement.innerHTML =
-      `${greeting.text}, ${currentUser.fullName}! <span style="display:inline-flex;vertical-align:-4px;">${greeting.icon}</span>`;
+
+    // Security: fullName is user-supplied data (entered at registration),
+    // so it must go through textContent (auto-escaped), never innerHTML.
+    // Only the icon markup below is a trusted, hardcoded constant string.
+    userNameElement.textContent = `${greeting.text}, ${currentUser.fullName}! `;
+
+    const iconWrapper = document.createElement("span");
+    iconWrapper.style.display = "inline-flex";
+    iconWrapper.style.verticalAlign = "-4px";
+    iconWrapper.innerHTML = greeting.icon;
+    userNameElement.appendChild(iconWrapper);
   }
 
   // Stat elements

@@ -497,8 +497,6 @@ input[type="password"]::-ms-clear {
   display: none;
 }
 
-::-ms-rev
-
 /* Input error state */
 input.error,
 textarea.error {
