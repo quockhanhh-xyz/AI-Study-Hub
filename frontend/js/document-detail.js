@@ -744,8 +744,10 @@ async function handleDelete() {
 async function handlePublish() {
     const publishBtn = document.getElementById("publishBtn");
     publishBtn.disabled = true;
-    const oldText = publishBtn.textContent;
-    publishBtn.textContent = "Publishing...";
+    const btnText = publishBtn.querySelector(".btn-text");
+    const oldText = btnText ? btnText.textContent : publishBtn.textContent;
+    if (btnText) btnText.textContent = "Publishing...";
+    else publishBtn.textContent = "Publishing...";
 
     try {
         const res = await publishDocument(currentDocumentId);
@@ -755,15 +757,18 @@ async function handlePublish() {
         window.showToast(err.message || "Failed to publish document.", "error");
     } finally {
         publishBtn.disabled = false;
-        publishBtn.textContent = oldText;
+        if (btnText) btnText.textContent = oldText;
+        else publishBtn.textContent = oldText;
     }
 }
 
 async function handleUnpublish() {
     const unpublishBtn = document.getElementById("unpublishBtn");
     unpublishBtn.disabled = true;
-    const oldText = unpublishBtn.textContent;
-    unpublishBtn.textContent = "Unpublishing...";
+    const btnText = unpublishBtn.querySelector(".btn-text");
+    const oldText = btnText ? btnText.textContent : unpublishBtn.textContent;
+    if (btnText) btnText.textContent = "Unpublishing...";
+    else unpublishBtn.textContent = "Unpublishing...";
 
     try {
         const res = await unpublishDocument(currentDocumentId);
@@ -773,7 +778,8 @@ async function handleUnpublish() {
         window.showToast(err.message || "Failed to unpublish document.", "error");
     } finally {
         unpublishBtn.disabled = false;
-        unpublishBtn.textContent = oldText;
+        if (btnText) btnText.textContent = oldText;
+        else unpublishBtn.textContent = oldText;
     }
 }
 
