@@ -30,8 +30,29 @@
 
                     <div class="form-group">
                         <label for="loginPassword">Password</label>
-                        <input id="loginPassword" name="password" type="password" placeholder="Enter your password"
-                            required />
+                        <div class="password-field">
+                            <input id="loginPassword" name="password" type="password" placeholder="Enter your password"
+                                required />
+                            <button type="button" class="password-toggle-btn" data-target="loginPassword"
+                                aria-label="Show password">
+                                <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    height="18" width="18" aria-hidden="true" focusable="false">
+                                    <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M2.25 12S6 4.5 12 4.5s9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12Z">
+                                    </path>
+                                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"></circle>
+                                </svg>
+                                <svg class="icon-eye-off" style="display: none;" xmlns="http://www.w3.org/2000/svg"
+                                    fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true"
+                                    focusable="false">
+                                    <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M3 3l18 18M10.6 10.6a3 3 0 0 0 4.24 4.24M6.5 6.7C4.2 8.2 2.25 12 2.25 12S6 19.5 12 19.5c1.85 0 3.47-.42 4.86-1.06M9.9 4.7A10.6 10.6 0 0 1 12 4.5c6 0 9.75 7.5 9.75 7.5a17.6 17.6 0 0 1-2.44 3.42">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn btn-primary">

@@ -261,6 +261,31 @@
   }
 
   // ─────────────────────────────────────────────────────────────
+  // SHOW / HIDE PASSWORD
+  // ─────────────────────────────────────────────────────────────
+
+  function setupPasswordToggles() {
+    const toggles = document.querySelectorAll(".password-toggle-btn");
+    toggles.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const targetId = btn.dataset.target;
+        const input = document.getElementById(targetId);
+        if (!input) return;
+
+        const willShow = input.type === "password";
+        input.type = willShow ? "text" : "password";
+
+        const eyeIcon = btn.querySelector(".icon-eye");
+        const eyeOffIcon = btn.querySelector(".icon-eye-off");
+        if (eyeIcon) eyeIcon.style.display = willShow ? "none" : "block";
+        if (eyeOffIcon) eyeOffIcon.style.display = willShow ? "block" : "none";
+
+        btn.setAttribute("aria-label", willShow ? "Hide password" : "Show password");
+      });
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────
   // EVENT LISTENERS
   // ─────────────────────────────────────────────────────────────
 
@@ -281,52 +306,53 @@
     if (loginForm) loginForm.addEventListener("submit", handleLogin);
   });
 
+
 })();
 
 // ─────────────────────────────────────────────────────────────
-  // AUTH REFRESH HELPER
-  // ─────────────────────────────────────────────────────────────
+// AUTH REFRESH HELPER
+// ─────────────────────────────────────────────────────────────
 
-   /**
-   * Re-fetches the current user from backend and updates localStorage.
-   * Refresh current user after payment or tier changes.
-   * @returns {Promise<Object|null>} Updated user data or null on failure.
-   */
-  async function refreshCurrentUser() {
-    try {
-      const result = await get("/api/auth/me", { skipUnauthorizedRedirect: true });
-      if (result && result.data) {
-        localStorage.setItem("currentUser", JSON.stringify(result.data));
-        return result.data;
-      }
-      return null;
-    } catch (error) {
-      console.warn("Failed to refresh current user session:", error);
-      return null;
+/**
+* Re-fetches the current user from backend and updates localStorage.
+* Refresh current user after payment or tier changes.
+* @returns {Promise<Object|null>} Updated user data or null on failure.
+*/
+async function refreshCurrentUser() {
+  try {
+    const result = await get("/api/auth/me", { skipUnauthorizedRedirect: true });
+    if (result && result.data) {
+      localStorage.setItem("currentUser", JSON.stringify(result.data));
+      return result.data;
     }
+    return null;
+  } catch (error) {
+    console.warn("Failed to refresh current user session:", error);
+    return null;
   }
+}
 
-  // Expose globally so payment flow and other page scripts can call it
-  window.refreshCurrentUser = refreshCurrentUser;
+// Expose globally so payment flow and other page scripts can call it
+window.refreshCurrentUser = refreshCurrentUser;
 
-  // ─────────────────────────────────────────────────────────────
-  // AUTH GUARD HELPER (Step 14)
-  // ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// AUTH GUARD HELPER (Step 14)
+// ─────────────────────────────────────────────────────────────
 
-  /**
-   * Client-side auth guard.
-   * Checks if user is logged in via localStorage. If not, redirects to login page.
-   * Note: The true source of truth is the HttpOnly cookie, so API calls will still
-   * return 401 and trigger a redirect if the cookie is expired.
-   */
-  function requireAuth() {
-    const currentUser = localStorage.getItem("currentUser");
-    if (!currentUser) {
-      const currentUrl = encodeURIComponent(window.location.pathname + window.location.search);
-      window.location.href = `login.html?redirect=${currentUrl}`;
-      return false;
-    }
-    return true;
+/**
+ * Client-side auth guard.
+ * Checks if user is logged in via localStorage. If not, redirects to login page.
+ * Note: The true source of truth is the HttpOnly cookie, so API calls will still
+ * return 401 and trigger a redirect if the cookie is expired.
+ */
+function requireAuth() {
+  const currentUser = localStorage.getItem("currentUser");
+  if (!currentUser) {
+    const currentUrl = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.href = `login.html?redirect=${currentUrl}`;
+    return false;
   }
+  return true;
+}
 
-  window.requireAuth = requireAuth;
+window.requireAuth = requireAuth;
