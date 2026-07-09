@@ -80,6 +80,10 @@ a {
   transition: none !important;
 }
 
+.sidebar.no-transition + .main-content {
+  transition: none !important;
+}
+
 /* Classes that handle state collapse. */
 .sidebar.collapsed {
   width: 80px;
