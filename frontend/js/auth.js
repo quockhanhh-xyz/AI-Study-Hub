@@ -277,24 +277,86 @@
 
     if (registerForm) registerForm.addEventListener("submit", handleRegister);
     if (verifyOtpForm) verifyOtpForm.addEventListener("submit", handleVerifyOtp);
-    if (resendOtpButton) resendOtpButton.addEventListener("click", handleResendOtp);
+    if (resendOtpButton) {
+      resendOtpButton.addEventListener("click", handleResendOtp);
+      startResendCooldown(resendOtpButton);
+    }
     if (loginForm) loginForm.addEventListener("submit", handleLogin);
 
     // Toggle Password Visibility
+    const EYE_OPEN = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="eyeGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF7E00"/><stop offset="100%" stop-color="#FFC107"/></linearGradient></defs><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="url(#eyeGradient)"/></svg>`;
+    const EYE_CLOSED = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="eyeGradientClosed" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF7E00"/><stop offset="100%" stop-color="#FFC107"/></linearGradient></defs><path d="M11.83 9L15 12.16V12a3 3 0 0 0-3-3h-.17zm-4.3.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm14.47 2.2c-.34 1.15-1 2.19-1.8 3.03l-1.46-1.46c.55-.66 1.01-1.42 1.33-2.26-1.5-3.8-5.26-6.5-9.67-6.5-.94 0-1.85.12-2.72.35L5.78 3.2 4.37 4.61l15.01 15.02 1.41-1.41-2.79-2.79v-.01zM2.81 7.28C1.86 8.65 1.25 10.26 1 12c1.73 4.39 6 7.5 11 7.5 1.3 0 2.54-.2 3.71-.56l-1.63-1.63C13.41 17.75 12.72 17.9 12 17.9c-2.76 0-5-2.24-5-5 0-.72.15-1.41.41-2.08L4.22 7.63c-.5.42-.99.86-1.41 1.35v-.01z" fill="url(#eyeGradientClosed)"/></svg>`;
+
     document.querySelectorAll(".btn-toggle-password").forEach(function (btn) {
+      // Set initial icon
+      btn.innerHTML = EYE_CLOSED;
+      
       btn.addEventListener("click", function () {
         const input = this.previousElementSibling;
         if (input && input.tagName === "INPUT") {
           if (input.type === "password") {
             input.type = "text";
-            this.textContent = "🔒";
+            this.innerHTML = EYE_OPEN;
           } else {
             input.type = "password";
-            this.textContent = "👁️";
+            this.innerHTML = EYE_CLOSED;
           }
         }
       });
     });
+    // OTP Input Logic (6-box)
+    const otpInputs = document.querySelectorAll(".otp-input");
+    const hiddenOtpInput = document.getElementById("otp");
+
+    if (otpInputs.length > 0 && hiddenOtpInput) {
+      const updateHiddenOtp = () => {
+        hiddenOtpInput.value = Array.from(otpInputs).map(input => input.value).join("");
+      };
+
+      otpInputs.forEach((input, index) => {
+        // Handle paste
+        if (index === 0) {
+          input.addEventListener("paste", (e) => {
+            e.preventDefault();
+            const pasteData = e.clipboardData.getData("text").trim().slice(0, 6);
+            if (/^\d+$/.test(pasteData)) {
+              pasteData.split("").forEach((char, i) => {
+                if (otpInputs[i]) {
+                  otpInputs[i].value = char;
+                }
+              });
+              updateHiddenOtp();
+              const focusIndex = Math.min(pasteData.length, 5);
+              otpInputs[focusIndex].focus();
+            }
+          });
+        }
+
+        input.addEventListener("input", (e) => {
+          const val = e.target.value;
+          if (/[^0-9]/.test(val)) {
+            e.target.value = val.replace(/[^0-9]/g, "");
+            return;
+          }
+          updateHiddenOtp();
+          if (val !== "" && index < otpInputs.length - 1) {
+            otpInputs[index + 1].focus();
+          }
+        });
+
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Backspace" && !e.target.value && index > 0) {
+            otpInputs[index - 1].focus();
+            otpInputs[index - 1].value = "";
+            updateHiddenOtp();
+          } else if (e.key === "ArrowLeft" && index > 0) {
+            otpInputs[index - 1].focus();
+          } else if (e.key === "ArrowRight" && index < otpInputs.length - 1) {
+            otpInputs[index + 1].focus();
+          }
+        });
+      });
+    }
   });
 
 })();
