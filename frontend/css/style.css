@@ -71,7 +71,7 @@ a {
   padding: 24px 16px;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Suppress transition on initial page load to prevent sidebar flash/jitter */
@@ -86,22 +86,53 @@ a {
   padding: 24px 12px;
 }
 
-.sidebar.collapsed .logo {
-  justify-content: center;
-  margin-left: 0;
+/* Stable logo block transition without layout jump */
+.logo-text {
+  display: inline-block;
+  opacity: 1;
+  max-width: 160px;
+  transition: opacity 0.2s ease, max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  white-space: nowrap;
 }
 
-.sidebar.collapsed .logo-text,
+.sidebar.collapsed .logo-text {
+  opacity: 0;
+  max-width: 0;
+  pointer-events: none;
+}
+
+.sidebar.collapsed .logo {
+  margin-left: 4px;
+}
+
+/* Smooth nav text transitions */
+.nav-text,
+.logout-text {
+  display: inline-block;
+  opacity: 1;
+  max-width: 150px;
+  transition: opacity 0.2s ease, max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 .sidebar.collapsed .nav-text,
-.sidebar.collapsed .sidebar-divider,
 .sidebar.collapsed .logout-text {
-  display: none;
-  /* Hide all text, keep only the icons.*/
+  opacity: 0;
+  max-width: 0;
+  pointer-events: none;
+}
+
+.sidebar.collapsed .sidebar-divider {
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
 .sidebar.collapsed .nav-link {
   justify-content: center;
   padding: 12px;
+  gap: 0;
 }
 
 
