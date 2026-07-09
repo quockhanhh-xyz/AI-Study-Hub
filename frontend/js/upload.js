@@ -321,10 +321,20 @@ function hideProgress() {
   progressFill.style.width = "0%";
 }
 
+// Auto-fill Title from the selected file's name, but only if the user
+// hasn't already typed something into the Title field themselves.
+function autofillTitleFromFile(file) {
+  if (!file || !titleInput) return;
+  if (titleInput.value.trim()) return;
+  const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+  titleInput.value = nameWithoutExt;
+}
+
 // File input change
 fileInput.addEventListener("change", () => {
   const file = fileInput.files[0] || null;
   updateDropZone(file);
+  autofillTitleFromFile(file);
   hideMessage();
 });
 
@@ -358,6 +368,7 @@ dropZone.addEventListener("drop", (e) => {
     dt.items.add(file);
     fileInput.files = dt.files;
     updateDropZone(file);
+    autofillTitleFromFile(file);
     hideMessage();
   }
 });
