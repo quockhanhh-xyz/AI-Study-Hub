@@ -88,14 +88,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
     const date = new Date(dateStr);
     if (Number.isNaN(date.getTime())) return "-";
-<<<<<<< HEAD
     return date.toLocaleString("vi-VN", {
       year: "numeric", month: "short", day: "2-digit",
       hour: "2-digit", minute: "2-digit"
     });
-=======
-    return date.toLocaleString("vi-VN");
->>>>>>> origin/develop
   }
 
   function updateTierUI(tier) {
