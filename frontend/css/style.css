@@ -3503,15 +3503,47 @@ svg {
 
 .ai-tools-section-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
   margin-bottom: 8px;
+  width: 100%;
 }
 
 .ai-tools-section-header h3 {
   margin: 0;
   font-size: 16px;
+}
+
+.ai-tools-summary-box {
+  position: relative;
+  background: var(--surface-soft);
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.btn-copy-summary {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-copy-summary:hover {
+  background: var(--surface-soft);
+  color: var(--primary);
+  border-color: var(--primary);
 }
 
 .ai-tools-quota-note {

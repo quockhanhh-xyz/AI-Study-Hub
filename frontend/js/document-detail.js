@@ -2014,6 +2014,20 @@ function initAiToolsHandlers() {
     if (summaryBtn) summaryBtn.addEventListener("click", handleGenerateSummary);
     if (flashcardBtn) flashcardBtn.addEventListener("click", handleGenerateFlashcardSet);
     if (quizBtn) quizBtn.addEventListener("click", handleGenerateQuizSet);
+
+    const copySummaryBtn = document.getElementById("copySummaryBtn");
+    if (copySummaryBtn) {
+        copySummaryBtn.addEventListener("click", () => {
+            const body = document.getElementById("summaryTextBody");
+            if (body && navigator.clipboard) {
+                navigator.clipboard.writeText(body.innerText).then(() => {
+                    if (window.showToast) window.showToast("Copied to clipboard!", "success");
+                }).catch(err => {
+                    if (window.showToast) window.showToast("Failed to copy to clipboard", "error");
+                });
+            }
+        });
+    }
 }
 
 document.addEventListener("DOMContentLoaded", initAiToolsHandlers);
