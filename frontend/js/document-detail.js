@@ -1989,14 +1989,19 @@ function renderSetList(listEl, emptyEl, sets, detailUrlPrefix, labelFn) {
         const link = document.createElement("a");
         const setId = set.flashcardSetId || set.quizSetId;
         link.href = `${detailUrlPrefix}${setId}`;
-        link.textContent = labelFn(set);
+        link.className = "ai-tools-set-link";
+
+        const titleSpan = document.createElement("span");
+        titleSpan.className = "ai-tools-set-title";
+        titleSpan.textContent = labelFn(set);
 
         const meta = document.createElement("span");
         meta.className = "ai-tools-set-meta";
         meta.textContent = formatGeneratedAt(set.createdAt);
 
+        link.appendChild(titleSpan);
+        link.appendChild(meta);
         li.appendChild(link);
-        li.appendChild(meta);
         listEl.appendChild(li);
     });
 }

@@ -1173,18 +1173,28 @@
                       <div class="ai-tools-section-header">
                         <h3>AI Quiz</h3>
                       </div>
-                      <div class="ai-tools-generate-row">
-                        <label for="quizCountInput">Number of questions</label>
-                        <input type="number" id="quizCountInput" min="3" placeholder="Default" />
-                        <label for="quizDifficultySelect">Difficulty</label>
-                        <select id="quizDifficultySelect">
-                          <option value="MIXED">Mixed</option>
-                          <option value="EASY">Easy</option>
-                          <option value="MEDIUM">Medium</option>
-                          <option value="HARD">Hard</option>
-                        </select>
-                        <button type="button" class="btn btn-secondary btn-sm" id="quizGenerateBtn" disabled>Generate
-                          Quiz</button>
+                      <div class="ai-tools-form-stack">
+                        <div class="ai-tools-form-row">
+                          <div class="ai-tools-form-group">
+                            <label for="quizCountInput">Number of questions</label>
+                            <select id="quizCountInput">
+                              <option value="5">5</option>
+                              <option value="10" selected>10</option>
+                              <option value="15">15</option>
+                              <option value="20">20</option>
+                            </select>
+                          </div>
+                          <div class="ai-tools-form-group">
+                            <label for="quizDifficultySelect">Difficulty</label>
+                            <select id="quizDifficultySelect">
+                              <option value="MIXED">Mixed</option>
+                              <option value="EASY">Easy</option>
+                              <option value="MEDIUM">Medium</option>
+                              <option value="HARD">Hard</option>
+                            </select>
+                          </div>
+                        </div>
+                        <button type="button" class="btn btn-primary" style="width: 100%; padding: 10px;" id="quizGenerateBtn" disabled>Generate Quiz</button>
                       </div>
                       <div class="ai-tools-error" id="quizError" style="display:none;"></div>
 
