@@ -25,6 +25,7 @@ public class SharingServiceImpl implements SharingService {
     private final GroupDocumentShareRepository groupDocumentShareRepository;
     private final TierPolicyService tierPolicyService;
     private final UsageService usageService;
+    private final com.demo.ai_study_hub.repository.DocumentFavoriteRepository documentFavoriteRepository;
 
     @Override
     @Transactional
@@ -88,7 +89,20 @@ public class SharingServiceImpl implements SharingService {
         User user = getUser(email);
         List<DocumentShare> activeShares = documentShareRepository.findActiveSharesWithMe(user);
         return activeShares.stream()
-                .map(share -> mapToDirectResponse(share, false))
+                .map(share -> {
+                    DocumentShareResponse response = mapToDirectResponse(share, false);
+                    // Scoped enrichment here only — mapToDirectResponse is
+                    // shared with getDocumentShares() (owner viewing their
+                    // own share list) where "favoritedByMe" would mean
+                    // something different (the owner's own favorite state,
+                    // not the recipient's), so it's set here explicitly
+                    // for the recipient's own view instead of inside the
+                    // shared mapper.
+                    response.setFavoritedByMe(
+                            documentFavoriteRepository.existsByUser_UserIdAndDocument_DocumentId(
+                                    user.getUserId(), response.getDocumentId()));
+                    return response;
+                })
                 .collect(Collectors.toList());
     }
 
