@@ -35,9 +35,9 @@ public class TierPolicyService {
             3,                          // maxContextChunks
             500,                        // maxOutputTokens
             null,                       // aiModel (resolved dynamically, see getModelForTier)
-            1,                          // summaryGenerationsPerDay
-            1,                          // flashcardSetsPerDay
-            1,                          // quizSetsPerDay
+            3,                          // summaryGenerationsPerDay
+            2,                          // flashcardSetsPerDay
+            2,                          // quizSetsPerDay
             5                           // itemsPerSet
     );
 
@@ -57,9 +57,9 @@ public class TierPolicyService {
             8,                           // maxContextChunks
             1500,                        // maxOutputTokens
             null,                       // aiModel (resolved dynamically)
-            10,                          // summaryGenerationsPerDay
-            10,                          // flashcardSetsPerDay
-            10,                          // quizSetsPerDay
+            20,                          // summaryGenerationsPerDay
+            15,                          // flashcardSetsPerDay
+            15,                          // quizSetsPerDay
             15                           // itemsPerSet
     );
 
@@ -80,8 +80,8 @@ public class TierPolicyService {
             3000,                        // maxOutputTokens
             null,                       // aiModel (resolved dynamically)
             50,                          // summaryGenerationsPerDay
-            50,                          // flashcardSetsPerDay
-            50,                          // quizSetsPerDay
+            40,                          // flashcardSetsPerDay
+            40,                          // quizSetsPerDay
             30                           // itemsPerSet
     );
 
