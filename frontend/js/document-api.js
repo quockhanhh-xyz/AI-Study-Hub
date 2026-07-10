@@ -155,4 +155,57 @@ function downloadDocument(documentOrId) {
   window.location.href = `${API_BASE_URL}/api/documents/${id}/download`;
 }
 
+/* ==========================================================================
+   FAVORITE / SAVED DOCUMENTS
+   ========================================================================== */
+
+/**
+ * Marks a document as favorite for the current user.
+ * @param {number|string} id - The document ID to favorite.
+ * @returns {Promise<Object>} Server confirmation payload.
+ */
+function favoriteDocument(id) {
+  if (!id) throw new Error("favoriteDocument: id is required");
+  return post(`/api/documents/${id}/favorite`);
+}
+
+/**
+ * Removes a document from the current user's favorites.
+ * @param {number|string} id - The document ID to unfavorite.
+ * @returns {Promise<Object>} Server confirmation payload.
+ */
+function unfavoriteDocument(id) {
+  if (!id) throw new Error("unfavoriteDocument: id is required");
+  return del(`/api/documents/${id}/favorite`);
+}
+
+/**
+ * Retrieves the list of documents the current user has favorited.
+ * @returns {Promise<Object>} List of favorited documents.
+ */
+function getFavoriteDocuments() {
+  return get("/api/documents/favorites");
+}
+
+/**
+ * Normalizes favorite state across document DTOs.
+ * Backend uses `favoritedByMe`; `isFavorited` is kept only as legacy fallback.
+ * @param {Object} document - Any document DTO returned by the backend.
+ * @returns {boolean} Whether the current user favorited this document.
+ */
+function isDocumentFavorited(document) {
+  return !!(document && (document.favoritedByMe ?? document.isFavorited));
+}
+
+/**
+ * Updates favorite state on the FE object without drifting from backend naming.
+ * @param {Object} document - Any document DTO returned by the backend.
+ * @param {boolean} value - New favorite state.
+ */
+function setDocumentFavorited(document, value) {
+  if (!document) return;
+  document.favoritedByMe = !!value;
+  document.isFavorited = !!value;
+}
+
 // End of document API helper file.

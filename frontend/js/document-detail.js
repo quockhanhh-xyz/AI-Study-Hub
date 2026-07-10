@@ -223,6 +223,20 @@ function renderDocument(doc) {
         }
     }
 
+    // ── Favorite star button (Step: Favorite/Saved Documents) ──
+    const favoriteBtn = document.getElementById("favoriteDetailBtn");
+    if (favoriteBtn) {
+        if (currentIsAuthenticated) {
+            favoriteBtn.style.display = "inline-flex";
+            const favorited = isDocumentFavorited(doc);
+            favoriteBtn.classList.toggle("favorited", favorited);
+            favoriteBtn.title = favorited ? "Remove from favorites" : "Add to favorites";
+            favoriteBtn.onclick = () => handleToggleFavoriteDetail(doc);
+        } else {
+            favoriteBtn.style.display = "none";
+        }
+    }
+
     // Pre-fill edit form
     const editTitle = document.getElementById("editTitle");
     const editDesc = document.getElementById("editDescription");
@@ -738,6 +752,38 @@ async function handleDelete() {
         }, 1200);
     } catch (err) {
         window.showToast(err.message || "Failed to delete document.", "error");
+    }
+}
+
+async function handleToggleFavoriteDetail(doc) {
+    const btn = document.getElementById("favoriteDetailBtn");
+    if (!btn) return;
+    btn.disabled = true;
+    const wasFavorited = isDocumentFavorited(doc);
+    const id = doc.documentId || doc.id || currentDocumentId;
+
+    try {
+        if (wasFavorited) {
+            await unfavoriteDocument(id);
+            setDocumentFavorited(doc, false);
+            btn.classList.remove("favorited");
+            btn.title = "Add to favorites";
+            window.showToast("Removed from favorites.", "success");
+        } else {
+            await favoriteDocument(id);
+            setDocumentFavorited(doc, true);
+            btn.classList.add("favorited");
+            btn.title = "Remove from favorites";
+            window.showToast("Added to favorites.", "success");
+        }
+    } catch (err) {
+        if (err && err.status === 403) {
+            window.showToast("You do not have access to this document.", "error");
+        } else {
+            window.showToast(err.message || "Failed to update favorite.", "error");
+        }
+    } finally {
+        btn.disabled = false;
     }
 }
 
