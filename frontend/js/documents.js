@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const fileTypeFilter = document.getElementById("fileTypeFilter");
   const folderFilter = document.getElementById("folderFilter");
   const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+  const favoritesFilterBtn = document.getElementById("favoritesFilterBtn");
 
   // Document list elements
   const documentLoader = document.getElementById("documentLoader");
@@ -30,6 +31,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const emptyUploadBtn = document.getElementById("emptyUploadBtn");
 
   let userFolders = [];
+  let showFavoritesOnly = false;
 
   function goToUpload() {
     window.location.href = "upload.html";
@@ -95,6 +97,37 @@ document.addEventListener("DOMContentLoaded", async function () {
     return path.join(" / ");
   }
 
+  async function handleToggleFavorite(documentItem, btn) {
+    btn.disabled = true;
+    const wasFavorited = documentItem.isFavorited;
+    try {
+      if (wasFavorited) {
+        await unfavoriteDocument(documentItem.documentId);
+        documentItem.isFavorited = false;
+        btn.classList.remove("favorited");
+        btn.title = "Add to favorites";
+        showToast("Removed from favorites.", "success");
+        if (showFavoritesOnly) {
+          await loadDocuments();
+        }
+      } else {
+        await favoriteDocument(documentItem.documentId);
+        documentItem.isFavorited = true;
+        btn.classList.add("favorited");
+        btn.title = "Remove from favorites";
+        showToast("Added to favorites.", "success");
+      }
+    } catch (error) {
+      if (error && error.status === 403) {
+        showToast("You do not have access to this document.", "error");
+      } else {
+        showToast(error.message || "Failed to update favorite.", "error");
+      }
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
   function createDocumentCard(documentItem) {
     const card = document.createElement("article");
     card.className = "document-card";
@@ -119,6 +152,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     titleLink.style.color = "inherit";
     title.appendChild(titleLink);
     header.appendChild(title);
+
+    const favoriteBtn = document.createElement("button");
+    favoriteBtn.type = "button";
+    favoriteBtn.className = "favorite-star-btn" + (documentItem.isFavorited ? " favorited" : "");
+    favoriteBtn.title = documentItem.isFavorited ? "Remove from favorites" : "Add to favorites";
+    favoriteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>';
+    favoriteBtn.addEventListener("click", async function (e) {
+      e.stopPropagation();
+      e.preventDefault();
+      await handleToggleFavorite(documentItem, favoriteBtn);
+    });
+    header.appendChild(favoriteBtn);
 
     const vis = documentItem.visibility || "PRIVATE";
     if (vis !== "PRIVATE") {
@@ -325,7 +370,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     const isFiltering = params.keyword || params.subjectId || params.fileType || params.folderId;
 
     try {
-      const result = await searchDocuments(params);
+      const result = showFavoritesOnly
+        ? await getFavoriteDocuments()
+        : await searchDocuments(params);
       const documents = Array.isArray(result.data) ? result.data : [];
       await resolveFoldersForDocuments(documents);
 
@@ -421,6 +468,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   if (clearFiltersBtn) {
     clearFiltersBtn.addEventListener("click", async function () {
+      showFavoritesOnly = false;
+      if (favoritesFilterBtn) favoritesFilterBtn.classList.remove("active");
       if (searchInput) searchInput.value = "";
       if (subjectFilter) {
         subjectFilter.value = "";
@@ -434,6 +483,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         folderFilter.value = "";
         folderFilter.dispatchEvent(new Event("syncCustom"));
       }
+      await loadDocuments();
+    });
+  }
+
+  if (favoritesFilterBtn) {
+    favoritesFilterBtn.addEventListener("click", async function () {
+      showFavoritesOnly = !showFavoritesOnly;
+      favoritesFilterBtn.classList.toggle("active", showFavoritesOnly);
       await loadDocuments();
     });
   }
