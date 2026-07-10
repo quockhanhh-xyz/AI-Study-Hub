@@ -86,14 +86,14 @@ class DocumentFavoriteServiceTest {
     void favorite_WhenOwnerFavoritesOwnDocument_ShouldSucceed() {
         when(documentRepository.findById(10)).thenReturn(Optional.of(ownedDoc));
         when(documentFavoriteRepository.existsByUserAndDocument(user, ownedDoc)).thenReturn(false);
-        when(documentFavoriteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(documentFavoriteRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
 
         FavoriteResponse response = favoriteService.favorite(10, "user@test.com");
 
         assertNotNull(response);
         assertEquals(10, response.getDocumentId());
         assertTrue(response.isFavoritedByMe());
-        verify(documentFavoriteRepository, times(1)).save(any());
+        verify(documentFavoriteRepository, times(1)).saveAndFlush(any());
     }
 
     @Test
@@ -103,7 +103,7 @@ class DocumentFavoriteServiceTest {
 
         when(documentRepository.findById(30)).thenReturn(Optional.of(inaccessibleDoc));
         when(documentFavoriteRepository.existsByUserAndDocument(user, inaccessibleDoc)).thenReturn(false);
-        when(documentFavoriteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(documentFavoriteRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
 
         FavoriteResponse response = favoriteService.favorite(30, "user@test.com");
 
@@ -116,7 +116,7 @@ class DocumentFavoriteServiceTest {
         when(documentShareRepository.findByDocumentAndSharedWithAndStatus(inaccessibleDoc, user, "ACTIVE"))
                 .thenReturn(Optional.of(new DocumentShare()));
         when(documentFavoriteRepository.existsByUserAndDocument(user, inaccessibleDoc)).thenReturn(false);
-        when(documentFavoriteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(documentFavoriteRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
 
         FavoriteResponse response = favoriteService.favorite(30, "user@test.com");
 
@@ -137,7 +137,7 @@ class DocumentFavoriteServiceTest {
         assertTrue(response.isFavoritedByMe());
         // Must NOT attempt a second insert — the unique constraint (and this
         // check) is what prevents duplicate favorite rows.
-        verify(documentFavoriteRepository, never()).save(any());
+        verify(documentFavoriteRepository, never()).saveAndFlush(any());
     }
 
     // =========================================================================
@@ -153,7 +153,7 @@ class DocumentFavoriteServiceTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         assertEquals("DOCUMENT_DELETED", ex.getCode());
-        verify(documentFavoriteRepository, never()).save(any());
+        verify(documentFavoriteRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -181,7 +181,7 @@ class DocumentFavoriteServiceTest {
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("DOCUMENT_ACCESS_DENIED", ex.getCode());
-        verify(documentFavoriteRepository, never()).save(any());
+        verify(documentFavoriteRepository, never()).saveAndFlush(any());
     }
 
     // =========================================================================
