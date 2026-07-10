@@ -234,6 +234,26 @@
 
       setMessage("loginMessage", result.message || "Login successfully.", "success");
 
+      // Trigger confetti celebration from the message position
+      if (typeof confetti === "function") {
+        const msgEl = document.getElementById("loginMessage");
+        let originX = 0.5;
+        let originY = 0.6;
+        if (msgEl) {
+          const rect = msgEl.getBoundingClientRect();
+          originX = (rect.left + rect.width / 2) / window.innerWidth;
+          originY = (rect.top + rect.height / 2) / window.innerHeight;
+        }
+
+        confetti({
+          particleCount: 150,
+          spread: 80,
+          ticks: 300,
+          origin: { x: originX, y: originY },
+          colors: ['#FF7E00', '#FFC107', '#4361EE', '#3A0CA3']
+        });
+      }
+
       setTimeout(function () {
         let target = "dashboard.html";
         const redirectValue = getRedirectParam();
@@ -252,7 +272,7 @@
         }
 
         window.location.href = target;
-      }, 500);
+      }, 600);
     } catch (error) {
       setMessage("loginMessage", error.message, "error");
     } finally {
