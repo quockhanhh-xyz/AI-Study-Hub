@@ -279,6 +279,17 @@
       border: 1px solid var(--border);
     }
 
+    #favoriteDetailBtn {
+      width: 24px;
+      height: 24px;
+      margin-left: 2px;
+    }
+
+    #favoriteDetailBtn svg {
+      width: 16px;
+      height: 16px;
+    }
+
     .inspector-document-header h1 {
       margin: 0;
       color: var(--text);
@@ -895,6 +906,11 @@
                 <span class="detail-type-badge" id="fileTypeBadge">FILE</span>
                 <span id="visibilityBadge" class="status-badge" style="display:none;"></span>
                 <span id="approvalBadge" class="status-badge" style="display:none;"></span>
+                <button type="button" id="favoriteDetailBtn" class="favorite-star-btn" style="display:none;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z" />
+                  </svg>
+                </button>
               </div>
               <h1 id="docTitle">Document</h1>
               <span class="detail-uploaded-by" id="docUploadedBy"></span>
@@ -902,19 +918,39 @@
 
             <div class="document-action-row" id="documentActionRow" aria-label="Document actions">
               <button id="shareBtn" class="btn btn-secondary" style="display:none;">
-                <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                  <polyline points="16 6 12 2 8 6"></polyline>
+                  <line x1="12" y1="2" x2="12" y2="15"></line>
+                </svg>
                 <span class="btn-text">Share</span>
               </button>
               <button id="moveBtn" class="btn btn-secondary" style="display:none;" onclick="showMoveModal()">
-                <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
                 <span class="btn-text">Move</span>
               </button>
               <button id="publishBtn" class="btn btn-primary" style="display:none;">
-                <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                  </path>
+                </svg>
                 <span class="btn-text">Publish</span>
               </button>
               <button id="unpublishBtn" class="btn btn-secondary" style="display:none;">
-                <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-3.24-3.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-3.24-3.24">
+                  </path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
                 <span class="btn-text">Unpublish</span>
               </button>
             </div>
@@ -990,7 +1026,8 @@
                     <div id="noDirectShares" class="shares-empty-state" style="display:none;">
                       <span class="shares-empty-icon">🔒</span>
                       <p class="shares-empty-text">Not shared with any users directly.</p>
-                      <button type="button" class="shares-empty-action-link" id="emptyShareUserLink">+ Share with someone</button>
+                      <button type="button" class="shares-empty-action-link" id="emptyShareUserLink">+ Share with
+                        someone</button>
                     </div>
                   </div>
 
@@ -1000,7 +1037,8 @@
                     <div id="noGroupShares" class="shares-empty-state" style="display:none;">
                       <span class="shares-empty-icon">👥</span>
                       <p class="shares-empty-text">Not shared in any groups.</p>
-                      <button type="button" class="shares-empty-action-link" id="emptyShareGroupLink">+ Share with group</button>
+                      <button type="button" class="shares-empty-action-link" id="emptyShareGroupLink">+ Share with
+                        group</button>
                     </div>
                   </div>
                 </section>
@@ -1034,8 +1072,10 @@
                   </div>
 
                   <div class="ai-qa-sample-questions" id="aiQaSampleQuestions" style="display:none;">
-                    <button type="button" class="ai-qa-sample-btn" data-question="What are the key points?">What are the key points?</button>
-                    <button type="button" class="ai-qa-sample-btn" data-question="Give me examples from this document.">Give me examples</button>
+                    <button type="button" class="ai-qa-sample-btn" data-question="What are the key points?">What are the
+                      key points?</button>
+                    <button type="button" class="ai-qa-sample-btn"
+                      data-question="Give me examples from this document.">Give me examples</button>
                   </div>
 
                   <div class="ai-qa-messages" id="aiQaMessages">
