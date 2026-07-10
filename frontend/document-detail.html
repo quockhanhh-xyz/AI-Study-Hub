@@ -481,9 +481,9 @@
     }
 
     .status-badge.processing {
-      background-color: #eff6ff;
-      color: #1e40af;
-      border: 1px solid #bfdbfe;
+      background-color: #fff7ed;
+      color: #c2410c;
+      border: 1px solid #fed7aa;
     }
 
     .status-badge.completed {
@@ -499,7 +499,8 @@
     }
 
     .status-badge.unsupported,
-    .status-badge.empty-content {
+    .status-badge.empty-content,
+    .status-badge.pending {
       background-color: #f3f4f6;
       color: #374151;
       border: 1px solid #d1d5db;
@@ -510,8 +511,8 @@
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      border: 2px solid #bfdbfe;
-      border-top-color: #1e40af;
+      border: 2px solid #fed7aa;
+      border-top-color: #c2410c;
       animation: ai-spin 0.8s linear infinite;
       margin-right: 4px;
       vertical-align: middle;
@@ -643,33 +644,34 @@
       margin-top: 0;
       padding-top: 0;
       border-top: none;
-      padding-bottom: 18px;
-      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .ai-qa-divider {
+      border: 0;
+      border-top: 1px solid var(--border);
+      margin: 4px 0;
+      opacity: 0.5;
     }
 
     .ai-qa-usage-row {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       justify-content: space-between;
       gap: 10px;
-      padding: 10px 12px;
-      background: var(--background);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 12px;
+      padding: 5px 2px 12px 2px;
+      font-size: 11px;
+      line-height: 1.5;
       color: var(--muted);
     }
 
     .ai-qa-model-badge {
       display: inline-flex;
       align-items: center;
-      padding: 3px 8px;
-      border-radius: 6px;
-      background: var(--primary-light);
-      color: var(--primary-hover);
-      border: 1px solid var(--primary-border);
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 500;
+      color: var(--muted);
+      opacity: 0.7;
       white-space: nowrap;
     }
 
@@ -735,10 +737,11 @@
 
     .ai-qa-message.assistant {
       align-self: flex-start;
-      background: var(--background);
-      color: var(--text);
+      background: #f3f4f6;
+      color: #000;
       border: 1px solid var(--border);
       border-bottom-left-radius: 4px;
+      padding: 16px;
     }
 
     .ai-qa-message.loading {
@@ -810,6 +813,7 @@
     .ai-qa-input-row textarea:disabled {
       background: var(--background);
       color: var(--muted);
+      cursor: not-allowed;
     }
 
     .ai-qa-input-row button {
@@ -817,6 +821,13 @@
       min-width: 72px;
       min-height: 40px;
       padding: 8px 16px;
+    }
+
+    .ai-qa-input-row button:disabled {
+      background-color: #E5E7EB !important;
+      border-color: #E5E7EB !important;
+      color: #9CA3AF !important;
+      cursor: not-allowed !important;
     }
 
     .ai-qa-input-meta {
@@ -1065,11 +1076,8 @@
                       <pre class="ai-extracted-text-content" id="aiExtractedTextContent"></pre>
                     </div>
                   </section>
-
-                  <div class="ai-qa-usage-row" id="aiQaUsageRow" style="display:none;">
-                    <span id="aiQaUsageText">–</span>
-                    <span id="aiQaModelLabel" class="ai-qa-model-badge" style="display:none;"></span>
-                  </div>
+                  
+                  <hr class="ai-qa-divider" />
 
                   <div class="ai-qa-sample-questions" id="aiQaSampleQuestions" style="display:none;">
                     <button type="button" class="ai-qa-sample-btn" data-question="What are the key points?">What are the
@@ -1091,6 +1099,11 @@
                     <button type="submit" class="btn btn-primary" id="aiQaAskBtn" disabled>Ask</button>
                   </form>
                   <div class="ai-qa-input-meta" id="aiQaInputMeta"></div>
+
+                  <div class="ai-qa-usage-row" id="aiQaUsageRow" style="display:none;">
+                    <span id="aiQaUsageText">–</span>
+                    <span id="aiQaModelLabel" class="ai-qa-model-badge" style="display:none;"></span>
+                  </div>
                 </section>
               </div>
 
@@ -1115,21 +1128,33 @@
 
                       <div id="summaryContent" style="display:none;">
                         <p class="ai-tools-generated-meta" id="summaryMeta"></p>
-                        <p id="summaryOverview"></p>
+                        
+                        <div class="ai-tools-summary-box">
+                          <button type="button" class="btn-copy-summary" id="copySummaryBtn" title="Copy to clipboard">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                              <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                              <path d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                            </svg>
+                          </button>
+                          
+                          <div id="summaryTextBody">
+                            <p id="summaryOverview"></p>
 
-                        <div id="summaryKeyPointsBlock">
-                          <h4>Key points</h4>
-                          <ul id="summaryKeyPoints"></ul>
-                        </div>
+                            <div id="summaryKeyPointsBlock">
+                              <h4>Key points</h4>
+                              <ul id="summaryKeyPoints"></ul>
+                            </div>
 
-                        <div id="summaryTermsBlock" style="display:none;">
-                          <h4>Important terms</h4>
-                          <dl id="summaryTerms"></dl>
-                        </div>
+                            <div id="summaryTermsBlock" style="display:none;">
+                              <h4>Important terms</h4>
+                              <dl id="summaryTerms"></dl>
+                            </div>
 
-                        <div id="summaryQuestionsBlock" style="display:none;">
-                          <h4>Suggested review questions</h4>
-                          <ul id="summaryQuestions"></ul>
+                            <div id="summaryQuestionsBlock" style="display:none;">
+                              <h4>Suggested review questions</h4>
+                              <ul id="summaryQuestions"></ul>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
@@ -1160,18 +1185,28 @@
                       <div class="ai-tools-section-header">
                         <h3>AI Quiz</h3>
                       </div>
-                      <div class="ai-tools-generate-row">
-                        <label for="quizCountInput">Number of questions</label>
-                        <input type="number" id="quizCountInput" min="3" placeholder="Default" />
-                        <label for="quizDifficultySelect">Difficulty</label>
-                        <select id="quizDifficultySelect">
-                          <option value="MIXED">Mixed</option>
-                          <option value="EASY">Easy</option>
-                          <option value="MEDIUM">Medium</option>
-                          <option value="HARD">Hard</option>
-                        </select>
-                        <button type="button" class="btn btn-secondary btn-sm" id="quizGenerateBtn" disabled>Generate
-                          Quiz</button>
+                      <div class="ai-tools-form-stack">
+                        <div class="ai-tools-form-row">
+                          <div class="ai-tools-form-group">
+                            <label for="quizCountInput">Number of questions</label>
+                            <select id="quizCountInput">
+                              <option value="5">5</option>
+                              <option value="10" selected>10</option>
+                              <option value="15">15</option>
+                              <option value="20">20</option>
+                            </select>
+                          </div>
+                          <div class="ai-tools-form-group">
+                            <label for="quizDifficultySelect">Difficulty</label>
+                            <select id="quizDifficultySelect">
+                              <option value="MIXED">Mixed</option>
+                              <option value="EASY">Easy</option>
+                              <option value="MEDIUM">Medium</option>
+                              <option value="HARD">Hard</option>
+                            </select>
+                          </div>
+                        </div>
+                        <button type="button" class="btn btn-primary" style="width: 100%; padding: 10px;" id="quizGenerateBtn" disabled>Generate Quiz</button>
                       </div>
                       <div class="ai-tools-error" id="quizError" style="display:none;"></div>
 

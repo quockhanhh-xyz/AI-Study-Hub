@@ -1463,11 +1463,24 @@ async function loadAiQaChatHistory() {
         if (messagesEl) messagesEl.innerHTML = "";
 
         messages.forEach(m => {
-            const role = (m.role || "").toUpperCase() === "USER" ? "user" : "assistant";
-            appendAiQaMessage(role, m.content || "", {
-                sourceChunks: m.sourceChunks,
-                modelName: m.modelName
-            });
+            if (m.question) {
+                appendAiQaMessage("user", m.question);
+            }
+            if (m.answer) {
+                appendAiQaMessage("assistant", m.answer, {
+                    sourceChunks: m.sourceChunks,
+                    modelName: m.modelName
+                });
+            }
+            
+            // Fallback for role/content format
+            if (!m.question && !m.answer && m.role) {
+                const role = (m.role || "").toUpperCase() === "USER" ? "user" : "assistant";
+                appendAiQaMessage(role, m.content || "", {
+                    sourceChunks: m.sourceChunks,
+                    modelName: m.modelName
+                });
+            }
         });
     } catch (err) {
         console.error("Failed to load AI chat history", err);
@@ -1566,7 +1579,9 @@ function updateAskAvailability() {
 async function handleAiQaSubmit(e) {
     if (e) e.preventDefault();
     const textarea = document.getElementById("aiQaQuestionInput");
-    if (!textarea) return;
+    const askBtn = document.getElementById("aiQaAskBtn");
+    
+    if (!textarea || textarea.disabled || (askBtn && askBtn.disabled)) return;
 
     const question = textarea.value.trim();
     if (!question) {
@@ -1974,14 +1989,19 @@ function renderSetList(listEl, emptyEl, sets, detailUrlPrefix, labelFn) {
         const link = document.createElement("a");
         const setId = set.flashcardSetId || set.quizSetId;
         link.href = `${detailUrlPrefix}${setId}`;
-        link.textContent = labelFn(set);
+        link.className = "ai-tools-set-link";
+
+        const titleSpan = document.createElement("span");
+        titleSpan.className = "ai-tools-set-title";
+        titleSpan.textContent = labelFn(set);
 
         const meta = document.createElement("span");
         meta.className = "ai-tools-set-meta";
         meta.textContent = formatGeneratedAt(set.createdAt);
 
+        link.appendChild(titleSpan);
+        link.appendChild(meta);
         li.appendChild(link);
-        li.appendChild(meta);
         listEl.appendChild(li);
     });
 }
@@ -1994,6 +2014,20 @@ function initAiToolsHandlers() {
     if (summaryBtn) summaryBtn.addEventListener("click", handleGenerateSummary);
     if (flashcardBtn) flashcardBtn.addEventListener("click", handleGenerateFlashcardSet);
     if (quizBtn) quizBtn.addEventListener("click", handleGenerateQuizSet);
+
+    const copySummaryBtn = document.getElementById("copySummaryBtn");
+    if (copySummaryBtn) {
+        copySummaryBtn.addEventListener("click", () => {
+            const body = document.getElementById("summaryTextBody");
+            if (body && navigator.clipboard) {
+                navigator.clipboard.writeText(body.innerText).then(() => {
+                    if (window.showToast) window.showToast("Copied to clipboard!", "success");
+                }).catch(err => {
+                    if (window.showToast) window.showToast("Failed to copy to clipboard", "error");
+                });
+            }
+        });
+    }
 }
 
 document.addEventListener("DOMContentLoaded", initAiToolsHandlers);
