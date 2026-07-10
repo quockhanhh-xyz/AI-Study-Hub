@@ -59,6 +59,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   const EXTRA_TIER_FEATURES = {
     FREE: [
+      "10 AI questions/day",
+      "Upload files up to 10MB",
+      "View documents shared by the community",
       "100MB storage",
       "Up to 30 documents",
       "Up to 20 folders (3 levels deep)",
@@ -66,6 +69,9 @@ document.addEventListener("DOMContentLoaded", async function () {
       "Up to 30 active document shares"
     ],
     PREMIUM: [
+      "50 AI questions/day",
+      "Upload files up to 50MB",
+      "Create basic review Flashcards",
       "2GB storage",
       "Up to 500 documents",
       "Up to 200 folders (8 levels deep)",
@@ -76,6 +82,9 @@ document.addEventListener("DOMContentLoaded", async function () {
       "10 AI quiz sets/day"
     ],
     ULTRA: [
+      "Unlimited AI Q&A",
+      "Upload files up to 100MB",
+      "Auto-generate Quiz sets",
       "10GB storage",
       "Up to 2,000 documents",
       "Up to 1,000 folders (12 levels deep)",
@@ -314,8 +323,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     // display. Re-enable once Backend returns English feature strings.
     // const backendFeatures = Array.isArray(plan.features) ? plan.features : [];
     const extraFeatures = EXTRA_TIER_FEATURES[planTier] || [];
-    const allFeatures = [...extraFeatures];
-    
+    const allFeatures = EXTRA_TIER_FEATURES[planTier] || [];
+
     if (allFeatures.length > 0) {
       const list = document.createElement("ul");
       list.style.padding = "0";
