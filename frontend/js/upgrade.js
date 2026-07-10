@@ -269,7 +269,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     card.className = "card";
     card.style.maxWidth = "none";
 
-    const CHECK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-right:6px;flex-shrink:0;"><path fill="#16a34a" fill-rule="evenodd" d="M23.914 6.914 8.5 22.328 0.086 13.914l2.828 -2.828L8.5 16.672 21.086 4.086l2.828 2.828Z" clip-rule="evenodd"/></svg>';
+    const CHECK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" style="flex-shrink:0;display:block;"><path d="m23.15 5.4 -2.8 -2.8a0.5 0.5 0 0 0 -0.7 0L7.85 14.4a0.5 0.5 0 0 1 -0.7 0l-2.8 -2.8a0.5 0.5 0 0 0 -0.7 0l-2.8 2.8a0.5 0.5 0 0 0 0 0.7l6.3 6.3a0.5 0.5 0 0 0 0.7 0l15.3 -15.3a0.5 0.5 0 0 0 0 -0.7Z" fill="#16a34a" stroke-width="1"></path></svg>';
     const FIRE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="13" height="13" style="vertical-align:-2px;margin-right:4px;"><path stroke="#ffffff" d="M12 23.5c-4.566 0 -8.5 -3.702 -8.5 -8.268a8.268 8.268 0 0 1 2.798 -6.2L9 6.647c1.758 -1.55 2.843 -3.814 3 -6.147h0.5c1.509 1.94 1.995 4.344 2.06 6.452 0.077 2.455 2.07 4.814 4.516 4.596l0.534 -0.048a8.26 8.26 0 0 1 0.89 3.732c0 4.566 -3.934 8.268 -8.5 8.268Zm0 0c2.149 0 4 -1.77 4 -3.953 0 -1.135 -0.48 -2.214 -1.317 -2.965l-1.272 -1.14c-0.911 -0.942 -1.161 -1.94 -1.161 -1.94h-0.5s-0.25 0.998 -1.161 1.94l-1.273 1.14A3.982 3.982 0 0 0 8 19.547C8 21.73 9.85 23.5 12 23.5Z" stroke-width="1.5"/></svg>';
     const CROWN_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="14" height="14" style="vertical-align:-3px;margin-right:4px;"><g fill="#ffffff"><path d="M29.715 9.145h1.52v3.04h-1.52Z"/><path d="M26.665 7.615h3.05v1.53h-3.05Z"/><path d="m26.665 18.285 1.53 0 0 -4.57 1.52 0 0 -1.53 -3.05 0 0 -3.04 -1.52 0 0 4.57 1.52 0 0 4.57z"/><path d="m25.145 19.805 -1.53 0 0 1.53 1.53 0 0 1.52 -18.29 0 0 -1.52 1.53 0 0 -1.53 -1.53 0 0 -1.52 -1.52 0 0 7.62 1.52 0 0 1.52 18.29 0 0 -1.52 1.52 0 0 -7.62 -1.52 0 0 1.52z"/><path d="M23.615 13.715h1.53v1.52h-1.53Z"/><path d="M22.095 15.235h1.52v1.53h-1.52Z"/><path d="M20.575 16.765h1.52v1.52h-1.52Z"/><path d="M19.045 19.805h3.05v1.53h-3.05Z"/><path d="M19.045 13.715h1.53v3.05h-1.53Z"/><path d="M17.525 10.665h1.52v3.05h-1.52Z"/><path d="M17.525 6.095h1.52v3.05h-1.52Z"/><path d="M14.475 9.145h3.05v1.52h-3.05Z"/><path d="M14.475 4.575h3.05v1.52h-3.05Z"/><path d="M14.475 18.285h3.05v3.05h-3.05Z"/><path d="M12.955 10.665h1.52v3.05h-1.52Z"/><path d="M12.955 6.095h1.52v3.05h-1.52Z"/><path d="M11.425 13.715h1.53v3.05h-1.53Z"/><path d="M9.905 19.805h3.05v1.53h-3.05Z"/><path d="M9.905 16.765h1.52v1.52h-1.52Z"/><path d="M8.385 15.235h1.52v1.53h-1.52Z"/><path d="M6.855 13.715h1.53v1.52h-1.53Z"/><path d="m2.285 12.185 0 1.53 1.53 0 0 4.57 1.52 0 0 -4.57 1.52 0 0 -4.57 -1.52 0 0 3.04 -3.05 0z"/><path d="M2.285 7.615h3.05v1.53h-3.05Z"/><path d="M0.765 9.145h1.52v3.04H0.765Z"/></g></svg>';
 
@@ -315,14 +315,20 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (allFeatures.length > 0) {
       const list = document.createElement("ul");
-      list.style.padding = "0 0 0 20px";
+      list.style.padding = "0";
+      list.style.margin = "0";
       list.style.color = "var(--text-muted)";
       list.style.fontSize = "14px";
       list.style.lineHeight = "1.8";
       list.style.textAlign = "left";
+      list.style.listStyle = "none";
       allFeatures.forEach(function (feature) {
         const li = document.createElement("li");
-        li.textContent = feature;
+        li.style.display = "flex";
+        li.style.alignItems = "center";
+        li.style.gap = "8px";
+        li.style.marginBottom = "4px";
+        li.innerHTML = `${CHECK_ICON}<span>${feature}</span>`;
         list.appendChild(li);
       });
       card.appendChild(list);
@@ -344,8 +350,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (isCurrentPlan) {
       const currentBadge = document.createElement("div");
-      currentBadge.innerHTML = `${CHECK_ICON}Current Plan`;
-      currentBadge.style.cssText = "margin-top:16px;display:flex;align-items:center;justify-content:center;background:#dcfce7;color:#16a34a;font-weight:600;font-size:13px;padding:6px 12px;border-radius:8px;";
+      currentBadge.innerHTML = `${CHECK_ICON}<span>Current Plan</span>`;
+      currentBadge.style.cssText = "margin-top:16px;display:flex;align-items:center;justify-content:center;gap:6px;background:#dcfce7;color:#16a34a;font-weight:600;font-size:13px;padding:6px 12px;border-radius:8px;";
       card.appendChild(currentBadge);
 
       if (isPurchasable) {

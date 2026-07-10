@@ -560,7 +560,6 @@ textarea.success {
   box-shadow: 0 8px 24px rgba(245, 158, 11, 0.25) !important;
   position: relative;
   z-index: 1;
-  margin-top: -8px;
   padding-top: 40px !important;
 }
 
@@ -570,7 +569,6 @@ textarea.success {
   box-shadow: 0 8px 24px rgba(124, 58, 237, 0.25) !important;
   position: relative;
   z-index: 1;
-  margin-top: -8px;
   padding-top: 40px !important;
 }
 
@@ -1574,7 +1572,7 @@ textarea.success {
 /* Grid layout container */
 .grid-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
   transition: grid-template-columns 0.2s ease;
@@ -3258,11 +3256,16 @@ svg {
   margin-top: 24px;
 }
 
+#pricingGrid {
+  align-items: stretch;
+}
+
 #pricingGrid .card {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+  height: 100%;
 }
 
 .member-row-main {
@@ -4068,7 +4071,7 @@ svg {
 }
 
 #upgradePlanPage .back-link,
-.main-content > .back-link {
+.main-content>.back-link {
   margin-top: 24px;
   display: inline-block;
 }
