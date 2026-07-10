@@ -114,21 +114,21 @@ This document defines the backend validation, database migration, and entitlemen
 |---|---|---|---|---|---|
 | TC-TIER-060 | FREE | AI Chat Sessions | 3 sessions owned | Create 4th chat session | Blocked with `AI_SESSIONS_LIMIT_EXCEEDED` (403). |
 | TC-TIER-061 | FREE | Messages/Session | 30 messages in session | Send 31st message | Blocked with `SESSION_MESSAGES_LIMIT_EXCEEDED` (403). |
-| TC-TIER-062 | FREE | Summary quota | 1 summary/day | Request 2nd summary | Blocked with `SUMMARY_QUOTA_EXCEEDED` (403). |
-| TC-TIER-063 | FREE | Flashcard quota | 1 card set/day | Create 2nd card set | Blocked with `FLASHCARD_QUOTA_EXCEEDED` (403). |
-| TC-TIER-064 | FREE | Quiz quota | 1 quiz set/day | Create 2nd quiz set | Blocked with `QUIZ_QUOTA_EXCEEDED` (403). |
+| TC-TIER-062 | FREE | Summary quota | 3 summaries/day | Request 4th summary | Blocked with `SUMMARY_QUOTA_EXCEEDED` (403). |
+| TC-TIER-063 | FREE | Flashcard quota | 2 card sets/day | Create 3rd card set | Blocked with `FLASHCARD_QUOTA_EXCEEDED` (403). |
+| TC-TIER-064 | FREE | Quiz quota | 2 quiz sets/day | Create 3rd quiz set | Blocked with `QUIZ_QUOTA_EXCEEDED` (403). |
 | TC-TIER-065 | FREE | Items per set | 5 items in set | Add 6th item to set | Blocked with `ITEM_LIMIT_EXCEEDED` (400). |
 | TC-TIER-066 | PREMIUM | AI Chat Sessions | 30 sessions owned | Create 31st chat session | Blocked with `AI_SESSIONS_LIMIT_EXCEEDED` (403). |
 | TC-TIER-067 | PREMIUM | Messages/Session | 300 messages in session | Send 301st message | Blocked with `SESSION_MESSAGES_LIMIT_EXCEEDED` (403). |
-| TC-TIER-068 | PREMIUM | Summary quota | 10 summaries/day | Request 11th summary | Blocked with `SUMMARY_QUOTA_EXCEEDED` (403). |
-| TC-TIER-069 | PREMIUM | Flashcard quota | 10 card sets/day | Create 11th card set | Blocked with `FLASHCARD_QUOTA_EXCEEDED` (403). |
-| TC-TIER-070 | PREMIUM | Quiz quota | 10 quiz sets/day | Create 11th quiz set | Blocked with `QUIZ_QUOTA_EXCEEDED` (403). |
+| TC-TIER-068 | PREMIUM | Summary quota | 20 summaries/day | Request 21st summary | Blocked with `SUMMARY_QUOTA_EXCEEDED` (403). |
+| TC-TIER-069 | PREMIUM | Flashcard quota | 15 card sets/day | Create 16th card set | Blocked with `FLASHCARD_QUOTA_EXCEEDED` (403). |
+| TC-TIER-070 | PREMIUM | Quiz quota | 15 quiz sets/day | Create 16th quiz set | Blocked with `QUIZ_QUOTA_EXCEEDED` (403). |
 | TC-TIER-071 | PREMIUM | Items per set | 15 items in set | Add 16th item to set | Blocked with `ITEM_LIMIT_EXCEEDED` (400). |
 | TC-TIER-072 | ULTRA | AI Chat Sessions | 100 sessions owned | Create 101st chat session | Blocked with `AI_SESSIONS_LIMIT_EXCEEDED` (403). |
 | TC-TIER-073 | ULTRA | Messages/Session | 1000 messages in session | Send 1001st message | Blocked with `SESSION_MESSAGES_LIMIT_EXCEEDED` (403). |
 | TC-TIER-074 | ULTRA | Summary quota | 50 summaries/day | Request 51st summary | Blocked with `SUMMARY_QUOTA_EXCEEDED` (403). |
-| TC-TIER-075 | ULTRA | Flashcard quota | 50 card sets/day | Create 51st card set | Blocked with `FLASHCARD_QUOTA_EXCEEDED` (403). |
-| TC-TIER-076 | ULTRA | Quiz quota | 50 quiz sets/day | Create 51st quiz set | Blocked with `QUIZ_QUOTA_EXCEEDED` (403). |
+| TC-TIER-075 | ULTRA | Flashcard quota | 40 card sets/day | Create 41st card set | Blocked with `FLASHCARD_QUOTA_EXCEEDED` (403). |
+| TC-TIER-076 | ULTRA | Quiz quota | 40 quiz sets/day | Create 41st quiz set | Blocked with `QUIZ_QUOTA_EXCEEDED` (403). |
 | TC-TIER-077 | ULTRA | Items per set | 30 items in set | Add 31st item to set | Blocked with `ITEM_LIMIT_EXCEEDED` (400). |
 
 ### 3.3. AI Reservation State Transitions
@@ -148,7 +148,7 @@ This document defines the backend validation, database migration, and entitlemen
 
 | TC | Scenario | Expected HTTP | Expected JSON Payload |
 |---|---|---|---|
-| TC-TIER-090 | Authenticated request (Effective Tier = PREMIUM) | 200 OK | Returns `"tier": "PREMIUM"`, `"effectiveTier": "PREMIUM"`, `"tierExpiresAt": "2026-08-04T10:00:00Z"` (with timezone suffix), and correct max limit bounds matching the PREMIUM policy (including `maxAiSessionsPerDocument = 30`, `maxMessagesPerSession = 300`, `maxSummaryQuotaPerDay = 10`, `maxContextChunks = 8`, `maxOutputTokens = 1500`, `aiModel = "gemini-2.5-flash"`). |
+| TC-TIER-090 | Authenticated request (Effective Tier = PREMIUM) | 200 OK | Returns `"tier": "PREMIUM"`, `"effectiveTier": "PREMIUM"`, `"tierExpiresAt": "2026-08-04T10:00:00Z"` (with timezone suffix), and correct max limit bounds matching the PREMIUM policy (including `maxAiSessionsPerDocument = 30`, `maxMessagesPerSession = 300`, `maxSummaryQuotaPerDay = 20`, `maxContextChunks = 8`, `maxOutputTokens = 1500`, `aiModel = "gemini-2.5-flash"`). |
 | TC-TIER-091 | Unauthenticated request | 401 Unauthorized | Returns `{"success":false,"message":"Unauthorized"}`. |
 
 ### 4.2. Usage Statistics Endpoint (GET /api/account/usage)

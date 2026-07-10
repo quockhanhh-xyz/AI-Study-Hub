@@ -1,6 +1,7 @@
 package com.demo.ai_study_hub.service;
 
 import com.demo.ai_study_hub.enums.UserTier;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
@@ -11,32 +12,23 @@ import org.springframework.stereotype.Component;
  * here so the quota table can be audited/changed in exactly one place.
  */
 @Component
+@RequiredArgsConstructor
 public class AiLearningQuotaPolicy {
+
+    private final TierPolicyService tierPolicyService;
 
     public record CountRange(int min, int defaultValue, int max) {}
 
     public int summaryDailyLimit(UserTier tier) {
-        return switch (tier) {
-            case PREMIUM -> 20;
-            case ULTRA -> 50;
-            default -> 3;
-        };
+        return tierPolicyService.getLimits(tier).summaryGenerationsPerDay();
     }
 
     public int flashcardSetDailyLimit(UserTier tier) {
-        return switch (tier) {
-            case PREMIUM -> 15;
-            case ULTRA -> 40;
-            default -> 2;
-        };
+        return tierPolicyService.getLimits(tier).flashcardSetsPerDay();
     }
 
     public int quizSetDailyLimit(UserTier tier) {
-        return switch (tier) {
-            case PREMIUM -> 15;
-            case ULTRA -> 40;
-            default -> 2;
-        };
+        return tierPolicyService.getLimits(tier).quizSetsPerDay();
     }
 
     public CountRange flashcardCountRange(UserTier tier) {

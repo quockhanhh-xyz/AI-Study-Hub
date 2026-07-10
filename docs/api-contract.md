@@ -4107,9 +4107,9 @@ The system calculates the user's **Effective Tier** dynamically on each request 
 | **Max Messages per Session** | 30 | 300 | 1,000 |
 | **Max AI Daily Questions** | 5 | 50 | 200 |
 | **Max Question Characters** | 500 characters | 2,000 characters | 5,000 characters |
-| **Max Summary/Day** | 1 | 10 | 50 |
-| **Max Flashcard Sets/Day** | 1 | 10 | 50 |
-| **Max Quiz Sets/Day** | 1 | 10 | 50 |
+| **Max Summary/Day** | 3 | 20 | 50 |
+| **Max Flashcard Sets/Day** | 2 | 15 | 40 |
+| **Max Quiz Sets/Day** | 2 | 15 | 40 |
 | **Max Items per Set** | 5 | 15 | 30 |
 | **Max Context Chunks** | 3 | 8 | 15 |
 | **Max Output Tokens** | 500 | 1500 | 3000 |
@@ -4152,9 +4152,9 @@ Retrieve the current authenticated user's active tier, expiration timestamp, and
       "maxMessagesPerSession": 300,
       "maxAiDailyQuestions": 50,
       "maxQuestionChars": 2000,
-      "maxSummaryQuotaPerDay": 10,
-      "maxFlashcardQuotaPerDay": 10,
-      "maxQuizQuotaPerDay": 10,
+      "maxSummaryQuotaPerDay": 20,
+      "maxFlashcardQuotaPerDay": 15,
+      "maxQuizQuotaPerDay": 15,
       "maxItemsPerSet": 15,
       "maxContextChunks": 8,
       "maxOutputTokens": 1500,
