@@ -26,7 +26,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   // Elements
-  const currentTierBadge = document.getElementById("currentTierBadge");
   const alreadyPremiumBanner = document.getElementById("alreadyPremiumBanner");
 
   const paymentStatusBanner = document.getElementById("paymentStatusBanner");
@@ -89,7 +88,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
     const date = new Date(dateStr);
     if (Number.isNaN(date.getTime())) return "-";
-    return date.toLocaleString("vi-VN");
+    return date.toLocaleString("vi-VN", {
+      year: "numeric", month: "short", day: "2-digit",
+      hour: "2-digit", minute: "2-digit"
+    });
   }
 
   function updateTierUI(tier) {
@@ -97,19 +99,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     currentUser.tier = normalizedTier;
     currentUser.effectiveTier = normalizedTier;
     localStorage.setItem("currentUser", JSON.stringify(currentUser));
-
-    if (currentTierBadge) {
-      currentTierBadge.textContent = normalizedTier;
-      currentTierBadge.classList.remove("badge-tier-free", "badge-tier-premium", "badge-tier-ultra");
-      currentTierBadge.classList.add(`badge-tier-${normalizedTier.toLowerCase()}`);
-    }
+    const PARTY_ICON = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" width="14" height="14" style="vertical-align:-2px;margin-right:6px;"><path fill="#16a34a" fill-rule="evenodd" d="M6.85809 0.0378864C6.46428 0.166299 6.24914 0.589641 6.37755 0.983447c0.20769 0.636913 0.18035 1.327293 -0.07702 1.945723 -0.15916 0.38242 0.02184 0.82145 0.40426 0.9806 0.38241 0.15915 0.82144 -0.02184 0.98059 -0.40426 0.39515 -0.94949 0.43711 -2.0093 0.11827 -2.987086 -0.12841 -0.393806 -0.55176 -0.6089501 -0.94556 -0.4805376ZM9.15914 3.05478c-0.05698 -0.41028 0.22943 -0.78906 0.6397 -0.84604 0.41026 -0.05697 0.78906 0.22943 0.84606 0.63971 0.0917 0.66069 -0.0609 1.33223 -0.4293 1.88825 -0.22881 0.34529 -0.69419 0.43973 -1.03949 0.21094 -0.34529 -0.22879 -0.43974 -0.69417 -0.21095 -1.03947 0.16642 -0.25116 0.23546 -0.55468 0.19398 -0.85339ZM2.35203 4.5956c0.4856 -0.83619 1.56726 -1.06633 2.35596 -0.53103 0.84837 0.57581 2.1462 1.49677 2.90279 2.24369 0.75653 0.74688 1.69433 2.03286 2.28121 2.87388 0.54521 0.78134 0.33031 1.86626 -0.49889 2.36346 -2.45124 1.4698 -5.22105 2.5647 -7.90405 2.4446 -0.793228 -0.0355 -1.4270834 -0.6616 -1.4732368 -1.454C-0.140432 9.85376 0.916322 7.06788 2.35203 4.5956Zm1.65398 0.50325c-0.20021 -0.13589 -0.45826 -0.07314 -0.57303 0.12448C2.04959 7.60552 1.12815 10.1364 1.2637 12.4635c0.00893 0.1534 0.12861 0.2711 0.28123 0.278 2.32705 0.1041 4.84349 -0.8517 7.20535 -2.268 0.19581 -0.1174 0.25552 -0.377 0.11662 -0.57604 -0.59288 -0.84962 -1.47054 -2.04435 -2.13431 -2.69965 -0.66377 -0.6553 -1.86954 -1.51727 -2.72658 -2.09896ZM11.2019 7.9557c0.2877 -0.06534 0.5895 -0.02194 0.8472 0.12186 0.3617 0.20184 0.8185 0.07225 1.0204 -0.28945 0.2018 -0.36171 0.0722 -0.81856 -0.2895 -1.0204 -0.581 -0.32424 -1.2614 -0.42211 -1.9103 -0.27477 -0.4039 0.09172 -0.657 0.49352 -0.5653 0.89746 0.0918 0.40393 0.4936 0.65702 0.8975 0.5653Zm1.3142 -3.2696c-0.4142 0 -0.75 -0.33578 -0.75 -0.75 0 -0.41421 0.3358 -0.75 0.75 -0.75h0.7335c0.4142 0 0.75 0.33579 0.75 0.75 0 0.41422 -0.3358 0.75 -0.75 0.75h-0.7335Z" clip-rule="evenodd"/></svg>';
 
     if (alreadyPremiumBanner) {
       const message = alreadyPremiumBanner.querySelector("span");
       if (message) {
-        message.textContent = normalizedTier === "ULTRA"
-          ? "You are already on Ultra. You can renew your plan before it expires."
-          : "Your Premium plan is active. You can renew it or upgrade to Ultra.";
+        message.innerHTML = normalizedTier === "ULTRA"
+          ? `${PARTY_ICON}You are currently on the Ultra plan! You can renew it before it expires.`
+          : `${PARTY_ICON}You are currently on the Premium plan! You can renew it or upgrade to Ultra.`;
       }
       alreadyPremiumBanner.style.display = normalizedTier === "FREE" ? "none" : "flex";
     }
@@ -153,11 +150,11 @@ document.addEventListener("DOMContentLoaded", async function () {
   async function cancelPaymentOrder(paymentId, button) {
     const confirmed = typeof confirmAction === "function"
       ? await confirmAction({
-          title: "Cancel payment?",
-          message: "This closes the pending checkout so you can create a new payment. Do not cancel if you have already completed payment at VNPay.",
-          confirmText: "Cancel payment",
-          danger: true
-        })
+        title: "Cancel payment?",
+        message: "This closes the pending checkout so you can create a new payment. Do not cancel if you have already completed payment at VNPay.",
+        confirmText: "Cancel payment",
+        danger: true
+      })
       : window.confirm("Cancel this pending payment?");
 
     if (!confirmed) return;
@@ -242,10 +239,24 @@ document.addEventListener("DOMContentLoaded", async function () {
     card.className = "card";
     card.style.maxWidth = "none";
 
+    const CHECK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-right:6px;flex-shrink:0;"><path fill="#16a34a" fill-rule="evenodd" d="M23.914 6.914 8.5 22.328 0.086 13.914l2.828 -2.828L8.5 16.672 21.086 4.086l2.828 2.828Z" clip-rule="evenodd"/></svg>';
+    const FIRE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="13" height="13" style="vertical-align:-2px;margin-right:4px;"><path stroke="#ffffff" d="M12 23.5c-4.566 0 -8.5 -3.702 -8.5 -8.268a8.268 8.268 0 0 1 2.798 -6.2L9 6.647c1.758 -1.55 2.843 -3.814 3 -6.147h0.5c1.509 1.94 1.995 4.344 2.06 6.452 0.077 2.455 2.07 4.814 4.516 4.596l0.534 -0.048a8.26 8.26 0 0 1 0.89 3.732c0 4.566 -3.934 8.268 -8.5 8.268Zm0 0c2.149 0 4 -1.77 4 -3.953 0 -1.135 -0.48 -2.214 -1.317 -2.965l-1.272 -1.14c-0.911 -0.942 -1.161 -1.94 -1.161 -1.94h-0.5s-0.25 0.998 -1.161 1.94l-1.273 1.14A3.982 3.982 0 0 0 8 19.547C8 21.73 9.85 23.5 12 23.5Z" stroke-width="1.5"/></svg>';
+    const CROWN_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="14" height="14" style="vertical-align:-3px;margin-right:4px;"><g fill="#ffffff"><path d="M29.715 9.145h1.52v3.04h-1.52Z"/><path d="M26.665 7.615h3.05v1.53h-3.05Z"/><path d="m26.665 18.285 1.53 0 0 -4.57 1.52 0 0 -1.53 -3.05 0 0 -3.04 -1.52 0 0 4.57 1.52 0 0 4.57z"/><path d="m25.145 19.805 -1.53 0 0 1.53 1.53 0 0 1.52 -18.29 0 0 -1.52 1.53 0 0 -1.53 -1.53 0 0 -1.52 -1.52 0 0 7.62 1.52 0 0 1.52 18.29 0 0 -1.52 1.52 0 0 -7.62 -1.52 0 0 1.52z"/><path d="M23.615 13.715h1.53v1.52h-1.53Z"/><path d="M22.095 15.235h1.52v1.53h-1.52Z"/><path d="M20.575 16.765h1.52v1.52h-1.52Z"/><path d="M19.045 19.805h3.05v1.53h-3.05Z"/><path d="M19.045 13.715h1.53v3.05h-1.53Z"/><path d="M17.525 10.665h1.52v3.05h-1.52Z"/><path d="M17.525 6.095h1.52v3.05h-1.52Z"/><path d="M14.475 9.145h3.05v1.52h-3.05Z"/><path d="M14.475 4.575h3.05v1.52h-3.05Z"/><path d="M14.475 18.285h3.05v3.05h-3.05Z"/><path d="M12.955 10.665h1.52v3.05h-1.52Z"/><path d="M12.955 6.095h1.52v3.05h-1.52Z"/><path d="M11.425 13.715h1.53v3.05h-1.53Z"/><path d="M9.905 19.805h3.05v1.53h-3.05Z"/><path d="M9.905 16.765h1.52v1.52h-1.52Z"/><path d="M8.385 15.235h1.52v1.53h-1.52Z"/><path d="M6.855 13.715h1.53v1.52h-1.53Z"/><path d="m2.285 12.185 0 1.53 1.53 0 0 4.57 1.52 0 0 -4.57 1.52 0 0 -4.57 -1.52 0 0 3.04 -3.05 0z"/><path d="M2.285 7.615h3.05v1.53h-3.05Z"/><path d="M0.765 9.145h1.52v3.04H0.765Z"/></g></svg>';
+
     if (planTier === "PREMIUM") {
       card.classList.add("stat-card-premium");
+      const tag = document.createElement("div");
+      tag.innerHTML = `${FIRE_ICON}Best Value`;
+      tag.style.cssText = "position:absolute;top:-14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;background:#f59e0b;color:#fff;padding:4px 14px;border-radius:999px;font-size:12px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.15);";
+      card.style.position = "relative";
+      card.appendChild(tag);
     } else if (planTier === "ULTRA") {
       card.classList.add("stat-card-ultra");
+      const tag = document.createElement("div");
+      tag.innerHTML = `${CROWN_ICON}Most Popular`;
+      tag.style.cssText = "position:absolute;top:-14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;background:#7c3aed;color:#fff;padding:4px 14px;border-radius:999px;font-size:12px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.15);";
+      card.style.position = "relative";
+      card.appendChild(tag);
     }
 
     const title = document.createElement("h2");
@@ -298,9 +309,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (isCurrentPlan) {
       const currentBadge = document.createElement("div");
-      currentBadge.className = "helper-text success";
-      currentBadge.style.marginTop = "16px";
-      currentBadge.textContent = "Current Plan";
+      currentBadge.innerHTML = `${CHECK_ICON}Current Plan`;
+      currentBadge.style.cssText = "margin-top:16px;display:flex;align-items:center;justify-content:center;background:#dcfce7;color:#16a34a;font-weight:600;font-size:13px;padding:6px 12px;border-radius:8px;";
       card.appendChild(currentBadge);
 
       if (isPurchasable) {
@@ -344,14 +354,19 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
     wrapper.appendChild(vnpayBtn);
 
-    const mockBtn = document.createElement("button");
-    mockBtn.type = "button";
-    mockBtn.className = "btn btn-secondary";
-    mockBtn.textContent = "Mock Checkout (Demo)";
-    mockBtn.addEventListener("click", function (event) {
+    const mockLink = document.createElement("a");
+    mockLink.href = "#";
+    mockLink.textContent = "Mock Checkout (Demo)";
+    mockLink.style.textAlign = "center";
+    mockLink.style.fontSize = "12px";
+    mockLink.style.textDecoration = "underline";
+    mockLink.style.color = "var(--text-muted)";
+    mockLink.style.marginTop = "4px";
+    mockLink.addEventListener("click", function (event) {
+      event.preventDefault();
       handleMockClick(event, plan.planCode);
     });
-    wrapper.appendChild(mockBtn);
+    wrapper.appendChild(mockLink);
 
     return wrapper;
   }
