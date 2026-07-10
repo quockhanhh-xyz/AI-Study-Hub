@@ -30,4 +30,11 @@ public class FavoriteDocumentItemResponse {
     private LocalDateTime createdAt;
     private LocalDateTime favoritedAt;
     private boolean favoritedByMe;
+
+    private Long fileSize;
+    private String subjectName;
+    private String folderName;
+    private Boolean canOpen;
+    private Boolean canDownload;
+    private String processingStatus;
 }

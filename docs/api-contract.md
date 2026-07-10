@@ -638,7 +638,8 @@ Returns documents owned by the currently authenticated user, with optional searc
       "folderName": "Math Notes",
       "uploadedBy": null,
       "uploadedByName": "User A",
-      "createdAt": "2026-06-01T10:00:00"
+      "createdAt": "2026-06-01T10:00:00",
+      "favoritedByMe": false
     }
   ]
 }
@@ -877,7 +878,8 @@ Returns detailed information for a specific document. The request is authorized 
     "canEdit": true,
     "canDelete": true,
     "canMove": true,
-    "canShare": true
+    "canShare": true,
+    "favoritedByMe": false
   }
 }
 ```
@@ -1102,6 +1104,177 @@ Soft-deletes a specific document owned by the authenticated user.
 {
   "success": false,
   "message": "Document not found",
+  "data": null
+}
+```
+
+---
+
+## 5.4. Document Favorites APIs
+
+Manage favorite (saved) documents. Users can favorite viewable active documents and retrieve their list of saved documents.
+
+### 5.4.1. Favorite Document API
+
+## POST `/api/documents/{id}/favorite`
+
+Adds a specific document to the authenticated user's favorites. The operation is idempotent (multiple calls return success).
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "Document added to favorites.",
+  "data": {
+    "documentId": 1,
+    "favoritedByMe": true
+  }
+}
+```
+
+### Error Response - Unauthorized (401)
+
+```json
+{
+  "success": false,
+  "message": "Your session has expired. Please log in again.",
+  "data": null
+}
+```
+
+### Error Response - Forbidden (403)
+
+If the user does not have view permission for the document:
+
+```json
+{
+  "success": false,
+  "message": "You do not have permission to access this document",
+  "data": null
+}
+```
+
+### Error Response - Not Found (404)
+
+If the document does not exist:
+
+```json
+{
+  "success": false,
+  "message": "Document not found",
+  "data": null
+}
+```
+
+---
+
+### 5.4.2. Unfavorite Document API
+
+## DELETE `/api/documents/{id}/favorite`
+
+Removes a specific document from the authenticated user's favorites. The operation is idempotent.
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "Document removed from favorites.",
+  "data": {
+    "documentId": 1,
+    "favoritedByMe": false
+  }
+}
+```
+
+### Error Response - Unauthorized (401)
+
+```json
+{
+  "success": false,
+  "message": "Your session has expired. Please log in again.",
+  "data": null
+}
+```
+
+### Error Response - Not Found (404)
+
+If the document does not exist:
+
+```json
+{
+  "success": false,
+  "message": "Document not found",
+  "data": null
+}
+```
+
+---
+
+### 5.4.3. Get Favorite Documents API
+
+## GET `/api/documents/favorites`
+
+Retrieves a list of the authenticated user's favorited documents. Only documents that are still active (`status = 'ACTIVE'`) and viewable by the user are returned.
+
+### Request Headers
+
+- Cookie: `accessToken=jwt-token-value-here`
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "Favorite documents retrieved successfully",
+  "data": [
+    {
+      "documentId": 1,
+      "title": "SWR Lecture 1",
+      "fileType": "PDF",
+      "visibility": "PUBLIC",
+      "approvalStatus": "APPROVED",
+      "ownerId": 2,
+      "ownerName": "User B",
+      "createdAt": "2026-06-01T10:00:00",
+      "favoritedAt": "2026-07-10T04:00:00",
+      "favoritedByMe": true,
+      "fileSize": 102400,
+      "subjectName": "Software Project",
+      "folderName": "Math Notes",
+      "canOpen": true,
+      "canDownload": true,
+      "processingStatus": "SUCCESS"
+    }
+  ]
+}
+```
+
+### Success Response - Empty List
+
+```json
+{
+  "success": true,
+  "message": "Favorite documents retrieved successfully",
+  "data": []
+}
+```
+
+### Error Response - Unauthorized (401)
+
+```json
+{
+  "success": false,
+  "message": "Your session has expired. Please log in again.",
   "data": null
 }
 ```

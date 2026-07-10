@@ -49,10 +49,6 @@ public class DocumentFavoriteService {
 
         boolean alreadyFavorited = documentFavoriteRepository.existsByUserAndDocument(user, doc);
         if (alreadyFavorited) {
-            // Idempotent: favoriting an already-favorited document is not an
-            // error — just confirm the current state. Matches the
-            // "unique constraint at DB level" defense: a duplicate INSERT
-            // would violate uq_favorite_user_document anyway.
             return FavoriteResponse.builder().documentId(documentId).favoritedByMe(true).build();
         }
 
@@ -61,7 +57,12 @@ public class DocumentFavoriteService {
                 .document(doc)
                 .createdAt(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
-        documentFavoriteRepository.save(favorite);
+
+        try {
+            documentFavoriteRepository.saveAndFlush(favorite);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            return FavoriteResponse.builder().documentId(documentId).favoritedByMe(true).build();
+        }
 
         return FavoriteResponse.builder().documentId(documentId).favoritedByMe(true).build();
     }
@@ -73,7 +74,7 @@ public class DocumentFavoriteService {
                 .orElseThrow(() -> new QuotaExceededException(HttpStatus.NOT_FOUND,
                         "Document not found", "DOCUMENT_NOT_FOUND"));
 
-        // Unfavorite does NOT re-check view permission — if access was
+        // Unfavorite does NOT re-check view permission - if access was
         // revoked after favoriting (e.g. share was pulled), the user must
         // still be able to remove their own favorite entry. It is their
         // own data (documentFavoriteRepository query is scoped to user+doc),
@@ -90,7 +91,7 @@ public class DocumentFavoriteService {
         return documentFavoriteRepository.findByUserOrderByCreatedAtDesc(user)
                 .stream()
                 // A favorite row can point to a document that was later
-                // deleted, or whose sharing was revoked — filter those out
+                // deleted, or whose sharing was revoked - filter those out
                 // at read time rather than eagerly deleting the favorite
                 // row (soft-delete-friendly: if the document comes back
                 // ACTIVE / re-shared, the favorite silently reappears).
@@ -101,6 +102,11 @@ public class DocumentFavoriteService {
     }
 
     private FavoriteDocumentItemResponse toFavoriteItemResponse(Document doc, LocalDateTime favoritedAt) {
+        String processingStatusVal = "PENDING";
+        if (doc.getDocumentContent() != null) {
+            processingStatusVal = doc.getDocumentContent().getProcessingStatus().name();
+        }
+
         return FavoriteDocumentItemResponse.builder()
                 .documentId(doc.getDocumentId())
                 .title(doc.getTitle())
@@ -112,12 +118,18 @@ public class DocumentFavoriteService {
                 .createdAt(doc.getCreatedAt())
                 .favoritedAt(favoritedAt)
                 .favoritedByMe(true)
+                .fileSize(doc.getFileSize())
+                .subjectName(doc.getSubject() != null ? doc.getSubject().getSubjectName() : null)
+                .folderName(doc.getFolder() != null ? doc.getFolder().getName() : null)
+                .canOpen(true)
+                .canDownload(true)
+                .processingStatus(processingStatusVal)
                 .build();
     }
 
     /**
      * Bulk helper for list endpoints (my/public/shared-with-me) to compute
-     * favoritedByMe without N+1 queries — one query for the whole page.
+     * favoritedByMe without N+1 queries - one query for the whole page.
      */
     @Transactional(readOnly = true)
     public Set<Integer> getFavoritedDocumentIds(String userEmail, List<Integer> documentIds) {
@@ -137,7 +149,7 @@ public class DocumentFavoriteService {
     }
 
     // =========================================================================
-    // Permission check — mirrors AiChatServiceImpl.validateViewPermission()
+    // Permission check - mirrors AiChatServiceImpl.validateViewPermission()
     // =========================================================================
 
     private Document requireViewableActiveDocument(Integer documentId, User user) {
