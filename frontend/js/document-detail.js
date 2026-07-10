@@ -1463,11 +1463,24 @@ async function loadAiQaChatHistory() {
         if (messagesEl) messagesEl.innerHTML = "";
 
         messages.forEach(m => {
-            const role = (m.role || "").toUpperCase() === "USER" ? "user" : "assistant";
-            appendAiQaMessage(role, m.content || "", {
-                sourceChunks: m.sourceChunks,
-                modelName: m.modelName
-            });
+            if (m.question) {
+                appendAiQaMessage("user", m.question);
+            }
+            if (m.answer) {
+                appendAiQaMessage("assistant", m.answer, {
+                    sourceChunks: m.sourceChunks,
+                    modelName: m.modelName
+                });
+            }
+            
+            // Fallback for role/content format
+            if (!m.question && !m.answer && m.role) {
+                const role = (m.role || "").toUpperCase() === "USER" ? "user" : "assistant";
+                appendAiQaMessage(role, m.content || "", {
+                    sourceChunks: m.sourceChunks,
+                    modelName: m.modelName
+                });
+            }
         });
     } catch (err) {
         console.error("Failed to load AI chat history", err);
