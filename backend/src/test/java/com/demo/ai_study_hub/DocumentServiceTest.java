@@ -24,6 +24,7 @@ import com.demo.ai_study_hub.dto.TierLimits;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import static org.mockito.ArgumentMatchers.any;
+import com.demo.ai_study_hub.repository.DocumentFavoriteRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -62,6 +63,8 @@ class DocumentServiceTest {
     private UsageService usageService;
     @Mock
     private PlatformTransactionManager transactionManager;
+    @Mock
+    private DocumentFavoriteRepository documentFavoriteRepository;
 
     @InjectMocks
     private DocumentService documentService;
@@ -105,6 +108,7 @@ class DocumentServiceTest {
         );
         lenient().when(tierPolicyService.getLimitsForUser(any())).thenReturn(mockLimits);
         lenient().when(usageService.countActiveShares(any())).thenReturn(0L);
+        lenient().when(documentFavoriteRepository.existsByUserAndDocument(any(), any())).thenReturn(false);
         lenient().when(userRepository.findByIdForUpdate(anyInt())).thenAnswer(inv -> {
             Integer userId = inv.getArgument(0);
             if (userId.equals(1)) {

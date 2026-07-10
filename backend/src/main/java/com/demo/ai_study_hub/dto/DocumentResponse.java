@@ -46,4 +46,5 @@ public class DocumentResponse {
     private Boolean canShare;
     private Boolean canPublish;
     private Boolean canUnpublish;
+    private Boolean favoritedByMe;
 }
