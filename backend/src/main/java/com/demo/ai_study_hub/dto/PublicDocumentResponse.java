@@ -37,4 +37,5 @@ public class PublicDocumentResponse {
     private Boolean canPreview;
     private Boolean canOpen;
     private Boolean canDownload;
+    private Boolean favoritedByMe;
 }

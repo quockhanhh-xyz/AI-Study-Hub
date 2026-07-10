@@ -164,9 +164,11 @@ public class DocumentController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer subjectId,
             @RequestParam(required = false) String fileType,
-            @RequestParam(required = false) String sort) {
+            @RequestParam(required = false) String sort,
+            java.security.Principal principal) {
         try {
-            List<PublicDocumentResponse> data = documentService.getPublicDocuments(keyword, subjectId, fileType, sort);
+            String requesterEmail = principal != null ? principal.getName() : null;
+            List<PublicDocumentResponse> data = documentService.getPublicDocuments(keyword, subjectId, fileType, sort, requesterEmail);
             return ResponseEntity.ok(ApiResponse.success(data, "Public documents retrieved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
@@ -176,9 +178,11 @@ public class DocumentController {
     }
 
     @GetMapping("/public/{id}")
-    public ResponseEntity<ApiResponse<PublicDocumentResponse>> getPublicDocumentDetail(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<PublicDocumentResponse>> getPublicDocumentDetail(
+            @PathVariable Integer id, java.security.Principal principal) {
         try {
-            PublicDocumentResponse data = documentService.getPublicDocumentDetail(id);
+            String requesterEmail = principal != null ? principal.getName() : null;
+            PublicDocumentResponse data = documentService.getPublicDocumentDetail(id, requesterEmail);
             return ResponseEntity.ok(ApiResponse.success(data, "Public document detail retrieved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
