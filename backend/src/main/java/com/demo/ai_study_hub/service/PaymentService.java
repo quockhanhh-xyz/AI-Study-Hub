@@ -236,6 +236,7 @@ public class PaymentService {
                 .paymentMethod(paymentMethod)
                 .paymentProvider(paymentProvider)
                 .vnpBankCode(bankCode)
+                .createdAt(now)
                 .expiredAt(now.plusMinutes(PENDING_EXPIRY_MINUTES))
                 .build();
 

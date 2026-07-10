@@ -2,7 +2,6 @@ package com.demo.ai_study_hub.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
@@ -87,7 +86,6 @@ public class PaymentOrder {
     @Column(name = "expired_at")
     private LocalDateTime expiredAt;
 
-    @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -97,4 +95,11 @@ public class PaymentOrder {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now(java.time.ZoneOffset.UTC);
+        }
+    }
 }

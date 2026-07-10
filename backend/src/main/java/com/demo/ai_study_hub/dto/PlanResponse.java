@@ -1,6 +1,7 @@
 package com.demo.ai_study_hub.dto;
 
 import lombok.*;
+import java.util.List;
 
 @Data
 @Builder
@@ -17,4 +18,5 @@ public class PlanResponse {
     private int durationMonths;
     private int aiDailyLimit;
     private boolean purchasable;
+    private List<String> features;
 }
