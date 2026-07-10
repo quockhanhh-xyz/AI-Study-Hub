@@ -57,6 +57,36 @@ document.addEventListener("DOMContentLoaded", async function () {
     ULTRA: 2
   };
 
+  const EXTRA_TIER_FEATURES = {
+    FREE: [
+      "100MB storage",
+      "Up to 30 documents",
+      "Up to 20 folders (3 levels deep)",
+      "Join up to 3 study groups",
+      "Up to 30 active document shares"
+    ],
+    PREMIUM: [
+      "2GB storage",
+      "Up to 500 documents",
+      "Up to 200 folders (8 levels deep)",
+      "Create up to 30 study groups",
+      "Up to 1,000 active document shares",
+      "10 AI summary generations/day",
+      "10 AI flashcard sets/day",
+      "10 AI quiz sets/day"
+    ],
+    ULTRA: [
+      "10GB storage",
+      "Up to 2,000 documents",
+      "Up to 1,000 folders (12 levels deep)",
+      "Create up to 100 study groups",
+      "Up to 5,000 active document shares",
+      "50 AI summary generations/day",
+      "50 AI flashcard sets/day",
+      "50 AI quiz sets/day"
+    ]
+  };
+
   // ─────────────────────────────────────────────
   // Utilities
   // ─────────────────────────────────────────────
@@ -279,13 +309,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
     card.appendChild(price);
 
-    if (Array.isArray(plan.features) && plan.features.length > 0) {
+    const backendFeatures = Array.isArray(plan.features) ? plan.features : [];
+    const extraFeatures = EXTRA_TIER_FEATURES[planTier] || [];
+    const allFeatures = [...backendFeatures, ...extraFeatures];
+
+    if (allFeatures.length > 0) {
       const list = document.createElement("ul");
       list.style.padding = "0 0 0 20px";
       list.style.color = "var(--text-muted)";
       list.style.fontSize = "14px";
       list.style.lineHeight = "1.8";
-      plan.features.forEach(function (feature) {
+      list.style.textAlign = "left";
+      allFeatures.forEach(function (feature) {
         const li = document.createElement("li");
         li.textContent = feature;
         list.appendChild(li);

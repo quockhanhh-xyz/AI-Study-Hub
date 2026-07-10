@@ -557,19 +557,21 @@ textarea.success {
 .stat-card-premium {
   background: linear-gradient(135deg, #ffffff, #fffbeb) !important;
   border: 2px solid #f59e0b !important;
-  transform: scale(1.05);
   box-shadow: 0 8px 24px rgba(245, 158, 11, 0.25) !important;
   position: relative;
   z-index: 1;
+  margin-top: -8px;
+  padding-top: 40px !important;
 }
 
 .stat-card-ultra {
   background: linear-gradient(135deg, #ffffff, #f5f3ff) !important;
   border: 2px solid #7c3aed !important;
-  transform: scale(1.05);
   box-shadow: 0 8px 24px rgba(124, 58, 237, 0.25) !important;
   position: relative;
   z-index: 1;
+  margin-top: -8px;
+  padding-top: 40px !important;
 }
 
 .badge-tier-free,
@@ -1575,6 +1577,7 @@ textarea.success {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
+  transition: grid-template-columns 0.2s ease;
 }
 
 /* Flex vertical grid item */
@@ -4050,4 +4053,20 @@ svg {
   background-color: #ffffff;
   box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
   transform: translateY(-2px);
+}
+
+/* ═══════════════════════════════════════════════════════
+   PAYMENT HISTORY — Row alignment + back-link spacing fix
+═══════════════════════════════════════════════════════ */
+#historyList .member-row {
+  align-items: center;
+}
+
+#historyList .member-row-main {
+  align-items: center;
+  gap: 10px;
+}
+
+.document-panel .back-link {
+  margin-top: 20px;
 }
