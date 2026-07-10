@@ -68,6 +68,42 @@ document.addEventListener("DOMContentLoaded", async function () {
     return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
   }
 
+  function showFavoriteToast(message, type = "success") {
+    if (typeof window.showToast === "function") {
+      window.showToast(message, type);
+    }
+  }
+
+  async function handleToggleFavorite(doc, btn) {
+    btn.disabled = true;
+    const wasFavorited = isDocumentFavorited(doc);
+    const documentId = doc.documentId || doc.id;
+
+    try {
+      if (wasFavorited) {
+        await unfavoriteDocument(documentId);
+        setDocumentFavorited(doc, false);
+        btn.classList.remove("favorited");
+        btn.title = "Add to favorites";
+        showFavoriteToast("Removed from favorites.");
+      } else {
+        await favoriteDocument(documentId);
+        setDocumentFavorited(doc, true);
+        btn.classList.add("favorited");
+        btn.title = "Remove from favorites";
+        showFavoriteToast("Added to favorites.");
+      }
+    } catch (error) {
+      if (error && error.status === 403) {
+        showFavoriteToast("You do not have access to this document.", "error");
+      } else {
+        showFavoriteToast(error.message || "Failed to update favorite.", "error");
+      }
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
   function createDocCard(doc) {
     const card = document.createElement("article");
     card.className = "document-card";
@@ -93,6 +129,19 @@ document.addEventListener("DOMContentLoaded", async function () {
     titleLink.textContent = doc.title || "Untitled Document";
     titleEl.appendChild(titleLink);
     header.appendChild(titleEl);
+
+    const favoriteBtn = document.createElement("button");
+    favoriteBtn.type = "button";
+    const favorited = isDocumentFavorited(doc);
+    favoriteBtn.className = "favorite-star-btn" + (favorited ? " favorited" : "");
+    favoriteBtn.title = favorited ? "Remove from favorites" : "Add to favorites";
+    favoriteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>';
+    favoriteBtn.addEventListener("click", async function (e) {
+      e.stopPropagation();
+      e.preventDefault();
+      await handleToggleFavorite(doc, favoriteBtn);
+    });
+    header.appendChild(favoriteBtn);
 
     const desc = document.createElement("p");
     desc.className = "document-description";

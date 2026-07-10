@@ -187,4 +187,25 @@ function getFavoriteDocuments() {
   return get("/api/documents/favorites");
 }
 
+/**
+ * Normalizes favorite state across document DTOs.
+ * Backend uses `favoritedByMe`; `isFavorited` is kept only as legacy fallback.
+ * @param {Object} document - Any document DTO returned by the backend.
+ * @returns {boolean} Whether the current user favorited this document.
+ */
+function isDocumentFavorited(document) {
+  return !!(document && (document.favoritedByMe ?? document.isFavorited));
+}
+
+/**
+ * Updates favorite state on the FE object without drifting from backend naming.
+ * @param {Object} document - Any document DTO returned by the backend.
+ * @param {boolean} value - New favorite state.
+ */
+function setDocumentFavorited(document, value) {
+  if (!document) return;
+  document.favoritedByMe = !!value;
+  document.isFavorited = !!value;
+}
+
 // End of document API helper file.

@@ -99,11 +99,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   async function handleToggleFavorite(documentItem, btn) {
     btn.disabled = true;
-    const wasFavorited = documentItem.isFavorited;
+    const wasFavorited = isDocumentFavorited(documentItem);
     try {
       if (wasFavorited) {
         await unfavoriteDocument(documentItem.documentId);
-        documentItem.isFavorited = false;
+        setDocumentFavorited(documentItem, false);
         btn.classList.remove("favorited");
         btn.title = "Add to favorites";
         showToast("Removed from favorites.", "success");
@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
       } else {
         await favoriteDocument(documentItem.documentId);
-        documentItem.isFavorited = true;
+        setDocumentFavorited(documentItem, true);
         btn.classList.add("favorited");
         btn.title = "Remove from favorites";
         showToast("Added to favorites.", "success");
@@ -155,8 +155,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const favoriteBtn = document.createElement("button");
     favoriteBtn.type = "button";
-    favoriteBtn.className = "favorite-star-btn" + (documentItem.isFavorited ? " favorited" : "");
-    favoriteBtn.title = documentItem.isFavorited ? "Remove from favorites" : "Add to favorites";
+    const favorited = isDocumentFavorited(documentItem);
+    favoriteBtn.className = "favorite-star-btn" + (favorited ? " favorited" : "");
+    favoriteBtn.title = favorited ? "Remove from favorites" : "Add to favorites";
     favoriteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>';
     favoriteBtn.addEventListener("click", async function (e) {
       e.stopPropagation();

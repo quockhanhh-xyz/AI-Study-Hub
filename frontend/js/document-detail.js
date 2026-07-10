@@ -228,8 +228,9 @@ function renderDocument(doc) {
     if (favoriteBtn) {
         if (currentIsAuthenticated) {
             favoriteBtn.style.display = "inline-flex";
-            favoriteBtn.classList.toggle("favorited", !!doc.isFavorited);
-            favoriteBtn.title = doc.isFavorited ? "Remove from favorites" : "Add to favorites";
+            const favorited = isDocumentFavorited(doc);
+            favoriteBtn.classList.toggle("favorited", favorited);
+            favoriteBtn.title = favorited ? "Remove from favorites" : "Add to favorites";
             favoriteBtn.onclick = () => handleToggleFavoriteDetail(doc);
         } else {
             favoriteBtn.style.display = "none";
@@ -758,19 +759,19 @@ async function handleToggleFavoriteDetail(doc) {
     const btn = document.getElementById("favoriteDetailBtn");
     if (!btn) return;
     btn.disabled = true;
-    const wasFavorited = !!doc.isFavorited;
+    const wasFavorited = isDocumentFavorited(doc);
     const id = doc.documentId || doc.id || currentDocumentId;
 
     try {
         if (wasFavorited) {
             await unfavoriteDocument(id);
-            doc.isFavorited = false;
+            setDocumentFavorited(doc, false);
             btn.classList.remove("favorited");
             btn.title = "Add to favorites";
             window.showToast("Removed from favorites.", "success");
         } else {
             await favoriteDocument(id);
-            doc.isFavorited = true;
+            setDocumentFavorited(doc, true);
             btn.classList.add("favorited");
             btn.title = "Remove from favorites";
             window.showToast("Added to favorites.", "success");
