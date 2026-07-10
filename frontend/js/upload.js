@@ -61,15 +61,15 @@ const ALLOWED_TYPES = [
   "image/jpeg"
 ];
 // Step 13: fallback only while entitlements are loading; real limit comes from
-// getAccountEntitlements().limits.maxFileBytes via loadUploadLimits() below.
+// getAccountEntitlements().limits.maxFileSizeBytes via loadUploadLimits() below.
 let maxFileSizeBytes = 10 * 1024 * 1024;
 
 async function loadUploadLimits() {
   try {
     const res = await getAccountEntitlements();
     const entitlements = res.data || res;
-    if (entitlements.limits && typeof entitlements.limits.maxFileBytes === "number") {
-      maxFileSizeBytes = entitlements.limits.maxFileBytes;
+    if (entitlements.limits && typeof entitlements.limits.maxFileSizeBytes === "number") {
+      maxFileSizeBytes = entitlements.limits.maxFileSizeBytes;
     }
   } catch (err) {
     console.warn("Could not load account entitlements, using default file size limit:", err);
