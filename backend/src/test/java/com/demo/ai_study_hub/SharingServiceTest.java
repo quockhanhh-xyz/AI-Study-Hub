@@ -15,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.demo.ai_study_hub.service.TierPolicyService;
 import com.demo.ai_study_hub.service.UsageService;
 import com.demo.ai_study_hub.dto.TierLimits;
+import com.demo.ai_study_hub.repository.DocumentFavoriteRepository;
 import static org.mockito.ArgumentMatchers.any;
 
 import java.util.Collections;
@@ -43,6 +44,8 @@ class SharingServiceTest {
     private TierPolicyService tierPolicyService;
     @Mock
     private UsageService usageService;
+    @Mock
+    private DocumentFavoriteRepository documentFavoriteRepository;
 
     @InjectMocks
     private SharingServiceImpl sharingService;
@@ -91,6 +94,7 @@ class SharingServiceTest {
         );
         lenient().when(tierPolicyService.getLimitsForUser(any())).thenReturn(mockLimits);
         lenient().when(usageService.countActiveShares(any())).thenReturn(0L);
+        lenient().when(documentFavoriteRepository.existsByUser_UserIdAndDocument_DocumentId(any(), any())).thenReturn(false);
     }
 
     @Test

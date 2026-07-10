@@ -12,14 +12,27 @@
 
 <body>
     <div class="auth-shell">
-        <main class="auth-container">
-            <div class="auth-header">
-                <h1 class="auth-title">AI Study Hub</h1>
-                <p>Sign up to start learning with AI Study Hub.</p>
+        <div class="auth-visual">
+            <div class="auth-bubble auth-bubble-1"></div>
+            <div class="auth-bubble auth-bubble-2"></div>
+            <div class="auth-bubble auth-bubble-3"></div>
+            <div class="auth-bubble auth-bubble-4"></div>
+            
+            <div class="auth-visual-content">
+                <h2 class="auth-visual-title">AI Study Hub</h2>
+                <p class="auth-visual-subtitle">Join us and empower your learning journey with the ultimate AI assistant.</p>
             </div>
+        </div>
+
+        <main class="auth-container">
             <section class="card form-card">
-                <h2 class="auth-card-title">Create Account</h2>
+                <div style="text-align: center; margin-bottom: 32px;">
+                    <h2 style="font-size: 32px; font-weight: 800; color: #172033; margin-bottom: 8px; margin-top: 0;">Create Account</h2>
+                    <p style="color: var(--text-muted); font-size: 15px; margin: 0;">Sign up to start learning with AI Study Hub.</p>
+                </div>
+                
                 <p id="registerMessage" class="helper-text"></p>
+                
                 <form id="registerForm" novalidate>
                     <div class="form-group">
                         <label for="fullName">Full Name</label>
@@ -27,9 +40,9 @@
                     </div>
                     <div class="form-group">
                         <label for="email">Email</label>
-                        <input type="email" id="email" placeholder="user@test.com" required autocomplete="email" />
+                        <input type="email" id="email" placeholder="Enter your email" required autocomplete="email" />
                     </div>
-                    <div class="form-group">
+                    <div class="form-group password-group">
                         <label for="password">Password</label>
                         <div class="password-field">
                             <input type="password" id="password" placeholder="Enter your password" required
@@ -56,7 +69,7 @@
                         </div>
                         <small class="field-hint">At least 8 characters, including letters and numbers.</small>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group password-group">
                         <label for="confirmPassword">Confirm Password</label>
                         <div class="password-field">
                             <input type="password" id="confirmPassword" placeholder="Re-enter password" required
@@ -81,10 +94,11 @@
                                 </svg>
                             </button>
                         </div>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Register</button>
+                    <button type="submit" class="btn btn-primary" style="margin-top: 8px;">Create Account</button>
                     <p class="helper-text">
-                        Already have an account? <a href="login.html">Login</a>
+                        Already have an account? <a href="login.html">Sign in</a>
                     </p>
                 </form>
             </section>

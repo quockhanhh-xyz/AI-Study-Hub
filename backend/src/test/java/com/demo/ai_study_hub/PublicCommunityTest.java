@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import com.demo.ai_study_hub.repository.DocumentFavoriteRepository;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -31,6 +32,8 @@ class PublicCommunityTest {
     private DocumentRepository documentRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private DocumentFavoriteRepository documentFavoriteRepository;
 
     @InjectMocks
     private DocumentService documentService;
@@ -40,6 +43,7 @@ class PublicCommunityTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(documentFavoriteRepository.existsByUserAndDocument(any(), any())).thenReturn(false);
         mockOwner = new User();
         mockOwner.setUserId(1);
         mockOwner.setEmail("owner@test.com");
@@ -99,7 +103,7 @@ class PublicCommunityTest {
         when(documentRepository.findPublicDocumentsWithFilters(eq("physics"), eq(null), eq("PDF"), any(Sort.class)))
                 .thenReturn(Collections.singletonList(mockDoc));
 
-        List<PublicDocumentResponse> res = documentService.getPublicDocuments("physics", null, "PDF", "newest");
+        List<PublicDocumentResponse> res = documentService.getPublicDocuments("physics", null, "PDF", "newest", null);
 
         assertNotNull(res);
         assertEquals(1, res.size());
@@ -115,21 +119,21 @@ class PublicCommunityTest {
         mockDoc.setApprovalStatus("APPROVED");
 
         // Test newest/default sort
-        documentService.getPublicDocuments("physics", null, "PDF", "newest");
+        documentService.getPublicDocuments("physics", null, "PDF", "newest", null);
         verify(documentRepository).findPublicDocumentsWithFilters(
                 eq("physics"), eq(null), eq("PDF"),
                 eq(Sort.by(Sort.Order.desc("publishedAt"), Sort.Order.desc("createdAt")))
         );
 
         // Test mostViewed sort
-        documentService.getPublicDocuments("physics", null, "PDF", "mostViewed");
+        documentService.getPublicDocuments("physics", null, "PDF", "mostViewed", null);
         verify(documentRepository).findPublicDocumentsWithFilters(
                 eq("physics"), eq(null), eq("PDF"),
                 eq(Sort.by(Sort.Order.desc("viewCount"), Sort.Order.desc("publishedAt")))
         );
 
         // Test mostDownloaded sort
-        documentService.getPublicDocuments("physics", null, "PDF", "mostDownloaded");
+        documentService.getPublicDocuments("physics", null, "PDF", "mostDownloaded", null);
         verify(documentRepository).findPublicDocumentsWithFilters(
                 eq("physics"), eq(null), eq("PDF"),
                 eq(Sort.by(Sort.Order.desc("downloadCount"), Sort.Order.desc("publishedAt")))
@@ -143,7 +147,7 @@ class PublicCommunityTest {
         when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
         when(documentRepository.save(any(Document.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        PublicDocumentResponse res = documentService.getPublicDocumentDetail(10);
+        PublicDocumentResponse res = documentService.getPublicDocumentDetail(10, null);
 
         assertNotNull(res);
         assertEquals(1, mockDoc.getViewCount());
@@ -157,7 +161,7 @@ class PublicCommunityTest {
         when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            documentService.getPublicDocumentDetail(10);
+            documentService.getPublicDocumentDetail(10, null);
         });
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
@@ -172,7 +176,7 @@ class PublicCommunityTest {
         when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            documentService.getPublicDocumentDetail(10);
+            documentService.getPublicDocumentDetail(10, null);
         });
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());

@@ -42,6 +42,7 @@ public class DocumentService {
     private final TierPolicyService tierPolicyService;
     private final UsageService usageService;
     private final PlatformTransactionManager transactionManager;
+    private final com.demo.ai_study_hub.repository.DocumentFavoriteRepository documentFavoriteRepository;
 
     public DocumentResponse uploadDocument(MultipartFile file, String title, String description, Integer subjectId, Integer folderId, String email) {
         if (title == null || title.trim().isEmpty()) {
@@ -50,19 +51,19 @@ public class DocumentService {
 
         // 1. Initial validation (no lock)
         User owner = userRepository.findByEmail(email)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         if (subjectId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Subject is required");
         }
         Subject subject = subjectRepository.findById(subjectId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
         if (!"ACTIVE".equals(subject.getStatus())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found");
         }
 
         if ("USER_CUSTOM".equals(subject.getScope())
-            && (subject.getOwner() == null || !subject.getOwner().getUserId().equals(owner.getUserId()))) {
+                && (subject.getOwner() == null || !subject.getOwner().getUserId().equals(owner.getUserId()))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this subject");
         }
 
@@ -85,14 +86,14 @@ public class DocumentService {
         }
 
         boolean isDuplicate = documentRepository.existsDuplicate(
-            owner,
-            file.getOriginalFilename(),
-            file.getSize(),
-            folderId
+                owner,
+                file.getOriginalFilename(),
+                file.getSize(),
+                folderId
         );
         if (isDuplicate) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                "A file with the same name already exists in this folder.");
+                    "A file with the same name already exists in this folder.");
         }
 
         // 2. Upload to Cloudinary (outside transaction/lock)
@@ -104,7 +105,7 @@ public class DocumentService {
         } catch (Exception e) {
             log.error("Cloudinary upload failed or timed out", e);
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                "Cloudinary upload failed or timed out. Please try again.");
+                    "Cloudinary upload failed or timed out. Please try again.");
         }
 
         String url = uploadResult.getFileUrl();
@@ -120,7 +121,7 @@ public class DocumentService {
             return txTemplate.execute(status -> {
                 // Lock user for update
                 User lockedOwner = userRepository.findByIdForUpdate(owner.getUserId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
                 // Re-validate subject and folder in current hibernate session
                 Subject txSubject = subjectRepository.findById(subjectId).orElseThrow();
@@ -128,14 +129,14 @@ public class DocumentService {
 
                 // Re-run duplicate check
                 boolean isDup = documentRepository.existsDuplicate(
-                    lockedOwner,
-                    file.getOriginalFilename(),
-                    file.getSize(),
-                    folderId
+                        lockedOwner,
+                        file.getOriginalFilename(),
+                        file.getSize(),
+                        folderId
                 );
                 if (isDup) {
                     throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        "A file with the same name already exists in this folder.");
+                            "A file with the same name already exists in this folder.");
                 }
 
                 // Final check on quota limits
@@ -206,7 +207,7 @@ public class DocumentService {
                 throw (QuotaExceededException) e;
             }
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                "Failed to save document metadata. Upload has been rolled back.");
+                    "Failed to save document metadata. Upload has been rolled back.");
         }
     }
 
@@ -526,6 +527,14 @@ public class DocumentService {
             processingStatusVal = doc.getDocumentContent().getProcessingStatus().name();
         }
 
+        // NOTE: one query per document here (called from mapToResponseList too).
+        // Acceptable for MVP given document lists are typically small and not
+        // paginated in this codebase; if lists grow large, bulk-fetch via
+        // documentFavoriteRepository.findFavoritedDocumentIds(...) once in
+        // mapToResponseList() and thread the Set through instead.
+        boolean favoritedByMe = requester != null
+                && documentFavoriteRepository.existsByUserAndDocument(requester, doc);
+
         return DocumentResponse.builder()
                 .documentId(doc.getDocumentId())
                 .title(doc.getTitle())
@@ -560,16 +569,28 @@ public class DocumentService {
                 .canShare(canShare)
                 .canPublish(canPublish)
                 .canUnpublish(canUnpublish)
+                .favoritedByMe(favoritedByMe)
                 .build();
     }
 
-    private PublicDocumentResponse mapToPublicResponse(Document doc) {
+    private PublicDocumentResponse mapToPublicResponse(Document doc, String requesterEmail) {
         boolean previewSupported = isPreviewSupported(doc);
         boolean isPublicAndApproved = "PUBLIC".equals(doc.getVisibility()) && "APPROVED".equals(doc.getApprovalStatus());
 
         boolean canPreview = isPublicAndApproved && previewSupported;
         boolean canOpen = isPublicAndApproved;
         boolean canDownload = isPublicAndApproved;
+
+        // Public endpoints don't require login — requesterEmail is null for
+        // anonymous visitors, in which case favoritedByMe is always false
+        // (favoriting requires an account, see DocumentFavoriteService).
+        boolean favoritedByMe = false;
+        if (requesterEmail != null) {
+            User requester = userRepository.findByEmail(requesterEmail).orElse(null);
+            if (requester != null) {
+                favoritedByMe = documentFavoriteRepository.existsByUserAndDocument(requester, doc);
+            }
+        }
 
         return PublicDocumentResponse.builder()
                 .documentId(doc.getDocumentId())
@@ -592,6 +613,7 @@ public class DocumentService {
                 .canPreview(canPreview)
                 .canOpen(canOpen)
                 .canDownload(canDownload)
+                .favoritedByMe(favoritedByMe)
                 .build();
     }
 
@@ -652,7 +674,7 @@ public class DocumentService {
         return fileName.substring(lastDot + 1);
     }
 
-    public List<PublicDocumentResponse> getPublicDocuments(String keyword, Integer subjectId, String fileType, String sortType) {
+    public List<PublicDocumentResponse> getPublicDocuments(String keyword, Integer subjectId, String fileType, String sortType, String requesterEmail) {
         Sort sort = Sort.by(Sort.Order.desc("publishedAt"), Sort.Order.desc("createdAt"));
         if ("mostViewed".equalsIgnoreCase(sortType)) {
             sort = Sort.by(Sort.Order.desc("viewCount"), Sort.Order.desc("publishedAt"));
@@ -662,11 +684,11 @@ public class DocumentService {
 
         return documentRepository.findPublicDocumentsWithFilters(keyword, subjectId, fileType, sort)
                 .stream()
-                .map(this::mapToPublicResponse)
+                .map(doc -> mapToPublicResponse(doc, requesterEmail))
                 .collect(Collectors.toList());
     }
 
-    public PublicDocumentResponse getPublicDocumentDetail(Integer documentId) {
+    public PublicDocumentResponse getPublicDocumentDetail(Integer documentId, String requesterEmail) {
         Document doc = documentRepository.findById(documentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
 
@@ -681,7 +703,7 @@ public class DocumentService {
         doc.setViewCount((doc.getViewCount() == null ? 0L : doc.getViewCount()) + 1);
         documentRepository.save(doc);
 
-        return mapToPublicResponse(doc);
+        return mapToPublicResponse(doc, requesterEmail);
     }
 
     public DocumentDownloadInfo getPublicDocumentDownloadInfo(Integer documentId) {

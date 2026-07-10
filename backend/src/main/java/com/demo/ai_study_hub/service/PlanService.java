@@ -43,6 +43,7 @@ public class PlanService {
         private final int durationMonths;
         private final String billingLabel;
         private final boolean purchasable;
+        private final List<String> features;
     }
 
     private Map<String, PaymentPlan> plans() {
@@ -55,6 +56,11 @@ public class PlanService {
                 .durationMonths(0)
                 .billingLabel(FREE_BILLING_LABEL)
                 .purchasable(false)
+                .features(List.of(
+                        "10 câu hỏi AI/ngày",
+                        "Tải file tài liệu tối đa 10MB",
+                        "Xem tài liệu chia sẻ từ cộng đồng"
+                ))
                 .build());
         map.put(PlanCode.PREMIUM_1_MONTH, PaymentPlan.builder()
                 .planCode(PlanCode.PREMIUM_1_MONTH)
@@ -64,6 +70,11 @@ public class PlanService {
                 .durationMonths(PAID_DURATION_MONTHS)
                 .billingLabel(PREMIUM_BILLING_LABEL)
                 .purchasable(true)
+                .features(List.of(
+                        "50 câu hỏi AI/ngày",
+                        "Tải file tối đa 50MB",
+                        "Tạo Flashcards ôn tập cơ bản"
+                ))
                 .build());
         map.put(PlanCode.ULTRA_1_MONTH, PaymentPlan.builder()
                 .planCode(PlanCode.ULTRA_1_MONTH)
@@ -73,6 +84,11 @@ public class PlanService {
                 .durationMonths(PAID_DURATION_MONTHS)
                 .billingLabel(PREMIUM_BILLING_LABEL)
                 .purchasable(true)
+                .features(List.of(
+                        "AI hỏi đáp KHÔNG giới hạn",
+                        "Tải file lên tới 100MB",
+                        "Tự động tạo bộ câu hỏi Quiz"
+                ))
                 .build());
         return map;
     }
@@ -95,6 +111,7 @@ public class PlanService {
                 .durationMonths(plan.getDurationMonths())
                 .aiDailyLimit(tierPolicyService.getLimits(plan.getTargetTier()).aiQuestionsPerDay())
                 .purchasable(plan.isPurchasable())
+                .features(plan.getFeatures())
                 .build();
     }
 

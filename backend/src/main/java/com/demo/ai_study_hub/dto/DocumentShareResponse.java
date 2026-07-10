@@ -25,4 +25,5 @@ public class DocumentShareResponse {
     private String permission;
     private String status;
     private LocalDateTime createdAt;
+    private Boolean favoritedByMe;
 }

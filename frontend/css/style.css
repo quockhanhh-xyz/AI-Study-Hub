@@ -3834,3 +3834,220 @@ svg {
   color: var(--primary-hover);
   text-decoration: underline;
 }
+
+/* ═══════════════════════════════════════════════════════
+   AUTH SPLIT SCREEN LAYOUT
+═══════════════════════════════════════════════════════ */
+
+.auth-shell {
+  display: flex;
+  min-height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 50%, #9B51E0 100%);
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  position: relative;
+}
+
+.auth-visual {
+  flex: 0 0 40%;
+  background: transparent;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  padding: 40px;
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+/* Floating bubbles */
+.auth-bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.05) 100%);
+  box-shadow: inset 0px 0px 20px rgba(255, 255, 255, 0.5), 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  animation: floatBubble 10s ease-in-out infinite alternate;
+}
+
+.auth-bubble-1 {
+  width: 180px;
+  height: 180px;
+  top: 15%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.auth-bubble-2 {
+  width: 90px;
+  height: 90px;
+  top: 60%;
+  left: 20%;
+  animation-delay: 2s;
+}
+
+.auth-bubble-3 {
+  width: 250px;
+  height: 250px;
+  bottom: -50px;
+  right: -50px;
+  animation-delay: 1s;
+}
+
+.auth-bubble-4 {
+  width: 60px;
+  height: 60px;
+  top: 30%;
+  right: 15%;
+  animation-delay: 3s;
+}
+
+@keyframes floatBubble {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  100% {
+    transform: translateY(-30px) rotate(10deg);
+  }
+}
+
+.auth-visual-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+}
+
+.auth-visual-title {
+  font-size: 56px;
+  font-weight: 900;
+  margin-bottom: 20px;
+  letter-spacing: -1.5px;
+
+  /* Holographic effect */
+  background: linear-gradient(135deg,
+      #ffffff 0%,
+      #e8d3ff 25%,
+      #a6e3e9 50%,
+      #ffc4e1 75%,
+      #ffffff 100%);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: holoGradient 6s ease infinite;
+  filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.15));
+}
+
+@keyframes holoGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.auth-visual-subtitle {
+  font-size: 18px;
+  opacity: 0.95;
+  line-height: 1.6;
+  max-width: 380px;
+  margin: 0 auto;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.auth-container {
+  flex: 0 0 60%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  padding: 40px;
+  z-index: 2;
+  box-sizing: border-box;
+}
+
+.auth-container .card {
+  background: #ffffff;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  border-radius: 24px;
+  max-width: 440px;
+  width: 100%;
+  padding: 40px;
+  margin: 0 auto;
+}
+
+#loginMessage,
+#registerMessage,
+#otpMessage {
+  min-height: 24px;
+  height: auto;
+  margin-top: 0;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Responsive layout query */
+@media (max-width: 768px) {
+  .auth-shell {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .auth-visual {
+    display: none;
+  }
+
+  .auth-container {
+    flex: 0 0 100%;
+    width: 100%;
+    padding: 24px 16px;
+  }
+
+  .auth-container .card {
+    padding: 30px 24px;
+  }
+}
+
+/* OTP Input UI */
+.otp-input {
+  width: 100%;
+  max-width: 46px;
+  aspect-ratio: 1;
+  height: 46px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  background-color: #f8fafc;
+  color: var(--text-dark);
+  transition: all 0.2s ease;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.otp-input:focus {
+  border-color: var(--primary);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+  transform: translateY(-2px);
+}
