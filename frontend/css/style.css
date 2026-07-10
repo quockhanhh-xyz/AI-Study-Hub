@@ -4051,3 +4051,55 @@ svg {
   box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
   transform: translateY(-2px);
 }
+
+/* ═══════════════════════════════════════════════════════
+   FAVORITE / SAVED DOCUMENTS — Star Button
+═══════════════════════════════════════════════════════ */
+.favorite-star-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--text-light);
+  flex-shrink: 0;
+  transition: color 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
+}
+
+.favorite-star-btn:hover {
+  background-color: var(--primary-light);
+  color: var(--warning);
+  transform: scale(1.1);
+}
+
+.favorite-star-btn.favorited {
+  color: var(--warning);
+}
+
+.favorite-star-btn.favorited svg {
+  fill: var(--warning);
+}
+
+.favorite-star-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  transition: fill 0.2s ease;
+}
+
+.favorites-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.favorites-filter-btn.active {
+  background-color: var(--warning);
+  color: #ffffff;
+}
