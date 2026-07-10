@@ -234,6 +234,26 @@
 
       setMessage("loginMessage", result.message || "Login successfully.", "success");
 
+      // Trigger confetti celebration from the message position
+      if (typeof confetti === "function") {
+        const msgEl = document.getElementById("loginMessage");
+        let originX = 0.5;
+        let originY = 0.6;
+        if (msgEl) {
+          const rect = msgEl.getBoundingClientRect();
+          originX = (rect.left + rect.width / 2) / window.innerWidth;
+          originY = (rect.top + rect.height / 2) / window.innerHeight;
+        }
+
+        confetti({
+          particleCount: 150,
+          spread: 80,
+          ticks: 300,
+          origin: { x: originX, y: originY },
+          colors: ['#FF7E00', '#FFC107', '#4361EE', '#3A0CA3']
+        });
+      }
+
       setTimeout(function () {
         let target = "dashboard.html";
         const redirectValue = getRedirectParam();
@@ -252,7 +272,7 @@
         }
 
         window.location.href = target;
-      }, 500);
+      }, 600);
     } catch (error) {
       setMessage("loginMessage", error.message, "error");
     } finally {
@@ -302,10 +322,67 @@
 
     if (registerForm) registerForm.addEventListener("submit", handleRegister);
     if (verifyOtpForm) verifyOtpForm.addEventListener("submit", handleVerifyOtp);
-    if (resendOtpButton) resendOtpButton.addEventListener("click", handleResendOtp);
+    if (resendOtpButton) {
+      resendOtpButton.addEventListener("click", handleResendOtp);
+      startResendCooldown(resendOtpButton);
+    }
     if (loginForm) loginForm.addEventListener("submit", handleLogin);
 
     setupPasswordToggles();
+
+    // OTP Input Logic (6-box)
+    const otpInputs = document.querySelectorAll(".otp-input");
+    const hiddenOtpInput = document.getElementById("otp");
+
+    if (otpInputs.length > 0 && hiddenOtpInput) {
+      const updateHiddenOtp = () => {
+        hiddenOtpInput.value = Array.from(otpInputs).map(input => input.value).join("");
+      };
+
+      otpInputs.forEach((input, index) => {
+        // Handle paste
+        if (index === 0) {
+          input.addEventListener("paste", (e) => {
+            e.preventDefault();
+            const pasteData = e.clipboardData.getData("text").trim().slice(0, 6);
+            if (/^\d+$/.test(pasteData)) {
+              pasteData.split("").forEach((char, i) => {
+                if (otpInputs[i]) {
+                  otpInputs[i].value = char;
+                }
+              });
+              updateHiddenOtp();
+              const focusIndex = Math.min(pasteData.length, 5);
+              otpInputs[focusIndex].focus();
+            }
+          });
+        }
+
+        input.addEventListener("input", (e) => {
+          const val = e.target.value;
+          if (/[^0-9]/.test(val)) {
+            e.target.value = val.replace(/[^0-9]/g, "");
+            return;
+          }
+          updateHiddenOtp();
+          if (val !== "" && index < otpInputs.length - 1) {
+            otpInputs[index + 1].focus();
+          }
+        });
+
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Backspace" && !e.target.value && index > 0) {
+            otpInputs[index - 1].focus();
+            otpInputs[index - 1].value = "";
+            updateHiddenOtp();
+          } else if (e.key === "ArrowLeft" && index > 0) {
+            otpInputs[index - 1].focus();
+          } else if (e.key === "ArrowRight" && index < otpInputs.length - 1) {
+            otpInputs[index + 1].focus();
+          }
+        });
+      });
+    }
   });
 
 

@@ -13,22 +13,34 @@
 
 <body>
     <div class="auth-shell">
-        <main class="auth-container">
-            <div class="auth-header">
-                <h1 class="auth-title">AI Study Hub</h1>
-                <p>Only accounts verified by email OTP can access the system.</p>
+        <div class="auth-visual">
+            <div class="auth-bubble auth-bubble-1"></div>
+            <div class="auth-bubble auth-bubble-2"></div>
+            <div class="auth-bubble auth-bubble-3"></div>
+            <div class="auth-bubble auth-bubble-4"></div>
+            
+            <div class="auth-visual-content">
+                <h2 class="auth-visual-title">AI Study Hub</h2>
+                <p class="auth-visual-subtitle">Empower your learning journey with the ultimate AI assistant.</p>
             </div>
+        </div>
 
+        <main class="auth-container">
             <section class="card form-card">
-                <h2 class="auth-card-title">Login</h2>
+                <div style="text-align: center; margin-bottom: 32px;">
+                    <h2 style="font-size: 32px; font-weight: 800; color: #172033; margin-bottom: 8px; margin-top: 0;">Sign in</h2>
+                    <p style="color: var(--text-muted); font-size: 15px; margin: 0;">Welcome back! Sign in to continue your learning journey.</p>
+                </div>
+                
                 <p id="loginMessage" class="helper-text"></p>
+                
                 <form id="loginForm">
                     <div class="form-group">
                         <label for="loginEmail">Email</label>
-                        <input id="loginEmail" name="email" type="email" placeholder="user@test.com" required />
+                        <input id="loginEmail" name="email" type="email" placeholder="Enter your email" required />
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group password-group">
                         <label for="loginPassword">Password</label>
                         <div class="password-field">
                             <input id="loginPassword" name="password" type="password" placeholder="Enter your password"
@@ -55,24 +67,25 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary">
-                        Login
+                    <button type="submit" class="btn btn-primary" style="margin-top: 8px;">
+                        Sign in
                     </button>
 
-                    <p class="helper-text">
-                        New user? <a href="register.html">Create an account</a>
-                    </p>
-
-                    <p class="helper-text">
-                        Already registered but not verified?
-                        <a href="verify-otp.html">Verify OTP</a>
-                    </p>
-
+                    <div style="text-align: center; margin-top: 24px;">
+                        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+                            New user? <a href="register.html" style="color: var(--primary);">Create an account</a>
+                        </p>
+                        <p style="font-size: 13px; color: var(--text-muted); margin: 0;">
+                            Already registered but not verified? <a href="verify-otp.html" style="color: var(--primary); white-space: nowrap;">Verify&nbsp;OTP</a>
+                        </p>
+                    </div>
                 </form>
             </section>
         </main>
     </div>
 
+    <!-- Canvas Confetti for celebrations -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="js/api.js"></script>
     <script src="js/navigation.js"></script>
     <script src="js/auth.js"></script>
