@@ -309,10 +309,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
     card.appendChild(price);
 
-    const backendFeatures = Array.isArray(plan.features) ? plan.features : [];
+    // NOTE: plan.features from Backend is currently in Vietnamese while the
+    // rest of the UI is English — skipping it for now to avoid mixed-language
+    // display. Re-enable once Backend returns English feature strings.
+    // const backendFeatures = Array.isArray(plan.features) ? plan.features : [];
     const extraFeatures = EXTRA_TIER_FEATURES[planTier] || [];
-    const allFeatures = [...backendFeatures, ...extraFeatures];
-
+    const allFeatures = [...extraFeatures];
+    
     if (allFeatures.length > 0) {
       const list = document.createElement("ul");
       list.style.padding = "0";
