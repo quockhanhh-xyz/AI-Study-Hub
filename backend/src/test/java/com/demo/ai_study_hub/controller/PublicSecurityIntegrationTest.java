@@ -74,7 +74,7 @@ class PublicSecurityIntegrationTest {
                 .canDownload(true)
                 .build();
 
-        when(documentService.getPublicDocuments(any(), any(), any(), any()))
+        when(documentService.getPublicDocuments(any(), any(), any(), any(), any()))
                 .thenReturn(Collections.singletonList(publicDoc));
 
         mockMvc.perform(get("/api/documents/public"))
@@ -108,7 +108,7 @@ class PublicSecurityIntegrationTest {
                 .canDownload(true)
                 .build();
 
-        when(documentService.getPublicDocumentDetail(25)).thenReturn(publicDoc);
+        when(documentService.getPublicDocumentDetail(25, null)).thenReturn(publicDoc);
 
         mockMvc.perform(get("/api/documents/public/25"))
                 .andExpect(status().isOk())
