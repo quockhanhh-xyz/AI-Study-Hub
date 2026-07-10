@@ -36,8 +36,8 @@ async function reprocessDocument(documentId) {
  * Standardizes human-readable labels across the frontend interface.
  */
 const DOCUMENT_PROCESSING_STATUS = {
-  PENDING: { label: "Pending", class: "status-pending" },
-  PROCESSING: { label: "Processing Text", class: "status-processing" },
+  PENDING: { label: "UNPROCESSED", class: "status-unprocessed" },
+  PROCESSING: { label: "PROCESSING...", class: "status-processing" },
   COMPLETED: { label: "Ready for AI Q&A", class: "status-success" },
   FAILED: { label: "Processing Failed", class: "status-error" },
   UNSUPPORTED: { label: "Unsupported File Type", class: "status-error" },

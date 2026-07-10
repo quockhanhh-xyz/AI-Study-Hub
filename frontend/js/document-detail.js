@@ -1566,7 +1566,9 @@ function updateAskAvailability() {
 async function handleAiQaSubmit(e) {
     if (e) e.preventDefault();
     const textarea = document.getElementById("aiQaQuestionInput");
-    if (!textarea) return;
+    const askBtn = document.getElementById("aiQaAskBtn");
+    
+    if (!textarea || textarea.disabled || (askBtn && askBtn.disabled)) return;
 
     const question = textarea.value.trim();
     if (!question) {
