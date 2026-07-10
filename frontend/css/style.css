@@ -556,12 +556,20 @@ textarea.success {
 
 .stat-card-premium {
   background: linear-gradient(135deg, #ffffff, #fffbeb) !important;
-  border-color: #fde68a !important;
+  border: 2px solid #f59e0b !important;
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.25) !important;
+  position: relative;
+  z-index: 1;
 }
 
 .stat-card-ultra {
   background: linear-gradient(135deg, #ffffff, #f5f3ff) !important;
-  border-color: #ddd6fe !important;
+  border: 2px solid #7c3aed !important;
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.25) !important;
+  position: relative;
+  z-index: 1;
 }
 
 .badge-tier-free,
@@ -1224,7 +1232,7 @@ textarea.success {
   transition: none !important;
 }
 
-.sidebar.no-transition + .main-content {
+.sidebar.no-transition+.main-content {
   transition: none !important;
 }
 
@@ -3782,7 +3790,8 @@ svg {
 }
 
 .shares-empty-state {
-  display: none; /* Controlled dynamically by JS (will be set to flex) */
+  display: none;
+  /* Controlled dynamically by JS (will be set to flex) */
   flex-direction: column;
   align-items: center;
   justify-content: center;
