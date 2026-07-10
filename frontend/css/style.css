@@ -4067,6 +4067,12 @@ svg {
   gap: 10px;
 }
 
-.document-panel .back-link {
-  margin-top: 20px;
+#upgradePlanPage .back-link,
+.main-content > .back-link {
+  margin-top: 24px;
+  display: inline-block;
+}
+
+.back-link {
+  margin-top: 24px;
 }
