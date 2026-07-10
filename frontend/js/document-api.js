@@ -155,4 +155,36 @@ function downloadDocument(documentOrId) {
   window.location.href = `${API_BASE_URL}/api/documents/${id}/download`;
 }
 
+/* ==========================================================================
+   FAVORITE / SAVED DOCUMENTS
+   ========================================================================== */
+
+/**
+ * Marks a document as favorite for the current user.
+ * @param {number|string} id - The document ID to favorite.
+ * @returns {Promise<Object>} Server confirmation payload.
+ */
+function favoriteDocument(id) {
+  if (!id) throw new Error("favoriteDocument: id is required");
+  return post(`/api/documents/${id}/favorite`);
+}
+
+/**
+ * Removes a document from the current user's favorites.
+ * @param {number|string} id - The document ID to unfavorite.
+ * @returns {Promise<Object>} Server confirmation payload.
+ */
+function unfavoriteDocument(id) {
+  if (!id) throw new Error("unfavoriteDocument: id is required");
+  return del(`/api/documents/${id}/favorite`);
+}
+
+/**
+ * Retrieves the list of documents the current user has favorited.
+ * @returns {Promise<Object>} List of favorited documents.
+ */
+function getFavoriteDocuments() {
+  return get("/api/documents/favorites");
+}
+
 // End of document API helper file.
