@@ -644,33 +644,34 @@
       margin-top: 0;
       padding-top: 0;
       border-top: none;
-      padding-bottom: 18px;
-      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .ai-qa-divider {
+      border: 0;
+      border-top: 1px solid var(--border);
+      margin: 4px 0;
+      opacity: 0.5;
     }
 
     .ai-qa-usage-row {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       justify-content: space-between;
       gap: 10px;
-      padding: 10px 12px;
-      background: var(--background);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 12px;
+      padding: 5px 2px 12px 2px;
+      font-size: 11px;
+      line-height: 1.5;
       color: var(--muted);
     }
 
     .ai-qa-model-badge {
       display: inline-flex;
       align-items: center;
-      padding: 3px 8px;
-      border-radius: 6px;
-      background: var(--primary-light);
-      color: var(--primary-hover);
-      border: 1px solid var(--primary-border);
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 500;
+      color: var(--muted);
+      opacity: 0.7;
       white-space: nowrap;
     }
 
@@ -1075,11 +1076,8 @@
                       <pre class="ai-extracted-text-content" id="aiExtractedTextContent"></pre>
                     </div>
                   </section>
-
-                  <div class="ai-qa-usage-row" id="aiQaUsageRow" style="display:none;">
-                    <span id="aiQaUsageText">–</span>
-                    <span id="aiQaModelLabel" class="ai-qa-model-badge" style="display:none;"></span>
-                  </div>
+                  
+                  <hr class="ai-qa-divider" />
 
                   <div class="ai-qa-sample-questions" id="aiQaSampleQuestions" style="display:none;">
                     <button type="button" class="ai-qa-sample-btn" data-question="What are the key points?">What are the
@@ -1101,6 +1099,11 @@
                     <button type="submit" class="btn btn-primary" id="aiQaAskBtn" disabled>Ask</button>
                   </form>
                   <div class="ai-qa-input-meta" id="aiQaInputMeta"></div>
+
+                  <div class="ai-qa-usage-row" id="aiQaUsageRow" style="display:none;">
+                    <span id="aiQaUsageText">–</span>
+                    <span id="aiQaModelLabel" class="ai-qa-model-badge" style="display:none;"></span>
+                  </div>
                 </section>
               </div>
 
