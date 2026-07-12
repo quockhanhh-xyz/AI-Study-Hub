@@ -57,9 +57,9 @@ public class PlanService {
                 .billingLabel(FREE_BILLING_LABEL)
                 .purchasable(false)
                 .features(List.of(
-                        "10 câu hỏi AI/ngày",
-                        "Tải file tài liệu tối đa 10MB",
-                        "Xem tài liệu chia sẻ từ cộng đồng"
+                        "5 AI questions per day",
+                        "Upload files up to 10MB",
+                        "View shared and community documents"
                 ))
                 .build());
         map.put(PlanCode.PREMIUM_1_MONTH, PaymentPlan.builder()
@@ -71,9 +71,9 @@ public class PlanService {
                 .billingLabel(PREMIUM_BILLING_LABEL)
                 .purchasable(true)
                 .features(List.of(
-                        "50 câu hỏi AI/ngày",
-                        "Tải file tối đa 50MB",
-                        "Tạo Flashcards ôn tập cơ bản"
+                        "50 AI questions per day",
+                        "Upload files up to 50MB",
+                        "Generate flashcards and quizzes"
                 ))
                 .build());
         map.put(PlanCode.ULTRA_1_MONTH, PaymentPlan.builder()
@@ -85,9 +85,9 @@ public class PlanService {
                 .billingLabel(PREMIUM_BILLING_LABEL)
                 .purchasable(true)
                 .features(List.of(
-                        "AI hỏi đáp KHÔNG giới hạn",
-                        "Tải file lên tới 100MB",
-                        "Tự động tạo bộ câu hỏi Quiz"
+                        "200 AI questions per day",
+                        "Upload files up to 100MB",
+                        "Higher limits for AI learning tools"
                 ))
                 .build());
         return map;
@@ -116,7 +116,7 @@ public class PlanService {
     }
 
     /**
-     * Looks up a plan by code. Throws 400 if the plan code does not exist —
+     * Looks up a plan by code. Throws 400 if the plan code does not exist.
      * NEVER falls back to FREE pricing silently.
      */
     public PaymentPlan getPlan(String planCode) {
