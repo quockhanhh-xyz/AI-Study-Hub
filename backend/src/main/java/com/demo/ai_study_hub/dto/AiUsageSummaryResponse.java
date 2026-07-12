@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AiUsageSummaryResponse {
 
-    /** User account tier: "FREE" | "PREMIUM" */
+    /** User account tier: "FREE" | "PREMIUM" | "ULTRA" */
     private String tier;
 
     /** Max questions per day for this tier */
