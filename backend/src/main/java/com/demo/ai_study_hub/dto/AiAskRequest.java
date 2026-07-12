@@ -12,7 +12,7 @@ public class AiAskRequest {
     /**
      * The user's question about the document.
      * Must be non-blank. Character length limit is enforced in service
-     * based on user tier (FREE: 500, PREMIUM: 2000).
+     * based on user tier (FREE: 500, PREMIUM: 2000, ULTRA: 5000).
      */
     @NotBlank(message = "Question must not be blank")
     private String question;
