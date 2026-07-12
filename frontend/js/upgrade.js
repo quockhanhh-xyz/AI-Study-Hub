@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   const EXTRA_TIER_FEATURES = {
     FREE: [
-      "10 AI questions/day",
+      "5 AI questions/day",
       "Upload files up to 10MB",
       "View documents shared by the community",
       "100MB storage",
@@ -77,12 +77,12 @@ document.addEventListener("DOMContentLoaded", async function () {
       "Up to 200 folders (8 levels deep)",
       "Create up to 30 study groups",
       "Up to 1,000 active document shares",
-      "10 AI summary generations/day",
-      "10 AI flashcard sets/day",
-      "10 AI quiz sets/day"
+      "20 AI summary generations/day",
+      "15 AI flashcard sets/day",
+      "15 AI quiz sets/day"
     ],
     ULTRA: [
-      "Unlimited AI Q&A",
+      "200 AI questions/day",
       "Upload files up to 100MB",
       "Auto-generate Quiz sets",
       "10GB storage",
@@ -91,8 +91,8 @@ document.addEventListener("DOMContentLoaded", async function () {
       "Create up to 100 study groups",
       "Up to 5,000 active document shares",
       "50 AI summary generations/day",
-      "50 AI flashcard sets/day",
-      "50 AI quiz sets/day"
+      "40 AI flashcard sets/day",
+      "40 AI quiz sets/day"
     ]
   };
 
@@ -144,8 +144,8 @@ document.addEventListener("DOMContentLoaded", async function () {
       const message = alreadyPremiumBanner.querySelector("span");
       if (message) {
         message.innerHTML = normalizedTier === "ULTRA"
-          ? `${PARTY_ICON}You are currently on the Ultra plan! You can renew it before it expires.`
-          : `${PARTY_ICON}You are currently on the Premium plan! You can renew it or upgrade to Ultra.`;
+            ? `${PARTY_ICON}You are currently on the Ultra plan! You can renew it before it expires.`
+            : `${PARTY_ICON}You are currently on the Premium plan! You can renew it or upgrade to Ultra.`;
       }
       alreadyPremiumBanner.style.display = normalizedTier === "FREE" ? "none" : "flex";
     }
@@ -188,13 +188,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   async function cancelPaymentOrder(paymentId, button) {
     const confirmed = typeof confirmAction === "function"
-      ? await confirmAction({
-        title: "Cancel payment?",
-        message: "This closes the pending checkout so you can create a new payment. Do not cancel if you have already completed payment at VNPay.",
-        confirmText: "Cancel payment",
-        danger: true
-      })
-      : window.confirm("Cancel this pending payment?");
+        ? await confirmAction({
+          title: "Cancel payment?",
+          message: "This closes the pending checkout so you can create a new payment. Do not cancel if you have already completed payment at VNPay.",
+          confirmText: "Cancel payment",
+          danger: true
+        })
+        : window.confirm("Cancel this pending payment?");
 
     if (!confirmed) return;
     setButtonLoading(button, true, "Cancelling...");
@@ -307,10 +307,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     price.style.fontSize = "24px";
     price.style.fontWeight = "700";
     price.style.color = planTier === "PREMIUM"
-      ? "#b45309"
-      : planTier === "ULTRA"
-        ? "#7c3aed"
-        : "var(--text-main)";
+        ? "#b45309"
+        : planTier === "ULTRA"
+            ? "#7c3aed"
+            : "var(--text-main)";
     if (plan.price > 0) {
       price.textContent = `${formatCurrency(plan.price, plan.currency)} / ${plan.billingLabel || "month"}`;
     } else {
@@ -376,8 +376,8 @@ document.addEventListener("DOMContentLoaded", async function () {
       lowerPlanNote.className = "helper-text";
       lowerPlanNote.style.marginTop = "16px";
       lowerPlanNote.textContent = planTier === "FREE"
-        ? "Included with every account"
-        : "Downgrade is not supported";
+          ? "Included with every account"
+          : "Downgrade is not supported";
       card.appendChild(lowerPlanNote);
     }
 
@@ -572,8 +572,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     dateInfo.style.fontSize = "12px";
     dateInfo.style.color = "var(--text-muted)";
     dateInfo.textContent = payment.paidAt
-      ? `Paid: ${formatDate(payment.paidAt)}`
-      : `Created: ${formatDate(payment.createdAt)}`;
+        ? `Paid: ${formatDate(payment.paidAt)}`
+        : `Created: ${formatDate(payment.createdAt)}`;
     meta.appendChild(dateInfo);
 
     if (canContinueVNPay(payment)) {
