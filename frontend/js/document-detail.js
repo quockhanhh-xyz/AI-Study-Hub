@@ -87,6 +87,40 @@ let aiToolsLoaded = false;
 let aiToolsProcessingStatus = "PENDING";
 let summaryExists = false;
 
+function normalizeProcessingStatusResponse(res) {
+    return res?.success && res?.data ? res.data : (res || {});
+}
+
+function setViewerAiProcessingStatus(status) {
+    const nextStatus = status || "PENDING";
+    aiQaProcessingStatus = nextStatus;
+    aiToolsProcessingStatus = nextStatus;
+    updateAskAvailability();
+    updateAiToolsAvailability();
+
+    const toolsPane = document.getElementById("inspectorPaneTools");
+    if (nextStatus === "COMPLETED" && toolsPane?.classList.contains("active")) {
+        loadAiToolsData();
+    }
+}
+
+async function refreshViewerProcessingStatusIfMissing(doc) {
+    if (!currentIsAuthenticated || !currentDocumentId || doc.processingStatus) return;
+
+    const docId = currentDocumentId;
+    try {
+        const res = await getProcessingStatus(docId);
+        if (docId !== currentDocumentId) return;
+        const data = normalizeProcessingStatusResponse(res);
+        setViewerAiProcessingStatus(data.processingStatus || "PENDING");
+    } catch (err) {
+        console.error("Failed to fetch document processing status", err);
+        if (docId === currentDocumentId) {
+            setViewerAiProcessingStatus("PENDING");
+        }
+    }
+}
+
 // Step 13: detects backend quota errors (e.g. share limit) so we can route
 // them through the shared showQuotaError() helper.
 function isQuotaError(error) {
@@ -372,6 +406,7 @@ function renderDocument(doc) {
 
     // Step 14: reset + (re)populate the AI Tools tab for this document
     renderAiToolsTab(doc);
+    refreshViewerProcessingStatusIfMissing(doc);
 
     if (tabsContainer && tabPanes) {
         if (hasInspector) {
@@ -536,8 +571,7 @@ function applyAIProcessingState(status, data) {
     renderAIActions(status);
 
     if (currentIsAuthenticated) {
-        aiQaProcessingStatus = status;
-        updateAskAvailability();
+        setViewerAiProcessingStatus(status);
     }
 }
 
@@ -1372,20 +1406,6 @@ function renderAIQaTab(doc) {
     aiQaUsageInfo = null;
     aiQaProcessingStatus = doc.processingStatus || "PENDING";
 
-    if (!doc.processingStatus && currentIsAuthenticated && currentDocumentId) {
-        getProcessingStatus(currentDocumentId)
-            .then(res => {
-                const target = res?.success && res?.data ? res.data : res;
-                aiQaProcessingStatus = target?.processingStatus || "PENDING";
-                updateAskAvailability();
-            })
-            .catch(err => {
-                console.error("Failed to fetch public document processing status", err);
-                aiQaProcessingStatus = "PENDING";
-                updateAskAvailability();
-            });
-    }
-
     const messagesEl = document.getElementById("aiQaMessages");
     if (messagesEl) {
         messagesEl.innerHTML =
@@ -1683,7 +1703,10 @@ function renderAiToolsTab(doc) {
 
     summaryExists = false;
     updateSummaryButtonLabel();
+    updateAiToolsAvailability();
+}
 
+function updateAiToolsAvailability() {
     const notReadyMsg = document.getElementById("aiToolsNotReadyMessage");
     const content = document.getElementById("aiToolsContent");
     const ready = aiToolsProcessingStatus === "COMPLETED";
@@ -1710,6 +1733,7 @@ function renderAiToolsTab(doc) {
 // Lazily loads Summary + Flashcard sets + Quiz sets the first time the tab opens.
 async function loadAiToolsData() {
     if (aiToolsLoaded || !currentDocumentId) return;
+    if (aiToolsProcessingStatus !== "COMPLETED") return;
     aiToolsLoaded = true;
 
     await Promise.all([
