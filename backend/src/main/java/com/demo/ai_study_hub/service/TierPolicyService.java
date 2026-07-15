@@ -38,7 +38,9 @@ public class TierPolicyService {
             3,                          // summaryGenerationsPerDay
             2,                          // flashcardSetsPerDay
             2,                          // quizSetsPerDay
-            5                           // itemsPerSet
+            5,                          // itemsPerSet
+            20,                         // maxQuizQuestionsPerSet
+            20                          // maxFlashcardsPerSet
     );
 
     private static final TierLimits PREMIUM_LIMITS = new TierLimits(
@@ -60,7 +62,9 @@ public class TierPolicyService {
             20,                          // summaryGenerationsPerDay
             15,                          // flashcardSetsPerDay
             15,                          // quizSetsPerDay
-            15                           // itemsPerSet
+            15,                          // itemsPerSet
+            50,                         // maxQuizQuestionsPerSet
+            50                          // maxFlashcardsPerSet
     );
 
     private static final TierLimits ULTRA_LIMITS = new TierLimits(
@@ -82,7 +86,9 @@ public class TierPolicyService {
             50,                          // summaryGenerationsPerDay
             40,                          // flashcardSetsPerDay
             40,                          // quizSetsPerDay
-            30                           // itemsPerSet
+            30,                          // itemsPerSet
+            80,                         // maxQuizQuestionsPerSet
+            80                          // maxFlashcardsPerSet
     );
 
     /**
@@ -124,7 +130,9 @@ public class TierPolicyService {
                 base.summaryGenerationsPerDay(),
                 base.flashcardSetsPerDay(),
                 base.quizSetsPerDay(),
-                base.itemsPerSet()
+                base.itemsPerSet(),
+                base.maxQuizQuestionsPerSet(),
+                base.maxFlashcardsPerSet()
         );
     }
 

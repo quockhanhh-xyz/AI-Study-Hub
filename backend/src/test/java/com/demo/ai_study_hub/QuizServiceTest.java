@@ -7,9 +7,8 @@ import com.demo.ai_study_hub.enums.UserTier;
 import com.demo.ai_study_hub.exception.QuotaExceededException;
 import com.demo.ai_study_hub.exception.AiProviderException;
 import com.demo.ai_study_hub.service.*;
-import com.demo.ai_study_hub.repository.DocumentChunkRepository;
-import com.demo.ai_study_hub.repository.QuizSetRepository;
-import com.demo.ai_study_hub.repository.UserRepository;
+import com.demo.ai_study_hub.repository.*;
+import com.demo.ai_study_hub.dto.QuizAttemptDtos.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,6 +44,8 @@ class QuizServiceTest {
     @Mock private AiProviderRouter aiProviderRouter;
     @Mock private AiModelSelector aiModelSelector;
     @Mock private AiProviderService aiProviderService;
+    @Mock private QuizAttemptRepository quizAttemptRepository;
+    @Mock private QuizAttemptAnswerRepository quizAttemptAnswerRepository;
     @Mock private com.demo.ai_study_hub.repository.AiUsageReservationRepository aiUsageReservationRepository;
     @Mock private com.demo.ai_study_hub.repository.AiUsageLogRepository aiUsageLogRepository;
     @Mock private org.springframework.transaction.PlatformTransactionManager transactionManager;
@@ -112,7 +113,7 @@ class QuizServiceTest {
                 accessGuard, quotaPolicy, promptBuilder, validator,
                 tierPolicyService, aiProviderRouter, aiModelSelector, objectMapper,
                 aiUsageLogRepository, aiUsageReservationRepository, transactionManager,
-                learningContextBuilder);
+                learningContextBuilder, quizAttemptRepository, quizAttemptAnswerRepository);
 
         user = new User();
         user.setUserId(1);
@@ -301,5 +302,99 @@ class QuizServiceTest {
         assertEquals(HttpStatus.TOO_MANY_REQUESTS, ex.getStatusCode());
         assertEquals("AI_PROVIDER_RATE_LIMITED", ex.getCode());
         verify(aiProviderService, times(1)).call(any(), any(), anyInt(), any(Double.class), anyBoolean());
+    }
+
+    @Test
+    void generate_WhenFocusExceeds300Chars_ShouldThrowInvalidGenerationFocus() {
+        GenerateQuizRequest req = new GenerateQuizRequest();
+        req.setQuestionCount(5);
+        req.setFocus("A".repeat(301)); // 301 chars focus
+
+        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByIdForUpdate(1)).thenReturn(Optional.of(user));
+        when(accessGuard.requireReadyDocument(eq(10), eq(user)))
+                .thenReturn(new AiLearningAccessGuard.ReadyDocument(document, content));
+        when(tierPolicyService.getEffectiveTier(user)).thenReturn(UserTier.FREE);
+        when(quotaPolicy.quizQuestionCountRange(UserTier.FREE)).thenReturn(freeRange);
+
+        QuotaExceededException ex = assertThrows(QuotaExceededException.class,
+                () -> quizService.generate(10, req, "user@test.com"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("INVALID_GENERATION_FOCUS", ex.getCode());
+    }
+
+    @Test
+    void submitAttempt_WithValidAnswers_ShouldCalculateScoreAndSave() {
+        QuizSet quizSet = new QuizSet();
+        quizSet.setQuizSetId(50L);
+        quizSet.setDocument(document);
+        quizSet.setUser(user);
+
+        QuizQuestion q1 = QuizQuestion.builder()
+                .questionId(201L)
+                .quizSet(quizSet)
+                .correctOption("B")
+                .options(List.of(
+                        QuizOption.builder().optionKey("A").build(),
+                        QuizOption.builder().optionKey("B").build()
+                ))
+                .build();
+        quizSet.setQuestions(List.of(q1));
+
+        QuizAttemptRequest req = new QuizAttemptRequest();
+        QuizAttemptRequest.AnswerInput ans = new QuizAttemptRequest.AnswerInput();
+        ans.setQuestionId(201L);
+        ans.setSelectedOption("B");
+        req.setAnswers(List.of(ans));
+
+        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
+        when(quizSetRepository.findById(50L)).thenReturn(Optional.of(quizSet));
+        doNothing().when(accessGuard).checkReadPermission(document, user);
+        when(quizAttemptRepository.save(any(QuizAttempt.class))).thenAnswer(i -> i.getArgument(0));
+
+        QuizAttemptResponse response = quizService.submitAttempt(50L, req, "user@test.com");
+
+        assertNotNull(response);
+        assertEquals(1, response.getCorrectCount());
+        assertEquals(100.0, response.getPercentage());
+        assertEquals(1.0, response.getScore());
+        verify(quizAttemptAnswerRepository, times(1)).saveAll(anyList());
+    }
+
+    @Test
+    void submitAttempt_WithInvalidOption_ShouldThrowQuizAttemptInvalidAnswer() {
+        QuizSet quizSet = new QuizSet();
+        quizSet.setQuizSetId(50L);
+        quizSet.setDocument(document);
+        quizSet.setUser(user);
+
+        QuizQuestion q1 = QuizQuestion.builder()
+                .questionId(201L)
+                .quizSet(quizSet)
+                .correctOption("B")
+                .options(List.of(
+                        QuizOption.builder().optionKey("A").build(),
+                        QuizOption.builder().optionKey("B").build()
+                ))
+                .build();
+        quizSet.setQuestions(List.of(q1));
+
+        QuizAttemptRequest req = new QuizAttemptRequest();
+        QuizAttemptRequest.AnswerInput ans = new QuizAttemptRequest.AnswerInput();
+        ans.setQuestionId(201L);
+        ans.setSelectedOption("Z"); // invalid option
+        req.setAnswers(List.of(ans));
+
+        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
+        when(quizSetRepository.findById(50L)).thenReturn(Optional.of(quizSet));
+        doNothing().when(accessGuard).checkReadPermission(document, user);
+        when(quizAttemptRepository.save(any(QuizAttempt.class))).thenAnswer(i -> i.getArgument(0));
+
+        QuotaExceededException ex = assertThrows(QuotaExceededException.class,
+                () -> quizService.submitAttempt(50L, req, "user@test.com"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("QUIZ_ATTEMPT_INVALID_ANSWER", ex.getCode());
     }
 }

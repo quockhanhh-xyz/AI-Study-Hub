@@ -10,6 +10,8 @@ public class FlashcardDtos {
     public static class GenerateFlashcardRequest {
         /** Optional. Null → use tier default. */
         private Integer count;
+        /** Optional. Focus topic for the flashcards, max 300 chars. */
+        private String focus;
     }
 
     @Data

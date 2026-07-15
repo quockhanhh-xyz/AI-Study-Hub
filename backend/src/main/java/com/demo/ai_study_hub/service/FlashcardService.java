@@ -57,14 +57,28 @@ public class FlashcardService {
         final DocumentContent content;
         final UserTier tier;
         final int count;
+        final String focus;
 
-        AiReservationResult(User user, Document doc, DocumentContent content, UserTier tier, int count) {
+        AiReservationResult(User user, Document doc, DocumentContent content, UserTier tier, int count, String focus) {
             this.user = user;
             this.doc = doc;
             this.content = content;
             this.tier = tier;
             this.count = count;
+            this.focus = focus;
         }
+    }
+
+    private String validateAndCleanFocus(String focus) {
+        if (focus == null) return null;
+        String trimmed = focus.trim();
+        if (trimmed.isEmpty()) return null;
+        if (trimmed.length() > 300) {
+            throw new QuotaExceededException(HttpStatus.BAD_REQUEST,
+                    "Focus topic cannot exceed 300 characters",
+                    "INVALID_GENERATION_FOCUS");
+        }
+        return trimmed;
     }
 
     public FlashcardSetResponse generate(Integer documentId, GenerateFlashcardRequest request, String userEmail) {
@@ -84,6 +98,7 @@ public class FlashcardService {
 
             AiLearningQuotaPolicy.CountRange range = quotaPolicy.flashcardCountRange(tier);
             int count = resolveCount(request.getCount(), range, "INVALID_FLASHCARD_COUNT");
+            String focus = validateAndCleanFocus(request.getFocus());
 
             checkDailyQuota(user, tier);
 
@@ -102,7 +117,7 @@ public class FlashcardService {
                     .build();
             aiUsageReservationRepository.save(reservation);
 
-            return new AiReservationResult(user, doc, content, tier, count);
+            return new AiReservationResult(user, doc, content, tier, count, focus);
         });
 
         // 2. Call AI provider outside transaction
@@ -110,7 +125,7 @@ public class FlashcardService {
         int maxTokens = aiModelSelector.getMaxLearningOutputTokens(reserveResult.tier.name());
 
         try {
-            List<AiFlashcardOutput> cards = callAndValidateWithRetry(documentId, reserveResult.tier.name(), reserveResult.content.getExtractedText(), model, maxTokens, reserveResult.count);
+            List<AiFlashcardOutput> cards = callAndValidateWithRetry(documentId, reserveResult.tier.name(), reserveResult.content.getExtractedText(), model, maxTokens, reserveResult.count, reserveResult.focus);
 
             // 3. Confirm reservation, save result, and log success in REQUIRES_NEW transaction
             return txTemplate.execute(status -> {
@@ -159,12 +174,14 @@ public class FlashcardService {
         return requested;
     }
 
-    private List<AiFlashcardOutput> callAndValidateWithRetry(Integer documentId, String tier, String extractedText, String model, int maxTokens, int count) {
+    private List<AiFlashcardOutput> callAndValidateWithRetry(Integer documentId, String tier, String extractedText, String model, int maxTokens, int count, String focus) {
         boolean lastFailureWasProviderCall = false;
         for (int attempt = 1; attempt <= 2; attempt++) {
             String context = learningContextBuilder.buildLimitedContext(documentId, tier, attempt, extractedText);
             int currentCount = (attempt == 1) ? count : Math.max(3, count / 2);
-            String prompt = promptBuilder.buildFlashcardPrompt(context, currentCount);
+            String prompt = focus != null
+                    ? promptBuilder.buildFlashcardPrompt(context, currentCount, focus)
+                    : promptBuilder.buildFlashcardPrompt(context, currentCount);
             String rawText;
             try {
                 rawText = aiProviderRouter.route().call(prompt, model, maxTokens, 0.3, true).getText();

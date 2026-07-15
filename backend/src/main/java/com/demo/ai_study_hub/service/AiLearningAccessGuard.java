@@ -77,6 +77,10 @@ public class AiLearningAccessGuard {
         return new ReadyDocument(doc, content);
     }
 
+    public void checkReadPermission(Document doc, User user) {
+        validateReadPermission(doc, user);
+    }
+
     /**
      * Same 4-path permission logic as Step 10's validateViewPermission:
      * owner OR direct share OR group-document share (active member) OR
