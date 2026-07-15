@@ -26,7 +26,7 @@ public class TierPolicyService {
             20,                         // maxFolders
             3,                          // maxFolderDepth
             3,                          // maxOwnedGroups
-            10,                         // maxMembersPerGroup
+            3,                          // maxMembersPerGroup
             30,                         // maxActiveShares
             3,                          // maxAiSessionsPerDocument
             30,                         // maxMessagesPerSession
