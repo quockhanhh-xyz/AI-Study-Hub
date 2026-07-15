@@ -4111,6 +4111,8 @@ The system calculates the user's **Effective Tier** dynamically on each request 
 | **Max Flashcard Sets/Day** | 2 | 15 | 40 |
 | **Max Quiz Sets/Day** | 2 | 15 | 40 |
 | **Max Items per Set** | 5 | 15 | 30 |
+| **Max Quiz Questions per Set** | 20 | 50 | 80 |
+| **Max Flashcards per Set** | 20 | 50 | 80 |
 | **Max Context Chunks** | 3 | 8 | 15 |
 | **Max Output Tokens** | 500 | 1500 | 3000 |
 | **AI Model Selector** | `gemini-2.5-flash-lite` | `gemini-2.5-flash` | `gemini-2.5-flash` |
@@ -4431,9 +4433,11 @@ Generates a new flashcard set.
 * **Request Body**:
 ```json
 {
-  "count": 8
+  "count": 8,
+  "focus": "chapter 3"
 }
 ```
+* **`focus`** (optional): String, max 300 characters. Omitted, empty, or whitespace-only resolves to `null`. If length > 300 characters, returns **400 Bad Request** with code `INVALID_GENERATION_FOCUS`.
 * **Response `200 OK`**:
   Returns the generated flashcard set payload (format matches GET set detail).
 
@@ -4532,16 +4536,115 @@ Generates a new multiple-choice quiz set.
 ```json
 {
   "questionCount": 5,
-  "difficulty": "MIXED"
+  "difficulty": "MIXED",
+  "focus": "chapter 3"
 }
 ```
 * **`difficulty`** (optional): one of `EASY`, `MEDIUM`, `HARD`, `MIXED` (case-insensitive). Omitted or `null` defaults to `MIXED`. Any other value returns **400 Bad Request** with code `INVALID_QUIZ_DIFFICULTY`.
+* **`focus`** (optional): String, max 300 characters. Omitted, empty, or whitespace-only resolves to `null`. If length > 300 characters, returns **400 Bad Request** with code `INVALID_GENERATION_FOCUS`.
 * **Response `200 OK`**:
   Returns the generated quiz set payload (format matches GET quiz set detail).
 
 ---
 
-## 18.5. Quotas and Limits Specs
+## 18.5. Quiz Attempt Endpoints
+
+### POST `/api/ai/quiz-sets/{quizSetId}/attempts`
+Submits a quiz attempt.
+
+* **URL Parameter**: `quizSetId` (long)
+* **Request Body**:
+```json
+{
+  "startedAt": "2026-07-08T10:00:00Z",
+  "completedAt": "2026-07-08T10:05:00Z",
+  "answers": [
+    {
+      "questionId": 201,
+      "selectedOption": "B"
+    }
+  ]
+}
+```
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Quiz attempt submitted successfully",
+  "data": {
+    "attemptId": 301,
+    "quizSetId": 7,
+    "userId": 1,
+    "score": 1.0,
+    "totalQuestions": 5,
+    "correctCount": 1,
+    "percentage": 20.0,
+    "startedAt": "2026-07-08T10:00:00Z",
+    "completedAt": "2026-07-08T10:05:00Z",
+    "createdAt": "2026-07-15T06:00:00Z",
+    "answers": [
+      {
+        "attemptAnswerId": 501,
+        "questionId": 201,
+        "selectedOption": "B",
+        "correctOption": "B",
+        "isCorrect": true,
+        "answeredAt": "2026-07-15T06:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### GET `/api/ai/quiz-sets/{quizSetId}/attempts`
+Retrieves attempt history for a quiz set.
+
+* **URL Parameter**: `quizSetId` (long)
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Quiz attempt history retrieved successfully",
+  "data": [
+    {
+      "attemptId": 301,
+      "quizSetId": 7,
+      "userId": 1,
+      "score": 1.0,
+      "totalQuestions": 5,
+      "correctCount": 1,
+      "percentage": 20.0,
+      "startedAt": "2026-07-08T10:00:00Z",
+      "completedAt": "2026-07-08T10:05:00Z",
+      "createdAt": "2026-07-15T06:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### GET `/api/ai/quiz-sets/{quizSetId}/attempts/latest`
+Retrieves the latest quiz attempt.
+
+* **URL Parameter**: `quizSetId` (long)
+* **Response `200 OK`**:
+  Returns the attempt payload (format matches POST attempt submit response).
+
+---
+
+### GET `/api/ai/quiz-sets/{quizSetId}/attempts/best`
+Retrieves the best quiz attempt (highest percentage score).
+
+* **URL Parameter**: `quizSetId` (long)
+* **Response `200 OK`**:
+  Returns the attempt payload (format matches POST attempt submit response).
+
+---
+
+## 18.6. Quotas and Limits Specs
 
 ### Quota Keys
 * `AI_SUMMARY_GENERATION` (daily limits on summaries)

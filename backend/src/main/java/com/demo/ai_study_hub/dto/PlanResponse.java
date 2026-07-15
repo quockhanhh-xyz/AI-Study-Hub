@@ -19,4 +19,14 @@ public class PlanResponse {
     private int aiDailyLimit;
     private boolean purchasable;
     private List<String> features;
+    private PlanLimitsDto limits;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PlanLimitsDto {
+        private int maxQuizQuestionsPerSet;
+        private int maxFlashcardsPerSet;
+    }
 }

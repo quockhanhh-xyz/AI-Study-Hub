@@ -32,18 +32,16 @@ public class AiLearningQuotaPolicy {
     }
 
     public CountRange flashcardCountRange(UserTier tier) {
-        return switch (tier) {
-            case PREMIUM -> new CountRange(3, 15, 30);
-            case ULTRA -> new CountRange(3, 20, 50);
-            default -> new CountRange(3, 8, 8);
-        };
+        var limits = tierPolicyService.getLimits(tier);
+        int max = limits.maxFlashcardsPerSet();
+        int def = limits.itemsPerSet();
+        return new CountRange(3, def, max);
     }
 
     public CountRange quizQuestionCountRange(UserTier tier) {
-        return switch (tier) {
-            case PREMIUM -> new CountRange(3, 10, 15);
-            case ULTRA -> new CountRange(3, 15, 25);
-            default -> new CountRange(3, 5, 5);
-        };
+        var limits = tierPolicyService.getLimits(tier);
+        int max = limits.maxQuizQuestionsPerSet();
+        int def = limits.itemsPerSet();
+        return new CountRange(3, def, max);
     }
 }

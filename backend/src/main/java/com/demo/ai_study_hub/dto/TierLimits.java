@@ -19,5 +19,53 @@ public record TierLimits(
     int summaryGenerationsPerDay,
     int flashcardSetsPerDay,
     int quizSetsPerDay,
-    int itemsPerSet
-) {}
+    int itemsPerSet,
+    int maxQuizQuestionsPerSet,
+    int maxFlashcardsPerSet
+) {
+    public TierLimits(
+        long storageBytes,
+        int maxDocuments,
+        long maxFileBytes,
+        int maxFolders,
+        int maxFolderDepth,
+        int maxOwnedGroups,
+        int maxMembersPerGroup,
+        int maxActiveShares,
+        int maxAiSessionsPerDocument,
+        int maxMessagesPerSession,
+        int aiQuestionsPerDay,
+        int maxQuestionChars,
+        int maxContextChunks,
+        int maxOutputTokens,
+        String aiModel,
+        int summaryGenerationsPerDay,
+        int flashcardSetsPerDay,
+        int quizSetsPerDay,
+        int itemsPerSet
+    ) {
+        this(
+            storageBytes,
+            maxDocuments,
+            maxFileBytes,
+            maxFolders,
+            maxFolderDepth,
+            maxOwnedGroups,
+            maxMembersPerGroup,
+            maxActiveShares,
+            maxAiSessionsPerDocument,
+            maxMessagesPerSession,
+            aiQuestionsPerDay,
+            maxQuestionChars,
+            maxContextChunks,
+            maxOutputTokens,
+            aiModel,
+            summaryGenerationsPerDay,
+            flashcardSetsPerDay,
+            quizSetsPerDay,
+            itemsPerSet,
+            itemsPerSet <= 5 ? 20 : (itemsPerSet <= 15 ? 50 : 80),
+            itemsPerSet <= 5 ? 20 : (itemsPerSet <= 15 ? 50 : 80)
+        );
+    }
+}

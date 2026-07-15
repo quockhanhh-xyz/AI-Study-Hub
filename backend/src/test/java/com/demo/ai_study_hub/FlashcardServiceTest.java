@@ -244,4 +244,24 @@ class FlashcardServiceTest {
         verify(flashcardSetRepository, times(1))
                 .findByDocument_DocumentIdAndUser_UserIdOrderByCreatedAtDesc(10, 1);
     }
+
+    @Test
+    void generate_WhenFocusExceeds300Chars_ShouldThrowInvalidGenerationFocus() {
+        GenerateFlashcardRequest req = new GenerateFlashcardRequest();
+        req.setCount(5);
+        req.setFocus("A".repeat(301)); // 301 chars focus
+
+        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByIdForUpdate(1)).thenReturn(Optional.of(user));
+        when(accessGuard.requireReadyDocument(eq(10), eq(user)))
+                .thenReturn(new AiLearningAccessGuard.ReadyDocument(document, content));
+        when(tierPolicyService.getEffectiveTier(user)).thenReturn(UserTier.FREE);
+        when(quotaPolicy.flashcardCountRange(UserTier.FREE)).thenReturn(freeRange);
+
+        QuotaExceededException ex = assertThrows(QuotaExceededException.class,
+                () -> flashcardService.generate(10, req, "user@test.com"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("INVALID_GENERATION_FOCUS", ex.getCode());
+    }
 }

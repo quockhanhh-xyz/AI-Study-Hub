@@ -1,13 +1,16 @@
 package com.demo.ai_study_hub.service;
 
 import com.demo.ai_study_hub.dto.QuizDtos.*;
+import com.demo.ai_study_hub.dto.QuizAttemptDtos.*;
 import com.demo.ai_study_hub.entity.*;
+import com.demo.ai_study_hub.entity.QuizAttempt;
+import com.demo.ai_study_hub.entity.QuizAttemptAnswer;
 import com.demo.ai_study_hub.enums.UserTier;
 import com.demo.ai_study_hub.exception.QuotaExceededException;
 import com.demo.ai_study_hub.exception.AiProviderException;
-import com.demo.ai_study_hub.repository.DocumentChunkRepository;
-import com.demo.ai_study_hub.repository.QuizSetRepository;
-import com.demo.ai_study_hub.repository.UserRepository;
+import com.demo.ai_study_hub.repository.*;
+import com.demo.ai_study_hub.repository.QuizAttemptRepository;
+import com.demo.ai_study_hub.repository.QuizAttemptAnswerRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,8 +30,6 @@ import java.util.UUID;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.transaction.TransactionDefinition;
-import com.demo.ai_study_hub.repository.AiUsageLogRepository;
-import com.demo.ai_study_hub.repository.AiUsageReservationRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -52,6 +54,8 @@ public class QuizService {
     private final AiUsageReservationRepository aiUsageReservationRepository;
     private final PlatformTransactionManager transactionManager;
     private final LearningContextBuilder learningContextBuilder;
+    private final QuizAttemptRepository quizAttemptRepository;
+    private final QuizAttemptAnswerRepository quizAttemptAnswerRepository;
 
     private static class AiReservationResult {
         final User user;
@@ -60,15 +64,29 @@ public class QuizService {
         final UserTier tier;
         final int count;
         final String difficulty;
+        final String focus;
 
-        AiReservationResult(User user, Document doc, DocumentContent content, UserTier tier, int count, String difficulty) {
+        AiReservationResult(User user, Document doc, DocumentContent content, UserTier tier, int count, String difficulty, String focus) {
             this.user = user;
             this.doc = doc;
             this.content = content;
             this.tier = tier;
             this.count = count;
             this.difficulty = difficulty;
+            this.focus = focus;
         }
+    }
+
+    private String validateAndCleanFocus(String focus) {
+        if (focus == null) return null;
+        String trimmed = focus.trim();
+        if (trimmed.isEmpty()) return null;
+        if (trimmed.length() > 300) {
+            throw new QuotaExceededException(HttpStatus.BAD_REQUEST,
+                    "Focus topic cannot exceed 300 characters",
+                    "INVALID_GENERATION_FOCUS");
+        }
+        return trimmed;
     }
 
     public QuizSetResponse generate(Integer documentId, GenerateQuizRequest request, String userEmail) {
@@ -89,6 +107,7 @@ public class QuizService {
             AiLearningQuotaPolicy.CountRange range = quotaPolicy.quizQuestionCountRange(tier);
             int count = resolveCount(request.getQuestionCount(), range);
             String difficulty = resolveDifficulty(request.getDifficulty());
+            String focus = validateAndCleanFocus(request.getFocus());
 
             checkDailyQuota(user, tier);
 
@@ -107,7 +126,7 @@ public class QuizService {
                     .build();
             aiUsageReservationRepository.save(reservation);
 
-            return new AiReservationResult(user, doc, content, tier, count, difficulty);
+            return new AiReservationResult(user, doc, content, tier, count, difficulty, focus);
         });
 
         // 2. Call AI provider outside transaction
@@ -115,7 +134,7 @@ public class QuizService {
         int maxTokens = aiModelSelector.getMaxLearningOutputTokens(reserveResult.tier.name());
 
         try {
-            List<AiQuizQuestionOutput> questions = callAndValidateWithRetry(documentId, reserveResult.tier.name(), reserveResult.content.getExtractedText(), model, maxTokens, reserveResult.count, reserveResult.difficulty);
+            List<AiQuizQuestionOutput> questions = callAndValidateWithRetry(documentId, reserveResult.tier.name(), reserveResult.content.getExtractedText(), model, maxTokens, reserveResult.count, reserveResult.difficulty, reserveResult.focus);
 
             // 3. Confirm reservation, save result, and log success in REQUIRES_NEW transaction
             return txTemplate.execute(status -> {
@@ -174,12 +193,14 @@ public class QuizService {
         return upper;
     }
 
-    private List<AiQuizQuestionOutput> callAndValidateWithRetry(Integer documentId, String tier, String extractedText, String model, int maxTokens, int count, String difficulty) {
+    private List<AiQuizQuestionOutput> callAndValidateWithRetry(Integer documentId, String tier, String extractedText, String model, int maxTokens, int count, String difficulty, String focus) {
         boolean lastFailureWasProviderCall = false;
         for (int attempt = 1; attempt <= 2; attempt++) {
             String context = learningContextBuilder.buildLimitedContext(documentId, tier, attempt, extractedText);
             int currentCount = (attempt == 1) ? count : Math.max(3, count / 2);
-            String prompt = promptBuilder.buildQuizPrompt(context, currentCount, difficulty);
+            String prompt = focus != null
+                    ? promptBuilder.buildQuizPrompt(context, currentCount, difficulty, focus)
+                    : promptBuilder.buildQuizPrompt(context, currentCount, difficulty);
             String rawText;
             try {
                 rawText = aiProviderRouter.route().call(prompt, model, maxTokens, 0.3, true).getText();
@@ -434,5 +455,195 @@ public class QuizService {
     private User loadUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+    }
+
+    @Transactional
+    public QuizAttemptResponse submitAttempt(Long quizSetId, QuizAttemptRequest request, String userEmail) {
+        User user = loadUser(userEmail);
+        QuizSet quizSet = quizSetRepository.findById(quizSetId)
+                .orElseThrow(() -> new QuotaExceededException(HttpStatus.NOT_FOUND,
+                        "Quiz set not found", "QUIZ_SET_NOT_FOUND"));
+
+        // Check permission
+        try {
+            accessGuard.checkReadPermission(quizSet.getDocument(), user);
+        } catch (Exception e) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Forbidden to access this quiz set", "QUIZ_ATTEMPT_FORBIDDEN");
+        }
+
+        int totalQuestions = quizSet.getQuestions().size();
+        if (totalQuestions == 0) {
+            throw new QuotaExceededException(HttpStatus.BAD_REQUEST,
+                    "Quiz set has no questions", "QUIZ_SET_NOT_FOUND");
+        }
+
+        List<QuizAttemptAnswer> attemptAnswers = new ArrayList<>();
+        int correctCount = 0;
+
+        QuizAttempt attempt = QuizAttempt.builder()
+                .quizSet(quizSet)
+                .user(user)
+                .startedAt(request.getStartedAt() != null ? request.getStartedAt() : LocalDateTime.now(ZoneOffset.UTC))
+                .completedAt(request.getCompletedAt() != null ? request.getCompletedAt() : LocalDateTime.now(ZoneOffset.UTC))
+                .createdAt(LocalDateTime.now(ZoneOffset.UTC))
+                .score(0.0)
+                .correctCount(0)
+                .percentage(0.0)
+                .totalQuestions(totalQuestions)
+                .build();
+
+        // Save first so we have attemptId
+        attempt = quizAttemptRepository.save(attempt);
+
+        for (QuizQuestion q : quizSet.getQuestions()) {
+            final QuizQuestion question = q;
+            QuizAttemptRequest.AnswerInput ansInput = request.getAnswers() == null ? null : request.getAnswers().stream()
+                    .filter(a -> a != null && question.getQuestionId().equals(a.getQuestionId()))
+                    .findFirst()
+                    .orElse(null);
+
+            String selectedOpt = null;
+            boolean isCorrect = false;
+
+            if (ansInput != null) {
+                String rawSel = ansInput.getSelectedOption() != null ? ansInput.getSelectedOption().toUpperCase().trim() : "";
+                selectedOpt = rawSel;
+                final String selectedOptFinal = rawSel;
+                boolean optionExists = question.getOptions().stream()
+                        .anyMatch(o -> o.getOptionKey().equalsIgnoreCase(selectedOptFinal));
+                if (!optionExists) {
+                    throw new QuotaExceededException(HttpStatus.BAD_REQUEST,
+                            "Invalid selected option: " + ansInput.getSelectedOption(),
+                            "QUIZ_ATTEMPT_INVALID_ANSWER");
+                }
+                String correctOpt = question.getCorrectOption().toUpperCase();
+                isCorrect = selectedOpt.equals(correctOpt);
+                if (isCorrect) {
+                    correctCount++;
+                }
+            }
+
+            QuizAttemptAnswer attemptAnswer = QuizAttemptAnswer.builder()
+                    .quizAttempt(attempt)
+                    .quizQuestion(question)
+                    .selectedOption(selectedOpt)
+                    .correctOption(question.getCorrectOption().toUpperCase())
+                    .isCorrect(isCorrect)
+                    .answeredAt(LocalDateTime.now(ZoneOffset.UTC))
+                    .build();
+
+            attemptAnswers.add(attemptAnswer);
+        }
+
+        // Save all answers
+        quizAttemptAnswerRepository.saveAll(attemptAnswers);
+
+        double percentage = ((double) correctCount / totalQuestions) * 100.0;
+        attempt.setCorrectCount(correctCount);
+        attempt.setPercentage(percentage);
+        attempt.setScore((double) correctCount);
+        attempt.setAnswers(attemptAnswers);
+
+        // Update attempt with final scores
+        attempt = quizAttemptRepository.save(attempt);
+
+        return toAttemptResponse(attempt);
+    }
+
+    @Transactional(readOnly = true)
+    public List<QuizAttemptResponse> getAttemptHistory(Long quizSetId, String userEmail) {
+        User user = loadUser(userEmail);
+        QuizSet quizSet = quizSetRepository.findById(quizSetId)
+                .orElseThrow(() -> new QuotaExceededException(HttpStatus.NOT_FOUND,
+                        "Quiz set not found", "QUIZ_SET_NOT_FOUND"));
+
+        // Check permission
+        try {
+            accessGuard.checkReadPermission(quizSet.getDocument(), user);
+        } catch (Exception e) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Forbidden to access this quiz set", "QUIZ_ATTEMPT_FORBIDDEN");
+        }
+
+        List<QuizAttempt> attempts = quizAttemptRepository
+                .findByQuizSet_QuizSetIdAndUser_UserIdOrderByCreatedAtDesc(quizSetId, user.getUserId());
+
+        return attempts.stream()
+                .map(this::toAttemptResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public QuizAttemptResponse getLatestAttempt(Long quizSetId, String userEmail) {
+        User user = loadUser(userEmail);
+        QuizSet quizSet = quizSetRepository.findById(quizSetId)
+                .orElseThrow(() -> new QuotaExceededException(HttpStatus.NOT_FOUND,
+                        "Quiz set not found", "QUIZ_SET_NOT_FOUND"));
+
+        // Check permission
+        try {
+            accessGuard.checkReadPermission(quizSet.getDocument(), user);
+        } catch (Exception e) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Forbidden to access this quiz set", "QUIZ_ATTEMPT_FORBIDDEN");
+        }
+
+        QuizAttempt attempt = quizAttemptRepository
+                .findFirstByQuizSet_QuizSetIdAndUser_UserIdOrderByCreatedAtDesc(quizSetId, user.getUserId())
+                .orElseThrow(() -> new QuotaExceededException(HttpStatus.NOT_FOUND,
+                        "No attempts found for this quiz set", "QUIZ_ATTEMPT_NOT_FOUND"));
+
+        return toAttemptResponse(attempt);
+    }
+
+    @Transactional(readOnly = true)
+    public QuizAttemptResponse getBestAttempt(Long quizSetId, String userEmail) {
+        User user = loadUser(userEmail);
+        QuizSet quizSet = quizSetRepository.findById(quizSetId)
+                .orElseThrow(() -> new QuotaExceededException(HttpStatus.NOT_FOUND,
+                        "Quiz set not found", "QUIZ_SET_NOT_FOUND"));
+
+        // Check permission
+        try {
+            accessGuard.checkReadPermission(quizSet.getDocument(), user);
+        } catch (Exception e) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Forbidden to access this quiz set", "QUIZ_ATTEMPT_FORBIDDEN");
+        }
+
+        QuizAttempt attempt = quizAttemptRepository
+                .findFirstByQuizSet_QuizSetIdAndUser_UserIdOrderByPercentageDescCreatedAtDesc(quizSetId, user.getUserId())
+                .orElseThrow(() -> new QuotaExceededException(HttpStatus.NOT_FOUND,
+                        "No attempts found for this quiz set", "QUIZ_ATTEMPT_NOT_FOUND"));
+
+        return toAttemptResponse(attempt);
+    }
+
+    private QuizAttemptResponse toAttemptResponse(QuizAttempt attempt) {
+        List<QuizAttemptAnswerResponse> answers = attempt.getAnswers().stream()
+                .map(a -> QuizAttemptAnswerResponse.builder()
+                        .attemptAnswerId(a.getAttemptAnswerId())
+                        .questionId(a.getQuizQuestion().getQuestionId())
+                        .selectedOption(a.getSelectedOption())
+                        .correctOption(a.getCorrectOption())
+                        .isCorrect(a.getIsCorrect())
+                        .answeredAt(a.getAnsweredAt())
+                        .build())
+                .collect(Collectors.toList());
+
+        return QuizAttemptResponse.builder()
+                .attemptId(attempt.getAttemptId())
+                .quizSetId(attempt.getQuizSet().getQuizSetId())
+                .userId(attempt.getUser().getUserId())
+                .score(attempt.getScore())
+                .totalQuestions(attempt.getTotalQuestions())
+                .correctCount(attempt.getCorrectCount())
+                .percentage(attempt.getPercentage())
+                .startedAt(attempt.getStartedAt())
+                .completedAt(attempt.getCompletedAt())
+                .createdAt(attempt.getCreatedAt())
+                .answers(answers)
+                .build();
     }
 }

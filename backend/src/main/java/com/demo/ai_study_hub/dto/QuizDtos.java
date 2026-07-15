@@ -13,6 +13,8 @@ public class QuizDtos {
         private Integer questionCount;
         /** EASY | MEDIUM | HARD | MIXED. Null → MIXED. */
         private String difficulty;
+        /** Optional. Focus topic for the quiz, max 300 chars. */
+        private String focus;
     }
 
     @Data

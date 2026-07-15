@@ -49,9 +49,18 @@ public class AiLearningPromptBuilder {
     }
 
     public String buildFlashcardPrompt(String documentContent, int count) {
+        return buildFlashcardPrompt(documentContent, count, null);
+    }
+
+    public String buildFlashcardPrompt(String documentContent, int count, String focus) {
+        String focusInstruction = (focus != null && !focus.isBlank())
+                ? "\n- FOCUS: Focus primarily on the topic: \"" + focus + "\" from the document DATA block. Do NOT use any external knowledge. If this focus topic is not found in the DATA block, fall back to general document content.\n"
+                : "";
+
         return INJECTION_GUARD + """
 
                 TASK: Generate exactly %d flashcards from the document below, covering its most important concepts.
+                %s
 
                 Return a JSON object with EXACTLY this shape:
                 {
@@ -64,20 +73,31 @@ public class AiLearningPromptBuilder {
                 - "cards" MUST contain exactly %d items, no more, no less.
                 - "difficulty" must be one of EASY, MEDIUM, HARD.
                 - "frontText" and "backText" must never be empty.
+                %s
 
                 <<<DOCUMENT_CONTEXT_START>>>
                 %s
                 <<<DOCUMENT_CONTEXT_END>>>
-                """.formatted(count, count, documentContent);
+                """.formatted(count, focusInstruction, count, focusInstruction, documentContent);
     }
+
     public String buildQuizPrompt(String documentContent, int questionCount, String difficulty) {
+        return buildQuizPrompt(documentContent, questionCount, difficulty, null);
+    }
+
+    public String buildQuizPrompt(String documentContent, int questionCount, String difficulty, String focus) {
         String difficultyInstruction = "MIXED".equalsIgnoreCase(difficulty)
                 ? "Mix difficulties across the set: include a blend of EASY, MEDIUM, and HARD questions. Each individual question must still use exactly one of EASY, MEDIUM, or HARD. Never output difficulty = \"MIXED\" inside a question."
                 : "Every question must have difficulty = \"" + difficulty + "\".";
 
+        String focusInstruction = (focus != null && !focus.isBlank())
+                ? "\n- FOCUS: Focus primarily on the topic: \"" + focus + "\" from the document DATA block. Do NOT use any external knowledge. If this focus topic is not found in the DATA block, fall back to general document content.\n"
+                : "";
+
         return INJECTION_GUARD + """
 
                 TASK: Generate exactly %d multiple-choice questions from the document below.
+                %s
                 %s
 
                 Return a JSON object with EXACTLY this shape:
@@ -99,10 +119,11 @@ public class AiLearningPromptBuilder {
                 - "correctOption" MUST be one of "A", "B", "C", "D" and MUST match one of the option keys.
                 - "explanation" must never be empty.
                 - Each individual question's "difficulty" field MUST be one of: "EASY", "MEDIUM", "HARD". Never output "MIXED" as a question's difficulty.
+                %s
 
                 <<<DOCUMENT_CONTEXT_START>>>
                 %s
                 <<<DOCUMENT_CONTEXT_END>>>
-                """.formatted(questionCount, difficultyInstruction, questionCount, documentContent);
+                """.formatted(questionCount, difficultyInstruction, focusInstruction, questionCount, focusInstruction, documentContent);
     }
 }

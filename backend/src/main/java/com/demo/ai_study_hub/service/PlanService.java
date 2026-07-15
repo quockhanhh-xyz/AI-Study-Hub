@@ -58,6 +58,8 @@ public class PlanService {
                 .purchasable(false)
                 .features(List.of(
                         "5 AI questions per day",
+                        "Generate up to 20 quiz questions per set",
+                        "Generate up to 20 flashcards per set",
                         "Upload files up to 10MB",
                         "View shared and community documents"
                 ))
@@ -72,8 +74,9 @@ public class PlanService {
                 .purchasable(true)
                 .features(List.of(
                         "50 AI questions per day",
-                        "Upload files up to 50MB",
-                        "Generate flashcards and quizzes"
+                        "Generate up to 50 quiz questions per set",
+                        "Generate up to 50 flashcards per set",
+                        "Upload files up to 50MB"
                 ))
                 .build());
         map.put(PlanCode.ULTRA_1_MONTH, PaymentPlan.builder()
@@ -86,8 +89,9 @@ public class PlanService {
                 .purchasable(true)
                 .features(List.of(
                         "200 AI questions per day",
-                        "Upload files up to 100MB",
-                        "Higher limits for AI learning tools"
+                        "Generate up to 80 quiz questions per set",
+                        "Generate up to 80 flashcards per set",
+                        "Upload files up to 100MB"
                 ))
                 .build());
         return map;
@@ -100,6 +104,12 @@ public class PlanService {
     }
 
     private PlanResponse toResponse(PaymentPlan plan) {
+        var tierLimits = tierPolicyService.getLimits(plan.getTargetTier());
+        var planLimits = PlanResponse.PlanLimitsDto.builder()
+                .maxQuizQuestionsPerSet(tierLimits.maxQuizQuestionsPerSet())
+                .maxFlashcardsPerSet(tierLimits.maxFlashcardsPerSet())
+                .build();
+
         return PlanResponse.builder()
                 .tier(plan.getTargetTier().name())
                 .planCode(plan.getPlanCode())
@@ -109,9 +119,10 @@ public class PlanService {
                 .currency(CURRENCY)
                 .billingLabel(plan.getBillingLabel())
                 .durationMonths(plan.getDurationMonths())
-                .aiDailyLimit(tierPolicyService.getLimits(plan.getTargetTier()).aiQuestionsPerDay())
+                .aiDailyLimit(tierLimits.aiQuestionsPerDay())
                 .purchasable(plan.isPurchasable())
                 .features(plan.getFeatures())
+                .limits(planLimits)
                 .build();
     }
 
