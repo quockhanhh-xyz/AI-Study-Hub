@@ -1,5 +1,6 @@
 package com.demo.ai_study_hub.service;
 
+import com.demo.ai_study_hub.config.FrontendProperties;
 import com.demo.ai_study_hub.dto.*;
 import com.demo.ai_study_hub.entity.*;
 import com.demo.ai_study_hub.repository.*;
@@ -25,6 +26,8 @@ public class StudyGroupServiceImpl implements StudyGroupService {
     private final GroupFolderShareRepository groupFolderShareRepository;
     private final TierPolicyService tierPolicyService;
     private final UsageService usageService;
+    private final EmailService emailService;
+    private final FrontendProperties frontendProperties;
 
     private static final String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private final SecureRandom random = new SecureRandom();
@@ -329,6 +332,57 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .status(group.getStatus())
                 .createdAt(group.getCreatedAt())
                 .updatedAt(group.getUpdatedAt())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public GroupEmailInviteResponse sendEmailInvite(Integer groupId, GroupEmailInviteRequest request, String senderEmail) {
+        User sender = getUser(senderEmail);
+        StudyGroup group = getActiveGroup(groupId);
+
+        // Only the group owner can send invites
+        StudyGroupMember senderMembership = studyGroupMemberRepository
+                .findByGroupAndUserAndStatus(group, sender, "ACTIVE")
+                .orElseThrow(() -> new QuotaExceededException(
+                        HttpStatus.FORBIDDEN,
+                        "You are not a member of this group",
+                        "GROUP_INVITE_FORBIDDEN"));
+
+        if (!"OWNER".equals(senderMembership.getRole())) {
+            throw new QuotaExceededException(
+                    HttpStatus.FORBIDDEN,
+                    "Only the group owner can send email invites",
+                    "GROUP_INVITE_FORBIDDEN");
+        }
+
+        String inviteeEmail = request.getEmail().trim().toLowerCase();
+
+        // Reject if the invitee is already an ACTIVE member
+        User invitee = userRepository.findByEmail(inviteeEmail).orElse(null);
+        if (invitee != null) {
+            boolean alreadyMember = studyGroupMemberRepository
+                    .existsByGroupAndUserAndStatus(group, invitee, "ACTIVE");
+            if (alreadyMember) {
+                throw new QuotaExceededException(
+                        HttpStatus.BAD_REQUEST,
+                        "This user is already an active member of the group",
+                        "GROUP_MEMBER_ALREADY_EXISTS");
+            }
+        }
+
+        String base = frontendProperties.getBaseUrl();
+        if (base == null) base = "";
+        if (base.endsWith("/")) base = base.substring(0, base.length() - 1);
+        String joinUrl = base + "/frontend/groups.html?inviteCode=" + group.getInviteCode();
+
+        emailService.sendGroupInviteEmail(inviteeEmail, group.getGroupName(), joinUrl);
+
+        return GroupEmailInviteResponse.builder()
+                .groupId(group.getGroupId())
+                .email(inviteeEmail)
+                .inviteCode(group.getInviteCode())
+                .joinUrl(joinUrl)
                 .build();
     }
 }

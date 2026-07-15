@@ -2,6 +2,8 @@ package com.demo.ai_study_hub.service;
 
 import com.demo.ai_study_hub.dto.CreateGroupRequest;
 import com.demo.ai_study_hub.dto.GroupDetailResponse;
+import com.demo.ai_study_hub.dto.GroupEmailInviteRequest;
+import com.demo.ai_study_hub.dto.GroupEmailInviteResponse;
 import com.demo.ai_study_hub.dto.GroupResponse;
 import com.demo.ai_study_hub.dto.JoinGroupRequest;
 import com.demo.ai_study_hub.dto.UpdateGroupRequest;
@@ -25,4 +27,6 @@ public interface StudyGroupService {
     void deleteGroup(Integer groupId, String email);
 
     void removeMember(Integer groupId, Integer userId, String email);
+
+    GroupEmailInviteResponse sendEmailInvite(Integer groupId, GroupEmailInviteRequest request, String senderEmail);
 }
