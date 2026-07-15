@@ -110,7 +110,6 @@ function goToNextCard() {
 
 function initFlashcardControls() {
     const stage = document.getElementById("flashcardStage");
-    const flipBtn = document.getElementById("flashcardFlipBtn");
     const prevBtn = document.getElementById("flashcardPrevBtn");
     const nextBtn = document.getElementById("flashcardNextBtn");
 
@@ -123,7 +122,6 @@ function initFlashcardControls() {
             }
         });
     }
-    if (flipBtn) flipBtn.addEventListener("click", flipCurrentCard);
     if (prevBtn) prevBtn.addEventListener("click", goToPreviousCard);
     if (nextBtn) nextBtn.addEventListener("click", goToNextCard);
 

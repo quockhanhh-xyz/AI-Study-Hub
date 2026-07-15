@@ -4223,3 +4223,19 @@ svg {
   background-color: var(--warning);
   color: #ffffff;
 }
+
+.flashcard-controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: center;
+}
+
+.flashcard-nav-btn {
+  min-width: 120px; 
+}
+
+.flashcard-face p {
+  font-size: 1.4rem; 
+  line-height: 1.6;
+}
