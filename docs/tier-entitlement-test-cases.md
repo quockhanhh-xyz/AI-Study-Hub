@@ -46,7 +46,7 @@ This document defines the backend validation, database migration, and entitlemen
 | TC | Effective Tier | Current Groups / Members count | Action | Expected HTTP | Expected Action / Error Code |
 |---|---|---|---|---|---|
 | TC-TIER-020 | FREE | Owns 3 active study groups | Create new study group | 403 Forbidden | Blocked with code `GROUP_LIMIT_EXCEEDED`. |
-| TC-TIER-021 | FREE | Group has 10 members | Invite or add member to group | 403 Forbidden | Blocked with code `GROUP_MEMBER_LIMIT_EXCEEDED`. |
+| TC-TIER-021 | FREE | Group has 3 members | Invite or add member to group | 403 Forbidden | Blocked with code `GROUP_MEMBER_LIMIT_EXCEEDED`. |
 | TC-TIER-022 | PREMIUM | Owns 30 active study groups | Create new study group | 403 Forbidden | Blocked with code `GROUP_LIMIT_EXCEEDED`. |
 | TC-TIER-023 | PREMIUM | Group has 100 members | Invite or add member to group | 403 Forbidden | Blocked with code `GROUP_MEMBER_LIMIT_EXCEEDED`. |
 | TC-TIER-024 | ULTRA | Owns 100 active study groups | Create new study group | 403 Forbidden | Blocked with code `GROUP_LIMIT_EXCEEDED`. |

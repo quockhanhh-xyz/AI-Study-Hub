@@ -23,6 +23,7 @@ public class PublicDocumentResponse {
     private String fileUrl;
     private String visibility;
     private String approvalStatus;
+    private String processingStatus;
     private LocalDateTime publishedAt;
     private Long viewCount;
     private Long downloadCount;

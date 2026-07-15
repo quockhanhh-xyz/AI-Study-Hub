@@ -576,6 +576,10 @@ public class DocumentService {
     private PublicDocumentResponse mapToPublicResponse(Document doc, String requesterEmail) {
         boolean previewSupported = isPreviewSupported(doc);
         boolean isPublicAndApproved = "PUBLIC".equals(doc.getVisibility()) && "APPROVED".equals(doc.getApprovalStatus());
+        String processingStatusVal = "PENDING";
+        if (doc.getDocumentContent() != null) {
+            processingStatusVal = doc.getDocumentContent().getProcessingStatus().name();
+        }
 
         boolean canPreview = isPublicAndApproved && previewSupported;
         boolean canOpen = isPublicAndApproved;
@@ -604,6 +608,7 @@ public class DocumentService {
                 .fileUrl(doc.getFileUrl())
                 .visibility(doc.getVisibility())
                 .approvalStatus(doc.getApprovalStatus())
+                .processingStatus(processingStatusVal)
                 .publishedAt(doc.getPublishedAt())
                 .viewCount(doc.getViewCount())
                 .downloadCount(doc.getDownloadCount())

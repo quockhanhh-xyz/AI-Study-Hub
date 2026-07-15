@@ -4101,7 +4101,7 @@ The system calculates the user's **Effective Tier** dynamically on each request 
 | **Max Folders Count** | 20 | 200 | 1,000 |
 | **Max Folder Depth** | 3 levels | 8 levels | 12 levels |
 | **Max Owned Study Groups** | 3 | 30 | 100 |
-| **Max Members per Group** | 10 | 100 | 300 |
+| **Max Members per Group** | 3 | 100 | 300 |
 | **Max Active Shares** | 30 | 1,000 | 5,000 |
 | **Max AI Sessions per Doc** | 3 | 30 | 100 |
 | **Max Messages per Session** | 30 | 300 | 1,000 |
