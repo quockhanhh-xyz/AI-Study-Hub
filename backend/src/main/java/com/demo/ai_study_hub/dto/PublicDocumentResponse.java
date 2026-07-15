@@ -39,4 +39,24 @@ public class PublicDocumentResponse {
     private Boolean canOpen;
     private Boolean canDownload;
     private Boolean favoritedByMe;
+
+    /**
+     * true nếu document đã COMPLETED và requester đã đăng nhập.
+     * Guest (anonymous) luôn false vì các AI action cần login.
+     */
+    private Boolean canUseAiTools;
+
+    /**
+     * true nếu requester là owner VÀ processingStatus chưa được xử lý
+     * (PENDING / FAILED / UNSUPPORTED / EMPTY_CONTENT).
+     * Non-owner và guest luôn false.
+     */
+    private Boolean canProcess;
+
+    /**
+     * true nếu requester là owner VÀ document đã từng được process
+     * (COMPLETED hoặc FAILED) — tức là có thể chạy lại.
+     * Non-owner và guest luôn false.
+     */
+    private Boolean canReprocess;
 }
