@@ -154,4 +154,36 @@ public class StudyGroupController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
         }
     }
+
+    @PostMapping("/{id}/members/{userId}/approve")
+    public ResponseEntity<ApiResponse<Void>> approveJoinRequest(
+            @PathVariable Integer id,
+            @PathVariable Integer userId,
+            Principal principal) {
+        try {
+            studyGroupService.approveJoinRequest(id, userId, principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(null, "Join request approved successfully"));
+        } catch (QuotaExceededException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason(), e.getCode()));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/members/{userId}/reject")
+    public ResponseEntity<ApiResponse<Void>> rejectJoinRequest(
+            @PathVariable Integer id,
+            @PathVariable Integer userId,
+            Principal principal) {
+        try {
+            studyGroupService.rejectJoinRequest(id, userId, principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(null, "Join request rejected successfully"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
 }

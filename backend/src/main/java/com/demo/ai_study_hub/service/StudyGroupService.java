@@ -29,4 +29,8 @@ public interface StudyGroupService {
     void removeMember(Integer groupId, Integer userId, String email);
 
     GroupEmailInviteResponse sendEmailInvite(Integer groupId, GroupEmailInviteRequest request, String senderEmail);
+
+    void approveJoinRequest(Integer groupId, Integer userId, String ownerEmail);
+
+    void rejectJoinRequest(Integer groupId, Integer userId, String ownerEmail);
 }

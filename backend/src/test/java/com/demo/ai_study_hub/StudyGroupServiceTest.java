@@ -4,6 +4,7 @@ import com.demo.ai_study_hub.dto.*;
 import com.demo.ai_study_hub.entity.*;
 import com.demo.ai_study_hub.repository.*;
 import com.demo.ai_study_hub.service.StudyGroupServiceImpl;
+import com.demo.ai_study_hub.service.NotificationService;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,8 @@ class StudyGroupServiceTest {
     private TierPolicyService tierPolicyService;
     @Mock
     private UsageService usageService;
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private StudyGroupServiceImpl studyGroupService;
@@ -338,5 +341,101 @@ class StudyGroupServiceTest {
         assertEquals("OWNER", response.getRole());
         assertEquals("ACTIVE", response.getStatus());
         verify(studyGroupMemberRepository, times(1)).save(any(StudyGroupMember.class));
+    }
+
+    @Test
+    void joinGroup_WhenValid_ShouldSetStatusToPendingAndNotifyOwner() {
+        JoinGroupRequest request = new JoinGroupRequest();
+        request.setInviteCode("ABCD1234");
+
+        when(userRepository.findByEmail("member@gmail.com")).thenReturn(Optional.of(member));
+        when(studyGroupRepository.findByInviteCodeForUpdate("ABCD1234")).thenReturn(Optional.of(group));
+        when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(group, member, "ACTIVE")).thenReturn(false);
+        when(studyGroupMemberRepository.countByGroupAndStatus(group, "ACTIVE")).thenReturn(1L);
+
+        GroupResponse response = studyGroupService.joinGroup(request, "member@gmail.com");
+
+        assertNotNull(response);
+        assertEquals("MEMBER", response.getRole());
+        verify(studyGroupMemberRepository, times(1)).save(any(StudyGroupMember.class));
+        verify(notificationService, times(1)).createNotification(
+                eq(owner),
+                eq("GROUP_JOIN_REQUEST"),
+                eq("New join request"),
+                contains("member@gmail.com requested to join"),
+                eq("GROUP"),
+                eq(1L)
+        );
+    }
+
+    @Test
+    void approveJoinRequest_WhenPending_ShouldSetActiveAndNotifyUser() {
+        StudyGroupMember pendingMembership = new StudyGroupMember();
+        pendingMembership.setGroup(group);
+        pendingMembership.setUser(member);
+        pendingMembership.setStatus("PENDING");
+        pendingMembership.setRole("MEMBER");
+
+        StudyGroupMember ownerMembership = new StudyGroupMember();
+        ownerMembership.setGroup(group);
+        ownerMembership.setUser(owner);
+        ownerMembership.setStatus("ACTIVE");
+        ownerMembership.setRole("OWNER");
+
+        when(userRepository.findByEmail("owner@gmail.com")).thenReturn(Optional.of(owner));
+        when(studyGroupRepository.findById(1)).thenReturn(Optional.of(group));
+        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(group, owner, "ACTIVE"))
+                .thenReturn(Optional.of(ownerMembership));
+        when(userRepository.findById(2)).thenReturn(Optional.of(member));
+        when(studyGroupMemberRepository.findByGroupAndUser(group, member)).thenReturn(Optional.of(pendingMembership));
+        when(studyGroupMemberRepository.countByGroupAndStatus(group, "ACTIVE")).thenReturn(1L);
+
+        studyGroupService.approveJoinRequest(1, 2, "owner@gmail.com");
+
+        assertEquals("ACTIVE", pendingMembership.getStatus());
+        verify(studyGroupMemberRepository, times(1)).save(pendingMembership);
+        verify(notificationService, times(1)).createNotification(
+                eq(member),
+                eq("GROUP_JOIN_APPROVED"),
+                eq("Join request approved"),
+                contains("was approved"),
+                eq("GROUP"),
+                eq(1L)
+        );
+    }
+
+    @Test
+    void rejectJoinRequest_WhenPending_ShouldSetRejectedAndNotifyUser() {
+        StudyGroupMember pendingMembership = new StudyGroupMember();
+        pendingMembership.setGroup(group);
+        pendingMembership.setUser(member);
+        pendingMembership.setStatus("PENDING");
+        pendingMembership.setRole("MEMBER");
+
+        StudyGroupMember ownerMembership = new StudyGroupMember();
+        ownerMembership.setGroup(group);
+        ownerMembership.setUser(owner);
+        ownerMembership.setStatus("ACTIVE");
+        ownerMembership.setRole("OWNER");
+
+        when(userRepository.findByEmail("owner@gmail.com")).thenReturn(Optional.of(owner));
+        when(studyGroupRepository.findById(1)).thenReturn(Optional.of(group));
+        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(group, owner, "ACTIVE"))
+                .thenReturn(Optional.of(ownerMembership));
+        when(userRepository.findById(2)).thenReturn(Optional.of(member));
+        when(studyGroupMemberRepository.findByGroupAndUser(group, member)).thenReturn(Optional.of(pendingMembership));
+
+        studyGroupService.rejectJoinRequest(1, 2, "owner@gmail.com");
+
+        assertEquals("REJECTED", pendingMembership.getStatus());
+        verify(studyGroupMemberRepository, times(1)).save(pendingMembership);
+        verify(notificationService, times(1)).createNotification(
+                eq(member),
+                eq("GROUP_JOIN_REJECTED"),
+                eq("Join request rejected"),
+                contains("was rejected"),
+                eq("GROUP"),
+                eq(1L)
+        );
     }
 }

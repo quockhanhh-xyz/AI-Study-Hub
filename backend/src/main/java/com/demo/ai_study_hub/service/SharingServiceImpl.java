@@ -26,6 +26,7 @@ public class SharingServiceImpl implements SharingService {
     private final TierPolicyService tierPolicyService;
     private final UsageService usageService;
     private final com.demo.ai_study_hub.repository.DocumentFavoriteRepository documentFavoriteRepository;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -260,6 +261,18 @@ public class SharingServiceImpl implements SharingService {
 
         share.setStatus("REVOKED");
         groupDocumentShareRepository.save(share);
+
+        // If not revoked by the document owner, notify the document owner
+        if (!share.getDocument().getOwner().getUserId().equals(user.getUserId())) {
+            notificationService.createNotification(
+                    share.getDocument().getOwner(),
+                    "GROUP_DOCUMENT_REMOVED",
+                    "Document removed from group",
+                    "Your document " + share.getDocument().getTitle() + " was removed from group " + group.getGroupName() + ".",
+                    "GROUP_DOCUMENT",
+                    Long.valueOf(group.getGroupId())
+            );
+        }
     }
 
     private User getUser(String email) {
