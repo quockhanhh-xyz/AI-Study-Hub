@@ -356,14 +356,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     titleEl.appendChild(titleLink);
     header.appendChild(titleEl);
 
-    const desc = document.createElement("p");
-    desc.className = "document-description";
-    if (doc.description && doc.description.trim() !== "No description provided.") {
-      desc.textContent = doc.description;
-    } else {
-      desc.style.display = "none";
-    }
-
     const meta = document.createElement("div");
     meta.className = "document-meta";
 
@@ -384,7 +376,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     uploaderItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Uploaded by: <strong>${contributorName}</strong>`;
     meta.append(uploaderItem);
 
-    content.append(header, desc, meta);
+    content.append(header, meta);
     card.appendChild(content);
 
     // Revoke is shown strictly based on backend's canRevoke flag
