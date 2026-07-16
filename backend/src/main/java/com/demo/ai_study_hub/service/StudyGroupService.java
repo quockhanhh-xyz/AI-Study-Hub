@@ -34,7 +34,9 @@ public interface StudyGroupService {
     // Step B — approval flow
     List<PendingMemberResponse> listPendingMembers(Integer groupId, String ownerEmail);
 
-    void approveMember(Integer groupId, Integer memberId, String ownerEmail);
+    /** Approve PENDING join request by userId (matches #168 notification actorUserId). */
+    void approveMember(Integer groupId, Integer userId, String ownerEmail);
 
-    void rejectMember(Integer groupId, Integer memberId, String ownerEmail);
+    /** Reject PENDING join request by userId (matches #168 notification actorUserId). */
+    void rejectMember(Integer groupId, Integer userId, String ownerEmail);
 }

@@ -28,6 +28,6 @@ public class GroupResponse {
     private Long documentCount;
     private Long folderCount;
 
-    /** Populated only on joinGroup response when requiresApproval=true. Values: ACTIVE | PENDING */
-    private String memberStatus;
+    /** Populated on joinGroup response. Values: ACTIVE | PENDING */
+    private String membershipStatus;
 }
