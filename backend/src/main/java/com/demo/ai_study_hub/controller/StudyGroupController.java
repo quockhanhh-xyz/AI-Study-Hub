@@ -169,13 +169,13 @@ public class StudyGroupController {
         }
     }
 
-    @PostMapping("/{id}/members/{memberId}/approve")
+    @PostMapping("/{id}/members/{userId}/approve")
     public ResponseEntity<ApiResponse<Void>> approveMember(
             @PathVariable Integer id,
-            @PathVariable Integer memberId,
+            @PathVariable Integer userId,
             Principal principal) {
         try {
-            studyGroupService.approveMember(id, memberId, principal.getName());
+            studyGroupService.approveMember(id, userId, principal.getName());
             return ResponseEntity.ok(ApiResponse.success(null, "Member approved successfully"));
         } catch (QuotaExceededException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason(), e.getCode()));
@@ -186,13 +186,13 @@ public class StudyGroupController {
         }
     }
 
-    @PostMapping("/{id}/members/{memberId}/reject")
+    @PostMapping("/{id}/members/{userId}/reject")
     public ResponseEntity<ApiResponse<Void>> rejectMember(
             @PathVariable Integer id,
-            @PathVariable Integer memberId,
+            @PathVariable Integer userId,
             Principal principal) {
         try {
-            studyGroupService.rejectMember(id, memberId, principal.getName());
+            studyGroupService.rejectMember(id, userId, principal.getName());
             return ResponseEntity.ok(ApiResponse.success(null, "Member request rejected"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
