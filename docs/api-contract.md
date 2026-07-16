@@ -4931,4 +4931,3 @@ Marks all notifications of the current authenticated user as read.
     "data": null
   }
   ```
-

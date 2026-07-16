@@ -32,6 +32,8 @@ class GroupEmailInviteTest {
     @Mock private UsageService usageService;
     @Mock private EmailService emailService;
     @Mock private FrontendProperties frontendProperties;
+    @Mock private NotificationService notificationService;
+    @Mock private GroupInvitationRepository groupInvitationRepository;
 
     @InjectMocks
     private StudyGroupServiceImpl studyGroupService;

@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import com.demo.ai_study_hub.exception.QuotaExceededException;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +31,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
     private final EmailService emailService;
     private final FrontendProperties frontendProperties;
     private final NotificationService notificationService;
+    private final GroupInvitationRepository groupInvitationRepository;
 
     private static final String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private final SecureRandom random = new SecureRandom();
@@ -117,9 +120,14 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .findByGroupAndUserAndStatus(group, user, "ACTIVE")
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not a member of this group"));
 
-        List<StudyGroupMember> activeMembers = studyGroupMemberRepository.findByGroupAndStatus(group, "ACTIVE");
+        List<StudyGroupMember> membersToShow;
+        if ("OWNER".equals(currentMembership.getRole())) {
+            membersToShow = studyGroupMemberRepository.findByGroupAndStatusIn(group, List.of("ACTIVE", "PENDING"));
+        } else {
+            membersToShow = studyGroupMemberRepository.findByGroupAndStatus(group, "ACTIVE");
+        }
 
-        List<GroupDetailResponse.GroupMemberItem> memberItems = activeMembers.stream()
+        List<GroupDetailResponse.GroupMemberItem> memberItems = membersToShow.stream()
                 .map(m -> GroupDetailResponse.GroupMemberItem.builder()
                         .memberId(m.getMemberId())
                         .userId(m.getUser().getUserId())
@@ -132,7 +140,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                         .build())
                 .collect(Collectors.toList());
 
-        long memberCount = activeMembers.size();
+        long memberCount = studyGroupMemberRepository.countByGroupAndStatus(group, "ACTIVE");
         long documentCount = groupDocumentShareRepository.findActiveSharesForGroup(group).size();
         long folderCount = groupFolderShareRepository.findActiveSharesForGroup(group).size();
 
@@ -179,8 +187,11 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         }
 
         StudyGroupMember existing = studyGroupMemberRepository.findByGroupAndUser(group, user).orElse(null);
+        boolean isInvited = groupInvitationRepository.existsByGroupAndEmail(group, user.getEmail().trim().toLowerCase());
+        String targetStatus = isInvited ? "ACTIVE" : "PENDING";
+
         if (existing != null) {
-            existing.setStatus("PENDING");
+            existing.setStatus(targetStatus);
             existing.setRole("MEMBER");
             studyGroupMemberRepository.save(existing);
         } else {
@@ -188,23 +199,28 @@ public class StudyGroupServiceImpl implements StudyGroupService {
             member.setGroup(group);
             member.setUser(user);
             member.setRole("MEMBER");
-            member.setStatus("PENDING");
+            member.setStatus(targetStatus);
             studyGroupMemberRepository.save(member);
         }
 
-        String displayName = (user.getFullName() != null && !user.getFullName().trim().isEmpty())
-                ? user.getFullName() : user.getEmail();
+        if (isInvited) {
+            groupInvitationRepository.deleteByGroupAndEmail(group, user.getEmail().trim().toLowerCase());
+        } else {
+            String displayName = (user.getFullName() != null && !user.getFullName().trim().isEmpty())
+                    ? user.getFullName() : user.getEmail();
 
-        notificationService.createNotification(
-                group.getOwner(),
-                "GROUP_JOIN_REQUEST",
-                "New join request",
-                displayName + " requested to join " + group.getGroupName() + ".",
-                "GROUP",
-                Long.valueOf(group.getGroupId())
-        );
+            notificationService.createNotification(
+                    group.getOwner(),
+                    "GROUP_JOIN_REQUEST",
+                    "New join request",
+                    displayName + " requested to join " + group.getGroupName() + ".",
+                    "GROUP",
+                    Long.valueOf(group.getGroupId()),
+                    user.getUserId()
+            );
+        }
 
-        return mapToGroupResponse(group, "MEMBER");
+        return mapToGroupResponse(group, "MEMBER", targetStatus);
     }
 
     @Override
@@ -356,6 +372,10 @@ public class StudyGroupServiceImpl implements StudyGroupService {
     }
 
     private GroupResponse mapToGroupResponse(StudyGroup group, String role) {
+        return mapToGroupResponse(group, role, "ACTIVE");
+    }
+
+    private GroupResponse mapToGroupResponse(StudyGroup group, String role, String membershipStatus) {
         return GroupResponse.builder()
                 .groupId(group.getGroupId())
                 .groupName(group.getGroupName())
@@ -364,6 +384,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .ownerId(group.getOwner().getUserId())
                 .role(role)
                 .status(group.getStatus())
+                .membershipStatus(membershipStatus)
                 .createdAt(group.getCreatedAt())
                 .updatedAt(group.getUpdatedAt())
                 .build();
@@ -404,6 +425,15 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                         "GROUP_MEMBER_ALREADY_EXISTS");
             }
         }
+
+        // Save invitation record
+        GroupInvitation invite = groupInvitationRepository.findByGroupAndEmail(group, inviteeEmail)
+                .orElseGet(() -> GroupInvitation.builder()
+                        .group(group)
+                        .email(inviteeEmail)
+                        .build());
+        invite.setInvitedAt(LocalDateTime.now(ZoneOffset.UTC));
+        groupInvitationRepository.save(invite);
 
         String base = frontendProperties.getBaseUrl();
         if (base == null) base = "";

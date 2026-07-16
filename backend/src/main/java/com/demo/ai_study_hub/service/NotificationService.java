@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -70,6 +71,11 @@ public class NotificationService {
 
     @Transactional
     public void createNotification(User recipient, String type, String title, String message, String targetType, Long targetId) {
+        createNotification(recipient, type, title, message, targetType, targetId, null);
+    }
+
+    @Transactional
+    public void createNotification(User recipient, String type, String title, String message, String targetType, Long targetId, Integer actorUserId) {
         Notification notification = Notification.builder()
                 .recipient(recipient)
                 .type(type)
@@ -77,6 +83,7 @@ public class NotificationService {
                 .message(message)
                 .targetType(targetType)
                 .targetId(targetId)
+                .actorUserId(actorUserId)
                 .read(false)
                 .createdAt(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
@@ -96,8 +103,9 @@ public class NotificationService {
                 .message(n.getMessage())
                 .targetType(n.getTargetType())
                 .targetId(n.getTargetId())
+                .actorUserId(n.getActorUserId())
                 .read(n.isRead())
-                .createdAt(n.getCreatedAt())
+                .createdAt(n.getCreatedAt() != null ? n.getCreatedAt().toInstant(ZoneOffset.UTC) : null)
                 .build();
     }
 }

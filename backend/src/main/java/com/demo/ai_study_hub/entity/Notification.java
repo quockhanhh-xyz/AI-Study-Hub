@@ -39,6 +39,9 @@ public class Notification {
     @Column(name = "target_id", nullable = false)
     private Long targetId;
 
+    @Column(name = "actor_user_id")
+    private Integer actorUserId;
+
     @Column(name = "is_read", nullable = false)
     private boolean read;
 

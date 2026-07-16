@@ -69,7 +69,10 @@ public class StudyGroupController {
             Principal principal) {
         try {
             GroupResponse data = studyGroupService.joinGroup(request, principal.getName());
-            return ResponseEntity.ok(ApiResponse.success(data, "Joined group successfully"));
+            String msg = "ACTIVE".equals(data.getMembershipStatus())
+                    ? "Joined group successfully"
+                    : "Join request sent. Waiting for owner approval.";
+            return ResponseEntity.ok(ApiResponse.success(data, msg));
         } catch (ResponseStatusException e) {
             if (e instanceof com.demo.ai_study_hub.exception.QuotaExceededException qe) {
                 return ResponseEntity.status(qe.getStatusCode()).body(ApiResponse.error(qe.getReason(), qe.getCode()));

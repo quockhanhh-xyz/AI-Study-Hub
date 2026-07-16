@@ -43,6 +43,8 @@ class StudyGroupServiceTest {
     private UsageService usageService;
     @Mock
     private NotificationService notificationService;
+    @Mock
+    private GroupInvitationRepository groupInvitationRepository;
 
     @InjectMocks
     private StudyGroupServiceImpl studyGroupService;
@@ -303,8 +305,10 @@ class StudyGroupServiceTest {
         when(studyGroupMemberRepository.findByGroupAndUserAndStatus(group, owner, "ACTIVE"))
                 .thenReturn(Optional.of(membership));
 
-        when(studyGroupMemberRepository.findByGroupAndStatus(group, "ACTIVE"))
+        when(studyGroupMemberRepository.findByGroupAndStatusIn(group, List.of("ACTIVE", "PENDING")))
                 .thenReturn(List.of(membership));
+        when(studyGroupMemberRepository.countByGroupAndStatus(group, "ACTIVE"))
+                .thenReturn(1L);
         when(groupDocumentShareRepository.findActiveSharesForGroup(group))
                 .thenReturn(java.util.Collections.emptyList());
         when(groupFolderShareRepository.findActiveSharesForGroup(group))
@@ -364,7 +368,8 @@ class StudyGroupServiceTest {
                 eq("New join request"),
                 contains("member@gmail.com requested to join"),
                 eq("GROUP"),
-                eq(1L)
+                eq(1L),
+                eq(2)
         );
     }
 
