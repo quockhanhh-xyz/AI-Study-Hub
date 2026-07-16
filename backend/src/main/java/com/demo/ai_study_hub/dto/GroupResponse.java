@@ -19,11 +19,13 @@ public class GroupResponse {
     private Integer ownerId;
     private String role;
     private String status;
+    private boolean requiresApproval;
     private String membershipStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     private Long memberCount;
+    private Long pendingMemberCount;
     private Long documentCount;
     private Long folderCount;
 }

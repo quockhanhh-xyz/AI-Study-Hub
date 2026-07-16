@@ -33,4 +33,6 @@ public interface StudyGroupService {
     void approveJoinRequest(Integer groupId, Integer userId, String ownerEmail);
 
     void rejectJoinRequest(Integer groupId, Integer userId, String ownerEmail);
+
+    List<PendingMemberResponse> listPendingMembers(Integer groupId, String ownerEmail);
 }
