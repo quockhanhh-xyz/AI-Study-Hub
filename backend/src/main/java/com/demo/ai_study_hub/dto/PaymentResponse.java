@@ -2,7 +2,6 @@ package com.demo.ai_study_hub.dto;
 
 import lombok.*;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Data
