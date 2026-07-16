@@ -154,4 +154,50 @@ public class StudyGroupController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
         }
     }
+
+    @GetMapping("/{id}/pending-members")
+    public ResponseEntity<ApiResponse<List<PendingMemberResponse>>> listPendingMembers(
+            @PathVariable Integer id,
+            Principal principal) {
+        try {
+            List<PendingMemberResponse> data = studyGroupService.listPendingMembers(id, principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(data, "Pending members retrieved successfully"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/members/{memberId}/approve")
+    public ResponseEntity<ApiResponse<Void>> approveMember(
+            @PathVariable Integer id,
+            @PathVariable Integer memberId,
+            Principal principal) {
+        try {
+            studyGroupService.approveMember(id, memberId, principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(null, "Member approved successfully"));
+        } catch (QuotaExceededException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason(), e.getCode()));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/members/{memberId}/reject")
+    public ResponseEntity<ApiResponse<Void>> rejectMember(
+            @PathVariable Integer id,
+            @PathVariable Integer memberId,
+            Principal principal) {
+        try {
+            studyGroupService.rejectMember(id, memberId, principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(null, "Member request rejected"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
 }
