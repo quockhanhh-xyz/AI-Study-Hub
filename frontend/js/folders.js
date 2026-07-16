@@ -405,13 +405,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     content.append(header);
 
-    // Only render description if it is not empty/falsy
-    if (doc.description && doc.description.trim()) {
-      const desc = document.createElement("p");
-      desc.className = "document-description";
-      desc.textContent = doc.description;
-      content.appendChild(desc);
-    }
+    // Description removed to keep card compact
 
     const meta = document.createElement("div");
     meta.className = "document-meta";
