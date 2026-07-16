@@ -4,6 +4,7 @@ import com.demo.ai_study_hub.dto.*;
 import com.demo.ai_study_hub.entity.*;
 import com.demo.ai_study_hub.repository.*;
 import com.demo.ai_study_hub.service.SharingServiceImpl;
+import com.demo.ai_study_hub.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,6 +47,8 @@ class SharingServiceTest {
     private UsageService usageService;
     @Mock
     private DocumentFavoriteRepository documentFavoriteRepository;
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private SharingServiceImpl sharingService;
@@ -413,5 +416,43 @@ class SharingServiceTest {
         assertNull(responses.get(0).getSharedWithEmail());
         assertEquals("John Owner", responses.get(0).getSharedByName());
         assertEquals("Mary Recipient", responses.get(0).getSharedWithName());
+    }
+
+    @Test
+    void revokeGroupShare_WhenGroupOwnerRevokesOthersDoc_ShouldNotifyDocOwner() {
+        // Document owned by recipient (userId = 2), shared by recipient
+        Document otherDoc = new Document();
+        otherDoc.setDocumentId(99);
+        otherDoc.setTitle("Recipient's Doc");
+        otherDoc.setOwner(recipient);
+
+        GroupDocumentShare share = new GroupDocumentShare();
+        share.setShareId(1);
+        share.setDocument(otherDoc);
+        share.setGroup(group);
+        share.setStatus("ACTIVE");
+
+        // Owner (group owner) revokes
+        when(userRepository.findByEmail("owner@gmail.com")).thenReturn(Optional.of(owner));
+        when(groupDocumentShareRepository.findById(1)).thenReturn(Optional.of(share));
+
+        StudyGroupMember membership = new StudyGroupMember();
+        membership.setRole("OWNER");
+        membership.setStatus("ACTIVE");
+        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(group, owner, "ACTIVE"))
+                .thenReturn(Optional.of(membership));
+
+        sharingService.revokeGroupShare(1, "owner@gmail.com");
+
+        assertEquals("REVOKED", share.getStatus());
+        verify(groupDocumentShareRepository, times(1)).save(share);
+        verify(notificationService, times(1)).createNotification(
+                eq(recipient),
+                eq("GROUP_DOCUMENT_REMOVED"),
+                eq("Document removed from group"),
+                contains("was removed from group"),
+                eq("GROUP_DOCUMENT"),
+                eq(5L)
+        );
     }
 }

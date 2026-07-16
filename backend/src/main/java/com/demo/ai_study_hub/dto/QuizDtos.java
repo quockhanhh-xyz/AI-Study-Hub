@@ -2,7 +2,7 @@ package com.demo.ai_study_hub.dto;
 
 import lombok.*;
 import com.fasterxml.jackson.annotation.JsonAlias;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 public class QuizDtos {
@@ -27,9 +27,9 @@ public class QuizDtos {
         private String title;
         private Integer questionCount;
         private String model;
-        private LocalDateTime sourceProcessedAt;
+        private Instant sourceProcessedAt;
         private Integer sourceChunkCount;
-        private LocalDateTime createdAt;
+        private Instant createdAt;
         private List<QuizQuestionItem> questions;
     }
 
@@ -42,7 +42,7 @@ public class QuizDtos {
         private Integer documentId;
         private String title;
         private Integer questionCount;
-        private LocalDateTime createdAt;
+        private Instant createdAt;
     }
 
     @Data

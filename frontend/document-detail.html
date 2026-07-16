@@ -1071,11 +1071,12 @@
 
 
                   </section>
-                  
+
                   <hr class="ai-qa-divider" />
 
                   <div class="ai-qa-sample-questions" id="aiQaSampleQuestions" style="display:none;">
-                    <button type="button" class="ai-qa-sample-btn" data-question="Summarize this document.">Summarize this document</button>
+                    <button type="button" class="ai-qa-sample-btn" data-question="Summarize this document.">Summarize
+                      this document</button>
                     <button type="button" class="ai-qa-sample-btn" data-question="What are the key points?">What are the
                       key points?</button>
                     <button type="button" class="ai-qa-sample-btn"
@@ -1116,6 +1117,11 @@
                       <div class="ai-tools-generate-row">
                         <label for="flashcardCountInput">Number of cards</label>
                         <input type="number" id="flashcardCountInput" min="3" placeholder="Default" />
+                        <small class="ai-tools-limit-hint" id="flashcardCountHint"></small>
+                        <label for="flashcardFocusInput">Focus (optional)</label>
+                        <textarea id="flashcardFocusInput" rows="2" maxlength="300"
+                          placeholder="e.g. Focus on chapter 3 definitions"></textarea>
+                        <small class="ai-tools-char-count" id="flashcardFocusCount">0/300</small>
                         <button type="button" class="btn btn-secondary btn-sm" id="flashcardGenerateBtn"
                           disabled>Generate Flashcards</button>
                       </div>
@@ -1136,12 +1142,8 @@
                         <div class="ai-tools-form-row">
                           <div class="ai-tools-form-group">
                             <label for="quizCountInput">Number of questions</label>
-                            <select id="quizCountInput">
-                              <option value="5">5</option>
-                              <option value="10" selected>10</option>
-                              <option value="15">15</option>
-                              <option value="20">20</option>
-                            </select>
+                            <input type="number" id="quizCountInput" min="3" placeholder="Default" />
+                            <small class="ai-tools-limit-hint" id="quizCountHint"></small>
                           </div>
                           <div class="ai-tools-form-group">
                             <label for="quizDifficultySelect">Difficulty</label>
@@ -1153,7 +1155,12 @@
                             </select>
                           </div>
                         </div>
-                        <button type="button" class="btn btn-primary" style="width: 100%; padding: 10px;" id="quizGenerateBtn" disabled>Generate Quiz</button>
+                        <label for="quizFocusInput">Focus (optional)</label>
+                        <textarea id="quizFocusInput" rows="2" maxlength="300"
+                          placeholder="e.g. Focus on chapter 3 definitions"></textarea>
+                        <small class="ai-tools-char-count" id="quizFocusCount">0/300</small>
+                        <button type="button" class="btn btn-primary" style="width: 100%; padding: 10px;"
+                          id="quizGenerateBtn" disabled>Generate Quiz</button>
                       </div>
                       <div class="ai-tools-error" id="quizError" style="display:none;"></div>
 

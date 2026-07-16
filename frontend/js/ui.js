@@ -819,7 +819,11 @@ function mapAiLearningError(error) {
  */
 function formatGeneratedAt(isoString) {
   if (!isoString) return "";
-  const date = new Date(isoString);
+  let dateStr = String(isoString);
+  if (!dateStr.endsWith("Z") && !dateStr.includes("+")) {
+    dateStr += "Z";
+  }
+  const date = new Date(dateStr);
   if (isNaN(date.getTime())) return isoString;
   return date.toLocaleString(undefined, {
     year: 'numeric', month: 'short', day: 'numeric',

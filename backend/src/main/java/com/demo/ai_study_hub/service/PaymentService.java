@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -393,11 +394,11 @@ public class PaymentService {
                 .paymentProvider(order.getPaymentProvider())
                 .paymentUrl(shouldExposeUrl(order) ? order.getPaymentUrl() : null)
                 .tier(tier)
-                .createdAt(order.getCreatedAt())
-                .paidAt(order.getPaidAt())
-                .expiredAt(order.getExpiredAt())
+                .createdAt(order.getCreatedAt() != null ? order.getCreatedAt().toInstant(ZoneOffset.UTC) : null)
+                .paidAt(order.getPaidAt() != null ? order.getPaidAt().toInstant(ZoneOffset.UTC) : null)
+                .expiredAt(order.getExpiredAt() != null ? order.getExpiredAt().toInstant(ZoneOffset.UTC) : null)
                 .reviewReason(order.getReviewReason())
-                .reviewRequiredAt(order.getReviewRequiredAt())
+                .reviewRequiredAt(order.getReviewRequiredAt() != null ? order.getReviewRequiredAt().toInstant(ZoneOffset.UTC) : null)
                 .build();
     }
 

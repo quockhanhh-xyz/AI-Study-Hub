@@ -2032,7 +2032,7 @@ Joins a group using an invite code.
     "inviteCode": "A1B2C3D4"
   }
   ```
-- **Success Response (200 OK)**:
+- **Success Response (200 OK - Direct Join when pre-invited via email)**:
   ```json
   {
     "success": true,
@@ -2045,6 +2045,28 @@ Joins a group using an invite code.
       "ownerId": 5,
       "role": "MEMBER",
       "status": "ACTIVE",
+      "membershipStatus": "ACTIVE",
+      "createdAt": "2026-06-19T13:30:00",
+      "memberCount": null,
+      "documentCount": null,
+      "folderCount": null
+    }
+  }
+  ```
+- **Success Response (200 OK - Join Request Sent for approval)**:
+  ```json
+  {
+    "success": true,
+    "message": "Join request sent. Waiting for owner approval.",
+    "data": {
+      "groupId": 1,
+      "groupName": "Java Developers",
+      "description": "Group for studying Java and Spring Boot",
+      "inviteCode": "A1B2C3D4",
+      "ownerId": 5,
+      "role": "MEMBER",
+      "status": "ACTIVE",
+      "membershipStatus": "PENDING",
       "createdAt": "2026-06-19T13:30:00",
       "memberCount": null,
       "documentCount": null,
@@ -4815,3 +4837,119 @@ The system uses exactly these six enum values. `READY_FOR_AI` is **not** used.
 | `EMPTY_CONTENT` | File has no extractable text | ❌ |
 
 Both AI Q&A and AI Tools must gate on the **same** `processingStatus == COMPLETED` condition.
+
+---
+
+## Step B — Notification System & Study Group Join Request Flow
+
+### 1. Study Group Join Requests (Approval Flow)
+
+When joining a group via `POST /api/groups/join`, the member is placed in a `PENDING` state rather than joining immediately. The group owner must approve or reject their request.
+
+#### POST `/api/groups/{id}/members/{userId}/approve`
+Approves a pending member to become `ACTIVE`. Only the group owner can perform this action. Group membership limit checks are performed on approval.
+- **Auth required**: Yes
+- **Success Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "message": "Join request approved successfully",
+    "data": null
+  }
+  ```
+
+#### POST `/api/groups/{id}/members/{userId}/reject`
+Rejects a pending member. Sets their status to `REJECTED`. Only the group owner can perform this action.
+- **Auth required**: Yes
+- **Success Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "message": "Join request rejected successfully",
+    "data": null
+  }
+  ```
+
+---
+
+### 2. In-App Notifications
+
+Notifications are sent to users on key group and document sharing events.
+
+#### Notification Types
+- `GROUP_MEMBER_REMOVED` (recipient: removed user)
+- `GROUP_MEMBER_LEFT` (recipient: group owner)
+- `GROUP_JOIN_REQUEST` (recipient: group owner)
+- `GROUP_JOIN_APPROVED` (recipient: requesting user)
+- `GROUP_JOIN_REJECTED` (recipient: requesting user)
+- `GROUP_DOCUMENT_REMOVED` (recipient: document owner, if removed by group owner/non-doc-owner)
+
+#### GET `/api/notifications/my`
+Retrieves a list of all notifications for the current authenticated user, ordered from newest to oldest.
+- **Auth required**: Yes
+- **Success Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "message": "Notifications retrieved successfully",
+    "data": [
+      {
+        "notificationId": 1,
+        "type": "GROUP_JOIN_REQUEST",
+        "title": "New join request",
+        "message": "John requested to join Java Devs.",
+        "targetType": "GROUP",
+        "targetId": 5,
+        "read": false,
+        "createdAt": "2026-07-16T10:00:00"
+      }
+    ]
+  }
+  ```
+
+#### GET `/api/notifications/unread-count`
+Returns the count of unread notifications for the current authenticated user.
+- **Auth required**: Yes
+- **Success Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "message": "Unread notification count fetched successfully",
+    "data": {
+      "count": 3
+    }
+  }
+  ```
+
+#### PUT `/api/notifications/{id}/read`
+Marks a specific notification as read. Users can only mark their own notifications as read.
+- **Auth required**: Yes
+- **Success Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "message": "Notification marked as read successfully",
+    "data": {
+      "notificationId": 1,
+      "type": "GROUP_JOIN_REQUEST",
+      "title": "New join request",
+      "message": "John requested to join Java Devs.",
+      "targetType": "GROUP",
+      "targetId": 5,
+      "read": true,
+      "createdAt": "2026-07-16T10:00:00"
+    }
+  }
+  ```
+
+#### PUT `/api/notifications/read-all`
+Marks all notifications of the current authenticated user as read.
+- **Auth required**: Yes
+- **Success Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "message": "All notifications marked as read successfully",
+    "data": null
+  }
+  ```
