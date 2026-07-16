@@ -19,6 +19,7 @@ public class GroupResponse {
     private Integer ownerId;
     private String role;
     private String status;
+    private String membershipStatus;
     private boolean requiresApproval;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -27,7 +28,4 @@ public class GroupResponse {
     private Long pendingMemberCount;
     private Long documentCount;
     private Long folderCount;
-
-    /** Populated on joinGroup response. Values: ACTIVE | PENDING */
-    private String membershipStatus;
 }

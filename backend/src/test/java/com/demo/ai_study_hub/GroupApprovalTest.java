@@ -34,6 +34,8 @@ class GroupApprovalTest {
     @Mock private UsageService usageService;
     @Mock private EmailService emailService;
     @Mock private FrontendProperties frontendProperties;
+    @Mock private NotificationService notificationService;
+    @Mock private GroupInvitationRepository groupInvitationRepository;
 
     @InjectMocks
     private StudyGroupServiceImpl studyGroupService;
@@ -257,7 +259,7 @@ class GroupApprovalTest {
                 .thenReturn(Optional.of(pendingMembership));
         when(studyGroupMemberRepository.countByGroupAndStatus(groupWithApproval, "ACTIVE")).thenReturn(5L);
 
-        studyGroupService.approveMember(10, 2, "owner@test.com");
+        studyGroupService.approveJoinRequest(10, 2, "owner@test.com");
 
         assertEquals("ACTIVE", pendingMembership.getStatus());
         verify(studyGroupMemberRepository).save(pendingMembership);
@@ -274,7 +276,7 @@ class GroupApprovalTest {
                 .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                studyGroupService.approveMember(10, 2, "owner@test.com"));
+                studyGroupService.approveJoinRequest(10, 2, "owner@test.com"));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         verify(studyGroupMemberRepository, never()).save(any());
@@ -297,7 +299,7 @@ class GroupApprovalTest {
         when(studyGroupMemberRepository.countByGroupAndStatus(groupWithApproval, "ACTIVE")).thenReturn(30L);
 
         QuotaExceededException ex = assertThrows(QuotaExceededException.class, () ->
-                studyGroupService.approveMember(10, 2, "owner@test.com"));
+                studyGroupService.approveJoinRequest(10, 2, "owner@test.com"));
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("GROUP_MEMBER_LIMIT_EXCEEDED", ex.getCode());
@@ -313,7 +315,7 @@ class GroupApprovalTest {
         when(userRepository.findById(999)).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                studyGroupService.approveMember(10, 999, "owner@test.com"));
+                studyGroupService.approveJoinRequest(10, 999, "owner@test.com"));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
@@ -337,7 +339,7 @@ class GroupApprovalTest {
         when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING"))
                 .thenReturn(Optional.of(pendingMembership));
 
-        studyGroupService.rejectMember(10, 2, "owner@test.com");
+        studyGroupService.rejectJoinRequest(10, 2, "owner@test.com");
 
         assertEquals("REJECTED", pendingMembership.getStatus());
         verify(studyGroupMemberRepository).save(pendingMembership);
@@ -354,7 +356,7 @@ class GroupApprovalTest {
                 .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                studyGroupService.rejectMember(10, 2, "owner@test.com"));
+                studyGroupService.rejectJoinRequest(10, 2, "owner@test.com"));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         verify(studyGroupMemberRepository, never()).save(any());
@@ -378,7 +380,7 @@ class GroupApprovalTest {
                 .thenReturn(Optional.of(regularMembership));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                studyGroupService.rejectMember(10, 2, "regular@test.com"));
+                studyGroupService.rejectJoinRequest(10, 2, "regular@test.com"));
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         verify(studyGroupMemberRepository, never()).save(any());

@@ -20,6 +20,8 @@ public interface StudyGroupMemberRepository extends JpaRepository<StudyGroupMemb
 
     List<StudyGroupMember> findByGroupAndStatus(StudyGroup group, String status);
 
+    List<StudyGroupMember> findByGroupAndStatusIn(StudyGroup group, List<String> statuses);
+
     List<StudyGroupMember> findByUserAndStatus(User user, String status);
 
     boolean existsByGroupAndUserAndStatus(StudyGroup group, User user, String status);
