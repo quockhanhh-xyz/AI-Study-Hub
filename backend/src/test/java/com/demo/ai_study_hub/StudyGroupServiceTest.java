@@ -443,4 +443,26 @@ class StudyGroupServiceTest {
                 eq(1L)
         );
     }
+
+    @Test
+    void joinGroup_WhenPreInvitedViaEmail_ShouldJoinDirectlyAsActiveAndCleanUpInvitation() {
+        JoinGroupRequest request = new JoinGroupRequest();
+        request.setInviteCode("ABCD1234");
+
+        when(userRepository.findByEmail("member@gmail.com")).thenReturn(Optional.of(member));
+        when(studyGroupRepository.findByInviteCodeForUpdate("ABCD1234")).thenReturn(Optional.of(group));
+        when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(group, member, "ACTIVE")).thenReturn(false);
+        when(studyGroupMemberRepository.countByGroupAndStatus(group, "ACTIVE")).thenReturn(1L);
+        when(studyGroupMemberRepository.findByGroupAndUser(group, member)).thenReturn(Optional.empty());
+        when(groupInvitationRepository.existsByGroupAndEmail(group, "member@gmail.com")).thenReturn(true);
+
+        GroupResponse response = studyGroupService.joinGroup(request, "member@gmail.com");
+
+        assertNotNull(response);
+        assertEquals("MEMBER", response.getRole());
+        assertEquals("ACTIVE", response.getMembershipStatus());
+        verify(studyGroupMemberRepository, times(1)).save(any(StudyGroupMember.class));
+        verify(groupInvitationRepository, times(1)).deleteByGroupAndEmail(group, "member@gmail.com");
+        verify(notificationService, never()).createNotification(any(), any(), any(), any(), any(), any(), any());
+    }
 }

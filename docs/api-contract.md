@@ -2032,7 +2032,7 @@ Joins a group using an invite code.
     "inviteCode": "A1B2C3D4"
   }
   ```
-- **Success Response (200 OK)**:
+- **Success Response (200 OK - Direct Join when pre-invited via email)**:
   ```json
   {
     "success": true,
@@ -2045,6 +2045,28 @@ Joins a group using an invite code.
       "ownerId": 5,
       "role": "MEMBER",
       "status": "ACTIVE",
+      "membershipStatus": "ACTIVE",
+      "createdAt": "2026-06-19T13:30:00",
+      "memberCount": null,
+      "documentCount": null,
+      "folderCount": null
+    }
+  }
+  ```
+- **Success Response (200 OK - Join Request Sent for approval)**:
+  ```json
+  {
+    "success": true,
+    "message": "Join request sent. Waiting for owner approval.",
+    "data": {
+      "groupId": 1,
+      "groupName": "Java Developers",
+      "description": "Group for studying Java and Spring Boot",
+      "inviteCode": "A1B2C3D4",
+      "ownerId": 5,
+      "role": "MEMBER",
+      "status": "ACTIVE",
+      "membershipStatus": "PENDING",
       "createdAt": "2026-06-19T13:30:00",
       "memberCount": null,
       "documentCount": null,
