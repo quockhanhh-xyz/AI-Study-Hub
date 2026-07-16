@@ -1,11 +1,11 @@
 package com.demo.ai_study_hub;
 
+import com.demo.ai_study_hub.config.FrontendProperties;
 import com.demo.ai_study_hub.dto.*;
 import com.demo.ai_study_hub.entity.*;
 import com.demo.ai_study_hub.exception.QuotaExceededException;
 import com.demo.ai_study_hub.repository.*;
 import com.demo.ai_study_hub.service.*;
-import com.demo.ai_study_hub.config.FrontendProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,7 +20,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -104,9 +103,7 @@ class GroupApprovalTest {
         GroupResponse response = studyGroupService.joinGroup(request, "newuser@test.com");
 
         assertNotNull(response);
-        assertEquals("PENDING", response.getMemberStatus());
-
-        // Verify saved membership is PENDING
+        assertEquals("PENDING", response.getMembershipStatus());
         verify(studyGroupMemberRepository).save(argThat(m ->
                 "PENDING".equals(m.getStatus()) && "MEMBER".equals(m.getRole())
         ));
@@ -128,8 +125,7 @@ class GroupApprovalTest {
         GroupResponse response = studyGroupService.joinGroup(request, "newuser@test.com");
 
         assertNotNull(response);
-        assertNull(response.getMemberStatus());
-
+        assertEquals("ACTIVE", response.getMembershipStatus());
         verify(studyGroupMemberRepository).save(argThat(m ->
                 "ACTIVE".equals(m.getStatus()) && "MEMBER".equals(m.getRole())
         ));
@@ -149,12 +145,12 @@ class GroupApprovalTest {
                 studyGroupService.joinGroup(request, "newuser@test.com"));
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
-        assertTrue(ex.getReason().contains("pending"));
+        assertTrue(ex.getReason().toLowerCase().contains("pending"));
         verify(studyGroupMemberRepository, never()).save(any());
     }
 
     @Test
-    void joinGroup_WhenApprovalAndExistingRecord_ShouldUpdateToPending() {
+    void joinGroup_WhenApprovalAndExistingRejectedRecord_ShouldUpdateToPending() {
         JoinGroupRequest request = new JoinGroupRequest();
         request.setInviteCode("APPROVE1");
 
@@ -180,7 +176,7 @@ class GroupApprovalTest {
     // ─── listPendingMembers ───────────────────────────────────────────────────
 
     @Test
-    void listPendingMembers_OwnerCanList() {
+    void listPendingMembers_OwnerCanList_ReturnsBothMemberIdAndUserId() {
         StudyGroupMember pending1 = new StudyGroupMember();
         pending1.setMemberId(100);
         pending1.setUser(newUser);
@@ -198,25 +194,26 @@ class GroupApprovalTest {
         List<PendingMemberResponse> result = studyGroupService.listPendingMembers(10, "owner@test.com");
 
         assertEquals(1, result.size());
+        // memberId for internal reference, userId for approve/reject endpoint
         assertEquals(100, result.get(0).getMemberId());
         assertEquals(2, result.get(0).getUserId());
     }
 
     @Test
     void listPendingMembers_NonOwner_ShouldThrow403() {
-        User memberUser = new User();
-        memberUser.setUserId(3);
-        memberUser.setEmail("regular@test.com");
+        User regularUser = new User();
+        regularUser.setUserId(3);
+        regularUser.setEmail("regular@test.com");
 
         StudyGroupMember regularMembership = new StudyGroupMember();
         regularMembership.setGroup(groupWithApproval);
-        regularMembership.setUser(memberUser);
+        regularMembership.setUser(regularUser);
         regularMembership.setRole("MEMBER");
         regularMembership.setStatus("ACTIVE");
 
-        when(userRepository.findByEmail("regular@test.com")).thenReturn(Optional.of(memberUser));
+        when(userRepository.findByEmail("regular@test.com")).thenReturn(Optional.of(regularUser));
         when(studyGroupRepository.findById(10)).thenReturn(Optional.of(groupWithApproval));
-        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, memberUser, "ACTIVE"))
+        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, regularUser, "ACTIVE"))
                 .thenReturn(Optional.of(regularMembership));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
@@ -240,10 +237,10 @@ class GroupApprovalTest {
         assertTrue(result.isEmpty());
     }
 
-    // ─── approveMember ────────────────────────────────────────────────────────
+    // ─── approveMember (by userId) ────────────────────────────────────────────
 
     @Test
-    void approveMember_OwnerApprovesPending_ShouldSetActive() {
+    void approveMember_OwnerApprovesByUserId_ShouldSetActive() {
         StudyGroupMember pendingMembership = new StudyGroupMember();
         pendingMembership.setMemberId(99);
         pendingMembership.setGroup(groupWithApproval);
@@ -255,56 +252,52 @@ class GroupApprovalTest {
         when(studyGroupRepository.findById(10)).thenReturn(Optional.of(groupWithApproval));
         when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, owner, "ACTIVE"))
                 .thenReturn(Optional.of(ownerMembership));
-        when(studyGroupMemberRepository.findById(99)).thenReturn(Optional.of(pendingMembership));
+        when(userRepository.findById(2)).thenReturn(Optional.of(newUser));
+        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING"))
+                .thenReturn(Optional.of(pendingMembership));
         when(studyGroupMemberRepository.countByGroupAndStatus(groupWithApproval, "ACTIVE")).thenReturn(5L);
 
-        studyGroupService.approveMember(10, 99, "owner@test.com");
+        studyGroupService.approveMember(10, 2, "owner@test.com");
 
         assertEquals("ACTIVE", pendingMembership.getStatus());
         verify(studyGroupMemberRepository).save(pendingMembership);
     }
 
     @Test
-    void approveMember_WhenMemberNotPending_ShouldThrow400() {
-        StudyGroupMember activeMembership = new StudyGroupMember();
-        activeMembership.setMemberId(99);
-        activeMembership.setGroup(groupWithApproval);
-        activeMembership.setUser(newUser);
-        activeMembership.setRole("MEMBER");
-        activeMembership.setStatus("ACTIVE");  // already active
-
+    void approveMember_WhenUserHasNoPendingRequest_ShouldThrow404() {
         when(userRepository.findByEmail("owner@test.com")).thenReturn(Optional.of(owner));
         when(studyGroupRepository.findById(10)).thenReturn(Optional.of(groupWithApproval));
         when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, owner, "ACTIVE"))
                 .thenReturn(Optional.of(ownerMembership));
-        when(studyGroupMemberRepository.findById(99)).thenReturn(Optional.of(activeMembership));
+        when(userRepository.findById(2)).thenReturn(Optional.of(newUser));
+        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING"))
+                .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                studyGroupService.approveMember(10, 99, "owner@test.com"));
+                studyGroupService.approveMember(10, 2, "owner@test.com"));
 
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         verify(studyGroupMemberRepository, never()).save(any());
     }
 
     @Test
     void approveMember_WhenMemberLimitReached_ShouldThrowForbidden() {
         StudyGroupMember pendingMembership = new StudyGroupMember();
-        pendingMembership.setMemberId(99);
         pendingMembership.setGroup(groupWithApproval);
         pendingMembership.setUser(newUser);
-        pendingMembership.setRole("MEMBER");
         pendingMembership.setStatus("PENDING");
 
         when(userRepository.findByEmail("owner@test.com")).thenReturn(Optional.of(owner));
         when(studyGroupRepository.findById(10)).thenReturn(Optional.of(groupWithApproval));
         when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, owner, "ACTIVE"))
                 .thenReturn(Optional.of(ownerMembership));
-        when(studyGroupMemberRepository.findById(99)).thenReturn(Optional.of(pendingMembership));
-        // maxMembersPerGroup = 30 from limits; simulate 30 active
+        when(userRepository.findById(2)).thenReturn(Optional.of(newUser));
+        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING"))
+                .thenReturn(Optional.of(pendingMembership));
         when(studyGroupMemberRepository.countByGroupAndStatus(groupWithApproval, "ACTIVE")).thenReturn(30L);
 
         QuotaExceededException ex = assertThrows(QuotaExceededException.class, () ->
-                studyGroupService.approveMember(10, 99, "owner@test.com"));
+                studyGroupService.approveMember(10, 2, "owner@test.com"));
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("GROUP_MEMBER_LIMIT_EXCEEDED", ex.getCode());
@@ -312,34 +305,23 @@ class GroupApprovalTest {
     }
 
     @Test
-    void approveMember_WhenMemberBelongsToDifferentGroup_ShouldThrow404() {
-        StudyGroup otherGroup = new StudyGroup();
-        otherGroup.setGroupId(999);
-        otherGroup.setOwner(owner);
-        otherGroup.setStatus("ACTIVE");
-
-        StudyGroupMember pendingInOther = new StudyGroupMember();
-        pendingInOther.setMemberId(99);
-        pendingInOther.setGroup(otherGroup);  // different group
-        pendingInOther.setUser(newUser);
-        pendingInOther.setStatus("PENDING");
-
+    void approveMember_WhenUserNotFound_ShouldThrow404() {
         when(userRepository.findByEmail("owner@test.com")).thenReturn(Optional.of(owner));
         when(studyGroupRepository.findById(10)).thenReturn(Optional.of(groupWithApproval));
         when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, owner, "ACTIVE"))
                 .thenReturn(Optional.of(ownerMembership));
-        when(studyGroupMemberRepository.findById(99)).thenReturn(Optional.of(pendingInOther));
+        when(userRepository.findById(999)).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                studyGroupService.approveMember(10, 99, "owner@test.com"));
+                studyGroupService.approveMember(10, 999, "owner@test.com"));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 
-    // ─── rejectMember ─────────────────────────────────────────────────────────
+    // ─── rejectMember (by userId) ─────────────────────────────────────────────
 
     @Test
-    void rejectMember_OwnerRejectsPending_ShouldSetRejected() {
+    void rejectMember_OwnerRejectsByUserId_ShouldSetRejected() {
         StudyGroupMember pendingMembership = new StudyGroupMember();
         pendingMembership.setMemberId(99);
         pendingMembership.setGroup(groupWithApproval);
@@ -351,32 +333,30 @@ class GroupApprovalTest {
         when(studyGroupRepository.findById(10)).thenReturn(Optional.of(groupWithApproval));
         when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, owner, "ACTIVE"))
                 .thenReturn(Optional.of(ownerMembership));
-        when(studyGroupMemberRepository.findById(99)).thenReturn(Optional.of(pendingMembership));
+        when(userRepository.findById(2)).thenReturn(Optional.of(newUser));
+        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING"))
+                .thenReturn(Optional.of(pendingMembership));
 
-        studyGroupService.rejectMember(10, 99, "owner@test.com");
+        studyGroupService.rejectMember(10, 2, "owner@test.com");
 
         assertEquals("REJECTED", pendingMembership.getStatus());
         verify(studyGroupMemberRepository).save(pendingMembership);
     }
 
     @Test
-    void rejectMember_WhenMemberNotPending_ShouldThrow400() {
-        StudyGroupMember activeMembership = new StudyGroupMember();
-        activeMembership.setMemberId(99);
-        activeMembership.setGroup(groupWithApproval);
-        activeMembership.setUser(newUser);
-        activeMembership.setStatus("ACTIVE");
-
+    void rejectMember_WhenUserHasNoPendingRequest_ShouldThrow404() {
         when(userRepository.findByEmail("owner@test.com")).thenReturn(Optional.of(owner));
         when(studyGroupRepository.findById(10)).thenReturn(Optional.of(groupWithApproval));
         when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, owner, "ACTIVE"))
                 .thenReturn(Optional.of(ownerMembership));
-        when(studyGroupMemberRepository.findById(99)).thenReturn(Optional.of(activeMembership));
+        when(userRepository.findById(2)).thenReturn(Optional.of(newUser));
+        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING"))
+                .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                studyGroupService.rejectMember(10, 99, "owner@test.com"));
+                studyGroupService.rejectMember(10, 2, "owner@test.com"));
 
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         verify(studyGroupMemberRepository, never()).save(any());
     }
 
@@ -398,7 +378,7 @@ class GroupApprovalTest {
                 .thenReturn(Optional.of(regularMembership));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                studyGroupService.rejectMember(10, 99, "regular@test.com"));
+                studyGroupService.rejectMember(10, 2, "regular@test.com"));
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         verify(studyGroupMemberRepository, never()).save(any());
@@ -413,11 +393,16 @@ class GroupApprovalTest {
         request.setRequiresApproval(true);
 
         groupWithoutApproval.setOwner(owner);
+        StudyGroupMember ownerInOpenGroup = new StudyGroupMember();
+        ownerInOpenGroup.setGroup(groupWithoutApproval);
+        ownerInOpenGroup.setUser(owner);
+        ownerInOpenGroup.setRole("OWNER");
+        ownerInOpenGroup.setStatus("ACTIVE");
 
         when(userRepository.findByEmail("owner@test.com")).thenReturn(Optional.of(owner));
         when(studyGroupRepository.findById(20)).thenReturn(Optional.of(groupWithoutApproval));
         when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithoutApproval, owner, "ACTIVE"))
-                .thenReturn(Optional.of(ownerMembership));
+                .thenReturn(Optional.of(ownerInOpenGroup));
         when(studyGroupRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         GroupResponse response = studyGroupService.updateGroup(20, request, "owner@test.com");
@@ -430,7 +415,7 @@ class GroupApprovalTest {
     void updateGroup_WhenRequiresApprovalNull_ShouldKeepExistingValue() {
         UpdateGroupRequest request = new UpdateGroupRequest();
         request.setGroupName("Updated Name");
-        request.setRequiresApproval(null);  // null = keep existing
+        request.setRequiresApproval(null);
 
         groupWithApproval.setOwner(owner);
 
@@ -442,7 +427,6 @@ class GroupApprovalTest {
 
         GroupResponse response = studyGroupService.updateGroup(10, request, "owner@test.com");
 
-        // requiresApproval was true, should remain true
         assertTrue(response.isRequiresApproval());
     }
 }
