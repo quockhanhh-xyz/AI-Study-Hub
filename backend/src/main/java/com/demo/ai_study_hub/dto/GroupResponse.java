@@ -19,10 +19,15 @@ public class GroupResponse {
     private Integer ownerId;
     private String role;
     private String status;
+    private boolean requiresApproval;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     private Long memberCount;
+    private Long pendingMemberCount;
     private Long documentCount;
     private Long folderCount;
+
+    /** Populated only on joinGroup response when requiresApproval=true. Values: ACTIVE | PENDING */
+    private String memberStatus;
 }
