@@ -49,6 +49,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         group.setInviteCode(generateUniqueInviteCode());
         group.setOwner(owner);
         group.setStatus("ACTIVE");
+        group.setRequiresApproval(request.isRequiresApproval());
         StudyGroup savedGroup = studyGroupRepository.save(group);
 
         StudyGroupMember member = new StudyGroupMember();
@@ -60,6 +61,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
         GroupResponse response = mapToGroupResponse(savedGroup, "OWNER");
         response.setMemberCount(1L);
+        response.setPendingMemberCount(0L);
         response.setDocumentCount(0L);
         response.setFolderCount(0L);
         return response;
@@ -169,6 +171,11 @@ public class StudyGroupServiceImpl implements StudyGroupService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You are already a member of this group");
         }
 
+        boolean alreadyPending = studyGroupMemberRepository.existsByGroupAndUserAndStatus(group, user, "PENDING");
+        if (alreadyPending) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Your join request is already pending approval");
+        }
+
         User groupOwner = group.getOwner();
         com.demo.ai_study_hub.dto.TierLimits ownerLimits = tierPolicyService.getLimitsForUser(groupOwner);
         long memberCount = studyGroupMemberRepository.countByGroupAndStatus(group, "ACTIVE");
@@ -177,9 +184,11 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                     "Group members limit exceeded", "GROUP_MEMBER_LIMIT_EXCEEDED");
         }
 
+        String targetStatus = group.isRequiresApproval() ? "PENDING" : "ACTIVE";
+
         StudyGroupMember existing = studyGroupMemberRepository.findByGroupAndUser(group, user).orElse(null);
         if (existing != null) {
-            existing.setStatus("ACTIVE");
+            existing.setStatus(targetStatus);
             existing.setRole("MEMBER");
             studyGroupMemberRepository.save(existing);
         } else {
@@ -187,11 +196,15 @@ public class StudyGroupServiceImpl implements StudyGroupService {
             member.setGroup(group);
             member.setUser(user);
             member.setRole("MEMBER");
-            member.setStatus("ACTIVE");
+            member.setStatus(targetStatus);
             studyGroupMemberRepository.save(member);
         }
 
-        return mapToGroupResponse(group, "MEMBER");
+        GroupResponse response = mapToGroupResponse(group, "MEMBER");
+        if ("PENDING".equals(targetStatus)) {
+            response.setMemberStatus("PENDING");
+        }
+        return response;
     }
 
     @Override
@@ -224,6 +237,9 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
         group.setGroupName(request.getGroupName());
         group.setDescription(request.getDescription());
+        if (request.getRequiresApproval() != null) {
+            group.setRequiresApproval(request.getRequiresApproval());
+        }
         StudyGroup updated = studyGroupRepository.save(group);
 
         return mapToGroupResponse(updated, "OWNER");
@@ -330,9 +346,77 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .ownerId(group.getOwner().getUserId())
                 .role(role)
                 .status(group.getStatus())
+                .requiresApproval(group.isRequiresApproval())
                 .createdAt(group.getCreatedAt())
                 .updatedAt(group.getUpdatedAt())
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PendingMemberResponse> listPendingMembers(Integer groupId, String ownerEmail) {
+        User owner = getUser(ownerEmail);
+        StudyGroup group = getActiveGroup(groupId);
+        requireOwner(group, owner);
+
+        return studyGroupMemberRepository.findByGroupAndStatus(group, "PENDING").stream()
+                .map(m -> PendingMemberResponse.builder()
+                        .memberId(m.getMemberId())
+                        .userId(m.getUser().getUserId())
+                        .fullName(m.getUser().getFullName())
+                        .email(m.getUser().getEmail())
+                        .requestedAt(m.getJoinedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void approveMember(Integer groupId, Integer memberId, String ownerEmail) {
+        User owner = getUser(ownerEmail);
+        StudyGroup group = getActiveGroup(groupId);
+        requireOwner(group, owner);
+
+        StudyGroupMember membership = studyGroupMemberRepository.findById(memberId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pending request not found"));
+
+        if (!membership.getGroup().getGroupId().equals(groupId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pending request not found");
+        }
+        if (!"PENDING".equals(membership.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Member request is not in PENDING state");
+        }
+
+        long activeCount = studyGroupMemberRepository.countByGroupAndStatus(group, "ACTIVE");
+        com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(group.getOwner());
+        if (activeCount >= limits.maxMembersPerGroup()) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Group members limit exceeded", "GROUP_MEMBER_LIMIT_EXCEEDED");
+        }
+
+        membership.setStatus("ACTIVE");
+        studyGroupMemberRepository.save(membership);
+    }
+
+    @Override
+    @Transactional
+    public void rejectMember(Integer groupId, Integer memberId, String ownerEmail) {
+        User owner = getUser(ownerEmail);
+        StudyGroup group = getActiveGroup(groupId);
+        requireOwner(group, owner);
+
+        StudyGroupMember membership = studyGroupMemberRepository.findById(memberId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pending request not found"));
+
+        if (!membership.getGroup().getGroupId().equals(groupId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pending request not found");
+        }
+        if (!"PENDING".equals(membership.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Member request is not in PENDING state");
+        }
+
+        membership.setStatus("REJECTED");
+        studyGroupMemberRepository.save(membership);
     }
 
     @Override
@@ -341,7 +425,6 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         User sender = getUser(senderEmail);
         StudyGroup group = getActiveGroup(groupId);
 
-        // Only the group owner can send invites
         StudyGroupMember senderMembership = studyGroupMemberRepository
                 .findByGroupAndUserAndStatus(group, sender, "ACTIVE")
                 .orElseThrow(() -> new QuotaExceededException(
@@ -358,7 +441,6 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
         String inviteeEmail = request.getEmail().trim().toLowerCase();
 
-        // Reject if the invitee is already an ACTIVE member
         User invitee = userRepository.findByEmail(inviteeEmail).orElse(null);
         if (invitee != null) {
             boolean alreadyMember = studyGroupMemberRepository
