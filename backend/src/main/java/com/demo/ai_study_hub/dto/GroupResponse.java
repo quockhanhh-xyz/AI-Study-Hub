@@ -19,6 +19,7 @@ public class GroupResponse {
     private Integer ownerId;
     private String role;
     private String status;
+    private String membershipStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

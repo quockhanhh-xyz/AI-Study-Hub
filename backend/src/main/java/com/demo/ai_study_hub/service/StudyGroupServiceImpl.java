@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import com.demo.ai_study_hub.exception.QuotaExceededException;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,6 +30,8 @@ public class StudyGroupServiceImpl implements StudyGroupService {
     private final UsageService usageService;
     private final EmailService emailService;
     private final FrontendProperties frontendProperties;
+    private final NotificationService notificationService;
+    private final GroupInvitationRepository groupInvitationRepository;
 
     private static final String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private final SecureRandom random = new SecureRandom();
@@ -116,9 +120,14 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .findByGroupAndUserAndStatus(group, user, "ACTIVE")
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not a member of this group"));
 
-        List<StudyGroupMember> activeMembers = studyGroupMemberRepository.findByGroupAndStatus(group, "ACTIVE");
+        List<StudyGroupMember> membersToShow;
+        if ("OWNER".equals(currentMembership.getRole())) {
+            membersToShow = studyGroupMemberRepository.findByGroupAndStatusIn(group, List.of("ACTIVE", "PENDING"));
+        } else {
+            membersToShow = studyGroupMemberRepository.findByGroupAndStatus(group, "ACTIVE");
+        }
 
-        List<GroupDetailResponse.GroupMemberItem> memberItems = activeMembers.stream()
+        List<GroupDetailResponse.GroupMemberItem> memberItems = membersToShow.stream()
                 .map(m -> GroupDetailResponse.GroupMemberItem.builder()
                         .memberId(m.getMemberId())
                         .userId(m.getUser().getUserId())
@@ -131,7 +140,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                         .build())
                 .collect(Collectors.toList());
 
-        long memberCount = activeMembers.size();
+        long memberCount = studyGroupMemberRepository.countByGroupAndStatus(group, "ACTIVE");
         long documentCount = groupDocumentShareRepository.findActiveSharesForGroup(group).size();
         long folderCount = groupFolderShareRepository.findActiveSharesForGroup(group).size();
 
@@ -178,8 +187,11 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         }
 
         StudyGroupMember existing = studyGroupMemberRepository.findByGroupAndUser(group, user).orElse(null);
+        boolean isInvited = groupInvitationRepository.existsByGroupAndEmail(group, user.getEmail().trim().toLowerCase());
+        String targetStatus = isInvited ? "ACTIVE" : "PENDING";
+
         if (existing != null) {
-            existing.setStatus("ACTIVE");
+            existing.setStatus(targetStatus);
             existing.setRole("MEMBER");
             studyGroupMemberRepository.save(existing);
         } else {
@@ -187,11 +199,28 @@ public class StudyGroupServiceImpl implements StudyGroupService {
             member.setGroup(group);
             member.setUser(user);
             member.setRole("MEMBER");
-            member.setStatus("ACTIVE");
+            member.setStatus(targetStatus);
             studyGroupMemberRepository.save(member);
         }
 
-        return mapToGroupResponse(group, "MEMBER");
+        if (isInvited) {
+            groupInvitationRepository.deleteByGroupAndEmail(group, user.getEmail().trim().toLowerCase());
+        } else {
+            String displayName = (user.getFullName() != null && !user.getFullName().trim().isEmpty())
+                    ? user.getFullName() : user.getEmail();
+
+            notificationService.createNotification(
+                    group.getOwner(),
+                    "GROUP_JOIN_REQUEST",
+                    "New join request",
+                    displayName + " requested to join " + group.getGroupName() + ".",
+                    "GROUP",
+                    Long.valueOf(group.getGroupId()),
+                    user.getUserId()
+            );
+        }
+
+        return mapToGroupResponse(group, "MEMBER", targetStatus);
     }
 
     @Override
@@ -212,6 +241,18 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         membership.setStatus("LEFT");
         studyGroupMemberRepository.save(membership);
         revokeGroupSharesForUser(group, user);
+
+        String displayName = (user.getFullName() != null && !user.getFullName().trim().isEmpty())
+                ? user.getFullName() : user.getEmail();
+
+        notificationService.createNotification(
+                group.getOwner(),
+                "GROUP_MEMBER_LEFT",
+                "Member left group",
+                displayName + " has left " + group.getGroupName() + ".",
+                "GROUP",
+                Long.valueOf(groupId)
+        );
     }
 
     @Override
@@ -267,6 +308,15 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         membership.setStatus("REMOVED");
         studyGroupMemberRepository.save(membership);
         revokeGroupSharesForUser(group, targetUser);
+
+        notificationService.createNotification(
+                targetUser,
+                "GROUP_MEMBER_REMOVED",
+                "Removed from group",
+                "You have been removed from " + group.getGroupName() + ".",
+                "GROUP",
+                Long.valueOf(groupId)
+        );
     }
 
     private void revokeGroupSharesForUser(StudyGroup group, User user) {
@@ -322,6 +372,10 @@ public class StudyGroupServiceImpl implements StudyGroupService {
     }
 
     private GroupResponse mapToGroupResponse(StudyGroup group, String role) {
+        return mapToGroupResponse(group, role, "ACTIVE");
+    }
+
+    private GroupResponse mapToGroupResponse(StudyGroup group, String role, String membershipStatus) {
         return GroupResponse.builder()
                 .groupId(group.getGroupId())
                 .groupName(group.getGroupName())
@@ -330,6 +384,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .ownerId(group.getOwner().getUserId())
                 .role(role)
                 .status(group.getStatus())
+                .membershipStatus(membershipStatus)
                 .createdAt(group.getCreatedAt())
                 .updatedAt(group.getUpdatedAt())
                 .build();
@@ -371,6 +426,15 @@ public class StudyGroupServiceImpl implements StudyGroupService {
             }
         }
 
+        // Save invitation record
+        GroupInvitation invite = groupInvitationRepository.findByGroupAndEmail(group, inviteeEmail)
+                .orElseGet(() -> GroupInvitation.builder()
+                        .group(group)
+                        .email(inviteeEmail)
+                        .build());
+        invite.setInvitedAt(LocalDateTime.now(ZoneOffset.UTC));
+        groupInvitationRepository.save(invite);
+
         String base = frontendProperties.getBaseUrl();
         if (base == null) base = "";
         if (base.endsWith("/")) base = base.substring(0, base.length() - 1);
@@ -384,5 +448,77 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .inviteCode(group.getInviteCode())
                 .joinUrl(joinUrl)
                 .build();
+     }
+
+    @Override
+    @Transactional
+    public void approveJoinRequest(Integer groupId, Integer userId, String ownerEmail) {
+        User owner = getUser(ownerEmail);
+        StudyGroup group = getActiveGroup(groupId);
+
+        requireOwner(group, owner);
+
+        User targetUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        StudyGroupMember membership = studyGroupMemberRepository.findByGroupAndUser(group, targetUser)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Join request not found"));
+
+        if (!"PENDING".equals(membership.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Member is not in PENDING state");
+        }
+
+        // Quota check before approval (same as joinGroup)
+        com.demo.ai_study_hub.dto.TierLimits ownerLimits = tierPolicyService.getLimitsForUser(owner);
+        long memberCount = studyGroupMemberRepository.countByGroupAndStatus(group, "ACTIVE");
+        if (memberCount >= ownerLimits.maxMembersPerGroup()) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Group members limit exceeded", "GROUP_MEMBER_LIMIT_EXCEEDED");
+        }
+
+        membership.setStatus("ACTIVE");
+        studyGroupMemberRepository.save(membership);
+
+        // Create notification for the approved user
+        notificationService.createNotification(
+                targetUser,
+                "GROUP_JOIN_APPROVED",
+                "Join request approved",
+                "Your request to join " + group.getGroupName() + " was approved.",
+                "GROUP",
+                Long.valueOf(groupId)
+        );
+    }
+
+    @Override
+    @Transactional
+    public void rejectJoinRequest(Integer groupId, Integer userId, String ownerEmail) {
+        User owner = getUser(ownerEmail);
+        StudyGroup group = getActiveGroup(groupId);
+
+        requireOwner(group, owner);
+
+        User targetUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        StudyGroupMember membership = studyGroupMemberRepository.findByGroupAndUser(group, targetUser)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Join request not found"));
+
+        if (!"PENDING".equals(membership.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Member is not in PENDING state");
+        }
+
+        membership.setStatus("REJECTED");
+        studyGroupMemberRepository.save(membership);
+
+        // Create notification for the rejected user
+        notificationService.createNotification(
+                targetUser,
+                "GROUP_JOIN_REJECTED",
+                "Join request rejected",
+                "Your request to join " + group.getGroupName() + " was rejected.",
+                "GROUP",
+                Long.valueOf(groupId)
+        );
     }
 }

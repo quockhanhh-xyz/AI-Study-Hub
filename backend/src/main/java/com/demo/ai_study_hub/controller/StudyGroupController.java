@@ -69,7 +69,10 @@ public class StudyGroupController {
             Principal principal) {
         try {
             GroupResponse data = studyGroupService.joinGroup(request, principal.getName());
-            return ResponseEntity.ok(ApiResponse.success(data, "Joined group successfully"));
+            String msg = "ACTIVE".equals(data.getMembershipStatus())
+                    ? "Joined group successfully"
+                    : "Join request sent. Waiting for owner approval.";
+            return ResponseEntity.ok(ApiResponse.success(data, msg));
         } catch (ResponseStatusException e) {
             if (e instanceof com.demo.ai_study_hub.exception.QuotaExceededException qe) {
                 return ResponseEntity.status(qe.getStatusCode()).body(ApiResponse.error(qe.getReason(), qe.getCode()));
@@ -148,6 +151,38 @@ public class StudyGroupController {
             return ResponseEntity.ok(ApiResponse.success(data, "Invitation email sent successfully"));
         } catch (QuotaExceededException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason(), e.getCode()));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/members/{userId}/approve")
+    public ResponseEntity<ApiResponse<Void>> approveJoinRequest(
+            @PathVariable Integer id,
+            @PathVariable Integer userId,
+            Principal principal) {
+        try {
+            studyGroupService.approveJoinRequest(id, userId, principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(null, "Join request approved successfully"));
+        } catch (QuotaExceededException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason(), e.getCode()));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/members/{userId}/reject")
+    public ResponseEntity<ApiResponse<Void>> rejectJoinRequest(
+            @PathVariable Integer id,
+            @PathVariable Integer userId,
+            Principal principal) {
+        try {
+            studyGroupService.rejectJoinRequest(id, userId, principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(null, "Join request rejected successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {
