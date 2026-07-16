@@ -441,9 +441,14 @@ This checklist defines the step-by-step verification flow to demonstrate direct 
 
 ---
 
-# 12. AI Learning Tools (Step 14)
+# 12. AI Learning Tools (Step 14 + Step A)
 
-Provides demo and verification steps for AI study tools (Summary, Flashcard, and Quiz multiple choice).
+Provides demo and verification steps for AI study tools.
+
+> **Step A scope update**: The AI Tools panel now exposes **only Quiz and Flashcard**.
+> - **Summary** has been moved to the AI Q&A panel as a quick-action chip ("Summarize this document for me").
+> - **View Extracted Text** button has been removed from the UI (backend API still available).
+> - Backend Summary APIs remain functional; only the UI entry point changed.
 
 ### 12.1. Document Readiness and Permission Guards
 - [ ] **Step 12.1**: Log in as User A (FREE). Open a document with extraction status `COMPLETED` and request Summary generation.
@@ -488,3 +493,31 @@ Provides demo and verification steps for AI study tools (Summary, Flashcard, and
 ### 12.7. Feature Restriction Check
 - [ ] **Step 12.15**: Verify that no UI options or backend API endpoints exist for editing summary key points, deleting individual flashcard sets, or deleting quiz sets.
   - *Expected*: No modification/deletion routes are registered. Step 14 features are read-only.
+
+---
+
+# 13. Step A — Community AI Flags & Group Email Invite
+
+### 13.1. Community Document Permission Flags
+- [ ] **Step 13.1**: Call `GET /api/documents/public/{id}` **without authentication** (no token).
+  - *Expected*: Response contains `canUseAiTools: false`, `canProcess: false`, `canReprocess: false`.
+- [ ] **Step 13.2**: Call `GET /api/documents/public/{id}` **authenticated as a non-owner** for a document with `processingStatus: COMPLETED`.
+  - *Expected*: `canUseAiTools: true`, `canProcess: false`, `canReprocess: false`.
+- [ ] **Step 13.3**: Call `GET /api/documents/public/{id}` **authenticated as the owner** for a document with `processingStatus: COMPLETED`.
+  - *Expected*: `canUseAiTools: true`, `canProcess: false`, `canReprocess: true`.
+- [ ] **Step 13.4**: Call `GET /api/documents/public/{id}` **authenticated as the owner** for a document with `processingStatus: PENDING`.
+  - *Expected*: `canUseAiTools: false`, `canProcess: true`, `canReprocess: false`.
+- [ ] **Step 13.5**: Call `POST /api/documents/{id}/process` as a **non-owner** of the document.
+  - *Expected*: Returns `403 Forbidden` with `code: DOCUMENT_PROCESS_FORBIDDEN`.
+
+### 13.2. Group Email Invite
+- [ ] **Step 13.6**: As group **owner**, call `POST /api/groups/{id}/invites/email` with a valid email.
+  - *Expected*: Returns `200 OK` with `inviteCode` and `joinUrl`. Invite email sent to the address.
+- [ ] **Step 13.7**: As group **member (non-owner)**, call `POST /api/groups/{id}/invites/email`.
+  - *Expected*: Returns `403 Forbidden` with `code: GROUP_INVITE_FORBIDDEN`.
+- [ ] **Step 13.8**: As group **owner**, invite the email of a user who is **already an ACTIVE member**.
+  - *Expected*: Returns `400 Bad Request` with `code: GROUP_MEMBER_ALREADY_EXISTS`.
+- [ ] **Step 13.9**: As group owner, invite with an **invalid email format** (e.g. `notanemail`).
+  - *Expected*: Returns `400 Bad Request` (validation error).
+- [ ] **Step 13.10**: Check the `joinUrl` in the response contains the group's `inviteCode` as a query param.
+  - *Expected*: URL format: `{FRONTEND_BASE_URL}/frontend/groups.html?inviteCode=XXXXXXXX`.
