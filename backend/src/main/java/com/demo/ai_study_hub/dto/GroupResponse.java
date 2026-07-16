@@ -19,7 +19,6 @@ public class GroupResponse {
     private Integer ownerId;
     private String role;
     private String status;
-    private boolean requiresApproval;
     private String membershipStatus;
     private boolean requiresApproval;
     private LocalDateTime createdAt;
