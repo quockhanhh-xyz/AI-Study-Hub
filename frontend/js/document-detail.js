@@ -86,6 +86,7 @@ let aiQaUsageInfo = null;
 let aiToolsLoaded = false;
 let aiToolsProcessingStatus = "PENDING";
 let summaryExists = false;
+let currentPlanLimits = null; // { maxQuizQuestionsPerSet, maxFlashcardsPerSet } from Plan API
 
 function normalizeProcessingStatusResponse(res) {
     return res?.success && res?.data ? res.data : (res || {});
@@ -158,6 +159,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (isAuthenticated) {
         initSharingUI();
+        loadPlanLimitsForAiTools();
     }
 });
 
@@ -1695,6 +1697,72 @@ const AI_TOOLS_NOT_READY_MESSAGES = {
     EMPTY_CONTENT: "No readable text was found in this document."
 };
 
+// Loads the current user's plan limits (maxQuizQuestionsPerSet /
+// maxFlashcardsPerSet) once, so the Generate forms can show a hint and clamp
+// the count instead of using hardcoded values. Best-effort: if the plan
+// endpoint isn't available/named differently, we silently skip the hint —
+// the backend still enforces the real limit on generate.
+async function loadPlanLimitsForAiTools() {
+    try {
+        const res = await getAccountEntitlements();
+        const limits = res?.data?.limits || null;
+        // Confirmed via /api/account/entitlements response: the backend
+        // exposes a single combined "maxItemsPerSet" for BOTH quiz questions
+        // and flashcards, NOT separate maxQuizQuestionsPerSet /
+        // maxFlashcardsPerSet as the original plan doc described. Mapping
+        // both to the same value here; flagged to the team separately.
+        currentPlanLimits = limits
+            ? {
+                maxQuizQuestionsPerSet: limits.maxItemsPerSet,
+                maxFlashcardsPerSet: limits.maxItemsPerSet
+            }
+            : null;
+    } catch (err) {
+        console.warn("Could not load plan limits for AI Tools generate form (non-fatal):", err);
+        currentPlanLimits = null;
+    }
+    applyAiToolsLimitsToForm();
+}
+
+// Applies currentPlanLimits to the flashcard/quiz count inputs: sets the
+// HTML max attribute and shows a hint. Never hardcodes 20/50/80 — if limits
+// aren't loaded, the inputs just have no upper hint (backend still validates).
+function applyAiToolsLimitsToForm() {
+    const flashcardInput = document.getElementById("flashcardCountInput");
+    const flashcardHint = document.getElementById("flashcardCountHint");
+    const quizInput = document.getElementById("quizCountInput");
+    const quizHint = document.getElementById("quizCountHint");
+
+    const maxFlashcards = currentPlanLimits?.maxFlashcardsPerSet;
+    const maxQuiz = currentPlanLimits?.maxQuizQuestionsPerSet;
+
+    if (flashcardInput) {
+        if (maxFlashcards) {
+            flashcardInput.max = maxFlashcards;
+            if (flashcardHint) flashcardHint.textContent = `Up to ${maxFlashcards} cards on your plan`;
+        } else if (flashcardHint) {
+            flashcardHint.textContent = "";
+        }
+    }
+
+    if (quizInput) {
+        if (maxQuiz) {
+            quizInput.max = maxQuiz;
+            if (quizHint) quizHint.textContent = `Up to ${maxQuiz} questions on your plan`;
+        } else if (quizHint) {
+            quizHint.textContent = "";
+        }
+    }
+}
+
+// Updates the "X/300" character counter under a focus textarea.
+function updateFocusCharCount(inputId, countId) {
+    const input = document.getElementById(inputId);
+    const countEl = document.getElementById(countId);
+    if (!input || !countEl) return;
+    countEl.textContent = `${input.value.length}/300`;
+}
+
 // Resets the tab state and gates generate buttons based on processingStatus.
 // Called every time renderDocument() runs (initial load, after Save/Move/Publish).
 function renderAiToolsTab(doc) {
@@ -1904,16 +1972,37 @@ async function handleGenerateFlashcardSet() {
     const btn = document.getElementById("flashcardGenerateBtn");
     const errorEl = document.getElementById("flashcardError");
     const countInput = document.getElementById("flashcardCountInput");
+    const focusInput = document.getElementById("flashcardFocusInput");
     if (!btn || btn.disabled) return;
 
     if (errorEl) errorEl.style.display = "none";
+
+    const focusRaw = focusInput ? focusInput.value.trim() : "";
+    if (focusRaw.length > 300) {
+        if (errorEl) {
+            errorEl.textContent = "Focus must be 300 characters or fewer.";
+            errorEl.style.display = "block";
+        }
+        return;
+    }
+
     setButtonLoading(btn, true, "Generating...");
 
     try {
         const rawCount = countInput ? countInput.value.trim() : "";
-        const count = rawCount ? parseInt(rawCount, 10) : undefined;
-        await AiLearningAPI.generateFlashcardSet(currentDocumentId, Number.isNaN(count) ? undefined : count);
+        let count = rawCount ? parseInt(rawCount, 10) : undefined;
+        if (count !== undefined && !Number.isNaN(count) && currentPlanLimits?.maxFlashcardsPerSet) {
+            count = Math.min(count, currentPlanLimits.maxFlashcardsPerSet);
+        }
+
+        await AiLearningAPI.generateFlashcardSet(
+            currentDocumentId,
+            Number.isNaN(count) ? undefined : count,
+            focusRaw || undefined
+        );
         showToast("Flashcard set generated successfully", "success");
+        if (focusInput) focusInput.value = "";
+        updateFocusCharCount("flashcardFocusInput", "flashcardFocusCount");
         await loadFlashcardSets();
     } catch (err) {
         console.error("Failed to generate flashcard set", err);
@@ -1924,6 +2013,8 @@ async function handleGenerateFlashcardSet() {
             const code = err.code || err.data?.code || "";
             if (code === "AI_PROVIDER_ERROR" || code === "AI_OUTPUT_INVALID" || code === "AI_PROVIDER_TIMEOUT") {
                 errorMsg += " Tip: Try choosing fewer cards (e.g. 3 or 5) for better stability.";
+            } else if (code === "INVALID_GENERATION_FOCUS") {
+                errorMsg = "Focus text is invalid or too long. Please shorten it.";
             }
             errorEl.textContent = errorMsg;
             errorEl.style.display = "block";
@@ -1964,17 +2055,39 @@ async function handleGenerateQuizSet() {
     const errorEl = document.getElementById("quizError");
     const countInput = document.getElementById("quizCountInput");
     const difficultySelect = document.getElementById("quizDifficultySelect");
+    const focusInput = document.getElementById("quizFocusInput");
     if (!btn || btn.disabled) return;
 
     if (errorEl) errorEl.style.display = "none";
+
+    const focusRaw = focusInput ? focusInput.value.trim() : "";
+    if (focusRaw.length > 300) {
+        if (errorEl) {
+            errorEl.textContent = "Focus must be 300 characters or fewer.";
+            errorEl.style.display = "block";
+        }
+        return;
+    }
+
     setButtonLoading(btn, true, "Generating...");
 
     try {
         const rawCount = countInput ? countInput.value.trim() : "";
-        const count = rawCount ? parseInt(rawCount, 10) : undefined;
+        let count = rawCount ? parseInt(rawCount, 10) : undefined;
+        if (count !== undefined && !Number.isNaN(count) && currentPlanLimits?.maxQuizQuestionsPerSet) {
+            count = Math.min(count, currentPlanLimits.maxQuizQuestionsPerSet);
+        }
+
         const difficulty = difficultySelect ? difficultySelect.value : "MIXED";
-        await AiLearningAPI.generateQuizSet(currentDocumentId, Number.isNaN(count) ? undefined : count, difficulty);
+        await AiLearningAPI.generateQuizSet(
+            currentDocumentId,
+            Number.isNaN(count) ? undefined : count,
+            difficulty,
+            focusRaw || undefined
+        );
         showToast("Quiz generated successfully", "success");
+        if (focusInput) focusInput.value = "";
+        updateFocusCharCount("quizFocusInput", "quizFocusCount");
         await loadQuizSets();
     } catch (err) {
         console.error("Failed to generate quiz set", err);
@@ -1985,6 +2098,8 @@ async function handleGenerateQuizSet() {
             const code = err.code || err.data?.code || "";
             if (code === "AI_PROVIDER_ERROR" || code === "AI_OUTPUT_INVALID" || code === "AI_PROVIDER_TIMEOUT") {
                 errorMsg += " Tip: Try choosing fewer questions (e.g. 3 or 5) for better stability.";
+            } else if (code === "INVALID_GENERATION_FOCUS") {
+                errorMsg = "Focus text is invalid or too long. Please shorten it.";
             }
             errorEl.textContent = errorMsg;
             errorEl.style.display = "block";
@@ -2039,6 +2154,19 @@ function initAiToolsHandlers() {
     if (flashcardBtn) flashcardBtn.addEventListener("click", handleGenerateFlashcardSet);
     if (quizBtn) quizBtn.addEventListener("click", handleGenerateQuizSet);
 
+    const flashcardFocusInput = document.getElementById("flashcardFocusInput");
+    if (flashcardFocusInput) {
+        flashcardFocusInput.addEventListener("input", () =>
+            updateFocusCharCount("flashcardFocusInput", "flashcardFocusCount")
+        );
+    }
+    const quizFocusInput = document.getElementById("quizFocusInput");
+    if (quizFocusInput) {
+        quizFocusInput.addEventListener("input", () =>
+            updateFocusCharCount("quizFocusInput", "quizFocusCount")
+        );
+    }
+
     const copySummaryBtn = document.getElementById("copySummaryBtn");
     if (copySummaryBtn) {
         copySummaryBtn.addEventListener("click", () => {
@@ -2049,6 +2177,27 @@ function initAiToolsHandlers() {
                 }).catch(err => {
                     if (window.showToast) window.showToast("Failed to copy to clipboard", "error");
                 });
+            }
+        });
+    }
+
+    const flashcardCountInput = document.getElementById("flashcardCountInput");
+    if (flashcardCountInput) {
+        flashcardCountInput.addEventListener("blur", () => {
+            const max = currentPlanLimits?.maxFlashcardsPerSet;
+            const val = parseInt(flashcardCountInput.value, 10);
+            if (max && !Number.isNaN(val) && val > max) {
+                flashcardCountInput.value = max;
+            }
+        });
+    }
+    const quizCountInput = document.getElementById("quizCountInput");
+    if (quizCountInput) {
+        quizCountInput.addEventListener("blur", () => {
+            const max = currentPlanLimits?.maxQuizQuestionsPerSet;
+            const val = parseInt(quizCountInput.value, 10);
+            if (max && !Number.isNaN(val) && val > max) {
+                quizCountInput.value = max;
             }
         });
     }

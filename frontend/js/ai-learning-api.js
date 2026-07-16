@@ -59,11 +59,12 @@ const AiLearningAPI = {
   /**
    * Generate a new flashcard set
    * @param {number|string} documentId
-   * @param {number} count
+   * @param {number} [count]
+   * @param {string} [focus] - optional focus/topic hint, max 300 chars
    * @returns {Promise<object>} response payload
    */
-  generateFlashcardSet: async (documentId, count) => {
-    return await post(`/api/ai/documents/${documentId}/flashcard-sets/generate`, { count });
+  generateFlashcardSet: async (documentId, count, focus) => {
+    return await post(`/api/ai/documents/${documentId}/flashcard-sets/generate`, { count, focus });
   },
 
   // --- Quiz APIs ---
@@ -89,14 +90,16 @@ const AiLearningAPI = {
   /**
    * Generate a new quiz set
    * @param {number|string} documentId
-   * @param {number} questionCount
+   * @param {number} [questionCount]
    * @param {string} difficulty - EASY, MEDIUM, HARD
+   * @param {string} [focus] - optional focus/topic hint, max 300 chars
    * @returns {Promise<object>} response payload
    */
-  generateQuizSet: async (documentId, questionCount, difficulty) => {
+  generateQuizSet: async (documentId, questionCount, difficulty, focus) => {
     return await post(`/api/ai/documents/${documentId}/quiz-sets/generate`, {
       questionCount,
-      difficulty
+      difficulty,
+      focus
     });
   },
 
