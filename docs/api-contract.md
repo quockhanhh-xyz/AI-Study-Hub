@@ -1253,7 +1253,7 @@ Retrieves a list of the authenticated user's favorited documents. Only documents
       "folderName": "Math Notes",
       "canOpen": true,
       "canDownload": true,
-      "processingStatus": "SUCCESS"
+      "processingStatus": "COMPLETED"
     }
   ]
 }
