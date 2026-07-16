@@ -237,8 +237,8 @@ async function finishQuiz() {
 
     try {
         const res = await AiLearningAPI.submitQuizAttempt(currentSetId, {
-            startedAt: quizStartedAt.toISOString().slice(0, 19),
-            completedAt: new Date().toISOString().slice(0, 19),
+            startedAt: quizStartedAt.toISOString(),
+            completedAt: new Date().toISOString(),
             answers
         });
         lastAttemptResult = res.data;

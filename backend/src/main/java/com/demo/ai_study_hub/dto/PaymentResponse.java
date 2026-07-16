@@ -1,6 +1,7 @@
 package com.demo.ai_study_hub.dto;
 
 import lombok.*;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -22,9 +23,9 @@ public class PaymentResponse {
     private String paymentProvider;
     private String paymentUrl;
     private String tier;
-    private LocalDateTime createdAt;
-    private LocalDateTime paidAt;
-    private LocalDateTime expiredAt;
+    private Instant createdAt;
+    private Instant paidAt;
+    private Instant expiredAt;
     private String reviewReason;
-    private LocalDateTime reviewRequiredAt;
+    private Instant reviewRequiredAt;
 }
