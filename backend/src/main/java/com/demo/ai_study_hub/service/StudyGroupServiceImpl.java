@@ -201,9 +201,8 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         }
 
         GroupResponse response = mapToGroupResponse(group, "MEMBER");
-        if ("PENDING".equals(targetStatus)) {
-            response.setMemberStatus("PENDING");
-        }
+        // membershipStatus aligns with #168 convention (memberStatus was renamed)
+        response.setMembershipStatus(targetStatus);
         return response;
     }
 
@@ -372,20 +371,17 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
     @Override
     @Transactional
-    public void approveMember(Integer groupId, Integer memberId, String ownerEmail) {
+    public void approveMember(Integer groupId, Integer userId, String ownerEmail) {
         User owner = getUser(ownerEmail);
         StudyGroup group = getActiveGroup(groupId);
         requireOwner(group, owner);
 
-        StudyGroupMember membership = studyGroupMemberRepository.findById(memberId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pending request not found"));
+        User targetUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        if (!membership.getGroup().getGroupId().equals(groupId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pending request not found");
-        }
-        if (!"PENDING".equals(membership.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Member request is not in PENDING state");
-        }
+        StudyGroupMember membership = studyGroupMemberRepository
+                .findByGroupAndUserAndStatus(group, targetUser, "PENDING")
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pending request not found for this user"));
 
         long activeCount = studyGroupMemberRepository.countByGroupAndStatus(group, "ACTIVE");
         com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(group.getOwner());
@@ -396,27 +392,26 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
         membership.setStatus("ACTIVE");
         studyGroupMemberRepository.save(membership);
+        // TODO(#168-notification): send GROUP_JOIN_APPROVED notification to targetUser
     }
 
     @Override
     @Transactional
-    public void rejectMember(Integer groupId, Integer memberId, String ownerEmail) {
+    public void rejectMember(Integer groupId, Integer userId, String ownerEmail) {
         User owner = getUser(ownerEmail);
         StudyGroup group = getActiveGroup(groupId);
         requireOwner(group, owner);
 
-        StudyGroupMember membership = studyGroupMemberRepository.findById(memberId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pending request not found"));
+        User targetUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        if (!membership.getGroup().getGroupId().equals(groupId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pending request not found");
-        }
-        if (!"PENDING".equals(membership.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Member request is not in PENDING state");
-        }
+        StudyGroupMember membership = studyGroupMemberRepository
+                .findByGroupAndUserAndStatus(group, targetUser, "PENDING")
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pending request not found for this user"));
 
         membership.setStatus("REJECTED");
         studyGroupMemberRepository.save(membership);
+        // TODO(#168-notification): send GROUP_JOIN_REJECTED notification to targetUser
     }
 
     @Override
