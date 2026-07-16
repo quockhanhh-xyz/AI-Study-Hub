@@ -221,11 +221,40 @@
 
                 <!-- Members Panel -->
                 <div id="groupTabPanelMembers" class="group-tab-panel">
+
+                    <!-- Pending Members Section (OWNER only) -->
+                    <div id="pendingMemberSection" class="dashboard-panel" style="display:none; margin-bottom: 32px;">
+                        <div class="section-header" style="margin-bottom: 12px;">
+                            <div>
+                                <h2 class="section-title" id="pendingMemberSectionTitle"
+                                    style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Pending
+                                    Requests</h2>
+                                <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">People waiting for
+                                    approval to join this group.</p>
+                            </div>
+                        </div>
+
+                        <div id="pendingMemberLoader" class="document-state"
+                            style="display: none; justify-content: center; padding: 24px;">
+                            <span>Loading pending requests...</span>
+                        </div>
+
+                        <p id="pendingMemberError" class="helper-text error" role="alert" style="display: none;"></p>
+
+                        <div id="pendingMemberList" class="member-list"></div>
+
+                        <div id="pendingMemberEmpty" class="empty-state" style="display: none; padding: 32px 24px;">
+                            <div class="empty-title">No pending requests</div>
+                            <p>New join requests will show up here for you to approve or reject.</p>
+                        </div>
+                    </div>
+
                     <div class="dashboard-panel" style="margin-bottom: 32px;">
                         <div class="section-header" style="margin-bottom: 12px;">
                             <div>
                                 <h2 class="section-title" id="memberSectionTitle"
-                                    style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Members</h2>
+                                    style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Members
+                                </h2>
                                 <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">People who belong to
                                     this study group.</p>
                             </div>
@@ -242,7 +271,8 @@
                                 <h2 class="section-title" id="docSectionTitle"
                                     style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Shared
                                     Documents</h2>
-                                <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Documents shared into
+                                <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Documents shared
+                                    into
                                     this group by its members.</p>
                             </div>
                         </div>
@@ -284,9 +314,11 @@
                         <div class="section-header" style="margin-bottom: 12px;">
                             <div>
                                 <h2 class="section-title" id="folderSectionTitle"
-                                    style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Shared Folders
+                                    style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Shared
+                                    Folders
                                 </h2>
-                                <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Folders shared into this
+                                <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Folders shared into
+                                    this
                                     group by its members.</p>
                             </div>
                         </div>
@@ -316,7 +348,8 @@
                             </div>
                             <div class="empty-title">No folders shared yet</div>
                             <p>Members can share their own folders into this group from the Folders page.</p>
-                            <div class="empty-actions" style="margin-top: 12px; display: flex; justify-content: center;">
+                            <div class="empty-actions"
+                                style="margin-top: 12px; display: flex; justify-content: center;">
                                 <a href="folders.html" class="btn btn-secondary" style="text-decoration: none;">Share a
                                     Folder</a>
                             </div>
@@ -331,7 +364,8 @@
                             <div>
                                 <h2 class="section-title"
                                     style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Chat</h2>
-                                <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Chat with active members
+                                <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Chat with active
+                                    members
                                     of this group.</p>
                             </div>
                         </div>
