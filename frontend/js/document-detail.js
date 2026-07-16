@@ -1706,7 +1706,7 @@ function initAiQaHandlers() {
 document.addEventListener("DOMContentLoaded", initAiQaHandlers);
 
 // ══════════════════════════════════════════════════════════════════════════
-// AI TOOLS TAB — Summary / Quiz / Flashcard (Step 14)
+// AI TOOLS TAB — Quiz / Flashcard (Step 14)
 // Uses js/ai-learning-api.js helpers. Reuses the same processingStatus
 // gating established in Step 9 (doc.processingStatus === "COMPLETED").
 // ══════════════════════════════════════════════════════════════════════════
@@ -1735,8 +1735,8 @@ async function loadPlanLimitsForAiTools() {
         // both to the same value here; flagged to the team separately.
         currentPlanLimits = limits
             ? {
-                maxQuizQuestionsPerSet: limits.maxItemsPerSet,
-                maxFlashcardsPerSet: limits.maxItemsPerSet
+                maxQuizQuestionsPerSet: limits.maxQuizQuestionsPerSet ?? limits.maxItemsPerSet,
+                maxFlashcardsPerSet: limits.maxFlashcardsPerSet ?? limits.maxItemsPerSet
             }
             : null;
     } catch (err) {
