@@ -135,6 +135,33 @@ class GroupApprovalTest {
     }
 
     @Test
+    void joinGroup_WhenInvited_ShouldSetStatusToActive_AndBypassApproval() {
+        JoinGroupRequest request = new JoinGroupRequest();
+        request.setInviteCode("APPROVE1"); // group requires approval
+
+        when(userRepository.findByEmail("newuser@test.com")).thenReturn(Optional.of(newUser));
+        when(studyGroupRepository.findByInviteCodeForUpdate("APPROVE1")).thenReturn(Optional.of(groupWithApproval));
+        lenient().when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithApproval, newUser, "ACTIVE")).thenReturn(false);
+        lenient().when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING")).thenReturn(false);
+        lenient().when(studyGroupMemberRepository.countByGroupAndStatus(groupWithApproval, "ACTIVE")).thenReturn(2L);
+        when(studyGroupMemberRepository.findByGroupAndUser(groupWithApproval, newUser)).thenReturn(Optional.empty());
+        when(studyGroupMemberRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        // MOCK isInvited = true
+        when(groupInvitationRepository.existsByGroupAndEmail(groupWithApproval, "newuser@test.com")).thenReturn(true);
+
+        GroupResponse response = studyGroupService.joinGroup(request, "newuser@test.com");
+
+        assertNotNull(response);
+        assertEquals("ACTIVE", response.getMembershipStatus());
+        verify(studyGroupMemberRepository).save(argThat(m ->
+                "ACTIVE".equals(m.getStatus()) && "MEMBER".equals(m.getRole())
+        ));
+        // Verify invitation deleted
+        verify(groupInvitationRepository).deleteByGroupAndEmail(groupWithApproval, "newuser@test.com");
+    }
+
+    @Test
     void joinGroup_WhenAlreadyPending_ShouldThrow400() {
         JoinGroupRequest request = new JoinGroupRequest();
         request.setInviteCode("APPROVE1");
