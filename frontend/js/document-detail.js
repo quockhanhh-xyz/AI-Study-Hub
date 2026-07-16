@@ -11,7 +11,8 @@ function handleBack() {
                 refUrl.pathname.includes("shared-with-me.html") ||
                 refUrl.pathname.includes("group-detail.html") ||
                 refUrl.pathname.includes("shared-folder-detail.html") ||
-                refUrl.pathname.includes("folders.html")
+                refUrl.pathname.includes("folders.html") ||
+                refUrl.pathname.includes("community.html")
             )) {
                 window.location.href = document.referrer;
                 return;
@@ -20,7 +21,12 @@ function handleBack() {
             // Ignore parse errors, fallback to default redirect
         }
     }
-    window.location.href = "dashboard.html";
+
+    if (currentIsCommunityView) {
+        window.location.href = "community.html";
+    } else {
+        window.location.href = "dashboard.html";
+    }
 }
 
 // Fix #3: showFatalError queries DOM directly to avoid ReferenceError
@@ -73,6 +79,8 @@ let currentDocumentId = null;
 let currentDocumentFolderId = null;
 let currentIsCommunityView = false;
 let currentIsAuthenticated = false;
+let currentDocCanProcess = false;
+let currentDocCanReprocess = false;
 let aiExtractedTextLoaded = false;
 let aiExtractedTextExpanded = true;
 
@@ -82,10 +90,9 @@ let aiQaSending = false;
 let aiQaProcessingStatus = "PENDING";
 let aiQaUsageInfo = null;
 
-// Step 14 — AI Tools (Summary / Quiz / Flashcard) tab state
+// Step 14 — AI Tools (Quiz / Flashcard) tab state
 let aiToolsLoaded = false;
 let aiToolsProcessingStatus = "PENDING";
-let summaryExists = false;
 
 function normalizeProcessingStatusResponse(res) {
     return res?.success && res?.data ? res.data : (res || {});
@@ -97,6 +104,12 @@ function setViewerAiProcessingStatus(status) {
     aiToolsProcessingStatus = nextStatus;
     updateAskAvailability();
     updateAiToolsAvailability();
+
+    const processingStatusBadge = document.getElementById("processingStatusBadge");
+    if (processingStatusBadge) {
+        processingStatusBadge.textContent = nextStatus === "COMPLETED" ? "Ready for AI" : nextStatus;
+        processingStatusBadge.className = "status-badge " + nextStatus.toLowerCase();
+    }
 
     const toolsPane = document.getElementById("inspectorPaneTools");
     if (nextStatus === "COMPLETED" && toolsPane?.classList.contains("active")) {
@@ -150,6 +163,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         params.get("mode") === "public";
 
     initInspectorTabs();
+
+    if (currentIsCommunityView) {
+        const backBtn = document.getElementById("detailBackBtn");
+        if (backBtn) {
+            backBtn.innerHTML = `← Back to Community Library`;
+        }
+    }
 
     loadPage(id, {
         isAuthenticated,
@@ -257,17 +277,31 @@ function renderDocument(doc) {
         }
     }
 
+    const processingStatusBadge = document.getElementById("processingStatusBadge");
+    if (processingStatusBadge) {
+        const pStatus = doc.processingStatus || "PENDING";
+        processingStatusBadge.textContent = pStatus === "COMPLETED" ? "Ready for AI" : pStatus;
+        processingStatusBadge.style.display = "inline-flex";
+        processingStatusBadge.className = "status-badge " + pStatus.toLowerCase();
+    }
+
     // ── Favorite star button (Step: Favorite/Saved Documents) ──
     const favoriteBtn = document.getElementById("favoriteDetailBtn");
     if (favoriteBtn) {
+        favoriteBtn.style.display = "inline-flex";
         if (currentIsAuthenticated) {
-            favoriteBtn.style.display = "inline-flex";
             const favorited = isDocumentFavorited(doc);
             favoriteBtn.classList.toggle("favorited", favorited);
             favoriteBtn.title = favorited ? "Remove from favorites" : "Add to favorites";
             favoriteBtn.onclick = () => handleToggleFavoriteDetail(doc);
         } else {
-            favoriteBtn.style.display = "none";
+            favoriteBtn.title = "Login to add to favorites";
+            favoriteBtn.onclick = () => {
+                showToast("Please log in to save this document to your favorites.", "warning");
+                setTimeout(() => {
+                    window.location.href = `login.html?returnUrl=${encodeURIComponent(window.location.href)}`;
+                }, 1500);
+            };
         }
     }
 
@@ -394,12 +428,16 @@ function renderDocument(doc) {
     // member, or logged-in public viewer). Backend is the final authority —
     // if the user actually can't ask, askDocumentQuestion() will fail with a
     // mapped error (401/403/409/422) shown inline in the chat panel.
-    const showAiTab = currentIsAuthenticated;
-    // AI Tools tab: same audience as AI Q&A (any logged-in user with read
-    // access). Backend permission check (DOCUMENT_ACCESS_DENIED) is the
-    // final authority; generate calls will fail cleanly if not allowed.
-    const showToolsTab = currentIsAuthenticated;
+    const hasAiToolsFlag = typeof doc.canUseAiTools === "boolean";
+    // For authenticated users, respect the backend flag if present.
+    // For guests, always show the tabs to act as a marketing "login prompt" hook.
+    const showAiTab = (!currentIsAuthenticated) ? true : (hasAiToolsFlag ? doc.canUseAiTools : true);
+    const showToolsTab = (!currentIsAuthenticated) ? true : (hasAiToolsFlag ? doc.canUseAiTools : true);
     const hasInspector = showDetailsTab || showSharingTab || showAiTab || showToolsTab;
+
+    // Update global state for action buttons
+    currentDocCanProcess = typeof doc.canProcess === "boolean" ? doc.canProcess : (!currentIsCommunityView && doc.canEdit);
+    currentDocCanReprocess = typeof doc.canReprocess === "boolean" ? doc.canReprocess : (!currentIsCommunityView && doc.canEdit);
 
     // Step 10: reset + (re)populate the AI Q&A tab for this document
     renderAIQaTab(doc);
@@ -440,10 +478,7 @@ function renderDocument(doc) {
     }
 }
 
-function updateSummaryButtonLabel() {
-    const btn = document.getElementById("summaryGenerateBtn");
-    if (btn) btn.textContent = summaryExists ? "Regenerate Summary" : "Generate Summary";
-}
+
 
 // ══════════════════════════════════════════════════════════════════════════
 // AI PROCESSING PANEL (Step 9)
@@ -466,7 +501,7 @@ function renderAIProcessingPanel(doc) {
     const section = document.getElementById("aiProcessingSection");
     if (!section) return;
 
-    const canSeePanel = !currentIsCommunityView && doc.canEdit;
+    const canSeePanel = (!currentIsCommunityView && doc.canEdit) || doc.canProcess || doc.canReprocess;
     if (!canSeePanel) {
         section.style.display = "none";
         if (currentDocumentId) stopDocumentPolling(currentDocumentId);
@@ -581,9 +616,11 @@ function renderAIActions(status) {
     actionsEl.innerHTML = "";
 
     if (status === "PENDING") {
-        actionsEl.appendChild(
-            buildAIActionButton("Process for AI", "btn-primary", () => handleAIProcessAction("process"))
-        );
+        if (currentDocCanProcess) {
+            actionsEl.appendChild(
+                buildAIActionButton("Process for AI", "btn-primary", () => handleAIProcessAction("process"))
+            );
+        }
     } else if (status === "PROCESSING") {
         const loadingBtn = document.createElement("button");
         loadingBtn.type = "button";
@@ -592,20 +629,23 @@ function renderAIActions(status) {
         loadingBtn.textContent = "Processing…";
         actionsEl.appendChild(loadingBtn);
     } else if (status === "FAILED") {
-        actionsEl.appendChild(
-            buildAIActionButton("Retry", "btn-primary", () => handleAIProcessAction("process"))
-        );
+        if (currentDocCanProcess) {
+            actionsEl.appendChild(
+                buildAIActionButton("Retry", "btn-primary", () => handleAIProcessAction("process"))
+            );
+        }
     } else if (status === "EMPTY_CONTENT") {
-        actionsEl.appendChild(
-            buildAIActionButton("Reprocess", "btn-primary", () => handleAIProcessAction("reprocess"))
-        );
+        if (currentDocCanReprocess) {
+            actionsEl.appendChild(
+                buildAIActionButton("Reprocess", "btn-primary", () => handleAIProcessAction("reprocess"))
+            );
+        }
     } else if (status === "COMPLETED") {
-        actionsEl.appendChild(
-            buildAIActionButton("View Extracted Text", "btn-secondary", handleViewExtractedText)
-        );
-        actionsEl.appendChild(
-            buildAIActionButton("Reprocess", "btn-secondary", () => handleAIProcessAction("reprocess"))
-        );
+        if (currentDocCanReprocess) {
+            actionsEl.appendChild(
+                buildAIActionButton("Reprocess", "btn-secondary", () => handleAIProcessAction("reprocess"))
+            );
+        }
     }
 }
 
@@ -669,44 +709,9 @@ function startAIPolling() {
     );
 }
 
-async function handleViewExtractedText() {
-    const box = document.getElementById("aiExtractedTextBox");
-    const contentEl = document.getElementById("aiExtractedTextContent");
-    if (!box || !contentEl) return;
 
-    if (aiExtractedTextLoaded) {
-        aiExtractedTextExpanded = !aiExtractedTextExpanded;
-        box.style.display = aiExtractedTextExpanded ? "block" : "none";
-        return;
-    }
 
-    contentEl.textContent = "Loading extracted text…";
-    box.style.display = "block";
-    aiExtractedTextExpanded = true;
-
-    try {
-        const res = await getDocumentContent(currentDocumentId);
-        const text = (res.data && res.data.extractedText) || "";
-        contentEl.textContent = text || "(No text available.)";
-        aiExtractedTextLoaded = true;
-    } catch (err) {
-        contentEl.textContent = "";
-        box.style.display = "none";
-        window.showToast(err.message || "Failed to load extracted text.", "error");
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    const toggleBtn = document.getElementById("aiTextToggleBtn");
-    if (toggleBtn) {
-        toggleBtn.addEventListener("click", () => {
-            const box = document.getElementById("aiExtractedTextBox");
-            aiExtractedTextExpanded = !aiExtractedTextExpanded;
-            if (box) box.style.display = aiExtractedTextExpanded ? "block" : "none";
-            toggleBtn.textContent = aiExtractedTextExpanded ? "Collapse" : "Expand";
-        });
-    }
-});
+// Removed Extracted text logic
 
 
 // ── Render subject dropdown ───────────────────────────────────────────────────
@@ -1399,7 +1404,6 @@ async function handleRevokeGroup(shareId) {
 
 // Resets and (re)initializes the AI Q&A tab whenever a document is (re)rendered.
 function renderAIQaTab(doc) {
-    if (!currentIsAuthenticated) return;
 
     aiQaChatLoaded = false;
     aiQaSending = false;
@@ -1424,7 +1428,9 @@ function renderAIQaTab(doc) {
     if (textarea) textarea.value = "";
 
     updateAskAvailability();
-    loadAiQaUsage();
+    if (currentIsAuthenticated) {
+        loadAiQaUsage();
+    }
 }
 
 async function loadAiQaUsage() {
@@ -1459,6 +1465,7 @@ function renderAiQaUsage() {
 
 // Loads chat history once per tab activation (per document).
 async function loadAiQaChatHistory() {
+    if (!currentIsAuthenticated) return;
     if (aiQaChatLoaded || !currentDocumentId) return;
     aiQaChatLoaded = true;
 
@@ -1558,10 +1565,11 @@ function showAiQaBanner(message, type = "info") {
 // AI_STATUS_DESCRIPTIONS (which is written for the owner-only Processing
 // panel). These are worded for any viewer, including non-owners who
 // cannot see/trigger processing at all.
+// Central gate for the Ask button / textarea / sample questions.
 const AI_QA_STATUS_MESSAGES = {
-    PENDING: "Please process this document before asking AI.",
+    PENDING: "This document has not been processed for AI yet.",
     PROCESSING: "This document is being processed for AI. Please wait…",
-    FAILED: "AI processing failed for this document. Please process this document before asking AI.",
+    FAILED: "AI processing failed for this document.",
     UNSUPPORTED: "This file type is not supported for AI Q&A.",
     EMPTY_CONTENT: "No readable text was found in this document."
 };
@@ -1576,9 +1584,7 @@ function updateAskAvailability() {
     if (!textarea || !askBtn) return;
 
     let disabledReason = "";
-    if (!currentIsAuthenticated) {
-        disabledReason = "Please log in to use AI Q&A.";
-    } else if (aiQaProcessingStatus !== "COMPLETED") {
+    if (aiQaProcessingStatus !== "COMPLETED") {
         disabledReason =
             AI_QA_STATUS_MESSAGES[aiQaProcessingStatus] ||
             "This document is not ready for AI yet. Please process it first.";
@@ -1617,6 +1623,13 @@ async function handleAiQaSubmit(e) {
 }
 
 async function sendAiQaQuestion(question) {
+    if (!currentIsAuthenticated) {
+        showToast("Please log in to use AI Q&A.", "warning");
+        setTimeout(() => {
+            window.location.href = `login.html?returnUrl=${encodeURIComponent(window.location.href)}`;
+        }, 1500);
+        return;
+    }
     aiQaSending = true;
     updateAskAvailability();
     showAiQaBanner("");
@@ -1688,9 +1701,9 @@ document.addEventListener("DOMContentLoaded", initAiQaHandlers);
 // ══════════════════════════════════════════════════════════════════════════
 
 const AI_TOOLS_NOT_READY_MESSAGES = {
-    PENDING: "Please process this document before using AI tools.",
+    PENDING: "This document has not been processed for AI yet.",
     PROCESSING: "This document is being processed. Please wait…",
-    FAILED: "Document processing failed. Please process this document before using AI tools.",
+    FAILED: "AI processing failed for this document.",
     UNSUPPORTED: "This file type is not supported for AI tools.",
     EMPTY_CONTENT: "No readable text was found in this document."
 };
@@ -1701,8 +1714,7 @@ function renderAiToolsTab(doc) {
     aiToolsLoaded = false; // force reload of summary/quiz/flashcard data for the (possibly new) document
     aiToolsProcessingStatus = doc.processingStatus || "PENDING";
 
-    summaryExists = false;
-    updateSummaryButtonLabel();
+
     updateAiToolsAvailability();
 }
 
@@ -1724,154 +1736,23 @@ function updateAiToolsAvailability() {
     }
     if (content) content.style.display = ready ? "block" : "none";
 
-    ["summaryGenerateBtn", "flashcardGenerateBtn", "quizGenerateBtn"].forEach(id => {
+    ["flashcardGenerateBtn", "quizGenerateBtn"].forEach(id => {
         const btn = document.getElementById(id);
-        if (btn) btn.disabled = !ready || !currentIsAuthenticated;
+        if (btn) btn.disabled = !ready;
     });
 }
 
 // Lazily loads Summary + Flashcard sets + Quiz sets the first time the tab opens.
 async function loadAiToolsData() {
+    if (!currentIsAuthenticated) return;
     if (aiToolsLoaded || !currentDocumentId) return;
     if (aiToolsProcessingStatus !== "COMPLETED") return;
     aiToolsLoaded = true;
 
     await Promise.all([
-        loadSummary(),
         loadFlashcardSets(),
         loadQuizSets()
     ]);
-}
-
-// ── Summary ──────────────────────────────────────────────────────────────
-async function loadSummary() {
-    const loader = document.getElementById("summaryLoader");
-    const empty = document.getElementById("summaryEmptyState");
-    const contentEl = document.getElementById("summaryContent");
-    const errorEl = document.getElementById("summaryError");
-
-    if (loader) loader.style.display = "block";
-    if (empty) empty.style.display = "none";
-    if (contentEl) contentEl.style.display = "none";
-    if (errorEl) errorEl.style.display = "none";
-
-    try {
-        const res = await AiLearningAPI.getLatestSummary(currentDocumentId);
-        if (loader) loader.style.display = "none";
-        renderSummary(res.data || null);
-    } catch (err) {
-        if (loader) loader.style.display = "none";
-        if (err.code === "SUMMARY_NOT_FOUND" || err.status === 404 || err.data?.code === "SUMMARY_NOT_FOUND") {
-            summaryExists = false;
-            updateSummaryButtonLabel();
-            if (empty) empty.style.display = "block";
-        } else {
-            console.error("Failed to load summary", err);
-            if (errorEl) {
-                errorEl.textContent = mapAiLearningError(err);
-                errorEl.style.display = "block";
-            }
-        }
-    }
-}
-
-function renderSummary(summary) {
-    const empty = document.getElementById("summaryEmptyState");
-    const contentEl = document.getElementById("summaryContent");
-
-    if (!summary) {
-        summaryExists = false;
-        updateSummaryButtonLabel();
-        if (empty) empty.style.display = "block";
-        if (contentEl) contentEl.style.display = "none";
-        return;
-    }
-
-    summaryExists = true;
-    updateSummaryButtonLabel();
-
-    if (empty) empty.style.display = "none";
-    if (contentEl) contentEl.style.display = "block";
-
-    const meta = document.getElementById("summaryMeta");
-    if (meta) meta.textContent = `Generated ${formatGeneratedAt(summary.createdAt)}`;
-
-    const overview = document.getElementById("summaryOverview");
-    if (overview) overview.textContent = summary.overview || "";
-
-    const keyPointsList = document.getElementById("summaryKeyPoints");
-    if (keyPointsList) {
-        keyPointsList.innerHTML = "";
-        (summary.keyPoints || []).forEach(point => {
-            const li = document.createElement("li");
-            li.textContent = point;
-            keyPointsList.appendChild(li);
-        });
-    }
-
-    const termsBlock = document.getElementById("summaryTermsBlock");
-    const termsList = document.getElementById("summaryTerms");
-    if (termsList) {
-        termsList.innerHTML = "";
-        const terms = summary.importantTerms || [];
-        if (terms.length > 0) {
-            terms.forEach(t => {
-                const dt = document.createElement("dt");
-                dt.textContent = t.term;
-                const dd = document.createElement("dd");
-                dd.textContent = t.definition;
-                termsList.appendChild(dt);
-                termsList.appendChild(dd);
-            });
-            if (termsBlock) termsBlock.style.display = "block";
-        } else if (termsBlock) {
-            termsBlock.style.display = "none";
-        }
-    }
-
-    const questionsBlock = document.getElementById("summaryQuestionsBlock");
-    const questionsList = document.getElementById("summaryQuestions");
-    if (questionsList) {
-        questionsList.innerHTML = "";
-        const questions = summary.suggestedReviewQuestions || [];
-        if (questions.length > 0) {
-            questions.forEach(q => {
-                const li = document.createElement("li");
-                li.textContent = q;
-                questionsList.appendChild(li);
-            });
-            if (questionsBlock) questionsBlock.style.display = "block";
-        } else if (questionsBlock) {
-            questionsBlock.style.display = "none";
-        }
-    }
-}
-
-async function handleGenerateSummary() {
-    const btn = document.getElementById("summaryGenerateBtn");
-    const errorEl = document.getElementById("summaryError");
-    if (!btn || btn.disabled) return;
-
-    if (errorEl) errorEl.style.display = "none";
-    const loadingLabel = summaryExists ? "Regenerating..." : "Generating...";
-    setButtonLoading(btn, true, loadingLabel);
-
-    try {
-        const res = await AiLearningAPI.generateSummary(currentDocumentId, true);
-        renderSummary(res.data || null);
-        showToast("Summary generated successfully", "success");
-    } catch (err) {
-        console.error("Failed to generate summary", err);
-        if (isQuotaError(err) || err.code === "SUMMARY_QUOTA_EXCEEDED") {
-            showQuotaError(err);
-        } else if (errorEl) {
-            errorEl.textContent = mapAiLearningError(err);
-            errorEl.style.display = "block";
-        }
-    } finally {
-        setButtonLoading(btn, false);
-        updateSummaryButtonLabel();
-    }
 }
 
 // ── Flashcards ───────────────────────────────────────────────────────────
@@ -1901,6 +1782,13 @@ async function loadFlashcardSets() {
 }
 
 async function handleGenerateFlashcardSet() {
+    if (!currentIsAuthenticated) {
+        showToast("Please log in to generate Flashcards.", "warning");
+        setTimeout(() => {
+            window.location.href = `login.html?returnUrl=${encodeURIComponent(window.location.href)}`;
+        }, 1500);
+        return;
+    }
     const btn = document.getElementById("flashcardGenerateBtn");
     const errorEl = document.getElementById("flashcardError");
     const countInput = document.getElementById("flashcardCountInput");
@@ -1960,6 +1848,13 @@ async function loadQuizSets() {
 }
 
 async function handleGenerateQuizSet() {
+    if (!currentIsAuthenticated) {
+        showToast("Please log in to generate Quiz.", "warning");
+        setTimeout(() => {
+            window.location.href = `login.html?returnUrl=${encodeURIComponent(window.location.href)}`;
+        }, 1500);
+        return;
+    }
     const btn = document.getElementById("quizGenerateBtn");
     const errorEl = document.getElementById("quizError");
     const countInput = document.getElementById("quizCountInput");
@@ -2031,27 +1926,11 @@ function renderSetList(listEl, emptyEl, sets, detailUrlPrefix, labelFn) {
 }
 
 function initAiToolsHandlers() {
-    const summaryBtn = document.getElementById("summaryGenerateBtn");
     const flashcardBtn = document.getElementById("flashcardGenerateBtn");
     const quizBtn = document.getElementById("quizGenerateBtn");
 
-    if (summaryBtn) summaryBtn.addEventListener("click", handleGenerateSummary);
     if (flashcardBtn) flashcardBtn.addEventListener("click", handleGenerateFlashcardSet);
     if (quizBtn) quizBtn.addEventListener("click", handleGenerateQuizSet);
-
-    const copySummaryBtn = document.getElementById("copySummaryBtn");
-    if (copySummaryBtn) {
-        copySummaryBtn.addEventListener("click", () => {
-            const body = document.getElementById("summaryTextBody");
-            if (body && navigator.clipboard) {
-                navigator.clipboard.writeText(body.innerText).then(() => {
-                    if (window.showToast) window.showToast("Copied to clipboard!", "success");
-                }).catch(err => {
-                    if (window.showToast) window.showToast("Failed to copy to clipboard", "error");
-                });
-            }
-        });
-    }
 }
 
 document.addEventListener("DOMContentLoaded", initAiToolsHandlers);
