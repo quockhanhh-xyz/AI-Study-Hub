@@ -425,8 +425,17 @@ function renderDocument(doc) {
             if (tabAI) tabAI.style.display = showAiTab ? "block" : "none";
             if (tabTools) tabTools.style.display = showToolsTab ? "block" : "none";
 
-            // Default active state
-            if (showDetailsTab) {
+            // Default active state — respects ?tab= from the URL (e.g. the
+            // "Back to document" link on flashcards.html/quiz.html uses
+            // ?tab=tools so the user lands back on AI Tools, not Details).
+            const requestedTab = new URLSearchParams(window.location.search).get("tab");
+            if (requestedTab === "tools" && showToolsTab) {
+                setActiveTab("tools", false);
+            } else if (requestedTab === "ai" && showAiTab) {
+                setActiveTab("ai", false);
+            } else if (requestedTab === "sharing" && showSharingTab) {
+                setActiveTab("sharing", false);
+            } else if (showDetailsTab) {
                 setActiveTab("details", false);
             } else if (showSharingTab) {
                 setActiveTab("sharing", false);
@@ -1494,7 +1503,7 @@ async function loadAiQaChatHistory() {
                     modelName: m.modelName
                 });
             }
-            
+
             // Fallback for role/content format
             if (!m.question && !m.answer && m.role) {
                 const role = (m.role || "").toUpperCase() === "USER" ? "user" : "assistant";
@@ -1602,7 +1611,7 @@ async function handleAiQaSubmit(e) {
     if (e) e.preventDefault();
     const textarea = document.getElementById("aiQaQuestionInput");
     const askBtn = document.getElementById("aiQaAskBtn");
-    
+
     if (!textarea || textarea.disabled || (askBtn && askBtn.disabled)) return;
 
     const question = textarea.value.trim();

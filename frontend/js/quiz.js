@@ -49,7 +49,7 @@ async function loadQuizSet(setId) {
 
         const backLink = document.getElementById("quizBackLink");
         if (backLink && currentQuizSet.documentId) {
-            backLink.href = `document-detail.html?id=${currentQuizSet.documentId}`;
+            backLink.href = `document-detail.html?id=${currentQuizSet.documentId}&tab=tools`;
         }
 
         startNewAttempt();

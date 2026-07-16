@@ -50,7 +50,7 @@ async function loadFlashcardSet(setId) {
 
         const backLink = document.getElementById("flashcardBackLink");
         if (backLink && currentFlashcardSet.documentId) {
-            backLink.href = `document-detail.html?id=${currentFlashcardSet.documentId}`;
+            backLink.href = `document-detail.html?id=${currentFlashcardSet.documentId}&tab=tools`;
         }
 
         cardMarks = {};
