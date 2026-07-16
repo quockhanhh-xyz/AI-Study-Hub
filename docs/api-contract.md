@@ -1253,7 +1253,7 @@ Retrieves a list of the authenticated user's favorited documents. Only documents
       "folderName": "Math Notes",
       "canOpen": true,
       "canDownload": true,
-      "processingStatus": "SUCCESS"
+      "processingStatus": "COMPLETED"
     }
   ]
 }
@@ -4696,5 +4696,122 @@ If the client submits count params outside validation ranges, returns HTTP `400 
 | **404 Not Found** | `FLASHCARD_SET_NOT_FOUND` | Flashcard set does not exist or does not belong to user |
 | **404 Not Found** | `QUIZ_SET_NOT_FOUND` | Quiz set does not exist or does not belong to user |
 | **404 Not Found** | `SUMMARY_NOT_FOUND` | Summary does not exist or does not belong to user |
-| **502 Bad Gateway** | `AI_OUTPUT_INVALID` | Model failed to output expected JSON schema format after 1 retry |
-| **502 Bad Gateway** | `AI_PROVIDER_ERROR` | Upstream AI model API provider failure |
+| **400 Bad Request** | `INVALID_GENERATION_FOCUS` | `focus` field exceeds 300 characters |
+| **500 Internal Server Error** | `AI_NOT_CONFIGURED` | AI provider not configured on server |
+| **403 Forbidden** | `DOCUMENT_PROCESS_FORBIDDEN` | Non-owner attempted to trigger process or reprocess |
+| **403 Forbidden** | `GROUP_INVITE_FORBIDDEN` | Requester is not the group owner |
+| **400 Bad Request** | `GROUP_MEMBER_ALREADY_EXISTS` | Invitee email is already an ACTIVE member of the group |
+| **404 Not Found** | `QUIZ_ATTEMPT_NOT_FOUND` | No attempt found matching the criteria |
+| **403 Forbidden** | `QUIZ_ATTEMPT_FORBIDDEN` | User does not have permission to access this quiz set |
+| **400 Bad Request** | `QUIZ_ATTEMPT_INVALID_ANSWER` | Selected option key does not exist in the question |
+
+---
+
+## Step A (BE2) — Community Document Permission Flags
+
+> Added to `PublicDocumentResponse` and returned by `GET /api/documents/public/{id}` and `GET /api/documents/public`.
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `canUseAiTools` | `boolean` | `true` when `processingStatus == COMPLETED` **and** requester is authenticated. Guest (anonymous) always `false`. |
+| `canProcess` | `boolean` | `true` when requester is the document **owner** and `processingStatus` is `PENDING`, `FAILED`, `UNSUPPORTED`, or `EMPTY_CONTENT`. |
+| `canReprocess` | `boolean` | `true` when requester is the document **owner** and `processingStatus` is `COMPLETED` or `FAILED`. |
+
+**Rule summary:**
+
+| Scenario | `canUseAiTools` | `canProcess` | `canReprocess` |
+| :--- | :---: | :---: | :---: |
+| Guest (not logged in) | `false` | `false` | `false` |
+| Authenticated non-owner, status = COMPLETED | `true` | `false` | `false` |
+| Authenticated non-owner, status ≠ COMPLETED | `false` | `false` | `false` |
+| Owner, status = PENDING | `false` | `true` | `false` |
+| Owner, status = COMPLETED | `true` | `false` | `true` |
+| Owner, status = FAILED | `false` | `true` | `true` |
+| Owner, status = UNSUPPORTED / EMPTY_CONTENT | `false` | `true` | `false` |
+
+---
+
+## Step A (BE2) — Group Email Invite
+
+### `POST /api/groups/{groupId}/invites/email`
+
+Sends an email invitation to the specified address. The email contains a direct join link with the group's invite code.
+
+**Auth required:** Yes (JWT Bearer)
+
+**Path Parameters:**
+
+| Param | Type | Description |
+| :--- | :--- | :--- |
+| `groupId` | `integer` | ID of the target group |
+
+**Request Body:**
+
+```json
+{
+  "email": "student@example.com"
+}
+```
+
+**Success Response (`200 OK`):**
+
+```json
+{
+  "success": true,
+  "message": "Invitation email sent successfully",
+  "data": {
+    "groupId": 5,
+    "email": "student@example.com",
+    "inviteCode": "ABC12345",
+    "joinUrl": "https://your-domain.com/frontend/groups.html?inviteCode=ABC12345"
+  }
+}
+```
+
+**Error Codes:**
+
+| HTTP Status | Code | Cause |
+| :--- | :--- | :--- |
+| `403 Forbidden` | `GROUP_INVITE_FORBIDDEN` | Requester is not the group owner (or not even a member) |
+| `404 Not Found` | — | Group does not exist or is not ACTIVE |
+| `400 Bad Request` | `GROUP_MEMBER_ALREADY_EXISTS` | The invitee email is already an ACTIVE member |
+
+**Notes:**
+- `joinUrl` is built from `FRONTEND_BASE_URL` env var + `/frontend/groups.html?inviteCode=<code>`.
+- If the invitee email does not have an account yet, the email is still sent. They can register and then join using the invite code.
+- Duplicate invite to the same non-member email simply resends the email (no invite history table in Step A).
+
+---
+
+## Step A (BE2) — AI Tools Contract
+
+Starting from Step A, the user-facing AI Tools panel exposes **only**:
+
+1. **Generate Flashcards** — `POST /api/ai/documents/{documentId}/flashcard-sets/generate`
+2. **Generate Quiz** — `POST /api/ai/documents/{documentId}/quiz-sets/generate`
+
+The following have been removed from the **UI** (backend APIs remain available for admin/debug):
+
+| Removed from UI | Backend API | Status |
+| :--- | :--- | :--- |
+| View Extracted Text | `GET /api/documents/{id}/content` | Still available |
+| Generate Summary | `POST /api/ai/documents/{documentId}/summaries/generate` | Still available |
+
+The **Summarize** action moves to the AI Q&A panel as a quick-action chip that pre-fills the question: *"Summarize this document for me."*
+
+---
+
+## Step A (BE2) — `processingStatus` Canonical Values
+
+The system uses exactly these six enum values. `READY_FOR_AI` is **not** used.
+
+| Value | Meaning | AI Q&A / Tools |
+| :--- | :--- | :--- |
+| `PENDING` | Not yet processed | ❌ |
+| `PROCESSING` | Extraction in progress | ❌ (show spinner) |
+| `COMPLETED` | Extracted successfully | ✅ |
+| `FAILED` | Extraction error | ❌ |
+| `UNSUPPORTED` | File type not supported | ❌ |
+| `EMPTY_CONTENT` | File has no extractable text | ❌ |
+
+Both AI Q&A and AI Tools must gate on the **same** `processingStatus == COMPLETED` condition.

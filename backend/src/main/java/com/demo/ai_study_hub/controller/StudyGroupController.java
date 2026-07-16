@@ -1,6 +1,7 @@
 package com.demo.ai_study_hub.controller;
 
 import com.demo.ai_study_hub.dto.*;
+import com.demo.ai_study_hub.exception.QuotaExceededException;
 import com.demo.ai_study_hub.service.StudyGroupService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -130,6 +131,23 @@ public class StudyGroupController {
         try {
             studyGroupService.removeMember(id, userId, principal.getName());
             return ResponseEntity.ok(ApiResponse.success(null, "Member removed successfully"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/invites/email")
+    public ResponseEntity<ApiResponse<GroupEmailInviteResponse>> sendEmailInvite(
+            @PathVariable Integer id,
+            @Valid @RequestBody GroupEmailInviteRequest request,
+            Principal principal) {
+        try {
+            GroupEmailInviteResponse data = studyGroupService.sendEmailInvite(id, request, principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(data, "Invitation email sent successfully"));
+        } catch (QuotaExceededException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason(), e.getCode()));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {

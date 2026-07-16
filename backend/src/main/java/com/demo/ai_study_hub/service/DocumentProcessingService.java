@@ -219,9 +219,17 @@ public class DocumentProcessingService {
         return doc;
     }
 
+    /**
+     * Only the document owner can trigger process / reprocess.
+     * Non-owners (including share recipients and public-document viewers)
+     * receive 403 DOCUMENT_PROCESS_FORBIDDEN.
+     */
     private void validateOwnerAccess(Document doc, User user) {
         if (!doc.getOwner().getUserId().equals(user.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not the owner of this document");
+            throw new com.demo.ai_study_hub.exception.QuotaExceededException(
+                    HttpStatus.FORBIDDEN,
+                    "Only the document owner can process or reprocess this document",
+                    "DOCUMENT_PROCESS_FORBIDDEN");
         }
     }
 

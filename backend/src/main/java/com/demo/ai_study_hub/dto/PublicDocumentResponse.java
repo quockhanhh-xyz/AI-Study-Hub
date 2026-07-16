@@ -39,4 +39,13 @@ public class PublicDocumentResponse {
     private Boolean canOpen;
     private Boolean canDownload;
     private Boolean favoritedByMe;
+
+
+    private Boolean canUseAiTools;
+
+
+    private Boolean canProcess;
+
+
+    private Boolean canReprocess;
 }

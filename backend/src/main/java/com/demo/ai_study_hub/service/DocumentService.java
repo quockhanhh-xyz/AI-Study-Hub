@@ -589,10 +589,33 @@ public class DocumentService {
         // anonymous visitors, in which case favoritedByMe is always false
         // (favoriting requires an account, see DocumentFavoriteService).
         boolean favoritedByMe = false;
+
+        // Permission flags: guest is always false; authenticated users get canUseAiTools
+        // when COMPLETED; only the owner gets canProcess / canReprocess.
+        boolean canUseAiTools = false;
+        boolean canProcess = false;
+        boolean canReprocess = false;
+
         if (requesterEmail != null) {
             User requester = userRepository.findByEmail(requesterEmail).orElse(null);
             if (requester != null) {
                 favoritedByMe = documentFavoriteRepository.existsByUserAndDocument(requester, doc);
+
+                boolean isCompleted = "COMPLETED".equals(processingStatusVal);
+                boolean isOwner = doc.getOwner() != null
+                        && doc.getOwner().getUserId().equals(requester.getUserId());
+
+                canUseAiTools = isCompleted;
+
+                if (isOwner) {
+                    canProcess = "PENDING".equals(processingStatusVal)
+                            || "FAILED".equals(processingStatusVal)
+                            || "UNSUPPORTED".equals(processingStatusVal)
+                            || "EMPTY_CONTENT".equals(processingStatusVal);
+
+                    canReprocess = "COMPLETED".equals(processingStatusVal)
+                            || "FAILED".equals(processingStatusVal);
+                }
             }
         }
 
@@ -619,6 +642,9 @@ public class DocumentService {
                 .canOpen(canOpen)
                 .canDownload(canDownload)
                 .favoritedByMe(favoritedByMe)
+                .canUseAiTools(canUseAiTools)
+                .canProcess(canProcess)
+                .canReprocess(canReprocess)
                 .build();
     }
 

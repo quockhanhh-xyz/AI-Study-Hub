@@ -3,6 +3,7 @@ package com.demo.ai_study_hub.controller;
 import com.demo.ai_study_hub.dto.ApiResponse;
 import com.demo.ai_study_hub.dto.DocumentContentResponse;
 import com.demo.ai_study_hub.dto.DocumentProcessingStatusResponse;
+import com.demo.ai_study_hub.exception.QuotaExceededException;
 import com.demo.ai_study_hub.service.DocumentProcessingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,8 @@ public class DocumentProcessingController {
             DocumentProcessingStatusResponse data = documentProcessingService.startProcessing(id, principal.getName());
             return ResponseEntity.status(HttpStatus.ACCEPTED)
                     .body(ApiResponse.success(data, "Document processing started"));
+        } catch (QuotaExceededException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason(), e.getCode()));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {
@@ -39,6 +42,8 @@ public class DocumentProcessingController {
             DocumentProcessingStatusResponse data = documentProcessingService.startReprocessing(id, principal.getName());
             return ResponseEntity.status(HttpStatus.ACCEPTED)
                     .body(ApiResponse.success(data, "Document reprocessing started"));
+        } catch (QuotaExceededException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason(), e.getCode()));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {
