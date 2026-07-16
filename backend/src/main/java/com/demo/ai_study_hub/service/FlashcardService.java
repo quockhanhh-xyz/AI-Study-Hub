@@ -16,9 +16,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.UUID;
@@ -357,7 +359,7 @@ public class FlashcardService {
                         .documentId(s.getDocument().getDocumentId())
                         .title(s.getTitle())
                         .itemCount(s.getItemCount())
-                        .createdAt(s.getCreatedAt())
+                        .createdAt(s.getCreatedAt() != null ? s.getCreatedAt().toInstant(ZoneOffset.UTC) : null)
                         .build())
                 .collect(Collectors.toList());
     }
@@ -390,9 +392,9 @@ public class FlashcardService {
                 .title(s.getTitle())
                 .itemCount(s.getItemCount())
                 .model(s.getModel())
-                .sourceProcessedAt(s.getSourceProcessedAt())
+                .sourceProcessedAt(s.getSourceProcessedAt() != null ? s.getSourceProcessedAt().toInstant(ZoneOffset.UTC) : null)
                 .sourceChunkCount(s.getSourceChunkCount())
-                .createdAt(s.getCreatedAt())
+                .createdAt(s.getCreatedAt() != null ? s.getCreatedAt().toInstant(ZoneOffset.UTC) : null)
                 .flashcards(items)
                 .build();
     }

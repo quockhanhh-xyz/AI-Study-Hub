@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -403,7 +404,7 @@ public class QuizService {
                         .documentId(s.getDocument().getDocumentId())
                         .title(s.getTitle())
                         .questionCount(s.getQuestionCount())
-                        .createdAt(s.getCreatedAt())
+                        .createdAt(s.getCreatedAt() != null ? s.getCreatedAt().toInstant(ZoneOffset.UTC) : null)
                         .build())
                 .collect(Collectors.toList());
     }
@@ -445,9 +446,9 @@ public class QuizService {
                 .title(s.getTitle())
                 .questionCount(s.getQuestionCount())
                 .model(s.getModel())
-                .sourceProcessedAt(s.getSourceProcessedAt())
+                .sourceProcessedAt(s.getSourceProcessedAt() != null ? s.getSourceProcessedAt().toInstant(ZoneOffset.UTC) : null)
                 .sourceChunkCount(s.getSourceChunkCount())
-                .createdAt(s.getCreatedAt())
+                .createdAt(s.getCreatedAt() != null ? s.getCreatedAt().toInstant(ZoneOffset.UTC) : null)
                 .questions(items)
                 .build();
     }
@@ -484,8 +485,8 @@ public class QuizService {
         QuizAttempt attempt = QuizAttempt.builder()
                 .quizSet(quizSet)
                 .user(user)
-                .startedAt(request.getStartedAt() != null ? request.getStartedAt() : LocalDateTime.now(ZoneOffset.UTC))
-                .completedAt(request.getCompletedAt() != null ? request.getCompletedAt() : LocalDateTime.now(ZoneOffset.UTC))
+                .startedAt(request.getStartedAt() != null ? LocalDateTime.ofInstant(request.getStartedAt(), ZoneOffset.UTC) : LocalDateTime.now(ZoneOffset.UTC))
+                .completedAt(request.getCompletedAt() != null ? LocalDateTime.ofInstant(request.getCompletedAt(), ZoneOffset.UTC) : LocalDateTime.now(ZoneOffset.UTC))
                 .createdAt(LocalDateTime.now(ZoneOffset.UTC))
                 .score(0.0)
                 .correctCount(0)
@@ -628,7 +629,7 @@ public class QuizService {
                         .selectedOption(a.getSelectedOption())
                         .correctOption(a.getCorrectOption())
                         .isCorrect(a.getIsCorrect())
-                        .answeredAt(a.getAnsweredAt())
+                        .answeredAt(a.getAnsweredAt() != null ? a.getAnsweredAt().toInstant(ZoneOffset.UTC) : null)
                         .build())
                 .collect(Collectors.toList());
 
@@ -640,9 +641,9 @@ public class QuizService {
                 .totalQuestions(attempt.getTotalQuestions())
                 .correctCount(attempt.getCorrectCount())
                 .percentage(attempt.getPercentage())
-                .startedAt(attempt.getStartedAt())
-                .completedAt(attempt.getCompletedAt())
-                .createdAt(attempt.getCreatedAt())
+                .startedAt(attempt.getStartedAt() != null ? attempt.getStartedAt().toInstant(ZoneOffset.UTC) : null)
+                .completedAt(attempt.getCompletedAt() != null ? attempt.getCompletedAt().toInstant(ZoneOffset.UTC) : null)
+                .createdAt(attempt.getCreatedAt() != null ? attempt.getCreatedAt().toInstant(ZoneOffset.UTC) : null)
                 .answers(answers)
                 .build();
     }

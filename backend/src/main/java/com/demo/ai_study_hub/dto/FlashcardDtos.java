@@ -1,7 +1,7 @@
 package com.demo.ai_study_hub.dto;
 
 import lombok.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 public class FlashcardDtos {
@@ -24,9 +24,9 @@ public class FlashcardDtos {
         private String title;
         private Integer itemCount;
         private String model;
-        private LocalDateTime sourceProcessedAt;
+        private Instant sourceProcessedAt;
         private Integer sourceChunkCount;
-        private LocalDateTime createdAt;
+        private Instant createdAt;
         private List<FlashcardItem> flashcards;
     }
 
@@ -39,7 +39,7 @@ public class FlashcardDtos {
         private Integer documentId;
         private String title;
         private Integer itemCount;
-        private LocalDateTime createdAt;
+        private Instant createdAt;
     }
 
     @Data

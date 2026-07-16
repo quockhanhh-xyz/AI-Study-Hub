@@ -1,15 +1,15 @@
 package com.demo.ai_study_hub.dto;
 
 import lombok.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 public class QuizAttemptDtos {
 
     @Data
     public static class QuizAttemptRequest {
-        private LocalDateTime startedAt;
-        private LocalDateTime completedAt;
+        private Instant startedAt;
+        private Instant completedAt;
         private List<AnswerInput> answers;
 
         @Data
@@ -31,9 +31,9 @@ public class QuizAttemptDtos {
         private Integer totalQuestions;
         private Integer correctCount;
         private Double percentage;
-        private LocalDateTime startedAt;
-        private LocalDateTime completedAt;
-        private LocalDateTime createdAt;
+        private Instant startedAt;
+        private Instant completedAt;
+        private Instant createdAt;
         private List<QuizAttemptAnswerResponse> answers;
     }
 
@@ -47,6 +47,6 @@ public class QuizAttemptDtos {
         private String selectedOption;
         private String correctOption;
         private Boolean isCorrect;
-        private LocalDateTime answeredAt;
+        private Instant answeredAt;
     }
 }

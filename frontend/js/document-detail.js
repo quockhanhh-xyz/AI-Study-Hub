@@ -969,7 +969,11 @@ function formatFileSize(bytes) {
 
 function formatDate(isoString) {
     if (!isoString) return "–";
-    const d = new Date(isoString);
+    let dateStr = String(isoString);
+    if (!dateStr.endsWith("Z") && !dateStr.includes("+")) {
+        dateStr += "Z";
+    }
+    const d = new Date(dateStr);
     return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
