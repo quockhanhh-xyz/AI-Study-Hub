@@ -98,26 +98,6 @@ const AiLearningAPI = {
       questionCount,
       difficulty
     });
-  },
-
-  /**
-   * Submit a quiz attempt. Backend computes score/correctCount/percentage —
-   * never send a client-computed score.
-   * @param {number|string} quizSetId
-   * @param {{startedAt: string, completedAt: string, answers: Array<{questionId: number, selectedOption: string}>}} payload
-   * @returns {Promise<object>} response payload with data.{attemptId, score, totalQuestions, correctCount, percentage, completedAt}
-   */
-  submitQuizAttempt: async (quizSetId, payload) => {
-    return await post(`/api/ai/quiz-sets/${quizSetId}/attempts`, payload);
-  },
-
-  /**
-   * Get the current user's attempt history for a quiz set.
-   * @param {number|string} quizSetId
-   * @returns {Promise<object>} response payload with data: Array<attempt>
-   */
-  getQuizAttemptHistory: async (quizSetId) => {
-    return await get(`/api/ai/quiz-sets/${quizSetId}/attempts`);
   }
 };
 

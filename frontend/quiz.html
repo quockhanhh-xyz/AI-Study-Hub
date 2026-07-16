@@ -31,11 +31,6 @@
       <div id="quizErrorState" class="status-box status-error" style="display:none;"></div>
 
       <section id="quizViewer" class="card quiz-viewer" style="display:none;">
-        <div class="quiz-review-banner" id="quizReviewBanner" style="display:none;">
-          <span>Reviewing your answers</span>
-          <button type="button" class="btn btn-text" id="quizBackToSummaryBtn">← Back to results</button>
-        </div>
-
         <div class="quiz-progress" id="quizProgress"></div>
 
         <h2 class="quiz-question-text" id="quizQuestionText"></h2>
@@ -51,29 +46,10 @@
         </div>
       </section>
 
-      <section id="quizSummary" class="card quiz-summary" style="display:none;">
+      <section id="quizSummary" class="card" style="display:none;">
         <h2>Quiz complete</h2>
-
-        <div id="quizSummarySubmitting" class="helper-text" style="display:none;">Submitting your answers...</div>
-        <div id="quizSummaryError" class="status-box status-error" style="display:none;"></div>
-
-        <div id="quizSummaryResult" style="display:none;">
-          <div class="quiz-summary-score">
-            <span class="quiz-summary-score-value" id="quizSummaryScoreValue"></span>
-            <span class="quiz-summary-score-label" id="quizSummaryScoreLabel"></span>
-          </div>
-          <p id="quizSummaryText"></p>
-
-          <div class="quiz-summary-actions">
-            <button type="button" class="btn btn-secondary" id="quizReviewAnswersBtn">Review your answers</button>
-            <button type="button" class="btn btn-primary" id="quizRetakeBtn">Retry quiz</button>
-          </div>
-
-          <div class="quiz-history" id="quizHistorySection" style="display:none;">
-            <h3>Past attempts</h3>
-            <ul class="quiz-history-list" id="quizHistoryList"></ul>
-          </div>
-        </div>
+        <p id="quizSummaryText"></p>
+        <button type="button" class="btn btn-secondary" id="quizRetakeBtn">Review again</button>
       </section>
 
       <a href="#" class="back-link" id="quizBackLink">← Back to document</a>

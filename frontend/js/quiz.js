@@ -1,18 +1,11 @@
-// quiz.js – FE2: Quiz Set Detail Page (Step A: Learning UX)
+// quiz.js – FE2: Quiz Set Detail Page (Step 14)
 // Displays a generated multiple-choice quiz set.
 // Data comes from getQuizSet(setId) — js/ai-learning-api.js.
 // Rule: never reveal the correct option before the user picks an answer.
-// Rule: the FINAL score always comes from the backend submit-attempt response,
-// never from a client-side count — the FE only sends { startedAt, completedAt, answers }.
 
 let currentQuizSet = null;
-let currentSetId = null;
 let currentQuestionIndex = 0;
 let userAnswers = {}; // { [questionId]: optionKey }
-let quizStartedAt = null;
-let isReviewMode = false;
-let isSubmitting = false;
-let lastAttemptResult = null; // { attemptId, score, totalQuestions, correctCount, percentage, completedAt }
 
 document.addEventListener("DOMContentLoaded", async () => {
     const isAuthenticated = window.authReady ? await window.authReady : false;
@@ -26,7 +19,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
     }
 
-    currentSetId = setId;
     await loadQuizSet(setId);
     initQuizControls();
 });
@@ -52,11 +44,9 @@ async function loadQuizSet(setId) {
             backLink.href = `document-detail.html?id=${currentQuizSet.documentId}`;
         }
 
-        startNewAttempt();
-
-        // Attempt history is a nice-to-have — load it in the background and
-        // fail silently if the endpoint isn't available yet.
-        loadAttemptHistory();
+        currentQuestionIndex = 0;
+        userAnswers = {};
+        renderCurrentQuestion();
 
         loader.style.display = "none";
         viewer.style.display = "block";
@@ -69,25 +59,10 @@ async function loadQuizSet(setId) {
     }
 }
 
-// Resets state for a fresh attempt (initial load AND every "Retry quiz").
-function startNewAttempt() {
-    currentQuestionIndex = 0;
-    userAnswers = {};
-    quizStartedAt = new Date();
-    isReviewMode = false;
-
-    document.getElementById("quizSummary").style.display = "none";
-    document.getElementById("quizViewer").style.display = "block";
-    renderCurrentQuestion();
-}
-
 function renderCurrentQuestion() {
     if (!currentQuizSet) return;
     const questions = currentQuizSet.questions;
     const question = questions[currentQuestionIndex];
-
-    const reviewBanner = document.getElementById("quizReviewBanner");
-    if (reviewBanner) reviewBanner.style.display = isReviewMode ? "flex" : "none";
 
     document.getElementById("quizProgress").textContent =
         `Question ${currentQuestionIndex + 1} / ${questions.length}`;
@@ -107,17 +82,9 @@ function renderCurrentQuestion() {
 
     const prevBtn = document.getElementById("quizPrevBtn");
     const nextBtn = document.getElementById("quizNextBtn");
-    const isLastQuestion = currentQuestionIndex === questions.length - 1;
-
     if (prevBtn) prevBtn.disabled = currentQuestionIndex === 0;
     if (nextBtn) {
-        if (isReviewMode) {
-            nextBtn.textContent = "Next →";
-            nextBtn.disabled = isLastQuestion;
-        } else {
-            nextBtn.textContent = isLastQuestion ? "Finish" : "Next →";
-            nextBtn.disabled = false;
-        }
+        nextBtn.textContent = currentQuestionIndex === questions.length - 1 ? "Finish" : "Next →";
     }
 
     document.getElementById("quizSummary").style.display = "none";
@@ -126,8 +93,7 @@ function renderCurrentQuestion() {
 
 // Renders the 4 MCQ options. Before the user answers: plain selectable list,
 // no correctness shown. After the user answers: locks selection, highlights
-// correct/incorrect. In review mode every question is already answered, so
-// this naturally renders as a locked, graded view.
+// correct/incorrect (handled in renderFeedback via CSS classes here).
 function renderOptions(question, selectedOption) {
     const list = document.getElementById("quizOptionsList");
     list.innerHTML = "";
@@ -150,16 +116,15 @@ function renderOptions(question, selectedOption) {
         btn.appendChild(textSpan);
 
         if (selectedOption) {
+            // Already answered this question: lock it and reveal correctness.
             btn.disabled = true;
             if (opt.optionKey === question.correctOption) {
                 btn.classList.add("correct");
             } else if (opt.optionKey === selectedOption) {
                 btn.classList.add("incorrect");
             }
-        } else if (!isReviewMode) {
-            btn.addEventListener("click", () => handleSelectOption(question, opt.optionKey));
         } else {
-            btn.disabled = true;
+            btn.addEventListener("click", () => handleSelectOption(question, opt.optionKey));
         }
 
         list.appendChild(btn);
@@ -185,7 +150,8 @@ function renderFeedback(question, selectedOption) {
 }
 
 function handleSelectOption(question, optionKey) {
-    if (isReviewMode) return; // answers are locked while reviewing
+    // Once answered, the choice is locked — re-clicking options after this does nothing
+    // because renderOptions() disables all buttons on the next render.
     userAnswers[question.questionId] = optionKey;
     renderOptions(question, optionKey);
     renderFeedback(question, optionKey);
@@ -199,153 +165,41 @@ function goToPreviousQuestion() {
 
 function goToNextQuestion() {
     const questions = currentQuizSet.questions;
-    const isLastQuestion = currentQuestionIndex >= questions.length - 1;
-
-    if (isReviewMode) {
-        if (!isLastQuestion) {
-            currentQuestionIndex++;
-            renderCurrentQuestion();
-        }
+    if (currentQuestionIndex >= questions.length - 1) {
+        showQuizSummary();
         return;
     }
-
-    if (isLastQuestion) {
-        finishQuiz();
-        return;
-    }
-
     currentQuestionIndex++;
     renderCurrentQuestion();
 }
 
-// Submits the attempt to the backend. The backend is the single source of
-// truth for score/correctCount/percentage — we never compute or show our own.
-async function finishQuiz() {
-    if (isSubmitting) return;
-    isSubmitting = true;
+function showQuizSummary() {
+    const questions = currentQuizSet.questions;
+    const answeredCount = Object.keys(userAnswers).length;
+    const correctCount = questions.filter(q => userAnswers[q.questionId] === q.correctOption).length;
 
-    document.getElementById("quizViewer").style.display = "none";
-    document.getElementById("quizSummary").style.display = "block";
-    document.getElementById("quizSummaryResult").style.display = "none";
-    document.getElementById("quizSummaryError").style.display = "none";
-    document.getElementById("quizSummarySubmitting").style.display = "block";
-
-    const answers = Object.entries(userAnswers).map(([questionId, selectedOption]) => ({
-        questionId: Number(questionId),
-        selectedOption
-    }));
-
-    try {
-        const res = await AiLearningAPI.submitQuizAttempt(currentSetId, {
-            startedAt: quizStartedAt.toISOString(),
-            completedAt: new Date().toISOString(),
-            answers
-        });
-        lastAttemptResult = res.data;
-        renderQuizResult();
-        loadAttemptHistory(); // refresh history with the just-submitted attempt
-    } catch (err) {
-        console.error("Failed to submit quiz attempt", err);
-        document.getElementById("quizSummarySubmitting").style.display = "none";
-        const errorEl = document.getElementById("quizSummaryError");
-        errorEl.textContent =
-            (typeof mapAiLearningError === "function" ? mapAiLearningError(err) : (err.message || "Failed to submit your quiz attempt."))
-            + " Your answers weren't lost — you can try submitting again.";
-        errorEl.style.display = "block";
-    } finally {
-        isSubmitting = false;
-    }
-}
-
-function renderQuizResult() {
-    if (!lastAttemptResult) return;
-
-    document.getElementById("quizSummarySubmitting").style.display = "none";
-    document.getElementById("quizSummaryError").style.display = "none";
-    document.getElementById("quizSummaryResult").style.display = "block";
-
-    const { correctCount, totalQuestions, percentage } = lastAttemptResult;
-    document.getElementById("quizSummaryScoreValue").textContent = `${percentage}%`;
-    document.getElementById("quizSummaryScoreLabel").textContent = `${correctCount} / ${totalQuestions} correct`;
     document.getElementById("quizSummaryText").textContent =
-        `You answered ${Object.keys(userAnswers).length} of ${currentQuizSet.questions.length} questions.`;
-}
+        answeredCount === questions.length
+            ? `You answered ${correctCount} / ${questions.length} correctly.`
+            : `You answered ${answeredCount} / ${questions.length} questions (${correctCount} correct so far).`;
 
-function startReview() {
-    if (!lastAttemptResult) return;
-    isReviewMode = true;
-    currentQuestionIndex = 0;
-    document.getElementById("quizSummary").style.display = "none";
-    document.getElementById("quizViewer").style.display = "block";
-    renderCurrentQuestion();
-}
-
-function backToSummaryFromReview() {
-    isReviewMode = false;
     document.getElementById("quizViewer").style.display = "none";
     document.getElementById("quizSummary").style.display = "block";
-    renderQuizResult();
-}
-
-function retryQuiz() {
-    startNewAttempt();
-}
-
-// Attempt history is optional / best-effort: if the endpoint isn't available
-// yet (BE3 still in progress) or returns an error, just hide the section.
-async function loadAttemptHistory() {
-    const section = document.getElementById("quizHistorySection");
-    const list = document.getElementById("quizHistoryList");
-    if (!section || !list) return;
-
-    try {
-        const res = await AiLearningAPI.getQuizAttemptHistory(currentSetId);
-        const attempts = Array.isArray(res.data) ? res.data : [];
-
-        if (attempts.length === 0) {
-            section.style.display = "none";
-            return;
-        }
-
-        const sorted = [...attempts].sort(
-            (a, b) => new Date(b.completedAt) - new Date(a.completedAt)
-        );
-
-        list.innerHTML = "";
-        sorted.forEach(attempt => {
-            const li = document.createElement("li");
-
-            const scoreSpan = document.createElement("span");
-            scoreSpan.className = "quiz-history-score";
-            scoreSpan.textContent = `${attempt.percentage}% (${attempt.correctCount}/${attempt.totalQuestions})`;
-
-            const dateSpan = document.createElement("span");
-            dateSpan.textContent = formatGeneratedAt(attempt.completedAt);
-
-            li.appendChild(scoreSpan);
-            li.appendChild(dateSpan);
-            list.appendChild(li);
-        });
-
-        section.style.display = "block";
-    } catch (err) {
-        // Silent — history is a bonus feature, not required for Step A demo.
-        section.style.display = "none";
-    }
 }
 
 function initQuizControls() {
     const prevBtn = document.getElementById("quizPrevBtn");
     const nextBtn = document.getElementById("quizNextBtn");
     const retakeBtn = document.getElementById("quizRetakeBtn");
-    const reviewBtn = document.getElementById("quizReviewAnswersBtn");
-    const backToSummaryBtn = document.getElementById("quizBackToSummaryBtn");
 
     if (prevBtn) prevBtn.addEventListener("click", goToPreviousQuestion);
     if (nextBtn) nextBtn.addEventListener("click", goToNextQuestion);
-    if (retakeBtn) retakeBtn.addEventListener("click", retryQuiz);
-    if (reviewBtn) reviewBtn.addEventListener("click", startReview);
-    if (backToSummaryBtn) backToSummaryBtn.addEventListener("click", backToSummaryFromReview);
+    if (retakeBtn) {
+        retakeBtn.addEventListener("click", () => {
+            currentQuestionIndex = 0;
+            renderCurrentQuestion();
+        });
+    }
 }
 
 function showQuizError(message) {
