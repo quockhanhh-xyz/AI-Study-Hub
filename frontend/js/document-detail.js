@@ -21,7 +21,7 @@ function handleBack() {
             // Ignore parse errors, fallback to default redirect
         }
     }
-    
+
     if (currentIsCommunityView) {
         window.location.href = "community.html";
     } else {
@@ -107,7 +107,7 @@ function setViewerAiProcessingStatus(status) {
 
     const processingStatusBadge = document.getElementById("processingStatusBadge");
     if (processingStatusBadge) {
-        processingStatusBadge.textContent = nextStatus === "COMPLETED" ? "AI READY" : nextStatus;
+        processingStatusBadge.textContent = nextStatus === "COMPLETED" ? "Ready for AI" : nextStatus;
         processingStatusBadge.className = "status-badge " + nextStatus.toLowerCase();
     }
 
@@ -280,7 +280,7 @@ function renderDocument(doc) {
     const processingStatusBadge = document.getElementById("processingStatusBadge");
     if (processingStatusBadge) {
         const pStatus = doc.processingStatus || "PENDING";
-        processingStatusBadge.textContent = pStatus === "COMPLETED" ? "AI READY" : pStatus;
+        processingStatusBadge.textContent = pStatus === "COMPLETED" ? "Ready for AI" : pStatus;
         processingStatusBadge.style.display = "inline-flex";
         processingStatusBadge.className = "status-badge " + pStatus.toLowerCase();
     }
