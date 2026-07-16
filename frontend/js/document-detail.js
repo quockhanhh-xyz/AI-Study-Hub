@@ -79,6 +79,8 @@ let currentDocumentId = null;
 let currentDocumentFolderId = null;
 let currentIsCommunityView = false;
 let currentIsAuthenticated = false;
+let currentDocCanProcess = false;
+let currentDocCanReprocess = false;
 let aiExtractedTextLoaded = false;
 let aiExtractedTextExpanded = true;
 
@@ -102,6 +104,12 @@ function setViewerAiProcessingStatus(status) {
     aiToolsProcessingStatus = nextStatus;
     updateAskAvailability();
     updateAiToolsAvailability();
+
+    const processingStatusBadge = document.getElementById("processingStatusBadge");
+    if (processingStatusBadge) {
+        processingStatusBadge.textContent = nextStatus === "COMPLETED" ? "AI READY" : nextStatus;
+        processingStatusBadge.className = "status-badge " + nextStatus.toLowerCase();
+    }
 
     const toolsPane = document.getElementById("inspectorPaneTools");
     if (nextStatus === "COMPLETED" && toolsPane?.classList.contains("active")) {
@@ -269,6 +277,14 @@ function renderDocument(doc) {
         }
     }
 
+    const processingStatusBadge = document.getElementById("processingStatusBadge");
+    if (processingStatusBadge) {
+        const pStatus = doc.processingStatus || "PENDING";
+        processingStatusBadge.textContent = pStatus === "COMPLETED" ? "AI READY" : pStatus;
+        processingStatusBadge.style.display = "inline-flex";
+        processingStatusBadge.className = "status-badge " + pStatus.toLowerCase();
+    }
+
     // ── Favorite star button (Step: Favorite/Saved Documents) ──
     const favoriteBtn = document.getElementById("favoriteDetailBtn");
     if (favoriteBtn) {
@@ -281,7 +297,10 @@ function renderDocument(doc) {
         } else {
             favoriteBtn.title = "Login to add to favorites";
             favoriteBtn.onclick = () => {
-                window.location.href = `login.html?returnUrl=${encodeURIComponent(window.location.href)}`;
+                showToast("Please log in to save this document to your favorites.", "warning");
+                setTimeout(() => {
+                    window.location.href = `login.html?returnUrl=${encodeURIComponent(window.location.href)}`;
+                }, 1500);
             };
         }
     }
@@ -409,12 +428,16 @@ function renderDocument(doc) {
     // member, or logged-in public viewer). Backend is the final authority —
     // if the user actually can't ask, askDocumentQuestion() will fail with a
     // mapped error (401/403/409/422) shown inline in the chat panel.
-    const showAiTab = true;
-    // AI Tools tab: same audience as AI Q&A (any logged-in user with read
-    // access). Backend permission check (DOCUMENT_ACCESS_DENIED) is the
-    // final authority; generate calls will fail cleanly if not allowed.
-    const showToolsTab = true;
+    const hasAiToolsFlag = typeof doc.canUseAiTools === "boolean";
+    // For authenticated users, respect the backend flag if present.
+    // For guests, always show the tabs to act as a marketing "login prompt" hook.
+    const showAiTab = (!currentIsAuthenticated) ? true : (hasAiToolsFlag ? doc.canUseAiTools : true);
+    const showToolsTab = (!currentIsAuthenticated) ? true : (hasAiToolsFlag ? doc.canUseAiTools : true);
     const hasInspector = showDetailsTab || showSharingTab || showAiTab || showToolsTab;
+
+    // Update global state for action buttons
+    currentDocCanProcess = typeof doc.canProcess === "boolean" ? doc.canProcess : (!currentIsCommunityView && doc.canEdit);
+    currentDocCanReprocess = typeof doc.canReprocess === "boolean" ? doc.canReprocess : (!currentIsCommunityView && doc.canEdit);
 
     // Step 10: reset + (re)populate the AI Q&A tab for this document
     renderAIQaTab(doc);
@@ -478,7 +501,7 @@ function renderAIProcessingPanel(doc) {
     const section = document.getElementById("aiProcessingSection");
     if (!section) return;
 
-    const canSeePanel = !currentIsCommunityView && doc.canEdit;
+    const canSeePanel = (!currentIsCommunityView && doc.canEdit) || doc.canProcess || doc.canReprocess;
     if (!canSeePanel) {
         section.style.display = "none";
         if (currentDocumentId) stopDocumentPolling(currentDocumentId);
@@ -593,9 +616,11 @@ function renderAIActions(status) {
     actionsEl.innerHTML = "";
 
     if (status === "PENDING") {
-        actionsEl.appendChild(
-            buildAIActionButton("Process for AI", "btn-primary", () => handleAIProcessAction("process"))
-        );
+        if (currentDocCanProcess) {
+            actionsEl.appendChild(
+                buildAIActionButton("Process for AI", "btn-primary", () => handleAIProcessAction("process"))
+            );
+        }
     } else if (status === "PROCESSING") {
         const loadingBtn = document.createElement("button");
         loadingBtn.type = "button";
@@ -604,17 +629,23 @@ function renderAIActions(status) {
         loadingBtn.textContent = "Processing…";
         actionsEl.appendChild(loadingBtn);
     } else if (status === "FAILED") {
-        actionsEl.appendChild(
-            buildAIActionButton("Retry", "btn-primary", () => handleAIProcessAction("process"))
-        );
+        if (currentDocCanProcess) {
+            actionsEl.appendChild(
+                buildAIActionButton("Retry", "btn-primary", () => handleAIProcessAction("process"))
+            );
+        }
     } else if (status === "EMPTY_CONTENT") {
-        actionsEl.appendChild(
-            buildAIActionButton("Reprocess", "btn-primary", () => handleAIProcessAction("reprocess"))
-        );
+        if (currentDocCanReprocess) {
+            actionsEl.appendChild(
+                buildAIActionButton("Reprocess", "btn-primary", () => handleAIProcessAction("reprocess"))
+            );
+        }
     } else if (status === "COMPLETED") {
-        actionsEl.appendChild(
-            buildAIActionButton("Reprocess", "btn-secondary", () => handleAIProcessAction("reprocess"))
-        );
+        if (currentDocCanReprocess) {
+            actionsEl.appendChild(
+                buildAIActionButton("Reprocess", "btn-secondary", () => handleAIProcessAction("reprocess"))
+            );
+        }
     }
 }
 
@@ -1593,7 +1624,10 @@ async function handleAiQaSubmit(e) {
 
 async function sendAiQaQuestion(question) {
     if (!currentIsAuthenticated) {
-        window.location.href = `login.html?returnUrl=${encodeURIComponent(window.location.href)}`;
+        showToast("Please log in to use AI Q&A.", "warning");
+        setTimeout(() => {
+            window.location.href = `login.html?returnUrl=${encodeURIComponent(window.location.href)}`;
+        }, 1500);
         return;
     }
     aiQaSending = true;
@@ -1749,7 +1783,10 @@ async function loadFlashcardSets() {
 
 async function handleGenerateFlashcardSet() {
     if (!currentIsAuthenticated) {
-        window.location.href = `login.html?returnUrl=${encodeURIComponent(window.location.href)}`;
+        showToast("Please log in to generate Flashcards.", "warning");
+        setTimeout(() => {
+            window.location.href = `login.html?returnUrl=${encodeURIComponent(window.location.href)}`;
+        }, 1500);
         return;
     }
     const btn = document.getElementById("flashcardGenerateBtn");
@@ -1812,7 +1849,10 @@ async function loadQuizSets() {
 
 async function handleGenerateQuizSet() {
     if (!currentIsAuthenticated) {
-        window.location.href = `login.html?returnUrl=${encodeURIComponent(window.location.href)}`;
+        showToast("Please log in to generate Quiz.", "warning");
+        setTimeout(() => {
+            window.location.href = `login.html?returnUrl=${encodeURIComponent(window.location.href)}`;
+        }, 1500);
         return;
     }
     const btn = document.getElementById("quizGenerateBtn");
