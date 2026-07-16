@@ -357,6 +357,7 @@ class StudyGroupServiceTest {
         when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(group, member, "ACTIVE")).thenReturn(false);
         when(studyGroupMemberRepository.countByGroupAndStatus(group, "ACTIVE")).thenReturn(1L);
 
+        group.setRequiresApproval(true);
         GroupResponse response = studyGroupService.joinGroup(request, "member@gmail.com");
 
         assertNotNull(response);

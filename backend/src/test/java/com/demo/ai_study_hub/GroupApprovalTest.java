@@ -85,6 +85,7 @@ class GroupApprovalTest {
                 "gemini-2.5-flash-lite", 1, 1, 1, 5
         );
         lenient().when(tierPolicyService.getLimitsForUser(any())).thenReturn(limits);
+        lenient().when(groupInvitationRepository.existsByGroupAndEmail(any(), anyString())).thenReturn(false);
     }
 
     // ─── joinGroup ────────────────────────────────────────────────────────────
@@ -96,9 +97,9 @@ class GroupApprovalTest {
 
         when(userRepository.findByEmail("newuser@test.com")).thenReturn(Optional.of(newUser));
         when(studyGroupRepository.findByInviteCodeForUpdate("APPROVE1")).thenReturn(Optional.of(groupWithApproval));
-        when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithApproval, newUser, "ACTIVE")).thenReturn(false);
-        when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING")).thenReturn(false);
-        when(studyGroupMemberRepository.countByGroupAndStatus(groupWithApproval, "ACTIVE")).thenReturn(2L);
+        lenient().when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithApproval, newUser, "ACTIVE")).thenReturn(false);
+        lenient().when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING")).thenReturn(false);
+        lenient().when(studyGroupMemberRepository.countByGroupAndStatus(groupWithApproval, "ACTIVE")).thenReturn(2L);
         when(studyGroupMemberRepository.findByGroupAndUser(groupWithApproval, newUser)).thenReturn(Optional.empty());
         when(studyGroupMemberRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
@@ -118,9 +119,9 @@ class GroupApprovalTest {
 
         when(userRepository.findByEmail("newuser@test.com")).thenReturn(Optional.of(newUser));
         when(studyGroupRepository.findByInviteCodeForUpdate("OPEN1234")).thenReturn(Optional.of(groupWithoutApproval));
-        when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithoutApproval, newUser, "ACTIVE")).thenReturn(false);
-        when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithoutApproval, newUser, "PENDING")).thenReturn(false);
-        when(studyGroupMemberRepository.countByGroupAndStatus(groupWithoutApproval, "ACTIVE")).thenReturn(2L);
+        lenient().when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithoutApproval, newUser, "ACTIVE")).thenReturn(false);
+        lenient().when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithoutApproval, newUser, "PENDING")).thenReturn(false);
+        lenient().when(studyGroupMemberRepository.countByGroupAndStatus(groupWithoutApproval, "ACTIVE")).thenReturn(2L);
         when(studyGroupMemberRepository.findByGroupAndUser(groupWithoutApproval, newUser)).thenReturn(Optional.empty());
         when(studyGroupMemberRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
@@ -140,7 +141,7 @@ class GroupApprovalTest {
 
         when(userRepository.findByEmail("newuser@test.com")).thenReturn(Optional.of(newUser));
         when(studyGroupRepository.findByInviteCodeForUpdate("APPROVE1")).thenReturn(Optional.of(groupWithApproval));
-        when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithApproval, newUser, "ACTIVE")).thenReturn(false);
+        lenient().when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithApproval, newUser, "ACTIVE")).thenReturn(false);
         when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING")).thenReturn(true);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
@@ -164,9 +165,9 @@ class GroupApprovalTest {
 
         when(userRepository.findByEmail("newuser@test.com")).thenReturn(Optional.of(newUser));
         when(studyGroupRepository.findByInviteCodeForUpdate("APPROVE1")).thenReturn(Optional.of(groupWithApproval));
-        when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithApproval, newUser, "ACTIVE")).thenReturn(false);
-        when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING")).thenReturn(false);
-        when(studyGroupMemberRepository.countByGroupAndStatus(groupWithApproval, "ACTIVE")).thenReturn(1L);
+        lenient().when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithApproval, newUser, "ACTIVE")).thenReturn(false);
+        lenient().when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING")).thenReturn(false);
+        lenient().when(studyGroupMemberRepository.countByGroupAndStatus(groupWithApproval, "ACTIVE")).thenReturn(1L);
         when(studyGroupMemberRepository.findByGroupAndUser(groupWithApproval, newUser)).thenReturn(Optional.of(previousMembership));
         when(studyGroupMemberRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
@@ -255,7 +256,7 @@ class GroupApprovalTest {
         when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, owner, "ACTIVE"))
                 .thenReturn(Optional.of(ownerMembership));
         when(userRepository.findById(2)).thenReturn(Optional.of(newUser));
-        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING"))
+        when(studyGroupMemberRepository.findByGroupAndUser(groupWithApproval, newUser))
                 .thenReturn(Optional.of(pendingMembership));
         when(studyGroupMemberRepository.countByGroupAndStatus(groupWithApproval, "ACTIVE")).thenReturn(5L);
 
@@ -272,7 +273,7 @@ class GroupApprovalTest {
         when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, owner, "ACTIVE"))
                 .thenReturn(Optional.of(ownerMembership));
         when(userRepository.findById(2)).thenReturn(Optional.of(newUser));
-        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING"))
+        lenient().when(studyGroupMemberRepository.findByGroupAndUser(groupWithApproval, newUser))
                 .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
@@ -294,7 +295,7 @@ class GroupApprovalTest {
         when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, owner, "ACTIVE"))
                 .thenReturn(Optional.of(ownerMembership));
         when(userRepository.findById(2)).thenReturn(Optional.of(newUser));
-        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING"))
+        when(studyGroupMemberRepository.findByGroupAndUser(groupWithApproval, newUser))
                 .thenReturn(Optional.of(pendingMembership));
         when(studyGroupMemberRepository.countByGroupAndStatus(groupWithApproval, "ACTIVE")).thenReturn(30L);
 
@@ -336,7 +337,7 @@ class GroupApprovalTest {
         when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, owner, "ACTIVE"))
                 .thenReturn(Optional.of(ownerMembership));
         when(userRepository.findById(2)).thenReturn(Optional.of(newUser));
-        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING"))
+        when(studyGroupMemberRepository.findByGroupAndUser(groupWithApproval, newUser))
                 .thenReturn(Optional.of(pendingMembership));
 
         studyGroupService.rejectJoinRequest(10, 2, "owner@test.com");
@@ -352,7 +353,7 @@ class GroupApprovalTest {
         when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, owner, "ACTIVE"))
                 .thenReturn(Optional.of(ownerMembership));
         when(userRepository.findById(2)).thenReturn(Optional.of(newUser));
-        when(studyGroupMemberRepository.findByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING"))
+        lenient().when(studyGroupMemberRepository.findByGroupAndUser(groupWithApproval, newUser))
                 .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->

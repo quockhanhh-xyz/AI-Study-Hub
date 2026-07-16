@@ -179,6 +179,11 @@ public class StudyGroupServiceImpl implements StudyGroupService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You are already a member of this group");
         }
 
+        boolean alreadyPending = studyGroupMemberRepository.existsByGroupAndUserAndStatus(group, user, "PENDING");
+        if (alreadyPending) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Your join request is already pending approval");
+        }
+
         User groupOwner = group.getOwner();
         com.demo.ai_study_hub.dto.TierLimits ownerLimits = tierPolicyService.getLimitsForUser(groupOwner);
         long memberCount = studyGroupMemberRepository.countByGroupAndStatus(group, "ACTIVE");
