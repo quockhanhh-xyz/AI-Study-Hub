@@ -35,6 +35,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   const memberList = document.getElementById("memberList");
 
+  const pendingMemberSection = document.getElementById("pendingMemberSection");
+  const pendingMemberLoader = document.getElementById("pendingMemberLoader");
+  const pendingMemberError = document.getElementById("pendingMemberError");
+  const pendingMemberList = document.getElementById("pendingMemberList");
+  const pendingMemberEmpty = document.getElementById("pendingMemberEmpty");
+
   const docLoader = document.getElementById("docLoader");
   const docError = document.getElementById("docError");
   const docGrid = document.getElementById("docGrid");
@@ -323,6 +329,137 @@ document.addEventListener("DOMContentLoaded", async function () {
     const memberSectionTitle = document.getElementById("memberSectionTitle");
     if (memberSectionTitle) {
       memberSectionTitle.textContent = `Members (${members.length})`;
+    }
+  }
+
+  function createPendingMemberRow(member) {
+    const row = document.createElement("div");
+    row.className = "member-row";
+
+    const main = document.createElement("div");
+    main.className = "member-row-main";
+
+    const name = document.createElement("span");
+    name.className = "member-row-name";
+    name.textContent = member.fullName || member.displayName || "Unknown User";
+
+    const statusBadge = document.createElement("span");
+    statusBadge.className = "badge-role-member";
+    statusBadge.style.color = "var(--warning, #b45309)";
+    statusBadge.textContent = "PENDING";
+
+    main.append(name, statusBadge);
+    row.appendChild(main);
+
+    const actions = document.createElement("div");
+    actions.style.display = "flex";
+    actions.style.gap = "8px";
+
+    const approveBtn = document.createElement("button");
+    approveBtn.type = "button";
+    approveBtn.className = "btn btn-primary btn-sm";
+    approveBtn.textContent = "Approve";
+
+    const rejectBtn = document.createElement("button");
+    rejectBtn.type = "button";
+    rejectBtn.className = "btn btn-danger btn-sm";
+    rejectBtn.textContent = "Reject";
+
+    approveBtn.addEventListener("click", async function () {
+      approveBtn.disabled = true;
+      rejectBtn.disabled = true;
+      approveBtn.textContent = "Approving...";
+      try {
+        await approveGroupMember(groupId, member.userId);
+        showToast(`${member.fullName || member.displayName || "Member"} approved.`, "success");
+        await loadPendingMembers();
+        await loadGroupDetail();
+      } catch (error) {
+        showToast(error.message || "Failed to approve member.", "error");
+        approveBtn.disabled = false;
+        rejectBtn.disabled = false;
+        approveBtn.textContent = "Approve";
+      }
+    });
+
+    rejectBtn.addEventListener("click", async function () {
+      const confirmed = await confirmAction({
+        title: "Reject Join Request?",
+        message: `Reject ${member.fullName || member.displayName || "this user"}'s request to join this group?`,
+        confirmText: "Reject",
+        danger: true
+      });
+      if (!confirmed) return;
+
+      approveBtn.disabled = true;
+      rejectBtn.disabled = true;
+      rejectBtn.textContent = "Rejecting...";
+      try {
+        await rejectGroupMember(groupId, member.userId);
+        showToast(`${member.fullName || member.displayName || "Member"} rejected.`, "success");
+        await loadPendingMembers();
+      } catch (error) {
+        showToast(error.message || "Failed to reject member.", "error");
+        approveBtn.disabled = false;
+        rejectBtn.disabled = false;
+        rejectBtn.textContent = "Reject";
+      }
+    });
+
+    actions.append(approveBtn, rejectBtn);
+    row.appendChild(actions);
+
+    return row;
+  }
+
+  function renderPendingMembers(members) {
+    pendingMemberList.innerHTML = "";
+
+    const pendingMemberSectionTitle = document.getElementById("pendingMemberSectionTitle");
+    if (pendingMemberSectionTitle) {
+      pendingMemberSectionTitle.textContent = `Pending Requests (${members.length})`;
+    }
+
+    if (members.length === 0) {
+      pendingMemberEmpty.style.display = "flex";
+      pendingMemberList.style.display = "none";
+      return;
+    }
+
+    pendingMemberEmpty.style.display = "none";
+    pendingMemberList.style.display = "block";
+    members.forEach(function (member) {
+      pendingMemberList.appendChild(createPendingMemberRow(member));
+    });
+  }
+
+  async function loadPendingMembers() {
+    // Only the OWNER can see and manage pending join requests.
+    if (myRole !== "OWNER") {
+      pendingMemberSection.style.display = "none";
+      return;
+    }
+
+    pendingMemberSection.style.display = "block";
+    pendingMemberLoader.style.display = "flex";
+    pendingMemberList.style.display = "none";
+    pendingMemberEmpty.style.display = "none";
+    hideError(pendingMemberError);
+
+    try {
+      const result = await getPendingMembers(groupId);
+      const pendingMembers = Array.isArray(result.data) ? result.data : [];
+      pendingMemberLoader.style.display = "none";
+      renderPendingMembers(pendingMembers);
+    } catch (error) {
+      pendingMemberLoader.style.display = "none";
+      // The endpoint has not been implemented by BE2 yet (returns 401/404).
+      //Hide the entire section instead of showing a misleading error message, and never let 401 errors surface to the UI.
+      if (error.status === 401 || error.status === 404) {
+        pendingMemberSection.style.display = "none";
+        return;
+      }
+      showError(pendingMemberError, error.message || "Failed to load pending requests.");
     }
   }
 
@@ -736,6 +873,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       renderGroupInfo(group);
       renderMembers(Array.isArray(group.members) ? group.members : []);
+      await loadPendingMembers();
 
     } catch (error) {
       detailLoader.style.display = "none";
