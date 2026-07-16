@@ -3942,11 +3942,12 @@ svg {
 .auth-shell {
   display: flex;
   min-height: 100vh;
-  width: 100vw;
+  width: 100%;
   background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 50%, #9B51E0 100%);
   margin: 0;
   padding: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
 }
 
