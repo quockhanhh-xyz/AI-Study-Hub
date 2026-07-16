@@ -143,10 +143,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
     header.appendChild(favoriteBtn);
 
-    const desc = document.createElement("p");
-    desc.className = "document-description";
-    desc.textContent = `Shared by: ${doc.sharedByName || "Unknown User"}`;
-
     const meta = document.createElement("div");
     meta.className = "document-meta";
 
@@ -155,7 +151,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     dateItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> ${formatDate(doc.createdAt)}`;
     meta.append(dateItem);
 
-    content.append(header, desc, meta);
+    const sharedByItem = document.createElement("span");
+    sharedByItem.className = "document-meta-item";
+    sharedByItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${doc.sharedByName || "Unknown User"}`;
+    meta.append(sharedByItem);
+
+    content.append(header, meta);
     card.appendChild(content);
 
     card.addEventListener("click", function (e) {

@@ -179,14 +179,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     title.appendChild(titleLink);
     header.appendChild(title);
 
-    const description = document.createElement("p");
-    description.className = "document-description";
-    if (documentItem.description) {
-      description.textContent = documentItem.description;
-    } else {
-      description.style.display = "none";
-    }
-
     const meta = document.createElement("div");
     meta.className = "document-meta";
 
@@ -203,7 +195,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       meta.append(subjectItem);
     }
 
-    content.append(header, description, meta);
+    content.append(header, meta);
     card.appendChild(content);
 
     card.addEventListener("click", function (e) {

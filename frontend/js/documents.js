@@ -166,47 +166,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
     header.appendChild(favoriteBtn);
 
-    const vis = documentItem.visibility || "PRIVATE";
-    if (vis !== "PRIVATE") {
-      const visibilityBadge = document.createElement("span");
-      visibilityBadge.className = "status-badge " + vis.toLowerCase();
-      visibilityBadge.textContent = vis;
-      header.appendChild(visibilityBadge);
-    }
-
-    if (vis === "PUBLIC" && documentItem.approvalStatus) {
-      const approvalBadge = document.createElement("span");
-      approvalBadge.className = "status-badge " + documentItem.approvalStatus.toLowerCase();
-      approvalBadge.textContent = documentItem.approvalStatus;
-      header.appendChild(approvalBadge);
-    }
-
-    // Step 9: Processing status badge — fallback to PENDING for legacy responses
-    const rawStatus = documentItem.processingStatus || "PENDING";
-    const CARD_STATUS_LABELS = {
-      PENDING: "Pending",
-      PROCESSING: "Processing",
-      COMPLETED: "Ready",
-      FAILED: "Failed",
-      UNSUPPORTED: "Unsupported",
-      EMPTY_CONTENT: "Empty"
-    };
-    const statusInfo = (typeof DOCUMENT_PROCESSING_STATUS !== "undefined" && DOCUMENT_PROCESSING_STATUS[rawStatus])
-      ? { label: CARD_STATUS_LABELS[rawStatus] || DOCUMENT_PROCESSING_STATUS[rawStatus].label, class: DOCUMENT_PROCESSING_STATUS[rawStatus].class }
-      : { label: CARD_STATUS_LABELS[rawStatus] || "Pending", class: "status-pending" };
-    const processingBadge = document.createElement("span");
-    processingBadge.className = `processing-status-badge ${statusInfo.class}`;
-    processingBadge.textContent = statusInfo.label;
-    header.appendChild(processingBadge);
-
-    const description = document.createElement("p");
-    description.className = "document-description";
-    if (documentItem.description) {
-      description.textContent = documentItem.description;
-    } else {
-      description.style.display = "none";
-    }
-
     const meta = document.createElement("div");
     meta.className = "document-meta";
 
@@ -237,7 +196,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
     meta.append(folderLink);
 
-    content.append(header, description, meta);
+    content.append(header, meta);
     card.appendChild(content);
 
     card.addEventListener("click", function (e) {
