@@ -115,10 +115,17 @@ async function fetchAndRenderNotifications() {
     if (typeof getNotifications !== "function") return;
 
     try {
-        const res = await getNotifications();
-        if (res && res.data) {
-            notificationsList = res.data || [];
-            unreadNotificationCount = res.unreadCount !== undefined ? res.unreadCount : notificationsList.filter(n => !n.isRead).length;
+        const [listRes, countRes] = await Promise.all([
+            getNotifications(),
+            typeof getUnreadNotificationCount === "function" ? getUnreadNotificationCount() : Promise.resolve({ data: 0 })
+        ]);
+        
+        if (listRes && listRes.data) {
+            notificationsList = listRes.data || [];
+            
+            // Backend returns count in data or unreadCount field depending on contract
+            const countValue = countRes.data !== undefined ? countRes.data : countRes.unreadCount;
+            unreadNotificationCount = countValue !== undefined ? Number(countValue) : notificationsList.filter(n => !n.isRead).length;
             updateBadge();
             renderNotificationList();
         }
