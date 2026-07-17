@@ -41,9 +41,8 @@ public class AdminServiceImpl implements AdminService {
         long totalDocuments = documentRepository.countByStatus("ACTIVE");
         long pendingDocs = documentRepository.countByVisibilityAndApprovalStatusAndStatus("PUBLIC", "PENDING", "ACTIVE");
 
-        List<PaymentOrder> successPayments = paymentOrderRepository.findByStatus("SUCCESS");
-        long totalRevenue = successPayments.stream().mapToLong(PaymentOrder::getAmount).sum();
-        long successfulPaymentsCount = successPayments.size();
+        long totalRevenue = paymentOrderRepository.sumSuccessfulRevenue();
+        long successfulPaymentsCount = paymentOrderRepository.countByStatus("SUCCESS");
 
         LocalDateTime nowUtc = LocalDateTime.now(ZoneOffset.UTC);
         LocalDateTime startOfToday = nowUtc.toLocalDate().atStartOfDay();
@@ -60,13 +59,14 @@ public class AdminServiceImpl implements AdminService {
                 .map(row -> new AdminDashboardResponse.ApprovalStatusCountItem(row[0].toString(), (Long) row[1]))
                 .collect(Collectors.toList());
 
-        Map<String, Long> monthlyRev = successPayments.stream()
+        List<Object[]> payGroupingData = paymentOrderRepository.findSuccessPaymentDatesAndAmounts();
+        Map<String, Long> monthlyRev = payGroupingData.stream()
                 .collect(Collectors.groupingBy(
-                        p -> {
-                            LocalDateTime dt = p.getPaidAt() != null ? p.getPaidAt() : p.getCreatedAt();
+                        row -> {
+                            LocalDateTime dt = (LocalDateTime) row[0];
                             return dt.format(DateTimeFormatter.ofPattern("yyyy-MM"));
                         },
-                        Collectors.summingLong(PaymentOrder::getAmount)
+                        Collectors.summingLong(row -> (Long) row[1])
                 ));
 
         List<AdminDashboardResponse.RevenueByMonthItem> revenueByMonth = monthlyRev.entrySet().stream()
@@ -107,7 +107,10 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional(readOnly = true)
     public AdminPublicDocumentListResponse getPublicDocuments(String search, String approvalStatus, String fileType, Integer subjectId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        if (page < 0) page = 0;
+        if (size < 1) size = 20;
+        if (size > 100) size = 100;
+        Pageable pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
         String searchParam = (search == null || search.trim().isEmpty()) ? null : search.trim();
         String appStatusParam = (approvalStatus == null || approvalStatus.trim().isEmpty()) ? null : approvalStatus.trim();
         String fileTypeParam = (fileType == null || fileType.trim().isEmpty()) ? null : fileType.trim();

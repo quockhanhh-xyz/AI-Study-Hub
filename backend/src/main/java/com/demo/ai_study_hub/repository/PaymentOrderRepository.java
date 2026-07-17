@@ -18,6 +18,14 @@ public interface PaymentOrderRepository extends JpaRepository<PaymentOrder, Long
 
     List<PaymentOrder> findByStatus(String status);
 
+    long countByStatus(String status);
+
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM PaymentOrder p WHERE p.status = 'SUCCESS'")
+    long sumSuccessfulRevenue();
+
+    @Query("SELECT COALESCE(p.paidAt, p.createdAt), p.amount FROM PaymentOrder p WHERE p.status = 'SUCCESS'")
+    List<Object[]> findSuccessPaymentDatesAndAmounts();
+
     List<PaymentOrder> findByUserOrderByCreatedAtDesc(User user);
 
     Optional<PaymentOrder> findByPaymentIdAndUser(Long paymentId, User user);
