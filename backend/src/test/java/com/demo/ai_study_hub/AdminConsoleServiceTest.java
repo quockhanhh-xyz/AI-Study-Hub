@@ -98,10 +98,10 @@ class AdminConsoleServiceTest {
 
     @Test
     void testUpdateUserStatus_SelfBlock_ThrowsException() {
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+        org.springframework.web.server.ResponseStatusException exception = assertThrows(org.springframework.web.server.ResponseStatusException.class, () -> {
             adminUserService.updateUserStatus(1, "BLOCKED", 1);
         });
-        assertEquals("Cannot block/unblock yourself", exception.getMessage());
+        assertEquals("Cannot block/unblock yourself", exception.getReason());
     }
 
     @Test
