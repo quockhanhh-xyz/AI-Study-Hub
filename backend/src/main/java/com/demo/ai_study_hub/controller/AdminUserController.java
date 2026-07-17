@@ -38,6 +38,7 @@ public class AdminUserController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction
     ) {
+        page = Math.max(0, page);
         size = Math.min(Math.max(1, size), 100);
         java.util.List<String> validSorts = java.util.Arrays.asList("userId", "email", "fullName", "createdAt", "role", "status", "tier");
         if (!validSorts.contains(sortBy)) {
