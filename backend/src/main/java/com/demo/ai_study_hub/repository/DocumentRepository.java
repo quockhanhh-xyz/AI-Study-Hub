@@ -67,6 +67,8 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
     List<Document> findByFolder(Folder folder);
     List<Document> findByOwner_UserIdAndStatus(Integer userId, String status);
+    
+    long countByOwner(User owner);
 
     @Query("SELECT d FROM Document d LEFT JOIN d.subject s " +
             "WHERE d.status = 'ACTIVE' " +

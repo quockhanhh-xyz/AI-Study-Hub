@@ -13,8 +13,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
 @Repository
-public interface PaymentOrderRepository extends JpaRepository<PaymentOrder, Long> {
+public interface PaymentOrderRepository extends JpaRepository<PaymentOrder, Long>, JpaSpecificationExecutor<PaymentOrder> {
 
     List<PaymentOrder> findByStatus(String status);
 

@@ -9,8 +9,10 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
 @Repository
-public interface AiUsageLogRepository extends JpaRepository<AiUsageLog, Long> {
+public interface AiUsageLogRepository extends JpaRepository<AiUsageLog, Long>, JpaSpecificationExecutor<AiUsageLog> {
 
     /**
      * Count successful AI questions used by a user since a given timestamp.
