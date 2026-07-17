@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subject Management - AI Study Hub Admin</title>
+    <!-- Include global styles first, then admin styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Mock Sidebar -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <h2>Admin Console</h2>
+            <nav>
+                <a href="admin-dashboard.html">Dashboard</a>
+                <a href="admin-users.html">Users</a>
+                <a href="admin-documents.html">Public Documents</a>
+                <a href="admin-payments.html">Payments</a>
+                <a href="admin-ai-usage.html">AI Usage</a>
+                <a href="admin-subjects.html" class="active">Subjects</a>
+                <a href="index.html">Back to App</a>
+            </nav>
+        </aside>
+
+        <main class="admin-content">
+            <div class="admin-header">
+                <h1>System Subject Management</h1>
+                <div>
+                    <button id="exportBtn" class="btn btn-secondary">Export Excel</button>
+                    <button class="btn btn-primary" onclick="openSubjectModal()">+ New Subject</button>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filter-section form-group" style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
+                <input type="text" id="searchInput" placeholder="Search by Code or Name..." style="flex: 1;">
+                <select id="statusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="INACTIVE">INACTIVE</option>
+                </select>
+                <button id="filterBtn" class="btn btn-secondary">Filter</button>
+            </div>
+
+            <!-- Table -->
+            <div class="admin-table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subjectsTableBody">
+                        <tr><td colspan="6" style="text-align: center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+                <div id="pagination" class="pagination">
+                    <!-- Pagination buttons -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div class="admin-modal" id="subjectModal">
+        <div class="admin-modal-content">
+            <div class="admin-modal-header">
+                <h3 id="subjectModalTitle">Create Subject</h3>
+                <button type="button" class="close-btn" onclick="closeModal('subjectModal')">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <form id="subjectForm">
+                    <input type="hidden" id="subjectId">
+                    <div class="form-group">
+                        <label>Code (Unique)</label>
+                        <input type="text" id="subjectCode" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" id="subjectName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="subjectDesc" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="admin-modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('subjectModal')">Cancel</button>
+                <button class="btn btn-primary" id="saveSubjectBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toggle Status Confirm Modal -->
+    <div class="admin-modal" id="toggleStatusModal">
+        <div class="admin-modal-content">
+            <div class="admin-modal-header">
+                <h3>Change Status</h3>
+                <button type="button" class="close-btn" onclick="closeModal('toggleStatusModal')">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <p id="toggleStatusMessage">Are you sure you want to change the status of this subject?</p>
+                <input type="hidden" id="toggleSubjectId">
+                <input type="hidden" id="toggleSubjectStatus">
+            </div>
+            <div class="admin-modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('toggleStatusModal')">Cancel</button>
+                <button class="btn btn-primary" id="confirmToggleBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/admin-subject-api.js"></script>
+    <script src="js/admin-subjects.js"></script>
+</body>
+</html>
