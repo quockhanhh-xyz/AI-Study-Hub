@@ -49,6 +49,9 @@ class AiChatControllerTest {
     @MockBean
     private UserDetailsServiceImpl userDetailsService;
 
+    @MockBean
+    private com.demo.ai_study_hub.repository.UserRepository userRepository;
+
     // =========================================================================
     // 1. Chưa login bị 401
     // =========================================================================

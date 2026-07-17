@@ -45,6 +45,9 @@ class DocumentProcessingControllerTest {
     @MockBean
     private UserDetailsServiceImpl userDetailsService;
 
+    @MockBean
+    private com.demo.ai_study_hub.repository.UserRepository userRepository;
+
     @Test
     @WithMockUser(username = "owner@gmail.com")
     void processDocument_WhenSucceed_ShouldReturn202Accepted() throws Exception {

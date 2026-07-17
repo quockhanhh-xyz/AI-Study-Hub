@@ -55,6 +55,9 @@ class PublicSecurityIntegrationTest {
     @MockBean
     private UserDetailsServiceImpl userDetailsService;
 
+    @MockBean
+    private com.demo.ai_study_hub.repository.UserRepository userRepository;
+
     @Test
     void getPublicDocuments_AsGuest_ShouldReturn200AndCleanData() throws Exception {
         PublicDocumentResponse publicDoc = PublicDocumentResponse.builder()
