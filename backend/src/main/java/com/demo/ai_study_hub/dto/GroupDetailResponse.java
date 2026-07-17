@@ -20,6 +20,7 @@ public class GroupDetailResponse {
     private Integer ownerId;
     private String status;
     private String currentUserRole;
+    private boolean requiresApproval;
     private List<GroupMemberItem> members;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

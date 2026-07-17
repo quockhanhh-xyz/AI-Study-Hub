@@ -35,6 +35,10 @@ public class StudyGroup {
     @Column(name = "status", nullable = false, length = 30)
     private String status = "ACTIVE";
 
+    /** When true, joinGroup via invite code creates a PENDING membership that the owner must approve. */
+    @Column(name = "requires_approval", nullable = false)
+    private boolean requiresApproval = false;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

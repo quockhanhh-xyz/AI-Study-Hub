@@ -158,6 +158,20 @@ public class StudyGroupController {
         }
     }
 
+    @GetMapping("/{id}/pending-members")
+    public ResponseEntity<ApiResponse<List<PendingMemberResponse>>> listPendingMembers(
+            @PathVariable Integer id,
+            Principal principal) {
+        try {
+            List<PendingMemberResponse> data = studyGroupService.listPendingMembers(id, principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(data, "Pending members retrieved successfully"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
     @PostMapping("/{id}/members/{userId}/approve")
     public ResponseEntity<ApiResponse<Void>> approveJoinRequest(
             @PathVariable Integer id,
