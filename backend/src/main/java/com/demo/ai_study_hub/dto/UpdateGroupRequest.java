@@ -10,4 +10,7 @@ public class UpdateGroupRequest {
     private String groupName;
 
     private String description;
+
+    /** If null, the current requiresApproval setting is kept unchanged. */
+    private Boolean requiresApproval;
 }

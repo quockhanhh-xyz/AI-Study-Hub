@@ -2025,14 +2025,14 @@ Retrieves detailed information of a group, including member list. Access is allo
 
 ## 8.4. Join Group API
 ## POST `/api/groups/join`
-Joins a group using an invite code.
+Joins a group using an invite code. If the group requires approval (requiresApproval = true) and the user was not pre-invited by the owner via email, the user's membership status becomes PENDING and a join request notification is sent to the owner. Otherwise (pre-invited via email or group does not require approval), the user joins directly as ACTIVE.
 - **Request Body**:
   ```json
   {
     "inviteCode": "A1B2C3D4"
   }
   ```
-- **Success Response (200 OK - Direct Join when pre-invited via email)**:
+- **Success Response (200 OK - Direct Join when pre-invited via email or group does not require approval)**:
   ```json
   {
     "success": true,
@@ -2053,7 +2053,7 @@ Joins a group using an invite code.
     }
   }
   ```
-- **Success Response (200 OK - Join Request Sent for approval)**:
+- **Success Response (200 OK - Join Request Sent for approval when group requires approval and not pre-invited)**:
   ```json
   {
     "success": true,

@@ -10,4 +10,6 @@ public class CreateGroupRequest {
     private String groupName;
 
     private String description;
+
+    private boolean requiresApproval = false;
 }

@@ -50,6 +50,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         StudyGroup group = new StudyGroup();
         group.setGroupName(request.getGroupName());
         group.setDescription(request.getDescription());
+        group.setRequiresApproval(request.isRequiresApproval());
         group.setInviteCode(generateUniqueInviteCode());
         group.setOwner(owner);
         group.setStatus("ACTIVE");
@@ -82,12 +83,16 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .collect(Collectors.toList());
 
         java.util.Map<Integer, Long> memberCounts = new java.util.HashMap<>();
+        java.util.Map<Integer, Long> pendingCounts = new java.util.HashMap<>();
         java.util.Map<Integer, Long> docCounts = new java.util.HashMap<>();
         java.util.Map<Integer, Long> folderCounts = new java.util.HashMap<>();
 
         if (!groupIds.isEmpty()) {
             studyGroupMemberRepository.countActiveMembersByGroupIds(groupIds).forEach(row -> {
                 memberCounts.put((Integer) row[0], (Long) row[1]);
+            });
+            studyGroupMemberRepository.countPendingMembersByGroupIds(groupIds).forEach(row -> {
+                pendingCounts.put((Integer) row[0], (Long) row[1]);
             });
             groupDocumentShareRepository.countActiveSharesByGroupIds(groupIds).forEach(row -> {
                 docCounts.put((Integer) row[0], (Long) row[1]);
@@ -103,6 +108,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                     StudyGroup group = m.getGroup();
                     GroupResponse res = mapToGroupResponse(group, m.getRole());
                     res.setMemberCount(memberCounts.getOrDefault(group.getGroupId(), 0L));
+                    res.setPendingMemberCount(pendingCounts.getOrDefault(group.getGroupId(), 0L));
                     res.setDocumentCount(docCounts.getOrDefault(group.getGroupId(), 0L));
                     res.setFolderCount(folderCounts.getOrDefault(group.getGroupId(), 0L));
                     return res;
@@ -152,6 +158,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .ownerId(group.getOwner().getUserId())
                 .status(group.getStatus())
                 .currentUserRole(currentMembership.getRole())
+                .requiresApproval(group.isRequiresApproval())
                 .members(memberItems)
                 .memberCount(memberCount)
                 .documentCount(documentCount)
@@ -178,6 +185,11 @@ public class StudyGroupServiceImpl implements StudyGroupService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You are already a member of this group");
         }
 
+        boolean alreadyPending = studyGroupMemberRepository.existsByGroupAndUserAndStatus(group, user, "PENDING");
+        if (alreadyPending) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Your join request is already pending approval");
+        }
+
         User groupOwner = group.getOwner();
         com.demo.ai_study_hub.dto.TierLimits ownerLimits = tierPolicyService.getLimitsForUser(groupOwner);
         long memberCount = studyGroupMemberRepository.countByGroupAndStatus(group, "ACTIVE");
@@ -188,7 +200,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
         StudyGroupMember existing = studyGroupMemberRepository.findByGroupAndUser(group, user).orElse(null);
         boolean isInvited = groupInvitationRepository.existsByGroupAndEmail(group, user.getEmail().trim().toLowerCase());
-        String targetStatus = isInvited ? "ACTIVE" : "PENDING";
+        String targetStatus = isInvited ? "ACTIVE" : (group.isRequiresApproval() ? "PENDING" : "ACTIVE");
 
         if (existing != null) {
             existing.setStatus(targetStatus);
@@ -205,7 +217,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
         if (isInvited) {
             groupInvitationRepository.deleteByGroupAndEmail(group, user.getEmail().trim().toLowerCase());
-        } else {
+        } else if ("PENDING".equals(targetStatus)) {
             String displayName = (user.getFullName() != null && !user.getFullName().trim().isEmpty())
                     ? user.getFullName() : user.getEmail();
 
@@ -265,9 +277,12 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
         group.setGroupName(request.getGroupName());
         group.setDescription(request.getDescription());
+        if (request.getRequiresApproval() != null) {
+            group.setRequiresApproval(request.getRequiresApproval());
+        }
         StudyGroup updated = studyGroupRepository.save(group);
 
-        return mapToGroupResponse(updated, "OWNER");
+        return mapToGroupResponse(updated, "OWNER", "ACTIVE");
     }
 
     @Override
@@ -385,9 +400,28 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .role(role)
                 .status(group.getStatus())
                 .membershipStatus(membershipStatus)
+                .requiresApproval(group.isRequiresApproval())
                 .createdAt(group.getCreatedAt())
                 .updatedAt(group.getUpdatedAt())
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PendingMemberResponse> listPendingMembers(Integer groupId, String ownerEmail) {
+        User owner = getUser(ownerEmail);
+        StudyGroup group = getActiveGroup(groupId);
+        requireOwner(group, owner);
+
+        return studyGroupMemberRepository.findByGroupAndStatus(group, "PENDING").stream()
+                .map(m -> PendingMemberResponse.builder()
+                        .memberId(m.getMemberId())
+                        .userId(m.getUser().getUserId())
+                        .fullName(m.getUser().getFullName())
+                        .email(m.getUser().getEmail())
+                        .requestedAt(m.getJoinedAt())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override
