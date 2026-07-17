@@ -130,7 +130,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Step 8A Rule: Use anchor elements <a> for navigable structural resource components
     const card = document.createElement("a");
     card.className = "folder-card";
-    card.href = `group-detail.html?id=${group.groupId}`;
+    const groupId = group.id || group.groupId;
+    card.href = `group-detail.html?id=${groupId}`;
     card.style.textDecoration = "none";
     card.style.color = "inherit";
 
@@ -161,7 +162,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     card.addEventListener("click", function (e) {
       if (!e.ctrlKey && !e.metaKey) {
         e.preventDefault();
-        navigateToGroup(group.groupId);
+        navigateToGroup(groupId);
       }
     });
 

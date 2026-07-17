@@ -23,21 +23,17 @@ async function initializeLayout() {
 }
 
 
+// Immediately restore sidebar state synchronously (script is at end of body)
+bootstrapSidebarCollapseState();
+
 window.authReady =
   document.readyState === "loading"
     ? new Promise((resolve) => {
       document.addEventListener("DOMContentLoaded", async () => {
-        bootstrapSidebarCollapseState();
         resolve(await initializeLayout());
       });
     })
     : Promise.resolve(initializeLayout());
-
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", bootstrapSidebarCollapseState, { once: true });
-} else {
-  bootstrapSidebarCollapseState();
-}
 
 
 /**
@@ -284,7 +280,6 @@ function initializeSidebarCollapse() {
   `;
   toggleBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18"></path></svg>';
   toggleBtn.setAttribute("aria-label", "Toggle Sidebar Navigation");
-
 
   if (logoContainer) {
     logoContainer.appendChild(toggleBtn);

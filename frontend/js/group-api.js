@@ -19,7 +19,7 @@ function createGroup(data) {
  * @returns {Promise<Array>} List of groups.
  */
 function getMyGroups() {
-  return get("/api/groups/my");
+  return get("/api/groups/my", { skipUnauthorizedRedirect: true });
 }
 
 /**
@@ -28,7 +28,7 @@ function getMyGroups() {
  * @returns {Promise<Object>} Group details.
  */
 function getGroupById(id) {
-  return get(`/api/groups/${id}`);
+  return get(`/api/groups/${id}`, { skipUnauthorizedRedirect: true });
 }
 
 /**
@@ -87,7 +87,7 @@ function removeGroupMember(groupId, userId) {
  * @returns {Promise<Array>} List of group documents.
  */
 function getGroupDocuments(groupId) {
-  return get(`/api/groups/${groupId}/documents`);
+  return get(`/api/groups/${groupId}/documents`, { skipUnauthorizedRedirect: true });
 }
 
 /**
@@ -97,5 +97,5 @@ function getGroupDocuments(groupId) {
  * @returns {Promise<Object>} List of group shared folders.
  */
 function getGroupFolders(groupId) {
-  return get(`/api/groups/${groupId}/folders`);
+  return get(`/api/groups/${groupId}/folders`, { skipUnauthorizedRedirect: true });
 }
