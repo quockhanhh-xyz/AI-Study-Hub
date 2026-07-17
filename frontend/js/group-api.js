@@ -99,3 +99,35 @@ function getGroupDocuments(groupId) {
 function getGroupFolders(groupId) {
   return get(`/api/groups/${groupId}/folders`, { skipUnauthorizedRedirect: true });
 }
+
+/**
+ * Retrieves the list of pending members awaiting owner approval.
+ * Owner permission is required.
+ * @param {number|string} groupId - Group identifier.
+ * @returns {Promise<Array>} List of pending members.
+ */
+function getPendingMembers(groupId) {
+  return get(`/api/groups/${groupId}/pending-members`, { skipUnauthorizedRedirect: true });
+}
+
+/**
+ * Approves a pending member's join request.
+ * Owner permission is required.
+ * @param {number|string} groupId - Group identifier.
+ * @param {number|string} userId - User identifier.
+ * @returns {Promise<Object>} Approve operation response.
+ */
+function approveGroupMember(groupId, userId) {
+  return post(`/api/groups/${groupId}/members/${userId}/approve`);
+}
+
+/**
+ * Rejects a pending member's join request.
+ * Owner permission is required.
+ * @param {number|string} groupId - Group identifier.
+ * @param {number|string} userId - User identifier.
+ * @returns {Promise<Object>} Reject operation response.
+ */
+function rejectGroupMember(groupId, userId) {
+  return post(`/api/groups/${groupId}/members/${userId}/reject`);
+}
