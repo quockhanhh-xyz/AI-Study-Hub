@@ -5,7 +5,7 @@
 
 async function getNotifications() {
     try {
-        const res = await get("/api/notifications", { skipUnauthorizedRedirect: true });
+        const res = await get("/api/notifications/my", { skipUnauthorizedRedirect: true });
         return res;
     } catch (error) {
         console.warn("Failed to fetch notifications from backend:", error);
@@ -13,9 +13,19 @@ async function getNotifications() {
     }
 }
 
+async function getUnreadNotificationCount() {
+    try {
+        const res = await get("/api/notifications/unread-count", { skipUnauthorizedRedirect: true });
+        return res;
+    } catch (error) {
+        console.warn("Failed to fetch unread notification count from backend:", error);
+        throw error;
+    }
+}
+
 async function markNotificationAsRead(notificationId) {
     try {
-        return await post(`/api/notifications/${notificationId}/read`, {}, { skipUnauthorizedRedirect: true });
+        return await put(`/api/notifications/${notificationId}/read`, {}, { skipUnauthorizedRedirect: true });
     } catch (error) {
         console.warn("Failed to mark notification as read:", error);
         throw error;
@@ -24,7 +34,7 @@ async function markNotificationAsRead(notificationId) {
 
 async function markAllNotificationsAsRead() {
     try {
-        return await post("/api/notifications/read-all", {}, { skipUnauthorizedRedirect: true });
+        return await put("/api/notifications/read-all", {}, { skipUnauthorizedRedirect: true });
     } catch (error) {
         console.warn("Failed to mark all notifications as read:", error);
         throw error;
@@ -33,5 +43,6 @@ async function markAllNotificationsAsRead() {
 
 // Expose functions globally
 window.getNotifications = getNotifications;
+window.getUnreadNotificationCount = getUnreadNotificationCount;
 window.markNotificationAsRead = markNotificationAsRead;
 window.markAllNotificationsAsRead = markAllNotificationsAsRead;
