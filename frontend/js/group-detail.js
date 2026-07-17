@@ -771,7 +771,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         item.appendChild(info);
         
         item.addEventListener("click", () => {
-          const mentionTag = `[doc:${doc.id}:${doc.title}] `;
+          const mentionTag = `[doc:${doc.documentId}:${doc.title || "Untitled"}] `;
           chatInput.value = chatInput.value + mentionTag;
           chatInput.focus();
           updateSendButtonState();
