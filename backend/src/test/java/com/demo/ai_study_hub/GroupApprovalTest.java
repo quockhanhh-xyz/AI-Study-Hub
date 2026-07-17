@@ -459,4 +459,28 @@ class GroupApprovalTest {
 
         assertTrue(response.isRequiresApproval());
     }
+
+    @Test
+    void joinGroup_WhenPreInvitedViaEmail_ShouldJoinAsActiveAndBypassApprovalAndCleanUpInvitation() {
+        JoinGroupRequest request = new JoinGroupRequest();
+        request.setInviteCode("APPROVE1");
+
+        when(userRepository.findByEmail("newuser@test.com")).thenReturn(Optional.of(newUser));
+        when(studyGroupRepository.findByInviteCodeForUpdate("APPROVE1")).thenReturn(Optional.of(groupWithApproval));
+        lenient().when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithApproval, newUser, "ACTIVE")).thenReturn(false);
+        lenient().when(studyGroupMemberRepository.existsByGroupAndUserAndStatus(groupWithApproval, newUser, "PENDING")).thenReturn(false);
+        lenient().when(studyGroupMemberRepository.countByGroupAndStatus(groupWithApproval, "ACTIVE")).thenReturn(1L);
+        when(studyGroupMemberRepository.findByGroupAndUser(groupWithApproval, newUser)).thenReturn(Optional.empty());
+        
+        // Mock invitation check
+        when(groupInvitationRepository.existsByGroupAndEmail(groupWithApproval, "newuser@test.com")).thenReturn(true);
+
+        GroupResponse response = studyGroupService.joinGroup(request, "newuser@test.com");
+
+        assertNotNull(response);
+        assertEquals("ACTIVE", response.getMembershipStatus());
+        verify(studyGroupMemberRepository, times(1)).save(any(StudyGroupMember.class));
+        verify(groupInvitationRepository, times(1)).deleteByGroupAndEmail(groupWithApproval, "newuser@test.com");
+        verify(notificationService, never()).createNotification(any(), any(), any(), any(), any(), any(), any());
+    }
 }

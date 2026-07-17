@@ -83,12 +83,16 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .collect(Collectors.toList());
 
         java.util.Map<Integer, Long> memberCounts = new java.util.HashMap<>();
+        java.util.Map<Integer, Long> pendingCounts = new java.util.HashMap<>();
         java.util.Map<Integer, Long> docCounts = new java.util.HashMap<>();
         java.util.Map<Integer, Long> folderCounts = new java.util.HashMap<>();
 
         if (!groupIds.isEmpty()) {
             studyGroupMemberRepository.countActiveMembersByGroupIds(groupIds).forEach(row -> {
                 memberCounts.put((Integer) row[0], (Long) row[1]);
+            });
+            studyGroupMemberRepository.countPendingMembersByGroupIds(groupIds).forEach(row -> {
+                pendingCounts.put((Integer) row[0], (Long) row[1]);
             });
             groupDocumentShareRepository.countActiveSharesByGroupIds(groupIds).forEach(row -> {
                 docCounts.put((Integer) row[0], (Long) row[1]);
@@ -104,6 +108,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                     StudyGroup group = m.getGroup();
                     GroupResponse res = mapToGroupResponse(group, m.getRole());
                     res.setMemberCount(memberCounts.getOrDefault(group.getGroupId(), 0L));
+                    res.setPendingMemberCount(pendingCounts.getOrDefault(group.getGroupId(), 0L));
                     res.setDocumentCount(docCounts.getOrDefault(group.getGroupId(), 0L));
                     res.setFolderCount(folderCounts.getOrDefault(group.getGroupId(), 0L));
                     return res;
@@ -153,6 +158,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .ownerId(group.getOwner().getUserId())
                 .status(group.getStatus())
                 .currentUserRole(currentMembership.getRole())
+                .requiresApproval(group.isRequiresApproval())
                 .members(memberItems)
                 .memberCount(memberCount)
                 .documentCount(documentCount)
