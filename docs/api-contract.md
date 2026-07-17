@@ -4953,3 +4953,179 @@ Marks all notifications of the current authenticated user as read.
     "data": null
   }
   ```
+
+---
+
+# 9. Admin APIs
+
+All admin API endpoints require authentication and authorization. Only accounts with the `ADMIN` role are permitted access. Unauthenticated requests return `401 Unauthorized`. Non-admin authenticated requests return `403 Forbidden`.
+
+The role property in `GET /api/auth/me` returns `"ADMIN"` or `"USER"`.
+
+## 9.1. Admin Dashboard Summary API
+## GET `/api/admin/dashboard/summary`
+Retrieves summary metrics for the admin console.
+- **Auth required**: Yes (Role: `ADMIN`)
+- **Success Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "message": "Admin dashboard summary retrieved successfully",
+    "data": {
+      "totalUsers": 120,
+      "totalDocuments": 450,
+      "pendingPublicDocuments": 8,
+      "totalRevenue": 2500000,
+      "successfulPayments": 24,
+      "aiRequestsToday": 320,
+      "aiRequestsThisMonth": 7200,
+      "usersByTier": [
+        {
+          "tier": "FREE",
+          "count": 90
+        },
+        {
+          "tier": "PREMIUM",
+          "count": 25
+        },
+        {
+          "tier": "ULTRA",
+          "count": 5
+        }
+      ],
+      "documentsByApprovalStatus": [
+        {
+          "approvalStatus": "PENDING",
+          "count": 10
+        },
+        {
+          "approvalStatus": "APPROVED",
+          "count": 80
+        },
+        {
+          "approvalStatus": "REJECTED",
+          "count": 5
+        }
+      ],
+      "revenueByMonth": [
+        {
+          "month": "2026-07",
+          "revenue": 1200000
+        }
+      ],
+      "aiUsageByFeature": [
+        {
+          "feature": "AI_QA",
+          "count": 300
+        },
+        {
+          "feature": "AI_SUMMARY",
+          "count": 60
+        },
+        {
+          "feature": "AI_FLASHCARD",
+          "count": 45
+        },
+        {
+          "feature": "AI_QUIZ",
+          "count": 50
+        }
+      ]
+    }
+  }
+  ```
+
+## 9.2. Get Public Documents Moderation List API
+## GET `/api/admin/documents/public`
+Retrieves a paginated list of public documents for moderation.
+- **Auth required**: Yes (Role: `ADMIN`)
+- **Query Parameters**:
+  - `search` (String, optional): Search keyword matching title or owner email.
+  - `approvalStatus` (String, optional): Approval status filter (`PENDING`, `APPROVED`, `REJECTED`).
+  - `fileType` (String, optional): File type filter (e.g. `PDF`).
+  - `subjectId` (Integer, optional): Subject ID filter.
+  - `page` (Integer, optional, default: 0): Page index.
+  - `size` (Integer, optional, default: 20): Page size.
+- **Success Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "message": "Public documents retrieved successfully",
+    "data": {
+      "items": [
+        {
+          "documentId": 10,
+          "title": "Biology Chapter 3",
+          "ownerEmail": "student@example.com",
+          "subject": "Biology",
+          "fileType": "PDF",
+          "visibility": "PUBLIC",
+          "approvalStatus": "PENDING",
+          "processingStatus": "COMPLETED",
+          "viewCount": 15,
+          "downloadCount": 3,
+          "createdAt": "2026-07-08T10:00:00Z",
+          "publishedAt": "2026-07-08T10:30:00Z"
+        }
+      ],
+      "page": 0,
+      "size": 20,
+      "totalItems": 100,
+      "totalPages": 5
+    }
+  }
+  ```
+
+## 9.3. Approve Public Document API
+## PATCH `/api/admin/documents/{id}/approve`
+Approves a public document, making it visible in the Community Library.
+- **Auth required**: Yes (Role: `ADMIN`)
+- **Success Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "message": "Document approved successfully",
+    "data": null
+  }
+  ```
+
+## 9.4. Reject Public Document API
+## PATCH `/api/admin/documents/{id}/reject`
+Rejects a public document. It will not be shown in the Community Library, but its original file and DB record are kept.
+- **Auth required**: Yes (Role: `ADMIN`)
+- **Success Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "message": "Document rejected successfully",
+    "data": null
+  }
+  ```
+
+## 9.5. Unpublish Public Document API
+## PATCH `/api/admin/documents/{id}/unpublish`
+Sets a public document visibility back to `PRIVATE`.
+- **Auth required**: Yes (Role: `ADMIN`)
+- **Success Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "message": "Document unpublished successfully",
+    "data": null
+  }
+  ```
+
+## 9.6. Export Public Documents API
+## GET `/api/admin/documents/public/export`
+Exports filtered public documents metadata to an Excel workbook (.xlsx).
+- **Auth required**: Yes (Role: `ADMIN`)
+- **Query Parameters**:
+  - `search` (String, optional)
+  - `approvalStatus` (String, optional)
+  - `fileType` (String, optional)
+  - `subjectId` (Integer, optional)
+- **Response Headers**:
+  - `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+  - `Content-Disposition: attachment; filename="public_documents.xlsx"`
+- **Response Body**: Binary XLSX file payload.
+

@@ -16,6 +16,8 @@ import java.util.Optional;
 @Repository
 public interface PaymentOrderRepository extends JpaRepository<PaymentOrder, Long> {
 
+    List<PaymentOrder> findByStatus(String status);
+
     List<PaymentOrder> findByUserOrderByCreatedAtDesc(User user);
 
     Optional<PaymentOrder> findByPaymentIdAndUser(Long paymentId, User user);

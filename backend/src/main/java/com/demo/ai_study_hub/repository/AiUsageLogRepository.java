@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Repository
 public interface AiUsageLogRepository extends JpaRepository<AiUsageLog, Long> {
@@ -34,4 +35,10 @@ public interface AiUsageLogRepository extends JpaRepository<AiUsageLog, Long> {
             @Param("userId") Integer userId,
             @Param("requestType") String requestType,
             @Param("since") LocalDateTime since);
+
+    @Query("SELECT l.requestType, COUNT(l) FROM AiUsageLog l WHERE l.status = 'SUCCESS' GROUP BY l.requestType")
+    List<Object[]> countUsageByRequestType();
+
+    @Query("SELECT COUNT(l) FROM AiUsageLog l WHERE l.status = 'SUCCESS' AND l.createdAt >= :since")
+    long countSuccessfulLogsAfter(@Param("since") LocalDateTime since);
 }
