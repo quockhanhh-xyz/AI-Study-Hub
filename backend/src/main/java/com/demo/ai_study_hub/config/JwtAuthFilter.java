@@ -36,7 +36,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String email = jwtUtil.extractEmail(token);
             com.demo.ai_study_hub.entity.User userEntity = userRepository.findByEmail(email).orElse(null);
 
-            if (userEntity != null && !"BLOCKED".equals(userEntity.getStatus())) {
+            if (userEntity != null && "ACTIVE".equals(userEntity.getStatus())) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
                 UsernamePasswordAuthenticationToken auth =
