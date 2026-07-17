@@ -631,7 +631,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const bubble = document.createElement("div");
     bubble.className = "chat-message-bubble";
-    safeTextRender(bubble, msg.content);
+    parseChatMentions(bubble, msg.content);
 
     row.append(meta, bubble);
     return row;
@@ -721,6 +721,123 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // Initial button state
   updateSendButtonState();
+
+  // ─────────────────────────────────────────────────────────────
+  // CHAT DOCUMENT MENTION
+  // ─────────────────────────────────────────────────────────────
+
+  const chatMentionBtn = document.getElementById("chatMentionBtn");
+  const chatMentionDropdown = document.getElementById("chatMentionDropdown");
+  const chatMentionList = document.getElementById("chatMentionList");
+  let isMentionDropdownOpen = false;
+
+  function toggleMentionDropdown() {
+    isMentionDropdownOpen = !isMentionDropdownOpen;
+    chatMentionDropdown.style.display = isMentionDropdownOpen ? "flex" : "none";
+    if (isMentionDropdownOpen) {
+      loadMentionDocuments();
+    }
+  }
+
+  async function loadMentionDocuments() {
+    chatMentionList.innerHTML = `<div class="chat-mention-empty">Loading documents...</div>`;
+    try {
+      const result = await getGroupDocuments(groupId);
+      const docs = Array.isArray(result.data) ? result.data : [];
+      
+      if (docs.length === 0) {
+        chatMentionList.innerHTML = `<div class="chat-mention-empty">No documents found in this group.</div>`;
+        return;
+      }
+      
+      chatMentionList.innerHTML = "";
+      docs.forEach(doc => {
+        const item = document.createElement("div");
+        item.className = "chat-mention-item";
+        
+        const icon = document.createElement("div");
+        icon.className = "chat-mention-item-icon";
+        icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>`;
+        
+        const info = document.createElement("div");
+        info.className = "chat-mention-item-info";
+        
+        const name = document.createElement("div");
+        name.className = "chat-mention-item-name";
+        name.textContent = doc.title || "Untitled";
+        
+        info.appendChild(name);
+        item.appendChild(icon);
+        item.appendChild(info);
+        
+        item.addEventListener("click", () => {
+          const mentionTag = `[doc:${doc.id}:${doc.title}] `;
+          chatInput.value = chatInput.value + mentionTag;
+          chatInput.focus();
+          updateSendButtonState();
+          toggleMentionDropdown();
+        });
+        
+        chatMentionList.appendChild(item);
+      });
+    } catch (error) {
+      chatMentionList.innerHTML = `<div class="chat-mention-empty" style="color:var(--danger)">Failed to load documents</div>`;
+    }
+  }
+
+  if (chatMentionBtn) {
+    chatMentionBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleMentionDropdown();
+    });
+  }
+
+  // Close dropdown when clicking outside
+  document.addEventListener("click", (e) => {
+    if (isMentionDropdownOpen && !chatMentionBtn.contains(e.target) && !chatMentionDropdown.contains(e.target)) {
+      toggleMentionDropdown();
+    }
+  });
+
+  // Safely parse [doc:ID:Title] into a clickable DOM anchor.
+  function parseChatMentions(container, text) {
+    if (!text) return;
+    
+    // Regex matches [doc:ID:Title]
+    const regex = /\[doc:(\w+):([^\]]+)\]/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+      // Append text before the match
+      if (match.index > lastIndex) {
+        container.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+      }
+      
+      const docId = match[1];
+      const docTitle = match[2];
+      
+      // Create pill anchor
+      const anchor = document.createElement("a");
+      anchor.className = "chat-doc-mention";
+      anchor.href = `document-detail.html?id=${encodeURIComponent(docId)}`;
+      anchor.target = "_blank"; // open in new tab
+      
+      anchor.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="14" width="14" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>`;
+      const titleSpan = document.createElement("span");
+      titleSpan.textContent = docTitle;
+      anchor.appendChild(titleSpan);
+      
+      container.appendChild(anchor);
+      
+      lastIndex = regex.lastIndex;
+    }
+    
+    // Append remaining text
+    if (lastIndex < text.length) {
+      container.appendChild(document.createTextNode(text.substring(lastIndex)));
+    }
+  }
 
   async function loadGroupDetail() {
     detailLoader.style.display = "flex";
