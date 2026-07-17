@@ -1,5 +1,8 @@
 package com.demo.ai_study_hub.controller;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.demo.ai_study_hub.dto.ApiResponse;
 import com.demo.ai_study_hub.dto.AdminAiUsageListResponse;
 import com.demo.ai_study_hub.service.AdminAiUsageService;
@@ -34,6 +37,11 @@ public class AdminAiUsageController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction
     ) {
+        size = Math.min(Math.max(1, size), 100);
+        java.util.List<String> validSorts = java.util.Arrays.asList("userId", "email", "createdAt", "tier", "fullName");
+        if (!validSorts.contains(sortBy)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sort field");
+        }
         Sort sort = direction.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         AdminAiUsageListResponse response = adminAiUsageService.getAiUsages(search, tier, feature, startDate, endDate, pageable);

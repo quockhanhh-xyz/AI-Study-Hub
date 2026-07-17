@@ -1,5 +1,8 @@
 package com.demo.ai_study_hub.service;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.demo.ai_study_hub.dto.AdminPaymentItem;
 import com.demo.ai_study_hub.dto.AdminPaymentListResponse;
 import com.demo.ai_study_hub.entity.PaymentOrder;
@@ -43,7 +46,7 @@ public class AdminPaymentService {
     }
 
     public AdminPaymentItem getPaymentById(Long id) {
-        PaymentOrder order = paymentOrderRepository.findById(id).orElseThrow(() -> new RuntimeException("Payment not found"));
+        PaymentOrder order = paymentOrderRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment not found"));
         return mapToItem(order);
     }
 
@@ -81,7 +84,7 @@ public class AdminPaymentService {
             workbook.write(out);
             return out.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException("Error exporting payments to Excel", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error exporting payments to Excel", e);
         }
     }
 

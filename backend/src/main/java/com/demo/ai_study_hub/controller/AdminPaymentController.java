@@ -1,5 +1,8 @@
 package com.demo.ai_study_hub.controller;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.demo.ai_study_hub.dto.ApiResponse;
 import com.demo.ai_study_hub.dto.AdminPaymentListResponse;
 import com.demo.ai_study_hub.dto.AdminPaymentItem;
@@ -36,6 +39,11 @@ public class AdminPaymentController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction
     ) {
+        size = Math.min(Math.max(1, size), 100);
+        java.util.List<String> validSorts = java.util.Arrays.asList("paymentId", "amount", "status", "createdAt", "paidAt", "planCode");
+        if (!validSorts.contains(sortBy)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sort field");
+        }
         Sort sort = direction.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         AdminPaymentListResponse response = adminPaymentService.getPayments(search, plan, status, provider, startDate, endDate, pageable);

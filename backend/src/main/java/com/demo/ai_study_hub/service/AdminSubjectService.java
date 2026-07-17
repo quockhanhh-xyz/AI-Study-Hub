@@ -1,5 +1,8 @@
 package com.demo.ai_study_hub.service;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.demo.ai_study_hub.dto.AdminSubjectItem;
 import com.demo.ai_study_hub.dto.AdminSubjectListResponse;
 import com.demo.ai_study_hub.dto.AdminSubjectRequest;
@@ -44,7 +47,7 @@ public class AdminSubjectService {
 
     public AdminSubjectItem createSubject(AdminSubjectRequest request) {
         if (subjectRepository.existsBySubjectCode(request.getSubjectCode())) {
-            throw new RuntimeException("Subject code already exists");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Subject code already exists");
         }
 
         Subject subject = new Subject();
@@ -59,14 +62,14 @@ public class AdminSubjectService {
     }
 
     public AdminSubjectItem updateSubject(Integer id, AdminSubjectRequest request) {
-        Subject subject = subjectRepository.findById(id).orElseThrow(() -> new RuntimeException("Subject not found"));
+        Subject subject = subjectRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
         
         if (!isSystemSubject(subject)) {
-            throw new RuntimeException("Cannot edit custom subjects");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot edit custom subjects");
         }
 
         if (!subject.getSubjectCode().equals(request.getSubjectCode()) && subjectRepository.existsBySubjectCode(request.getSubjectCode())) {
-            throw new RuntimeException("Subject code already exists");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Subject code already exists");
         }
 
         subject.setSubjectCode(request.getSubjectCode());
@@ -78,10 +81,14 @@ public class AdminSubjectService {
     }
 
     public AdminSubjectItem updateSubjectStatus(Integer id, String status) {
-        Subject subject = subjectRepository.findById(id).orElseThrow(() -> new RuntimeException("Subject not found"));
+        if (!"ACTIVE".equals(status) && !"INACTIVE".equals(status)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status");
+        }
+
+        Subject subject = subjectRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
 
         if (!isSystemSubject(subject)) {
-            throw new RuntimeException("Cannot edit custom subjects");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot edit custom subjects");
         }
 
         subject.setStatus(status);
@@ -117,7 +124,7 @@ public class AdminSubjectService {
             workbook.write(out);
             return out.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException("Error exporting subjects to Excel", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error exporting subjects to Excel", e);
         }
     }
 

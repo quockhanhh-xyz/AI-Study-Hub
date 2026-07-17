@@ -1,5 +1,8 @@
 package com.demo.ai_study_hub.service;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.demo.ai_study_hub.dto.AdminUserItem;
 import com.demo.ai_study_hub.dto.AdminUserListResponse;
 import com.demo.ai_study_hub.entity.User;
@@ -68,22 +71,26 @@ public class AdminUserService {
     }
 
     public AdminUserItem getUserById(Integer id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         return mapToItem(user);
     }
 
     public AdminUserItem updateUserStatus(Integer id, String newStatus, Integer currentAdminId) {
-        if (id.equals(currentAdminId)) {
-            throw new RuntimeException("Cannot block/unblock yourself");
+        if (!"ACTIVE".equals(newStatus) && !"INACTIVE".equals(newStatus) && !"BLOCKED".equals(newStatus)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status");
         }
 
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        if (id.equals(currentAdminId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot block/unblock yourself");
+        }
+
+        User user = userRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         if ("BLOCKED".equals(newStatus) && "ADMIN".equals(user.getRole())) {
             // Optional: prevent blocking last admin
             long adminCount = userRepository.findAll().stream().filter(u -> "ADMIN".equals(u.getRole()) && !"BLOCKED".equals(u.getStatus())).count();
             if (adminCount <= 1) {
-                throw new RuntimeException("Cannot block the last active admin");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot block the last active admin");
             }
         }
 
@@ -144,7 +151,7 @@ public class AdminUserService {
             workbook.write(out);
             return out.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException("Error exporting users to Excel", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error exporting users to Excel", e);
         }
     }
 

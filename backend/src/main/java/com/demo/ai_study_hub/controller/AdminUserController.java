@@ -1,5 +1,8 @@
 package com.demo.ai_study_hub.controller;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.demo.ai_study_hub.dto.ApiResponse;
 import com.demo.ai_study_hub.dto.AdminUserListResponse;
 import com.demo.ai_study_hub.dto.AdminUserItem;
@@ -35,6 +38,11 @@ public class AdminUserController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction
     ) {
+        size = Math.min(Math.max(1, size), 100);
+        java.util.List<String> validSorts = java.util.Arrays.asList("userId", "email", "fullName", "createdAt", "role", "status", "tier");
+        if (!validSorts.contains(sortBy)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sort field");
+        }
         Sort sort = direction.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         AdminUserListResponse response = adminUserService.getUsers(search, role, tier, status, pageable);
