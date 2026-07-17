@@ -215,6 +215,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   createConfirmBtn.addEventListener("click", async function () {
     const groupName = createGroupName.value.trim();
     const description = createGroupDescription.value.trim();
+    const createRequiresApproval = document.getElementById("createRequiresApproval");
+    const requiresApproval = createRequiresApproval ? createRequiresApproval.checked : false;
 
     if (!groupName) {
       showError(createError, "Group name is required.");
@@ -225,7 +227,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     hideError(createError);
 
     try {
-      await createGroup({ groupName, description });
+      await createGroup({ groupName, description, requiresApproval });
       closeModal(createModal);
       showToast("Group created successfully.", "success");
       await loadGroups();
@@ -269,9 +271,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     hideError(joinError);
 
     try {
-      await joinGroup(inviteCode);
+      const response = await joinGroup(inviteCode);
       closeModal(joinModal);
-      showToast("Joined group successfully.", "success");
+      if (response.data && response.data.membershipStatus === "PENDING") {
+        showToast("Join request sent successfully. Pending approval.", "success");
+      } else {
+        showToast("Joined group successfully.", "success");
+      }
       await loadGroups();
     } catch (error) {
       // Backend returns a business error when the user is already a member,
