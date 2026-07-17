@@ -123,9 +123,9 @@ async function fetchAndRenderNotifications() {
         if (listRes && listRes.data) {
             notificationsList = listRes.data || [];
             
-            // Backend returns count in data or unreadCount field depending on contract
-            const countValue = countRes.data !== undefined ? countRes.data : countRes.unreadCount;
-            unreadNotificationCount = countValue !== undefined ? Number(countValue) : notificationsList.filter(n => !n.isRead).length;
+            // Backend returns count in data.count or unreadCount field depending on contract
+            const countValue = countRes?.data?.count ?? countRes?.unreadCount;
+            unreadNotificationCount = countValue !== undefined && countValue !== null ? Number(countValue) : notificationsList.filter(n => !n.read).length;
             updateBadge();
             renderNotificationList();
         }
@@ -166,20 +166,20 @@ function renderNotificationList() {
 
     notificationsList.forEach(notif => {
         const item = document.createElement("div");
-        item.className = "notification-item" + (notif.isRead ? "" : " unread");
+        item.className = "notification-item" + (notif.read ? "" : " unread");
 
         // Icon based on type
         let iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>`;
         
-        if (notif.type === "JOIN_REQUEST") {
+        if (notif.type === "GROUP_JOIN_REQUEST") {
             iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" /></svg>`;
-        } else if (notif.type === "JOIN_APPROVED") {
+        } else if (notif.type === "GROUP_JOIN_APPROVED") {
             iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
-        } else if (notif.type === "JOIN_REJECTED" || notif.type === "MEMBER_REMOVED") {
+        } else if (notif.type === "GROUP_JOIN_REJECTED" || notif.type === "GROUP_MEMBER_REMOVED") {
             iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>`;
-        } else if (notif.type === "MEMBER_LEFT") {
+        } else if (notif.type === "GROUP_MEMBER_LEFT") {
             iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>`;
-        } else if (notif.type === "DOCUMENT_REMOVED") {
+        } else if (notif.type === "GROUP_DOCUMENT_REMOVED") {
             iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.158 0c-.36-.05-.72-.099-1.08-.148m-1.08-.148a50.11 50.11 0 00-10.42 0m10.42 0V4.25c0-.141-.101-.271-.241-.287a48.54 48.54 0 00-10.158 0c-.14.016-.241.146-.241.287v1.5" /></svg>`;
         }
 
@@ -206,14 +206,14 @@ function renderNotificationList() {
 
         // Click action
         item.addEventListener("click", async () => {
-            if (!notif.isRead) {
-                await handleMarkRead(notif.id);
+            if (!notif.read) {
+                await handleMarkRead(notif.notificationId);
             }
-            if (notif.linkTarget && notif.linkId) {
-                if (notif.linkTarget === "GROUP") {
-                    window.location.href = `group-detail.html?id=${notif.linkId}`;
-                } else if (notif.linkTarget === "DOCUMENT") {
-                    window.location.href = `document-detail.html?id=${notif.linkId}`;
+            if (notif.targetType && notif.targetId) {
+                if (notif.targetType === "GROUP") {
+                    window.location.href = `group-detail.html?id=${notif.targetId}`;
+                } else if (notif.targetType === "DOCUMENT") {
+                    window.location.href = `document-detail.html?id=${notif.targetId}`;
                 }
             }
         });
@@ -222,13 +222,13 @@ function renderNotificationList() {
     });
 }
 
-async function handleMarkRead(id) {
+async function handleMarkRead(notificationId) {
     if (typeof markNotificationAsRead === "function") {
-        await markNotificationAsRead(id);
+        await markNotificationAsRead(notificationId);
     }
-    const notif = notificationsList.find(n => n.id === id);
-    if (notif && !notif.isRead) {
-        notif.isRead = true;
+    const notif = notificationsList.find(n => n.notificationId === notificationId);
+    if (notif && !notif.read) {
+        notif.read = true;
         unreadNotificationCount = Math.max(0, unreadNotificationCount - 1);
         updateBadge();
         renderNotificationList();
@@ -239,7 +239,7 @@ async function handleMarkAllRead() {
     if (typeof markAllNotificationsAsRead === "function") {
         await markAllNotificationsAsRead();
     }
-    notificationsList.forEach(n => n.isRead = true);
+    notificationsList.forEach(n => n.read = true);
     unreadNotificationCount = 0;
     updateBadge();
     renderNotificationList();
