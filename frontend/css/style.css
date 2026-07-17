@@ -1221,7 +1221,7 @@ textarea.success {
 
 
 /* ═══════════════════════════════════════════════════════
-   SIDEBAR — CONSOLIDATED 
+   SIDEBAR — CONSOLIDATED
 ═══════════════════════════════════════════════════════ */
 
 .sidebar {
@@ -5056,7 +5056,7 @@ svg {
 /* ─────────────────────────────────────────────────────────────
    SIDEBAR FOUC PREVENTION (No Transition Class)
    ───────────────────────────────────────────────────────────── */
-.no-transition, 
+.no-transition,
 .no-transition * {
   transition: none !important;
 }
