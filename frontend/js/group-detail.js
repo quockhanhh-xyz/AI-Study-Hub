@@ -1013,6 +1013,10 @@ document.addEventListener("DOMContentLoaded", async function () {
   editGroupBtn.addEventListener("click", function () {
     editGroupName.value = currentGroup.groupName || "";
     editGroupDescription.value = currentGroup.description || "";
+    const editRequiresApproval = document.getElementById("editRequiresApproval");
+    if (editRequiresApproval) {
+        editRequiresApproval.checked = currentGroup.requiresApproval === true;
+    }
     hideError(editError);
     openModal(editModal);
     editGroupName.focus();
@@ -1023,6 +1027,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   editConfirmBtn.addEventListener("click", async function () {
     const groupName = editGroupName.value.trim();
     const description = editGroupDescription.value.trim();
+    const editRequiresApproval = document.getElementById("editRequiresApproval");
+    const requiresApproval = editRequiresApproval ? editRequiresApproval.checked : false;
 
     if (!groupName) {
       showError(editError, "Group name is required.");
@@ -1033,7 +1039,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     hideError(editError);
 
     try {
-      await updateGroup(groupId, { groupName, description });
+      await updateGroup(groupId, { groupName, description, requiresApproval });
       closeModal(editModal);
       showToast("Group updated.", "success");
       await loadGroupDetail();
