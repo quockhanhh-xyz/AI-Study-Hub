@@ -111,7 +111,11 @@ public class AdminAiUsageService {
                 subquery.select(subRoot.get("user").get("userId"));
 
                 List<Predicate> subPredicates = new ArrayList<>();
-                subPredicates.add(cb.equal(subRoot.get("requestType"), mappedFeature));
+                if ("QA".equals(mappedFeature)) {
+                    subPredicates.add(subRoot.get("requestType").in("ASK", "QA", "AI_QA"));
+                } else {
+                    subPredicates.add(cb.equal(subRoot.get("requestType"), mappedFeature));
+                }
 
                 if (startDate != null) {
                     subPredicates.add(cb.greaterThanOrEqualTo(subRoot.get("createdAt"), startDate));
@@ -151,7 +155,7 @@ public class AdminAiUsageService {
 
         for (AiUsageLog log : logs) {
             String type = log.getRequestType();
-            if ("QA".equalsIgnoreCase(type) || "ASK".equalsIgnoreCase(type)) qa++;
+            if ("QA".equalsIgnoreCase(type) || "ASK".equalsIgnoreCase(type) || "AI_QA".equalsIgnoreCase(type)) qa++;
             else if ("SUMMARY".equalsIgnoreCase(type)) summary++;
             else if ("FLASHCARD".equalsIgnoreCase(type)) flashcard++;
             else if ("QUIZ".equalsIgnoreCase(type)) quiz++;
