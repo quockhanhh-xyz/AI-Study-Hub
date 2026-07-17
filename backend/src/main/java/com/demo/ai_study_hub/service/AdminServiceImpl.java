@@ -137,8 +137,11 @@ public class AdminServiceImpl implements AdminService {
         if (!"ACTIVE".equals(doc.getStatus())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
+        if (!"PUBLIC".equals(doc.getVisibility())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only public documents can be moderated");
+        }
         doc.setApprovalStatus("APPROVED");
-        if ("PUBLIC".equals(doc.getVisibility()) && doc.getPublishedAt() == null) {
+        if (doc.getPublishedAt() == null) {
             doc.setPublishedAt(LocalDateTime.now(ZoneOffset.UTC));
         }
         documentRepository.save(doc);
@@ -152,6 +155,9 @@ public class AdminServiceImpl implements AdminService {
         if (!"ACTIVE".equals(doc.getStatus())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
+        if (!"PUBLIC".equals(doc.getVisibility())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only public documents can be moderated");
+        }
         doc.setApprovalStatus("REJECTED");
         documentRepository.save(doc);
     }
@@ -163,6 +169,9 @@ public class AdminServiceImpl implements AdminService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
         if (!"ACTIVE".equals(doc.getStatus())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+        if (!"PUBLIC".equals(doc.getVisibility())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only public documents can be unpublished");
         }
         doc.setVisibility("PRIVATE");
         documentRepository.save(doc);
