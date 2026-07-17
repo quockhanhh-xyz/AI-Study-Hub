@@ -1,5 +1,8 @@
 package com.demo.ai_study_hub.service;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.demo.ai_study_hub.dto.AdminAiUsageItem;
 import com.demo.ai_study_hub.dto.AdminAiUsageListResponse;
 import com.demo.ai_study_hub.entity.AiUsageLog;
@@ -35,35 +38,7 @@ public class AdminAiUsageService {
     private UserRepository userRepository;
 
     public AdminAiUsageListResponse getAiUsages(String search, String tier, String feature, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-        Specification<User> spec = (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            if (search != null && !search.isEmpty()) {
-                String searchLike = "%" + search.toLowerCase() + "%";
-                predicates.add(cb.or(
-                        cb.like(cb.lower(root.get("email")), searchLike),
-                        cb.like(cb.lower(root.get("fullName")), searchLike)
-                ));
-            }
-            if (tier != null && !tier.isEmpty()) {
-                predicates.add(cb.equal(root.get("tier").as(String.class), tier));
-            }
-            
-            // If feature is provided, ensure user has at least one log with this feature
-            if (feature != null && !feature.isEmpty()) {
-                String mappedFeature = mapFeatureToInternal(feature);
-                Join<User, AiUsageLog> logs = root.join("aiUsageLogs", jakarta.persistence.criteria.JoinType.INNER);
-                predicates.add(cb.equal(logs.get("requestType"), mappedFeature));
-                if (startDate != null) {
-                    predicates.add(cb.greaterThanOrEqualTo(logs.get("createdAt"), startDate));
-                }
-                if (endDate != null) {
-                    predicates.add(cb.lessThanOrEqualTo(logs.get("createdAt"), endDate));
-                }
-                query.distinct(true);
-            }
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
-
+        Specification<User> spec = buildSpecification(search, tier, feature, startDate, endDate);
         Page<User> page = userRepository.findAll(spec, pageable);
 
         List<AdminAiUsageItem> items = page.getContent().stream()
@@ -79,34 +54,7 @@ public class AdminAiUsageService {
     }
 
     public byte[] exportAiUsage(String search, String tier, String feature, LocalDateTime startDate, LocalDateTime endDate) {
-        Specification<User> spec = (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            if (search != null && !search.isEmpty()) {
-                String searchLike = "%" + search.toLowerCase() + "%";
-                predicates.add(cb.or(
-                        cb.like(cb.lower(root.get("email")), searchLike),
-                        cb.like(cb.lower(root.get("fullName")), searchLike)
-                ));
-            }
-            if (tier != null && !tier.isEmpty()) {
-                predicates.add(cb.equal(root.get("tier").as(String.class), tier));
-            }
-            
-            if (feature != null && !feature.isEmpty()) {
-                String mappedFeature = mapFeatureToInternal(feature);
-                Join<User, AiUsageLog> logs = root.join("aiUsageLogs", jakarta.persistence.criteria.JoinType.INNER);
-                predicates.add(cb.equal(logs.get("requestType"), mappedFeature));
-                if (startDate != null) {
-                    predicates.add(cb.greaterThanOrEqualTo(logs.get("createdAt"), startDate));
-                }
-                if (endDate != null) {
-                    predicates.add(cb.lessThanOrEqualTo(logs.get("createdAt"), endDate));
-                }
-                query.distinct(true);
-            }
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
-
+        Specification<User> spec = buildSpecification(search, tier, feature, startDate, endDate);
         List<User> users = userRepository.findAll(spec);
 
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -138,8 +86,45 @@ public class AdminAiUsageService {
             workbook.write(out);
             return out.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException("Error exporting AI usage to Excel", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error exporting AI usage to Excel", e);
         }
+    }
+
+    private Specification<User> buildSpecification(String search, String tier, String feature, LocalDateTime startDate, LocalDateTime endDate) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (search != null && !search.isEmpty()) {
+                String searchLike = "%" + search.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("email")), searchLike),
+                        cb.like(cb.lower(root.get("fullName")), searchLike)
+                ));
+            }
+            if (tier != null && !tier.isEmpty()) {
+                predicates.add(cb.equal(root.get("tier").as(String.class), tier));
+            }
+            
+            if (feature != null && !feature.isEmpty()) {
+                String mappedFeature = mapFeatureToInternal(feature);
+                jakarta.persistence.criteria.Subquery<Integer> subquery = query.subquery(Integer.class);
+                jakarta.persistence.criteria.Root<AiUsageLog> subRoot = subquery.from(AiUsageLog.class);
+                subquery.select(subRoot.get("user").get("userId"));
+
+                List<Predicate> subPredicates = new ArrayList<>();
+                subPredicates.add(cb.equal(subRoot.get("requestType"), mappedFeature));
+
+                if (startDate != null) {
+                    subPredicates.add(cb.greaterThanOrEqualTo(subRoot.get("createdAt"), startDate));
+                }
+                if (endDate != null) {
+                    subPredicates.add(cb.lessThanOrEqualTo(subRoot.get("createdAt"), endDate));
+                }
+                subquery.where(cb.and(subPredicates.toArray(new Predicate[0])));
+
+                predicates.add(root.get("userId").in(subquery));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
     }
 
     private AdminAiUsageItem mapToItem(User user, LocalDateTime startDate, LocalDateTime endDate) {
