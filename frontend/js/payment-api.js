@@ -116,7 +116,8 @@ function canContinueVNPay(payment) {
  */
 async function getPaymentPlans() {
   return await apiRequest("/api/payments/plans", {
-    method: "GET"
+    method: "GET",
+    skipUnauthorizedRedirect: true
   });
 }
 
@@ -174,7 +175,8 @@ async function getPayment(paymentId) {
  */
 async function getMyPayments() {
   return await apiRequest("/api/payments/my", {
-    method: "GET"
+    method: "GET",
+    skipUnauthorizedRedirect: true
   });
 }
 

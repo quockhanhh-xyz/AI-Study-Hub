@@ -31,7 +31,8 @@ function getGroupChatErrorMessage(error) {
 async function getGroupMessages(groupId, limit = 50) {
     if (!groupId) throw new Error("Group ID is required.");
     return await apiRequest(`/api/groups/${groupId}/messages?limit=${limit}`, {
-        method: "GET"
+        method: "GET",
+        skipUnauthorizedRedirect: true
     });
 }
 
@@ -47,7 +48,7 @@ async function getGroupMessagesAfter(groupId, afterMessageId, limit = 50) {
     if (!afterMessageId) throw new Error("afterMessageId is required.");
     return await apiRequest(
         `/api/groups/${groupId}/messages?limit=${limit}&afterMessageId=${afterMessageId}`,
-        { method: "GET" }
+        { method: "GET", skipUnauthorizedRedirect: true }
     );
 }
 
