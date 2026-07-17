@@ -5,6 +5,7 @@ import com.demo.ai_study_hub.dto.AdminPublicDocumentListResponse;
 import com.demo.ai_study_hub.dto.ApiResponse;
 import com.demo.ai_study_hub.service.AdminService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
@@ -27,8 +29,9 @@ public class AdminController {
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(new ApiResponse<>(false, e.getReason(), null));
         } catch (Exception e) {
+            log.error("Error generating admin dashboard summary", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "An error occurred while generating dashboard summary: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(false, "An unexpected error occurred while generating dashboard summary.", null));
         }
     }
 
@@ -46,8 +49,9 @@ public class AdminController {
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(new ApiResponse<>(false, e.getReason(), null));
         } catch (Exception e) {
+            log.error("Error retrieving public documents for moderation", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "Failed to retrieve public documents: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(false, "An unexpected error occurred while retrieving public documents.", null));
         }
     }
 
@@ -59,8 +63,9 @@ public class AdminController {
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(new ApiResponse<>(false, e.getReason(), null));
         } catch (Exception e) {
+            log.error("Error approving document {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "Failed to approve document: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(false, "An unexpected error occurred while approving document.", null));
         }
     }
 
@@ -72,8 +77,9 @@ public class AdminController {
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(new ApiResponse<>(false, e.getReason(), null));
         } catch (Exception e) {
+            log.error("Error rejecting document {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "Failed to reject document: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(false, "An unexpected error occurred while rejecting document.", null));
         }
     }
 
@@ -85,8 +91,9 @@ public class AdminController {
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(new ApiResponse<>(false, e.getReason(), null));
         } catch (Exception e) {
+            log.error("Error unpublishing document {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "Failed to unpublish document: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(false, "An unexpected error occurred while unpublishing document.", null));
         }
     }
 
@@ -103,6 +110,7 @@ public class AdminController {
                     .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                     .body(data);
         } catch (Exception e) {
+            log.error("Error exporting public documents", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null);
         }
