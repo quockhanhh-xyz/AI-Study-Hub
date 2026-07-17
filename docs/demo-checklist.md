@@ -521,3 +521,34 @@ Provides demo and verification steps for AI study tools.
   - *Expected*: Returns `400 Bad Request` (validation error).
 - [ ] **Step 13.10**: Check the `joinUrl` in the response contains the group's `inviteCode` as a query param.
   - *Expected*: URL format: `{FRONTEND_BASE_URL}/frontend/groups.html?inviteCode=XXXXXXXX`.
+
+## 14. Step 15A - Admin Security, Dashboard & Public Document Moderation (BE3)
+
+### 14.1. Admin Security & Access Control
+- [ ] **Step 14.1**: Call any admin API (e.g. `GET /api/admin/dashboard/summary`) **without authentication** (no token).
+  - *Expected*: Returns `401 Unauthorized`.
+- [ ] **Step 14.2**: Call any admin API (e.g. `GET /api/admin/dashboard/summary`) **authenticated as a standard USER**.
+  - *Expected*: Returns `403 Forbidden`.
+- [ ] **Step 14.3**: Call any admin API (e.g. `GET /api/admin/dashboard/summary`) **authenticated as an ADMIN**.
+  - *Expected*: Returns `200 OK` with data.
+
+### 14.2. Admin Dashboard summary
+- [ ] **Step 14.4**: Call `GET /api/admin/dashboard/summary` as an **ADMIN**.
+  - *Expected*: Returns `totalUsers`, `totalDocuments`, `pendingPublicDocuments`, `totalRevenue`, `successfulPayments`, `aiRequestsToday`, `aiRequestsThisMonth`, `usersByTier`, `documentsByApprovalStatus`, `revenueByMonth`, and `aiUsageByFeature`.
+  - *Rule Check*: Verify that `totalRevenue` only sums successful payments (excluding PENDING, FAILED, etc.).
+  - *Rule Check*: Verify that user tier and document approval states match their current DB values.
+
+### 14.3. Public Document Moderation
+- [ ] **Step 14.5**: Call `GET /api/admin/documents/public` with pagination and filters (search, subject, fileType).
+  - *Expected*: Returns list of public documents matching filters with pagination controls.
+- [ ] **Step 14.6**: Approve a pending public document: `PATCH /api/admin/documents/{id}/approve`.
+  - *Expected*: `approvalStatus` updates to `APPROVED` and `publishedAt` is set to UTC now. The document now displays in the Community Library.
+- [ ] **Step 14.7**: Reject a pending public document: `PATCH /api/admin/documents/{id}/reject`.
+  - *Expected*: `approvalStatus` updates to `REJECTED`. The document does not display in Community Library, but its DB record and original file are not deleted.
+- [ ] **Step 14.8**: Unpublish an approved public document: `PATCH /api/admin/documents/{id}/unpublish`.
+  - *Expected*: `visibility` updates to `PRIVATE`. The document is hidden from the Community Library but remains intact in the DB.
+
+### 14.4. Excel Export
+- [ ] **Step 14.9**: Export public documents: `GET /api/admin/documents/public/export`.
+  - *Expected*: Downloads a valid Excel spreadsheet (`public_documents.xlsx`) containing ID, title, owner, subject, counts, status, and dates. Verify that sensitive data is not exposed.
+

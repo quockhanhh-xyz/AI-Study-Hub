@@ -4,6 +4,8 @@ import com.demo.ai_study_hub.entity.Document;
 import com.demo.ai_study_hub.entity.Folder;
 import com.demo.ai_study_hub.entity.User;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -93,4 +95,41 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
     @Query("SELECT COALESCE(SUM(d.fileSize), 0) FROM Document d WHERE d.owner = :owner AND d.status IN :statuses")
     Long sumFileSizeByOwnerAndStatusIn(@Param("owner") User owner, @Param("statuses") List<String> statuses);
+
+    long countByVisibilityAndApprovalStatusAndStatus(String visibility, String approvalStatus, String status);
+
+    long countByStatus(String status);
+
+    @Query("SELECT d.approvalStatus, COUNT(d) FROM Document d WHERE d.status = 'ACTIVE' GROUP BY d.approvalStatus")
+    List<Object[]> countDocumentsByApprovalStatus();
+
+    @Query("SELECT d FROM Document d LEFT JOIN d.subject s " +
+           "WHERE d.status = 'ACTIVE' " +
+           "AND d.visibility = 'PUBLIC' " +
+           "AND (:search IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(d.owner.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+           "AND (:approvalStatus IS NULL OR d.approvalStatus = :approvalStatus) " +
+           "AND (:fileType IS NULL OR d.fileType = :fileType) " +
+           "AND (:subjectId IS NULL OR s.subjectId = :subjectId)")
+    Page<Document> findPublicDocumentsForAdmin(
+            @Param("search") String search,
+            @Param("approvalStatus") String approvalStatus,
+            @Param("fileType") String fileType,
+            @Param("subjectId") Integer subjectId,
+            Pageable pageable
+    );
+
+    @Query("SELECT d FROM Document d LEFT JOIN d.subject s " +
+           "WHERE d.status = 'ACTIVE' " +
+           "AND d.visibility = 'PUBLIC' " +
+           "AND (:search IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(d.owner.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+           "AND (:approvalStatus IS NULL OR d.approvalStatus = :approvalStatus) " +
+           "AND (:fileType IS NULL OR d.fileType = :fileType) " +
+           "AND (:subjectId IS NULL OR s.subjectId = :subjectId) " +
+           "ORDER BY d.createdAt DESC")
+    List<Document> findPublicDocumentsForAdminExport(
+            @Param("search") String search,
+            @Param("approvalStatus") String approvalStatus,
+            @Param("fileType") String fileType,
+            @Param("subjectId") Integer subjectId
+    );
 }
