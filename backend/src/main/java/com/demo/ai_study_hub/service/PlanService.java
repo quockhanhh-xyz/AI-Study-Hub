@@ -16,10 +16,21 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class PlanService {
 
     private final TierPolicyService tierPolicyService;
+    private final com.demo.ai_study_hub.repository.PlanConfigRepository planConfigRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public PlanService(TierPolicyService tierPolicyService, com.demo.ai_study_hub.repository.PlanConfigRepository planConfigRepository) {
+        this.tierPolicyService = tierPolicyService;
+        this.planConfigRepository = planConfigRepository;
+    }
+
+    public PlanService(TierPolicyService tierPolicyService) {
+        this.tierPolicyService = tierPolicyService;
+        this.planConfigRepository = null;
+    }
 
     public static final long FREE_PRICE = 0L;
     public static final long PREMIUM_PRICE = 199_000L;
@@ -46,61 +57,94 @@ public class PlanService {
         private final List<String> features;
     }
 
+    private PaymentPlan toPaymentPlan(com.demo.ai_study_hub.entity.PlanConfig pc) {
+        List<String> featuresList = List.of();
+        if (pc.getFeaturesList() != null && !pc.getFeaturesList().trim().isEmpty()) {
+            featuresList = java.util.Arrays.asList(pc.getFeaturesList().split(","));
+        }
+        return PaymentPlan.builder()
+                .planCode(pc.getPlanCode())
+                .planName(pc.getPlanName())
+                .targetTier(UserTier.valueOf(pc.getTargetTier()))
+                .price(pc.getPrice())
+                .durationMonths(pc.getDurationMonths())
+                .billingLabel(pc.getBillingLabel())
+                .purchasable(pc.getPurchasable())
+                .features(featuresList)
+                .build();
+    }
+
     private Map<String, PaymentPlan> plans() {
         Map<String, PaymentPlan> map = new LinkedHashMap<>();
-        map.put(PlanCode.FREE, PaymentPlan.builder()
-                .planCode(PlanCode.FREE)
-                .planName("Free")
-                .targetTier(UserTier.FREE)
-                .price(FREE_PRICE)
-                .durationMonths(0)
-                .billingLabel(FREE_BILLING_LABEL)
-                .purchasable(false)
-                .features(List.of(
-                        "5 AI questions per day",
-                        "Generate up to 20 quiz questions per set",
-                        "Generate up to 20 flashcards per set",
-                        "Upload files up to 10MB",
-                        "View shared and community documents"
-                ))
-                .build());
-        map.put(PlanCode.PREMIUM_1_MONTH, PaymentPlan.builder()
-                .planCode(PlanCode.PREMIUM_1_MONTH)
-                .planName("Premium")
-                .targetTier(UserTier.PREMIUM)
-                .price(PREMIUM_PRICE)
-                .durationMonths(PAID_DURATION_MONTHS)
-                .billingLabel(PREMIUM_BILLING_LABEL)
-                .purchasable(true)
-                .features(List.of(
-                        "50 AI questions per day",
-                        "Generate up to 50 quiz questions per set",
-                        "Generate up to 50 flashcards per set",
-                        "Upload files up to 50MB"
-                ))
-                .build());
-        map.put(PlanCode.ULTRA_1_MONTH, PaymentPlan.builder()
-                .planCode(PlanCode.ULTRA_1_MONTH)
-                .planName("Ultra")
-                .targetTier(UserTier.ULTRA)
-                .price(ULTRA_PRICE)
-                .durationMonths(PAID_DURATION_MONTHS)
-                .billingLabel(PREMIUM_BILLING_LABEL)
-                .purchasable(true)
-                .features(List.of(
-                        "200 AI questions per day",
-                        "Generate up to 80 quiz questions per set",
-                        "Generate up to 80 flashcards per set",
-                        "Upload files up to 100MB"
-                ))
-                .build());
+        if (planConfigRepository != null) {
+            planConfigRepository.findAll().forEach(pc -> {
+                if ("ACTIVE".equalsIgnoreCase(pc.getStatus())) {
+                    map.put(pc.getPlanCode().toUpperCase(), toPaymentPlan(pc));
+                }
+            });
+        } else {
+            map.put(PlanCode.FREE, PaymentPlan.builder()
+                    .planCode(PlanCode.FREE)
+                    .planName("Free")
+                    .targetTier(UserTier.FREE)
+                    .price(FREE_PRICE)
+                    .durationMonths(0)
+                    .billingLabel(FREE_BILLING_LABEL)
+                    .purchasable(false)
+                    .features(List.of(
+                            "5 AI questions per day",
+                            "Generate up to 20 quiz questions per set",
+                            "Generate up to 20 flashcards per set",
+                            "Upload files up to 10MB",
+                            "View shared and community documents"
+                    ))
+                    .build());
+            map.put(PlanCode.PREMIUM_1_MONTH, PaymentPlan.builder()
+                    .planCode(PlanCode.PREMIUM_1_MONTH)
+                    .planName("Premium")
+                    .targetTier(UserTier.PREMIUM)
+                    .price(PREMIUM_PRICE)
+                    .durationMonths(PAID_DURATION_MONTHS)
+                    .billingLabel(PREMIUM_BILLING_LABEL)
+                    .purchasable(true)
+                    .features(List.of(
+                            "50 AI questions per day",
+                            "Generate up to 50 quiz questions per set",
+                            "Generate up to 50 flashcards per set",
+                            "Upload files up to 50MB"
+                    ))
+                    .build());
+            map.put(PlanCode.ULTRA_1_MONTH, PaymentPlan.builder()
+                    .planCode(PlanCode.ULTRA_1_MONTH)
+                    .planName("Ultra")
+                    .targetTier(UserTier.ULTRA)
+                    .price(ULTRA_PRICE)
+                    .durationMonths(PAID_DURATION_MONTHS)
+                    .billingLabel(PREMIUM_BILLING_LABEL)
+                    .purchasable(true)
+                    .features(List.of(
+                            "200 AI questions per day",
+                            "Generate up to 80 quiz questions per set",
+                            "Generate up to 80 flashcards per set",
+                            "Upload files up to 100MB"
+                    ))
+                    .build());
+        }
         return map;
     }
 
     public List<PlanResponse> getAllPlans() {
-        return plans().values().stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+        if (planConfigRepository != null) {
+            return planConfigRepository.findAll().stream()
+                    .filter(pc -> "ACTIVE".equalsIgnoreCase(pc.getStatus()))
+                    .map(this::toPaymentPlan)
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+        } else {
+            return plans().values().stream()
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+        }
     }
 
     private PlanResponse toResponse(PaymentPlan plan) {
@@ -131,11 +175,20 @@ public class PlanService {
      * NEVER falls back to FREE pricing silently.
      */
     public PaymentPlan getPlan(String planCode) {
-        PaymentPlan plan = planCode == null ? null : plans().get(planCode.toUpperCase());
-        if (plan == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid plan code: " + planCode);
+        if (planCode == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Plan code cannot be null");
         }
-        return plan;
+        if (planConfigRepository != null) {
+            com.demo.ai_study_hub.entity.PlanConfig pc = planConfigRepository.findById(planCode.toUpperCase())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid plan code: " + planCode));
+            return toPaymentPlan(pc);
+        } else {
+            PaymentPlan plan = plans().get(planCode.toUpperCase());
+            if (plan == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid plan code: " + planCode);
+            }
+            return plan;
+        }
     }
 
     public long getPrice(String planCode) {
@@ -151,10 +204,23 @@ public class PlanService {
     }
 
     public boolean isValidPlanCode(String planCode) {
-        return planCode != null && plans().containsKey(planCode.toUpperCase());
+        if (planCode == null) return false;
+        if (planConfigRepository != null) {
+            return planConfigRepository.existsById(planCode.toUpperCase());
+        } else {
+            return plans().containsKey(planCode.toUpperCase());
+        }
     }
 
     public boolean isPurchasablePlanCode(String planCode) {
-        return isValidPlanCode(planCode) && getPlan(planCode).isPurchasable();
+        if (planCode == null) return false;
+        if (planConfigRepository != null) {
+            return planConfigRepository.findById(planCode.toUpperCase())
+                    .map(pc -> pc.getPurchasable() && "ACTIVE".equalsIgnoreCase(pc.getStatus()))
+                    .orElse(false);
+        } else {
+            PaymentPlan plan = plans().get(planCode.toUpperCase());
+            return plan != null && plan.isPurchasable();
+        }
     }
 }

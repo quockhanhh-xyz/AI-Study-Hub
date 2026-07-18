@@ -17,4 +17,6 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
 
     @org.springframework.data.jpa.repository.Query("SELECT u.tier, COUNT(u) FROM User u GROUP BY u.tier")
     List<Object[]> countUsersByTier();
+
+    long countByStatus(String status);
 }

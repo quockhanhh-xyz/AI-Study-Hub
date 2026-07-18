@@ -26,6 +26,12 @@ public class PaymentOrder {
     @Column(name = "plan_code", nullable = false, length = 30)
     private String planCode;
 
+    @Column(name = "plan_name", length = 100)
+    private String planName;
+
+    @Column(name = "billing_label", length = 100)
+    private String billingLabel;
+
     /** Snapshot of the target tier at order-creation time (PREMIUM/ULTRA). */
     @Column(name = "target_tier", length = 20)
     private String targetTier;

@@ -11,6 +11,7 @@ import com.demo.ai_study_hub.service.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -72,6 +73,10 @@ public class AuthController {
 
             return ResponseEntity.ok(new ApiResponse<>(true, "Login successful", loginResponse));
         } catch (RuntimeException e) {
+            if ("Your account has been blocked.".equals(e.getMessage())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.error(e.getMessage(), "AUTH_ACCOUNT_BLOCKED"));
+            }
             return ResponseEntity.badRequest().body(new ApiResponse<>(false, e.getMessage(), null));
         }
     }

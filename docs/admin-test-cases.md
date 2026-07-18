@@ -88,3 +88,63 @@ This document describes the test cases to verify the implementation of the Admin
   - Response body contains valid binary Excel (.xlsx) file data.
   - Exported data contains correct document metadata (IDs, titles, subjects, view/download counts, created/published dates, etc.).
   - Sensitive information (passwords, tokens, API keys, secrets) is not exposed.
+
+---
+
+## Group 5: Blocked Account Interception & Redirection
+### TC-BLK-01: Blocked user request blocked at auth layer
+- **Preconditions**: User account `status` is set to `BLOCKED` in DB.
+- **Action**: Perform any authenticated API request (e.g. `GET /api/documents/public`).
+- **Expected Result**:
+  - Response status is `403 Forbidden`.
+  - Response body contains error payload `{"success":false,"message":"Account is blocked","code":"AUTH_ACCOUNT_BLOCKED"}`.
+
+### TC-BLK-02: Blocked user login fails
+- **Preconditions**: User account `status` is set to `BLOCKED` in DB.
+- **Action**: Perform `POST /api/auth/login`.
+- **Expected Result**:
+  - Response status is `403 Forbidden`.
+  - Response body contains error payload `{"success":false,"message":"Your account has been blocked.","code":"AUTH_ACCOUNT_BLOCKED"}`.
+
+---
+
+## Group 6: Workspace Separation Protection
+### TC-WKS-01: ADMIN access to USER workspace APIs is blocked
+- **Preconditions**: User is logged in as `ADMIN`.
+- **Action**: Call any user-flow study group/workspace APIs (e.g., `POST /api/documents/upload`, `POST /api/folders`, `POST /api/ai/ask`).
+- **Expected Result**:
+  - Response status is `403 Forbidden`.
+
+### TC-WKS-02: USER access to ADMIN workspace APIs is blocked
+- **Preconditions**: User is logged in as standard `USER`.
+- **Action**: Call any admin endpoints (e.g., `GET /api/admin/plans`, `GET /api/admin/dashboard/summary`).
+- **Expected Result**:
+  - Response status is `403 Forbidden`.
+
+---
+
+## Group 7: Plan Configuration Management CRUD & Export
+### TC-PLN-01: Update plan pricing & quota
+- **Preconditions**: User is logged in as `ADMIN`.
+- **Action**: Call `PUT /api/admin/plans/PREMIUM_1_MONTH` with new limits and features.
+- **Expected Result**:
+  - Response status is `200 OK`.
+  - Bảng config của plan được cập nhật trong DB.
+  - Các hạn mức (storage limit, AI daily questions, etc.) của User có Tier PREMIUM được áp dụng theo hạn mức mới ngay lập tức.
+
+### TC-PLN-02: Toggle plan status (ACTIVE / INACTIVE)
+- **Preconditions**: User is logged in as `ADMIN`.
+- **Action**: Call `PATCH /api/admin/plans/ULTRA_1_MONTH/status?status=INACTIVE`.
+- **Expected Result**:
+  - Response status is `200 OK`.
+  - Cột `status` của plan `ULTRA_1_MONTH` trong DB chuyển thành `INACTIVE`.
+  - Khi user thường gọi `GET /api/payments/plans` (hoặc FE gọi list plans để hiển thị), plan bị `INACTIVE` không xuất hiện và không thể mua.
+
+### TC-PLN-03: Export plan configs to Excel
+- **Preconditions**: User is logged in as `ADMIN`.
+- **Action**: Call `GET /api/admin/plans/export`.
+- **Expected Result**:
+  - Response headers chứa:
+    - `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+    - `Content-Disposition: attachment; filename="plans_configuration.xlsx"`
+  - Response body chứa file Excel hợp lệ.

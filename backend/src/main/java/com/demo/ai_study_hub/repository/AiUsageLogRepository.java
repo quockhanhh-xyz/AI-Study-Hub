@@ -43,4 +43,9 @@ public interface AiUsageLogRepository extends JpaRepository<AiUsageLog, Long>, J
 
     @Query("SELECT COUNT(l) FROM AiUsageLog l WHERE l.status = 'SUCCESS' AND l.createdAt >= :since")
     long countSuccessfulLogsAfter(@Param("since") LocalDateTime since);
+
+    @Query("SELECT l.createdAt FROM AiUsageLog l WHERE l.status = 'SUCCESS'")
+    List<LocalDateTime> findSuccessLogDates();
+
+    long countByStatus(String status);
 }

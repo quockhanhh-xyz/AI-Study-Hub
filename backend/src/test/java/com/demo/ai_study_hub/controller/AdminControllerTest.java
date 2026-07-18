@@ -186,4 +186,81 @@ class AdminControllerTest {
                 .andExpect(content().contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .andExpect(content().bytes(mockExcel));
     }
+
+    @Test
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
+    void getDashboardCharts_AsAdmin_ShouldReturn200() throws Exception {
+        com.demo.ai_study_hub.dto.AdminDashboardChartsResponse response =
+                com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.builder()
+                        .userTierDistribution(Collections.emptyList())
+                        .documentApprovalStatus(Collections.emptyList())
+                        .revenueByDay(Collections.emptyList())
+                        .aiUsageByDay(Collections.emptyList())
+                        .build();
+
+        when(adminService.getDashboardCharts()).thenReturn(response);
+
+        mockMvc.perform(get("/api/admin/dashboard/charts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
+    void getAllPlans_AsAdmin_ShouldReturn200() throws Exception {
+        when(adminService.getAllPlanConfigs()).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/api/admin/plans"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
+    void getPlanDetails_AsAdmin_ShouldReturn200() throws Exception {
+        com.demo.ai_study_hub.entity.PlanConfig mockPlan = com.demo.ai_study_hub.entity.PlanConfig.builder()
+                .planCode("PREMIUM_1_MONTH")
+                .planName("Premium")
+                .price(199000L)
+                .build();
+
+        when(adminService.getPlanConfig("PREMIUM_1_MONTH")).thenReturn(mockPlan);
+
+        mockMvc.perform(get("/api/admin/plans/PREMIUM_1_MONTH"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.planCode").value("PREMIUM_1_MONTH"))
+                .andExpect(jsonPath("$.data.planName").value("Premium"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
+    void updatePlan_AsAdmin_ShouldReturn200() throws Exception {
+        com.demo.ai_study_hub.entity.PlanConfig mockPlan = com.demo.ai_study_hub.entity.PlanConfig.builder()
+                .planCode("PREMIUM_1_MONTH")
+                .planName("Premium Renamed")
+                .price(199000L)
+                .build();
+
+        when(adminService.updatePlanConfig(eq("PREMIUM_1_MONTH"), any())).thenReturn(mockPlan);
+
+        mockMvc.perform(patch("/api/admin/plans/PREMIUM_1_MONTH/status")
+                        .param("status", "ACTIVE")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
+    void exportPlanConfigs_AsAdmin_ShouldReturnExcelStream() throws Exception {
+        byte[] mockExcel = new byte[]{5, 6, 7, 8};
+        when(adminService.exportPlanConfigs()).thenReturn(mockExcel);
+
+        mockMvc.perform(get("/api/admin/plans/export"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"plans_configuration.xlsx\""))
+                .andExpect(content().contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .andExpect(content().bytes(mockExcel));
+    }
 }

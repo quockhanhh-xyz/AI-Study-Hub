@@ -33,13 +33,17 @@ public class AdminServiceImpl implements AdminService {
     private final DocumentRepository documentRepository;
     private final PaymentOrderRepository paymentOrderRepository;
     private final AiUsageLogRepository aiUsageLogRepository;
+    private final PlanConfigRepository planConfigRepository;
 
     @Override
     @Transactional(readOnly = true)
     public AdminDashboardResponse getDashboardSummary() {
         long totalUsers = userRepository.count();
+        long activeUsers = userRepository.countByStatus("ACTIVE");
+        long blockedUsers = userRepository.countByStatus("BLOCKED");
         long totalDocuments = documentRepository.countByStatus("ACTIVE");
         long pendingDocs = documentRepository.countByVisibilityAndApprovalStatusAndStatus("PUBLIC", "PENDING", "ACTIVE");
+        long approvedDocs = documentRepository.countByVisibilityAndApprovalStatusAndStatus("PUBLIC", "APPROVED", "ACTIVE");
 
         long totalRevenue = paymentOrderRepository.sumSuccessfulRevenue();
         long successfulPaymentsCount = paymentOrderRepository.countByStatus("SUCCESS");
@@ -50,6 +54,7 @@ public class AdminServiceImpl implements AdminService {
 
         long aiRequestsToday = aiUsageLogRepository.countSuccessfulLogsAfter(startOfToday);
         long aiRequestsThisMonth = aiUsageLogRepository.countSuccessfulLogsAfter(startOfThisMonth);
+        long aiRequestsTotal = aiUsageLogRepository.countByStatus("SUCCESS");
 
         List<AdminDashboardResponse.TierCountItem> usersByTier = userRepository.countUsersByTier().stream()
                 .map(row -> new AdminDashboardResponse.TierCountItem(row[0].toString(), (Long) row[1]))
@@ -91,16 +96,64 @@ public class AdminServiceImpl implements AdminService {
 
         return AdminDashboardResponse.builder()
                 .totalUsers(totalUsers)
+                .activeUsers(activeUsers)
+                .blockedUsers(blockedUsers)
                 .totalDocuments(totalDocuments)
                 .pendingPublicDocuments(pendingDocs)
+                .approvedPublicDocuments(approvedDocs)
                 .totalRevenue(totalRevenue)
                 .successfulPayments(successfulPaymentsCount)
                 .aiRequestsToday(aiRequestsToday)
                 .aiRequestsThisMonth(aiRequestsThisMonth)
+                .aiRequestsTotal(aiRequestsTotal)
                 .usersByTier(usersByTier)
                 .documentsByApprovalStatus(docsByApproval)
                 .revenueByMonth(revenueByMonth)
                 .aiUsageByFeature(aiUsage)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public AdminDashboardChartsResponse getDashboardCharts() {
+        List<AdminDashboardChartsResponse.TierCountItem> userTierDistribution = userRepository.countUsersByTier().stream()
+                .map(row -> new AdminDashboardChartsResponse.TierCountItem(row[0].toString(), (Long) row[1]))
+                .collect(Collectors.toList());
+
+        List<AdminDashboardChartsResponse.ApprovalStatusCountItem> documentApprovalStatus = documentRepository.countDocumentsByApprovalStatus().stream()
+                .map(row -> new AdminDashboardChartsResponse.ApprovalStatusCountItem(row[0].toString(), (Long) row[1]))
+                .collect(Collectors.toList());
+
+        List<Object[]> payGroupingData = paymentOrderRepository.findSuccessPaymentDatesAndAmounts();
+        Map<String, Long> dailyRev = payGroupingData.stream()
+                .collect(Collectors.groupingBy(
+                        row -> {
+                            LocalDateTime dt = (LocalDateTime) row[0];
+                            return dt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                        },
+                        Collectors.summingLong(row -> (Long) row[1])
+                ));
+        List<AdminDashboardChartsResponse.RevenueByDayItem> revenueByDay = dailyRev.entrySet().stream()
+                .map(e -> new AdminDashboardChartsResponse.RevenueByDayItem(e.getKey(), e.getValue()))
+                .sorted(Comparator.comparing(AdminDashboardChartsResponse.RevenueByDayItem::getDate))
+                .collect(Collectors.toList());
+
+        List<LocalDateTime> aiLogDates = aiUsageLogRepository.findSuccessLogDates();
+        Map<String, Long> dailyAi = aiLogDates.stream()
+                .collect(Collectors.groupingBy(
+                        dt -> dt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                        Collectors.counting()
+                ));
+        List<AdminDashboardChartsResponse.AiUsageByDayItem> aiUsageByDay = dailyAi.entrySet().stream()
+                .map(e -> new AdminDashboardChartsResponse.AiUsageByDayItem(e.getKey(), e.getValue()))
+                .sorted(Comparator.comparing(AdminDashboardChartsResponse.AiUsageByDayItem::getDate))
+                .collect(Collectors.toList());
+
+        return AdminDashboardChartsResponse.builder()
+                .userTierDistribution(userTierDistribution)
+                .documentApprovalStatus(documentApprovalStatus)
+                .revenueByDay(revenueByDay)
+                .aiUsageByDay(aiUsageByDay)
                 .build();
     }
 
@@ -273,5 +326,126 @@ public class AdminServiceImpl implements AdminService {
                 .createdAt(doc.getCreatedAt() != null ? doc.getCreatedAt().toInstant(ZoneOffset.UTC) : null)
                 .publishedAt(doc.getPublishedAt() != null ? doc.getPublishedAt().toInstant(ZoneOffset.UTC) : null)
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PlanConfig> getAllPlanConfigs() {
+        return planConfigRepository.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PlanConfig getPlanConfig(String planCode) {
+        return planConfigRepository.findById(planCode.toUpperCase())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan not found with code: " + planCode));
+    }
+
+    @Override
+    @Transactional
+    public PlanConfig updatePlanConfig(String planCode, PlanUpdateRequest request) {
+        PlanConfig pc = planConfigRepository.findById(planCode.toUpperCase())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan not found with code: " + planCode));
+
+        if (request.getPlanName() != null) pc.setPlanName(request.getPlanName());
+        if (request.getPrice() != null) pc.setPrice(request.getPrice());
+        if (request.getBillingLabel() != null) pc.setBillingLabel(request.getBillingLabel());
+        if (request.getPurchasable() != null) pc.setPurchasable(request.getPurchasable());
+        if (request.getAiDailyQuestionLimit() != null) pc.setAiDailyQuestionLimit(request.getAiDailyQuestionLimit());
+        if (request.getStorageLimit() != null) pc.setStorageLimit(request.getStorageLimit());
+        if (request.getMaxFileSize() != null) pc.setMaxFileSize(request.getMaxFileSize());
+        if (request.getMaxDocumentCount() != null) pc.setMaxDocumentCount(request.getMaxDocumentCount());
+        if (request.getMaxFolderCount() != null) pc.setMaxFolderCount(request.getMaxFolderCount());
+        if (request.getMaxGroupCount() != null) pc.setMaxGroupCount(request.getMaxGroupCount());
+        if (request.getMaxFlashcardsPerSet() != null) pc.setMaxFlashcardsPerSet(request.getMaxFlashcardsPerSet());
+        if (request.getMaxQuizQuestionsPerSet() != null) pc.setMaxQuizQuestionsPerSet(request.getMaxQuizQuestionsPerSet());
+        if (request.getSummaryDailyLimit() != null) pc.setSummaryDailyLimit(request.getSummaryDailyLimit());
+        if (request.getFlashcardDailyLimit() != null) pc.setFlashcardDailyLimit(request.getFlashcardDailyLimit());
+        if (request.getQuizDailyLimit() != null) pc.setQuizDailyLimit(request.getQuizDailyLimit());
+
+        if (request.getFeatures() != null) {
+            pc.setFeaturesList(String.join(",", request.getFeatures()));
+        }
+
+        return planConfigRepository.save(pc);
+    }
+
+    @Override
+    @Transactional
+    public PlanConfig patchPlanStatus(String planCode, String status) {
+        PlanConfig pc = planConfigRepository.findById(planCode.toUpperCase())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan not found with code: " + planCode));
+
+        if (!"ACTIVE".equalsIgnoreCase(status) && !"INACTIVE".equalsIgnoreCase(status)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status: " + status);
+        }
+
+        pc.setStatus(status.toUpperCase());
+        return planConfigRepository.save(pc);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportPlanConfigs() {
+        List<PlanConfig> plans = planConfigRepository.findAll();
+
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Plans Configuration");
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font font = workbook.createFont();
+            font.setBold(true);
+            headerStyle.setFont(font);
+
+            Row headerRow = sheet.createRow(0);
+            String[] headers = {
+                    "Plan Code", "Plan Name", "Price", "Billing Label", "Purchasable",
+                    "AI Daily Question Limit", "Storage Limit", "Max File Size",
+                    "Max Document Count", "Max Folder Count", "Max Group Count",
+                    "Max Flashcards Per Set", "Max Quiz Questions Per Set",
+                    "Summary Daily Limit", "Flashcard Daily Limit", "Quiz Daily Limit",
+                    "Features List", "Status", "Target Tier", "Duration Months"
+            };
+
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            int rowIdx = 1;
+            for (PlanConfig pc : plans) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(pc.getPlanCode());
+                row.createCell(1).setCellValue(pc.getPlanName());
+                row.createCell(2).setCellValue(pc.getPrice());
+                row.createCell(3).setCellValue(pc.getBillingLabel());
+                row.createCell(4).setCellValue(pc.getPurchasable() ? "YES" : "NO");
+                row.createCell(5).setCellValue(pc.getAiDailyQuestionLimit());
+                row.createCell(6).setCellValue(pc.getStorageLimit());
+                row.createCell(7).setCellValue(pc.getMaxFileSize());
+                row.createCell(8).setCellValue(pc.getMaxDocumentCount());
+                row.createCell(9).setCellValue(pc.getMaxFolderCount());
+                row.createCell(10).setCellValue(pc.getMaxGroupCount());
+                row.createCell(11).setCellValue(pc.getMaxFlashcardsPerSet());
+                row.createCell(12).setCellValue(pc.getMaxQuizQuestionsPerSet());
+                row.createCell(13).setCellValue(pc.getSummaryDailyLimit());
+                row.createCell(14).setCellValue(pc.getFlashcardDailyLimit());
+                row.createCell(15).setCellValue(pc.getQuizDailyLimit());
+                row.createCell(16).setCellValue(pc.getFeaturesList() != null ? pc.getFeaturesList() : "");
+                row.createCell(17).setCellValue(pc.getStatus());
+                row.createCell(18).setCellValue(pc.getTargetTier());
+                row.createCell(19).setCellValue(pc.getDurationMonths());
+            }
+
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to generate Excel file", e);
+        }
     }
 }

@@ -552,3 +552,40 @@ Provides demo and verification steps for AI study tools.
 - [ ] **Step 14.9**: Export public documents: `GET /api/admin/documents/public/export`.
   - *Expected*: Downloads a valid Excel spreadsheet (`public_documents.xlsx`) containing ID, title, owner, subject, counts, status, and dates. Verify that sensitive data is not exposed.
 
+## 15. Step 15B - Admin Separation + Dashboard + Plan Config (BE3)
+
+### 15.1. Authentication Block for Blocked Users
+- [ ] **Step 15.1**: Call `POST /api/auth/login` using the credentials of a `BLOCKED` user account.
+  - *Expected*: Returns `403 Forbidden` with `"code": "AUTH_ACCOUNT_BLOCKED"`.
+- [ ] **Step 15.2**: Send any API request using an active session cookie of a user who has just been set to `BLOCKED` in the DB.
+  - *Expected*: Returns `403 Forbidden` with `"code": "AUTH_ACCOUNT_BLOCKED"`.
+
+### 15.2. Admin & User Workspace Separation
+- [ ] **Step 15.3**: Authenticate as `ADMIN` and call any standard User workspace endpoint (e.g. upload personal doc: `POST /api/documents/upload`, create folder: `POST /api/folders`, or AI Q&A: `POST /api/ai/ask`).
+  - *Expected*: Returns `403 Forbidden` with access denied.
+- [ ] **Step 15.4**: Authenticate as `USER` and call any Admin API endpoint (e.g. `GET /api/admin/plans`).
+  - *Expected*: Returns `403 Forbidden`.
+
+### 15.3. Plan Configuration Management CRUD & DB limits check
+- [ ] **Step 15.5**: Authenticate as `ADMIN` and retrieve all plan configurations: `GET /api/admin/plans`.
+  - *Expected*: Returns list of seeded plans (`FREE`, `PREMIUM_1_MONTH`, `ULTRA_1_MONTH`) with pricing and quotas.
+- [ ] **Step 15.6**: Update PREMIUM plan config (e.g. price to 249000, AI limit to 60): `PUT /api/admin/plans/PREMIUM_1_MONTH`.
+  - *Expected*: Returns `200 OK` with updated configurations.
+- [ ] **Step 15.7**: Query current limits for a Premium user: `GET /api/auth/me`.
+  - *Expected*: AI Daily limit shows `60` instead of the old `50` limit.
+- [ ] **Step 15.8**: Deactivate a plan config: `PATCH /api/admin/plans/ULTRA_1_MONTH/status?status=INACTIVE`.
+  - *Expected*: Returns `200 OK`. The status updates to `INACTIVE`.
+- [ ] **Step 15.9**: Call `GET /api/payments/plans` as a standard user.
+  - *Expected*: The `ULTRA_1_MONTH` plan is excluded from the list.
+
+### 15.4. Payment Order Snapshot Verification
+- [ ] **Step 15.10**: Create a payment order for PREMIUM plan: `POST /api/payments/checkout/PREMIUM_1_MONTH`.
+  - *Expected*: Returns payment URL and logs `amount`, `planName`, and `billingLabel` snapshot fields in `PaymentOrder` entity in DB.
+- [ ] **Step 15.11**: As ADMIN, update the price of PREMIUM plan config in the database (e.g. to 299000).
+- [ ] **Step 15.12**: Complete/Confirm the previously created checkout transaction.
+  - *Expected*: The IPN matches amount against the snapshot amount (199000) instead of the new price (299000). Payment succeeds and user tier upgrades to PREMIUM based on the duration snapshot (1 month).
+
+### 15.5. Export Plan Configurations to Excel
+- [ ] **Step 15.13**: As ADMIN, export plan configurations: `GET /api/admin/plans/export`.
+  - *Expected*: Downloads a valid Excel spreadsheet (`plans_configuration.xlsx`) containing all database fields of the plans.
+
