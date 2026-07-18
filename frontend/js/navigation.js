@@ -35,7 +35,10 @@ const NAVIGATION_MENU = [
   // Admin section
   { name: "Admin Dashboard", icon: ICON_ADMIN, url: "admin-dashboard.html", requiresAuth: true, requiresAdmin: true },
   { name: "Admin Users", icon: ICON_GROUP, url: "admin-users.html", requiresAuth: true, requiresAdmin: true },
+  { name: "Admin Documents", icon: ICON_DOCS, url: "admin-documents.html", requiresAuth: true, requiresAdmin: true },
   { name: "Admin Payments", icon: ICON_PAYMENT, url: "admin-payments.html", requiresAuth: true, requiresAdmin: true },
+  { name: "Admin AI Usage", icon: ICON_UPGRADE, url: "admin-ai-usage.html", requiresAuth: true, requiresAdmin: true },
+  { name: "Admin Subjects", icon: ICON_FOLDER, url: "admin-subjects.html", requiresAuth: true, requiresAdmin: true },
 
   // Step 11: Upgrade route — requires auth; guest redirected to login?redirect=upgrade.html
   { name: "Upgrade", icon: ICON_UPGRADE, url: "upgrade.html", requiresAuth: true },
