@@ -57,7 +57,21 @@ async function checkAuthenticationStatus() {
 
     // If successful, backfill or keep currentUser info active for UI layout
     if (result && result.data) {
+      // Normalize ROLE_ADMIN to ADMIN
+      if (result.data.role === 'ROLE_ADMIN') {
+        result.data.role = 'ADMIN';
+      }
       localStorage.setItem("currentUser", JSON.stringify(result.data));
+    }
+
+    // Admin role check: if page requires admin, redirect if user is not admin
+    if (currentRoute.requiresAdmin) {
+      const user = result && result.data ? result.data : null;
+      if (!user || user.role !== 'ADMIN') {
+        console.warn("Access denied. User is not an admin.");
+        window.location.href = "dashboard.html";
+        return true;
+      }
     }
 
 
@@ -148,6 +162,21 @@ function renderDynamicSidebar(isAuthenticated) {
     if (item.hidden) return false; // Filter out structural routes like detail pages
     if (item.hideWhenAuth && isAuthenticated) return false;
     if (item.requiresAuth && !isAuthenticated) return false;
+
+    // Filter admin routes
+    if (item.requiresAdmin) {
+      const userStr = localStorage.getItem("currentUser");
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          if (user.role !== 'ADMIN') return false;
+        } catch (e) {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    }
 
 
     // Step 6D Security & IA Cleanup: Explicitly deny standard users access to internal technical routes

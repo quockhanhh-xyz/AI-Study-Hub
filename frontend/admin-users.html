@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Users - AI Study Hub</title>
+    <meta name="description" content="Admin Users Management." />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="admin-layout">
+                <div class="admin-content-wrapper">
+                    <header class="admin-page-header">
+                        <h1 class="admin-page-title">User Management</h1>
+                    </header>
+                    <div class="admin-state-container" id="usersLoadingState">
+                        <div class="admin-state-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                        </div>
+                        <p>Loading users...</p>
+                    </div>
+
+                    <div class="admin-state-container" id="usersErrorState" style="display: none;">
+                        <div class="admin-state-icon" style="color: var(--danger);">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <p id="usersErrorMessage">Failed to load users.</p>
+                        <button class="btn btn-primary" onclick="loadUsers()" style="margin-top: 16px;">Retry</button>
+                    </div>
+
+                    <div id="usersContent" style="display: none;">
+                        <div class="admin-actions-bar">
+                            <div class="admin-filters">
+                                <input type="text" id="filterSearch" class="admin-filter-input" placeholder="Search by email/name" onkeyup="handleSearch(event)">
+                                <select id="filterRole" class="admin-filter-input" onchange="loadUsers(0)">
+                                    <option value="">All Roles</option>
+                                    <option value="USER">User</option>
+                                    <option value="ADMIN">Admin</option>
+                                </select>
+                                <select id="filterTier" class="admin-filter-input" onchange="loadUsers(0)">
+                                    <option value="">All Tiers</option>
+                                    <option value="FREE">Free</option>
+                                    <option value="PREMIUM">Premium</option>
+                                    <option value="ULTRA">Ultra</option>
+                                </select>
+                                <select id="filterStatus" class="admin-filter-input" onchange="loadUsers(0)">
+                                    <option value="">All Statuses</option>
+                                    <option value="ACTIVE">Active</option>
+                                    <option value="INACTIVE">Inactive</option>
+                                    <option value="BLOCKED">Blocked</option>
+                                </select>
+                            </div>
+                            <div class="admin-actions-buttons">
+                                <button class="btn btn-primary" onclick="handleExport()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                    </svg>
+                                    Export
+                                </button>
+                                <button class="btn btn-outline" onclick="clearFilters()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                    </svg>
+                                    Clear Filters
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="admin-card" style="padding: 0; overflow-x: auto;">
+                            <table class="table" id="usersTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Tier</th>
+                                        <th>Documents</th>
+                                        <th>Status</th>
+                                        <th>Joined Date</th>
+                                        <th style="text-align: right;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <!-- Rows rendered by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="admin-pagination">
+                            <span class="admin-pagination-info" id="paginationInfo">Showing 0 of 0</span>
+                            <button class="admin-pagination-btn" id="btnPrevPage" onclick="changePage(-1)">Previous</button>
+                            <button class="admin-pagination-btn" id="btnNextPage" onclick="changePage(1)">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div class="admin-modal-overlay" id="confirmModal">
+        <div class="admin-modal">
+            <h3 class="admin-modal-title" id="modalTitle">Confirm Action</h3>
+            <div class="admin-modal-body" id="modalBody">
+                Are you sure you want to perform this action?
+            </div>
+            <div class="admin-modal-actions">
+                <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" id="modalConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/admin-core-api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+
+    <!-- Page Specific Scripts -->
+    <script src="js/admin-user-api.js"></script>
+    <script src="js/admin-users.js"></script>
+</body>
+
+</html>
