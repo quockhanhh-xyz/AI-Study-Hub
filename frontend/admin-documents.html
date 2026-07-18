@@ -33,6 +33,12 @@
             <!-- Filters -->
             <div class="filter-section form-group" style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
                 <input type="text" id="searchInput" placeholder="Search by Title or Owner..." style="flex: 1;">
+                <select id="subjectFilter">
+                    <option value="">All Subjects</option>
+                    <!-- In a real app, populate dynamically from API -->
+                    <option value="1">SWP391</option>
+                    <option value="2">PRJ301</option>
+                </select>
                 <select id="statusFilter">
                     <option value="">All Statuses</option>
                     <option value="PENDING">PENDING</option>

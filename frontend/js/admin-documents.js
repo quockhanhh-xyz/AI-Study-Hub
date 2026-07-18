@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tableBody = document.getElementById('documentsTableBody');
     const pagination = document.getElementById('pagination');
     const searchInput = document.getElementById('searchInput');
+    const subjectFilter = document.getElementById('subjectFilter');
     const statusFilter = document.getElementById('statusFilter');
     const fileTypeFilter = document.getElementById('fileTypeFilter');
     const filterBtn = document.getElementById('filterBtn');
@@ -31,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             if (searchInput.value) params.search = searchInput.value;
+            if (subjectFilter && subjectFilter.value) params.subjectId = subjectFilter.value;
             if (statusFilter.value) params.approvalStatus = statusFilter.value;
             if (fileTypeFilter.value) params.fileType = fileTypeFilter.value;
 
