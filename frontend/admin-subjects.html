@@ -91,12 +91,9 @@
     </div>
 
     <!-- Create/Edit Modal -->
-    <div class="admin-modal" id="subjectModal">
-        <div class="admin-modal-content">
-            <div class="admin-modal-header">
-                <h3 id="subjectModalTitle">Create Subject</h3>
-                <button type="button" class="close-btn" onclick="closeModal('subjectModal')">&times;</button>
-            </div>
+    <div class="admin-modal-overlay" id="subjectModal">
+        <div class="admin-modal">
+            <h3 class="admin-modal-title" id="subjectModalTitle">Create Subject</h3>
             <div class="admin-modal-body">
                 <form id="subjectForm">
                     <input type="hidden" id="subjectId">
@@ -114,27 +111,24 @@
                     </div>
                 </form>
             </div>
-            <div class="admin-modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('subjectModal')">Cancel</button>
+            <div class="admin-modal-actions">
+                <button class="btn btn-outline" onclick="closeModal('subjectModal')">Cancel</button>
                 <button class="btn btn-primary" id="saveSubjectBtn">Save</button>
             </div>
         </div>
     </div>
 
     <!-- Toggle Status Confirm Modal -->
-    <div class="admin-modal" id="toggleStatusModal">
-        <div class="admin-modal-content">
-            <div class="admin-modal-header">
-                <h3>Change Status</h3>
-                <button type="button" class="close-btn" onclick="closeModal('toggleStatusModal')">&times;</button>
-            </div>
+    <div class="admin-modal-overlay" id="toggleStatusModal">
+        <div class="admin-modal">
+            <h3 class="admin-modal-title">Change Status</h3>
             <div class="admin-modal-body">
                 <p id="toggleStatusMessage">Are you sure you want to change the status of this subject?</p>
                 <input type="hidden" id="toggleSubjectId">
                 <input type="hidden" id="toggleSubjectStatus">
             </div>
-            <div class="admin-modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('toggleStatusModal')">Cancel</button>
+            <div class="admin-modal-actions">
+                <button class="btn btn-outline" onclick="closeModal('toggleStatusModal')">Cancel</button>
                 <button class="btn btn-primary" id="confirmToggleBtn">Confirm</button>
             </div>
         </div>
