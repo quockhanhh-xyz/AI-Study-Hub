@@ -12,6 +12,29 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initAdminDocuments() {
+    // Populate Subject Dropdown
+    const populateSubjectDropdown = async () => {
+        try {
+            const subjectFilter = document.getElementById('subjectFilter');
+            const response = await getSubjects(); // From subject-api.js
+            
+            if (response && response.success && response.data) {
+                // Keep the "All Subjects" option
+                subjectFilter.innerHTML = '<option value="">All Subjects</option>';
+                response.data.forEach(sub => {
+                    const option = document.createElement('option');
+                    option.value = sub.subjectId;
+                    option.textContent = `${sub.subjectCode} - ${sub.subjectName}`;
+                    subjectFilter.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.warn('Failed to load subjects for filter:', error);
+        }
+    };
+    
+    // Call it immediately
+    populateSubjectDropdown();
     // State
     let currentPage = 1;
     const pageSize = 10;
@@ -169,6 +192,7 @@ function initAdminDocuments() {
             exportBtn.innerHTML = 'Exporting...';
             const params = {};
             if (searchInput.value) params.search = searchInput.value;
+            if (subjectFilter.value) params.subjectId = subjectFilter.value;
             if (statusFilter.value) params.approvalStatus = statusFilter.value;
             if (fileTypeFilter.value) params.fileType = fileTypeFilter.value;
             
