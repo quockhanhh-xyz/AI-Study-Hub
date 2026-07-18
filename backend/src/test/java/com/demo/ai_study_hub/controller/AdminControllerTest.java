@@ -27,6 +27,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AdminController.class)
@@ -239,10 +240,32 @@ class AdminControllerTest {
         com.demo.ai_study_hub.entity.PlanConfig mockPlan = com.demo.ai_study_hub.entity.PlanConfig.builder()
                 .planCode("PREMIUM_1_MONTH")
                 .planName("Premium Renamed")
-                .price(199000L)
+                .price(249000L)
                 .build();
 
         when(adminService.updatePlanConfig(eq("PREMIUM_1_MONTH"), any())).thenReturn(mockPlan);
+
+        String jsonRequest = "{\"planName\":\"Premium Renamed\",\"price\":249000,\"billingLabel\":\"1 month\"}";
+
+        mockMvc.perform(put("/api/admin/plans/PREMIUM_1_MONTH")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonRequest)
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.planName").value("Premium Renamed"))
+                .andExpect(jsonPath("$.data.price").value(249000));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
+    void patchPlanStatus_AsAdmin_ShouldReturn200() throws Exception {
+        com.demo.ai_study_hub.entity.PlanConfig mockPlan = com.demo.ai_study_hub.entity.PlanConfig.builder()
+                .planCode("PREMIUM_1_MONTH")
+                .status("ACTIVE")
+                .build();
+
+        when(adminService.patchPlanStatus(eq("PREMIUM_1_MONTH"), eq("ACTIVE"))).thenReturn(mockPlan);
 
         mockMvc.perform(patch("/api/admin/plans/PREMIUM_1_MONTH/status")
                         .param("status", "ACTIVE")

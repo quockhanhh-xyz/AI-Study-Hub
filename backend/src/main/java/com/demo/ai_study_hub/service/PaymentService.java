@@ -384,14 +384,17 @@ public class PaymentService {
     }
 
     private PaymentResponse toResponse(PaymentOrder order, String tier) {
+        String planName = order.getPlanName() != null ? order.getPlanName() : planNameForCode(order.getPlanCode());
+        String billingLabel = order.getBillingLabel() != null ? order.getBillingLabel() : billingLabelForCode(order.getPlanCode());
+
         return PaymentResponse.builder()
                 .paymentId(order.getPaymentId())
                 .planCode(order.getPlanCode())
-                .planName(planNameForCode(order.getPlanCode()))
+                .planName(planName)
                 .targetTier(order.getTargetTier())
                 .amount(order.getAmount())
                 .currency(order.getCurrency())
-                .billingLabel(billingLabelForCode(order.getPlanCode()))
+                .billingLabel(billingLabel)
                 .status(order.getStatus())
                 .paymentMethod(order.getPaymentMethod())
                 .paymentProvider(order.getPaymentProvider())
