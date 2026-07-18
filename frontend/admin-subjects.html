@@ -9,22 +9,15 @@
     <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
-    <div class="admin-layout">
-        <!-- Mock Sidebar -->
-        <aside class="admin-sidebar" id="adminSidebar">
-            <h2>Admin Console</h2>
-            <nav>
-                <a href="admin-dashboard.html">Dashboard</a>
-                <a href="admin-users.html">Users</a>
-                <a href="admin-documents.html">Public Documents</a>
-                <a href="admin-payments.html">Payments</a>
-                <a href="admin-ai-usage.html">AI Usage</a>
-                <a href="admin-subjects.html" class="active">Subjects</a>
-                <a href="index.html">Back to App</a>
-            </nav>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
         </aside>
 
-        <main class="admin-content">
+        <main class="main-content">
+            <div class="admin-layout">
+                <div class="admin-content-wrapper">
             <div class="admin-header">
                 <h1>System Subject Management</h1>
                 <div>
@@ -63,6 +56,8 @@
                 </table>
                 <div id="pagination" class="pagination">
                     <!-- Pagination buttons -->
+                </div>
+            </div>
                 </div>
             </div>
         </main>
@@ -120,6 +115,9 @@
 
     <!-- Scripts -->
     <script src="js/api.js"></script>
+    <script src="js/admin-core-api.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/navigation.js"></script>
     <script src="js/admin-subject-api.js"></script>
     <script src="js/admin-subjects.js"></script>
 </body>
