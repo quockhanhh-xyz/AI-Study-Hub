@@ -14,8 +14,8 @@ public class PlanConfigDataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (planConfigRepository.count() == 0) {
-            // Seed FREE plan
+        // Seed FREE plan
+        if (!planConfigRepository.existsById("FREE")) {
             planConfigRepository.save(PlanConfig.builder()
                     .planCode("FREE")
                     .planName("Free")
@@ -28,6 +28,15 @@ public class PlanConfigDataSeeder implements CommandLineRunner {
                     .maxDocumentCount(30)
                     .maxFolderCount(20)
                     .maxGroupCount(3)
+                    .maxFolderDepth(3)
+                    .maxMembersPerGroup(3)
+                    .maxActiveShares(30)
+                    .maxAiSessionsPerDocument(3)
+                    .maxMessagesPerSession(30)
+                    .maxQuestionChars(500)
+                    .maxContextChunks(3)
+                    .maxOutputTokens(500)
+                    .itemsPerSet(5)
                     .maxFlashcardsPerSet(20)
                     .maxQuizQuestionsPerSet(20)
                     .summaryDailyLimit(3)
@@ -38,8 +47,10 @@ public class PlanConfigDataSeeder implements CommandLineRunner {
                     .targetTier("FREE")
                     .durationMonths(0)
                     .build());
+        }
 
-            // Seed PREMIUM_1_MONTH plan
+        // Seed PREMIUM_1_MONTH plan
+        if (!planConfigRepository.existsById("PREMIUM_1_MONTH")) {
             planConfigRepository.save(PlanConfig.builder()
                     .planCode("PREMIUM_1_MONTH")
                     .planName("Premium")
@@ -52,6 +63,15 @@ public class PlanConfigDataSeeder implements CommandLineRunner {
                     .maxDocumentCount(500)
                     .maxFolderCount(200)
                     .maxGroupCount(30)
+                    .maxFolderDepth(8)
+                    .maxMembersPerGroup(100)
+                    .maxActiveShares(1000)
+                    .maxAiSessionsPerDocument(30)
+                    .maxMessagesPerSession(300)
+                    .maxQuestionChars(2000)
+                    .maxContextChunks(8)
+                    .maxOutputTokens(1500)
+                    .itemsPerSet(15)
                     .maxFlashcardsPerSet(50)
                     .maxQuizQuestionsPerSet(50)
                     .summaryDailyLimit(20)
@@ -62,8 +82,10 @@ public class PlanConfigDataSeeder implements CommandLineRunner {
                     .targetTier("PREMIUM")
                     .durationMonths(1)
                     .build());
+        }
 
-            // Seed ULTRA_1_MONTH plan
+        // Seed ULTRA_1_MONTH plan
+        if (!planConfigRepository.existsById("ULTRA_1_MONTH")) {
             planConfigRepository.save(PlanConfig.builder()
                     .planCode("ULTRA_1_MONTH")
                     .planName("Ultra")
@@ -76,6 +98,15 @@ public class PlanConfigDataSeeder implements CommandLineRunner {
                     .maxDocumentCount(2000)
                     .maxFolderCount(1000)
                     .maxGroupCount(100)
+                    .maxFolderDepth(12)
+                    .maxMembersPerGroup(300)
+                    .maxActiveShares(5000)
+                    .maxAiSessionsPerDocument(100)
+                    .maxMessagesPerSession(1000)
+                    .maxQuestionChars(5000)
+                    .maxContextChunks(15)
+                    .maxOutputTokens(3000)
+                    .itemsPerSet(30)
                     .maxFlashcardsPerSet(80)
                     .maxQuizQuestionsPerSet(80)
                     .summaryDailyLimit(50)
@@ -86,8 +117,8 @@ public class PlanConfigDataSeeder implements CommandLineRunner {
                     .targetTier("ULTRA")
                     .durationMonths(1)
                     .build());
-
-            System.out.println("✅ [PlanConfigDataSeeder] Seeded default plan configurations.");
         }
+
+        System.out.println("✅ [PlanConfigDataSeeder] Seeded missing plan configurations.");
     }
 }

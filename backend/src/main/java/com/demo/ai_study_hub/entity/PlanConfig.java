@@ -48,6 +48,33 @@ public class PlanConfig {
     @Column(name = "max_group_count", nullable = false)
     private Integer maxGroupCount;
 
+    @Column(name = "max_folder_depth", nullable = false)
+    private Integer maxFolderDepth;
+
+    @Column(name = "max_members_per_group", nullable = false)
+    private Integer maxMembersPerGroup;
+
+    @Column(name = "max_active_shares", nullable = false)
+    private Integer maxActiveShares;
+
+    @Column(name = "max_ai_sessions_per_document", nullable = false)
+    private Integer maxAiSessionsPerDocument;
+
+    @Column(name = "max_messages_per_session", nullable = false)
+    private Integer maxMessagesPerSession;
+
+    @Column(name = "max_question_chars", nullable = false)
+    private Integer maxQuestionChars;
+
+    @Column(name = "max_context_chunks", nullable = false)
+    private Integer maxContextChunks;
+
+    @Column(name = "max_output_tokens", nullable = false)
+    private Integer maxOutputTokens;
+
+    @Column(name = "items_per_set", nullable = false)
+    private Integer itemsPerSet;
+
     @Column(name = "max_flashcards_per_set", nullable = false)
     private Integer maxFlashcardsPerSet;
 

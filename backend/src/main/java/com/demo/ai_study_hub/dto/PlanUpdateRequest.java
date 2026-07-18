@@ -15,6 +15,15 @@ public class PlanUpdateRequest {
     private Integer maxDocumentCount;
     private Integer maxFolderCount;
     private Integer maxGroupCount;
+    private Integer maxFolderDepth;
+    private Integer maxMembersPerGroup;
+    private Integer maxActiveShares;
+    private Integer maxAiSessionsPerDocument;
+    private Integer maxMessagesPerSession;
+    private Integer maxQuestionChars;
+    private Integer maxContextChunks;
+    private Integer maxOutputTokens;
+    private Integer itemsPerSet;
     private Integer maxFlashcardsPerSet;
     private Integer maxQuizQuestionsPerSet;
     private Integer summaryDailyLimit;

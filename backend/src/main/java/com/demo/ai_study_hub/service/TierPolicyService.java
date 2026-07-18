@@ -129,13 +129,22 @@ public class TierPolicyService {
         int maxDocuments = plan != null ? plan.getMaxDocumentCount() : base.maxDocuments();
         long maxFileBytes = plan != null ? plan.getMaxFileSize() : base.maxFileBytes();
         int maxFolders = plan != null ? plan.getMaxFolderCount() : base.maxFolders();
+        int maxFolderDepth = plan != null ? plan.getMaxFolderDepth() : base.maxFolderDepth();
         int maxOwnedGroups = plan != null ? plan.getMaxGroupCount() : base.maxOwnedGroups();
-        int maxFlashcardsPerSet = plan != null ? plan.getMaxFlashcardsPerSet() : base.maxFlashcardsPerSet();
-        int maxQuizQuestionsPerSet = plan != null ? plan.getMaxQuizQuestionsPerSet() : base.maxQuizQuestionsPerSet();
+        int maxMembersPerGroup = plan != null ? plan.getMaxMembersPerGroup() : base.maxMembersPerGroup();
+        int maxActiveShares = plan != null ? plan.getMaxActiveShares() : base.maxActiveShares();
+        int maxAiSessionsPerDocument = plan != null ? plan.getMaxAiSessionsPerDocument() : base.maxAiSessionsPerDocument();
+        int maxMessagesPerSession = plan != null ? plan.getMaxMessagesPerSession() : base.maxMessagesPerSession();
         int aiQuestionsPerDay = plan != null ? plan.getAiDailyQuestionLimit() : base.aiQuestionsPerDay();
+        int maxQuestionChars = plan != null ? plan.getMaxQuestionChars() : base.maxQuestionChars();
+        int maxContextChunks = plan != null ? plan.getMaxContextChunks() : base.maxContextChunks();
+        int maxOutputTokens = plan != null ? plan.getMaxOutputTokens() : base.maxOutputTokens();
         int summaryGenerationsPerDay = plan != null ? plan.getSummaryDailyLimit() : base.summaryGenerationsPerDay();
         int flashcardSetsPerDay = plan != null ? plan.getFlashcardDailyLimit() : base.flashcardSetsPerDay();
         int quizSetsPerDay = plan != null ? plan.getQuizDailyLimit() : base.quizSetsPerDay();
+        int itemsPerSet = plan != null ? plan.getItemsPerSet() : base.itemsPerSet();
+        int maxQuizQuestionsPerSet = plan != null ? plan.getMaxQuizQuestionsPerSet() : base.maxQuizQuestionsPerSet();
+        int maxFlashcardsPerSet = plan != null ? plan.getMaxFlashcardsPerSet() : base.maxFlashcardsPerSet();
 
         String model = getModelForTier(tier);
 
@@ -144,21 +153,21 @@ public class TierPolicyService {
                 maxDocuments,
                 maxFileBytes,
                 maxFolders,
-                base.maxFolderDepth(),
+                maxFolderDepth,
                 maxOwnedGroups,
-                base.maxMembersPerGroup(),
-                base.maxActiveShares(),
-                base.maxAiSessionsPerDocument(),
-                base.maxMessagesPerSession(),
+                maxMembersPerGroup,
+                maxActiveShares,
+                maxAiSessionsPerDocument,
+                maxMessagesPerSession,
                 aiQuestionsPerDay,
-                base.maxQuestionChars(),
-                base.maxContextChunks(),
-                base.maxOutputTokens(),
+                maxQuestionChars,
+                maxContextChunks,
+                maxOutputTokens,
                 model,
                 summaryGenerationsPerDay,
                 flashcardSetsPerDay,
                 quizSetsPerDay,
-                base.itemsPerSet(),
+                itemsPerSet,
                 maxQuizQuestionsPerSet,
                 maxFlashcardsPerSet
         );

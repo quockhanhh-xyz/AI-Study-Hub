@@ -347,9 +347,85 @@ public class AdminServiceImpl implements AdminService {
         PlanConfig pc = planConfigRepository.findById(planCode.toUpperCase())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan not found with code: " + planCode));
 
-        if (request.getPlanName() != null) pc.setPlanName(request.getPlanName());
+        // Strict validations
+        if ("FREE".equalsIgnoreCase(planCode)) {
+            if (request.getPurchasable() != null && request.getPurchasable()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Free plan cannot be made purchasable");
+            }
+        }
+        if (request.getPlanName() != null && request.getPlanName().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Plan name cannot be empty");
+        }
+        if (request.getBillingLabel() != null && request.getBillingLabel().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Billing label cannot be empty");
+        }
+        if (request.getPrice() != null && request.getPrice() < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Price cannot be negative");
+        }
+        if (request.getAiDailyQuestionLimit() != null && request.getAiDailyQuestionLimit() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "AI daily question limit must be positive");
+        }
+        if (request.getStorageLimit() != null && request.getStorageLimit() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Storage limit must be positive");
+        }
+        if (request.getMaxFileSize() != null && request.getMaxFileSize() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max file size must be positive");
+        }
+        if (request.getMaxDocumentCount() != null && request.getMaxDocumentCount() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max document count must be positive");
+        }
+        if (request.getMaxFolderCount() != null && request.getMaxFolderCount() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max folder count must be positive");
+        }
+        if (request.getMaxGroupCount() != null && request.getMaxGroupCount() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max group count must be positive");
+        }
+        if (request.getMaxFolderDepth() != null && request.getMaxFolderDepth() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max folder depth must be positive");
+        }
+        if (request.getMaxMembersPerGroup() != null && request.getMaxMembersPerGroup() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max members per group must be positive");
+        }
+        if (request.getMaxActiveShares() != null && request.getMaxActiveShares() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max active shares must be positive");
+        }
+        if (request.getMaxAiSessionsPerDocument() != null && request.getMaxAiSessionsPerDocument() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max AI sessions per document must be positive");
+        }
+        if (request.getMaxMessagesPerSession() != null && request.getMaxMessagesPerSession() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max messages per session must be positive");
+        }
+        if (request.getMaxQuestionChars() != null && request.getMaxQuestionChars() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max question characters must be positive");
+        }
+        if (request.getMaxContextChunks() != null && request.getMaxContextChunks() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max context chunks must be positive");
+        }
+        if (request.getMaxOutputTokens() != null && request.getMaxOutputTokens() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max output tokens must be positive");
+        }
+        if (request.getItemsPerSet() != null && request.getItemsPerSet() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Items per set must be positive");
+        }
+        if (request.getMaxFlashcardsPerSet() != null && request.getMaxFlashcardsPerSet() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max flashcards per set must be positive");
+        }
+        if (request.getMaxQuizQuestionsPerSet() != null && request.getMaxQuizQuestionsPerSet() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max quiz questions per set must be positive");
+        }
+        if (request.getSummaryDailyLimit() != null && request.getSummaryDailyLimit() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Summary daily limit must be positive");
+        }
+        if (request.getFlashcardDailyLimit() != null && request.getFlashcardDailyLimit() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Flashcard daily limit must be positive");
+        }
+        if (request.getQuizDailyLimit() != null && request.getQuizDailyLimit() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quiz daily limit must be positive");
+        }
+
+        if (request.getPlanName() != null) pc.setPlanName(request.getPlanName().trim());
         if (request.getPrice() != null) pc.setPrice(request.getPrice());
-        if (request.getBillingLabel() != null) pc.setBillingLabel(request.getBillingLabel());
+        if (request.getBillingLabel() != null) pc.setBillingLabel(request.getBillingLabel().trim());
         if (request.getPurchasable() != null) pc.setPurchasable(request.getPurchasable());
         if (request.getAiDailyQuestionLimit() != null) pc.setAiDailyQuestionLimit(request.getAiDailyQuestionLimit());
         if (request.getStorageLimit() != null) pc.setStorageLimit(request.getStorageLimit());
@@ -357,6 +433,15 @@ public class AdminServiceImpl implements AdminService {
         if (request.getMaxDocumentCount() != null) pc.setMaxDocumentCount(request.getMaxDocumentCount());
         if (request.getMaxFolderCount() != null) pc.setMaxFolderCount(request.getMaxFolderCount());
         if (request.getMaxGroupCount() != null) pc.setMaxGroupCount(request.getMaxGroupCount());
+        if (request.getMaxFolderDepth() != null) pc.setMaxFolderDepth(request.getMaxFolderDepth());
+        if (request.getMaxMembersPerGroup() != null) pc.setMaxMembersPerGroup(request.getMaxMembersPerGroup());
+        if (request.getMaxActiveShares() != null) pc.setMaxActiveShares(request.getMaxActiveShares());
+        if (request.getMaxAiSessionsPerDocument() != null) pc.setMaxAiSessionsPerDocument(request.getMaxAiSessionsPerDocument());
+        if (request.getMaxMessagesPerSession() != null) pc.setMaxMessagesPerSession(request.getMaxMessagesPerSession());
+        if (request.getMaxQuestionChars() != null) pc.setMaxQuestionChars(request.getMaxQuestionChars());
+        if (request.getMaxContextChunks() != null) pc.setMaxContextChunks(request.getMaxContextChunks());
+        if (request.getMaxOutputTokens() != null) pc.setMaxOutputTokens(request.getMaxOutputTokens());
+        if (request.getItemsPerSet() != null) pc.setItemsPerSet(request.getItemsPerSet());
         if (request.getMaxFlashcardsPerSet() != null) pc.setMaxFlashcardsPerSet(request.getMaxFlashcardsPerSet());
         if (request.getMaxQuizQuestionsPerSet() != null) pc.setMaxQuizQuestionsPerSet(request.getMaxQuizQuestionsPerSet());
         if (request.getSummaryDailyLimit() != null) pc.setSummaryDailyLimit(request.getSummaryDailyLimit());
@@ -402,7 +487,10 @@ public class AdminServiceImpl implements AdminService {
                     "Plan Code", "Plan Name", "Price", "Billing Label", "Purchasable",
                     "AI Daily Question Limit", "Storage Limit", "Max File Size",
                     "Max Document Count", "Max Folder Count", "Max Group Count",
-                    "Max Flashcards Per Set", "Max Quiz Questions Per Set",
+                    "Max Folder Depth", "Max Members Per Group", "Max Active Shares",
+                    "Max AI Sessions Per Document", "Max Messages Per Session",
+                    "Max Question Chars", "Max Context Chunks", "Max Output Tokens",
+                    "Items Per Set", "Max Flashcards Per Set", "Max Quiz Questions Per Set",
                     "Summary Daily Limit", "Flashcard Daily Limit", "Quiz Daily Limit",
                     "Features List", "Status", "Target Tier", "Duration Months"
             };
@@ -427,15 +515,24 @@ public class AdminServiceImpl implements AdminService {
                 row.createCell(8).setCellValue(pc.getMaxDocumentCount());
                 row.createCell(9).setCellValue(pc.getMaxFolderCount());
                 row.createCell(10).setCellValue(pc.getMaxGroupCount());
-                row.createCell(11).setCellValue(pc.getMaxFlashcardsPerSet());
-                row.createCell(12).setCellValue(pc.getMaxQuizQuestionsPerSet());
-                row.createCell(13).setCellValue(pc.getSummaryDailyLimit());
-                row.createCell(14).setCellValue(pc.getFlashcardDailyLimit());
-                row.createCell(15).setCellValue(pc.getQuizDailyLimit());
-                row.createCell(16).setCellValue(pc.getFeaturesList() != null ? pc.getFeaturesList() : "");
-                row.createCell(17).setCellValue(pc.getStatus());
-                row.createCell(18).setCellValue(pc.getTargetTier());
-                row.createCell(19).setCellValue(pc.getDurationMonths());
+                row.createCell(11).setCellValue(pc.getMaxFolderDepth());
+                row.createCell(12).setCellValue(pc.getMaxMembersPerGroup());
+                row.createCell(13).setCellValue(pc.getMaxActiveShares());
+                row.createCell(14).setCellValue(pc.getMaxAiSessionsPerDocument());
+                row.createCell(15).setCellValue(pc.getMaxMessagesPerSession());
+                row.createCell(16).setCellValue(pc.getMaxQuestionChars());
+                row.createCell(17).setCellValue(pc.getMaxContextChunks());
+                row.createCell(18).setCellValue(pc.getMaxOutputTokens());
+                row.createCell(19).setCellValue(pc.getItemsPerSet());
+                row.createCell(20).setCellValue(pc.getMaxFlashcardsPerSet());
+                row.createCell(21).setCellValue(pc.getMaxQuizQuestionsPerSet());
+                row.createCell(22).setCellValue(pc.getSummaryDailyLimit());
+                row.createCell(23).setCellValue(pc.getFlashcardDailyLimit());
+                row.createCell(24).setCellValue(pc.getQuizDailyLimit());
+                row.createCell(25).setCellValue(pc.getFeaturesList() != null ? pc.getFeaturesList() : "");
+                row.createCell(26).setCellValue(pc.getStatus());
+                row.createCell(27).setCellValue(pc.getTargetTier());
+                row.createCell(28).setCellValue(pc.getDurationMonths());
             }
 
             for (int i = 0; i < headers.length; i++) {
