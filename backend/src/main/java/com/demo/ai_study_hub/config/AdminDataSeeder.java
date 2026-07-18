@@ -4,6 +4,7 @@ import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.enums.UserTier;
 import com.demo.ai_study_hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "admin.seed.enabled", havingValue = "true")
 public class AdminDataSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
