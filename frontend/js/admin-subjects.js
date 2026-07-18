@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Loading...</td></tr>';
             
             const params = {
-                page: currentPage,
+                page: currentPage - 1,
                 size: pageSize
             };
 
@@ -48,9 +48,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Mock fallback
                 response = {
                     data: {
-                        content: [
-                            { id: 1, code: 'SWP391', name: 'Software Project', description: 'System subject for SWP', status: 'ACTIVE', createdAt: '2026-07-17T10:00:00Z', isSystem: true },
-                            { id: 2, code: 'PRJ301', name: 'Java Web', description: 'System subject for PRJ', status: 'INACTIVE', createdAt: '2026-07-16T15:30:00Z', isSystem: true }
+                        subjects: [
+                            { subjectId: 1, subjectCode: 'SWP391', subjectName: 'Software Project', description: 'System subject for SWP', status: 'ACTIVE', createdAt: '2026-07-17T10:00:00Z', isSystem: true },
+                            { subjectId: 2, subjectCode: 'PRJ301', subjectName: 'Java Web', description: 'System subject for PRJ', status: 'INACTIVE', createdAt: '2026-07-16T15:30:00Z', isSystem: true }
                         ],
                         totalElements: 2,
                         totalPages: 1
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const data = response.data;
-            renderTable(data.content);
+            renderTable(data.subjects);
             renderPagination(data.totalPages);
 
         } catch (error) {
@@ -76,16 +76,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         tableBody.innerHTML = items.map(item => `
             <tr>
-                <td>${item.code}</td>
-                <td>${item.name}</td>
+                <td>${item.subjectCode}</td>
+                <td>${item.subjectName}</td>
                 <td>${item.description || '-'}</td>
                 <td><span class="badge ${item.status.toLowerCase()}">${item.status}</span></td>
                 <td>${item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}</td>
                 <td>
                     <button class="btn btn-sm btn-secondary" onclick='openSubjectModal(${JSON.stringify(item)})'>Edit</button>
                     ${item.status === 'ACTIVE' 
-                        ? `<button class="btn btn-sm btn-danger" onclick="openToggleModal(${item.id}, 'INACTIVE', '${item.name}')">Disable</button>`
-                        : `<button class="btn btn-sm btn-primary" onclick="openToggleModal(${item.id}, 'ACTIVE', '${item.name}')">Enable</button>`
+                        ? `<button class="btn btn-sm btn-danger" onclick="openToggleModal(${item.subjectId}, 'INACTIVE', '${item.subjectName}')">Disable</button>`
+                        : `<button class="btn btn-sm btn-primary" onclick="openToggleModal(${item.subjectId}, 'ACTIVE', '${item.subjectName}')">Enable</button>`
                     }
                 </td>
             </tr>
@@ -113,9 +113,9 @@ document.addEventListener('DOMContentLoaded', () => {
         subjectForm.reset();
         if (subject) {
             modalTitle.textContent = 'Edit Subject';
-            subjectIdField.value = subject.id;
-            subjectCodeField.value = subject.code;
-            subjectNameField.value = subject.name;
+            subjectIdField.value = subject.subjectId;
+            subjectCodeField.value = subject.subjectCode;
+            subjectNameField.value = subject.subjectName;
             subjectDescField.value = subject.description || '';
         } else {
             modalTitle.textContent = 'Create Subject';
@@ -143,8 +143,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const data = {
-            code: subjectCodeField.value,
-            name: subjectNameField.value,
+            subjectCode: subjectCodeField.value,
+            subjectName: subjectNameField.value,
             description: subjectDescField.value
         };
         const id = subjectIdField.value;
