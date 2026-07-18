@@ -4681,20 +4681,20 @@ Limits are enforced per user tier on a daily calendar base matching Asia/Ho_Chi_
 | Daily Summary generations | 3 | 20 | 50 |
 | Daily Flashcard set generations | 2 | 15 | 40 |
 | Daily Quiz set generations | 2 | 15 | 40 |
-| Max questions count per Quiz set | 5 | 15 | 25 |
-| Max flashcards count per Flashcard set | 8 | 30 | 50 |
+| Max questions count per Quiz set | 20 | 50 | 80 |
+| Max flashcards count per Flashcard set | 20 | 50 | 80 |
 
 ### Range Validation Limits
 If the client submits count params outside validation ranges, returns HTTP `400 Bad Request` with appropriate codes:
 
 * **Quiz `questionCount`**:
-  * FREE: Min 3, Default 5, Max 5
-  * PREMIUM: Min 3, Default 10, Max 15
-  * ULTRA: Min 3, Default 15, Max 25
+  * FREE: Min 3, Default 5, Max 20
+  * PREMIUM: Min 3, Default 10, Max 50
+  * ULTRA: Min 3, Default 15, Max 80
 * **Flashcard `count`**:
-  * FREE: Min 3, Default 8, Max 8
-  * PREMIUM: Min 3, Default 15, Max 30
-  * ULTRA: Min 3, Default 20, Max 50
+  * FREE: Min 3, Default 8, Max 20
+  * PREMIUM: Min 3, Default 15, Max 50
+  * ULTRA: Min 3, Default 20, Max 80
 
 ---
 

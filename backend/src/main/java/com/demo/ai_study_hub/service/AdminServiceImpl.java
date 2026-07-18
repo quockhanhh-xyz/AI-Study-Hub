@@ -461,6 +461,10 @@ public class AdminServiceImpl implements AdminService {
         PlanConfig pc = planConfigRepository.findById(planCode.toUpperCase())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan not found with code: " + planCode));
 
+        if ("FREE".equalsIgnoreCase(planCode)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Free plan status cannot be modified");
+        }
+
         if (!"ACTIVE".equalsIgnoreCase(status) && !"INACTIVE".equalsIgnoreCase(status)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status: " + status);
         }
