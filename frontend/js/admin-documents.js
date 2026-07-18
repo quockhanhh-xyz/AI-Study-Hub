@@ -1,4 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Wait for the auth layout system to finish verifying the user
+    if (window.authReady) {
+        window.authReady.then((isAuthenticated) => {
+            if (isAuthenticated) {
+                initAdminDocuments();
+            }
+        });
+    } else {
+        initAdminDocuments();
+    }
+});
+
+function initAdminDocuments() {
     // State
     let currentPage = 1;
     const pageSize = 10;
@@ -21,11 +34,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const rejectDocId = document.getElementById('rejectDocId');
     const rejectReason = document.getElementById('rejectReason');
 
-    // Load Data
     const loadDocuments = async () => {
+        const loadingState = document.getElementById("docsLoadingState");
+        const errorState = document.getElementById("docsErrorState");
+        const contentState = document.getElementById("docsContent");
+
+        loadingState.style.display = "flex";
+        errorState.style.display = "none";
+        contentState.style.display = "none";
+        
         try {
-            tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Loading...</td></tr>';
-            
             const params = {
                 page: currentPage - 1,
                 size: pageSize
@@ -36,34 +54,26 @@ document.addEventListener('DOMContentLoaded', () => {
             if (statusFilter.value) params.approvalStatus = statusFilter.value;
             if (fileTypeFilter.value) params.fileType = fileTypeFilter.value;
 
-            // Wait for backend or mock response
-            let response;
-            try {
-                response = await getAdminPublicDocuments(params);
-            } catch (error) {
-                // Mock fallback for UI dev if backend not ready
-                console.warn('Backend not ready or error:', error);
-                response = {
-                    data: {
-                        items: [
-                            { documentId: 1, title: 'Math 101', ownerEmail: 'user1@test.com', subject: 'Math', fileType: 'PDF', visibility: 'PUBLIC', approvalStatus: 'PENDING', processingStatus: 'COMPLETED' },
-                            { documentId: 2, title: 'History Notes', ownerEmail: 'user2@test.com', subject: 'History', fileType: 'DOCX', visibility: 'PUBLIC', approvalStatus: 'APPROVED', processingStatus: 'COMPLETED' }
-                        ],
-                        totalElements: 2,
-                        totalPages: 1
-                    }
-                };
-            }
-
-            const data = response.data;
-            totalElements = data.totalElements;
+            const response = await getAdminPublicDocuments(params);
             
-            renderTable(data.items);
-            renderPagination(data.totalPages);
+            if (response && response.success && response.data) {
+                const data = response.data;
+                totalElements = data.totalElements;
+                
+                renderTable(data.items);
+                renderPagination(data.totalPages);
+
+                loadingState.style.display = "none";
+                contentState.style.display = "block";
+            } else {
+                throw new Error(response?.message || "Failed to load documents");
+            }
 
         } catch (error) {
             console.error('Error loading documents:', error);
-            tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: red;">Failed to load documents</td></tr>';
+            loadingState.style.display = "none";
+            errorState.style.display = "flex";
+            document.getElementById("docsErrorMessage").textContent = error.message || "An unexpected error occurred.";
         }
     };
 
@@ -155,24 +165,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     exportBtn.addEventListener('click', async () => {
         try {
+            exportBtn.disabled = true;
+            exportBtn.innerHTML = 'Exporting...';
             const params = {};
             if (searchInput.value) params.search = searchInput.value;
             if (statusFilter.value) params.approvalStatus = statusFilter.value;
             if (fileTypeFilter.value) params.fileType = fileTypeFilter.value;
             
-            const blob = await exportAdminPublicDocuments(params);
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Public_Documents_${new Date().toISOString().split('T')[0]}.xlsx`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
+            await exportAdminPublicDocuments(params);
         } catch (error) {
-            alert('Failed to export data');
+            console.error('Failed to export data', error);
+        } finally {
+            exportBtn.disabled = false;
+            exportBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                Export Excel
+            `;
         }
     });
 
     // Initial Load
     loadDocuments();
-});
+}
