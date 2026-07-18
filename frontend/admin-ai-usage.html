@@ -39,7 +39,13 @@
                     <option value="PREMIUM">PREMIUM</option>
                     <option value="ULTRA">ULTRA</option>
                 </select>
-                <!-- Not adding feature filter as dropdown if we show all features in columns, but per instructions "Filter tier/feature/date range", so maybe filter by specific usage -->
+                <select id="featureFilter">
+                    <option value="">All Features</option>
+                    <option value="AI_QA">AI Q&A</option>
+                    <option value="AI_SUMMARY">AI Summary</option>
+                    <option value="AI_FLASHCARD">AI Flashcard</option>
+                    <option value="AI_QUIZ">AI Quiz</option>
+                </select>
                 <input type="date" id="startDateFilter" title="Start Date">
                 <input type="date" id="endDateFilter" title="End Date">
                 <button id="filterBtn" class="btn btn-secondary">Filter</button>

@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pagination = document.getElementById('pagination');
     const searchInput = document.getElementById('searchInput');
     const tierFilter = document.getElementById('tierFilter');
+    const featureFilter = document.getElementById('featureFilter');
     const startDateFilter = document.getElementById('startDateFilter');
     const endDateFilter = document.getElementById('endDateFilter');
     const filterBtn = document.getElementById('filterBtn');
@@ -24,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (searchInput.value) params.search = searchInput.value;
             if (tierFilter.value) params.tier = tierFilter.value;
+            if (featureFilter && featureFilter.value) params.feature = featureFilter.value;
             if (startDateFilter.value) params.startDate = `${startDateFilter.value}T00:00:00`;
             if (endDateFilter.value) params.endDate = `${endDateFilter.value}T23:59:59`;
 
