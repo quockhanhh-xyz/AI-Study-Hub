@@ -32,7 +32,7 @@ async function loadDashboardData() {
         if (response && response.success && response.data) {
             renderDashboardStats(response.data);
             renderDashboardCharts(response.data);
-            
+
             loadingState.style.display = "none";
             contentState.style.display = "block";
         } else {
@@ -51,7 +51,7 @@ function renderDashboardStats(data) {
     document.getElementById("statTotalDocs").textContent = data.totalDocuments || 0;
     document.getElementById("statPendingDocs").textContent = data.pendingPublicDocuments || 0;
     document.getElementById("statAiRequests").textContent = data.aiRequestsToday || 0;
-    
+
     const revenue = data.totalRevenue || 0;
     document.getElementById("statTotalRevenue").textContent = revenue.toLocaleString('vi-VN') + " đ";
 }
@@ -75,15 +75,15 @@ function renderDashboardCharts(data) {
     const revenueByMonth = data.revenueByMonth || [];
     renderChart("chartRevenue", "chartRevenueContainer", "line", revenueByMonth, "month", "revenue", ['#16a34a']);
 
-    // 4. AI Usage by Feature (Line/Bar Chart)
+    // 4. AI Usage by Feature (Bar Chart)
     const aiUsage = data.aiUsageByFeature || [];
-    renderChart("chartAiUsage", "chartAiUsageContainer", "line", aiUsage, "feature", "count", ['#8b5cf6']);
+    renderChart("chartAiUsage", "chartAiUsageContainer", "bar", aiUsage, "feature", "count", ['#8b5cf6']);
 }
 
 function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, colors) {
     const container = document.getElementById(containerId);
     const canvas = document.getElementById(canvasId);
-    
+
     // Fallback state if no data
     if (!dataArray || dataArray.length === 0) {
         canvas.style.display = "none";
