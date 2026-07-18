@@ -33,11 +33,11 @@ function handleSearch(event) {
 
 async function loadUsers(page = 0) {
     currentPage = page;
-    
+
     const loadingState = document.getElementById("usersLoadingState");
     const errorState = document.getElementById("usersErrorState");
     const contentState = document.getElementById("usersContent");
-    
+
     // Only show full loading state on first load or error retry, otherwise keep table visible
     if (contentState.style.display === "none") {
         loadingState.style.display = "flex";
@@ -65,7 +65,7 @@ async function loadUsers(page = 0) {
         const response = await fetchAdminUsers(params);
         if (response && response.success && response.data) {
             renderUsersTable(response.data);
-            
+
             loadingState.style.display = "none";
             errorState.style.display = "none";
             contentState.style.display = "block";
@@ -90,20 +90,21 @@ function renderUsersTable(data) {
     const totalElements = data.totalElements || 0;
 
     if (users.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 24px; color: var(--text-muted);">No users found matching your filters.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 24px; color: var(--text-muted);">No users found matching your filters.</td></tr>`;
     } else {
         users.forEach(user => {
             const tr = document.createElement("tr");
-            
+
             // Format date local
             const createdDate = user.createdAt ? new Date(user.createdAt).toLocaleString() : "N/A";
-            
+
             tr.innerHTML = `
                 <td>#${user.userId}</td>
                 <td style="font-weight: 500;">${escapeHtml(user.fullName)}</td>
                 <td>${escapeHtml(user.email)}</td>
                 <td><span class="badge ${getRoleBadgeClass(user.role)}">${user.role}</span></td>
                 <td><span class="badge ${getTierBadgeClass(user.tier)}">${user.tier}</span></td>
+                <td style="font-weight: 600; color: var(--primary);">${user.documentCount || 0}</td>
                 <td><span class="badge ${getStatusBadgeClass(user.status)}">${user.status}</span></td>
                 <td style="color: var(--text-muted); font-size: 13px;">${createdDate}</td>
                 <td style="text-align: right;">
@@ -206,15 +207,15 @@ function clearFilters() {
 function promptUpdateStatus(userId, newStatus, message) {
     targetUserIdToUpdate = userId;
     targetStatusToUpdate = newStatus;
-    
+
     document.getElementById("modalTitle").textContent = newStatus === 'BLOCKED' ? "Block User" : "Unblock User";
     document.getElementById("modalBody").textContent = message;
-    
+
     const confirmBtn = document.getElementById("modalConfirmBtn");
     // Remove old listeners
     const newConfirmBtn = confirmBtn.cloneNode(true);
     confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-    
+
     if (newStatus === 'BLOCKED') {
         newConfirmBtn.style.backgroundColor = 'var(--danger)';
         newConfirmBtn.style.borderColor = 'var(--danger)';
@@ -224,7 +225,7 @@ function promptUpdateStatus(userId, newStatus, message) {
     }
 
     newConfirmBtn.addEventListener("click", executeUpdateStatus);
-    
+
     document.getElementById("confirmModal").classList.add("active");
 }
 
