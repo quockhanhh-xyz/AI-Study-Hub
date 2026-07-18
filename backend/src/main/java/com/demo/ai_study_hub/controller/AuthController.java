@@ -63,11 +63,21 @@ public class AuthController {
                     .build();
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
+            String normalizedRole = user.getRole();
+            if (normalizedRole != null) {
+                normalizedRole = normalizedRole.toUpperCase();
+                if (normalizedRole.startsWith("ROLE_")) {
+                    normalizedRole = normalizedRole.substring(5);
+                }
+            } else {
+                normalizedRole = "USER";
+            }
+
             LoginResponse loginResponse = LoginResponse.builder()
                     .userId(user.getUserId())
                     .fullName(user.getFullName())
                     .email(user.getEmail())
-                    .role(user.getRole())
+                    .role(normalizedRole)
                     .status(user.getStatus())
                     .build();
 
@@ -103,11 +113,21 @@ public class AuthController {
         }
         try {
             User user = authService.getUserByEmail(authentication.getName());
+            String normalizedRole = user.getRole();
+            if (normalizedRole != null) {
+                normalizedRole = normalizedRole.toUpperCase();
+                if (normalizedRole.startsWith("ROLE_")) {
+                    normalizedRole = normalizedRole.substring(5);
+                }
+            } else {
+                normalizedRole = "USER";
+            }
+
             Map<String, Object> data = new java.util.LinkedHashMap<>();
             data.put("userId", user.getUserId());
             data.put("email", user.getEmail());
             data.put("fullName", user.getFullName());
-            data.put("role", user.getRole());
+            data.put("role", normalizedRole);
             data.put("tier", user.getTier());
             data.put("status", user.getStatus());
             data.put("effectiveTier", tierPolicyService.getEffectiveTier(user));
