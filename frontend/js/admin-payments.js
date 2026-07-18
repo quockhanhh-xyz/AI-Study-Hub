@@ -28,6 +28,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let currentPage = 0;
 const PAGE_SIZE = 10;
+let currentSearchTimeout = null;
+
+function handleSearch(event) {
+    if (currentSearchTimeout) {
+        clearTimeout(currentSearchTimeout);
+    }
+    currentSearchTimeout = setTimeout(() => {
+        loadPayments(0);
+    }, 500);
+}
 
 /**
  * Loads paginated payments and updates the table.

@@ -195,13 +195,13 @@ async function downloadFile(endpoint, filename = 'download') {
 
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
-    
+
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
     document.body.appendChild(a);
     a.click();
-    
+
     // Cleanup
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
