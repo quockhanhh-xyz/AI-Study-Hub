@@ -18,7 +18,7 @@ function updateAdminSubject(subjectId, data) {
 
 function updateAdminSubjectStatus(subjectId, status) {
     const endpoint = `/api/admin/subjects/${subjectId}/status`;
-    return apiRequest(endpoint, { method: "PATCH", body: { status } });
+    return apiRequest(endpoint, { method: "PATCH", body: JSON.stringify({ status }) });
 }
 
 function exportAdminSubjects(params = {}) {
