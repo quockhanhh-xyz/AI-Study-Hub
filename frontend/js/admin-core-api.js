@@ -6,7 +6,7 @@
 
 /**
  * Normalizes the user role. If the backend returns ROLE_ADMIN, it converts it to ADMIN.
- * @param {string} role 
+ * @param {string} role
  * @returns {string} Normalized role
  */
 function normalizeAdminRole(role) {
@@ -17,8 +17,8 @@ function normalizeAdminRole(role) {
 
 /**
  * Base fetch wrapper for admin requests.
- * @param {string} endpoint 
- * @param {object} options 
+ * @param {string} endpoint
+ * @param {object} options
  * @returns {Promise<any>}
  */
 async function fetchAdmin(endpoint, options = {}) {
@@ -28,7 +28,7 @@ async function fetchAdmin(endpoint, options = {}) {
             window.location.href = "login.html";
             throw new Error("No user session found");
         }
-        
+
         const user = JSON.parse(userStr);
         if (normalizeAdminRole(user.role) !== 'ADMIN') {
             console.warn("Access denied. Admin privileges required.");
@@ -38,11 +38,11 @@ async function fetchAdmin(endpoint, options = {}) {
 
         // We use the existing base API methods (get, post, patch, etc.)
         // But if needed, we can inject admin specific headers here
-        
+
         // This is a placeholder for actual fetch logic using api.js
         // For GET requests we'll just use the global get() from api.js
         const method = options.method ? options.method.toLowerCase() : 'get';
-        
+
         if (method === 'get') {
             return await get(endpoint, options);
         } else if (method === 'post') {
@@ -54,9 +54,43 @@ async function fetchAdmin(endpoint, options = {}) {
         } else if (method === 'delete') {
             return await del(endpoint, options);
         }
-        
+
     } catch (error) {
         console.error(`Admin API Error (${endpoint}):`, error);
         throw error;
+    }
+}
+
+/**
+ * Downloads a file from the admin API using fetch with credentials.
+ * @param {string} endpoint
+ * @param {string} filename
+ */
+async function exportAdminData(endpoint, filename) {
+    try {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            },
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Export failed with status: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+    } catch (error) {
+        console.error('Export Data Error:', error);
+        alert('Failed to export data. Please try again.');
     }
 }
