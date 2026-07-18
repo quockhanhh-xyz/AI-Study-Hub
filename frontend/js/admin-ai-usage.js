@@ -18,14 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
             tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Loading...</td></tr>';
             
             const params = {
-                page: currentPage,
+                page: currentPage - 1,
                 size: pageSize
             };
 
             if (searchInput.value) params.search = searchInput.value;
             if (tierFilter.value) params.tier = tierFilter.value;
-            if (startDateFilter.value) params.startDate = startDateFilter.value;
-            if (endDateFilter.value) params.endDate = endDateFilter.value;
+            if (startDateFilter.value) params.startDate = `${startDateFilter.value}T00:00:00`;
+            if (endDateFilter.value) params.endDate = `${endDateFilter.value}T23:59:59`;
 
             let response;
             try {
@@ -35,9 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Mock fallback
                 response = {
                     data: {
-                        content: [
-                            { userEmail: 'user1@test.com', tier: 'FREE', aiQa: 5, aiSummary: 2, aiFlashcard: 0, aiQuiz: 1, totalRequests: 8, lastUsedAt: '2026-07-17T10:00:00Z' },
-                            { userEmail: 'premium@test.com', tier: 'PREMIUM', aiQa: 50, aiSummary: 20, aiFlashcard: 15, aiQuiz: 10, totalRequests: 95, lastUsedAt: '2026-07-16T15:30:00Z' }
+                        usages: [
+                            { userEmail: 'user1@test.com', tier: 'FREE', aiQaUsed: 5, summaryUsed: 2, flashcardUsed: 0, quizUsed: 1, totalAiRequests: 8, lastUsedAt: '2026-07-17T10:00:00Z' },
+                            { userEmail: 'premium@test.com', tier: 'PREMIUM', aiQaUsed: 50, summaryUsed: 20, flashcardUsed: 15, quizUsed: 10, totalAiRequests: 95, lastUsedAt: '2026-07-16T15:30:00Z' }
                         ],
                         totalElements: 2,
                         totalPages: 1
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const data = response.data;
-            renderTable(data.content);
+            renderTable(data.usages);
             renderPagination(data.totalPages);
 
         } catch (error) {
@@ -65,11 +65,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <tr>
                 <td>${item.userEmail || item.user || '-'}</td>
                 <td><span class="badge ${item.tier ? item.tier.toLowerCase() : ''}">${item.tier || '-'}</span></td>
-                <td>${item.aiQa || item.AI_QA || 0}</td>
-                <td>${item.aiSummary || item.AI_SUMMARY || 0}</td>
-                <td>${item.aiFlashcard || item.AI_FLASHCARD || 0}</td>
-                <td>${item.aiQuiz || item.AI_QUIZ || 0}</td>
-                <td><strong>${item.totalRequests || item.total || 0}</strong></td>
+                <td>${item.aiQaUsed || item.AI_QA || 0}</td>
+                <td>${item.summaryUsed || item.AI_SUMMARY || 0}</td>
+                <td>${item.flashcardUsed || item.AI_FLASHCARD || 0}</td>
+                <td>${item.quizUsed || item.AI_QUIZ || 0}</td>
+                <td><strong>${item.totalAiRequests || item.total || 0}</strong></td>
                 <td>${item.lastUsedAt ? new Date(item.lastUsedAt).toLocaleString() : '-'}</td>
             </tr>
         `).join('');
