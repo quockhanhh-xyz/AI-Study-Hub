@@ -55,6 +55,7 @@ async function apiRequest(endpoint, options = {}) {
       console.warn(
         "Session expired or invalid (HTTP 401). Executing global redirect to login..."
       );
+      localStorage.removeItem("currentUser");
       window.location.href = "login.html";
     }
 
@@ -111,8 +112,8 @@ async function apiRequest(endpoint, options = {}) {
  */
 function get(endpoint, options = {}) {
   return apiRequest(endpoint, {
-    method: "GET",
-    ...options
+    ...options,
+    method: "GET"
   });
 }
 
@@ -126,9 +127,9 @@ function post(endpoint, body, options = {}) {
   const isFormData = body instanceof FormData;
 
   return apiRequest(endpoint, {
+    ...options,
     method: "POST",
-    body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined),
-    ...options
+    body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined)
   });
 }
 
@@ -142,9 +143,25 @@ function put(endpoint, body, options = {}) {
   const isFormData = body instanceof FormData;
 
   return apiRequest(endpoint, {
+    ...options,
     method: "PUT",
-    body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined),
-    ...options
+    body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined)
+  });
+}
+
+/**
+ * API PATCH request helper
+ * @param {string} endpoint - Example: "/api/users/1/status"
+ * @param {object} body - Updated data object
+ * @param {object} options - Optional parameters override
+ */
+function patch(endpoint, body, options = {}) {
+  const isFormData = body instanceof FormData;
+
+  return apiRequest(endpoint, {
+    ...options,
+    method: "PATCH",
+    body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined)
   });
 }
 
@@ -155,7 +172,7 @@ function put(endpoint, body, options = {}) {
  */
 function del(endpoint, options = {}) {
   return apiRequest(endpoint, {
-    method: "DELETE",
-    ...options
+    ...options,
+    method: "DELETE"
   });
 }
