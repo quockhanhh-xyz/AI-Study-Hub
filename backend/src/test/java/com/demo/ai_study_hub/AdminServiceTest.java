@@ -113,4 +113,28 @@ class AdminServiceTest {
         assertEquals("Only public documents can be unpublished", ex.getReason());
         verify(documentRepository, never()).save(any());
     }
+
+    @Test
+    void makeDocumentPending_PublicDoc_ShouldSucceed() {
+        when(documentRepository.findById(1)).thenReturn(Optional.of(publicDoc));
+
+        adminService.makeDocumentPending(1);
+
+        assertEquals("PENDING", publicDoc.getApprovalStatus());
+        assertNull(publicDoc.getPublishedAt());
+        verify(documentRepository, times(1)).save(publicDoc);
+    }
+
+    @Test
+    void makeDocumentPending_PrivateDoc_ShouldThrowBadRequest() {
+        when(documentRepository.findById(2)).thenReturn(Optional.of(privateDoc));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> {
+            adminService.makeDocumentPending(2);
+        });
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("Only public documents can be moderated", ex.getReason());
+        verify(documentRepository, never()).save(any());
+    }
 }

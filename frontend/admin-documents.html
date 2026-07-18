@@ -101,30 +101,24 @@
     </div>
 
     <!-- Approve Confirm Modal -->
-    <div class="admin-modal" id="approveModal">
-        <div class="admin-modal-content">
-            <div class="admin-modal-header">
-                <h3>Approve Document</h3>
-                <button type="button" class="close-btn" onclick="closeModal('approveModal')">&times;</button>
-            </div>
+    <div class="admin-modal-overlay" id="approveModal">
+        <div class="admin-modal">
+            <h3 class="admin-modal-title">Approve Document</h3>
             <div class="admin-modal-body">
                 <p>Are you sure you want to approve this document? It will be visible in the Community Library.</p>
                 <input type="hidden" id="approveDocId">
             </div>
-            <div class="admin-modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('approveModal')">Cancel</button>
+            <div class="admin-modal-actions">
+                <button class="btn btn-outline" onclick="closeModal('approveModal')">Cancel</button>
                 <button class="btn btn-primary" id="confirmApproveBtn">Approve</button>
             </div>
         </div>
     </div>
 
     <!-- Reject Confirm Modal -->
-    <div class="admin-modal" id="rejectModal">
-        <div class="admin-modal-content">
-            <div class="admin-modal-header">
-                <h3>Reject Document</h3>
-                <button type="button" class="close-btn" onclick="closeModal('rejectModal')">&times;</button>
-            </div>
+    <div class="admin-modal-overlay" id="rejectModal">
+        <div class="admin-modal">
+            <h3 class="admin-modal-title">Reject Document</h3>
             <div class="admin-modal-body">
                 <p>Are you sure you want to reject this document? It will be hidden from the Community Library.</p>
                 <input type="hidden" id="rejectDocId">
@@ -133,9 +127,39 @@
                     <textarea id="rejectReason" rows="3" placeholder="Explain why..."></textarea>
                 </div>
             </div>
-            <div class="admin-modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('rejectModal')">Cancel</button>
+            <div class="admin-modal-actions">
+                <button class="btn btn-outline" onclick="closeModal('rejectModal')">Cancel</button>
                 <button class="btn btn-danger" id="confirmRejectBtn">Reject</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Move to Pending Confirm Modal -->
+    <div class="admin-modal-overlay" id="pendingModal">
+        <div class="admin-modal">
+            <h3 class="admin-modal-title">Move document back to review?</h3>
+            <div class="admin-modal-body">
+                <p>This document will be hidden from Community Library until approved again.</p>
+                <input type="hidden" id="pendingDocId">
+            </div>
+            <div class="admin-modal-actions">
+                <button class="btn btn-outline" onclick="closeModal('pendingModal')">Cancel</button>
+                <button class="btn btn-warning" id="confirmPendingBtn">Move to Pending</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unpublish Confirm Modal -->
+    <div class="admin-modal-overlay" id="unpublishModal">
+        <div class="admin-modal">
+            <h3 class="admin-modal-title">Unpublish document?</h3>
+            <div class="admin-modal-body">
+                <p>This document will be set to PRIVATE and hidden from public search.</p>
+                <input type="hidden" id="unpublishDocId">
+            </div>
+            <div class="admin-modal-actions">
+                <button class="btn btn-outline" onclick="closeModal('unpublishModal')">Cancel</button>
+                <button class="btn btn-secondary" id="confirmUnpublishBtn">Unpublish</button>
             </div>
         </div>
     </div>

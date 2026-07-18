@@ -158,6 +158,18 @@ class AdminControllerTest {
         verify(adminService, times(1)).unpublishDocument(1);
     }
 
+    @Test
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
+    void makeDocumentPending_AsAdmin_ShouldSucceed() throws Exception {
+        doNothing().when(adminService).makeDocumentPending(1);
+
+        mockMvc.perform(patch("/api/admin/documents/1/pending").with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        verify(adminService, times(1)).makeDocumentPending(1);
+    }
+
     // =========================================================================
     // 4. Excel Export
     // =========================================================================

@@ -97,6 +97,20 @@ public class AdminController {
         }
     }
 
+    @PatchMapping("/documents/{id}/pending")
+    public ResponseEntity<ApiResponse<Void>> makeDocumentPending(@PathVariable Integer id) {
+        try {
+            adminService.makeDocumentPending(id);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Document moved back to review successfully", null));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(new ApiResponse<>(false, e.getReason(), null));
+        } catch (Exception e) {
+            log.error("Error moving document {} back to pending", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "An unexpected error occurred while moving document back to pending.", null));
+        }
+    }
+
     @GetMapping("/documents/public/export")
     public ResponseEntity<byte[]> exportPublicDocuments(
             @RequestParam(required = false) String search,
