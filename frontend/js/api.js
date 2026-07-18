@@ -176,3 +176,37 @@ function del(endpoint, options = {}) {
     method: "DELETE"
   });
 }
+
+/**
+ * Downloads a file from an API endpoint, including authentication cookies.
+ * @param {string} endpoint - The API endpoint to download from
+ * @param {string} filename - The default filename to save as
+ */
+async function downloadFile(endpoint, filename = 'download') {
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: "GET",
+      credentials: "include"
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to download file: ${response.statusText}`);
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    
+    // Cleanup
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  } catch (error) {
+    console.error("Error downloading file:", error);
+    alert("Failed to download file. Please try again.");
+  }
+}
