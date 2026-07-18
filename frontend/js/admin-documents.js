@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Loading...</td></tr>';
             
             const params = {
-                page: currentPage,
+                page: currentPage - 1,
                 size: pageSize
             };
 
@@ -43,9 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.warn('Backend not ready or error:', error);
                 response = {
                     data: {
-                        content: [
-                            { id: 1, title: 'Math 101', ownerEmail: 'user1@test.com', subjectName: 'Math', fileType: 'PDF', visibility: 'PUBLIC', approvalStatus: 'PENDING', processingStatus: 'COMPLETED' },
-                            { id: 2, title: 'History Notes', ownerEmail: 'user2@test.com', subjectName: 'History', fileType: 'DOCX', visibility: 'PUBLIC', approvalStatus: 'APPROVED', processingStatus: 'COMPLETED' }
+                        items: [
+                            { documentId: 1, title: 'Math 101', ownerEmail: 'user1@test.com', subject: 'Math', fileType: 'PDF', visibility: 'PUBLIC', approvalStatus: 'PENDING', processingStatus: 'COMPLETED' },
+                            { documentId: 2, title: 'History Notes', ownerEmail: 'user2@test.com', subject: 'History', fileType: 'DOCX', visibility: 'PUBLIC', approvalStatus: 'APPROVED', processingStatus: 'COMPLETED' }
                         ],
                         totalElements: 2,
                         totalPages: 1
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = response.data;
             totalElements = data.totalElements;
             
-            renderTable(data.content);
+            renderTable(data.items);
             renderPagination(data.totalPages);
 
         } catch (error) {
@@ -75,15 +75,15 @@ document.addEventListener('DOMContentLoaded', () => {
             <tr>
                 <td>${doc.title || '-'}</td>
                 <td>${doc.ownerEmail || doc.owner || '-'}</td>
-                <td>${doc.subjectName || doc.subject || '-'}</td>
+                <td>${doc.subject || '-'}</td>
                 <td>${doc.fileType || '-'}</td>
                 <td><span class="badge active">${doc.visibility}</span></td>
                 <td><span class="badge ${doc.approvalStatus.toLowerCase()}">${doc.approvalStatus}</span></td>
                 <td>${doc.processingStatus}</td>
                 <td>
                     ${doc.approvalStatus === 'PENDING' ? `
-                        <button class="btn btn-sm btn-primary" onclick="openApproveModal(${doc.id})">Approve</button>
-                        <button class="btn btn-sm btn-danger" onclick="openRejectModal(${doc.id})">Reject</button>
+                        <button class="btn btn-sm btn-primary" onclick="openApproveModal(${doc.documentId})">Approve</button>
+                        <button class="btn btn-sm btn-danger" onclick="openRejectModal(${doc.documentId})">Reject</button>
                     ` : '-'}
                 </td>
             </tr>
