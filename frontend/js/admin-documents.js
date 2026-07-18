@@ -17,7 +17,7 @@ function initAdminDocuments() {
         try {
             const subjectFilter = document.getElementById('subjectFilter');
             const response = await getSubjects(); // From subject-api.js
-            
+
             if (response && response.success && response.data) {
                 // Keep the "All Subjects" option
                 subjectFilter.innerHTML = '<option value="">All Subjects</option>';
@@ -32,7 +32,7 @@ function initAdminDocuments() {
             console.warn('Failed to load subjects for filter:', error);
         }
     };
-    
+
     // Call it immediately
     populateSubjectDropdown();
     // State
@@ -65,7 +65,7 @@ function initAdminDocuments() {
         loadingState.style.display = "flex";
         errorState.style.display = "none";
         contentState.style.display = "none";
-        
+
         try {
             const params = {
                 page: currentPage - 1,
@@ -78,11 +78,11 @@ function initAdminDocuments() {
             if (fileTypeFilter.value) params.fileType = fileTypeFilter.value;
 
             const response = await getAdminPublicDocuments(params);
-            
+
             if (response && response.success && response.data) {
                 const data = response.data;
                 totalElements = data.totalElements;
-                
+
                 renderTable(data.items);
                 renderPagination(data.totalPages);
 
@@ -195,7 +195,7 @@ function initAdminDocuments() {
             if (subjectFilter.value) params.subjectId = subjectFilter.value;
             if (statusFilter.value) params.approvalStatus = statusFilter.value;
             if (fileTypeFilter.value) params.fileType = fileTypeFilter.value;
-            
+
             await exportAdminPublicDocuments(params);
         } catch (error) {
             console.error('Failed to export data', error);

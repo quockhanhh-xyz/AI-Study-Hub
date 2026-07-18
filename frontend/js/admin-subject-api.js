@@ -24,6 +24,6 @@ function updateAdminSubjectStatus(subjectId, status) {
 function exportAdminSubjects(params = {}) {
     const query = new URLSearchParams(params).toString();
     const endpoint = query ? `/api/admin/subjects/export?${query}` : '/api/admin/subjects/export';
-    
+
     return exportAdminData(endpoint, `Subjects_${new Date().toISOString().split('T')[0]}.xlsx`);
 }

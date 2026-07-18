@@ -15,7 +15,7 @@ function initAdminAiUsage() {
     // State
     let currentPage = 1;
     const pageSize = 10;
-    
+
     // Elements
     const tableBody = document.getElementById('usageTableBody');
     const pagination = document.getElementById('pagination');
@@ -49,7 +49,7 @@ function initAdminAiUsage() {
             if (endDateFilter.value) params.endDate = `${endDateFilter.value}T23:59:59`;
 
             const response = await getAdminAiUsage(params);
-            
+
             if (response && response.success && response.data) {
                 const data = response.data;
                 renderTable(data.usages);

@@ -19,6 +19,6 @@ function rejectAdminDocument(documentId) {
 function exportAdminPublicDocuments(params = {}) {
     const query = new URLSearchParams(params).toString();
     const endpoint = query ? `/api/admin/documents/public/export?${query}` : '/api/admin/documents/public/export';
-    
+
     return exportAdminData(endpoint, `Public_Documents_${new Date().toISOString().split('T')[0]}.xlsx`);
 }

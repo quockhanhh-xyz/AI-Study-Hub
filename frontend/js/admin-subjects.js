@@ -15,7 +15,7 @@ function initAdminSubjects() {
     // State
     let currentPage = 1;
     const pageSize = 10;
-    
+
     // Elements
     const tableBody = document.getElementById('subjectsTableBody');
     const pagination = document.getElementById('pagination');
@@ -28,7 +28,7 @@ function initAdminSubjects() {
     const subjectModal = document.getElementById('subjectModal');
     const toggleStatusModal = document.getElementById('toggleStatusModal');
     const subjectForm = document.getElementById('subjectForm');
-    
+
     // Form fields
     const subjectIdField = document.getElementById('subjectId');
     const subjectCodeField = document.getElementById('subjectCode');
@@ -60,7 +60,7 @@ function initAdminSubjects() {
             if (statusFilter.value) params.status = statusFilter.value;
 
             const response = await getAdminSubjects(params);
-            
+
             if (response && response.success && response.data) {
                 const data = response.data;
                 renderTable(data.subjects);
@@ -95,7 +95,7 @@ function initAdminSubjects() {
                 <td>${item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}</td>
                 <td>
                     <button class="btn btn-sm btn-secondary" onclick='openSubjectModal(${JSON.stringify(item)})'>Edit</button>
-                    ${item.status === 'ACTIVE' 
+                    ${item.status === 'ACTIVE'
                         ? `<button class="btn btn-sm btn-danger" onclick="openToggleModal(${item.subjectId}, 'INACTIVE', '${item.subjectName}')">Disable</button>`
                         : `<button class="btn btn-sm btn-primary" onclick="openToggleModal(${item.subjectId}, 'ACTIVE', '${item.subjectName}')">Enable</button>`
                     }
@@ -198,7 +198,7 @@ function initAdminSubjects() {
             const params = {};
             if (searchInput.value) params.search = searchInput.value;
             if (statusFilter.value) params.status = statusFilter.value;
-            
+
             await exportAdminSubjects(params);
         } catch (error) {
             console.error('Failed to export data', error);

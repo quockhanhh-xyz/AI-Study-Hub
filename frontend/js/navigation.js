@@ -45,7 +45,7 @@ const NAVIGATION_MENU = [
 
   // Step 13B: Payment Result route — requires auth, hidden from sidebar (reached only via payment redirect)
   { name: "Payment Result", icon: ICON_UPGRADE, url: "payment-result.html", requiresAuth: true, hidden: true },
-  
+
   // Guest-Only Gateway Routes (Step 8A Guard Target Authentication Sync)
   { name: "Login", icon: ICON_KEY, url: "login.html", hideWhenAuth: true },
   { name: "Register", icon: ICON_REGISTER, url: "register.html", hideWhenAuth: true },
