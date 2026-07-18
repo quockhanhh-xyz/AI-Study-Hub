@@ -9,5 +9,6 @@ public interface AdminService {
     void approveDocument(Integer id);
     void rejectDocument(Integer id);
     void unpublishDocument(Integer id);
+    void makeDocumentPending(Integer id);
     byte[] exportPublicDocuments(String search, String approvalStatus, String fileType, Integer subjectId);
 }

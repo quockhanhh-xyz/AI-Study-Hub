@@ -16,6 +16,14 @@ function rejectAdminDocument(documentId) {
     return apiRequest(`/api/admin/documents/${documentId}/reject`, { method: "PATCH" });
 }
 
+function makeAdminDocumentPending(documentId) {
+    return apiRequest(`/api/admin/documents/${documentId}/pending`, { method: "PATCH" });
+}
+
+function unpublishAdminDocument(documentId) {
+    return apiRequest(`/api/admin/documents/${documentId}/unpublish`, { method: "PATCH" });
+}
+
 function exportAdminPublicDocuments(params = {}) {
     const query = new URLSearchParams(params).toString();
     const endpoint = query ? `/api/admin/documents/public/export?${query}` : '/api/admin/documents/public/export';

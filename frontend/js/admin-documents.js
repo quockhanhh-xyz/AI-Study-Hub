@@ -53,8 +53,14 @@ function initAdminDocuments() {
     // Modals
     const approveModal = document.getElementById('approveModal');
     const rejectModal = document.getElementById('rejectModal');
+    const pendingModal = document.getElementById('pendingModal');
+    const unpublishModal = document.getElementById('unpublishModal');
+
     const approveDocId = document.getElementById('approveDocId');
     const rejectDocId = document.getElementById('rejectDocId');
+    const pendingDocId = document.getElementById('pendingDocId');
+    const unpublishDocId = document.getElementById('unpublishDocId');
+
     const rejectReason = document.getElementById('rejectReason');
 
     const loadDocuments = async () => {
@@ -119,6 +125,13 @@ function initAdminDocuments() {
                     ${doc.approvalStatus === 'PENDING' ? `
                         <button class="btn btn-sm btn-primary" onclick="openApproveModal(${doc.documentId})">Approve</button>
                         <button class="btn btn-sm btn-danger" onclick="openRejectModal(${doc.documentId})">Reject</button>
+                    ` : doc.approvalStatus === 'APPROVED' ? `
+                        <button class="btn btn-sm btn-warning" onclick="openPendingConfirmModal(${doc.documentId})">Re-review</button>
+                        <button class="btn btn-sm btn-danger" onclick="openRejectModal(${doc.documentId})">Reject</button>
+                        <button class="btn btn-sm btn-secondary" onclick="openUnpublishConfirmModal(${doc.documentId})">Unpublish</button>
+                    ` : doc.approvalStatus === 'REJECTED' ? `
+                        <button class="btn btn-sm btn-warning" onclick="openPendingConfirmModal(${doc.documentId})">Re-review</button>
+                        <button class="btn btn-sm btn-primary" onclick="openApproveModal(${doc.documentId})">Approve</button>
                     ` : '-'}
                 </td>
             </tr>
@@ -153,6 +166,16 @@ function initAdminDocuments() {
         rejectModal.classList.add('active');
     };
 
+    window.openPendingConfirmModal = (id) => {
+        pendingDocId.value = id;
+        pendingModal.classList.add('active');
+    };
+
+    window.openUnpublishConfirmModal = (id) => {
+        unpublishDocId.value = id;
+        unpublishModal.classList.add('active');
+    };
+
     window.closeModal = (modalId) => {
         document.getElementById(modalId).classList.remove('active');
     };
@@ -178,6 +201,28 @@ function initAdminDocuments() {
             loadDocuments();
         } catch (error) {
             alert('Failed to reject document: ' + error.message);
+        }
+    });
+
+    document.getElementById('confirmPendingBtn').addEventListener('click', async () => {
+        const id = pendingDocId.value;
+        try {
+            await makeAdminDocumentPending(id);
+            closeModal('pendingModal');
+            loadDocuments();
+        } catch (error) {
+            alert('Failed to move document back to review: ' + error.message);
+        }
+    });
+
+    document.getElementById('confirmUnpublishBtn').addEventListener('click', async () => {
+        const id = unpublishDocId.value;
+        try {
+            await unpublishAdminDocument(id);
+            closeModal('unpublishModal');
+            loadDocuments();
+        } catch (error) {
+            alert('Failed to unpublish document: ' + error.message);
         }
     });
 

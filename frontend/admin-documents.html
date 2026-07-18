@@ -134,6 +134,36 @@
         </div>
     </div>
 
+    <!-- Move to Pending Confirm Modal -->
+    <div class="admin-modal-overlay" id="pendingModal">
+        <div class="admin-modal">
+            <h3 class="admin-modal-title">Move document back to review?</h3>
+            <div class="admin-modal-body">
+                <p>This document will be hidden from Community Library until approved again.</p>
+                <input type="hidden" id="pendingDocId">
+            </div>
+            <div class="admin-modal-actions">
+                <button class="btn btn-outline" onclick="closeModal('pendingModal')">Cancel</button>
+                <button class="btn btn-warning" id="confirmPendingBtn">Move to Pending</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unpublish Confirm Modal -->
+    <div class="admin-modal-overlay" id="unpublishModal">
+        <div class="admin-modal">
+            <h3 class="admin-modal-title">Unpublish document?</h3>
+            <div class="admin-modal-body">
+                <p>This document will be set to PRIVATE and hidden from public search.</p>
+                <input type="hidden" id="unpublishDocId">
+            </div>
+            <div class="admin-modal-actions">
+                <button class="btn btn-outline" onclick="closeModal('unpublishModal')">Cancel</button>
+                <button class="btn btn-secondary" id="confirmUnpublishBtn">Unpublish</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="js/api.js"></script>
     <script src="js/admin-core-api.js"></script>

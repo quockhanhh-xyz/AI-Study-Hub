@@ -181,6 +181,22 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Transactional
+    public void makeDocumentPending(Integer id) {
+        Document doc = documentRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+        if (!"ACTIVE".equals(doc.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+        if (!"PUBLIC".equals(doc.getVisibility())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only public documents can be moderated");
+        }
+        doc.setApprovalStatus("PENDING");
+        doc.setPublishedAt(null);
+        documentRepository.save(doc);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public byte[] exportPublicDocuments(String search, String approvalStatus, String fileType, Integer subjectId) {
         String searchParam = (search == null || search.trim().isEmpty()) ? null : search.trim();
