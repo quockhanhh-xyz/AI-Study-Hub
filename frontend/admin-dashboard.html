@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard - AI Study Hub</title>
+    <meta name="description" content="Admin Dashboard for system overview and analytics." />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="admin-layout">
+                <div class="admin-content-wrapper">
+                    <header class="admin-page-header">
+                        <h1 class="admin-page-title">Admin Dashboard</h1>
+                    </header>
+                    <div class="admin-state-container" id="dashboardLoadingState">
+                        <div class="admin-state-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                        </div>
+                        <p>Loading dashboard statistics...</p>
+                    </div>
+
+                    <div class="admin-state-container" id="dashboardErrorState" style="display: none;">
+                        <div class="admin-state-icon" style="color: var(--danger);">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <p id="dashboardErrorMessage">Failed to load dashboard data.</p>
+                        <button class="btn btn-primary" onclick="loadDashboardData()" style="margin-top: 16px;">Retry</button>
+                    </div>
+
+                    <div id="dashboardContent" style="display: none;">
+                        <div class="admin-stats-grid">
+                            <div class="admin-card admin-stat-card">
+                                <div class="stat-title">Total Users</div>
+                                <div class="stat-value" id="statTotalUsers">0</div>
+                            </div>
+                            <div class="admin-card admin-stat-card">
+                                <div class="stat-title">Total Documents</div>
+                                <div class="stat-value" id="statTotalDocs">0</div>
+                            </div>
+                            <div class="admin-card admin-stat-card">
+                                <div class="stat-title">Pending Public Docs</div>
+                                <div class="stat-value" id="statPendingDocs">0</div>
+                            </div>
+                            <div class="admin-card admin-stat-card">
+                                <div class="stat-title">Total Revenue</div>
+                                <div class="stat-value" id="statTotalRevenue">0 đ</div>
+                            </div>
+                            <div class="admin-card admin-stat-card">
+                                <div class="stat-title">AI Requests Today</div>
+                                <div class="stat-value" id="statAiRequests">0</div>
+                            </div>
+                        </div>
+
+                        <div class="admin-charts-grid">
+                            <div class="admin-card">
+                                <div class="admin-chart-title">Users by Tier</div>
+                                <div class="admin-chart-container" id="chartUsersByTierContainer">
+                                    <canvas id="chartUsersByTier"></canvas>
+                                </div>
+                            </div>
+                            <div class="admin-card">
+                                <div class="admin-chart-title">Documents by Status</div>
+                                <div class="admin-chart-container" id="chartDocsByStatusContainer">
+                                    <canvas id="chartDocsByStatus"></canvas>
+                                </div>
+                            </div>
+                            <div class="admin-card">
+                                <div class="admin-chart-title">Revenue (Monthly)</div>
+                                <div class="admin-chart-container" id="chartRevenueContainer">
+                                    <canvas id="chartRevenue"></canvas>
+                                </div>
+                            </div>
+                            <div class="admin-card">
+                                <div class="admin-chart-title">AI Usage by Feature</div>
+                                <div class="admin-chart-container" id="chartAiUsageContainer">
+                                    <canvas id="chartAiUsage"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/admin-core-api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Page Specific Scripts -->
+    <script src="js/admin-dashboard-api.js"></script>
+    <script src="js/admin-dashboard.js"></script>
+</body>
+
+</html>
