@@ -1,5 +1,6 @@
-package com.demo.ai_study_hub.service;
+package com.demo.ai_study_hub;
 
+import com.demo.ai_study_hub.service.AdminServiceImpl;
 import com.demo.ai_study_hub.entity.Document;
 import com.demo.ai_study_hub.repository.DocumentRepository;
 import org.junit.jupiter.api.BeforeEach;
