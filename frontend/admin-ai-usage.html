@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Usage Monitoring - AI Study Hub Admin</title>
+    <!-- Include global styles first, then admin styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="admin-layout">
+                <div class="admin-content-wrapper">
+            <div class="admin-header">
+                <h1>AI Usage Monitoring</h1>
+                <button id="exportBtn" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    Export Excel
+                </button>
+            </div>
+
+            <div class="admin-state-container" id="usageLoadingState">
+                <div class="admin-state-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                    </svg>
+                </div>
+                <p>Loading AI usage data...</p>
+            </div>
+
+            <div class="admin-state-container" id="usageErrorState" style="display: none;">
+                <div class="admin-state-icon" style="color: var(--danger);">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <p id="usageErrorMessage">Failed to load AI usage data.</p>
+                <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 16px;">Retry</button>
+            </div>
+
+            <div id="usageContent" style="display: none;">
+
+            <!-- Filters -->
+            <div class="filter-section form-group" style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
+                <input type="text" id="searchInput" placeholder="Search by User Email..." style="flex: 1;">
+                <select id="tierFilter">
+                    <option value="">All Tiers</option>
+                    <option value="FREE">FREE</option>
+                    <option value="PREMIUM">PREMIUM</option>
+                    <option value="ULTRA">ULTRA</option>
+                </select>
+                <select id="featureFilter">
+                    <option value="">All Features</option>
+                    <option value="AI_QA">AI Q&A</option>
+                    <option value="AI_SUMMARY">AI Summary</option>
+                    <option value="AI_FLASHCARD">AI Flashcard</option>
+                    <option value="AI_QUIZ">AI Quiz</option>
+                </select>
+                <input type="date" id="startDateFilter" title="Start Date">
+                <input type="date" id="endDateFilter" title="End Date">
+                <button id="filterBtn" class="btn btn-secondary">Filter</button>
+            </div>
+
+            <!-- Table -->
+            <div class="admin-table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>User Email</th>
+                            <th>Tier</th>
+                            <th>AI Q&A</th>
+                            <th>Summary</th>
+                            <th>Flashcard</th>
+                            <th>Quiz</th>
+                            <th>Total</th>
+                            <th>Last Used At</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usageTableBody">
+                        <tr><td colspan="8" style="text-align: center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+                <div id="pagination" class="pagination">
+                    <!-- Pagination buttons -->
+                </div>
+            </div>
+            </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/admin-core-api.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/admin-ai-usage-api.js"></script>
+    <script src="js/admin-ai-usage.js"></script>
+</body>
+</html>
