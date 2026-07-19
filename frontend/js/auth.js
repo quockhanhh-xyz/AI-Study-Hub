@@ -255,14 +255,20 @@
       }
 
       setTimeout(function () {
-        let target = (user.role === 'ADMIN' || user.role === 'ROLE_ADMIN') ? "admin-dashboard.html" : "dashboard.html";
+        const isAdmin = (user.role === 'ADMIN' || user.role === 'ROLE_ADMIN');
+        let target = isAdmin ? "admin-dashboard.html" : "dashboard.html";
         const redirectValue = getRedirectParam();
 
         if (redirectValue) {
           try {
             const parsed = new URL(redirectValue, window.location.href);
             if (parsed.origin === window.location.origin && (parsed.protocol === "http:" || parsed.protocol === "https:")) {
-              target = parsed.pathname + parsed.search + parsed.hash;
+              let parsedTarget = parsed.pathname + parsed.search + parsed.hash;
+              if (isAdmin && !parsedTarget.includes('admin-')) {
+                  // Admin user but redirect target is not an admin page. Ignore redirect.
+              } else {
+                  target = parsedTarget;
+              }
             } else {
               console.warn("Mismatched open-redirect origin or protocol detected.");
             }
@@ -270,9 +276,8 @@
             console.warn("Invalid redirect origin context detected, falling back to default.", e);
           }
         }
-
         window.location.href = target;
-      }, 600);
+      }, 1500);
     } catch (error) {
       setMessage("loginMessage", error.message, "error");
     } finally {
