@@ -265,9 +265,7 @@ async function viewPaymentDetails(paymentId) {
                     <div><strong>User:</strong> ${p.userEmail || p.userId}</div>
                     <div><strong>Plan:</strong> ${p.planCode || p.planName || '-'}</div>
                     <div><strong>Amount:</strong> <span style="font-weight:bold">${formatter.format(p.amount)}</span></div>
-                    <div><strong>Currency:</strong> ${p.currency}</div>
                     <div><strong>Provider:</strong> ${p.paymentProvider}</div>
-                    <div><strong>Bank Code:</strong> ${p.bankCode || '-'}</div>
                     <div><strong>Trans. No:</strong> ${p.transactionNo || '-'}</div>
                     <div><strong>Status:</strong> <span class="badge status-${(p.status || 'PENDING').toLowerCase()}">${p.status}</span></div>
                     <div><strong>Created At:</strong> ${p.createdAt ? new Date(p.createdAt).toLocaleString() : '-'}</div>
