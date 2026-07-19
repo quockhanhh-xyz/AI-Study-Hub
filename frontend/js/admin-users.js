@@ -284,11 +284,12 @@ async function viewUserDetails(userId) {
                 <div>
                     <strong>Usage / Quota:</strong>
                     <div style="font-size: 13px; margin-top:5px;">
-                        <div>Storage: ${u.aiUsage ? u.aiUsage.storageUsed : 0} / ${u.storageLimit || '?'} bytes</div>
-                        <div>Questions: ${u.aiUsage ? u.aiUsage.questionsAsked : 0} / ${u.aiDailyLimit || '?'}</div>
-                        <div>Summaries: ${u.aiUsage ? u.aiUsage.summariesGenerated : 0}</div>
-                        <div>Flashcards: ${u.aiUsage ? u.aiUsage.flashcardsGenerated : 0}</div>
-                        <div>Quizzes: ${u.aiUsage ? u.aiUsage.quizzesGenerated : 0}</div>
+                        <div>AI Q&A: ${u.aiUsage ? u.aiUsage.aiQaUsed : 0} / ${u.aiDailyLimit || '?'}</div>
+                        <div>Summaries: ${u.aiUsage ? u.aiUsage.summaryUsed : 0}</div>
+                        <div>Flashcards: ${u.aiUsage ? u.aiUsage.flashcardUsed : 0}</div>
+                        <div>Quizzes: ${u.aiUsage ? u.aiUsage.quizUsed : 0}</div>
+                        <div>Total AI Requests: ${u.aiUsage ? u.aiUsage.totalAiRequests : 0}</div>
+                        <div>Storage Limit: ${u.storageLimit || '?'} bytes</div>
                         <div>Max File Size: ${u.maxFileSize || '?'} bytes</div>
                         <div>Max Docs: ${u.maxDocumentCount || '?'}</div>
                     </div>
