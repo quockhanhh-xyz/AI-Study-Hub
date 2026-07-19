@@ -293,7 +293,10 @@
     border-radius: 12px;
     padding: 24px;
     width: 100%;
-    max-width: 400px;
+    max-width: 650px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
     box-shadow: var(--shadow, 0 8px 24px rgba(23, 32, 51, 0.08));
     transform: translateY(20px);
     transition: transform 0.2s;
@@ -314,6 +317,8 @@
     margin-bottom: 24px;
     color: var(--text-muted, #64748b);
     line-height: 1.5;
+    overflow-y: auto;
+    padding-right: 8px;
 }
 
 .admin-modal-actions {

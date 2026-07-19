@@ -57,19 +57,27 @@ async function checkAuthenticationStatus() {
 
     // If successful, backfill or keep currentUser info active for UI layout
     if (result && result.data) {
-      // Normalize ROLE_ADMIN to ADMIN
-      if (result.data.role === 'ROLE_ADMIN') {
-        result.data.role = 'ADMIN';
-      }
+      // Normalize ROLE_ADMIN/ROLE_USER to ADMIN/USER for compatibility
+      if (result.data.role === 'ROLE_ADMIN') result.data.role = 'ADMIN';
+      if (result.data.role === 'ROLE_USER') result.data.role = 'USER';
+
       localStorage.setItem("currentUser", JSON.stringify(result.data));
     }
 
+    const user = result && result.data ? result.data : null;
+
     // Admin role check: if page requires admin, redirect if user is not admin
     if (currentRoute.requiresAdmin) {
-      const user = result && result.data ? result.data : null;
       if (!user || user.role !== 'ADMIN') {
         console.warn("Access denied. User is not an admin.");
         window.location.href = "dashboard.html";
+        return true;
+      }
+    } else if (!currentRoute.hideWhenAuth) {
+      // If the page does not require Admin and is not a login/register page
+      if (user && user.role === 'ADMIN') {
+        console.warn("Access denied. Admin cannot access user pages.");
+        window.location.href = "admin-dashboard.html";
         return true;
       }
     }
@@ -162,25 +170,24 @@ function renderDynamicSidebar(isAuthenticated) {
     if (item.hideWhenAuth && isAuthenticated) return false;
     if (item.requiresAuth && !isAuthenticated) return false;
 
-    // Filter admin routes
-    if (item.requiresAdmin) {
-      const userStr = localStorage.getItem("currentUser");
-      if (userStr) {
-        try {
-          const user = JSON.parse(userStr);
-          if (user.role !== 'ADMIN') return false;
-        } catch (e) {
-          return false;
-        }
-      } else {
-        return false;
-      }
+    let userRole = null;
+    const userStr = localStorage.getItem("currentUser");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        userRole = user.role;
+      } catch (e) { }
     }
 
+    // Separate ADMIN and USER menus completely
+    if (userRole === 'ADMIN') {
+      if (!item.requiresAdmin) return false;
+    } else {
+      if (item.requiresAdmin) return false;
+    }
 
     // Step 6D Security & IA Cleanup: Explicitly deny standard users access to internal technical routes
     if (item.url && (item.url.includes("health") || item.url.includes("api-health"))) return false;
-
 
     return true;
   });

@@ -176,4 +176,24 @@ class PublicSecurityIntegrationTest {
 
         verify(documentService, never()).incrementDownloadCount(25);
     }
+
+    @Test
+    void getPublicDocumentDetail_WhenNotFound_ShouldReturn404() throws Exception {
+        when(documentService.getPublicDocumentDetail(99, null))
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+
+        mockMvc.perform(get("/api/documents/public/99"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
+    void downloadPublicDocument_WhenNotFound_ShouldReturn404() throws Exception {
+        when(documentService.getPublicDocumentDownloadInfo(99))
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+
+        mockMvc.perform(get("/api/documents/public/99/download"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false));
+    }
 }

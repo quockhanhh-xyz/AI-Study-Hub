@@ -44,17 +44,20 @@ async function apiRequest(endpoint, options = {}) {
     console.warn("Response payload parsing failed, treating as raw text context.");
   }
 
-  // Handle explicit HTTP 401 Unauthorized
-  if (response.status === 401) {
+  // Handle explicit HTTP 401 Unauthorized or AUTH_ACCOUNT_BLOCKED
+  if (response.status === 401 || (data && data.code === "AUTH_ACCOUNT_BLOCKED")) {
     // Check whether the caller wants to handle redirect logic manually
     if (options.skipUnauthorizedRedirect === true) {
       console.log(
-        `Unauthorized (HTTP 401) for ${endpoint} - Handled locally by calling component.`
+        `Unauthorized (HTTP 401) or Blocked for ${endpoint} - Handled locally by calling component.`
       );
     } else {
       console.warn(
-        "Session expired or invalid (HTTP 401). Executing global redirect to login..."
+        "Session expired, invalid, or account blocked. Executing global redirect to login..."
       );
+      if (data && data.code === "AUTH_ACCOUNT_BLOCKED") {
+        alert("Your account has been blocked by an administrator.");
+      }
       localStorage.removeItem("currentUser");
       window.location.href = "login.html";
     }
@@ -64,7 +67,7 @@ async function apiRequest(endpoint, options = {}) {
       data.message ||
       data.error ||
       rawText ||
-      "Unauthorized - Session expired. Please log in again.";
+      "Unauthorized - Session expired or account blocked. Please log in again.";
 
     const error = new Error(errorMessage);
     error.status = response.status;

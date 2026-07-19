@@ -205,7 +205,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
-    public void rejectDocument(Integer id) {
+    public void rejectDocument(Integer id, String rejectReason) {
         Document doc = documentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
         if (!"ACTIVE".equals(doc.getStatus())) {
@@ -215,6 +215,9 @@ public class AdminServiceImpl implements AdminService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only public documents can be moderated");
         }
         doc.setApprovalStatus("REJECTED");
+        if (rejectReason != null && !rejectReason.trim().isEmpty()) {
+            doc.setRejectReason(rejectReason.trim());
+        }
         documentRepository.save(doc);
     }
 

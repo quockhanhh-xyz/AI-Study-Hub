@@ -6,6 +6,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.demo.ai_study_hub.dto.ApiResponse;
 import com.demo.ai_study_hub.dto.AdminUserListResponse;
 import com.demo.ai_study_hub.dto.AdminUserItem;
+import com.demo.ai_study_hub.dto.AdminUserDetail;
 import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.service.AdminUserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,8 +52,8 @@ public class AdminUserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<AdminUserItem>> getUserById(@PathVariable Integer id) {
-        AdminUserItem user = adminUserService.getUserById(id);
+    public ResponseEntity<ApiResponse<AdminUserDetail>> getUserById(@PathVariable Integer id) {
+        AdminUserDetail user = adminUserService.getUserById(id);
         return ResponseEntity.ok(ApiResponse.success(user, "User retrieved successfully"));
     }
 

@@ -4,6 +4,7 @@
  */
 
 let chartInstances = {};
+let autoRefreshInterval = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     // Wait for the auth layout system to finish verifying the user
@@ -18,31 +19,51 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-async function loadDashboardData() {
+async function loadDashboardData(isManualRefresh = false) {
     const loadingState = document.getElementById("dashboardLoadingState");
     const errorState = document.getElementById("dashboardErrorState");
     const contentState = document.getElementById("dashboardContent");
+    const refreshBtn = document.getElementById("btnRefreshDashboard");
 
-    loadingState.style.display = "flex";
-    errorState.style.display = "none";
-    contentState.style.display = "none";
+    if (!isManualRefresh) {
+        loadingState.style.display = "flex";
+        errorState.style.display = "none";
+        contentState.style.display = "none";
+    } else {
+        if (refreshBtn) refreshBtn.disabled = true;
+    }
 
     try {
-        const response = await fetchAdminDashboardSummary();
-        if (response && response.success && response.data) {
-            renderDashboardStats(response.data);
-            renderDashboardCharts(response.data);
+        const [summaryResponse, chartsResponse] = await Promise.all([
+            fetchAdminDashboardSummary(),
+            fetchAdminDashboardCharts()
+        ]);
 
-            loadingState.style.display = "none";
-            contentState.style.display = "block";
+        if (summaryResponse && summaryResponse.success && chartsResponse && chartsResponse.success) {
+            renderDashboardStats(summaryResponse.data);
+            renderDashboardCharts(chartsResponse.data);
+
+            if (!isManualRefresh) {
+                loadingState.style.display = "none";
+                contentState.style.display = "block";
+            }
+
+            // Setup auto-refresh if not already running
+            if (!autoRefreshInterval) {
+                autoRefreshInterval = setInterval(() => loadDashboardData(true), 60000);
+            }
         } else {
-            throw new Error(response.message || "Failed to load dashboard data");
+            throw new Error("Failed to load dashboard data");
         }
     } catch (error) {
         console.error("Dashboard error:", error);
-        loadingState.style.display = "none";
-        errorState.style.display = "flex";
-        document.getElementById("dashboardErrorMessage").textContent = error.message || "An unexpected error occurred.";
+        if (!isManualRefresh) {
+            loadingState.style.display = "none";
+            errorState.style.display = "flex";
+            document.getElementById("dashboardErrorMessage").textContent = error.message || "An unexpected error occurred.";
+        }
+    } finally {
+        if (refreshBtn) refreshBtn.disabled = false;
     }
 }
 
@@ -64,20 +85,20 @@ function renderDashboardCharts(data) {
     const colorPalette = ['#ff5858', '#f59e0b', '#16a34a', '#3b82f6', '#8b5cf6', '#ec4899'];
 
     // 1. Users by Tier (Pie Chart)
-    const usersByTier = data.usersByTier || [];
+    const usersByTier = data.userTierDistribution || [];
     renderChart("chartUsersByTier", "chartUsersByTierContainer", "pie", usersByTier, "tier", "count", colorPalette);
 
     // 2. Documents by Status (Bar Chart)
-    const docsByStatus = data.documentsByApprovalStatus || [];
+    const docsByStatus = data.documentApprovalStatus || [];
     renderChart("chartDocsByStatus", "chartDocsByStatusContainer", "bar", docsByStatus, "approvalStatus", "count", colorPalette);
 
-    // 3. Revenue by Month (Line Chart)
-    const revenueByMonth = data.revenueByMonth || [];
-    renderChart("chartRevenue", "chartRevenueContainer", "line", revenueByMonth, "month", "revenue", ['#16a34a']);
+    // 3. Revenue by Day (Line Chart)
+    const revenueByDay = data.revenueByDay || [];
+    renderChart("chartRevenue", "chartRevenueContainer", "line", revenueByDay, "date", "revenue", ['#16a34a']);
 
-    // 4. AI Usage by Feature (Bar Chart)
-    const aiUsage = data.aiUsageByFeature || [];
-    renderChart("chartAiUsage", "chartAiUsageContainer", "bar", aiUsage, "feature", "count", ['#8b5cf6']);
+    // 4. AI Usage by Day (Bar Chart)
+    const aiUsageByDay = data.aiUsageByDay || [];
+    renderChart("chartAiUsage", "chartAiUsageContainer", "bar", aiUsageByDay, "date", "count", ['#8b5cf6']);
 }
 
 function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, colors) {

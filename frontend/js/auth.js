@@ -255,24 +255,29 @@
       }
 
       setTimeout(function () {
-        let target = "dashboard.html";
+        const isAdmin = (user.role === 'ADMIN' || user.role === 'ROLE_ADMIN');
+        let target = isAdmin ? "admin-dashboard.html" : "dashboard.html";
         const redirectValue = getRedirectParam();
 
         if (redirectValue) {
           try {
             const parsed = new URL(redirectValue, window.location.href);
             if (parsed.origin === window.location.origin && (parsed.protocol === "http:" || parsed.protocol === "https:")) {
-              target = parsed.pathname + parsed.search + parsed.hash;
+              let parsedTarget = parsed.pathname + parsed.search + parsed.hash;
+              if (isAdmin && !parsedTarget.includes('admin-')) {
+                  // Admin user but redirect target is not an admin page. Ignore redirect.
+              } else {
+                  target = parsedTarget;
+              }
             } else {
               console.warn("Mismatched open-redirect origin or protocol detected.");
             }
           } catch (e) {
-            console.warn("Invalid redirect origin context detected, falling back to dashboard.", e);
+            console.warn("Invalid redirect origin context detected, falling back to default.", e);
           }
         }
-
         window.location.href = target;
-      }, 600);
+      }, 1500);
     } catch (error) {
       setMessage("loginMessage", error.message, "error");
     } finally {
@@ -434,4 +439,38 @@ function requireAuth() {
   return true;
 }
 
+function requireAdminAuth() {
+  if (!requireAuth()) return false;
+
+  try {
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (currentUser.role !== 'ADMIN' && currentUser.role !== 'ROLE_ADMIN') {
+      window.location.href = "dashboard.html";
+      return false;
+    }
+  } catch (e) {
+    console.error("Error parsing currentUser in requireAdminAuth", e);
+    return false;
+  }
+  return true;
+}
+
+function requireUserAuth() {
+  if (!requireAuth()) return false;
+
+  try {
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (currentUser.role === 'ADMIN' || currentUser.role === 'ROLE_ADMIN') {
+      window.location.href = "admin-dashboard.html";
+      return false;
+    }
+  } catch (e) {
+    console.error("Error parsing currentUser in requireUserAuth", e);
+    return false;
+  }
+  return true;
+}
+
 window.requireAuth = requireAuth;
+window.requireAdminAuth = requireAdminAuth;
+window.requireUserAuth = requireUserAuth;

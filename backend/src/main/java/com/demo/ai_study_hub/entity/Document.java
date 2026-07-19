@@ -59,6 +59,9 @@ public class Document {
     @Column(name = "approval_status", nullable = false, length = 20)
     private String approvalStatus = "PENDING";
 
+    @Column(name = "reject_reason", columnDefinition = "TEXT")
+    private String rejectReason;
+
     @Column(name = "published_at")
     private LocalDateTime publishedAt;
 

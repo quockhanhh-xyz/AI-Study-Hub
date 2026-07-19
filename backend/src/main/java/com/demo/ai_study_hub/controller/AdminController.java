@@ -4,6 +4,7 @@ import com.demo.ai_study_hub.dto.AdminDashboardResponse;
 import com.demo.ai_study_hub.dto.AdminPublicDocumentListResponse;
 import com.demo.ai_study_hub.dto.ApiResponse;
 import java.util.List;
+import java.util.Map;
 import com.demo.ai_study_hub.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,9 +86,12 @@ public class AdminController {
     }
 
     @PatchMapping("/documents/{id}/reject")
-    public ResponseEntity<ApiResponse<Void>> rejectDocument(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<Void>> rejectDocument(
+            @PathVariable Integer id,
+            @RequestBody(required = false) Map<String, String> body) {
         try {
-            adminService.rejectDocument(id);
+            String reason = body != null ? body.get("rejectReason") : null;
+            adminService.rejectDocument(id, reason);
             return ResponseEntity.ok(new ApiResponse<>(true, "Document rejected successfully", null));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(new ApiResponse<>(false, e.getReason(), null));

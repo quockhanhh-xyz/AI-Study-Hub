@@ -1331,6 +1331,10 @@ textarea.success {
   transition: opacity 0.2s ease, max-width 0.3s ease;
 }
 
+.nav-text {
+  font-size: 14.5px;
+}
+
 .sidebar.collapsed .logo-text,
 .sidebar.collapsed .nav-text,
 .sidebar.collapsed .logout-text {
