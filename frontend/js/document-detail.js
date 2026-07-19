@@ -25,7 +25,7 @@ function handleBack() {
     if (currentIsCommunityView) {
         window.location.href = "community.html";
     } else {
-        window.location.href = "dashboard.html";
+        window.location.href = "documents.html";
     }
 }
 
@@ -164,6 +164,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         params.get("mode") === "public";
 
     initInspectorTabs();
+    initEditFormListeners();
 
     if (currentIsCommunityView) {
         const backBtn = document.getElementById("detailBackBtn");
@@ -249,9 +250,6 @@ function renderDocument(doc) {
     }
 
     document.getElementById("docDescription").textContent = doc.description || "No description provided.";
-    document.getElementById("docSubject").textContent = doc.subject
-        ? doc.subject
-        : (doc.subjectCode ? `${doc.subjectCode} – ${doc.subjectName}` : "No subject");
     document.getElementById("docFileSize").textContent = formatFileSize(doc.fileSize);
     document.getElementById("docCreatedAt").textContent = formatDate(doc.createdAt);
 
@@ -284,7 +282,12 @@ function renderDocument(doc) {
         const pStatus = doc.processingStatus || "PENDING";
         processingStatusBadge.textContent = pStatus === "COMPLETED" ? "Ready for AI" : pStatus;
         processingStatusBadge.style.display = "inline-flex";
-        processingStatusBadge.className = "status-badge " + pStatus.toLowerCase();
+        processingStatusBadge.className = "status-badge badge-system " + pStatus.toLowerCase();
+    }
+
+    const publicVisibilityNote = document.getElementById("publicVisibilityNote");
+    if (publicVisibilityNote) {
+        publicVisibilityNote.style.display = doc.visibility === "PUBLIC" ? "block" : "none";
     }
 
     // ── Favorite star button (Step: Favorite/Saved Documents) ──
@@ -312,6 +315,21 @@ function renderDocument(doc) {
     const editDesc = document.getElementById("editDescription");
     if (editTitle) editTitle.value = doc.title || "";
     if (editDesc) editDesc.value = doc.description || "";
+
+    const viewTitleText = document.getElementById("viewTitleText");
+    const viewDescriptionText = document.getElementById("viewDescriptionText");
+    const viewSubjectText = document.getElementById("viewSubjectText");
+    if (viewTitleText) viewTitleText.textContent = doc.title || "–";
+    if (viewDescriptionText) viewDescriptionText.textContent = doc.description || "No description provided.";
+    if (viewSubjectText) {
+        viewSubjectText.textContent = doc.subject
+            ? doc.subject
+            : (doc.subjectCode ? `${doc.subjectCode} – ${doc.subjectName}` : "No subject");
+    }
+    
+    // Ensure save button is disabled when initially loading
+    const saveBtn = document.getElementById("saveBtn");
+    if (saveBtn) saveBtn.disabled = true;
 
     // ── Action buttons based on permission flags from backend ──
     const openBtn = document.getElementById("openFileBtn");
@@ -376,9 +394,9 @@ function renderDocument(doc) {
     }
 
     // Edit section — only the owner has canEdit
-    const editSec = document.querySelector(".edit-section");
-    if (editSec) {
-        editSec.style.display =
+    const viewSec = document.getElementById("detailsViewSection");
+    if (viewSec) {
+        viewSec.style.display =
             !currentIsCommunityView && doc.canEdit ? "block" : "none";
     }
 
@@ -753,6 +771,36 @@ function renderSubjectOptions(subjects, currentSubjectId) {
     }
 }
 
+// ── View/Edit Mode ────────────────────────────────────────────────────────────
+window.toggleEditMode = function(isEdit) {
+    const viewSec = document.getElementById("detailsViewSection");
+    const editSec = document.getElementById("detailsEditSection");
+    if (isEdit) {
+        if (viewSec) viewSec.style.display = "none";
+        if (editSec) editSec.style.display = "block";
+        const saveBtn = document.getElementById("saveBtn");
+        if (saveBtn) saveBtn.disabled = true;
+    } else {
+        if (viewSec) viewSec.style.display = "block";
+        if (editSec) editSec.style.display = "none";
+    }
+};
+
+function initEditFormListeners() {
+    const titleIn = document.getElementById("editTitle");
+    const descIn = document.getElementById("editDescription");
+    const subjIn = document.getElementById("editSubject");
+    const saveBtn = document.getElementById("saveBtn");
+    
+    function checkChanges() {
+        if (saveBtn) saveBtn.disabled = false;
+    }
+    
+    if (titleIn) titleIn.addEventListener("input", checkChanges);
+    if (descIn) descIn.addEventListener("input", checkChanges);
+    if (subjIn) subjIn.addEventListener("change", checkChanges);
+}
+
 // ── Save changes ──────────────────────────────────────────────────────────────
 async function handleSave() {
     const title = document.getElementById("editTitle").value.trim();
@@ -777,6 +825,7 @@ async function handleSave() {
         renderDocument(res.data);
         showEditMessage("", "");
         window.showToast("Changes saved successfully.", "success");
+        window.toggleEditMode(false);
     } catch (err) {
         showEditMessage(err.message || "Failed to save changes.", "error");
     } finally {
@@ -1324,6 +1373,14 @@ async function loadSharingInfo(docId) {
                 name.textContent = item.sharedWithName || "Unknown User";
 
                 main.append(name);
+                
+                const perm = document.createElement("div");
+                perm.style.fontSize = "11px";
+                perm.style.color = "var(--muted)";
+                perm.style.marginTop = "2px";
+                perm.textContent = "Can open & download";
+                main.append(perm);
+
                 row.appendChild(main);
 
                 const btn = document.createElement("button");
@@ -1357,6 +1414,14 @@ async function loadSharingInfo(docId) {
                 name.textContent = groupMap[item.groupId] || `Group (ID: ${item.groupId})`;
 
                 main.append(name);
+
+                const perm = document.createElement("div");
+                perm.style.fontSize = "11px";
+                perm.style.color = "var(--muted)";
+                perm.style.marginTop = "2px";
+                perm.textContent = "Can open & download";
+                main.append(perm);
+                
                 row.appendChild(main);
 
                 const btn = document.createElement("button");
@@ -1531,7 +1596,6 @@ async function loadAiQaChatHistory() {
 }
 
 // Appends one chat bubble (user / assistant / loading) to the messages list.
-// Uses textContent everywhere (never innerHTML with dynamic content) to avoid XSS.
 function appendAiQaMessage(role, content, meta = {}) {
     const messagesEl = document.getElementById("aiQaMessages");
     if (!messagesEl) return null;
@@ -1541,13 +1605,44 @@ function appendAiQaMessage(role, content, meta = {}) {
 
     const bubble = document.createElement("div");
     bubble.className = `ai-qa-message ${role}`;
-    bubble.textContent = content;
+
+    // Simple markdown-like parser to allow paragraphs and bullets without XSS
+    if (role === "assistant" && content) {
+        // Escape HTML first
+        let html = content
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+        
+        // Convert basic lists (- item)
+        html = html.replace(/(?:^|\n)- (.*?)(?=\n|$)/g, "<ul><li>$1</li></ul>");
+        html = html.replace(/<\/ul>\n<ul>/g, ""); // merge adjacent lists
+
+        // Wrap remaining text in paragraphs
+        const parts = html.split(/\n\n+/);
+        bubble.innerHTML = parts.map(p => {
+            if (p.startsWith("<ul>")) return p;
+            return `<p>${p.replace(/\n/g, "<br>")}</p>`;
+        }).join("");
+    } else {
+        bubble.textContent = content;
+    }
 
     if (Array.isArray(meta.sourceChunks) && meta.sourceChunks.length > 0) {
         const sourcesEl = document.createElement("div");
         sourcesEl.className = "ai-qa-message-sources";
-        const labels = meta.sourceChunks.map((c, i) => window.formatAiSourceLabel(c, i));
-        sourcesEl.textContent = "Sources: " + labels.join(", ");
+        
+        const label = document.createElement("span");
+        label.textContent = "Sources: ";
+        sourcesEl.appendChild(label);
+        
+        meta.sourceChunks.forEach((c, i) => {
+            const chip = document.createElement("span");
+            chip.className = "ai-qa-source-chip";
+            chip.textContent = window.formatAiSourceLabel(c, i);
+            sourcesEl.appendChild(chip);
+        });
+        
         bubble.appendChild(sourcesEl);
     }
 
@@ -1559,7 +1654,10 @@ function appendAiQaMessage(role, content, meta = {}) {
     }
 
     messagesEl.appendChild(bubble);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+    // Smooth scroll the new bubble into view within the scrollable container
+    setTimeout(() => {
+        bubble.scrollIntoView({ behavior: "smooth", block: "end" });
+    }, 50);
     return bubble;
 }
 
@@ -1599,12 +1697,50 @@ function updateAskAvailability() {
     if (!textarea || !askBtn) return;
 
     let disabledReason = "";
+    const processingSection = document.getElementById("aiProcessingSection");
+    const aiQaMessages = document.getElementById("aiQaMessages");
+    const sampleRow = document.getElementById("aiQaSampleQuestions");
+
     if (aiQaProcessingStatus !== "COMPLETED") {
-        disabledReason =
-            AI_QA_STATUS_MESSAGES[aiQaProcessingStatus] ||
-            "This document is not ready for AI yet. Please process it first.";
-    } else if (aiQaUsageInfo && aiQaUsageInfo.remainingQuestions <= 0) {
-        disabledReason = "You have reached your daily AI question limit.";
+        disabledReason = "Document not ready for AI.";
+        
+        // Handle Onboarding state visibility
+        if (processingSection) {
+            processingSection.style.display = "block";
+            const msgEl = document.getElementById("aiProcessingMessage");
+            const headEl = processingSection.querySelector(".ai-processing-heading");
+            const iconEl = processingSection.querySelector(".ai-processing-icon");
+            const actionsEl = document.getElementById("aiProcessingActions");
+            
+            if (aiQaProcessingStatus === "PROCESSING") {
+                if (iconEl) iconEl.innerHTML = '<div class="ai-processing-spinner"></div>';
+                if (headEl) headEl.textContent = "Processing document...";
+                if (msgEl) msgEl.textContent = "Please wait while we extract the content.";
+                if (actionsEl) actionsEl.innerHTML = "";
+            } else if (aiQaProcessingStatus === "PENDING") {
+                if (iconEl) iconEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24"><g id="Sparkle"><path id="Vector" fill="currentColor" d="m8.24536 15.7542 1.70215 0.8515 1.78909 0.8945 -1.78909 0.8946 -1.70215 0.8506 -0.85058 1.7021 -0.89454 1.7891 -0.89453 -1.7891 -0.85156 -1.7021 -3.49023 -1.7452 1.78906 -0.8945 1.70117 -0.8515 0.85156 -1.7012 0.89453 -1.7891zM18.2454 9.25415l2.7021 1.35155 1.7891 0.8945 -1.7891 0.8946 -2.7021 1.3506 -1.3506 2.7021 -0.8946 1.7891 -0.8945 -1.7891 -1.3515 -2.7021 -4.49028 -2.2452 1.78908 -0.8945 2.7012 -1.35155 1.3515 -2.70117 0.8945 -1.78906zm-2.8506 1.19335 -0.1494 0.2979 -0.2979 0.1494 -1.2109 0.6054 1.2109 0.6055 0.2979 0.1494 0.1494 0.2979 0.6054 1.2109 0.6055 -1.2109 0.1494 -0.2979 0.2979 -0.1494 1.2109 -0.6055 -1.2109 -0.6054 -0.2979 -0.1494 -0.1494 -0.2979 -0.6055 -1.21093zM8.24536 4.75415l1.70215 0.85156 1.78909 0.89453 -1.78909 0.89454 -1.70215 0.85058 -0.85058 1.70215 -0.89454 1.78909 -0.89453 -1.78909 -0.85156 -1.70215 -3.49023 -1.74512 1.78906 -0.89453 1.70117 -0.85156 0.85156 -1.70117 0.89453 -1.78906z" stroke-width="1"></path></g></svg>`;
+                if (headEl) headEl.textContent = "Prepare this document for AI Q&A";
+                if (msgEl) msgEl.textContent = "We’ll extract the content so AI can answer questions from this document.";
+                if (actionsEl) {
+                    actionsEl.innerHTML = `<button class="btn btn-primary" onclick="window.triggerDocumentProcessing('${currentDocumentId}')">Process for AI</button>`;
+                }
+            } else {
+                if (iconEl) iconEl.textContent = "⚠️";
+                if (headEl) headEl.textContent = "Cannot process document";
+                if (msgEl) msgEl.textContent = AI_QA_STATUS_MESSAGES[aiQaProcessingStatus] || "Failed to process.";
+                if (actionsEl) actionsEl.innerHTML = "";
+            }
+        }
+        if (aiQaMessages) aiQaMessages.style.display = "none";
+        if (sampleRow) sampleRow.style.display = "none";
+    } else {
+        if (processingSection) processingSection.style.display = "none";
+        if (aiQaMessages) aiQaMessages.style.display = "flex";
+        if (sampleRow) sampleRow.style.display = "flex";
+        
+        if (aiQaUsageInfo && aiQaUsageInfo.remainingQuestions <= 0) {
+            disabledReason = "You have reached your daily AI question limit.";
+        }
     }
 
     const disabled = !!disabledReason || aiQaSending;
@@ -1613,7 +1749,12 @@ function updateAskAvailability() {
     sampleButtons.forEach(b => (b.disabled = disabled));
 
     if (!aiQaSending) {
-        showAiQaBanner(disabledReason, "warning");
+        // Only show banner if there's a reason AND it's not just "not ready" (which is handled by onboarding)
+        if (disabledReason && aiQaProcessingStatus === "COMPLETED") {
+            showAiQaBanner(disabledReason, "warning");
+        } else {
+            showAiQaBanner("");
+        }
     }
 }
 
@@ -1800,19 +1941,39 @@ function renderAiToolsTab(doc) {
 }
 
 function updateAiToolsAvailability() {
-    const notReadyMsg = document.getElementById("aiToolsNotReadyMessage");
+    const notReadyMsg = document.getElementById("aiToolsNotReadySection");
     const content = document.getElementById("aiToolsContent");
     const ready = aiToolsProcessingStatus === "COMPLETED";
 
     if (notReadyMsg) {
         if (ready) {
             notReadyMsg.style.display = "none";
-            notReadyMsg.textContent = "";
         } else {
-            notReadyMsg.style.display = "block";
-            notReadyMsg.textContent =
-                AI_TOOLS_NOT_READY_MESSAGES[aiToolsProcessingStatus] ||
-                "This document is not ready for AI tools yet.";
+            notReadyMsg.style.display = "flex";
+            const msgEl = document.getElementById("aiToolsProcessingMessage");
+            if (msgEl) {
+                msgEl.textContent =
+                    AI_TOOLS_NOT_READY_MESSAGES[aiToolsProcessingStatus] ||
+                    "This document is not ready for AI tools yet.";
+            }
+            
+            // Build actions similar to AI Q&A
+            const actionsEl = document.getElementById("aiToolsProcessingActions");
+            if (actionsEl) {
+                actionsEl.innerHTML = "";
+                if (aiToolsProcessingStatus === "UNPROCESSED" || aiToolsProcessingStatus === "FAILED" || aiToolsProcessingStatus === "NOT_READY") {
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "btn btn-primary";
+                    btn.textContent = "Process for AI";
+                    btn.onclick = () => {
+                        window.startAiProcessing(currentDocumentId);
+                    };
+                    actionsEl.appendChild(btn);
+                } else if (aiToolsProcessingStatus === "PENDING" || aiToolsProcessingStatus === "PROCESSING") {
+                    actionsEl.innerHTML = `<span class="ai-processing-spinner"></span> <span style="font-size:13px; color:var(--text);">Processing document...</span>`;
+                }
+            }
         }
     }
     if (content) content.style.display = ready ? "block" : "none";
@@ -1849,9 +2010,7 @@ async function loadFlashcardSets() {
     try {
         const res = await AiLearningAPI.getFlashcardSets(currentDocumentId);
         if (loader) loader.style.display = "none";
-        renderSetList(list, empty, res.data || [], "flashcards.html?setId=", set =>
-            `${set.title || "Flashcard set"} — ${set.itemCount || 0} cards`
-        );
+        renderSetList(list, empty, res.data || [], "flashcards.html?setId=", "flashcard");
     } catch (err) {
         if (loader) loader.style.display = "none";
         console.error("Failed to load flashcard sets", err);
@@ -1938,9 +2097,7 @@ async function loadQuizSets() {
     try {
         const res = await AiLearningAPI.getQuizSets(currentDocumentId);
         if (loader) loader.style.display = "none";
-        renderSetList(list, empty, res.data || [], "quiz.html?setId=", set =>
-            `${set.title || "Quiz"} — ${set.questionCount || 0} questions`
-        );
+        renderSetList(list, empty, res.data || [], "quiz.html?setId=", "quiz");
     } catch (err) {
         if (loader) loader.style.display = "none";
         console.error("Failed to load quiz sets", err);
@@ -2019,7 +2176,7 @@ async function handleGenerateQuizSet() {
 
 // Shared renderer for the flashcard-set / quiz-set list items.
 // XSS-safe: uses textContent, never innerHTML, for backend-provided strings.
-function renderSetList(listEl, emptyEl, sets, detailUrlPrefix, labelFn) {
+function renderSetList(listEl, emptyEl, sets, detailUrlPrefix, type) {
     if (!listEl) return;
     listEl.innerHTML = "";
 
@@ -2038,16 +2195,44 @@ function renderSetList(listEl, emptyEl, sets, detailUrlPrefix, labelFn) {
         link.href = `${detailUrlPrefix}${setId}`;
         link.className = "ai-tools-set-link";
 
+        const contentDiv = document.createElement("div");
+        contentDiv.className = "ai-tools-set-content";
+
+        const titleRow = document.createElement("div");
+        titleRow.className = "ai-tools-set-title-row";
+        
+        const badgeSpan = document.createElement("span");
+        badgeSpan.className = "ai-tools-set-badge";
+        badgeSpan.textContent = type === "flashcard" ? "Flashcards" : "Quiz";
+
         const titleSpan = document.createElement("span");
         titleSpan.className = "ai-tools-set-title";
-        titleSpan.textContent = labelFn(set);
+        titleSpan.textContent = set.title || (type === "flashcard" ? "Flashcard set" : "Quiz");
 
-        const meta = document.createElement("span");
-        meta.className = "ai-tools-set-meta";
-        meta.textContent = formatGeneratedAt(set.createdAt);
+        titleRow.appendChild(badgeSpan);
+        titleRow.appendChild(titleSpan);
 
-        link.appendChild(titleSpan);
-        link.appendChild(meta);
+        const metaSpan = document.createElement("span");
+        metaSpan.className = "ai-tools-set-meta";
+        let metaText = "";
+        if (type === "flashcard") {
+            metaText = `${set.itemCount || 0} cards · ${formatGeneratedAt(set.createdAt)}`;
+        } else {
+            const diff = set.difficulty || "Mixed";
+            const formattedDiff = diff.charAt(0).toUpperCase() + diff.slice(1).toLowerCase();
+            metaText = `${set.questionCount || 0} questions · ${formattedDiff} · ${formatGeneratedAt(set.createdAt)}`;
+        }
+        metaSpan.textContent = metaText;
+
+        contentDiv.appendChild(titleRow);
+        contentDiv.appendChild(metaSpan);
+
+        const openBtn = document.createElement("span");
+        openBtn.className = "ai-tools-set-open";
+        openBtn.textContent = "Open";
+
+        link.appendChild(contentDiv);
+        link.appendChild(openBtn);
         li.appendChild(link);
         listEl.appendChild(li);
     });
