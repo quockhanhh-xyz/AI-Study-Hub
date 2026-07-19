@@ -80,34 +80,133 @@
     <!-- Edit Plan Modal -->
     <div class="admin-modal-overlay" id="editPlanModal">
         <div class="admin-modal">
-            <h3 class="admin-modal-title">Edit Plan</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; width: 100%;">
+                <h3 class="admin-modal-title" style="margin: 0; white-space: nowrap;">Edit Plan</h3>
+                <button type="button" style="background: transparent; color: var(--text-muted); padding: 0; margin: 0; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="closeEditPlanModal()" aria-label="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
             <div class="admin-modal-body">
                 <form id="editPlanForm">
                     <input type="hidden" id="editPlanCode" />
                     
-                    <div class="form-group" style="margin-bottom: 16px;">
-                        <label for="editPlanName" style="display: block; margin-bottom: 8px; font-weight: 500;">Plan Name</label>
-                        <input type="text" id="editPlanName" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required />
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <!-- Basic Info -->
+                        <div class="form-group">
+                            <label for="editPlanName" style="display: block; margin-bottom: 8px; font-weight: 500;">Plan Name</label>
+                            <input type="text" id="editPlanName" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanPrice" style="display: block; margin-bottom: 8px; font-weight: 500;">Price (đ)</label>
+                            <input type="number" id="editPlanPrice" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="0" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanDuration" style="display: block; margin-bottom: 8px; font-weight: 500;">Duration (Months)</label>
+                            <input type="number" id="editPlanDuration" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="0" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanBillingLabel" style="display: block; margin-bottom: 8px; font-weight: 500;">Billing Label</label>
+                            <input type="text" id="editPlanBillingLabel" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanPurchasable" style="display: block; margin-bottom: 8px; font-weight: 500;">Purchasable</label>
+                            <select id="editPlanPurchasable" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                        
+                        <!-- AI Limits -->
+                        <div class="form-group">
+                            <label for="editPlanAiLimit" style="display: block; margin-bottom: 8px; font-weight: 500;">AI Request Limit</label>
+                            <input type="number" id="editPlanAiLimit" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxAiSessions" style="display: block; margin-bottom: 8px; font-weight: 500;">Max AI Sessions / Doc</label>
+                            <input type="number" id="editPlanMaxAiSessions" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxMessages" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Messages / Session</label>
+                            <input type="number" id="editPlanMaxMessages" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxQuestionChars" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Question Chars</label>
+                            <input type="number" id="editPlanMaxQuestionChars" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxContextChunks" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Context Chunks</label>
+                            <input type="number" id="editPlanMaxContextChunks" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxOutputTokens" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Output Tokens</label>
+                            <input type="number" id="editPlanMaxOutputTokens" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+
+                        <!-- Storage & Documents -->
+                        <div class="form-group">
+                            <label for="editPlanStorageLimit" style="display: block; margin-bottom: 8px; font-weight: 500;">Storage Limit (Bytes)</label>
+                            <input type="number" id="editPlanStorageLimit" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxFileSize" style="display: block; margin-bottom: 8px; font-weight: 500;">Max File Size (Bytes)</label>
+                            <input type="number" id="editPlanMaxFileSize" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxDocumentCount" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Documents</label>
+                            <input type="number" id="editPlanMaxDocumentCount" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxFolderCount" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Folders</label>
+                            <input type="number" id="editPlanMaxFolderCount" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxFolderDepth" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Folder Depth</label>
+                            <input type="number" id="editPlanMaxFolderDepth" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+
+                        <!-- Groups & Sharing -->
+                        <div class="form-group">
+                            <label for="editPlanMaxGroupCount" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Groups</label>
+                            <input type="number" id="editPlanMaxGroupCount" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxMembers" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Members / Group</label>
+                            <input type="number" id="editPlanMaxMembers" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxActiveShares" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Active Shares</label>
+                            <input type="number" id="editPlanMaxActiveShares" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+
+                        <!-- Daily Limits & Others -->
+                        <div class="form-group">
+                            <label for="editPlanSummaryDailyLimit" style="display: block; margin-bottom: 8px; font-weight: 500;">Summary Daily Limit</label>
+                            <input type="number" id="editPlanSummaryDailyLimit" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanFlashcardDailyLimit" style="display: block; margin-bottom: 8px; font-weight: 500;">Flashcard Daily Limit</label>
+                            <input type="number" id="editPlanFlashcardDailyLimit" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanQuizDailyLimit" style="display: block; margin-bottom: 8px; font-weight: 500;">Quiz Daily Limit</label>
+                            <input type="number" id="editPlanQuizDailyLimit" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanItemsPerSet" style="display: block; margin-bottom: 8px; font-weight: 500;">Items / Set</label>
+                            <input type="number" id="editPlanItemsPerSet" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxFlashcards" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Flashcards / Set</label>
+                            <input type="number" id="editPlanMaxFlashcards" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxQuizQuestions" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Quiz Qs / Set</label>
+                            <input type="number" id="editPlanMaxQuizQuestions" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
                     </div>
 
                     <div class="form-group" style="margin-bottom: 16px;">
-                        <label for="editPlanPrice" style="display: block; margin-bottom: 8px; font-weight: 500;">Price (đ)</label>
-                        <input type="number" id="editPlanPrice" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="0" />
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 16px;">
-                        <label for="editPlanDuration" style="display: block; margin-bottom: 8px; font-weight: 500;">Duration (Months)</label>
-                        <input type="number" id="editPlanDuration" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="0" />
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 16px;">
-                        <label for="editPlanAiLimit" style="display: block; margin-bottom: 8px; font-weight: 500;">AI Request Limit</label>
-                        <input type="number" id="editPlanAiLimit" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
-                        <small style="color: var(--text-muted); display: block; margin-top: 4px;">Use -1 for unlimited.</small>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 16px;">
-                        <label for="editPlanFeatures" style="display: block; margin-bottom: 8px; font-weight: 500;">Features (JSON or Text)</label>
+                        <label for="editPlanFeatures" style="display: block; margin-bottom: 8px; font-weight: 500;">Features (One per line or comma-separated)</label>
                         <textarea id="editPlanFeatures" class="admin-filter-input" style="width: 100%; box-sizing: border-box; height: 100px; resize: vertical;" required></textarea>
                     </div>
                 </form>
