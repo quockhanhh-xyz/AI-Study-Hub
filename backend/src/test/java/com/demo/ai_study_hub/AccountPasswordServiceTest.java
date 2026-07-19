@@ -67,7 +67,7 @@ class AccountPasswordServiceTest {
     @Test
     void changePassword_ThrowsIfCurrentIncorrect() {
         when(passwordEncoder.matches("old_password", "hashed_old_password")).thenReturn(false);
-        
+
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
                 accountPasswordService.changePassword(testUser, request));
         assertEquals("400 BAD_REQUEST \"CURRENT_PASSWORD_INCORRECT\"", ex.getMessage());

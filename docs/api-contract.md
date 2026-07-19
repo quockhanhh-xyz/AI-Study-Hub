@@ -5296,7 +5296,7 @@ Exports all plan config parameters to an Excel workbook (.xlsx).
 * **Endpoint:** \POST /api/account/avatar\
 * **Description:** Upload and update the current user's avatar.
 * **Authentication:** Required
-* **Request:** multipart/form-data (\ile\ - max 5MB, format: jpg/jpeg/png/webp)
+* **Request:** multipart/form-data (\file\ - max 5MB, format: jpg/jpeg/png/webp)
 * **Response:** ProfileResponse
 
 #### 2.5.4 Change Password
