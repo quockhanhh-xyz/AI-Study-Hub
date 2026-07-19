@@ -5276,3 +5276,18 @@ Exports all plan config parameters to an Excel workbook (.xlsx).
   - `Content-Disposition: attachment; filename="plans_configuration.xlsx"`
 - **Response Body**: Binary XLSX file payload.
 
+
+### 2.5 Account Profile APIs
+#### 2.5.1 Get Profile
+* **Endpoint:** \GET /api/account/profile\
+* **Description:** Retrieve the current user's profile information.
+* **Authentication:** Required
+* **Response:** ProfileResponse (userId, email, fullName, avatarUrl, phone, schoolName, major, studentCode, graduationYear, educationLevel, bio, role, tier, tierExpiresAt, status, createdAt, updatedAt)
+
+#### 2.5.2 Update Profile
+* **Endpoint:** \PUT /api/account/profile\
+* **Description:** Update the current user's profile information.
+* **Authentication:** Required
+* **Request:** UpdateProfileRequest (fullName, phone, schoolName, major, studentCode, graduationYear, educationLevel, bio)
+* **Response:** ProfileResponse
+
