@@ -5726,3 +5726,16 @@ svg {
   color: var(--primary-hover);
   transform: translateX(2px);
 }
+
+/* Polished orange redirect links for auth pages */
+.auth-primary-link {
+  color: #FF5A3D !important;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.auth-primary-link:hover {
+  color: #EA580C !important;
+  text-decoration: underline !important;
+}
