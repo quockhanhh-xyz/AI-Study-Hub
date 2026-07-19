@@ -42,6 +42,33 @@ public class User {
     @Column(name = "status", nullable = false, length = 30)
     private String status = "INACTIVE";
 
+    @Column(name = "avatar_url", length = 1000)
+    private String avatarUrl;
+
+    @Column(name = "avatar_public_id", length = 255)
+    private String avatarPublicId;
+
+    @Column(name = "phone", length = 20)
+    private String phone;
+
+    @Column(name = "school_name", length = 100)
+    private String schoolName;
+
+    @Column(name = "major", length = 100)
+    private String major;
+
+    @Column(name = "student_code", length = 100)
+    private String studentCode;
+
+    @Column(name = "graduation_year")
+    private Integer graduationYear;
+
+    @Column(name = "education_level", length = 50)
+    private String educationLevel;
+
+    @Column(name = "bio", length = 500)
+    private String bio;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
