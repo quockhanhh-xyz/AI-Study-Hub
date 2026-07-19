@@ -138,13 +138,13 @@ class AdminControllerTest {
     @Test
     @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
     void rejectDocument_AsAdmin_ShouldSucceed() throws Exception {
-        doNothing().when(adminService).rejectDocument(1);
+        doNothing().when(adminService).rejectDocument(eq(1), any());
 
         mockMvc.perform(patch("/api/admin/documents/1/reject").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
-        verify(adminService, times(1)).rejectDocument(1);
+        verify(adminService, times(1)).rejectDocument(eq(1), any());
     }
 
     @Test
