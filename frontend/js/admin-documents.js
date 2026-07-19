@@ -47,7 +47,6 @@ function initAdminDocuments() {
     const subjectFilter = document.getElementById('subjectFilter');
     const statusFilter = document.getElementById('statusFilter');
     const fileTypeFilter = document.getElementById('fileTypeFilter');
-    const filterBtn = document.getElementById('filterBtn');
     const exportBtn = document.getElementById('exportBtn');
 
     // Modals
@@ -227,10 +226,32 @@ function initAdminDocuments() {
         }
     });
 
-    filterBtn.addEventListener('click', () => {
+    let currentSearchTimeout = null;
+    searchInput.addEventListener('input', () => {
+        if (currentSearchTimeout) clearTimeout(currentSearchTimeout);
+        currentSearchTimeout = setTimeout(() => {
+            currentPage = 1;
+            loadDocuments();
+        }, 500);
+    });
+
+    [subjectFilter, statusFilter, fileTypeFilter].forEach(el => {
+        if (el) {
+            el.addEventListener('change', () => {
+                currentPage = 1;
+                loadDocuments();
+            });
+        }
+    });
+
+    window.clearFilters = () => {
+        searchInput.value = '';
+        if (subjectFilter) subjectFilter.value = '';
+        statusFilter.value = '';
+        fileTypeFilter.value = '';
         currentPage = 1;
         loadDocuments();
-    });
+    };
 
     exportBtn.addEventListener('click', async () => {
         try {

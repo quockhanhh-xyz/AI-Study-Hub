@@ -24,7 +24,6 @@ function initAdminAiUsage() {
     const featureFilter = document.getElementById('featureFilter');
     const startDateFilter = document.getElementById('startDateFilter');
     const endDateFilter = document.getElementById('endDateFilter');
-    const filterBtn = document.getElementById('filterBtn');
     const exportBtn = document.getElementById('exportBtn');
 
     const loadUsage = async () => {
@@ -105,10 +104,33 @@ function initAdminAiUsage() {
         }
     };
 
-    filterBtn.addEventListener('click', () => {
+    let currentSearchTimeout = null;
+    searchInput.addEventListener('input', () => {
+        if (currentSearchTimeout) clearTimeout(currentSearchTimeout);
+        currentSearchTimeout = setTimeout(() => {
+            currentPage = 1;
+            loadUsage();
+        }, 500);
+    });
+
+    [tierFilter, featureFilter, startDateFilter, endDateFilter].forEach(el => {
+        if (el) {
+            el.addEventListener('change', () => {
+                currentPage = 1;
+                loadUsage();
+            });
+        }
+    });
+
+    window.clearFilters = () => {
+        searchInput.value = '';
+        if (tierFilter) tierFilter.value = '';
+        if (featureFilter) featureFilter.value = '';
+        startDateFilter.value = '';
+        endDateFilter.value = '';
         currentPage = 1;
         loadUsage();
-    });
+    };
 
     exportBtn.addEventListener('click', async () => {
         try {

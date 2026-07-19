@@ -21,7 +21,6 @@ function initAdminSubjects() {
     const pagination = document.getElementById('pagination');
     const searchInput = document.getElementById('searchInput');
     const statusFilter = document.getElementById('statusFilter');
-    const filterBtn = document.getElementById('filterBtn');
     const exportBtn = document.getElementById('exportBtn');
 
     // Modals
@@ -186,10 +185,30 @@ function initAdminSubjects() {
         }
     });
 
-    filterBtn.addEventListener('click', () => {
+    let currentSearchTimeout = null;
+    searchInput.addEventListener('input', () => {
+        if (currentSearchTimeout) clearTimeout(currentSearchTimeout);
+        currentSearchTimeout = setTimeout(() => {
+            currentPage = 1;
+            loadSubjects();
+        }, 500);
+    });
+
+    [statusFilter].forEach(el => {
+        if (el) {
+            el.addEventListener('change', () => {
+                currentPage = 1;
+                loadSubjects();
+            });
+        }
+    });
+
+    window.clearFilters = () => {
+        searchInput.value = '';
+        statusFilter.value = '';
         currentPage = 1;
         loadSubjects();
-    });
+    };
 
     exportBtn.addEventListener('click', async () => {
         try {
