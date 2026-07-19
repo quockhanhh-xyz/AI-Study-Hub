@@ -10,7 +10,7 @@ public interface AdminService {
     AdminDashboardChartsResponse getDashboardCharts();
     AdminPublicDocumentListResponse getPublicDocuments(String search, String approvalStatus, String fileType, Integer subjectId, int page, int size);
     void approveDocument(Integer id);
-    void rejectDocument(Integer id);
+    void rejectDocument(Integer id, String rejectReason);
     void unpublishDocument(Integer id);
     void makeDocumentPending(Integer id);
     byte[] exportPublicDocuments(String search, String approvalStatus, String fileType, Integer subjectId);

@@ -573,7 +573,7 @@ public class DocumentService {
                 .build();
     }
 
-    private PublicDocumentResponse mapToPublicResponse(Document doc, String requesterEmail) {
+    public PublicDocumentResponse mapToPublicResponse(Document doc, String requesterEmail) {
         boolean previewSupported = isPreviewSupported(doc);
         boolean isPublicAndApproved = "PUBLIC".equals(doc.getVisibility()) && "APPROVED".equals(doc.getApprovalStatus());
         String processingStatusVal = "PENDING";

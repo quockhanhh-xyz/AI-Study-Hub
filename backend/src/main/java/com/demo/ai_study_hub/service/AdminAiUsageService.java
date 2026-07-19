@@ -131,6 +131,10 @@ public class AdminAiUsageService {
         };
     }
 
+    public AdminAiUsageItem mapUserToAiUsageItem(User user) {
+        return mapToItem(user, null, null);
+    }
+
     private AdminAiUsageItem mapToItem(User user, LocalDateTime startDate, LocalDateTime endDate) {
         Specification<AiUsageLog> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
