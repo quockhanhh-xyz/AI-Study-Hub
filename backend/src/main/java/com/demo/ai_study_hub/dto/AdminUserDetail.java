@@ -21,6 +21,10 @@ public class AdminUserDetail {
     
     // Usage / Quota
     private AdminAiUsageItem aiUsage;
+    private Integer aiDailyLimit;
+    private Long storageLimit;
+    private Long maxFileSize;
+    private Integer maxDocumentCount;
     
     // Payment History
     private List<AdminPaymentItem> paymentHistory;

@@ -43,6 +43,9 @@ public class AdminUserService {
     private PaymentOrderRepository paymentOrderRepository;
 
     @Autowired
+    private TierPolicyService tierPolicyService;
+
+    @Autowired
     private AdminAiUsageService adminAiUsageService;
 
     public AdminUserListResponse getUsers(String search, String role, String tier, String status, Pageable pageable) {
@@ -191,6 +194,12 @@ public class AdminUserService {
         detail.setStatus(user.getStatus());
         detail.setCreatedAt(user.getCreatedAt());
         detail.setDocumentCount(documentRepository.countByOwner(user));
+
+        com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(user);
+        detail.setAiDailyLimit(limits.aiQuestionsPerDay());
+        detail.setStorageLimit(limits.storageBytes());
+        detail.setMaxFileSize(limits.maxFileBytes());
+        detail.setMaxDocumentCount(limits.maxDocuments());
 
         detail.setAiUsage(adminAiUsageService.mapUserToAiUsageItem(user));
 
