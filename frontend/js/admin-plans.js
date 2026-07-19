@@ -60,6 +60,16 @@ function renderPlansTable(plans) {
         
         const aiLimitDisplay = plan.aiDailyQuestionLimit === -1 ? 'Unlimited' : plan.aiDailyQuestionLimit;
         
+        let actionButtons = `<button class="btn admin-pagination-btn" style="width: auto; padding: 4px 8px; margin-right: 8px;" onclick="openEditPlanModal('${plan.planCode}')">Edit</button>`;
+        if (plan.planCode === 'FREE') {
+            actionButtons += `<span style="font-size: 0.85em; color: var(--text-muted); display: inline-block; padding: 4px;">System default</span>`;
+        } else {
+            actionButtons += `
+                <button class="btn admin-pagination-btn" style="width: auto; padding: 4px 8px; color: ${plan.status === 'ACTIVE' ? 'var(--danger)' : 'var(--success)'};" onclick="togglePlanStatus('${plan.planCode}', '${plan.status}')">
+                    ${plan.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                </button>`;
+        }
+        
         tr.innerHTML = `
             <td><strong>${plan.planCode}</strong></td>
             <td>${plan.planName || ''}</td>
@@ -67,12 +77,7 @@ function renderPlansTable(plans) {
             <td>${plan.durationMonths || 0}</td>
             <td>${aiLimitDisplay}</td>
             <td><span class="admin-badge ${statusBadgeClass}">${plan.status}</span></td>
-            <td>
-                <button class="btn admin-pagination-btn" style="width: auto; padding: 4px 8px; margin-right: 8px;" onclick="openEditPlanModal('${plan.planCode}')">Edit</button>
-                <button class="btn admin-pagination-btn" style="width: auto; padding: 4px 8px; color: ${plan.status === 'ACTIVE' ? 'var(--danger)' : 'var(--success)'};" onclick="togglePlanStatus('${plan.planCode}', '${plan.status}')">
-                    ${plan.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-                </button>
-            </td>
+            <td>${actionButtons}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -87,7 +92,16 @@ function openEditPlanModal(planCode) {
     document.getElementById("editPlanPrice").value = plan.price;
     document.getElementById("editPlanDuration").value = plan.durationMonths || 0;
     document.getElementById("editPlanBillingLabel").value = plan.billingLabel || '';
-    document.getElementById("editPlanPurchasable").value = plan.purchasable !== false ? 'true' : 'false';
+    
+    const purchasableSelect = document.getElementById("editPlanPurchasable");
+    if (plan.planCode === 'FREE') {
+        purchasableSelect.value = 'false';
+        purchasableSelect.disabled = true;
+    } else {
+        purchasableSelect.value = plan.purchasable !== false ? 'true' : 'false';
+        purchasableSelect.disabled = false;
+    }
+    
     
     document.getElementById("editPlanAiLimit").value = plan.aiDailyQuestionLimit ?? -1;
     document.getElementById("editPlanMaxAiSessions").value = plan.maxAiSessionsPerDocument ?? -1;
@@ -113,9 +127,10 @@ function openEditPlanModal(planCode) {
     document.getElementById("editPlanMaxFlashcards").value = plan.maxFlashcardsPerSet ?? -1;
     document.getElementById("editPlanMaxQuizQuestions").value = plan.maxQuizQuestionsPerSet ?? -1;
 
-    document.getElementById("editPlanFeatures").value = Array.isArray(plan.featuresList) 
-        ? plan.featuresList.join('\n') 
-        : (plan.featuresList || "");
+    const featureItems = Array.isArray(plan.features) 
+        ? plan.features 
+        : (plan.featuresList ? String(plan.featuresList).split(',') : []);
+    document.getElementById("editPlanFeatures").value = featureItems.map(item => item.trim()).filter(Boolean).join('\n');
 
     const modal = document.getElementById("editPlanModal");
     modal.classList.add("active");
