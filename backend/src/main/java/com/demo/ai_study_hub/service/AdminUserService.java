@@ -3,11 +3,16 @@ package com.demo.ai_study_hub.service;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.demo.ai_study_hub.dto.AdminUserDetail;
 import com.demo.ai_study_hub.dto.AdminUserItem;
 import com.demo.ai_study_hub.dto.AdminUserListResponse;
+import com.demo.ai_study_hub.dto.AdminPaymentItem;
+import com.demo.ai_study_hub.dto.AdminAiUsageItem;
 import com.demo.ai_study_hub.entity.User;
+import com.demo.ai_study_hub.entity.PaymentOrder;
 import com.demo.ai_study_hub.repository.DocumentRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
+import com.demo.ai_study_hub.repository.PaymentOrderRepository;
 import jakarta.persistence.criteria.Predicate;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -33,6 +38,15 @@ public class AdminUserService {
 
     @Autowired
     private DocumentRepository documentRepository;
+
+    @Autowired
+    private PaymentOrderRepository paymentOrderRepository;
+
+    @Autowired
+    private TierPolicyService tierPolicyService;
+
+    @Autowired
+    private AdminAiUsageService adminAiUsageService;
 
     public AdminUserListResponse getUsers(String search, String role, String tier, String status, Pageable pageable) {
         Specification<User> spec = (root, query, cb) -> {
@@ -70,9 +84,9 @@ public class AdminUserService {
         return response;
     }
 
-    public AdminUserItem getUserById(Integer id) {
+    public AdminUserDetail getUserById(Integer id) {
         User user = userRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        return mapToItem(user);
+        return mapToDetail(user);
     }
 
     public AdminUserItem updateUserStatus(Integer id, String newStatus, Integer currentAdminId) {
@@ -167,5 +181,44 @@ public class AdminUserService {
         item.setCreatedAt(user.getCreatedAt());
         item.setDocumentCount(documentRepository.countByOwner(user));
         return item;
+    }
+
+    private AdminUserDetail mapToDetail(User user) {
+        AdminUserDetail detail = new AdminUserDetail();
+        detail.setUserId(user.getUserId());
+        detail.setEmail(user.getEmail());
+        detail.setFullName(user.getFullName());
+        detail.setRole(user.getRole());
+        detail.setTier(user.getTier() != null ? user.getTier().name() : null);
+        detail.setTierExpiresAt(user.getTierExpiresAt());
+        detail.setStatus(user.getStatus());
+        detail.setCreatedAt(user.getCreatedAt());
+        detail.setDocumentCount(documentRepository.countByOwner(user));
+
+        com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(user);
+        detail.setAiDailyLimit(limits.aiQuestionsPerDay());
+        detail.setStorageLimit(limits.storageBytes());
+        detail.setMaxFileSize(limits.maxFileBytes());
+        detail.setMaxDocumentCount(limits.maxDocuments());
+
+        detail.setAiUsage(adminAiUsageService.mapUserToAiUsageItem(user));
+
+        List<PaymentOrder> orders = paymentOrderRepository.findByUserOrderByCreatedAtDesc(user);
+        List<AdminPaymentItem> paymentItems = orders.stream().map(order -> {
+            AdminPaymentItem p = new AdminPaymentItem();
+            p.setPaymentId(order.getPaymentId());
+            p.setUserEmail(user.getEmail());
+            p.setPlanCode(order.getPlanCode());
+            p.setAmount(order.getAmount());
+            p.setPaymentProvider(order.getPaymentProvider());
+            p.setStatus(order.getStatus());
+            p.setCreatedAt(order.getCreatedAt());
+            p.setPaidAt(order.getPaidAt());
+            p.setTransactionNo(order.getVnpTransactionNo());
+            return p;
+        }).collect(Collectors.toList());
+        detail.setPaymentHistory(paymentItems);
+
+        return detail;
     }
 }

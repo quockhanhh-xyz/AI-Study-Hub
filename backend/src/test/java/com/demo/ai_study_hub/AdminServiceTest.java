@@ -72,7 +72,7 @@ class AdminServiceTest {
     void rejectDocument_PublicDoc_ShouldSucceed() {
         when(documentRepository.findById(1)).thenReturn(Optional.of(publicDoc));
 
-        adminService.rejectDocument(1);
+        adminService.rejectDocument(1, null);
 
         assertEquals("REJECTED", publicDoc.getApprovalStatus());
         verify(documentRepository, times(1)).save(publicDoc);
@@ -83,7 +83,7 @@ class AdminServiceTest {
         when(documentRepository.findById(2)).thenReturn(Optional.of(privateDoc));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> {
-            adminService.rejectDocument(2);
+            adminService.rejectDocument(2, null);
         });
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());

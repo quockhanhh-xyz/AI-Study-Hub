@@ -573,7 +573,7 @@ public class DocumentService {
                 .build();
     }
 
-    private PublicDocumentResponse mapToPublicResponse(Document doc, String requesterEmail) {
+    public PublicDocumentResponse mapToPublicResponse(Document doc, String requesterEmail) {
         boolean previewSupported = isPreviewSupported(doc);
         boolean isPublicAndApproved = "PUBLIC".equals(doc.getVisibility()) && "APPROVED".equals(doc.getApprovalStatus());
         String processingStatusVal = "PENDING";
@@ -657,7 +657,7 @@ public class DocumentService {
                 || "TXT".equals(type);
     }
 
-    private String resolveDownloadFileName(Document doc) {
+    public String resolveDownloadFileName(Document doc) {
         String originalName = doc.getOriginalFileName();
         if (originalName != null && !originalName.trim().isEmpty()) {
             return originalName.trim();
@@ -669,7 +669,7 @@ public class DocumentService {
         return "document-" + doc.getDocumentId();
     }
 
-    private String resolveContentType(Document doc) {
+    public String resolveContentType(Document doc) {
         String type = normalizeFileType(doc);
         return switch (type) {
             case "PDF" -> "application/pdf";
