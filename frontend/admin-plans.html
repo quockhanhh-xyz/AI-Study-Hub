@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Plans - AI Study Hub</title>
+    <meta name="description" content="Manage Subscription Plans and Tiers." />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="admin-layout">
+                <div class="admin-content-wrapper">
+                    <header class="admin-page-header" style="justify-content: flex-start; gap: 16px;">
+                        <h1 class="admin-page-title">Admin Plans</h1>
+                        <button class="btn btn-primary" onclick="exportAdminPlansData()" style="width: auto; padding: 8px 16px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" style="margin-right: 6px; vertical-align: middle;">
+                                <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                            </svg>
+                            Export
+                        </button>
+                    </header>
+
+                    <div class="admin-state-container" id="plansLoadingState">
+                        <div class="admin-state-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                        </div>
+                        <p>Loading plans configuration...</p>
+                    </div>
+
+                    <div class="admin-state-container" id="plansErrorState" style="display: none;">
+                        <div class="admin-state-icon" style="color: var(--danger);">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <p id="plansErrorMessage">Failed to load plans.</p>
+                        <button class="btn btn-primary" onclick="loadPlansData()" style="margin-top: 16px;">Retry</button>
+                    </div>
+
+                    <div id="plansContent" style="display: none;">
+                        <div class="admin-card">
+                            <div class="admin-table-container">
+                                <table class="admin-table table">
+                                    <thead>
+                                        <tr>
+                                            <th>Plan Code</th>
+                                            <th>Name</th>
+                                            <th>Price (đ)</th>
+                                            <th>Duration (Months)</th>
+                                            <th>AI Requests</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="plansTableBody">
+                                        <!-- Plans will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Edit Plan Modal -->
+    <div class="admin-modal-overlay" id="editPlanModal">
+        <div class="admin-modal">
+            <h3 class="admin-modal-title">Edit Plan</h3>
+            <div class="admin-modal-body">
+                <form id="editPlanForm">
+                    <input type="hidden" id="editPlanCode" />
+                    
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="editPlanName" style="display: block; margin-bottom: 8px; font-weight: 500;">Plan Name</label>
+                        <input type="text" id="editPlanName" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required />
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="editPlanPrice" style="display: block; margin-bottom: 8px; font-weight: 500;">Price (đ)</label>
+                        <input type="number" id="editPlanPrice" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="0" />
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="editPlanDuration" style="display: block; margin-bottom: 8px; font-weight: 500;">Duration (Months)</label>
+                        <input type="number" id="editPlanDuration" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="0" />
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="editPlanAiLimit" style="display: block; margin-bottom: 8px; font-weight: 500;">AI Request Limit</label>
+                        <input type="number" id="editPlanAiLimit" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        <small style="color: var(--text-muted); display: block; margin-top: 4px;">Use -1 for unlimited.</small>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="editPlanFeatures" style="display: block; margin-bottom: 8px; font-weight: 500;">Features (JSON or Text)</label>
+                        <textarea id="editPlanFeatures" class="admin-filter-input" style="width: 100%; box-sizing: border-box; height: 100px; resize: vertical;" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="admin-modal-actions">
+                <button class="btn admin-pagination-btn" onclick="closeEditPlanModal()" style="margin: 0; width: auto;">Cancel</button>
+                <button class="btn btn-primary" id="btnSavePlan" onclick="savePlanChanges()" style="margin: 0; width: auto;">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/admin-core-api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+
+    <!-- Page Specific Scripts -->
+    <script src="js/admin-plans-api.js"></script>
+    <script src="js/admin-plans.js"></script>
+</body>
+
+</html>
