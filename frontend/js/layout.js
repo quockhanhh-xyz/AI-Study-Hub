@@ -60,7 +60,7 @@ async function checkAuthenticationStatus() {
       // Normalize ROLE_ADMIN/ROLE_USER to ADMIN/USER for compatibility
       if (result.data.role === 'ROLE_ADMIN') result.data.role = 'ADMIN';
       if (result.data.role === 'ROLE_USER') result.data.role = 'USER';
-      
+
       localStorage.setItem("currentUser", JSON.stringify(result.data));
     }
 

@@ -441,7 +441,7 @@ function requireAuth() {
 
 function requireAdminAuth() {
   if (!requireAuth()) return false;
-  
+
   try {
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
     if (currentUser.role !== 'ADMIN' && currentUser.role !== 'ROLE_ADMIN') {
@@ -457,7 +457,7 @@ function requireAdminAuth() {
 
 function requireUserAuth() {
   if (!requireAuth()) return false;
-  
+
   try {
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
     if (currentUser.role === 'ADMIN' || currentUser.role === 'ROLE_ADMIN') {

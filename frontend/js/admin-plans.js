@@ -30,7 +30,7 @@ async function loadPlansData() {
         if (response && response.success && response.data) {
             currentPlans = response.data;
             renderPlansTable(currentPlans);
-            
+
             loadingState.style.display = "none";
             contentState.style.display = "block";
         } else {
@@ -57,9 +57,9 @@ function renderPlansTable(plans) {
         const tr = document.createElement("tr");
 
         const statusBadgeClass = plan.status === 'ACTIVE' ? 'admin-badge-success' : 'admin-badge-danger';
-        
+
         const aiLimitDisplay = plan.aiDailyQuestionLimit === -1 ? 'Unlimited' : plan.aiDailyQuestionLimit;
-        
+
         let actionButtons = `<button class="btn admin-pagination-btn" style="width: auto; padding: 4px 8px; margin-right: 8px;" onclick="openEditPlanModal('${plan.planCode}')">Edit</button>`;
         if (plan.planCode === 'FREE') {
             actionButtons += `<span style="font-size: 0.85em; color: var(--text-muted); display: inline-block; padding: 4px;">System default</span>`;
@@ -69,7 +69,7 @@ function renderPlansTable(plans) {
                     ${plan.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                 </button>`;
         }
-        
+
         tr.innerHTML = `
             <td><strong>${plan.planCode}</strong></td>
             <td>${plan.planName || ''}</td>
@@ -92,7 +92,7 @@ function openEditPlanModal(planCode) {
     document.getElementById("editPlanPrice").value = plan.price;
     document.getElementById("editPlanDuration").value = plan.durationMonths || 0;
     document.getElementById("editPlanBillingLabel").value = plan.billingLabel || '';
-    
+
     const purchasableSelect = document.getElementById("editPlanPurchasable");
     if (plan.planCode === 'FREE') {
         purchasableSelect.value = 'false';
@@ -101,8 +101,8 @@ function openEditPlanModal(planCode) {
         purchasableSelect.value = plan.purchasable !== false ? 'true' : 'false';
         purchasableSelect.disabled = false;
     }
-    
-    
+
+
     document.getElementById("editPlanAiLimit").value = plan.aiDailyQuestionLimit ?? -1;
     document.getElementById("editPlanMaxAiSessions").value = plan.maxAiSessionsPerDocument ?? -1;
     document.getElementById("editPlanMaxMessages").value = plan.maxMessagesPerSession ?? -1;
@@ -127,8 +127,8 @@ function openEditPlanModal(planCode) {
     document.getElementById("editPlanMaxFlashcards").value = plan.maxFlashcardsPerSet ?? -1;
     document.getElementById("editPlanMaxQuizQuestions").value = plan.maxQuizQuestionsPerSet ?? -1;
 
-    const featureItems = Array.isArray(plan.features) 
-        ? plan.features 
+    const featureItems = Array.isArray(plan.features)
+        ? plan.features
         : (plan.featuresList ? String(plan.featuresList).split(',') : []);
     document.getElementById("editPlanFeatures").value = featureItems.map(item => item.trim()).filter(Boolean).join('\n');
 
@@ -240,7 +240,7 @@ async function savePlanChanges() {
 async function togglePlanStatus(planCode, currentStatus) {
     const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     const confirmMessage = `Are you sure you want to ${newStatus === 'ACTIVE' ? 'activate' : 'deactivate'} plan ${planCode}?`;
-    
+
     if (!confirm(confirmMessage)) return;
 
     try {

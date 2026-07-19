@@ -38,7 +38,7 @@ async function loadDashboardData(isManualRefresh = false) {
             fetchAdminDashboardSummary(),
             fetchAdminDashboardCharts()
         ]);
-        
+
         if (summaryResponse && summaryResponse.success && chartsResponse && chartsResponse.success) {
             renderDashboardStats(summaryResponse.data);
             renderDashboardCharts(chartsResponse.data);
@@ -47,7 +47,7 @@ async function loadDashboardData(isManualRefresh = false) {
                 loadingState.style.display = "none";
                 contentState.style.display = "block";
             }
-            
+
             // Setup auto-refresh if not already running
             if (!autoRefreshInterval) {
                 autoRefreshInterval = setInterval(() => loadDashboardData(true), 60000);
