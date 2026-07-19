@@ -29,6 +29,20 @@
     margin: 0;
 }
 
+.admin-header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.admin-header-actions .btn {
+    width: auto;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* Base Card styles for Admin Dashboards */
 .admin-card {
     background-color: var(--surface, #ffffff);

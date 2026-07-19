@@ -18,9 +18,9 @@
         <main class="main-content">
             <div class="admin-layout">
                 <div class="admin-content-wrapper">
-            <div class="admin-header">
-                <h1>System Subject Management</h1>
-                <div>
+            <header class="admin-page-header">
+                <h1 class="admin-page-title">System Subject Management</h1>
+                <div class="admin-header-actions">
                     <button id="exportBtn" class="btn btn-secondary">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -29,7 +29,7 @@
                     </button>
                     <button class="btn btn-primary" onclick="openSubjectModal()">+ New Subject</button>
                 </div>
-            </div>
+            </header>
 
             <div class="admin-state-container" id="subjLoadingState">
                 <div class="admin-state-icon">
