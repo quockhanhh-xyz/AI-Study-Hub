@@ -39,7 +39,7 @@ public class SubjectRequestService {
 
     @Autowired
     private SubjectRepository subjectRepository;
-    
+
     @Autowired
     private AdminSubjectService adminSubjectService;
 
@@ -68,11 +68,11 @@ public class SubjectRequestService {
             subjectRequestRepository.existsByRequestedNameAndStatus(requestedName, "PENDING")) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "A pending request with this code or name already exists");
         }
-        
+
         if (subjectRepository.existsBySubjectCodeAndStatus(requestedCode, "ACTIVE")) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "An active subject with this code already exists");
         }
-        
+
         java.util.Optional<Subject> existingByName = subjectRepository.findSystemSubjectByNameIgnoreCase(requestedName);
         if (existingByName.isPresent() && "ACTIVE".equals(existingByName.get().getStatus())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "An active system subject with this name already exists");
@@ -115,7 +115,7 @@ public class SubjectRequestService {
         if (existing == null) {
              existing = subjectRepository.findSystemSubjectByNameIgnoreCase(request.getRequestedName()).orElse(null);
         }
-        
+
         if (existing != null) {
             if ("ACTIVE".equals(existing.getStatus())) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Subject with this code or name already exists and is active");
@@ -155,10 +155,10 @@ public class SubjectRequestService {
         request.setReviewedAt(LocalDateTime.now());
         return mapToResponse(subjectRequestRepository.save(request));
     }
-    
+
     public byte[] exportSubjectRequests(String search, String status) {
         List<SubjectRequest> requests = subjectRequestRepository.findAll(buildSpecification(search, status));
-        
+
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Subject Requests");
             Row headerRow = sheet.createRow(0);

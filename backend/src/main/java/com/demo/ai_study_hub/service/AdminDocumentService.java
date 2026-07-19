@@ -51,9 +51,9 @@ public class AdminDocumentService {
         if (!"ACTIVE".equals(document.getStatus()) || !"PUBLIC".equals(document.getVisibility())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Document is not accessible for public moderation");
         }
-        
+
         String url = document.getFileUrl();
-        
+
         DocumentDownloadInfo info = new DocumentDownloadInfo();
         info.setFileUrl(url);
         info.setFileName(documentService.resolveDownloadFileName(document));
@@ -67,7 +67,7 @@ public class AdminDocumentService {
         if (!"ACTIVE".equals(document.getStatus()) || !"PUBLIC".equals(document.getVisibility())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Document is not accessible for public moderation");
         }
-        
+
         document.setApprovalStatus("APPROVED");
         document = documentRepository.save(document);
         return documentService.mapToPublicResponse(document, null);
@@ -79,15 +79,15 @@ public class AdminDocumentService {
         if (!"ACTIVE".equals(document.getStatus()) || !"PUBLIC".equals(document.getVisibility())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Document is not accessible for public moderation");
         }
-                
+
         document.setApprovalStatus("REJECTED");
         document = documentRepository.save(document);
         return documentService.mapToPublicResponse(document, null);
     }
-    
+
     public byte[] exportPublicDocuments() {
         List<Document> documents = documentRepository.findPublicDocumentsForAdminExport(null, null, null, null);
-        
+
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Public Documents");
             Row headerRow = sheet.createRow(0);

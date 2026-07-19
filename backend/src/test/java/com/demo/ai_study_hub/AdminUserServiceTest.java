@@ -76,7 +76,7 @@ class AdminUserServiceTest {
 
         when(adminAiUsageService.mapUserToAiUsageItem(user))
                 .thenReturn(aiUsageItem);
-        
+
         when(paymentOrderRepository.findByUserOrderByCreatedAtDesc(user))
                 .thenReturn(Collections.singletonList(payment));
 
@@ -88,12 +88,12 @@ class AdminUserServiceTest {
         when(tierPolicyService.getLimitsForUser(user)).thenReturn(limits);
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
-        
+
         AdminUserDetail detail = adminUserService.getUserById(1);
 
         assertNotNull(detail);
         assertEquals("test@test.com", detail.getEmail());
-        
+
         assertNotNull(detail.getAiUsage());
         assertEquals(30, detail.getAiUsage().getAiQaUsed());
 

@@ -18,14 +18,14 @@ public class AdminUserDetail {
     private String status;
     private LocalDateTime createdAt;
     private Long documentCount;
-    
+
     // Usage / Quota
     private AdminAiUsageItem aiUsage;
     private Integer aiDailyLimit;
     private Long storageLimit;
     private Long maxFileSize;
     private Integer maxDocumentCount;
-    
+
     // Payment History
     private List<AdminPaymentItem> paymentHistory;
 }

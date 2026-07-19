@@ -12,10 +12,10 @@ public class SubjectRequestResponse {
     private String status;
     private String rejectReason;
     private LocalDateTime createdAt;
-    
+
     private String requestedByEmail;
     private String requestedByName;
-    
+
     private String reviewedByEmail;
     private LocalDateTime reviewedAt;
 }

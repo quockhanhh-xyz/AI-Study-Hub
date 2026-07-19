@@ -16,7 +16,7 @@ import java.util.List;
 public interface SubjectRequestRepository extends JpaRepository<SubjectRequest, Integer>, JpaSpecificationExecutor<SubjectRequest> {
 
     List<SubjectRequest> findByRequestedByUser(User user);
-    
+
     Page<SubjectRequest> findByRequestedByUser(User user, Pageable pageable);
 
     boolean existsByRequestedCodeAndStatus(String requestedCode, String status);

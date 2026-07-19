@@ -42,12 +42,12 @@ class AdminAiUsageServiceTest {
         User u = new User();
         u.setUserId(1);
         u.setEmail("test@test.com");
-        
+
         Page<User> page = new PageImpl<>(Collections.singletonList(u));
-        
+
         when(userRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(page);
-                
+
         // When mapping to item, it might call aiUsageLogRepository, but if the user has no logs, it just returns 0
         // We can just mock the count/find methods if they are called inside mapToItem.
         // Wait, mapToItem uses aiUsageLogRepository.countSuccessfulLogsByTypeAfter, but the test might fail if it's not mocked?
