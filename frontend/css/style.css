@@ -3351,6 +3351,13 @@ svg {
   box-shadow: 0 4px 10px rgba(255, 88, 88, 0.08);
 }
 
+.quick-link-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  min-width: 0;
+}
+
 .quick-link-title {
   font-size: 15px;
   font-weight: 600;
