@@ -285,4 +285,3 @@ async function viewPaymentDetails(paymentId) {
 function closePaymentDetailModal() {
     document.getElementById("paymentDetailModal").classList.remove("active");
 }
-

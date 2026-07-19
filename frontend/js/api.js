@@ -56,8 +56,7 @@ async function apiRequest(endpoint, options = {}) {
         "Session expired or invalid (HTTP 401). Executing global redirect to login..."
       );
       localStorage.removeItem("currentUser");
-      console.log("Bypassed redirect to login.html");
-      // window.location.href = "login.html";
+      window.location.href = "login.html";
     }
 
     // Preserve backend error message whenever possible
