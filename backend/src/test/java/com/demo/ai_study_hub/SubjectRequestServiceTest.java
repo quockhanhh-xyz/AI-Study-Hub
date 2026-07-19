@@ -63,6 +63,7 @@ class SubjectRequestServiceTest {
         when(subjectRequestRepository.existsByRequestedCodeAndStatus("CS101", "PENDING")).thenReturn(false);
         when(subjectRequestRepository.existsByRequestedNameAndStatus("Computer Science", "PENDING")).thenReturn(false);
         when(subjectRepository.existsBySubjectCodeAndStatus("CS101", "ACTIVE")).thenReturn(false);
+        when(subjectRepository.findSystemSubjectByNameIgnoreCase("Computer Science")).thenReturn(Optional.empty());
         when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(testUser));
         when(subjectRequestRepository.save(any(SubjectRequest.class))).thenAnswer(i -> i.getArgument(0));
 
@@ -95,6 +96,7 @@ class SubjectRequestServiceTest {
         when(subjectRequestRepository.findById(1)).thenReturn(Optional.of(pendingReq));
         when(userRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(adminUser));
         when(subjectRepository.findBySubjectCode("CS101")).thenReturn(Optional.empty());
+        when(subjectRepository.findSystemSubjectByNameIgnoreCase("Comp Sci")).thenReturn(Optional.empty());
         when(subjectRequestRepository.save(any(SubjectRequest.class))).thenAnswer(i -> i.getArgument(0));
 
         SubjectRequest approved = subjectRequestService.approveRequest(1, "admin@test.com");

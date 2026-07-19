@@ -52,6 +52,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/account/**").hasRole("USER")
                         .requestMatchers("/api/notifications/**").hasRole("USER")
                         .requestMatchers("/api/payments/**").hasRole("USER")
+                        .requestMatchers("/api/subject-requests/**").hasRole("USER")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

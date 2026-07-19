@@ -12,12 +12,15 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.security.Principal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -44,7 +47,14 @@ class AdminSubjectRequestControllerTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(adminSubjectRequestController).build();
+        objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+        objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        mockMvc = MockMvcBuilders.standaloneSetup(adminSubjectRequestController)
+                .setMessageConverters(
+                        new MappingJackson2HttpMessageConverter(objectMapper),
+                        new org.springframework.http.converter.ByteArrayHttpMessageConverter()
+                )
+                .build();
         mockPrincipal = () -> "admin@test.com";
     }
 
@@ -53,12 +63,14 @@ class AdminSubjectRequestControllerTest {
         SubjectRequest req = new SubjectRequest();
         req.setRequestId(1);
 
-        when(subjectRequestService.getAllSubjectRequests()).thenReturn(Collections.singletonList(req));
+        org.springframework.data.domain.Page<SubjectRequest> page = new org.springframework.data.domain.PageImpl<>(Collections.singletonList(req));
+
+        when(subjectRequestService.getAllSubjectRequests(any(), any(), any())).thenReturn(page);
 
         mockMvc.perform(get("/api/admin/subject-requests"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].requestId").value(1));
+                .andExpect(jsonPath("$.data.content[0].requestId").value(1));
     }
 
     @Test
@@ -101,7 +113,7 @@ class AdminSubjectRequestControllerTest {
     @Test
     void exportSubjectRequests_Success() throws Exception {
         byte[] dummyData = "dummy excel data".getBytes();
-        when(subjectRequestService.exportSubjectRequests()).thenReturn(dummyData);
+        when(subjectRequestService.exportSubjectRequests(any(), any())).thenReturn(dummyData);
 
         mockMvc.perform(get("/api/admin/subject-requests/export"))
                 .andExpect(status().isOk())

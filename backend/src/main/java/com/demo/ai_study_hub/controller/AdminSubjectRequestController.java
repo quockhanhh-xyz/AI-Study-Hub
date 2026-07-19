@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/admin/subject-requests")
@@ -23,9 +24,29 @@ public class AdminSubjectRequestController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<ApiResponse<List<SubjectRequest>>> getAllRequests() {
-        List<SubjectRequest> requests = subjectRequestService.getAllSubjectRequests();
-        return ResponseEntity.ok(ApiResponse.success(requests, "Retrieved all subject requests"));
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAllRequests(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
+            
+        org.springframework.data.domain.Sort sort = direction.equalsIgnoreCase("asc") ? 
+            org.springframework.data.domain.Sort.by(sortBy).ascending() : 
+            org.springframework.data.domain.Sort.by(sortBy).descending();
+            
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sort);
+        
+        org.springframework.data.domain.Page<SubjectRequest> requests = subjectRequestService.getAllSubjectRequests(search, status, pageable);
+        
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("content", requests.getContent());
+        responseData.put("totalPages", requests.getTotalPages());
+        responseData.put("totalElements", requests.getTotalElements());
+        responseData.put("currentPage", requests.getNumber());
+        
+        return ResponseEntity.ok(ApiResponse.success(responseData, "Retrieved subject requests"));
     }
 
     @PatchMapping("/{id}/approve")
@@ -48,8 +69,10 @@ public class AdminSubjectRequestController {
 
     @GetMapping("/export")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<byte[]> exportSubjectRequests() {
-        byte[] data = subjectRequestService.exportSubjectRequests();
+    public ResponseEntity<byte[]> exportSubjectRequests(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status) {
+        byte[] data = subjectRequestService.exportSubjectRequests(search, status);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
         headers.setContentDispositionFormData("attachment", "subject_requests.xlsx");

@@ -22,6 +22,9 @@ public interface SubjectRepository extends JpaRepository<Subject, Integer>, JpaS
 
     java.util.Optional<Subject> findBySubjectCode(String subjectCode);
 
+    @Query("SELECT s FROM Subject s WHERE s.scope = 'SYSTEM' AND LOWER(s.subjectName) = LOWER(:name)")
+    java.util.Optional<Subject> findSystemSubjectByNameIgnoreCase(@Param("name") String name);
+
     @Query("SELECT s FROM Subject s WHERE s.status = 'ACTIVE' " +
             "AND (s.scope = 'SYSTEM' OR (s.scope = 'USER_CUSTOM' AND s.owner = :owner))")
     List<Subject> findVisibleSubjects(@Param("owner") User owner);

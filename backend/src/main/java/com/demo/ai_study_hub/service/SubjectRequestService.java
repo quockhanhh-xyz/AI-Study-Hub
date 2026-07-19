@@ -12,6 +12,10 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -20,6 +24,7 @@ import com.demo.ai_study_hub.service.AdminSubjectService;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -46,6 +51,11 @@ public class SubjectRequestService {
         if (subjectRepository.existsBySubjectCodeAndStatus(requestedCode, "ACTIVE")) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "An active subject with this code already exists");
         }
+        
+        java.util.Optional<Subject> existingByName = subjectRepository.findSystemSubjectByNameIgnoreCase(requestedName);
+        if (existingByName.isPresent() && "ACTIVE".equals(existingByName.get().getStatus())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An active system subject with this name already exists");
+        }
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -64,8 +74,8 @@ public class SubjectRequestService {
         return subjectRequestRepository.findByRequestedByUser(user);
     }
 
-    public List<SubjectRequest> getAllSubjectRequests() {
-        return subjectRequestRepository.findAll();
+    public Page<SubjectRequest> getAllSubjectRequests(String search, String status, Pageable pageable) {
+        return subjectRequestRepository.findAll(buildSpecification(search, status), pageable);
     }
 
     public SubjectRequest approveRequest(Integer requestId, String adminEmail) {
@@ -81,9 +91,13 @@ public class SubjectRequestService {
 
         // Check if subject already exists but is INACTIVE
         Subject existing = subjectRepository.findBySubjectCode(request.getRequestedCode()).orElse(null);
+        if (existing == null) {
+             existing = subjectRepository.findSystemSubjectByNameIgnoreCase(request.getRequestedName()).orElse(null);
+        }
+        
         if (existing != null) {
             if ("ACTIVE".equals(existing.getStatus())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Subject with this code already exists and is active");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Subject with this code or name already exists and is active");
             } else {
                 existing.setStatus("ACTIVE");
                 subjectRepository.save(existing);
@@ -121,8 +135,8 @@ public class SubjectRequestService {
         return subjectRequestRepository.save(request);
     }
     
-    public byte[] exportSubjectRequests() {
-        List<SubjectRequest> requests = subjectRequestRepository.findAll();
+    public byte[] exportSubjectRequests(String search, String status) {
+        List<SubjectRequest> requests = subjectRequestRepository.findAll(buildSpecification(search, status));
         
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Subject Requests");
@@ -150,13 +164,30 @@ public class SubjectRequestService {
                 row.createCell(6).setCellValue(req.getCreatedAt() != null ? req.getCreatedAt().toString() : "");
                 row.createCell(7).setCellValue(req.getReviewedBy() != null ? req.getReviewedBy().getEmail() : "");
                 row.createCell(8).setCellValue(req.getReviewedAt() != null ? req.getReviewedAt().toString() : "");
-                row.createCell(9).setCellValue(req.getRejectReason() != null ? req.getRejectReason() : "");
+                row.createCell(9).setCellValue(req.getRejectReason());
             }
 
             workbook.write(out);
             return out.toByteArray();
         } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error exporting subject requests to Excel", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to export subject requests");
         }
+    }
+
+    private Specification<SubjectRequest> buildSpecification(String search, String status) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (search != null && !search.isEmpty()) {
+                String searchLike = "%" + search.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("requestedCode")), searchLike),
+                        cb.like(cb.lower(root.get("requestedName")), searchLike)
+                ));
+            }
+            if (status != null && !status.isEmpty()) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
     }
 }
