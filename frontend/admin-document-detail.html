@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Document Detail - AI Study Hub Admin</title>
+    <!-- Include global styles first, then admin styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="admin-layout">
+                <div class="admin-content-wrapper">
+                    <div class="admin-header">
+                        <h1>Document Details (Moderation)</h1>
+                        <button class="btn btn-outline" onclick="window.history.back()">Back to List</button>
+                    </div>
+
+                    <div class="admin-state-container" id="loadingState">
+                        <div class="admin-state-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                        </div>
+                        <p>Loading document details...</p>
+                    </div>
+
+                    <div class="admin-state-container" id="errorState" style="display: none;">
+                        <div class="admin-state-icon" style="color: var(--danger);">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <p id="errorMessage">Failed to load details.</p>
+                        <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 16px;">Retry</button>
+                    </div>
+
+                    <div id="contentState" style="display: none;">
+                        <div class="admin-card" style="margin-bottom: 20px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">
+                                <div><strong>ID:</strong> <span id="docIdVal"></span></div>
+                                <div><strong>Title:</strong> <span id="docTitleVal"></span></div>
+                                <div><strong>Owner:</strong> <span id="docOwnerVal"></span></div>
+                                <div><strong>Subject:</strong> <span id="docSubjectVal"></span></div>
+                                <div><strong>File Type:</strong> <span id="docTypeVal"></span></div>
+                                <div><strong>Visibility:</strong> <span id="docVisVal"></span></div>
+                                <div><strong>Approval Status:</strong> <span id="docApprVal"></span></div>
+                                <div><strong>Processing Status:</strong> <span id="docProcVal"></span></div>
+                                <div><strong>Uploaded At:</strong> <span id="docDateVal"></span></div>
+                            </div>
+                        </div>
+
+                        <div class="admin-actions-bar" style="margin-bottom: 20px;">
+                            <button class="btn btn-outline" id="previewBtn">Preview Document</button>
+                            <button class="btn btn-outline" id="downloadBtn">Download File</button>
+                            <span style="flex:1;"></span>
+                            <button class="btn btn-primary" id="approveBtn" style="display:none;">Approve</button>
+                            <button class="btn btn-danger" id="rejectBtn" style="display:none;">Reject</button>
+                        </div>
+
+                        <div id="previewContainer" class="admin-card" style="display:none; height: 600px; padding: 0;">
+                            <!-- Iframe or PDF.js viewer -->
+                            <iframe id="previewFrame" style="width:100%; height:100%; border:none;"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Reject Confirm Modal -->
+    <div class="admin-modal-overlay" id="rejectModal">
+        <div class="admin-modal">
+            <h3 class="admin-modal-title">Reject Document</h3>
+            <div class="admin-modal-body">
+                <p>Are you sure you want to reject this document? It will be hidden from the Community Library.</p>
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Reason (Optional):</label>
+                    <textarea id="rejectReason" rows="3" placeholder="Explain why..."></textarea>
+                </div>
+            </div>
+            <div class="admin-modal-actions">
+                <button class="btn btn-outline" onclick="document.getElementById('rejectModal').classList.remove('active')">Cancel</button>
+                <button class="btn btn-danger" id="confirmRejectBtn">Reject</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/admin-core-api.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/admin-document-api.js"></script>
+    <script src="js/admin-document-detail.js"></script>
+</body>
+</html>
