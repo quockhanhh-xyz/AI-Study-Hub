@@ -3,6 +3,7 @@ package com.demo.ai_study_hub.controller;
 import com.demo.ai_study_hub.dto.AdminDashboardResponse;
 import com.demo.ai_study_hub.dto.AdminPublicDocumentListResponse;
 import com.demo.ai_study_hub.dto.ApiResponse;
+import java.util.List;
 import com.demo.ai_study_hub.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,20 @@ public class AdminController {
             log.error("Error generating admin dashboard summary", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(false, "An unexpected error occurred while generating dashboard summary.", null));
+        }
+    }
+
+    @GetMapping("/dashboard/charts")
+    public ResponseEntity<ApiResponse<com.demo.ai_study_hub.dto.AdminDashboardChartsResponse>> getDashboardCharts() {
+        try {
+            com.demo.ai_study_hub.dto.AdminDashboardChartsResponse data = adminService.getDashboardCharts();
+            return ResponseEntity.ok(new ApiResponse<>(true, "Admin dashboard charts retrieved successfully", data));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(new ApiResponse<>(false, e.getReason(), null));
+        } catch (Exception e) {
+            log.error("Error generating admin dashboard charts", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "An unexpected error occurred while generating dashboard charts.", null));
         }
     }
 
@@ -97,6 +112,20 @@ public class AdminController {
         }
     }
 
+    @PatchMapping("/documents/{id}/pending")
+    public ResponseEntity<ApiResponse<Void>> makeDocumentPending(@PathVariable Integer id) {
+        try {
+            adminService.makeDocumentPending(id);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Document moved back to review successfully", null));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(new ApiResponse<>(false, e.getReason(), null));
+        } catch (Exception e) {
+            log.error("Error moving document {} back to pending", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "An unexpected error occurred while moving document back to pending.", null));
+        }
+    }
+
     @GetMapping("/documents/public/export")
     public ResponseEntity<byte[]> exportPublicDocuments(
             @RequestParam(required = false) String search,
@@ -111,6 +140,79 @@ public class AdminController {
                     .body(data);
         } catch (Exception e) {
             log.error("Error exporting public documents", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
+        }
+    }
+
+    @GetMapping("/plans")
+    public ResponseEntity<ApiResponse<List<com.demo.ai_study_hub.entity.PlanConfig>>> getAllPlans() {
+        try {
+            List<com.demo.ai_study_hub.entity.PlanConfig> data = adminService.getAllPlanConfigs();
+            return ResponseEntity.ok(new ApiResponse<>(true, "All plans retrieved successfully", data));
+        } catch (Exception e) {
+            log.error("Error retrieving plan configurations", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "An unexpected error occurred while retrieving plans.", null));
+        }
+    }
+
+    @GetMapping("/plans/{planCode}")
+    public ResponseEntity<ApiResponse<com.demo.ai_study_hub.entity.PlanConfig>> getPlanDetails(@PathVariable String planCode) {
+        try {
+            com.demo.ai_study_hub.entity.PlanConfig data = adminService.getPlanConfig(planCode);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Plan details retrieved successfully", data));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(new ApiResponse<>(false, e.getReason(), null));
+        } catch (Exception e) {
+            log.error("Error retrieving plan configuration {}", planCode, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "An unexpected error occurred while retrieving plan details.", null));
+        }
+    }
+
+    @PutMapping("/plans/{planCode}")
+    public ResponseEntity<ApiResponse<com.demo.ai_study_hub.entity.PlanConfig>> updatePlan(
+            @PathVariable String planCode,
+            @RequestBody com.demo.ai_study_hub.dto.PlanUpdateRequest request) {
+        try {
+            com.demo.ai_study_hub.entity.PlanConfig data = adminService.updatePlanConfig(planCode, request);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Plan configuration updated successfully", data));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(new ApiResponse<>(false, e.getReason(), null));
+        } catch (Exception e) {
+            log.error("Error updating plan configuration {}", planCode, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "An unexpected error occurred while updating plan.", null));
+        }
+    }
+
+    @PatchMapping("/plans/{planCode}/status")
+    public ResponseEntity<ApiResponse<com.demo.ai_study_hub.entity.PlanConfig>> patchPlanStatus(
+            @PathVariable String planCode,
+            @RequestParam String status) {
+        try {
+            com.demo.ai_study_hub.entity.PlanConfig data = adminService.patchPlanStatus(planCode, status);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Plan status patched successfully", data));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(new ApiResponse<>(false, e.getReason(), null));
+        } catch (Exception e) {
+            log.error("Error patching status of plan configuration {}", planCode, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "An unexpected error occurred while patching plan status.", null));
+        }
+    }
+
+    @GetMapping("/plans/export")
+    public ResponseEntity<byte[]> exportPlanConfigs() {
+        try {
+            byte[] data = adminService.exportPlanConfigs();
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"plans_configuration.xlsx\"")
+                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .body(data);
+        } catch (Exception e) {
+            log.error("Error exporting plan configurations", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null);
         }

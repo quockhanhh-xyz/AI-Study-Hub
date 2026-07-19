@@ -102,7 +102,7 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
     long countByStatus(String status);
 
-    @Query("SELECT d.approvalStatus, COUNT(d) FROM Document d WHERE d.status = 'ACTIVE' GROUP BY d.approvalStatus")
+    @Query("SELECT d.approvalStatus, COUNT(d) FROM Document d WHERE d.status = 'ACTIVE' AND d.visibility = 'PUBLIC' GROUP BY d.approvalStatus")
     List<Object[]> countDocumentsByApprovalStatus();
 
     @Query("SELECT d FROM Document d LEFT JOIN d.subject s " +

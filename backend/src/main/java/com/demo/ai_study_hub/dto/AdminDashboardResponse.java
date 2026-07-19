@@ -13,12 +13,16 @@ import java.util.List;
 public class AdminDashboardResponse {
 
     private long totalUsers;
+    private long activeUsers;
+    private long blockedUsers;
     private long totalDocuments;
     private long pendingPublicDocuments;
+    private long approvedPublicDocuments;
     private long totalRevenue;
     private long successfulPayments;
     private long aiRequestsToday;
     private long aiRequestsThisMonth;
+    private long aiRequestsTotal;
 
     private List<TierCountItem> usersByTier;
     private List<ApprovalStatusCountItem> documentsByApprovalStatus;

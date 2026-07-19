@@ -11,6 +11,7 @@ import com.demo.ai_study_hub.service.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -62,16 +63,30 @@ public class AuthController {
                     .build();
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
+            String normalizedRole = user.getRole();
+            if (normalizedRole != null) {
+                normalizedRole = normalizedRole.toUpperCase();
+                if (normalizedRole.startsWith("ROLE_")) {
+                    normalizedRole = normalizedRole.substring(5);
+                }
+            } else {
+                normalizedRole = "USER";
+            }
+
             LoginResponse loginResponse = LoginResponse.builder()
                     .userId(user.getUserId())
                     .fullName(user.getFullName())
                     .email(user.getEmail())
-                    .role(user.getRole())
+                    .role(normalizedRole)
                     .status(user.getStatus())
                     .build();
 
             return ResponseEntity.ok(new ApiResponse<>(true, "Login successful", loginResponse));
         } catch (RuntimeException e) {
+            if ("Your account has been blocked.".equals(e.getMessage())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.error(e.getMessage(), "AUTH_ACCOUNT_BLOCKED"));
+            }
             return ResponseEntity.badRequest().body(new ApiResponse<>(false, e.getMessage(), null));
         }
     }
@@ -98,11 +113,21 @@ public class AuthController {
         }
         try {
             User user = authService.getUserByEmail(authentication.getName());
+            String normalizedRole = user.getRole();
+            if (normalizedRole != null) {
+                normalizedRole = normalizedRole.toUpperCase();
+                if (normalizedRole.startsWith("ROLE_")) {
+                    normalizedRole = normalizedRole.substring(5);
+                }
+            } else {
+                normalizedRole = "USER";
+            }
+
             Map<String, Object> data = new java.util.LinkedHashMap<>();
             data.put("userId", user.getUserId());
             data.put("email", user.getEmail());
             data.put("fullName", user.getFullName());
-            data.put("role", user.getRole());
+            data.put("role", normalizedRole);
             data.put("tier", user.getTier());
             data.put("status", user.getStatus());
             data.put("effectiveTier", tierPolicyService.getEffectiveTier(user));

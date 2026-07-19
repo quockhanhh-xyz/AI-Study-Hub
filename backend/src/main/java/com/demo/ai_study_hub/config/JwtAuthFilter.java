@@ -36,13 +36,23 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String email = jwtUtil.extractEmail(token);
             com.demo.ai_study_hub.entity.User userEntity = userRepository.findByEmail(email).orElse(null);
 
-            if (userEntity != null && "ACTIVE".equals(userEntity.getStatus())) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            if (userEntity != null) {
+                if ("BLOCKED".equals(userEntity.getStatus())) {
+                    SecurityContextHolder.clearContext();
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json");
+                    response.setCharacterEncoding("UTF-8");
+                    response.getWriter().write("{\"success\":false,\"message\":\"Account is blocked\",\"code\":\"AUTH_ACCOUNT_BLOCKED\"}");
+                    return; // halt filter chain
+                }
+                if ("ACTIVE".equals(userEntity.getStatus())) {
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-                UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(
-                                userEntity, null, userDetails.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                    UsernamePasswordAuthenticationToken auth =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails, null, userDetails.getAuthorities());
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
             }
         }
 

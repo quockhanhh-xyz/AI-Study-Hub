@@ -4681,20 +4681,20 @@ Limits are enforced per user tier on a daily calendar base matching Asia/Ho_Chi_
 | Daily Summary generations | 3 | 20 | 50 |
 | Daily Flashcard set generations | 2 | 15 | 40 |
 | Daily Quiz set generations | 2 | 15 | 40 |
-| Max questions count per Quiz set | 5 | 15 | 25 |
-| Max flashcards count per Flashcard set | 8 | 30 | 50 |
+| Max questions count per Quiz set | 20 | 50 | 80 |
+| Max flashcards count per Flashcard set | 20 | 50 | 80 |
 
 ### Range Validation Limits
 If the client submits count params outside validation ranges, returns HTTP `400 Bad Request` with appropriate codes:
 
 * **Quiz `questionCount`**:
-  * FREE: Min 3, Default 5, Max 5
-  * PREMIUM: Min 3, Default 10, Max 15
-  * ULTRA: Min 3, Default 15, Max 25
+  * FREE: Min 3, Default 5, Max 20
+  * PREMIUM: Min 3, Default 10, Max 50
+  * ULTRA: Min 3, Default 15, Max 80
 * **Flashcard `count`**:
-  * FREE: Min 3, Default 8, Max 8
-  * PREMIUM: Min 3, Default 15, Max 30
-  * ULTRA: Min 3, Default 20, Max 50
+  * FREE: Min 3, Default 8, Max 20
+  * PREMIUM: Min 3, Default 15, Max 50
+  * ULTRA: Min 3, Default 20, Max 80
 
 ---
 
@@ -5127,5 +5127,152 @@ Exports filtered public documents metadata to an Excel workbook (.xlsx).
 - **Response Headers**:
   - `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
   - `Content-Disposition: attachment; filename="public_documents.xlsx"`
+- **Response Body**: Binary XLSX file payload.
+
+---
+
+## 9.7. Get Dashboard Charts API
+## GET `/api/admin/dashboard/charts`
+Retrieve near-realtime aggregated data for dashboard visualizations.
+- **Auth required**: Yes (Role: `ADMIN`)
+- **Success Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "message": "Admin dashboard charts retrieved successfully",
+    "data": {
+      "userTierDistribution": [
+        { "tier": "FREE", "count": 120 },
+        { "tier": "PREMIUM", "count": 45 },
+        { "tier": "ULTRA", "count": 12 }
+      ],
+      "documentApprovalStatus": [
+        { "approvalStatus": "PENDING", "count": 5 },
+        { "approvalStatus": "APPROVED", "count": 89 },
+        { "approvalStatus": "REJECTED", "count": 3 }
+      ],
+      "revenueByDay": [
+        { "date": "2026-07-17", "revenue": 199000 },
+        { "date": "2026-07-18", "revenue": 398000 }
+      ],
+      "aiUsageByDay": [
+        { "date": "2026-07-17", "count": 420 },
+        { "date": "2026-07-18", "count": 510 }
+      ]
+    }
+  }
+  ```
+
+---
+
+# 10. Plan Configurations Management APIs
+
+## 10.1. Get All Plans
+## GET `/api/admin/plans`
+Get a list of all plan configurations.
+- **Auth required**: Yes (Role: `ADMIN`)
+- **Success Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "message": "All plans retrieved successfully",
+    "data": [
+      {
+        "planCode": "FREE",
+        "planName": "Free",
+        "price": 0,
+        "billingLabel": "Free",
+        "purchasable": false,
+        "aiDailyQuestionLimit": 5,
+        "storageLimit": 104857600,
+        "maxFileSize": 10485760,
+        "status": "ACTIVE",
+        "targetTier": "FREE",
+        "durationMonths": 0
+      }
+    ]
+  }
+  ```
+
+## 10.2. Get Plan Details
+## GET `/api/admin/plans/{planCode}`
+Get detailed configurations for a specific plan.
+- **Auth required**: Yes (Role: `ADMIN`)
+- **Success Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "message": "Plan details retrieved successfully",
+    "data": {
+      "planCode": "PREMIUM_1_MONTH",
+      "planName": "Premium",
+      "price": 199000,
+      "billingLabel": "1 month",
+      "purchasable": true,
+      "aiDailyQuestionLimit": 50,
+      "storageLimit": 2147483648,
+      "maxFileSize": 52428800,
+      "status": "ACTIVE",
+      "targetTier": "PREMIUM",
+      "durationMonths": 1
+    }
+  }
+  ```
+
+## 10.3. Update Plan Configurations
+## PUT `/api/admin/plans/{planCode}`
+Update limits, pricing, features list for a plan.
+- **Auth required**: Yes (Role: `ADMIN`)
+- **Request Body**:
+  ```json
+  {
+    "planName": "Premium New",
+    "price": 249000,
+    "billingLabel": "1 month",
+    "purchasable": true,
+    "aiDailyQuestionLimit": 60,
+    "features": ["60 AI questions", "Generate up to 50 quiz questions"]
+  }
+  ```
+- **Success Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "message": "Plan configuration updated successfully",
+    "data": {
+      "planCode": "PREMIUM_1_MONTH",
+      "planName": "Premium New",
+      "price": 249000,
+      "billingLabel": "1 month",
+      "status": "ACTIVE"
+    }
+  }
+  ```
+
+## 10.4. Patch Plan Status
+## PATCH `/api/admin/plans/{planCode}/status`
+Toggle plan state between `ACTIVE` and `INACTIVE`.
+- **Auth required**: Yes (Role: `ADMIN`)
+- **Query Parameters**:
+  - `status` (String, required: `ACTIVE` | `INACTIVE`)
+- **Success Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "message": "Plan status patched successfully",
+    "data": {
+      "planCode": "PREMIUM_1_MONTH",
+      "status": "INACTIVE"
+    }
+  }
+  ```
+
+## 10.5. Export Plan Configurations
+## GET `/api/admin/plans/export`
+Exports all plan config parameters to an Excel workbook (.xlsx).
+- **Auth required**: Yes (Role: `ADMIN`)
+- **Response Headers**:
+  - `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+  - `Content-Disposition: attachment; filename="plans_configuration.xlsx"`
 - **Response Body**: Binary XLSX file payload.
 

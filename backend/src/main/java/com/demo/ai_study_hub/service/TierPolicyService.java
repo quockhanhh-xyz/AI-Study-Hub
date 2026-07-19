@@ -11,10 +11,21 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
 @Service
-@RequiredArgsConstructor
 public class TierPolicyService {
 
     private final AiProperties aiProperties;
+    private final com.demo.ai_study_hub.repository.PlanConfigRepository planConfigRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public TierPolicyService(AiProperties aiProperties, com.demo.ai_study_hub.repository.PlanConfigRepository planConfigRepository) {
+        this.aiProperties = aiProperties;
+        this.planConfigRepository = planConfigRepository;
+    }
+
+    public TierPolicyService(AiProperties aiProperties) {
+        this.aiProperties = aiProperties;
+        this.planConfigRepository = null;
+    }
 
     // Quota/business limits per tier are fixed and hardcoded here — they are
     // NOT sourced from AiProperties (that class only configures the AI
@@ -105,34 +116,60 @@ public class TierPolicyService {
     }
 
     public TierLimits getLimits(UserTier tier) {
+        com.demo.ai_study_hub.entity.PlanConfig plan = (planConfigRepository != null) ?
+                planConfigRepository.findByTargetTier(tier.name()).orElse(null) : null;
+
         TierLimits base = switch (tier) {
             case PREMIUM -> PREMIUM_LIMITS;
             case ULTRA -> ULTRA_LIMITS;
             default -> FREE_LIMITS;
         };
+
+        long storageBytes = plan != null ? plan.getStorageLimit() : base.storageBytes();
+        int maxDocuments = plan != null ? plan.getMaxDocumentCount() : base.maxDocuments();
+        long maxFileBytes = plan != null ? plan.getMaxFileSize() : base.maxFileBytes();
+        int maxFolders = plan != null ? plan.getMaxFolderCount() : base.maxFolders();
+        int maxFolderDepth = plan != null ? plan.getMaxFolderDepth() : base.maxFolderDepth();
+        int maxOwnedGroups = plan != null ? plan.getMaxGroupCount() : base.maxOwnedGroups();
+        int maxMembersPerGroup = plan != null ? plan.getMaxMembersPerGroup() : base.maxMembersPerGroup();
+        int maxActiveShares = plan != null ? plan.getMaxActiveShares() : base.maxActiveShares();
+        int maxAiSessionsPerDocument = plan != null ? plan.getMaxAiSessionsPerDocument() : base.maxAiSessionsPerDocument();
+        int maxMessagesPerSession = plan != null ? plan.getMaxMessagesPerSession() : base.maxMessagesPerSession();
+        int aiQuestionsPerDay = plan != null ? plan.getAiDailyQuestionLimit() : base.aiQuestionsPerDay();
+        int maxQuestionChars = plan != null ? plan.getMaxQuestionChars() : base.maxQuestionChars();
+        int maxContextChunks = plan != null ? plan.getMaxContextChunks() : base.maxContextChunks();
+        int maxOutputTokens = plan != null ? plan.getMaxOutputTokens() : base.maxOutputTokens();
+        int summaryGenerationsPerDay = plan != null ? plan.getSummaryDailyLimit() : base.summaryGenerationsPerDay();
+        int flashcardSetsPerDay = plan != null ? plan.getFlashcardDailyLimit() : base.flashcardSetsPerDay();
+        int quizSetsPerDay = plan != null ? plan.getQuizDailyLimit() : base.quizSetsPerDay();
+        int itemsPerSet = plan != null ? plan.getItemsPerSet() : base.itemsPerSet();
+        int maxQuizQuestionsPerSet = plan != null ? plan.getMaxQuizQuestionsPerSet() : base.maxQuizQuestionsPerSet();
+        int maxFlashcardsPerSet = plan != null ? plan.getMaxFlashcardsPerSet() : base.maxFlashcardsPerSet();
+
         String model = getModelForTier(tier);
+
         return new TierLimits(
-                base.storageBytes(),
-                base.maxDocuments(),
-                base.maxFileBytes(),
-                base.maxFolders(),
-                base.maxFolderDepth(),
-                base.maxOwnedGroups(),
-                base.maxMembersPerGroup(),
-                base.maxActiveShares(),
-                base.maxAiSessionsPerDocument(),
-                base.maxMessagesPerSession(),
-                base.aiQuestionsPerDay(),
-                base.maxQuestionChars(),
-                base.maxContextChunks(),
-                base.maxOutputTokens(),
+                storageBytes,
+                maxDocuments,
+                maxFileBytes,
+                maxFolders,
+                maxFolderDepth,
+                maxOwnedGroups,
+                maxMembersPerGroup,
+                maxActiveShares,
+                maxAiSessionsPerDocument,
+                maxMessagesPerSession,
+                aiQuestionsPerDay,
+                maxQuestionChars,
+                maxContextChunks,
+                maxOutputTokens,
                 model,
-                base.summaryGenerationsPerDay(),
-                base.flashcardSetsPerDay(),
-                base.quizSetsPerDay(),
-                base.itemsPerSet(),
-                base.maxQuizQuestionsPerSet(),
-                base.maxFlashcardsPerSet()
+                summaryGenerationsPerDay,
+                flashcardSetsPerDay,
+                quizSetsPerDay,
+                itemsPerSet,
+                maxQuizQuestionsPerSet,
+                maxFlashcardsPerSet
         );
     }
 

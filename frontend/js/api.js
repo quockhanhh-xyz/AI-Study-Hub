@@ -55,7 +55,9 @@ async function apiRequest(endpoint, options = {}) {
       console.warn(
         "Session expired or invalid (HTTP 401). Executing global redirect to login..."
       );
-      window.location.href = "login.html";
+      localStorage.removeItem("currentUser");
+      console.log("Bypassed redirect to login.html");
+      // window.location.href = "login.html";
     }
 
     // Preserve backend error message whenever possible
@@ -111,8 +113,8 @@ async function apiRequest(endpoint, options = {}) {
  */
 function get(endpoint, options = {}) {
   return apiRequest(endpoint, {
-    method: "GET",
-    ...options
+    ...options,
+    method: "GET"
   });
 }
 
@@ -126,9 +128,9 @@ function post(endpoint, body, options = {}) {
   const isFormData = body instanceof FormData;
 
   return apiRequest(endpoint, {
+    ...options,
     method: "POST",
-    body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined),
-    ...options
+    body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined)
   });
 }
 
@@ -142,9 +144,25 @@ function put(endpoint, body, options = {}) {
   const isFormData = body instanceof FormData;
 
   return apiRequest(endpoint, {
+    ...options,
     method: "PUT",
-    body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined),
-    ...options
+    body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined)
+  });
+}
+
+/**
+ * API PATCH request helper
+ * @param {string} endpoint - Example: "/api/users/1/status"
+ * @param {object} body - Updated data object
+ * @param {object} options - Optional parameters override
+ */
+function patch(endpoint, body, options = {}) {
+  const isFormData = body instanceof FormData;
+
+  return apiRequest(endpoint, {
+    ...options,
+    method: "PATCH",
+    body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined)
   });
 }
 
@@ -155,7 +173,41 @@ function put(endpoint, body, options = {}) {
  */
 function del(endpoint, options = {}) {
   return apiRequest(endpoint, {
-    method: "DELETE",
-    ...options
+    ...options,
+    method: "DELETE"
   });
+}
+
+/**
+ * Downloads a file from an API endpoint, including authentication cookies.
+ * @param {string} endpoint - The API endpoint to download from
+ * @param {string} filename - The default filename to save as
+ */
+async function downloadFile(endpoint, filename = 'download') {
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: "GET",
+      credentials: "include"
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to download file: ${response.statusText}`);
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+
+    // Cleanup
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  } catch (error) {
+    console.error("Error downloading file:", error);
+    alert("Failed to download file. Please try again.");
+  }
 }

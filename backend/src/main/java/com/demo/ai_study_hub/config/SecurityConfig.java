@@ -30,6 +30,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/auth/me", "/api/auth/logout").authenticated()
@@ -42,6 +43,15 @@ public class SecurityConfig {
                         .requestMatchers("/api/payments/vnpay/ipn").permitAll()
                         .requestMatchers("/api/payments/vnpay/confirm-return").permitAll()
                         .requestMatchers("/api/health").permitAll()
+                        // User Workspace restrictions
+                        .requestMatchers("/api/documents/**").hasRole("USER")
+                        .requestMatchers("/api/folders/**").hasRole("USER")
+                        .requestMatchers("/api/ai/**").hasRole("USER")
+                        .requestMatchers("/api/groups/**").hasRole("USER")
+                        .requestMatchers("/api/trash/**").hasRole("USER")
+                        .requestMatchers("/api/account/**").hasRole("USER")
+                        .requestMatchers("/api/notifications/**").hasRole("USER")
+                        .requestMatchers("/api/payments/**").hasRole("USER")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

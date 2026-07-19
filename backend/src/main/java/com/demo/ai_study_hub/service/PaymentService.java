@@ -229,6 +229,8 @@ public class PaymentService {
         PaymentOrder order = PaymentOrder.builder()
                 .user(lockedUser)
                 .planCode(plan.getPlanCode())
+                .planName(plan.getPlanName())
+                .billingLabel(plan.getBillingLabel())
                 .targetTier(plan.getTargetTier().name())
                 .durationMonths(plan.getDurationMonths())
                 .amount(plan.getPrice())
@@ -281,13 +283,14 @@ public class PaymentService {
 
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
         LocalDateTime newExpiry;
+        int durationMonths = order.getDurationMonths() != null ? order.getDurationMonths() : 1;
 
         if (currentEffectiveTier == targetTier) {
             LocalDateTime currentExpiry = freshUser.getTierExpiresAt();
             LocalDateTime base = (currentExpiry != null && currentExpiry.isAfter(now)) ? currentExpiry : now;
-            newExpiry = base.plusMonths(1);
+            newExpiry = base.plusMonths(durationMonths);
         } else {
-            newExpiry = now.plusMonths(1);
+            newExpiry = now.plusMonths(durationMonths);
         }
 
         order.setStatus(PaymentStatus.SUCCESS);
@@ -381,14 +384,17 @@ public class PaymentService {
     }
 
     private PaymentResponse toResponse(PaymentOrder order, String tier) {
+        String planName = order.getPlanName() != null ? order.getPlanName() : planNameForCode(order.getPlanCode());
+        String billingLabel = order.getBillingLabel() != null ? order.getBillingLabel() : billingLabelForCode(order.getPlanCode());
+
         return PaymentResponse.builder()
                 .paymentId(order.getPaymentId())
                 .planCode(order.getPlanCode())
-                .planName(planNameForCode(order.getPlanCode()))
+                .planName(planName)
                 .targetTier(order.getTargetTier())
                 .amount(order.getAmount())
                 .currency(order.getCurrency())
-                .billingLabel(billingLabelForCode(order.getPlanCode()))
+                .billingLabel(billingLabel)
                 .status(order.getStatus())
                 .paymentMethod(order.getPaymentMethod())
                 .paymentProvider(order.getPaymentProvider())
