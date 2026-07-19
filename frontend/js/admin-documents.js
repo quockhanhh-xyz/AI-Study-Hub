@@ -16,12 +16,12 @@ function initAdminDocuments() {
     const populateSubjectDropdown = async () => {
         try {
             const subjectFilter = document.getElementById('subjectFilter');
-            const response = await getSubjects(); // From subject-api.js
+            const response = await getAdminSubjects({ size: 1000 }); // From admin-subject-api.js
 
-            if (response && response.success && response.data) {
+            if (response && response.success && response.data && response.data.subjects) {
                 // Keep the "All Subjects" option
                 subjectFilter.innerHTML = '<option value="">All Subjects</option>';
-                response.data.forEach(sub => {
+                response.data.subjects.forEach(sub => {
                     const option = document.createElement('option');
                     option.value = sub.subjectId;
                     option.textContent = `${sub.subjectCode} - ${sub.subjectName}`;
@@ -115,8 +115,8 @@ function initAdminDocuments() {
         tableBody.innerHTML = documents.map(doc => `
             <tr>
                 <td>${doc.title || '-'}</td>
-                <td>${doc.ownerEmail || doc.owner || '-'}</td>
-                <td>${doc.subject || '-'}</td>
+                <td>${doc.displayName || '-'}</td>
+                <td>${doc.subjectCode ? `${doc.subjectCode} - ${doc.subjectName}` : '-'}</td>
                 <td>${doc.fileType || '-'}</td>
                 <td><span class="badge active">${doc.visibility}</span></td>
                 <td><span class="badge ${doc.approvalStatus.toLowerCase()}">${doc.approvalStatus}</span></td>

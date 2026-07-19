@@ -49,14 +49,14 @@ async function loadDocumentDetails() {
 function renderDetails(doc) {
     document.getElementById("docIdVal").textContent = doc.documentId;
     document.getElementById("docTitleVal").textContent = doc.title || '-';
-    document.getElementById("docOwnerVal").textContent = doc.ownerEmail || doc.owner || '-';
-    document.getElementById("docSubjectVal").textContent = doc.subject || '-';
+    document.getElementById("docOwnerVal").textContent = doc.displayName || '-';
+    document.getElementById("docSubjectVal").textContent = doc.subjectCode ? `${doc.subjectCode} - ${doc.subjectName}` : '-';
     document.getElementById("docTypeVal").textContent = doc.fileType || '-';
-    
+
     document.getElementById("docVisVal").innerHTML = `<span class="badge ${doc.visibility === 'PUBLIC' ? 'active' : ''}">${doc.visibility}</span>`;
     document.getElementById("docApprVal").innerHTML = `<span class="badge ${doc.approvalStatus.toLowerCase()}">${doc.approvalStatus}</span>`;
     document.getElementById("docProcVal").textContent = doc.processingStatus || '-';
-    
+
     document.getElementById("docDateVal").textContent = doc.createdAt ? new Date(doc.createdAt).toLocaleString() : '-';
 
     const approveBtn = document.getElementById("approveBtn");
@@ -76,10 +76,19 @@ function renderDetails(doc) {
 
     approveBtn.onclick = handleApprove;
     rejectBtn.onclick = handleReject;
-    
-    document.getElementById("previewBtn").onclick = () => {
+
+    document.getElementById("previewBtn").onclick = async () => {
         document.getElementById("previewContainer").style.display = 'block';
-        document.getElementById("previewFrame").src = `${API_BASE_URL}/api/admin/documents/${currentDocId}/preview`;
+        try {
+            const res = await fetchAdmin(`/api/admin/documents/${currentDocId}/preview`, { method: 'GET' });
+            if (res && res.success && res.data && res.data.fileUrl) {
+                document.getElementById("previewFrame").src = res.data.fileUrl;
+            } else {
+                alert("Failed to load preview URL");
+            }
+        } catch (e) {
+            alert("Error loading preview: " + e.message);
+        }
     };
 
     document.getElementById("downloadBtn").onclick = async () => {
