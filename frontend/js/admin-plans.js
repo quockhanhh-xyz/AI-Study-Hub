@@ -86,8 +86,36 @@ function openEditPlanModal(planCode) {
     document.getElementById("editPlanName").value = plan.planName || '';
     document.getElementById("editPlanPrice").value = plan.price;
     document.getElementById("editPlanDuration").value = plan.durationMonths || 0;
-    document.getElementById("editPlanAiLimit").value = plan.aiDailyQuestionLimit || -1;
-    document.getElementById("editPlanFeatures").value = plan.featuresList || "";
+    document.getElementById("editPlanBillingLabel").value = plan.billingLabel || '';
+    document.getElementById("editPlanPurchasable").value = plan.purchasable !== false ? 'true' : 'false';
+    
+    document.getElementById("editPlanAiLimit").value = plan.aiDailyQuestionLimit ?? -1;
+    document.getElementById("editPlanMaxAiSessions").value = plan.maxAiSessionsPerDocument ?? -1;
+    document.getElementById("editPlanMaxMessages").value = plan.maxMessagesPerSession ?? -1;
+    document.getElementById("editPlanMaxQuestionChars").value = plan.maxQuestionChars ?? -1;
+    document.getElementById("editPlanMaxContextChunks").value = plan.maxContextChunks ?? -1;
+    document.getElementById("editPlanMaxOutputTokens").value = plan.maxOutputTokens ?? -1;
+
+    document.getElementById("editPlanStorageLimit").value = plan.storageLimit ?? -1;
+    document.getElementById("editPlanMaxFileSize").value = plan.maxFileSize ?? -1;
+    document.getElementById("editPlanMaxDocumentCount").value = plan.maxDocumentCount ?? -1;
+    document.getElementById("editPlanMaxFolderCount").value = plan.maxFolderCount ?? -1;
+    document.getElementById("editPlanMaxFolderDepth").value = plan.maxFolderDepth ?? -1;
+
+    document.getElementById("editPlanMaxGroupCount").value = plan.maxGroupCount ?? -1;
+    document.getElementById("editPlanMaxMembers").value = plan.maxMembersPerGroup ?? -1;
+    document.getElementById("editPlanMaxActiveShares").value = plan.maxActiveShares ?? -1;
+
+    document.getElementById("editPlanSummaryDailyLimit").value = plan.summaryDailyLimit ?? -1;
+    document.getElementById("editPlanFlashcardDailyLimit").value = plan.flashcardDailyLimit ?? -1;
+    document.getElementById("editPlanQuizDailyLimit").value = plan.quizDailyLimit ?? -1;
+    document.getElementById("editPlanItemsPerSet").value = plan.itemsPerSet ?? -1;
+    document.getElementById("editPlanMaxFlashcards").value = plan.maxFlashcardsPerSet ?? -1;
+    document.getElementById("editPlanMaxQuizQuestions").value = plan.maxQuizQuestionsPerSet ?? -1;
+
+    document.getElementById("editPlanFeatures").value = Array.isArray(plan.featuresList) 
+        ? plan.featuresList.join('\n') 
+        : (plan.featuresList || "");
 
     const modal = document.getElementById("editPlanModal");
     modal.classList.add("active");
@@ -99,14 +127,45 @@ function closeEditPlanModal() {
 }
 
 async function savePlanChanges() {
+    if (!confirm("Are you sure you want to save these changes?")) {
+        return;
+    }
+
     const planCode = document.getElementById("editPlanCode").value;
     const planName = document.getElementById("editPlanName").value;
     const price = parseInt(document.getElementById("editPlanPrice").value, 10);
     const durationMonths = parseInt(document.getElementById("editPlanDuration").value, 10);
-    const aiDailyQuestionLimit = parseInt(document.getElementById("editPlanAiLimit").value, 10);
-    const featuresList = document.getElementById("editPlanFeatures").value;
+    const billingLabel = document.getElementById("editPlanBillingLabel").value;
+    const purchasable = document.getElementById("editPlanPurchasable").value === 'true';
 
-    if (!planName || isNaN(price) || isNaN(durationMonths) || isNaN(aiDailyQuestionLimit)) {
+    const aiDailyQuestionLimit = parseInt(document.getElementById("editPlanAiLimit").value, 10);
+    const maxAiSessionsPerDocument = parseInt(document.getElementById("editPlanMaxAiSessions").value, 10);
+    const maxMessagesPerSession = parseInt(document.getElementById("editPlanMaxMessages").value, 10);
+    const maxQuestionChars = parseInt(document.getElementById("editPlanMaxQuestionChars").value, 10);
+    const maxContextChunks = parseInt(document.getElementById("editPlanMaxContextChunks").value, 10);
+    const maxOutputTokens = parseInt(document.getElementById("editPlanMaxOutputTokens").value, 10);
+
+    const storageLimit = parseInt(document.getElementById("editPlanStorageLimit").value, 10);
+    const maxFileSize = parseInt(document.getElementById("editPlanMaxFileSize").value, 10);
+    const maxDocumentCount = parseInt(document.getElementById("editPlanMaxDocumentCount").value, 10);
+    const maxFolderCount = parseInt(document.getElementById("editPlanMaxFolderCount").value, 10);
+    const maxFolderDepth = parseInt(document.getElementById("editPlanMaxFolderDepth").value, 10);
+
+    const maxGroupCount = parseInt(document.getElementById("editPlanMaxGroupCount").value, 10);
+    const maxMembersPerGroup = parseInt(document.getElementById("editPlanMaxMembers").value, 10);
+    const maxActiveShares = parseInt(document.getElementById("editPlanMaxActiveShares").value, 10);
+
+    const summaryDailyLimit = parseInt(document.getElementById("editPlanSummaryDailyLimit").value, 10);
+    const flashcardDailyLimit = parseInt(document.getElementById("editPlanFlashcardDailyLimit").value, 10);
+    const quizDailyLimit = parseInt(document.getElementById("editPlanQuizDailyLimit").value, 10);
+    const itemsPerSet = parseInt(document.getElementById("editPlanItemsPerSet").value, 10);
+    const maxFlashcardsPerSet = parseInt(document.getElementById("editPlanMaxFlashcards").value, 10);
+    const maxQuizQuestionsPerSet = parseInt(document.getElementById("editPlanMaxQuizQuestions").value, 10);
+
+    const featuresText = document.getElementById("editPlanFeatures").value;
+    const features = featuresText.split(/\n|,/).map(item => item.trim()).filter(Boolean);
+
+    if (!planName || isNaN(price) || isNaN(durationMonths)) {
         alert("Please fill in all required fields correctly.");
         return;
     }
@@ -115,8 +174,29 @@ async function savePlanChanges() {
         planName,
         price,
         durationMonths,
+        billingLabel,
+        purchasable,
         aiDailyQuestionLimit,
-        featuresList
+        maxAiSessionsPerDocument,
+        maxMessagesPerSession,
+        maxQuestionChars,
+        maxContextChunks,
+        maxOutputTokens,
+        storageLimit,
+        maxFileSize,
+        maxDocumentCount,
+        maxFolderCount,
+        maxFolderDepth,
+        maxGroupCount,
+        maxMembersPerGroup,
+        maxActiveShares,
+        summaryDailyLimit,
+        flashcardDailyLimit,
+        quizDailyLimit,
+        itemsPerSet,
+        maxFlashcardsPerSet,
+        maxQuizQuestionsPerSet,
+        features
     };
 
     const btn = document.getElementById("btnSavePlan");
