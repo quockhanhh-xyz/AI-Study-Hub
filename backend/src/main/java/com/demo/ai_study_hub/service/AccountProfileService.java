@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
+import java.time.Year;
 
 @Service
 @RequiredArgsConstructor
@@ -19,22 +21,36 @@ public class AccountProfileService {
         return mapToResponse(user);
     }
 
+    @Transactional
     public ProfileResponse updateProfile(User user, UpdateProfileRequest request) {
         if ("BLOCKED".equals(user.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account is blocked");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "AUTH_ACCOUNT_BLOCKED");
         }
 
-        user.setFullName(request.getFullName());
-        user.setPhone(request.getPhone());
-        user.setSchoolName(request.getSchoolName());
-        user.setMajor(request.getMajor());
-        user.setStudentCode(request.getStudentCode());
+        if (request.getGraduationYear() != null) {
+            int currentYear = Year.now().getValue();
+            if (request.getGraduationYear() > currentYear + 10) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Graduation year is too far in the future");
+            }
+        }
+
+        user.setFullName(trimToNull(request.getFullName()));
+        user.setPhone(trimToNull(request.getPhone()));
+        user.setSchoolName(trimToNull(request.getSchoolName()));
+        user.setMajor(trimToNull(request.getMajor()));
+        user.setStudentCode(trimToNull(request.getStudentCode()));
         user.setGraduationYear(request.getGraduationYear());
-        user.setEducationLevel(request.getEducationLevel());
-        user.setBio(request.getBio());
+        user.setEducationLevel(trimToNull(request.getEducationLevel()));
+        user.setBio(trimToNull(request.getBio()));
 
         user = userRepository.save(user);
         return mapToResponse(user);
+    }
+
+    private String trimToNull(String str) {
+        if (str == null) return null;
+        String trimmed = str.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     public ProfileResponse mapToResponse(User user) {

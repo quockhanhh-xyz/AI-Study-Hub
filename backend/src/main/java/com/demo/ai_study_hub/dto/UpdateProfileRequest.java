@@ -25,6 +25,7 @@ public class UpdateProfileRequest {
     @Min(value = 1900, message = "Graduation year must be at least 1900")
     private Integer graduationYear;
 
+    @Pattern(regexp = "^(HIGH_SCHOOL|COLLEGE|UNIVERSITY|GRADUATE|OTHER)$", message = "Invalid education level")
     private String educationLevel;
 
     @Size(max = 500, message = "Bio must be at most 500 characters")
