@@ -88,10 +88,24 @@ function initGlobalHeader() {
         initials = names[0][0].toUpperCase();
     }
 
+    let avatarHTML = `<div class="user-avatar-initials">${initials}</div>`;
+    if (currentUser.avatarUrl) {
+        avatarHTML = `<img src="${currentUser.avatarUrl}" class="user-avatar-img" alt="Avatar" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />`;
+    }
+
     const profileChip = document.createElement("div");
     profileChip.className = "user-profile-chip";
+    // Wrap click action on profileChip to navigate to correct profile page based on role
+    profileChip.addEventListener("click", () => {
+        if (currentUser.role === "ADMIN") {
+            window.location.href = "admin-profile.html";
+        } else {
+            window.location.href = "profile.html";
+        }
+    });
+
     profileChip.innerHTML = `
-        <div class="user-avatar-initials">${initials}</div>
+        ${avatarHTML}
         <span class="user-profile-name">${fullName}</span>
     `;
 
@@ -106,6 +120,38 @@ function initGlobalHeader() {
         mainContent.insertBefore(globalHeader, mainContent.firstChild);
     }
 }
+
+function refreshHeaderProfileChip() {
+    const profileChip = document.querySelector(".user-profile-chip");
+    if (!profileChip) return;
+
+    const currentUserRaw = localStorage.getItem("currentUser");
+    let currentUser = {};
+    try {
+        currentUser = JSON.parse(currentUserRaw || "{}");
+    } catch (e) {}
+
+    const fullName = currentUser.fullName || "User";
+    const names = fullName.trim().split(/\s+/);
+    let initials = "U";
+    if (names.length > 1) {
+        initials = (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    } else if (names.length > 0 && names[0]) {
+        initials = names[0][0].toUpperCase();
+    }
+
+    let avatarHTML = `<div class="user-avatar-initials">${initials}</div>`;
+    if (currentUser.avatarUrl) {
+        avatarHTML = `<img src="${currentUser.avatarUrl}" class="user-avatar-img" alt="Avatar" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />`;
+    }
+
+    profileChip.innerHTML = `
+        ${avatarHTML}
+        <span class="user-profile-name">${fullName}</span>
+    `;
+}
+
+window.refreshHeaderProfileChip = refreshHeaderProfileChip;
 
 function initNotifications() {
     // Dropdown close on outside click
