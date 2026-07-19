@@ -23,7 +23,7 @@ public class AdminSubjectRequestController {
     private SubjectRequestService subjectRequestService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllRequests(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
@@ -31,33 +31,33 @@ public class AdminSubjectRequestController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
-            
-        org.springframework.data.domain.Sort sort = direction.equalsIgnoreCase("asc") ? 
-            org.springframework.data.domain.Sort.by(sortBy).ascending() : 
+
+        org.springframework.data.domain.Sort sort = direction.equalsIgnoreCase("asc") ?
+            org.springframework.data.domain.Sort.by(sortBy).ascending() :
             org.springframework.data.domain.Sort.by(sortBy).descending();
-            
+
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sort);
-        
+
         org.springframework.data.domain.Page<SubjectRequestResponse> requests = subjectRequestService.getAllSubjectRequests(search, status, pageable);
-        
+
         Map<String, Object> responseData = new HashMap<>();
         responseData.put("content", requests.getContent());
         responseData.put("totalPages", requests.getTotalPages());
         responseData.put("totalElements", requests.getTotalElements());
         responseData.put("currentPage", requests.getNumber());
-        
+
         return ResponseEntity.ok(ApiResponse.success(responseData, "Retrieved subject requests"));
     }
 
     @PatchMapping("/{id}/approve")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<SubjectRequestResponse>> approveRequest(@PathVariable Integer id, Principal principal) {
         SubjectRequestResponse request = subjectRequestService.approveRequest(id, principal.getName());
         return ResponseEntity.ok(ApiResponse.success(request, "Subject request approved and subject created/activated"));
     }
 
     @PatchMapping("/{id}/reject")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<SubjectRequestResponse>> rejectRequest(
             @PathVariable Integer id,
             @RequestBody(required = false) Map<String, String> body,
@@ -68,7 +68,7 @@ public class AdminSubjectRequestController {
     }
 
     @GetMapping("/export")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<byte[]> exportSubjectRequests(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status) {

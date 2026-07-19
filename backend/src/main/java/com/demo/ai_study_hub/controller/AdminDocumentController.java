@@ -29,21 +29,21 @@ public class AdminDocumentController {
     private AdminDocumentService adminDocumentService;
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PublicDocumentResponse>> getDocumentDetail(@PathVariable Integer id) {
         PublicDocumentResponse data = adminDocumentService.getAdminDocumentDetail(id);
         return ResponseEntity.ok(ApiResponse.success(data, "Document detail retrieved successfully"));
     }
 
     @GetMapping("/{id}/preview")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<DocumentDownloadInfo>> previewDocument(@PathVariable Integer id) {
         DocumentDownloadInfo info = adminDocumentService.getAdminDocumentDownloadInfo(id);
         return ResponseEntity.ok(ApiResponse.success(info, "Document preview retrieved successfully"));
     }
 
     @GetMapping("/{id}/download")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> downloadDocument(@PathVariable Integer id) {
         try {
             DocumentDownloadInfo downloadInfo = adminDocumentService.getAdminDocumentDownloadInfo(id);
