@@ -158,7 +158,7 @@ public class CloudinaryStorageService {
             String resourceType;
             if (fileType != null) {
                 String lower = fileType.toLowerCase();
-                if (lower.equals("jpg") || lower.equals("jpeg") || lower.equals("png")) {
+                if (lower.equals("jpg") || lower.equals("jpeg") || lower.equals("png") || lower.equals("webp") || lower.equals("image")) {
                     resourceType = "image";
                 } else {
                     resourceType = "raw";
