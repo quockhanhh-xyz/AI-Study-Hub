@@ -13,10 +13,7 @@ function approveAdminDocument(documentId) {
 }
 
 function rejectAdminDocument(documentId, rejectReason = '') {
-    return apiRequest(`/api/admin/documents/${documentId}/reject`, {
-        method: "PATCH",
-        body: { rejectReason }
-    });
+    return patch(`/api/admin/documents/${documentId}/reject`, { rejectReason });
 }
 
 function makeAdminDocumentPending(documentId) {

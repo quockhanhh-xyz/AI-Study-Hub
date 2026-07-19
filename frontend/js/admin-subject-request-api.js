@@ -9,10 +9,7 @@ function approveAdminSubjectRequest(requestId) {
 }
 
 function rejectAdminSubjectRequest(requestId, rejectReason = '') {
-    return apiRequest(`/api/admin/subject-requests/${requestId}/reject`, {
-        method: "PATCH",
-        body: { rejectReason }
-    });
+    return patch(`/api/admin/subject-requests/${requestId}/reject`, { rejectReason });
 }
 
 function exportAdminSubjectRequests(params = {}) {

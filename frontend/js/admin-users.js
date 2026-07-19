@@ -265,7 +265,7 @@ async function viewUserDetails(userId) {
 
             let paymentsHtml = 'None';
             if (u.paymentHistory && u.paymentHistory.length > 0) {
-                paymentsHtml = '<ul style="margin:0; padding-left:20px;">' + u.paymentHistory.map(p => `<li>${p.planName} (${p.amount} ${p.currency}) - ${p.status} on ${new Date(p.createdAt).toLocaleDateString()}</li>`).join('') + '</ul>';
+                paymentsHtml = '<ul style="margin:0; padding-left:20px;">' + u.paymentHistory.map(p => `<li>${escapeHtml(p.planCode || 'N/A')} (${p.amount || 0} via ${escapeHtml(p.paymentProvider || 'N/A')}) - ${p.status} on ${new Date(p.createdAt).toLocaleDateString()}</li>`).join('') + '</ul>';
             }
 
             body.innerHTML = `
