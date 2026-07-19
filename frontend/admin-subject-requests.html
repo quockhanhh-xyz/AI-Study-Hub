@@ -49,15 +49,19 @@
 
                     <div id="reqContent" style="display: none;">
                         <!-- Filters -->
-                        <div class="filter-section form-group" style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
-                            <input type="text" id="searchInput" placeholder="Search code/name..." style="flex: 1;">
-                            <select id="statusFilter">
-                                <option value="">All Statuses</option>
-                                <option value="PENDING">PENDING</option>
-                                <option value="APPROVED">APPROVED</option>
-                                <option value="REJECTED">REJECTED</option>
-                            </select>
-                            <button id="filterBtn" class="btn btn-secondary">Filter</button>
+                        <div class="admin-actions-bar">
+                            <div class="admin-filters">
+                                <input type="text" id="searchInput" class="admin-filter-input" placeholder="Search code/name...">
+                                <select id="statusFilter" class="admin-filter-input">
+                                    <option value="">All Statuses</option>
+                                    <option value="PENDING">PENDING</option>
+                                    <option value="APPROVED">APPROVED</option>
+                                    <option value="REJECTED">REJECTED</option>
+                                </select>
+                            </div>
+                            <div class="admin-actions-buttons">
+                                <button id="filterBtn" class="btn btn-secondary">Filter</button>
+                            </div>
                         </div>
 
                         <!-- Table -->

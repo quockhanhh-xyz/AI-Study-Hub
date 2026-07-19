@@ -50,24 +50,28 @@
             <div id="usageContent" style="display: none;">
 
             <!-- Filters -->
-            <div class="filter-section form-group" style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
-                <input type="text" id="searchInput" placeholder="Search by User Email..." style="flex: 1;">
-                <select id="tierFilter">
-                    <option value="">All Tiers</option>
-                    <option value="FREE">FREE</option>
-                    <option value="PREMIUM">PREMIUM</option>
-                    <option value="ULTRA">ULTRA</option>
-                </select>
-                <select id="featureFilter">
-                    <option value="">All Features</option>
-                    <option value="AI_QA">AI Q&A</option>
-                    <option value="AI_SUMMARY">AI Summary</option>
-                    <option value="AI_FLASHCARD">AI Flashcard</option>
-                    <option value="AI_QUIZ">AI Quiz</option>
-                </select>
-                <input type="date" id="startDateFilter" title="Start Date">
-                <input type="date" id="endDateFilter" title="End Date">
-                <button id="filterBtn" class="btn btn-secondary">Filter</button>
+            <div class="admin-actions-bar">
+                <div class="admin-filters">
+                    <input type="text" id="searchInput" class="admin-filter-input" placeholder="Search by User Email...">
+                    <select id="tierFilter" class="admin-filter-input">
+                        <option value="">All Tiers</option>
+                        <option value="FREE">FREE</option>
+                        <option value="PREMIUM">PREMIUM</option>
+                        <option value="ULTRA">ULTRA</option>
+                    </select>
+                    <select id="featureFilter" class="admin-filter-input">
+                        <option value="">All Features</option>
+                        <option value="AI_QA">AI Q&A</option>
+                        <option value="AI_SUMMARY">AI Summary</option>
+                        <option value="AI_FLASHCARD">AI Flashcard</option>
+                        <option value="AI_QUIZ">AI Quiz</option>
+                    </select>
+                    <input type="date" id="startDateFilter" class="admin-filter-input" title="Start Date">
+                    <input type="date" id="endDateFilter" class="admin-filter-input" title="End Date">
+                </div>
+                <div class="admin-actions-buttons">
+                    <button id="filterBtn" class="btn btn-secondary">Filter</button>
+                </div>
             </div>
 
             <!-- Table -->

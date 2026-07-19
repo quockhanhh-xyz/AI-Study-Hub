@@ -50,24 +50,28 @@
             <div id="docsContent" style="display: none;">
 
             <!-- Filters -->
-            <div class="filter-section form-group" style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
-                <input type="text" id="searchInput" placeholder="Search by Title or Owner..." style="flex: 1;">
-                <select id="subjectFilter">
-                    <option value="">All Subjects</option>
-                </select>
-                <select id="statusFilter">
-                    <option value="">All Statuses</option>
-                    <option value="PENDING">PENDING</option>
-                    <option value="APPROVED">APPROVED</option>
-                    <option value="REJECTED">REJECTED</option>
-                </select>
-                <select id="fileTypeFilter">
-                    <option value="">All File Types</option>
-                    <option value="PDF">PDF</option>
-                    <option value="DOCX">DOCX</option>
-                    <option value="TXT">TXT</option>
-                </select>
-                <button id="filterBtn" class="btn btn-secondary">Filter</button>
+            <div class="admin-actions-bar">
+                <div class="admin-filters">
+                    <input type="text" id="searchInput" class="admin-filter-input" placeholder="Search by Title or Owner...">
+                    <select id="subjectFilter" class="admin-filter-input">
+                        <option value="">All Subjects</option>
+                    </select>
+                    <select id="statusFilter" class="admin-filter-input">
+                        <option value="">All Statuses</option>
+                        <option value="PENDING">PENDING</option>
+                        <option value="APPROVED">APPROVED</option>
+                        <option value="REJECTED">REJECTED</option>
+                    </select>
+                    <select id="fileTypeFilter" class="admin-filter-input">
+                        <option value="">All File Types</option>
+                        <option value="PDF">PDF</option>
+                        <option value="DOCX">DOCX</option>
+                        <option value="TXT">TXT</option>
+                    </select>
+                </div>
+                <div class="admin-actions-buttons">
+                    <button id="filterBtn" class="btn btn-secondary">Filter</button>
+                </div>
             </div>
 
             <!-- Table -->

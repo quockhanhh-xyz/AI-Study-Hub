@@ -53,14 +53,18 @@
             <div id="subjContent" style="display: none;">
 
             <!-- Filters -->
-            <div class="filter-section form-group" style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
-                <input type="text" id="searchInput" placeholder="Search by Code or Name..." style="flex: 1;">
-                <select id="statusFilter">
-                    <option value="">All Statuses</option>
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="INACTIVE">INACTIVE</option>
-                </select>
-                <button id="filterBtn" class="btn btn-secondary">Filter</button>
+            <div class="admin-actions-bar">
+                <div class="admin-filters">
+                    <input type="text" id="searchInput" class="admin-filter-input" placeholder="Search by Code or Name...">
+                    <select id="statusFilter" class="admin-filter-input">
+                        <option value="">All Statuses</option>
+                        <option value="ACTIVE">ACTIVE</option>
+                        <option value="INACTIVE">INACTIVE</option>
+                    </select>
+                </div>
+                <div class="admin-actions-buttons">
+                    <button id="filterBtn" class="btn btn-secondary">Filter</button>
+                </div>
             </div>
 
             <!-- Table -->
