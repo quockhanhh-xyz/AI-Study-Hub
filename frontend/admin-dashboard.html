@@ -21,8 +21,14 @@
         <main class="main-content">
             <div class="admin-layout">
                 <div class="admin-content-wrapper">
-                    <header class="admin-page-header">
+                    <header class="admin-page-header" style="justify-content: flex-start; gap: 16px;">
                         <h1 class="admin-page-title">Admin Dashboard</h1>
+                        <button class="btn btn-primary" id="btnRefreshDashboard" onclick="loadDashboardData(true)" style="width: auto; padding: 8px 16px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" style="margin-right: 6px; vertical-align: middle;">
+                                <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                            Refresh
+                        </button>
                     </header>
                     <div class="admin-state-container" id="dashboardLoadingState">
                         <div class="admin-state-icon">
@@ -81,13 +87,13 @@
                                 </div>
                             </div>
                             <div class="admin-card">
-                                <div class="admin-chart-title">Revenue (Monthly)</div>
+                                <div class="admin-chart-title">Revenue by Day</div>
                                 <div class="admin-chart-container" id="chartRevenueContainer">
                                     <canvas id="chartRevenue"></canvas>
                                 </div>
                             </div>
                             <div class="admin-card">
-                                <div class="admin-chart-title">AI Usage by Feature</div>
+                                <div class="admin-chart-title">AI Usage by Day</div>
                                 <div class="admin-chart-container" id="chartAiUsageContainer">
                                     <canvas id="chartAiUsage"></canvas>
                                 </div>
