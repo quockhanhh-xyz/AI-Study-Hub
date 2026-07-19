@@ -90,10 +90,16 @@ function initGlobalHeader() {
 
     const profileChip = document.createElement("div");
     profileChip.className = "user-profile-chip";
-    profileChip.innerHTML = `
-        <div class="user-avatar-initials">${initials}</div>
-        <span class="user-profile-name">${fullName}</span>
-    `;
+    // Wrap click action on profileChip to navigate to correct profile page based on role
+    profileChip.addEventListener("click", () => {
+        if (currentUser.role === "ADMIN") {
+            window.location.href = "admin-profile.html";
+        } else {
+            window.location.href = "profile.html";
+        }
+    });
+
+    renderSafeProfileChipContent(profileChip, currentUser, initials, fullName);
 
     const headerContent = document.createElement("div");
     headerContent.className = "global-top-bar-right";
@@ -106,6 +112,56 @@ function initGlobalHeader() {
         mainContent.insertBefore(globalHeader, mainContent.firstChild);
     }
 }
+
+function renderSafeProfileChipContent(profileChip, currentUser, initials, fullName) {
+    profileChip.innerHTML = ""; // Clear existing
+
+    if (currentUser.avatarUrl) {
+        const img = document.createElement("img");
+        img.src = currentUser.avatarUrl;
+        img.className = "user-avatar-img";
+        img.alt = "Avatar";
+        img.style.width = "28px";
+        img.style.height = "28px";
+        img.style.borderRadius = "50%";
+        img.style.objectFit = "cover";
+        profileChip.appendChild(img);
+    } else {
+        const initialsDiv = document.createElement("div");
+        initialsDiv.className = "user-avatar-initials";
+        initialsDiv.textContent = initials;
+        profileChip.appendChild(initialsDiv);
+    }
+
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "user-profile-name";
+    nameSpan.textContent = fullName;
+    profileChip.appendChild(nameSpan);
+}
+
+function refreshHeaderProfileChip() {
+    const profileChip = document.querySelector(".user-profile-chip");
+    if (!profileChip) return;
+
+    const currentUserRaw = localStorage.getItem("currentUser");
+    let currentUser = {};
+    try {
+        currentUser = JSON.parse(currentUserRaw || "{}");
+    } catch (e) {}
+
+    const fullName = currentUser.fullName || "User";
+    const names = fullName.trim().split(/\s+/);
+    let initials = "U";
+    if (names.length > 1) {
+        initials = (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    } else if (names.length > 0 && names[0]) {
+        initials = names[0][0].toUpperCase();
+    }
+
+    renderSafeProfileChipContent(profileChip, currentUser, initials, fullName);
+}
+
+window.refreshHeaderProfileChip = refreshHeaderProfileChip;
 
 function initNotifications() {
     // Dropdown close on outside click
