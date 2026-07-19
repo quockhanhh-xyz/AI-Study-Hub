@@ -163,10 +163,11 @@
 
 .admin-filters {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 12px;
     width: 100%;
-    max-width: 500px;
+    max-width: none;
 }
 
 .admin-card .table {
@@ -201,6 +202,8 @@
 }
 
 .admin-filter-input {
+    flex: 1;
+    min-width: 150px;
     padding: 8px 12px;
     border: 1px solid var(--border, #eadfdd);
     border-radius: 6px;
