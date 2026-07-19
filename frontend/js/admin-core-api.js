@@ -76,6 +76,30 @@ async function exportAdminData(endpoint, filename) {
             credentials: 'include'
         });
 
+        if (response.status === 401) {
+            try {
+                const data = await response.clone().json();
+                if (data && data.code === "AUTH_ACCOUNT_BLOCKED") {
+                    alert("Your account has been blocked by an administrator.");
+                }
+            } catch (e) {}
+            localStorage.removeItem("currentUser");
+            window.location.href = "login.html";
+            return;
+        }
+
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+            const data = await response.json();
+            if (data && data.code === "AUTH_ACCOUNT_BLOCKED") {
+                alert("Your account has been blocked by an administrator.");
+                localStorage.removeItem("currentUser");
+                window.location.href = "login.html";
+                return;
+            }
+            throw new Error(data.message || data.error || `Export failed: ${response.status}`);
+        }
+
         if (!response.ok) {
             throw new Error(`Export failed with status: ${response.status}`);
         }
