@@ -39,12 +39,18 @@ public class AdminDocumentService {
     public PublicDocumentResponse getAdminDocumentDetail(Integer id) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+        if (!"ACTIVE".equals(document.getStatus()) || !"PUBLIC".equals(document.getVisibility())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Document is not accessible for public moderation");
+        }
         return documentService.mapToPublicResponse(document, null); // userEmail = null because Admin viewing
     }
 
     public DocumentDownloadInfo getAdminDocumentDownloadInfo(Integer id) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+        if (!"ACTIVE".equals(document.getStatus()) || !"PUBLIC".equals(document.getVisibility())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Document is not accessible for public moderation");
+        }
         
         String url = document.getFileUrl();
         
@@ -58,7 +64,10 @@ public class AdminDocumentService {
     public PublicDocumentResponse approveDocument(Integer id) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
-                
+        if (!"ACTIVE".equals(document.getStatus()) || !"PUBLIC".equals(document.getVisibility())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Document is not accessible for public moderation");
+        }
+        
         document.setApprovalStatus("APPROVED");
         document = documentRepository.save(document);
         return documentService.mapToPublicResponse(document, null);
@@ -67,6 +76,9 @@ public class AdminDocumentService {
     public PublicDocumentResponse rejectDocument(Integer id, String rejectReason) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+        if (!"ACTIVE".equals(document.getStatus()) || !"PUBLIC".equals(document.getVisibility())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Document is not accessible for public moderation");
+        }
                 
         document.setApprovalStatus("REJECTED");
         document = documentRepository.save(document);

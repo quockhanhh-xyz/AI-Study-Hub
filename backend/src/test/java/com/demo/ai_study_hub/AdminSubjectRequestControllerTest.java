@@ -1,6 +1,7 @@
 package com.demo.ai_study_hub;
 
 import com.demo.ai_study_hub.entity.SubjectRequest;
+import com.demo.ai_study_hub.dto.SubjectRequestResponse;
 import com.demo.ai_study_hub.controller.AdminSubjectRequestController;
 import com.demo.ai_study_hub.service.SubjectRequestService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -60,10 +61,10 @@ class AdminSubjectRequestControllerTest {
 
     @Test
     void getAllRequests_Success() throws Exception {
-        SubjectRequest req = new SubjectRequest();
+        SubjectRequestResponse req = new SubjectRequestResponse();
         req.setRequestId(1);
 
-        org.springframework.data.domain.Page<SubjectRequest> page = new org.springframework.data.domain.PageImpl<>(Collections.singletonList(req));
+        org.springframework.data.domain.Page<SubjectRequestResponse> page = new org.springframework.data.domain.PageImpl<>(Collections.singletonList(req));
 
         when(subjectRequestService.getAllSubjectRequests(any(), any(), any())).thenReturn(page);
 
@@ -75,7 +76,7 @@ class AdminSubjectRequestControllerTest {
 
     @Test
     void approveRequest_Success() throws Exception {
-        SubjectRequest req = new SubjectRequest();
+        SubjectRequestResponse req = new SubjectRequestResponse();
         req.setRequestId(1);
         req.setStatus("APPROVED");
 
@@ -93,7 +94,7 @@ class AdminSubjectRequestControllerTest {
         Map<String, String> body = new HashMap<>();
         body.put("rejectReason", "Not needed");
 
-        SubjectRequest req = new SubjectRequest();
+        SubjectRequestResponse req = new SubjectRequestResponse();
         req.setRequestId(1);
         req.setStatus("REJECTED");
         req.setRejectReason("Not needed");

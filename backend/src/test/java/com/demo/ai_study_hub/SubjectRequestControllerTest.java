@@ -1,6 +1,7 @@
 package com.demo.ai_study_hub;
 
 import com.demo.ai_study_hub.entity.SubjectRequest;
+import com.demo.ai_study_hub.dto.SubjectRequestResponse;
 import com.demo.ai_study_hub.controller.SubjectRequestController;
 import com.demo.ai_study_hub.service.SubjectRequestService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,7 +54,7 @@ class SubjectRequestControllerTest {
         body.put("requestedName", "Comp Sci");
         body.put("description", "Desc");
 
-        SubjectRequest req = new SubjectRequest();
+        SubjectRequestResponse req = new SubjectRequestResponse();
         req.setRequestId(1);
         req.setRequestedCode("CS101");
         req.setStatus("PENDING");
@@ -71,7 +72,7 @@ class SubjectRequestControllerTest {
 
     @Test
     void getMyRequests_Success() throws Exception {
-        SubjectRequest req = new SubjectRequest();
+        SubjectRequestResponse req = new SubjectRequestResponse();
         req.setRequestId(1);
         req.setRequestedCode("CS101");
 

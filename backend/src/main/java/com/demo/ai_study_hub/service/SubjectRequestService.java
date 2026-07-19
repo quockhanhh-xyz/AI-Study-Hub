@@ -4,6 +4,7 @@ import com.demo.ai_study_hub.dto.AdminSubjectRequest;
 import com.demo.ai_study_hub.entity.Subject;
 import com.demo.ai_study_hub.entity.SubjectRequest;
 import com.demo.ai_study_hub.entity.User;
+import com.demo.ai_study_hub.dto.SubjectRequestResponse;
 import com.demo.ai_study_hub.repository.SubjectRepository;
 import com.demo.ai_study_hub.repository.SubjectRequestRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
@@ -42,7 +43,27 @@ public class SubjectRequestService {
     @Autowired
     private AdminSubjectService adminSubjectService;
 
-    public SubjectRequest createSubjectRequest(String requestedCode, String requestedName, String description, String email) {
+    public SubjectRequestResponse mapToResponse(SubjectRequest request) {
+        SubjectRequestResponse res = new SubjectRequestResponse();
+        res.setRequestId(request.getRequestId());
+        res.setRequestedCode(request.getRequestedCode());
+        res.setRequestedName(request.getRequestedName());
+        res.setDescription(request.getDescription());
+        res.setStatus(request.getStatus());
+        res.setRejectReason(request.getRejectReason());
+        res.setCreatedAt(request.getCreatedAt());
+        if (request.getRequestedByUser() != null) {
+            res.setRequestedByEmail(request.getRequestedByUser().getEmail());
+            res.setRequestedByName(request.getRequestedByUser().getFullName());
+        }
+        if (request.getReviewedBy() != null) {
+            res.setReviewedByEmail(request.getReviewedBy().getEmail());
+            res.setReviewedAt(request.getReviewedAt());
+        }
+        return res;
+    }
+
+    public SubjectRequestResponse createSubjectRequest(String requestedCode, String requestedName, String description, String email) {
         if (subjectRequestRepository.existsByRequestedCodeAndStatus(requestedCode, "PENDING") ||
             subjectRequestRepository.existsByRequestedNameAndStatus(requestedName, "PENDING")) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "A pending request with this code or name already exists");
@@ -65,20 +86,20 @@ public class SubjectRequestService {
         request.setRequestedName(requestedName);
         request.setDescription(description);
         request.setRequestedByUser(user);
-        return subjectRequestRepository.save(request);
+        return mapToResponse(subjectRequestRepository.save(request));
     }
 
-    public List<SubjectRequest> getMySubjectRequests(String email) {
+    public List<SubjectRequestResponse> getMySubjectRequests(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        return subjectRequestRepository.findByRequestedByUser(user);
+        return subjectRequestRepository.findByRequestedByUser(user).stream().map(this::mapToResponse).toList();
     }
 
-    public Page<SubjectRequest> getAllSubjectRequests(String search, String status, Pageable pageable) {
-        return subjectRequestRepository.findAll(buildSpecification(search, status), pageable);
+    public Page<SubjectRequestResponse> getAllSubjectRequests(String search, String status, Pageable pageable) {
+        return subjectRequestRepository.findAll(buildSpecification(search, status), pageable).map(this::mapToResponse);
     }
 
-    public SubjectRequest approveRequest(Integer requestId, String adminEmail) {
+    public SubjectRequestResponse approveRequest(Integer requestId, String adminEmail) {
         SubjectRequest request = subjectRequestRepository.findById(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject request not found"));
 
@@ -114,10 +135,10 @@ public class SubjectRequestService {
         request.setStatus("APPROVED");
         request.setReviewedBy(admin);
         request.setReviewedAt(LocalDateTime.now());
-        return subjectRequestRepository.save(request);
+        return mapToResponse(subjectRequestRepository.save(request));
     }
 
-    public SubjectRequest rejectRequest(Integer requestId, String rejectReason, String adminEmail) {
+    public SubjectRequestResponse rejectRequest(Integer requestId, String rejectReason, String adminEmail) {
         SubjectRequest request = subjectRequestRepository.findById(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject request not found"));
 
@@ -132,7 +153,7 @@ public class SubjectRequestService {
         request.setRejectReason(rejectReason);
         request.setReviewedBy(admin);
         request.setReviewedAt(LocalDateTime.now());
-        return subjectRequestRepository.save(request);
+        return mapToResponse(subjectRequestRepository.save(request));
     }
     
     public byte[] exportSubjectRequests(String search, String status) {

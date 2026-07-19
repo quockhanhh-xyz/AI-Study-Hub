@@ -1,7 +1,7 @@
 package com.demo.ai_study_hub.controller;
 
 import com.demo.ai_study_hub.dto.ApiResponse;
-import com.demo.ai_study_hub.entity.SubjectRequest;
+import com.demo.ai_study_hub.dto.SubjectRequestResponse;
 import com.demo.ai_study_hub.service.SubjectRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -38,7 +38,7 @@ public class AdminSubjectRequestController {
             
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sort);
         
-        org.springframework.data.domain.Page<SubjectRequest> requests = subjectRequestService.getAllSubjectRequests(search, status, pageable);
+        org.springframework.data.domain.Page<SubjectRequestResponse> requests = subjectRequestService.getAllSubjectRequests(search, status, pageable);
         
         Map<String, Object> responseData = new HashMap<>();
         responseData.put("content", requests.getContent());
@@ -51,19 +51,19 @@ public class AdminSubjectRequestController {
 
     @PatchMapping("/{id}/approve")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<ApiResponse<SubjectRequest>> approveRequest(@PathVariable Integer id, Principal principal) {
-        SubjectRequest request = subjectRequestService.approveRequest(id, principal.getName());
+    public ResponseEntity<ApiResponse<SubjectRequestResponse>> approveRequest(@PathVariable Integer id, Principal principal) {
+        SubjectRequestResponse request = subjectRequestService.approveRequest(id, principal.getName());
         return ResponseEntity.ok(ApiResponse.success(request, "Subject request approved and subject created/activated"));
     }
 
     @PatchMapping("/{id}/reject")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<ApiResponse<SubjectRequest>> rejectRequest(
+    public ResponseEntity<ApiResponse<SubjectRequestResponse>> rejectRequest(
             @PathVariable Integer id,
             @RequestBody(required = false) Map<String, String> body,
             Principal principal) {
         String rejectReason = body != null ? body.get("rejectReason") : null;
-        SubjectRequest request = subjectRequestService.rejectRequest(id, rejectReason, principal.getName());
+        SubjectRequestResponse request = subjectRequestService.rejectRequest(id, rejectReason, principal.getName());
         return ResponseEntity.ok(ApiResponse.success(request, "Subject request rejected"));
     }
 

@@ -1,7 +1,7 @@
 package com.demo.ai_study_hub.controller;
 
 import com.demo.ai_study_hub.dto.ApiResponse;
-import com.demo.ai_study_hub.entity.SubjectRequest;
+import com.demo.ai_study_hub.dto.SubjectRequestResponse;
 import com.demo.ai_study_hub.service.SubjectRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +19,7 @@ public class SubjectRequestController {
     private SubjectRequestService subjectRequestService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<SubjectRequest>> createRequest(
+    public ResponseEntity<ApiResponse<SubjectRequestResponse>> createRequest(
             @RequestBody Map<String, String> body,
             Principal principal) {
         String code = body.get("requestedCode");
@@ -30,13 +30,13 @@ public class SubjectRequestController {
             return ResponseEntity.badRequest().body(ApiResponse.error("Requested code and name are required"));
         }
 
-        SubjectRequest request = subjectRequestService.createSubjectRequest(code, name, description, principal.getName());
+        SubjectRequestResponse request = subjectRequestService.createSubjectRequest(code, name, description, principal.getName());
         return ResponseEntity.ok(ApiResponse.success(request, "Subject request created successfully"));
     }
 
     @GetMapping("/my")
-    public ResponseEntity<ApiResponse<List<SubjectRequest>>> getMyRequests(Principal principal) {
-        List<SubjectRequest> requests = subjectRequestService.getMySubjectRequests(principal.getName());
+    public ResponseEntity<ApiResponse<List<SubjectRequestResponse>>> getMyRequests(Principal principal) {
+        List<SubjectRequestResponse> requests = subjectRequestService.getMySubjectRequests(principal.getName());
         return ResponseEntity.ok(ApiResponse.success(requests, "Retrieved your subject requests"));
     }
 }

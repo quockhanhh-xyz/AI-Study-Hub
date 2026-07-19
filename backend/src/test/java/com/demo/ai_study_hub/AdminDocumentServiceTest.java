@@ -43,6 +43,8 @@ class AdminDocumentServiceTest {
         testDoc.setFileUrl("http://example.com/file.pdf");
         testDoc.setTitle("Test Title");
         testDoc.setFileType("application/pdf");
+        testDoc.setStatus("ACTIVE");
+        testDoc.setVisibility("PUBLIC");
 
         mockRes = PublicDocumentResponse.builder()
                 .documentId(1)

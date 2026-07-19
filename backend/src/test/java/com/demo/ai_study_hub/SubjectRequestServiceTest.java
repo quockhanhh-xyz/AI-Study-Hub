@@ -3,6 +3,7 @@ package com.demo.ai_study_hub;
 import com.demo.ai_study_hub.dto.AdminSubjectRequest;
 import com.demo.ai_study_hub.entity.Subject;
 import com.demo.ai_study_hub.entity.SubjectRequest;
+import com.demo.ai_study_hub.dto.SubjectRequestResponse;
 import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.repository.SubjectRepository;
 import com.demo.ai_study_hub.repository.SubjectRequestRepository;
@@ -67,13 +68,13 @@ class SubjectRequestServiceTest {
         when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(testUser));
         when(subjectRequestRepository.save(any(SubjectRequest.class))).thenAnswer(i -> i.getArgument(0));
 
-        SubjectRequest request = subjectRequestService.createSubjectRequest("CS101", "Computer Science", "Intro", "user@test.com");
+        SubjectRequestResponse request = subjectRequestService.createSubjectRequest("CS101", "Computer Science", "Intro", "user@test.com");
 
         assertNotNull(request);
         assertEquals("CS101", request.getRequestedCode());
         assertEquals("Computer Science", request.getRequestedName());
         assertEquals("Intro", request.getDescription());
-        assertEquals(testUser, request.getRequestedByUser());
+        assertEquals("user@test.com", request.getRequestedByEmail());
         assertEquals("PENDING", request.getStatus());
     }
 
@@ -99,10 +100,10 @@ class SubjectRequestServiceTest {
         when(subjectRepository.findSystemSubjectByNameIgnoreCase("Comp Sci")).thenReturn(Optional.empty());
         when(subjectRequestRepository.save(any(SubjectRequest.class))).thenAnswer(i -> i.getArgument(0));
 
-        SubjectRequest approved = subjectRequestService.approveRequest(1, "admin@test.com");
+        SubjectRequestResponse approved = subjectRequestService.approveRequest(1, "admin@test.com");
 
         assertEquals("APPROVED", approved.getStatus());
-        assertEquals(adminUser, approved.getReviewedBy());
+        assertEquals("admin@test.com", approved.getReviewedByEmail());
 
         ArgumentCaptor<AdminSubjectRequest> adminReqCaptor = ArgumentCaptor.forClass(AdminSubjectRequest.class);
         verify(adminSubjectService, times(1)).createSubject(adminReqCaptor.capture());
@@ -127,7 +128,7 @@ class SubjectRequestServiceTest {
         when(subjectRepository.findBySubjectCode("CS101")).thenReturn(Optional.of(existingSubject));
         when(subjectRequestRepository.save(any(SubjectRequest.class))).thenAnswer(i -> i.getArgument(0));
 
-        SubjectRequest approved = subjectRequestService.approveRequest(1, "admin@test.com");
+        SubjectRequestResponse approved = subjectRequestService.approveRequest(1, "admin@test.com");
 
         assertEquals("APPROVED", approved.getStatus());
         assertEquals("ACTIVE", existingSubject.getStatus());
@@ -145,10 +146,10 @@ class SubjectRequestServiceTest {
         when(userRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(adminUser));
         when(subjectRequestRepository.save(any(SubjectRequest.class))).thenAnswer(i -> i.getArgument(0));
 
-        SubjectRequest rejected = subjectRequestService.rejectRequest(1, "Bad name", "admin@test.com");
+        SubjectRequestResponse rejected = subjectRequestService.rejectRequest(1, "Bad name", "admin@test.com");
 
         assertEquals("REJECTED", rejected.getStatus());
         assertEquals("Bad name", rejected.getRejectReason());
-        assertEquals(adminUser, rejected.getReviewedBy());
+        assertEquals("admin@test.com", rejected.getReviewedByEmail());
     }
 }
