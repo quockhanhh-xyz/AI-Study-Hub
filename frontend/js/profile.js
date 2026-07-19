@@ -20,6 +20,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const majorInput = document.getElementById("profileMajor");
   const studentCodeInput = document.getElementById("profileStudentCode");
   const graduationYearInput = document.getElementById("profileGraduationYear");
+  if (graduationYearInput) {
+    graduationYearInput.max = String(new Date().getFullYear() + 10);
+  }
   const educationLevelInput = document.getElementById("profileEducationLevel");
   const bioInput = document.getElementById("profileBio");
   const resetBtn = document.getElementById("profileResetBtn");
@@ -176,9 +179,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
+      const currentYear = new Date().getFullYear();
       const gradYearVal = graduationYearInput.value ? parseInt(graduationYearInput.value, 10) : null;
-      if (gradYearVal !== null && (gradYearVal < 1950 || gradYearVal > 2100)) {
-        showStatus("Graduation year must be between 1950 and 2100", "error");
+      if (gradYearVal !== null && (gradYearVal < 1900 || gradYearVal > currentYear + 10)) {
+        showStatus(`Graduation year must be between 1900 and ${currentYear + 10}`, "error");
         return;
       }
 

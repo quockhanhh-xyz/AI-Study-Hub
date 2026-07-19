@@ -88,11 +88,6 @@ function initGlobalHeader() {
         initials = names[0][0].toUpperCase();
     }
 
-    let avatarHTML = `<div class="user-avatar-initials">${initials}</div>`;
-    if (currentUser.avatarUrl) {
-        avatarHTML = `<img src="${currentUser.avatarUrl}" class="user-avatar-img" alt="Avatar" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />`;
-    }
-
     const profileChip = document.createElement("div");
     profileChip.className = "user-profile-chip";
     // Wrap click action on profileChip to navigate to correct profile page based on role
@@ -104,10 +99,7 @@ function initGlobalHeader() {
         }
     });
 
-    profileChip.innerHTML = `
-        ${avatarHTML}
-        <span class="user-profile-name">${fullName}</span>
-    `;
+    renderSafeProfileChipContent(profileChip, currentUser, initials, fullName);
 
     const headerContent = document.createElement("div");
     headerContent.className = "global-top-bar-right";
@@ -119,6 +111,32 @@ function initGlobalHeader() {
     if (isFloating) {
         mainContent.insertBefore(globalHeader, mainContent.firstChild);
     }
+}
+
+function renderSafeProfileChipContent(profileChip, currentUser, initials, fullName) {
+    profileChip.innerHTML = ""; // Clear existing
+
+    if (currentUser.avatarUrl) {
+        const img = document.createElement("img");
+        img.src = currentUser.avatarUrl;
+        img.className = "user-avatar-img";
+        img.alt = "Avatar";
+        img.style.width = "28px";
+        img.style.height = "28px";
+        img.style.borderRadius = "50%";
+        img.style.objectFit = "cover";
+        profileChip.appendChild(img);
+    } else {
+        const initialsDiv = document.createElement("div");
+        initialsDiv.className = "user-avatar-initials";
+        initialsDiv.textContent = initials;
+        profileChip.appendChild(initialsDiv);
+    }
+
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "user-profile-name";
+    nameSpan.textContent = fullName;
+    profileChip.appendChild(nameSpan);
 }
 
 function refreshHeaderProfileChip() {
@@ -140,15 +158,7 @@ function refreshHeaderProfileChip() {
         initials = names[0][0].toUpperCase();
     }
 
-    let avatarHTML = `<div class="user-avatar-initials">${initials}</div>`;
-    if (currentUser.avatarUrl) {
-        avatarHTML = `<img src="${currentUser.avatarUrl}" class="user-avatar-img" alt="Avatar" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />`;
-    }
-
-    profileChip.innerHTML = `
-        ${avatarHTML}
-        <span class="user-profile-name">${fullName}</span>
-    `;
+    renderSafeProfileChipContent(profileChip, currentUser, initials, fullName);
 }
 
 window.refreshHeaderProfileChip = refreshHeaderProfileChip;
