@@ -262,7 +262,7 @@ async function viewUserDetails(userId) {
             const u = response.data;
             const expDate = u.tierExpiresAt ? new Date(u.tierExpiresAt).toLocaleString() : 'N/A';
             const joinedDate = u.createdAt ? new Date(u.createdAt).toLocaleString() : 'N/A';
-            
+
             let paymentsHtml = 'None';
             if (u.paymentHistory && u.paymentHistory.length > 0) {
                 paymentsHtml = '<ul style="margin:0; padding-left:20px;">' + u.paymentHistory.map(p => `<li>${p.planName} (${p.amount} ${p.currency}) - ${p.status} on ${new Date(p.createdAt).toLocaleDateString()}</li>`).join('') + '</ul>';
@@ -284,11 +284,13 @@ async function viewUserDetails(userId) {
                 <div>
                     <strong>Usage / Quota:</strong>
                     <div style="font-size: 13px; margin-top:5px;">
-                        <div>Storage: ${u.usage ? u.usage.storageUsed : 0} bytes</div>
-                        <div>Questions: ${u.usage ? u.usage.questionsAsked : 0} / ${u.quota ? u.quota.questionLimit : '?'}</div>
-                        <div>Summaries: ${u.usage ? u.usage.summariesGenerated : 0}</div>
-                        <div>Flashcards: ${u.usage ? u.usage.flashcardsGenerated : 0}</div>
-                        <div>Quizzes: ${u.usage ? u.usage.quizzesGenerated : 0}</div>
+                        <div>Storage: ${u.aiUsage ? u.aiUsage.storageUsed : 0} / ${u.storageLimit || '?'} bytes</div>
+                        <div>Questions: ${u.aiUsage ? u.aiUsage.questionsAsked : 0} / ${u.aiDailyLimit || '?'}</div>
+                        <div>Summaries: ${u.aiUsage ? u.aiUsage.summariesGenerated : 0}</div>
+                        <div>Flashcards: ${u.aiUsage ? u.aiUsage.flashcardsGenerated : 0}</div>
+                        <div>Quizzes: ${u.aiUsage ? u.aiUsage.quizzesGenerated : 0}</div>
+                        <div>Max File Size: ${u.maxFileSize || '?'} bytes</div>
+                        <div>Max Docs: ${u.maxDocumentCount || '?'}</div>
                     </div>
                 </div>
                 <hr style="margin: 15px 0; border: none; border-top: 1px solid var(--border);">
