@@ -5291,3 +5291,18 @@ Exports all plan config parameters to an Excel workbook (.xlsx).
 * **Request:** UpdateProfileRequest (fullName, phone, schoolName, major, studentCode, graduationYear, educationLevel, bio)
 * **Response:** ProfileResponse
 
+
+#### 2.5.3 Upload Avatar
+* **Endpoint:** \POST /api/account/avatar\
+* **Description:** Upload and update the current user's avatar.
+* **Authentication:** Required
+* **Request:** multipart/form-data (\ile\ - max 5MB, format: jpg/jpeg/png/webp)
+* **Response:** ProfileResponse
+
+#### 2.5.4 Change Password
+* **Endpoint:** \PUT /api/account/password\
+* **Description:** Change the current user's password.
+* **Authentication:** Required
+* **Request:** ChangePasswordRequest (currentPassword, newPassword)
+* **Response:** Empty success response
+

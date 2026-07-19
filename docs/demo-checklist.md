@@ -597,3 +597,11 @@ Provides demo and verification steps for AI study tools.
 - [ ] Blocked user cannot update profile
 - [ ] /api/auth/me returns avatarUrl and fullName
 
+
+- [ ] User can upload avatar at \/api/account/avatar\
+- [ ] Uploading invalid avatar extension or >5MB fails
+- [ ] Avatar URL is correctly saved and returned in profile
+- [ ] User can change password at \/api/account/password\
+- [ ] Changing password with incorrect current password fails
+- [ ] Changing password with invalid new password fails
+
