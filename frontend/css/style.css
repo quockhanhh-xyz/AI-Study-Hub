@@ -3304,8 +3304,8 @@ svg {
 }
 
 .quick-link-card-upload {
-  background: var(--primary-light) !important;
-  border-color: var(--primary-border) !important;
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
 }
 
 .quick-link-card-upload:hover {
