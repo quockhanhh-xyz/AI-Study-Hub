@@ -589,3 +589,19 @@ Provides demo and verification steps for AI study tools.
 - [ ] **Step 15.13**: As ADMIN, export plan configurations: `GET /api/admin/plans/export`.
   - *Expected*: Downloads a valid Excel spreadsheet (`plans_configuration.xlsx`) containing all database fields of the plans.
 
+
+### Step 16A Profile Account Settings
+- [ ] User can view their profile at \/api/account/profile\
+- [ ] User can update their profile at \/api/account/profile\
+- [ ] Profile update successfully applies only allowed fields
+- [ ] Blocked user cannot update profile
+- [ ] /api/auth/me returns avatarUrl and fullName
+
+
+- [ ] User can upload avatar at \/api/account/avatar\
+- [ ] Uploading invalid avatar extension or >5MB fails
+- [ ] Avatar URL is correctly saved and returned in profile
+- [ ] User can change password at \/api/account/password\
+- [ ] Changing password with incorrect current password fails
+- [ ] Changing password with invalid new password fails
+

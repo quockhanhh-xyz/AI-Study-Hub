@@ -112,6 +112,44 @@ public class CloudinaryStorageService {
         }
     }
 
+    public FileUploadResult uploadAvatar(MultipartFile file, Integer userId) {
+        if (!cloudinaryEnabled) {
+            throw new RuntimeException("Cloudinary is not enabled. Set CLOUDINARY_ENABLED=true to use file upload.");
+        }
+
+        try {
+            String originalName = file.getOriginalFilename();
+            String extension = "";
+            if (originalName != null && originalName.contains(".")) {
+                extension = originalName.substring(originalName.lastIndexOf("."));
+            }
+
+            String publicId = "avatar_" + System.currentTimeMillis();
+
+            Map uploadResult = cloudinary.get().uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", "ai-study-hub/avatars/" + userId,
+                            "resource_type", "image",
+                            "public_id", publicId,
+                            "unique_filename", false,
+                            "overwrite", true
+                    )
+            );
+
+            String fileUrl = (String) uploadResult.get("secure_url");
+            String responsePublicId = (String) uploadResult.get("public_id");
+
+            return FileUploadResult.builder()
+                    .fileUrl(fileUrl)
+                    .publicId(responsePublicId)
+                    .build();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Cloudinary upload failed: " + e.getMessage());
+        }
+    }
+
     public boolean deleteFile(String publicId, String fileType) {
         if (!cloudinaryEnabled) {
             return false;
@@ -120,7 +158,7 @@ public class CloudinaryStorageService {
             String resourceType;
             if (fileType != null) {
                 String lower = fileType.toLowerCase();
-                if (lower.equals("jpg") || lower.equals("jpeg") || lower.equals("png")) {
+                if (lower.equals("jpg") || lower.equals("jpeg") || lower.equals("png") || lower.equals("webp") || lower.equals("image")) {
                     resourceType = "image";
                 } else {
                     resourceType = "raw";
