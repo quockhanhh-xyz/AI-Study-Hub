@@ -72,6 +72,8 @@ class AdminDocumentServiceTest {
     @Test
     void getAdminDocumentDownloadInfo_Success() {
         when(documentRepository.findById(1)).thenReturn(Optional.of(testDoc));
+        when(documentService.resolveDownloadFileName(testDoc)).thenReturn("Test Title");
+        when(documentService.resolveContentType(testDoc)).thenReturn("application/pdf");
 
         DocumentDownloadInfo info = adminDocumentService.getAdminDocumentDownloadInfo(1);
 

@@ -657,7 +657,7 @@ public class DocumentService {
                 || "TXT".equals(type);
     }
 
-    private String resolveDownloadFileName(Document doc) {
+    public String resolveDownloadFileName(Document doc) {
         String originalName = doc.getOriginalFileName();
         if (originalName != null && !originalName.trim().isEmpty()) {
             return originalName.trim();
@@ -669,7 +669,7 @@ public class DocumentService {
         return "document-" + doc.getDocumentId();
     }
 
-    private String resolveContentType(Document doc) {
+    public String resolveContentType(Document doc) {
         String type = normalizeFileType(doc);
         return switch (type) {
             case "PDF" -> "application/pdf";

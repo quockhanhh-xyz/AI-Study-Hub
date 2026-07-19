@@ -50,8 +50,8 @@ public class AdminDocumentService {
         
         DocumentDownloadInfo info = new DocumentDownloadInfo();
         info.setFileUrl(url);
-        info.setFileName(document.getTitle());
-        info.setContentType(document.getFileType() != null ? document.getFileType() : "application/octet-stream");
+        info.setFileName(documentService.resolveDownloadFileName(document));
+        info.setContentType(documentService.resolveContentType(document));
         return info;
     }
 
