@@ -255,7 +255,7 @@
       }
 
       setTimeout(function () {
-        let target = "dashboard.html";
+        let target = (user.role === 'ADMIN' || user.role === 'ROLE_ADMIN') ? "admin-dashboard.html" : "dashboard.html";
         const redirectValue = getRedirectParam();
 
         if (redirectValue) {
@@ -267,7 +267,7 @@
               console.warn("Mismatched open-redirect origin or protocol detected.");
             }
           } catch (e) {
-            console.warn("Invalid redirect origin context detected, falling back to dashboard.", e);
+            console.warn("Invalid redirect origin context detected, falling back to default.", e);
           }
         }
 
@@ -434,4 +434,38 @@ function requireAuth() {
   return true;
 }
 
+function requireAdminAuth() {
+  if (!requireAuth()) return false;
+  
+  try {
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (currentUser.role !== 'ADMIN' && currentUser.role !== 'ROLE_ADMIN') {
+      window.location.href = "dashboard.html";
+      return false;
+    }
+  } catch (e) {
+    console.error("Error parsing currentUser in requireAdminAuth", e);
+    return false;
+  }
+  return true;
+}
+
+function requireUserAuth() {
+  if (!requireAuth()) return false;
+  
+  try {
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (currentUser.role === 'ADMIN' || currentUser.role === 'ROLE_ADMIN') {
+      window.location.href = "admin-dashboard.html";
+      return false;
+    }
+  } catch (e) {
+    console.error("Error parsing currentUser in requireUserAuth", e);
+    return false;
+  }
+  return true;
+}
+
 window.requireAuth = requireAuth;
+window.requireAdminAuth = requireAdminAuth;
+window.requireUserAuth = requireUserAuth;
