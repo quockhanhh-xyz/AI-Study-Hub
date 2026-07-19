@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Official Design System Base Tokens - Phase 2 Light Theme (Vibrant Orange-Red Primary) */
-  --primary: #ff5e36;
-  --primary-hover: #e04622;
+  /* Official Design System Base Tokens - Phase 2 Light Theme (Vibrant Orange-Red) */
+  --primary: #FF5A3D;
+  --primary-hover: #ff4724;
   --primary-light: #fff3f0;
   --primary-border: #ffd7cf;
 
@@ -4745,7 +4745,7 @@ svg {
   display: flex;
   height: 100vh;
   width: 100vw;
-  background: linear-gradient(135deg, #ff5e36 0%, #ff8e53 50%, #ffc08a 100%);
+  background: linear-gradient(135deg, #FF5A3D 0%, #FF8A4C 50%, #FFC08A 100%);
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -4766,6 +4766,17 @@ svg {
   padding: 40px;
   z-index: 1;
   box-sizing: border-box;
+}
+
+.auth-visual-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, rgba(255, 244, 236, 0.15) 0%, transparent 60%);
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* Auth Illustration Layout */
@@ -4833,6 +4844,28 @@ svg {
   z-index: 4;
   /* Counter-spin so icons stay upright */
   animation: spinCounterOrbit 24s linear infinite;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ill-icon:hover {
+  transform: scale(1.1) translateY(-5px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+}
+
+.ill-label {
+  position: absolute;
+  bottom: -22px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.ill-icon:hover .ill-label {
+  opacity: 1;
 }
 
 /* Position exactly on the ring edge */
@@ -4902,47 +4935,30 @@ svg {
 }
 
 .auth-visual-title {
-  font-size: 56px;
+  font-size: 52px;
   font-weight: 900;
   margin-bottom: 0px;
   letter-spacing: -1.5px;
-
-  /* Holographic effect */
-  background: linear-gradient(135deg,
-      #ffffff 0%,
-      #e8d3ff 25%,
-      #a6e3e9 50%,
-      #ffc4e1 75%,
-      #ffffff 100%);
-  background-size: 300% 300%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: holoGradient 6s ease infinite;
-  filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.15));
+  color: #FFF7ED;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-@keyframes holoGradient {
-  0% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-
-  100% {
-    background-position: 0% 50%;
-  }
+.auth-visual-tagline {
+  font-size: 24px;
+  color: #FFEEDD;
+  display: block;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
 }
 
 .auth-visual-subtitle {
-  font-size: 18px;
-  opacity: 0.95;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.9);
   line-height: 1.6;
   max-width: 380px;
   margin: 0 auto;
-  color: #fff;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -4960,8 +4976,8 @@ svg {
 
 .auth-container .card {
   background: #ffffff;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 24px;
   max-width: 400px;
   width: 100%;
@@ -5009,8 +5025,8 @@ svg {
 }
 
 .auth-container .btn-primary:disabled {
-  background-color: #e2e8f0;
-  color: #94a3b8;
+  background-color: #FFE1D6;
+  color: #FF8A70;
   box-shadow: none;
   cursor: not-allowed;
 }
