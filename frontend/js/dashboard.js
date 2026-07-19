@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const userNameElement = document.getElementById("dashboardUserName");
   const currentUserRaw = localStorage.getItem("currentUser");
   let currentUser = {};
+  let userFolders = [];
 
   try {
     currentUser = JSON.parse(currentUserRaw || "{}");
@@ -50,6 +51,19 @@ document.addEventListener("DOMContentLoaded", async function () {
     userNameElement.appendChild(iconWrapper);
   }
 
+  // Search Form Redirection (Dashboard Search Bar)
+  const searchForm = document.getElementById("dashboardSearchForm");
+  const searchInput = document.getElementById("dashboardSearchInput");
+  if (searchForm && searchInput) {
+    searchForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const val = searchInput.value.trim();
+      if (val) {
+        window.location.href = `documents.html?search=${encodeURIComponent(val)}`;
+      }
+    });
+  }
+
   // Stat elements
   const docCountElement = document.getElementById("docCount");
   const folderCountElement = document.getElementById("folderCount");
@@ -62,7 +76,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Document list elements
   const documentLoader = document.getElementById("documentLoader");
   const documentErrorMessage = document.getElementById("documentErrorMessage");
-  const documentGrid = document.getElementById("documentGrid");
+  const documentList = document.getElementById("documentList");
   const emptyState = document.getElementById("emptyState");
 
   // Account tier & entitlements (Step 13)
@@ -121,7 +135,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   function setDocumentsLoading() {
     if (documentLoader) documentLoader.style.display = "flex";
-    if (documentGrid) documentGrid.style.display = "none";
+    if (documentList) documentList.style.display = "none";
     if (emptyState) emptyState.style.display = "none";
     if (documentErrorMessage) documentErrorMessage.style.display = "none";
   }
@@ -148,64 +162,86 @@ document.addEventListener("DOMContentLoaded", async function () {
     return (fileType || "FILE").toUpperCase();
   }
 
-  function createMetaItem(label, value) {
-    const item = document.createElement("span");
-    item.textContent = `${label}: ${value}`;
-    return item;
-  }
-
   function createDocumentCard(documentItem) {
-    const card = document.createElement("article");
-    card.className = "document-card";
+    const row = document.createElement("div");
+    row.className = "dashboard-document-row";
 
-    // Left Column: The Large File Type Icon
+    // Column 1: File Type Icon
     const iconContainer = document.createElement("div");
+    iconContainer.className = "row-file-icon";
     iconContainer.innerHTML = getFileTypeIcon(documentItem.fileType);
-    const iconWrapper = iconContainer.firstElementChild;
-    card.appendChild(iconWrapper);
+    row.appendChild(iconContainer);
 
-    // Right Column: The Details Column
-    const content = document.createElement("div");
-    content.className = "document-card-content";
+    // Column 2: Title and Subject/Folder inline badges
+    const infoCol = document.createElement("div");
+    infoCol.className = "row-info-col";
 
-    const header = document.createElement("div");
-    header.className = "document-card-header";
-
-    const title = document.createElement("h3");
     const titleLink = document.createElement("a");
     titleLink.href = `document-detail.html?id=${documentItem.documentId}`;
+    titleLink.className = "row-title-link";
     titleLink.textContent = documentItem.title || documentItem.originalFileName || "Untitled document";
-    titleLink.style.color = "inherit";
-    title.appendChild(titleLink);
-    header.appendChild(title);
+    infoCol.appendChild(titleLink);
 
-    const meta = document.createElement("div");
-    meta.className = "document-meta";
-
-    const dateItem = document.createElement("span");
-    dateItem.className = "document-meta-item";
-    dateItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> ${formatDate(documentItem.createdAt)}`;
-    meta.append(dateItem);
+    // Metadata row (Subject • Folder)
+    const metaRow = document.createElement("div");
+    metaRow.className = "row-meta-sub";
 
     if (documentItem.subjectCode) {
-      const subjectItem = document.createElement("span");
-      subjectItem.className = "document-meta-item";
-      subjectItem.title = `${documentItem.subjectCode} - ${documentItem.subjectName}`;
-      subjectItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01"/></svg> ${documentItem.subjectCode} - ${documentItem.subjectName}`;
-      meta.append(subjectItem);
+      const subjectTag = document.createElement("span");
+      subjectTag.className = "meta-tag meta-subject";
+      subjectTag.textContent = `${documentItem.subjectCode} - ${documentItem.subjectName}`;
+      metaRow.appendChild(subjectTag);
+    } else {
+      const generalTag = document.createElement("span");
+      generalTag.className = "meta-tag";
+      generalTag.textContent = "General";
+      metaRow.appendChild(generalTag);
     }
 
-    content.append(header, meta);
-    card.appendChild(content);
+    // Lookup folder name from userFolders
+    if (documentItem.folderId) {
+      const matchedFolder = userFolders.find(f => f.folderId === documentItem.folderId);
+      if (matchedFolder) {
+        // Separator dot
+        const sep = document.createElement("span");
+        sep.className = "meta-separator";
+        sep.textContent = "•";
+        metaRow.appendChild(sep);
 
-    card.addEventListener("click", function (e) {
-      if (e.target.closest("button") || e.target.closest("a")) {
+        const folderTag = document.createElement("span");
+        folderTag.className = "meta-tag meta-folder";
+        folderTag.textContent = matchedFolder.folderName;
+        metaRow.appendChild(folderTag);
+      }
+    }
+
+    infoCol.appendChild(metaRow);
+    row.appendChild(infoCol);
+
+    // Column 3: Upload Date
+    const dateCol = document.createElement("div");
+    dateCol.className = "row-date-col";
+    dateCol.textContent = formatDate(documentItem.createdAt);
+    row.appendChild(dateCol);
+
+    // Column 4: Actions (Chevron arrow instead of Open button)
+    const actionsCol = document.createElement("div");
+    actionsCol.className = "row-actions-col";
+    actionsCol.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16" class="chevron-arrow">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+        </svg>
+    `;
+    row.appendChild(actionsCol);
+
+    row.addEventListener("click", function (e) {
+      if (e.target.closest("a") || e.target.closest("button")) {
         return;
       }
       window.location.href = `document-detail.html?id=${documentItem.documentId}`;
     });
 
-    return card;
+    return row;
   }
 
   // Dynamic Statistics Loading
@@ -218,9 +254,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 2. Folders Count
     try {
       const foldersRes = await getMyFolders(null, true);
-      const folders = Array.isArray(foldersRes.data) ? foldersRes.data : [];
+      userFolders = Array.isArray(foldersRes.data) ? foldersRes.data : [];
       if (folderCountElement) {
-        folderCountElement.textContent = String(folders.length);
+        folderCountElement.textContent = String(userFolders.length);
       }
     } catch (e) {
       console.warn("Failed to load folders count:", e);
@@ -270,8 +306,12 @@ document.addEventListener("DOMContentLoaded", async function () {
       const usedBytes = usageData.storage.used ?? 0;
       const limitBytes = usageData.storage.limit ?? 0;
 
-      if (usageRemainingElement && typeof formatUsageProgress === "function") {
-        usageRemainingElement.textContent = formatUsageProgress(usedBytes, limitBytes, "storage");
+      if (usageRemainingElement && limitBytes > 0) {
+        const percent = Math.min((usedBytes / limitBytes) * 100, 100).toFixed(0);
+        const formattedUsage = typeof formatUsageProgress === "function"
+          ? formatUsageProgress(usedBytes, limitBytes, "storage")
+          : formatFileSize(usedBytes);
+        usageRemainingElement.textContent = `${formattedUsage} (${percent}% used)`;
       } else if (usageRemainingElement) {
         usageRemainingElement.textContent = formatFileSize(usedBytes);
       }
@@ -282,7 +322,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         const bar = document.getElementById("usageProgressBar");
         if (bar) {
           bar.style.width = `${percent}%`;
-          bar.classList.toggle("quota-critical", isCritical);
+          bar.classList.remove("quota-low", "quota-medium", "quota-critical");
+          if (percent >= 90) {
+            bar.classList.add("quota-critical");
+          } else if (percent >= 70) {
+            bar.classList.add("quota-medium");
+          } else {
+            bar.classList.add("quota-low");
+          }
         }
         if (usageRemainingElement) {
           usageRemainingElement.classList.toggle("stat-value-danger", isCritical);
@@ -318,7 +365,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       if (documentLoader) documentLoader.style.display = "none";
 
       if (documents.length === 0) {
-        if (documentGrid) documentGrid.style.display = "none";
+        if (documentList) documentList.style.display = "none";
         if (emptyState) emptyState.style.display = "flex";
         return;
       }
@@ -328,16 +375,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         .slice(0, 5);
 
-      if (documentGrid) {
-        documentGrid.innerHTML = "";
+      if (documentList) {
+        documentList.innerHTML = "";
         recentDocs.forEach(function (doc) {
-          documentGrid.appendChild(createDocumentCard(doc));
+          documentList.appendChild(createDocumentCard(doc));
         });
-        documentGrid.style.display = "grid";
+        documentList.style.display = "block";
       }
     } catch (error) {
       if (documentLoader) documentLoader.style.display = "none";
-      if (documentGrid) documentGrid.style.display = "none";
+      if (documentList) documentList.style.display = "none";
       if (emptyState) emptyState.style.display = "none";
       if (documentErrorMessage) {
         documentErrorMessage.textContent = error.message || "Failed to load recent activity.";

@@ -21,20 +21,24 @@ function initGlobalHeader() {
     const mainContent = document.querySelector(".main-content");
     if (!mainContent) return;
 
-    // Check if header already exists
-    if (document.getElementById("globalTopBar")) return;
+    // Check if a local widget container exists
+    let globalHeader = document.getElementById("globalHeaderWidgets");
+    let isFloating = false;
 
-    // Create Global Header wrapper
-    const globalHeader = document.createElement("header");
-    globalHeader.className = "global-top-bar-floating";
-    globalHeader.id = "globalTopBar";
-    globalHeader.style.cssText = `
-        background: transparent !important;
-        border: none !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-        min-height: auto !important;
-    `;
+    if (!globalHeader) {
+        if (document.getElementById("globalTopBar")) return;
+        globalHeader = document.createElement("header");
+        globalHeader.className = "global-top-bar-floating";
+        globalHeader.id = "globalTopBar";
+        globalHeader.style.cssText = `
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            min-height: auto !important;
+        `;
+        isFloating = true;
+    }
 
     // Create notification container
     const notifContainer = document.createElement("div");
@@ -68,13 +72,39 @@ function initGlobalHeader() {
     notifContainer.appendChild(bellBtn);
     notifContainer.appendChild(dropdown);
 
+    // Profile chip
+    const currentUserRaw = localStorage.getItem("currentUser");
+    let currentUser = {};
+    try {
+        currentUser = JSON.parse(currentUserRaw || "{}");
+    } catch (e) {}
+
+    const fullName = currentUser.fullName || "User";
+    const names = fullName.trim().split(/\s+/);
+    let initials = "U";
+    if (names.length > 1) {
+        initials = (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    } else if (names.length > 0 && names[0]) {
+        initials = names[0][0].toUpperCase();
+    }
+
+    const profileChip = document.createElement("div");
+    profileChip.className = "user-profile-chip";
+    profileChip.innerHTML = `
+        <div class="user-avatar-initials">${initials}</div>
+        <span class="user-profile-name">${fullName}</span>
+    `;
+
     const headerContent = document.createElement("div");
     headerContent.className = "global-top-bar-right";
     headerContent.appendChild(notifContainer);
+    headerContent.appendChild(profileChip);
+
     globalHeader.appendChild(headerContent);
 
-    // Insert at the top of main content
-    mainContent.insertBefore(globalHeader, mainContent.firstChild);
+    if (isFloating) {
+        mainContent.insertBefore(globalHeader, mainContent.firstChild);
+    }
 }
 
 function initNotifications() {
