@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.util.Optional;
 
@@ -72,6 +73,26 @@ class AdminDocumentServiceTest {
     }
 
     @Test
+    void getAdminDocumentDetail_WhenPrivate_ShouldThrowForbidden() {
+        testDoc.setVisibility("PRIVATE");
+        when(documentRepository.findById(1)).thenReturn(Optional.of(testDoc));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                adminDocumentService.getAdminDocumentDetail(1));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    void getAdminDocumentDetail_WhenDeleted_ShouldThrowForbidden() {
+        testDoc.setStatus("DELETED");
+        when(documentRepository.findById(1)).thenReturn(Optional.of(testDoc));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                adminDocumentService.getAdminDocumentDetail(1));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
     void getAdminDocumentDownloadInfo_Success() {
         when(documentRepository.findById(1)).thenReturn(Optional.of(testDoc));
         when(documentService.resolveDownloadFileName(testDoc)).thenReturn("Test Title");
@@ -83,5 +104,33 @@ class AdminDocumentServiceTest {
         assertEquals("http://example.com/file.pdf", info.getFileUrl());
         assertEquals("Test Title", info.getFileName());
         assertEquals("application/pdf", info.getContentType());
+    }
+
+    @Test
+    void getAdminDocumentDownloadInfo_WhenPrivate_ShouldThrowForbidden() {
+        testDoc.setVisibility("PRIVATE");
+        when(documentRepository.findById(1)).thenReturn(Optional.of(testDoc));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                adminDocumentService.getAdminDocumentDownloadInfo(1));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    void getAdminDocumentDownloadInfo_WhenDeleted_ShouldThrowForbidden() {
+        testDoc.setStatus("DELETED");
+        when(documentRepository.findById(1)).thenReturn(Optional.of(testDoc));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                adminDocumentService.getAdminDocumentDownloadInfo(1));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    void getAdminDocumentDownloadInfo_NotFound() {
+        when(documentRepository.findById(1)).thenReturn(Optional.empty());
+
+        assertThrows(ResponseStatusException.class, () ->
+                adminDocumentService.getAdminDocumentDownloadInfo(1));
     }
 }
