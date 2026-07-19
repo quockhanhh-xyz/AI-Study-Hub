@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const userNameElement = document.getElementById("dashboardUserName");
   const currentUserRaw = localStorage.getItem("currentUser");
   let currentUser = {};
+  let userFolders = [];
 
   try {
     currentUser = JSON.parse(currentUserRaw || "{}");
@@ -161,12 +162,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     return (fileType || "FILE").toUpperCase();
   }
 
-  function createMetaItem(label, value) {
-    const item = document.createElement("span");
-    item.textContent = `${label}: ${value}`;
-    return item;
-  }
-
   function createDocumentCard(documentItem) {
     const row = document.createElement("div");
     row.className = "dashboard-document-row";
@@ -177,7 +172,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     iconContainer.innerHTML = getFileTypeIcon(documentItem.fileType);
     row.appendChild(iconContainer);
 
-    // Column 2: Title and Subject/Folder
+    // Column 2: Title and Subject/Folder inline badges
     const infoCol = document.createElement("div");
     infoCol.className = "row-info-col";
 
@@ -185,17 +180,42 @@ document.addEventListener("DOMContentLoaded", async function () {
     titleLink.href = `document-detail.html?id=${documentItem.documentId}`;
     titleLink.className = "row-title-link";
     titleLink.textContent = documentItem.title || documentItem.originalFileName || "Untitled document";
-    
-    const subText = document.createElement("span");
-    subText.className = "row-sub-text";
+    infoCol.appendChild(titleLink);
+
+    // Metadata row (Subject • Folder)
+    const metaRow = document.createElement("div");
+    metaRow.className = "row-meta-sub";
+
     if (documentItem.subjectCode) {
-      subText.textContent = `${documentItem.subjectCode} - ${documentItem.subjectName}`;
+      const subjectTag = document.createElement("span");
+      subjectTag.className = "meta-tag meta-subject";
+      subjectTag.textContent = `${documentItem.subjectCode} - ${documentItem.subjectName}`;
+      metaRow.appendChild(subjectTag);
     } else {
-      subText.textContent = "General";
+      const generalTag = document.createElement("span");
+      generalTag.className = "meta-tag";
+      generalTag.textContent = "General";
+      metaRow.appendChild(generalTag);
     }
 
-    infoCol.appendChild(titleLink);
-    infoCol.appendChild(subText);
+    // Lookup folder name from userFolders
+    if (documentItem.folderId) {
+      const matchedFolder = userFolders.find(f => f.folderId === documentItem.folderId);
+      if (matchedFolder) {
+        // Separator dot
+        const sep = document.createElement("span");
+        sep.className = "meta-separator";
+        sep.textContent = "•";
+        metaRow.appendChild(sep);
+
+        const folderTag = document.createElement("span");
+        folderTag.className = "meta-tag meta-folder";
+        folderTag.textContent = matchedFolder.folderName;
+        metaRow.appendChild(folderTag);
+      }
+    }
+
+    infoCol.appendChild(metaRow);
     row.appendChild(infoCol);
 
     // Column 3: Upload Date
@@ -204,16 +224,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     dateCol.textContent = formatDate(documentItem.createdAt);
     row.appendChild(dateCol);
 
-    // Column 4: Actions (Open & Details buttons)
+    // Column 4: Actions (Chevron arrow instead of Open button)
     const actionsCol = document.createElement("div");
     actionsCol.className = "row-actions-col";
-
-    const openBtn = document.createElement("a");
-    openBtn.href = `document-detail.html?id=${documentItem.documentId}`;
-    openBtn.className = "btn btn-secondary btn-sm";
-    openBtn.textContent = "Open";
-    actionsCol.appendChild(openBtn);
-
+    actionsCol.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16" class="chevron-arrow">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+        </svg>
+    `;
     row.appendChild(actionsCol);
 
     row.addEventListener("click", function (e) {
@@ -236,9 +254,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 2. Folders Count
     try {
       const foldersRes = await getMyFolders(null, true);
-      const folders = Array.isArray(foldersRes.data) ? foldersRes.data : [];
+      userFolders = Array.isArray(foldersRes.data) ? foldersRes.data : [];
       if (folderCountElement) {
-        folderCountElement.textContent = String(folders.length);
+        folderCountElement.textContent = String(userFolders.length);
       }
     } catch (e) {
       console.warn("Failed to load folders count:", e);
@@ -288,8 +306,12 @@ document.addEventListener("DOMContentLoaded", async function () {
       const usedBytes = usageData.storage.used ?? 0;
       const limitBytes = usageData.storage.limit ?? 0;
 
-      if (usageRemainingElement && typeof formatUsageProgress === "function") {
-        usageRemainingElement.textContent = formatUsageProgress(usedBytes, limitBytes, "storage");
+      if (usageRemainingElement && limitBytes > 0) {
+        const percent = Math.min((usedBytes / limitBytes) * 100, 100).toFixed(0);
+        const formattedUsage = typeof formatUsageProgress === "function"
+          ? formatUsageProgress(usedBytes, limitBytes, "storage")
+          : formatFileSize(usedBytes);
+        usageRemainingElement.textContent = `${formattedUsage} (${percent}% used)`;
       } else if (usageRemainingElement) {
         usageRemainingElement.textContent = formatFileSize(usedBytes);
       }
@@ -300,7 +322,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         const bar = document.getElementById("usageProgressBar");
         if (bar) {
           bar.style.width = `${percent}%`;
-          bar.classList.toggle("quota-critical", isCritical);
+          bar.classList.remove("quota-low", "quota-medium", "quota-critical");
+          if (percent >= 90) {
+            bar.classList.add("quota-critical");
+          } else if (percent >= 70) {
+            bar.classList.add("quota-medium");
+          } else {
+            bar.classList.add("quota-low");
+          }
         }
         if (usageRemainingElement) {
           usageRemainingElement.classList.toggle("stat-value-danger", isCritical);
