@@ -42,6 +42,21 @@
     return params.get("redirect") || "";
   }
 
+  function setupFormValidation(formId) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (!submitBtn) return;
+
+    // Check validity on input changes
+    form.addEventListener("input", () => {
+      submitBtn.disabled = !form.checkValidity();
+    });
+    
+    // Initial check
+    submitBtn.disabled = !form.checkValidity();
+  }
+
   // ─────────────────────────────────────────────────────────────
   // REGISTER
   // ─────────────────────────────────────────────────────────────
@@ -333,6 +348,10 @@
     }
     if (loginForm) loginForm.addEventListener("submit", handleLogin);
 
+    setupFormValidation("registerForm");
+    setupFormValidation("otpForm");
+    setupFormValidation("loginForm");
+
     setupPasswordToggles();
 
     // OTP Input Logic (6-box)
@@ -345,23 +364,24 @@
       };
 
       otpInputs.forEach((input, index) => {
-        // Handle paste
-        if (index === 0) {
-          input.addEventListener("paste", (e) => {
-            e.preventDefault();
-            const pasteData = e.clipboardData.getData("text").trim().slice(0, 6);
-            if (/^\d+$/.test(pasteData)) {
-              pasteData.split("").forEach((char, i) => {
-                if (otpInputs[i]) {
-                  otpInputs[i].value = char;
-                }
-              });
-              updateHiddenOtp();
-              const focusIndex = Math.min(pasteData.length, 5);
-              otpInputs[focusIndex].focus();
-            }
-          });
-        }
+        // Handle paste on any input
+        input.addEventListener("paste", (e) => {
+          e.preventDefault();
+          const pasteData = e.clipboardData.getData("text").trim().slice(0, 6);
+          if (/^\d+$/.test(pasteData)) {
+            pasteData.split("").forEach((char, i) => {
+              if (otpInputs[i]) {
+                otpInputs[i].value = char;
+              }
+            });
+            updateHiddenOtp();
+            const focusIndex = Math.min(pasteData.length, 5);
+            otpInputs[focusIndex].focus();
+            
+            // Trigger input event to re-validate form
+            hiddenOtpInput.dispatchEvent(new Event("input", { bubbles: true }));
+          }
+        });
 
         input.addEventListener("input", (e) => {
           const val = e.target.value;
@@ -370,6 +390,9 @@
             return;
           }
           updateHiddenOtp();
+          // Trigger input event for validation
+          hiddenOtpInput.dispatchEvent(new Event("input", { bubbles: true }));
+          
           if (val !== "" && index < otpInputs.length - 1) {
             otpInputs[index + 1].focus();
           }
@@ -380,6 +403,7 @@
             otpInputs[index - 1].focus();
             otpInputs[index - 1].value = "";
             updateHiddenOtp();
+            hiddenOtpInput.dispatchEvent(new Event("input", { bubbles: true }));
           } else if (e.key === "ArrowLeft" && index > 0) {
             otpInputs[index - 1].focus();
           } else if (e.key === "ArrowRight" && index < otpInputs.length - 1) {
