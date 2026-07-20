@@ -172,11 +172,19 @@
                     <div class="library-tab" data-tab="folders">Folders</div>
                 </div>
                 
-                <div class="dashboard-search" style="max-width: 480px; margin-bottom: 20px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" class="search-icon">
-                        <path fill="currentColor" d="M11 2c4.9706 0 9 4.0294 9 9 0 2.125-0.7381 4.0766-1.9697 5.6162l4.1767 4.1768-1.414 1.414-4.1768-4.1767C15.0766 19.2619 13.125 20 11 20c-4.9706 0-9-4.0294-9-9 0-4.9706 4.0294-9 9-9m0 2c-3.866 0-7 3.134-7 7 0 3.866 3.134 7 7 7 3.866 0 7-3.134 7-7 0-3.866-3.134-7-7-7" />
-                    </svg>
-                    <input type="text" id="searchInput" placeholder="Search your library..." style="padding-left: 40px; width: 100%;" />
+                <div style="display: flex; gap: 16px; margin-bottom: 20px; align-items: center;">
+                    <div class="dashboard-search" style="flex: 1; max-width: 480px; margin-bottom: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" class="search-icon">
+                            <path fill="currentColor" d="M11 2c4.9706 0 9 4.0294 9 9 0 2.125-0.7381 4.0766-1.9697 5.6162l4.1767 4.1768-1.414 1.414-4.1768-4.1767C15.0766 19.2619 13.125 20 11 20c-4.9706 0-9-4.0294-9-9 0-4.9706 4.0294-9 9-9m0 2c-3.866 0-7 3.134-7 7 0 3.866 3.134 7 7 7 3.866 0 7-3.134 7-7 0-3.866-3.134-7-7-7" />
+                        </svg>
+                        <input type="text" id="searchInput" placeholder="Search your library..." style="padding-left: 40px; width: 100%;" />
+                    </div>
+                    <button type="button" id="toggleFavoritesBtn" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; width: auto; flex: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" aria-hidden="true">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                        Favorites
+                    </button>
                 </div>
                 
                 <div id="documentsTab" class="tab-content active">

@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const subjectDatalist = document.getElementById("subjectDatalist");
   const fileTypeFilter = document.getElementById("fileTypeFilter");
   const folderFilter = document.getElementById("folderFilter");
+  const toggleFavoritesBtn = document.getElementById("toggleFavoritesBtn");
 
   const documentGrid = document.getElementById("documentGrid");
   const documentEmptyState = document.getElementById("documentEmptyState");
@@ -94,6 +95,10 @@ document.addEventListener("DOMContentLoaded", async function () {
       if (createFolderBtn) {
         createFolderBtn.style.display = tabId === "folders" ? "inline-flex" : "none";
       }
+      
+      if (toggleFavoritesBtn) {
+        toggleFavoritesBtn.style.display = tabId === "documents" ? "inline-flex" : "none";
+      }
 
       if (loadData) {
         if (tabId === "documents") loadDocuments();
@@ -147,6 +152,20 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
       });
     }
+
+    if (toggleFavoritesBtn) {
+      toggleFavoritesBtn.addEventListener("click", () => {
+        showFavoritesOnly = !showFavoritesOnly;
+        if (showFavoritesOnly) {
+          toggleFavoritesBtn.classList.remove("btn-secondary");
+          toggleFavoritesBtn.classList.add("btn-primary");
+        } else {
+          toggleFavoritesBtn.classList.remove("btn-primary");
+          toggleFavoritesBtn.classList.add("btn-secondary");
+        }
+        loadDocuments();
+      });
+    }
     
     const clearFiltersBtn = document.getElementById("clearFiltersBtn");
     if (clearFiltersBtn) {
@@ -155,6 +174,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (subjectFilter) { subjectFilter.value = ""; subjectFilter.dispatchEvent(new Event("syncCustom")); }
         if (fileTypeFilter) { fileTypeFilter.value = ""; fileTypeFilter.dispatchEvent(new Event("syncCustom")); }
         if (folderFilter) { folderFilter.value = ""; folderFilter.dispatchEvent(new Event("syncCustom")); }
+        
+        showFavoritesOnly = false;
+        if (toggleFavoritesBtn) {
+          toggleFavoritesBtn.classList.remove("btn-primary");
+          toggleFavoritesBtn.classList.add("btn-secondary");
+        }
+        
         loadDocuments();
       });
     }
