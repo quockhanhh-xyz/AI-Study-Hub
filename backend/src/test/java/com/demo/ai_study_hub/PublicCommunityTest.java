@@ -71,7 +71,7 @@ class PublicCommunityTest {
     }
 
     @Test
-    void publishDocument_WhenSuccessful_ShouldSetPublicAndApproved() {
+    void publishDocument_WhenSuccessful_ShouldSetPublicAndPending() {
         when(userRepository.findByEmail("owner@test.com")).thenReturn(Optional.of(mockOwner));
         when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
         when(documentRepository.save(any(Document.class))).thenAnswer(i -> i.getArguments()[0]);
@@ -80,8 +80,8 @@ class PublicCommunityTest {
 
         assertNotNull(res);
         assertEquals("PUBLIC", res.getVisibility());
-        assertEquals("APPROVED", res.getApprovalStatus());
-        assertNotNull(res.getPublishedAt());
+        assertEquals("PENDING", res.getApprovalStatus());
+        assertNull(res.getPublishedAt());
         verify(documentRepository, times(1)).save(mockDoc);
     }
 

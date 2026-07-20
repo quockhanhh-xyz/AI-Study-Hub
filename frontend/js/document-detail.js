@@ -384,11 +384,20 @@ function renderDocument(doc) {
 
     const visibilityStatusContent = document.getElementById("visibilityStatusContent");
     const privateVisibilityNote = document.getElementById("privateVisibilityNote");
+    const pendingVisibilityNote = document.getElementById("pendingVisibilityNote");
     if (visibilityStatusContent && privateVisibilityNote) {
         if (doc.visibility === "PUBLIC") {
-            visibilityStatusContent.style.display = "flex";
-            privateVisibilityNote.style.display = "none";
+            if (doc.approvalStatus === "PENDING") {
+                if (pendingVisibilityNote) pendingVisibilityNote.style.display = "flex";
+                visibilityStatusContent.style.display = "none";
+                privateVisibilityNote.style.display = "none";
+            } else {
+                if (pendingVisibilityNote) pendingVisibilityNote.style.display = "none";
+                visibilityStatusContent.style.display = "flex";
+                privateVisibilityNote.style.display = "none";
+            }
         } else {
+            if (pendingVisibilityNote) pendingVisibilityNote.style.display = "none";
             visibilityStatusContent.style.display = "none";
             privateVisibilityNote.style.display = "flex";
         }
@@ -1024,15 +1033,20 @@ async function handlePublish() {
     publishBtn.disabled = true;
     const btnText = publishBtn.querySelector(".btn-text");
     const oldText = btnText ? btnText.textContent : publishBtn.textContent;
-    if (btnText) btnText.textContent = "Publishing...";
-    else publishBtn.textContent = "Publishing...";
+    if (btnText) btnText.textContent = "Submitting...";
+    else publishBtn.textContent = "Submitting...";
 
     try {
         const res = await publishDocument(currentDocumentId);
         renderDocument(res.data);
-        window.showToast("Document published successfully.", "success");
+        const msg = (res && res.message) ? res.message : "Document submitted for admin review.";
+        window.showToast(msg, "success");
     } catch (err) {
-        window.showToast(err.message || "Failed to publish document.", "error");
+        if (err.message && (err.message.includes("personal subject") || err.message.includes("USER_CUSTOM"))) {
+            window.showToast("This document uses a personal subject. Request a system subject before publishing.", "error");
+        } else {
+            window.showToast(err.message || "Failed to submit document for review.", "error");
+        }
     } finally {
         publishBtn.disabled = false;
         if (btnText) btnText.textContent = oldText;

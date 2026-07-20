@@ -47,7 +47,8 @@
                             <input type="text" id="subjectSelect" list="subjectDatalist" placeholder="-- Select a subject --" required autocomplete="off" />
                             <datalist id="subjectDatalist"></datalist>
 
-                            <div id="newSubjectRow" class="inline-create-row" style="display:none;">
+                            <div id="newSubjectRow" class="inline-create-row" style="display:none; flex-direction:column; gap:4px;">
+                                <div style="font-size:11px; color:var(--muted); font-weight:500;">Create personal subject (only visible to you)</div>
                                 <div style="display:flex; gap:8px; flex-wrap:wrap; width:100%;">
                                     <input type="text" id="newSubjectCode" placeholder="Code, e.g: MYSUB" autocomplete="off"
                                         style="flex:0 0 140px;" />
@@ -59,6 +60,9 @@
                             <p id="newSubjectError" class="helper-text error" role="alert" style="display:none;"></p>
 
                             <p id="subjectError" class="helper-text error" role="alert" style="display:none;"></p>
+                            <div style="margin-top: 6px; font-size: 12px; color: var(--muted);">
+                                Need a subject for the entire system? <a href="#" id="openSubjectReqLink" style="color: var(--primary); font-weight: 600; text-decoration: underline;">Request system subject</a>
+                            </div>
                         </div>
 
                         <div class="form-group">
@@ -119,16 +123,45 @@
         </main>
     </div>
 
+    <!-- Subject Request Modal -->
+    <div class="admin-modal-overlay" id="subjectReqModal">
+        <div class="admin-modal" style="max-width: 440px;">
+            <h3 class="admin-modal-title">Request System Subject</h3>
+            <div class="admin-modal-body">
+                <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px;">Propose a new system subject for admin approval so it can be used for public documents in the Community Library.</p>
+                
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="font-size: 12px; font-weight: 600;">Subject Code <span class="label-required">*</span></label>
+                    <input type="text" id="reqSubjectCode" placeholder="E.g: CS101" autocomplete="off" style="width: 100%;" required />
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="font-size: 12px; font-weight: 600;">Subject Name <span class="label-required">*</span></label>
+                    <input type="text" id="reqSubjectName" placeholder="E.g: Introduction to Computer Science" autocomplete="off" style="width: 100%;" required />
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label style="font-size: 12px; font-weight: 600;">Description <span class="label-optional">(optional)</span></label>
+                    <textarea id="reqSubjectDesc" rows="2" placeholder="Brief description or course code detail..." style="width: 100%; min-height: 60px;"></textarea>
+                </div>
+                <p id="reqSubjectMsg" class="helper-text" role="alert" style="display:none;"></p>
+            </div>
+            <div class="admin-modal-actions">
+                <button type="button" class="btn btn-outline" id="cancelSubjectReqBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="submitSubjectReqBtn">Submit Request</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/api.js"></script>
     <script src="js/account-api.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/folder-api.js"></script>
     <script src="js/subject-api.js"></script>
+    <script src="js/subject-request-api.js"></script>
     <script src="js/document-api.js"></script>
     <script src="js/navigation.js"></script>
     <script src="js/layout.js"></script>
     <script src="js/upload.js"></script>
-<script src="js/notification-api.js"></script>
+    <script src="js/notification-api.js"></script>
     <script src="js/notification.js"></script>
 </body>
 
