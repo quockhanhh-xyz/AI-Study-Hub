@@ -38,9 +38,10 @@ public class AdminController {
     }
 
     @GetMapping("/dashboard/charts")
-    public ResponseEntity<ApiResponse<com.demo.ai_study_hub.dto.AdminDashboardChartsResponse>> getDashboardCharts() {
+    public ResponseEntity<ApiResponse<com.demo.ai_study_hub.dto.AdminDashboardChartsResponse>> getDashboardCharts(
+            @RequestParam(defaultValue = "30") Integer days) {
         try {
-            com.demo.ai_study_hub.dto.AdminDashboardChartsResponse data = adminService.getDashboardCharts();
+            com.demo.ai_study_hub.dto.AdminDashboardChartsResponse data = adminService.getDashboardCharts(days);
             return ResponseEntity.ok(new ApiResponse<>(true, "Admin dashboard charts retrieved successfully", data));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(new ApiResponse<>(false, e.getReason(), null));

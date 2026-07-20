@@ -72,7 +72,9 @@ class AdminControllerTest {
         AdminDashboardResponse mockResponse = AdminDashboardResponse.builder()
                 .totalUsers(10)
                 .totalDocuments(20)
-                .totalRevenue(5000L)
+                .lifetimeRevenue(5000L)
+                .allTimeSuccessfulPayments(50L)
+                .aiRequestsToday(500L)
                 .build();
 
         when(adminService.getDashboardSummary()).thenReturn(mockResponse);
@@ -81,7 +83,7 @@ class AdminControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.totalUsers").value(10))
-                .andExpect(jsonPath("$.data.totalRevenue").value(5000));
+                .andExpect(jsonPath("$.data.lifetimeRevenue").value(5000));
     }
 
     // =========================================================================
@@ -199,7 +201,7 @@ class AdminControllerTest {
                         .aiUsageByDay(Collections.emptyList())
                         .build();
 
-        when(adminService.getDashboardCharts()).thenReturn(response);
+        when(adminService.getDashboardCharts(30)).thenReturn(response);
 
         mockMvc.perform(get("/api/admin/dashboard/charts"))
                 .andExpect(status().isOk())

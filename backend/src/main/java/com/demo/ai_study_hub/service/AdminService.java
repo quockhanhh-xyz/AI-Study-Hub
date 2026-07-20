@@ -7,7 +7,7 @@ import com.demo.ai_study_hub.dto.AdminDashboardChartsResponse;
 
 public interface AdminService {
     AdminDashboardResponse getDashboardSummary();
-    AdminDashboardChartsResponse getDashboardCharts();
+    com.demo.ai_study_hub.dto.AdminDashboardChartsResponse getDashboardCharts(Integer days);
     AdminPublicDocumentListResponse getPublicDocuments(String search, String approvalStatus, String fileType, Integer subjectId, int page, int size);
     void approveDocument(Integer id);
     void rejectDocument(Integer id, String rejectReason);
