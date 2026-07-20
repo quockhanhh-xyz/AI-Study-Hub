@@ -199,7 +199,7 @@ function renderDynamicSidebar(isAuthenticated) {
   // Re-render links safely inside the container with standardized icon and text wrappers
   let navHtml = "";
   if (isAdminView) {
-      navHtml += `<div style="padding: 12px 24px 8px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Admin Console</div>`;
+      navHtml += `<div class="nav-section-title" style="padding: 12px 24px 8px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; transition: opacity 0.3s ease;">Admin Console</div>`;
   }
   
   navHtml += visibleMenus
