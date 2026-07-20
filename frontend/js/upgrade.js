@@ -406,6 +406,14 @@ document.addEventListener("DOMContentLoaded", async function () {
       handleVNPayClick(event, plan.planCode);
     });
     wrapper.appendChild(vnpayBtn);
+    
+    const manualNote = document.createElement("div");
+    manualNote.style.textAlign = "center";
+    manualNote.style.fontSize = "11px";
+    manualNote.style.color = "var(--text-muted)";
+    manualNote.style.marginTop = "2px";
+    manualNote.textContent = "One-time payment. Takes effect immediately.";
+    wrapper.appendChild(manualNote);
 
     const mockLink = document.createElement("a");
     mockLink.href = "#";
@@ -545,77 +553,68 @@ document.addEventListener("DOMContentLoaded", async function () {
   // ─────────────────────────────────────────────
 
   function createHistoryRow(payment) {
-    const row = document.createElement("div");
-    row.className = "member-row";
+    const tr = document.createElement("tr");
 
-    const main = document.createElement("div");
-    main.className = "member-row-main";
+    // Col 1: Plan Details
+    const planTd = document.createElement("td");
+    const planDiv = document.createElement("div");
+    planDiv.className = "payment-plan-cell";
+    
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "payment-plan-name";
+    nameSpan.textContent = payment.planName || payment.planCode;
+    
+    const amountSpan = document.createElement("span");
+    amountSpan.className = "payment-amount";
+    amountSpan.textContent = formatCurrency(payment.amount, payment.currency);
+    
+    planDiv.append(nameSpan, amountSpan);
+    planTd.appendChild(planDiv);
 
-    const name = document.createElement("span");
-    name.className = "member-row-name";
-    name.textContent = `${payment.planName || payment.planCode} — ${formatCurrency(payment.amount, payment.currency)}`;
+    // Col 2: Date
+    const dateTd = document.createElement("td");
+    const dateDiv = document.createElement("div");
+    dateDiv.className = "payment-date-cell";
+    dateDiv.textContent = payment.paidAt ? formatDate(payment.paidAt) : formatDate(payment.createdAt);
+    dateTd.appendChild(dateDiv);
 
+    // Col 3: Status
+    const statusTd = document.createElement("td");
     const statusInfo = formatPaymentStatus(payment.status);
     const statusBadge = document.createElement("span");
     statusBadge.className = `status-badge ${statusInfo.class}`;
     statusBadge.textContent = statusInfo.label;
+    statusTd.appendChild(statusBadge);
 
-    main.append(name, statusBadge);
+    // Col 4: Action
+    const actionTd = document.createElement("td");
+    actionTd.style.textAlign = "right";
 
-    const meta = document.createElement("div");
-    meta.style.display = "flex";
-    meta.style.flexDirection = "column";
-    meta.style.alignItems = "flex-end";
-    meta.style.gap = "4px";
-
-    const dateInfo = document.createElement("span");
-    dateInfo.style.fontSize = "12px";
-    dateInfo.style.color = "var(--text-muted)";
-    dateInfo.textContent = payment.paidAt
-        ? `Paid: ${formatDate(payment.paidAt)}`
-        : `Created: ${formatDate(payment.createdAt)}`;
-    meta.appendChild(dateInfo);
-
-    if (canContinueVNPay(payment)) {
+    if (canContinueVNPay(payment) || (typeof isMockPayment === "function" && isMockPayment(payment) && payment.status === "PENDING")) {
       const continueBtn = document.createElement("button");
-      continueBtn.type = "button";
-      continueBtn.className = "btn btn-secondary btn-sm";
-      continueBtn.textContent = "Continue payment";
+      continueBtn.className = "btn btn-primary btn-sm";
+      continueBtn.textContent = "Pay Now";
+      continueBtn.style.marginRight = "8px";
       continueBtn.addEventListener("click", function () {
-        window.location.href = payment.paymentUrl;
+        if (payment.paymentProvider === "MOCK") {
+          openMockCheckout(payment);
+        } else if (payment.paymentUrl) {
+          window.location.href = payment.paymentUrl;
+        }
       });
-      meta.appendChild(continueBtn);
+      actionTd.appendChild(continueBtn);
 
       const cancelBtn = document.createElement("button");
-      cancelBtn.type = "button";
-      cancelBtn.className = "btn btn-danger btn-sm";
-      cancelBtn.textContent = "Cancel payment";
+      cancelBtn.className = "btn btn-secondary btn-sm";
+      cancelBtn.textContent = "Cancel";
       cancelBtn.addEventListener("click", function () {
         cancelPaymentOrder(payment.paymentId, cancelBtn);
       });
-      meta.appendChild(cancelBtn);
-    } else if (isMockPayment(payment) && payment.status === "PENDING") {
-      const continueBtn = document.createElement("button");
-      continueBtn.type = "button";
-      continueBtn.className = "btn btn-secondary btn-sm";
-      continueBtn.textContent = "Continue Mock Checkout";
-      continueBtn.addEventListener("click", function () {
-        openMockCheckout(payment);
-      });
-      meta.appendChild(continueBtn);
-
-      const cancelBtn = document.createElement("button");
-      cancelBtn.type = "button";
-      cancelBtn.className = "btn btn-danger btn-sm";
-      cancelBtn.textContent = "Cancel payment";
-      cancelBtn.addEventListener("click", function () {
-        cancelPaymentOrder(payment.paymentId, cancelBtn);
-      });
-      meta.appendChild(cancelBtn);
+      actionTd.appendChild(cancelBtn);
     }
-
-    row.append(main, meta);
-    return row;
+    
+    tr.append(planTd, dateTd, statusTd, actionTd);
+    return tr;
   }
 
   async function loadHistory() {
@@ -630,17 +629,19 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       historyLoader.style.display = "none";
 
+      const historyListContainer = document.getElementById("historyListContainer");
+      
       if (payments.length === 0) {
-        historyEmpty.style.display = "flex";
-        return;
+        historyListContainer.style.display = "none";
+        historyEmpty.style.display = "block";
+      } else {
+        historyList.innerHTML = "";
+        payments.forEach(function (payment) {
+          historyList.appendChild(createHistoryRow(payment));
+        });
+        historyEmpty.style.display = "none";
+        historyListContainer.style.display = "block";
       }
-
-      historyList.innerHTML = "";
-      historyList.className = "member-list";
-      payments.forEach(function (payment) {
-        historyList.appendChild(createHistoryRow(payment));
-      });
-      historyList.style.display = "flex";
     } catch (error) {
       historyLoader.style.display = "none";
       historyError.textContent = mapPaymentError(error);
