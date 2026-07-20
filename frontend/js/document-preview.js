@@ -28,12 +28,14 @@ function renderDocumentPreview(doc) {
 }
 
 function renderPdfPreview(container, fileUrl) {
+  const pdfUrlWithZoom = fileUrl.includes("#") ? fileUrl : `${fileUrl}#view=FitH`;
   container.innerHTML = `
     <iframe
-      src="${fileUrl}"
+      src="${pdfUrlWithZoom}"
       class="preview-iframe"
       title="PDF Preview"
       frameborder="0"
+      style="width: 100%; height: 100%; border: 0;"
     ></iframe>
   `;
 }

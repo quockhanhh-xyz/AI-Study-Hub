@@ -245,22 +245,23 @@ function renderDocument(doc) {
         docTitleEl.title = doc.title || "";
     }
 
+    renderContextualTopBar(doc);
+
     // Update Document Reading Header
     const previewHeaderTitle = document.getElementById("previewHeaderTitle");
     const previewHeaderMetaText = document.getElementById("previewHeaderMetaText");
     const previewHeaderAiBadge = document.getElementById("previewHeaderAiBadge");
     
     if (previewHeaderTitle) {
-        const subjectCtx = doc.subject ? doc.subject : (doc.subjectName ? `${doc.subjectCode} - ${doc.subjectName}` : "");
-        previewHeaderTitle.textContent = subjectCtx ? `Reading: ${subjectCtx}` : "Document Preview";
-        previewHeaderTitle.title = subjectCtx || "Document Preview";
+        previewHeaderTitle.textContent = doc.title || "Document Preview";
+        previewHeaderTitle.title = doc.title || "Document Preview";
     }
     
     if (previewHeaderMetaText) {
-        const titleShort = doc.title && doc.title.length > 35 ? doc.title.slice(0, 32) + "..." : (doc.title || "");
+        const subjectCtx = doc.subject ? doc.subject : (doc.subjectName ? `${doc.subjectCode} - ${doc.subjectName}` : "");
         const sizeStr = formatFileSize(doc.fileSize);
         const typeStr = (doc.fileType || "").toUpperCase();
-        previewHeaderMetaText.textContent = `${titleShort} \u00B7 ${typeStr} \u00B7 ${sizeStr}`;
+        previewHeaderMetaText.textContent = `${subjectCtx ? subjectCtx + ' \u00B7 ' : ''}${typeStr} \u00B7 ${sizeStr}`;
     }
     
     if (previewHeaderAiBadge) {
@@ -2478,36 +2479,62 @@ document.addEventListener("DOMContentLoaded", () => {
     window.initPreviewSearch = initPreviewSearch;
 });
 
-function initTopBarSearch() {
+function renderContextualTopBar(doc) {
     const globalHeader = document.getElementById("globalTopBar");
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromParam = urlParams.get("from");
+    
+    let backLabel = "← Back to My Documents";
+    let backUrl = "documents.html";
+    if (fromParam === "community" || currentIsCommunityView) {
+        backLabel = "← Back to Community Library";
+        backUrl = "community-library.html";
+    } else if (fromParam === "shared") {
+        backLabel = "← Back to Shared with Me";
+        backUrl = "shared-with-me.html";
+    } else if (fromParam === "folders") {
+        backLabel = "← Back to My Folders";
+        backUrl = "folders.html";
+    }
+
+    // Update detailBackBtn label in right inspector
+    const detailBackBtn = document.getElementById("detailBackBtn");
+    if (detailBackBtn) {
+        detailBackBtn.textContent = backLabel;
+    }
+
     if (!globalHeader) return;
     
-    // If search form is already added, don't duplicate
-    if (document.getElementById("topBarSearchForm")) return;
+    const subjectText = doc ? (doc.subject ? doc.subject : (doc.subjectName ? `${doc.subjectCode} - ${doc.subjectName}` : "")) : "";
+    const docTitleText = doc ? doc.title : "";
+    const breadcrumbText = subjectText ? `${subjectText} / ${docTitleText}` : docTitleText;
     
-    const searchForm = document.createElement("form");
-    searchForm.id = "topBarSearchForm";
-    searchForm.className = "top-bar-search-form dashboard-search-form";
-    searchForm.innerHTML = `
-        <div class="search-input-wrapper" style="width: 100%;">
-            <span class="search-input-icon">
+    globalHeader.innerHTML = `
+        <div class="top-bar-contextual" style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; padding-right: 12px;">
+            <a href="${backUrl}" class="top-bar-back-link" style="display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: color 0.2s;">
+                ${backLabel}
+            </a>
+            <span style="color: var(--border); font-size: 12px;">/</span>
+            <span class="top-bar-breadcrumb" style="font-size: 13px; color: var(--text); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 480px;" title="${breadcrumbText}">
+                ${breadcrumbText}
+            </span>
+        </div>
+        <div class="global-top-bar-right" style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
+            <a href="${backUrl}" class="top-bar-search-btn" title="Search Library" style="display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); color: var(--muted); background: var(--surface); text-decoration: none; transition: all 0.2s;">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
                 </svg>
-            </span>
-            <input type="text" id="topBarSearchInput" placeholder="Search your documents..." class="dashboard-search-input" />
+            </a>
+            <div id="globalHeaderWidgets" class="global-header-widgets"></div>
         </div>
     `;
     
-    searchForm.addEventListener("submit", function (e) {
-        e.preventDefault();
-        const searchInput = document.getElementById("topBarSearchInput");
-        const val = searchInput ? searchInput.value.trim() : "";
-        if (val) {
-            window.location.href = `documents.html?search=${encodeURIComponent(val)}`;
-        }
-    });
-    
-    // Insert search form at the beginning of globalHeader
-    globalHeader.insertBefore(searchForm, globalHeader.firstChild);
+    if (typeof renderGlobalHeaderWidgets === "function") {
+        renderGlobalHeaderWidgets();
+    }
+}
+
+function initTopBarSearch() {
+    renderContextualTopBar(null);
 }

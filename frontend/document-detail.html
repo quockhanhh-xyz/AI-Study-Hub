@@ -487,14 +487,15 @@
     .inspector-document-header h1 {
       margin: 0;
       color: var(--text);
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 800;
-      line-height: 1.2;
+      line-height: 1.3;
       overflow-wrap: anywhere;
       display: -webkit-box;
-      -webkit-line-clamp: 3;
+      -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .detail-uploaded-by {
@@ -1708,7 +1709,7 @@
             </div>
             <div class="preview-toolbar-actions">
               <button id="openFileBtn" class="btn btn-secondary" style="display:none;">
-                Open <span aria-hidden="true">&#8599;</span>
+                Open fullscreen <span aria-hidden="true">&#8599;</span>
               </button>
               <button id="downloadFileBtn" class="btn btn-secondary" style="display:none;">
                 Download <span aria-hidden="true">&#8595;</span>
