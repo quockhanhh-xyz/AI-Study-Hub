@@ -107,8 +107,8 @@ function renderFallback(container, doc) {
       <div class="preview-fallback-title">Preview unavailable</div>
       <div class="preview-fallback-desc">Use Open File or Download to access this document.</div>
       <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
-        <a href="${openUrl}" target="_blank" class="btn btn-outline" ${!doc.canOpen ? 'disabled style="pointer-events:none; opacity:0.5;"' : ''}>Open File</a>
-        <button onclick="window.location.href = API_BASE_URL + '${doc.downloadUrl || `/api/documents/${downloadId}/download`}'" class="btn btn-primary" ${!doc.canDownload ? 'disabled' : ''}>Download</button>
+        <a href="${openUrl}" target="_blank" class="btn btn-outline" ${doc.canOpen === false ? 'disabled style="pointer-events:none; opacity:0.5;"' : ''}>Open File</a>
+        <button onclick="window.location.href = API_BASE_URL + '${doc.downloadUrl || `/api/documents/${downloadId}/download`}'" class="btn btn-primary" ${doc.canDownload === false ? 'disabled' : ''}>Download</button>
       </div>
     </div>
   `;

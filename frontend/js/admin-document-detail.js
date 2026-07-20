@@ -78,9 +78,8 @@ function renderDetails(doc) {
     rejectBtn.onclick = handleReject;
 
     document.getElementById("previewBtn").onclick = async () => {
-        document.getElementById("previewContainer").style.display = 'block';
-        const frame = document.getElementById("previewFrame");
-        const container = frame.parentElement;
+        const container = document.getElementById("previewContainer");
+        container.style.display = 'block';
         
         try {
             const res = await fetchAdmin(`/api/admin/documents/${currentDocId}/preview`, { method: 'GET' });
