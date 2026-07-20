@@ -1,5 +1,7 @@
 package com.demo.ai_study_hub.dto;
 
+import com.demo.ai_study_hub.enums.PreviewMode;
+
 import lombok.*;
 import java.time.LocalDateTime;
 
@@ -30,8 +32,14 @@ public class FavoriteDocumentItemResponse {
     private LocalDateTime createdAt;
     private LocalDateTime favoritedAt;
     private boolean favoritedByMe;
-
     private Long fileSize;
+    
+    private String fileUrl;
+    private String mimeType;
+    private String resourceType;
+    private String previewUrl;
+    private String downloadUrl;
+    private PreviewMode previewMode;
     private String subjectName;
     private String folderName;
     private Boolean canOpen;

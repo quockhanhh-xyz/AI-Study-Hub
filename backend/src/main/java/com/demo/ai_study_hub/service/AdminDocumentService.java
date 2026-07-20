@@ -28,6 +28,9 @@ public class AdminDocumentService {
 
     @Autowired
     private DocumentService documentService;
+    
+    @Autowired
+    private DocumentPreviewHelper previewHelper;
 
     public List<PublicDocumentResponse> getAdminPublicDocuments(String keyword, Integer subjectId, String fileType, String approvalStatus) {
         List<Document> documents = documentRepository.findPublicDocumentsForAdminExport(keyword, approvalStatus, fileType, subjectId);
@@ -54,10 +57,26 @@ public class AdminDocumentService {
 
         String url = document.getFileUrl();
 
+        String fileType = document.getFileType() != null ? document.getFileType() : "";
+        if (fileType.trim().isEmpty() && document.getOriginalFileName() != null) {
+            int lastDot = document.getOriginalFileName().lastIndexOf('.');
+            if (lastDot >= 0 && lastDot < document.getOriginalFileName().length() - 1) {
+                fileType = document.getOriginalFileName().substring(lastDot + 1);
+            }
+        }
+        fileType = fileType.trim().replace(".", "").toUpperCase();
+        
+        com.demo.ai_study_hub.enums.PreviewMode previewMode = previewHelper.getPreviewMode(fileType);
+
         DocumentDownloadInfo info = new DocumentDownloadInfo();
         info.setFileUrl(url);
         info.setFileName(documentService.resolveDownloadFileName(document));
         info.setContentType(documentService.resolveContentType(document));
+        info.setMimeType(previewHelper.getMimeType(fileType));
+        info.setResourceType(previewHelper.getResourceType(fileType));
+        info.setPreviewUrl(previewHelper.getPreviewUrl(url, previewMode));
+        info.setDownloadUrl("/api/admin/documents/" + document.getDocumentId() + "/download");
+        info.setPreviewMode(previewMode);
         return info;
     }
 

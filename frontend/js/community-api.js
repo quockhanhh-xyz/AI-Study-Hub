@@ -87,9 +87,18 @@ async function unpublishDocument(id) {
  * Downloads a public document without requiring authentication.
  * @param {string|number} id - Public document identifier.
  */
-function downloadPublicDocument(id) {
+function downloadPublicDocument(documentOrId) {
+  const id = typeof documentOrId === "object"
+    ? (documentOrId.documentId || documentOrId.id)
+    : documentOrId;
+
   if (!id) {
     console.error("Public download aborted: document identifier is missing.");
+    return;
+  }
+
+  if (typeof documentOrId === "object" && documentOrId.downloadUrl) {
+    window.location.href = API_BASE_URL + documentOrId.downloadUrl;
     return;
   }
 

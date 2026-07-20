@@ -9,21 +9,29 @@ function renderDocumentPreview(doc) {
   const container = document.getElementById("previewArea");
   if (!container) return;
 
-  const fileType = (doc.fileType || "").toLowerCase();
+  const mode = doc.previewMode || "FALLBACK";
+  const previewUrl = doc.previewUrl || doc.fileUrl;
 
-  if (!doc.canPreview) {
-    renderFallback(container, fileType);
+  if (!doc.canPreview || mode === "FALLBACK" || !previewUrl) {
+    renderFallback(container, doc);
     return;
   }
 
-  if (fileType === "pdf") {
-    renderPdfPreview(container, doc.fileUrl);
-  } else if (["png", "jpg", "jpeg", "gif", "webp"].includes(fileType)) {
-    renderImagePreview(container, doc.fileUrl, doc.title);
-  } else if (fileType === "txt") {
-    renderTxtPreview(container, doc.fileUrl);
-  } else {
-    renderFallback(container, fileType);
+  switch (mode) {
+    case "PDF":
+      renderPdfPreview(container, previewUrl);
+      break;
+    case "IMAGE":
+      renderImagePreview(container, previewUrl, doc.title);
+      break;
+    case "TEXT":
+      renderTxtPreview(container, previewUrl);
+      break;
+    case "OFFICE_VIEWER":
+      renderOfficePreview(container, previewUrl, doc);
+      break;
+    default:
+      renderFallback(container, doc);
   }
 }
 
@@ -63,8 +71,30 @@ function renderTxtPreview(container, fileUrl) {
   `;
 }
 
-function renderFallback(container, fileType) {
-  const label = fileType ? fileType.toUpperCase() : "This file type";
+function renderOfficePreview(container, previewUrl, doc) {
+  const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewUrl)}`;
+  container.innerHTML = `
+    <div style="height: 100%; display: flex; flex-direction: column;">
+      <div style="padding: 10px; background: var(--bg-card); border-bottom: 1px solid var(--border-color); text-align: center; font-size: 0.9rem; color: var(--text-secondary);">
+        If the preview does not load, <a href="${doc.fileUrl}" target="_blank" class="btn-link">open</a> or <a href="#" onclick="event.preventDefault(); window.location.href = API_BASE_URL + '${doc.downloadUrl || `/api/documents/${doc.documentId}/download`}'" class="btn-link">download</a> the file.
+      </div>
+      <iframe
+        src="${viewerUrl}"
+        class="preview-iframe"
+        title="Office Preview"
+        frameborder="0"
+        style="flex: 1;"
+      ></iframe>
+    </div>
+  `;
+}
+
+function renderFallback(container, doc) {
+  const label = doc.fileType ? doc.fileType.toUpperCase() : "This file type";
+  const openUrl = doc.fileUrl || "#";
+  const downloadId = doc.documentId;
+  const downloadTitle = doc.title || "document";
+  
   container.innerHTML = `
     <div class="preview-fallback">
       <div class="preview-fallback-icon">
@@ -74,8 +104,12 @@ function renderFallback(container, fileType) {
           <path stroke="currentColor" stroke-width="1.5" d="M14 2v6h6"/>
         </svg>
       </div>
-      <div class="preview-fallback-title">${label} files cannot be previewed</div>
-      <div class="preview-fallback-desc">Use the Open or Download buttons at the top of the preview panel to access this file.</div>
+      <div class="preview-fallback-title">Preview unavailable</div>
+      <div class="preview-fallback-desc">Use Open File or Download to access this document.</div>
+      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+        <a href="${openUrl}" target="_blank" class="btn btn-outline" ${!doc.canOpen ? 'disabled style="pointer-events:none; opacity:0.5;"' : ''}>Open File</a>
+        <button onclick="window.location.href = API_BASE_URL + '${doc.downloadUrl || `/api/documents/${downloadId}/download`}'" class="btn btn-primary" ${!doc.canDownload ? 'disabled' : ''}>Download</button>
+      </div>
     </div>
   `;
 }
