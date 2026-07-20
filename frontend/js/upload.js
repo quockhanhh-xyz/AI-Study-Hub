@@ -122,9 +122,30 @@ async function loadFolderOptions() {
   // Auto-select folder if folderId is provided in URL query params
   const urlParams = new URLSearchParams(window.location.search);
   const preselectedFolderId = urlParams.get("folderId") || urlParams.get("parentFolderId");
+  const folderNameParam = urlParams.get("folderName");
+  const uploadBackLink = document.getElementById("uploadBackLink");
+  const uploadContextBanner = document.getElementById("uploadContextBanner");
+  
   if (preselectedFolderId) {
     folderSelect.value = preselectedFolderId;
     lastFolderValue = preselectedFolderId;
+    folderSelect.disabled = true; // Lock folder selection
+    
+    if (uploadContextBanner) {
+        uploadContextBanner.textContent = folderNameParam ? `Uploading to ${folderNameParam}` : "Uploading to Folder";
+    }
+    if (uploadBackLink) {
+        uploadBackLink.href = `folders.html?folderId=${preselectedFolderId}`;
+        uploadBackLink.textContent = folderNameParam ? `← ${folderNameParam}` : "← Back to Folder";
+    }
+  } else {
+    if (uploadContextBanner) {
+        uploadContextBanner.textContent = "Uploading to My Documents";
+    }
+    if (uploadBackLink) {
+        uploadBackLink.href = "documents.html";
+        uploadBackLink.textContent = "← Back to My Documents";
+    }
   }
 
   // Initialize the custom dropdown component
@@ -263,7 +284,7 @@ function updateDropZone(file) {
             </svg>
         </div>
         <span class="drop-zone-text" id="dropZoneText">
-            Drag & drop or click to select a file<br />
+            Select one file to upload<br />
             <small>(PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG — max ${formatFileSize(maxFileSizeBytes)})</small>
         </span>
     `;
@@ -336,6 +357,7 @@ fileInput.addEventListener("change", () => {
   updateDropZone(file);
   autofillTitleFromFile(file);
   hideMessage();
+  checkFormValidity();
 });
 
 // Keyboard accessibility for drop zone
@@ -411,11 +433,13 @@ subjectSelect.addEventListener("change", () => {
   const isCreateNew = subjectSelect.value === CREATE_NEW_VALUE ||
     subjectSelect.value === "+ Create new subject…";
   if (isCreateNew) {
-    newSubjectRow.style.display = "flex";
-    showRowError(newSubjectError, "");
-    newSubjectCode.value = "";
-    newSubjectName.value = "";
-    newSubjectCode.focus();
+    if (newSubjectRow.style.display !== "flex") {
+      newSubjectRow.style.display = "flex";
+      showRowError(newSubjectError, "");
+      newSubjectCode.value = "";
+      newSubjectName.value = "";
+      newSubjectCode.focus();
+    }
     subjectSelect.value = "";
     subjectSelect.dispatchEvent(new Event("syncCustom"));
   } else {
@@ -436,7 +460,45 @@ folderSelect.addEventListener("change", () => {
     newFolderRow.style.display = "none";
     lastFolderValue = folderSelect.value;
   }
+  checkFormValidity();
 });
+
+const triggerCreateSubjectBtn = document.getElementById("triggerCreateSubjectBtn");
+if (triggerCreateSubjectBtn) {
+    triggerCreateSubjectBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        subjectSelect.value = CREATE_NEW_VALUE;
+        subjectSelect.dispatchEvent(new Event("change"));
+        if (window.UIHelper && window.UIHelper.convertInputToCustomDropdown) {
+             // Force UI dropdown sync if needed, though native change might handle it
+        }
+    });
+}
+
+function checkFormValidity() {
+    const title = titleInput.value.trim();
+    const hasFile = fileInput.files && fileInput.files.length > 0;
+    
+    const isCreatingSubject = (newSubjectRow.style.display === "flex");
+    let hasSubject = false;
+    if (isCreatingSubject) {
+        hasSubject = newSubjectCode.value.trim() !== "" && newSubjectName.value.trim() !== "";
+    } else {
+        hasSubject = subjectSelect.value.trim() !== "";
+    }
+    
+    if (title && hasFile && hasSubject) {
+        submitBtn.disabled = false;
+    } else {
+        submitBtn.disabled = true;
+    }
+}
+
+titleInput.addEventListener("input", checkFormValidity);
+subjectSelect.addEventListener("input", checkFormValidity);
+subjectSelect.addEventListener("change", checkFormValidity);
+newSubjectCode.addEventListener("input", checkFormValidity);
+newSubjectName.addEventListener("input", checkFormValidity);
 
 // Form submit
 uploadForm.addEventListener("submit", async (e) => {
