@@ -74,6 +74,24 @@
         white-space: nowrap !important;
         padding: 10px 20px !important;
       }
+      
+      .shared-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 8px;
+        transition: all 0.2s;
+        text-decoration: none;
+      }
+      
+      .shared-row:hover {
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      }
     </style>
 </head>
 
@@ -87,19 +105,20 @@
         <main class="main-content">
             <section class="page-header" style="max-width: none; margin: 0 0 24px 0; text-align: left;">
                 <h1 style="font-size: 26px; font-weight: 800; color: var(--text); margin: 0;">Shared With Me</h1>
+                <p style="color: var(--muted); font-size: 15px; margin-top: 8px;">Access documents and folders shared with you. You can open, download, and study with AI tools.</p>
             </section>
 
+            <div class="search-bar" style="margin-bottom: 24px; max-width: 400px;">
+                <input type="text" id="sharedSearchInput" class="search-input" placeholder="Search shared documents or folders..." style="width: 100%; padding: 10px 16px; border: 1px solid var(--border); border-radius: 8px;" autocomplete="off" />
+            </div>
+
             <div class="tab-header">
-                <button type="button" class="tab-btn active" id="tabDocsBtn">Shared Documents</button>
-                <button type="button" class="tab-btn" id="tabFoldersBtn">Shared Folders</button>
+                <button type="button" class="tab-btn active" id="tabDocsBtn">Shared Documents <span id="docsCountBadge"></span></button>
+                <button type="button" class="tab-btn" id="tabFoldersBtn">Shared Folders <span id="foldersCountBadge"></span></button>
             </div>
 
             <div id="sharedDocsPanel" class="dashboard-panel">
-                <div class="section-header">
-                    <div>
-                        <p style="color: var(--muted); font-size: 14px; margin: 0 0 8px;">Documents shared directly with you by other users.</p>
-                    </div>
-                </div>
+
 
                 <div id="sharedLoader" class="loading-state">
                     <div class="loading-spinner"></div>
@@ -140,11 +159,6 @@
             </div>
 
             <div id="sharedFoldersPanel" class="dashboard-panel" style="display: none;">
-                <div class="section-header">
-                    <div>
-                        <p style="color: var(--muted); font-size: 14px; margin: 0 0 8px;">Folders shared directly with you by other users.</p>
-                    </div>
-                </div>
 
                 <div id="folderLoader" class="loading-state">
                     <div class="loading-spinner"></div>
