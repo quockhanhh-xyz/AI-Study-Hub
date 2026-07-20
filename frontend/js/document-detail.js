@@ -239,7 +239,47 @@ async function loadPage(id, { isAuthenticated, isCommunityView }) {
 // ── Render document info ──────────────────────────────────────────────────────
 function renderDocument(doc) {
     document.getElementById("fileTypeBadge").textContent = (doc.fileType || "–").toUpperCase();
-    document.getElementById("docTitle").textContent = doc.title || "–";
+    const docTitleEl = document.getElementById("docTitle");
+    if (docTitleEl) {
+        docTitleEl.textContent = doc.title || "–";
+        docTitleEl.title = doc.title || "";
+    }
+
+    // Update Document Reading Header
+    const previewHeaderTitle = document.getElementById("previewHeaderTitle");
+    const previewHeaderMetaText = document.getElementById("previewHeaderMetaText");
+    const previewHeaderAiBadge = document.getElementById("previewHeaderAiBadge");
+    
+    if (previewHeaderTitle) {
+        const subjectCtx = doc.subject ? doc.subject : (doc.subjectName ? `${doc.subjectCode} - ${doc.subjectName}` : "");
+        previewHeaderTitle.textContent = subjectCtx ? `Reading: ${subjectCtx}` : "Document Preview";
+        previewHeaderTitle.title = subjectCtx || "Document Preview";
+    }
+    
+    if (previewHeaderMetaText) {
+        const titleShort = doc.title && doc.title.length > 35 ? doc.title.slice(0, 32) + "..." : (doc.title || "");
+        const sizeStr = formatFileSize(doc.fileSize);
+        const typeStr = (doc.fileType || "").toUpperCase();
+        previewHeaderMetaText.textContent = `${titleShort} \u00B7 ${typeStr} \u00B7 ${sizeStr}`;
+    }
+    
+    if (previewHeaderAiBadge) {
+        const pStatus = doc.processingStatus || "PENDING";
+        previewHeaderAiBadge.className = `preview-header-badge ai-${pStatus.toLowerCase()}`;
+        
+        let label = "AI: Pending";
+        if (pStatus === "COMPLETED") label = "AI Ready";
+        else if (pStatus === "PROCESSING") label = "AI Processing";
+        else if (pStatus === "FAILED") label = "AI Failed";
+        else if (pStatus === "UNSUPPORTED") label = "Not ready for AI";
+        
+        previewHeaderAiBadge.textContent = label;
+        previewHeaderAiBadge.style.display = "inline-flex";
+        
+        previewHeaderAiBadge.onclick = () => {
+            setActiveTab("ai", true);
+        };
+    }
 
     // Hide email in community view to prevent exposure
     const docUploadedBy = document.getElementById("docUploadedBy");
@@ -296,9 +336,16 @@ function renderDocument(doc) {
         if (aiStatusInlineRow) aiStatusInlineRow.style.display = "flex";
     }
 
-    const publicVisibilityNote = document.getElementById("publicVisibilityNote");
-    if (publicVisibilityNote) {
-        publicVisibilityNote.style.display = doc.visibility === "PUBLIC" ? "block" : "none";
+    const visibilityStatusContent = document.getElementById("visibilityStatusContent");
+    const privateVisibilityNote = document.getElementById("privateVisibilityNote");
+    if (visibilityStatusContent && privateVisibilityNote) {
+        if (doc.visibility === "PUBLIC") {
+            visibilityStatusContent.style.display = "flex";
+            privateVisibilityNote.style.display = "none";
+        } else {
+            visibilityStatusContent.style.display = "none";
+            privateVisibilityNote.style.display = "flex";
+        }
     }
 
     // ── Favorite star button (Step: Favorite/Saved Documents) ──
@@ -361,9 +408,10 @@ function renderDocument(doc) {
     const downloadBtn = document.getElementById("downloadFileBtn");
     const shareBtn = document.getElementById("shareBtn");
     const moveBtn = document.getElementById("moveBtn");
-    const publishBtn = document.getElementById("publishBtn");
-    const unpublishBtn = document.getElementById("unpublishBtn");
+    const publishBtn = document.getElementById("sharingPublishBtn");
+    const unpublishBtn = document.getElementById("sharingUnpublishBtn");
     const documentActionRow = document.getElementById("documentActionRow");
+    const actionRowDesc = document.getElementById("actionRowDesc");
 
     currentDocumentFolderId = doc.folderId;
     // ── AI Processing panel (Step 9) — owner only ──
@@ -418,6 +466,11 @@ function renderDocument(doc) {
         }
     }
 
+    // Toggle Share Action row helper description
+    if (actionRowDesc) {
+        actionRowDesc.style.display = (!currentIsCommunityView && doc.canShare) ? "block" : "none";
+    }
+
     // Edit section — only the owner has canEdit
     const viewSec = document.getElementById("detailsViewSection");
     if (viewSec) {
@@ -454,7 +507,7 @@ function renderDocument(doc) {
 
     if (documentActionRow) {
         const hasDocumentActions = !currentIsCommunityView && (
-            doc.canShare || doc.canMove || doc.canPublish || doc.canUnpublish
+            doc.canShare || doc.canMove
         );
         documentActionRow.style.display = hasDocumentActions ? "flex" : "none";
     }
@@ -532,6 +585,7 @@ function renderDocument(doc) {
             tabPanes.style.display = "none";
         }
     }
+    initTopBarSearch();
 }
 
 
@@ -914,7 +968,7 @@ async function handleToggleFavoriteDetail(doc) {
 }
 
 async function handlePublish() {
-    const publishBtn = document.getElementById("publishBtn");
+    const publishBtn = document.getElementById("sharingPublishBtn");
     publishBtn.disabled = true;
     const btnText = publishBtn.querySelector(".btn-text");
     const oldText = btnText ? btnText.textContent : publishBtn.textContent;
@@ -935,7 +989,7 @@ async function handlePublish() {
 }
 
 async function handleUnpublish() {
-    const unpublishBtn = document.getElementById("unpublishBtn");
+    const unpublishBtn = document.getElementById("sharingUnpublishBtn");
     unpublishBtn.disabled = true;
     const btnText = unpublishBtn.querySelector(".btn-text");
     const oldText = btnText ? btnText.textContent : unpublishBtn.textContent;
@@ -1282,18 +1336,30 @@ function initSharingUI() {
         await openShareModal('user');
     });
 
-    // Empty state link triggers
+    // Empty state link triggers & Header buttons
     const emptyShareUserLink = document.getElementById("emptyShareUserLink");
     const emptyShareGroupLink = document.getElementById("emptyShareGroupLink");
+    const addShareUserLink = document.getElementById("addShareUserLink");
+    const addShareGroupLink = document.getElementById("addShareGroupLink");
 
     if (emptyShareUserLink) {
         emptyShareUserLink.addEventListener("click", () => {
             openShareModal('user');
         });
     }
+    if (addShareUserLink) {
+        addShareUserLink.addEventListener("click", () => {
+            openShareModal('user');
+        });
+    }
 
     if (emptyShareGroupLink) {
         emptyShareGroupLink.addEventListener("click", () => {
+            openShareModal('group');
+        });
+    }
+    if (addShareGroupLink) {
+        addShareGroupLink.addEventListener("click", () => {
             openShareModal('group');
         });
     }
@@ -1383,11 +1449,14 @@ async function loadSharingInfo(docId) {
         // Direct shares list
         const directList = document.getElementById("directSharesList");
         const noDirect = document.getElementById("noDirectShares");
+        const addShareUserLink = document.getElementById("addShareUserLink");
         directList.innerHTML = "";
         if (userShares.length === 0) {
             noDirect.style.display = "flex";
+            if (addShareUserLink) addShareUserLink.style.display = "none";
         } else {
             noDirect.style.display = "none";
+            if (addShareUserLink) addShareUserLink.style.display = "inline-flex";
             userShares.forEach(item => {
                 const row = document.createElement("div");
                 row.className = "member-row";
@@ -1424,11 +1493,14 @@ async function loadSharingInfo(docId) {
         // Group shares list
         const groupList = document.getElementById("groupSharesList");
         const noGroup = document.getElementById("noGroupShares");
+        const addShareGroupLink = document.getElementById("addShareGroupLink");
         groupList.innerHTML = "";
         if (groupShares.length === 0) {
             noGroup.style.display = "flex";
+            if (addShareGroupLink) addShareGroupLink.style.display = "none";
         } else {
             noGroup.style.display = "none";
+            if (addShareGroupLink) addShareGroupLink.style.display = "inline-flex";
             groupShares.forEach(item => {
                 const row = document.createElement("div");
                 row.className = "member-row";
@@ -2405,3 +2477,37 @@ document.addEventListener("DOMContentLoaded", () => {
     // We expose initPreviewSearch globally so document-preview.js can call it
     window.initPreviewSearch = initPreviewSearch;
 });
+
+function initTopBarSearch() {
+    const globalHeader = document.getElementById("globalTopBar");
+    if (!globalHeader) return;
+    
+    // If search form is already added, don't duplicate
+    if (document.getElementById("topBarSearchForm")) return;
+    
+    const searchForm = document.createElement("form");
+    searchForm.id = "topBarSearchForm";
+    searchForm.className = "top-bar-search-form dashboard-search-form";
+    searchForm.innerHTML = `
+        <div class="search-input-wrapper" style="width: 100%;">
+            <span class="search-input-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
+                </svg>
+            </span>
+            <input type="text" id="topBarSearchInput" placeholder="Search your documents..." class="dashboard-search-input" />
+        </div>
+    `;
+    
+    searchForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const searchInput = document.getElementById("topBarSearchInput");
+        const val = searchInput ? searchInput.value.trim() : "";
+        if (val) {
+            window.location.href = `documents.html?search=${encodeURIComponent(val)}`;
+        }
+    });
+    
+    // Insert search form at the beginning of globalHeader
+    globalHeader.insertBefore(searchForm, globalHeader.firstChild);
+}

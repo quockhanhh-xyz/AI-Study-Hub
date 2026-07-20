@@ -56,11 +56,38 @@
     }
 
     .detail-main {
+      position: relative;
       height: 100vh;
       min-width: 0;
       min-height: 0;
       padding: 68px 20px 20px 20px;
       overflow: hidden;
+    }
+
+    .detail-main .global-top-bar-floating {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      height: 60px !important;
+      background: var(--surface) !important;
+      border-bottom: 1px solid var(--border) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      padding: 0 24px !important;
+      z-index: 99 !important;
+      box-shadow: none !important;
+    }
+
+    .detail-main .global-top-bar-floating .global-top-bar-right {
+      margin-left: auto;
+    }
+
+    .top-bar-search-form {
+      flex: 1;
+      max-width: 520px;
+      margin-right: 24px;
     }
 
     #detailLoader {
@@ -105,6 +132,86 @@
       padding: 6px 16px;
       border-bottom: 1px solid var(--border);
       background: var(--surface);
+    }
+
+    .preview-header-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+      flex: 1;
+    }
+    
+    .preview-header-top-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .preview-header-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+
+    .preview-header-title {
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 450px;
+    }
+
+    .preview-header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+      margin-left: 4px;
+    }
+    .preview-header-badge:hover {
+      opacity: 0.85;
+    }
+    .preview-header-badge.ai-completed {
+      background: #ecfdf5;
+      color: #065f46;
+      border-color: #a7f3d0;
+    }
+    .preview-header-badge.ai-processing {
+      background: #fff7ed;
+      color: #c2410c;
+      border-color: #fed7aa;
+    }
+    .preview-header-badge.ai-failed {
+      background: #f3f4f6;
+      color: #4b5563;
+      border-color: #d1d5db;
+    }
+    .preview-header-badge.ai-pending {
+      background: #fffbeb;
+      color: #b45309;
+      border-color: #fde68a;
+    }
+    .preview-header-badge.ai-unsupported {
+      background: #f3f4f6;
+      color: #4b5563;
+      border-color: #d1d5db;
     }
 
     .preview-toolbar-search {
@@ -380,10 +487,14 @@
     .inspector-document-header h1 {
       margin: 0;
       color: var(--text);
-      font-size: 28px;
+      font-size: 20px;
       font-weight: 800;
       line-height: 1.2;
       overflow-wrap: anywhere;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
     .detail-uploaded-by {
@@ -776,14 +887,19 @@
       margin: 0;
     }
 
-    .share-block+.share-block {
-      margin-top: 20px;
+    .share-block {
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
     }
 
     .share-block h3 {
-      margin: 0 0 8px;
-      color: var(--muted);
-      font-size: 13px;
+      margin: 0;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
     }
 
     .modal-box.detail-modal {
@@ -1069,21 +1185,20 @@
     .btn-ghost-sm {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border: 1px dashed var(--border);
+      gap: 8px;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
       border-radius: 8px;
       background: transparent;
       color: var(--text);
-      font-size: 12px;
+      font-size: 13px;
       font-family: inherit;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
     }
     .btn-ghost-sm:hover {
-      border-style: solid;
-      border-color: var(--primary-border);
+      border-color: var(--primary);
       color: var(--primary);
       background: var(--primary-light);
     }
@@ -1562,6 +1677,17 @@
       <div id="detailContent" class="detail-workspace" hidden>
         <section class="preview-workspace" aria-label="Document preview">
           <header class="preview-toolbar">
+            <div class="preview-header-info" id="previewHeaderInfo">
+              <div class="preview-header-top-row">
+                <span id="previewHeaderTopLabel">Document Preview</span>
+              </div>
+              <div class="preview-header-meta-row">
+                <span class="preview-header-title" id="previewHeaderTitle">Document</span>
+                <span class="preview-header-separator">&middot;</span>
+                <span id="previewHeaderMetaText">Loading...</span>
+                <span class="preview-header-badge" id="previewHeaderAiBadge" style="display:none;"></span>
+              </div>
+            </div>
             <div class="preview-toolbar-search" id="previewSearchBar" style="display:none;">
               <div class="preview-search-input-wrap">
                 <span class="preview-search-icon">
@@ -1582,7 +1708,7 @@
             </div>
             <div class="preview-toolbar-actions">
               <button id="openFileBtn" class="btn btn-secondary" style="display:none;">
-                Open fullscreen <span aria-hidden="true">&#8599;</span>
+                Open <span aria-hidden="true">&#8599;</span>
               </button>
               <button id="downloadFileBtn" class="btn btn-secondary" style="display:none;">
                 Download <span aria-hidden="true">&#8595;</span>
@@ -1622,44 +1748,28 @@
               </div>
             </header>
 
-            <div class="document-action-row" id="documentActionRow" aria-label="Document actions">
-              <button id="shareBtn" class="btn btn-primary" style="display:none;">
+            <div class="document-action-row" id="documentActionRow" aria-label="Document actions" style="margin-top: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+              <button id="shareBtn" class="btn btn-primary" style="display:none; padding: 10px 16px; font-weight: 600;">
                 <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
                   <polyline points="16 6 12 2 8 6"></polyline>
                   <line x1="12" y1="2" x2="12" y2="15"></line>
                 </svg>
-                <span class="btn-text">Share</span>
+                <span class="btn-text">Share document</span>
               </button>
-              <button id="moveBtn" class="btn btn-secondary" style="display:none;" onclick="showMoveModal()">
+              <button id="moveBtn" class="btn btn-outline" style="display:none;" onclick="showMoveModal()">
                 <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                 </svg>
                 <span class="btn-text">Move</span>
               </button>
-              <button id="publishBtn" class="btn btn-secondary" style="display:none;">
-                <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="2" y1="12" x2="22" y2="12"></line>
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
-                  </path>
-                </svg>
-                <span class="btn-text">Publish</span>
-              </button>
-              <button id="unpublishBtn" class="btn btn-secondary btn-unpublish" style="display:none;">
-                <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path
-                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-3.24-3.24">
-                  </path>
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
-                </svg>
-                <span class="btn-text">Unpublish</span>
-              </button>
             </div>
+            
+            <p class="action-row-desc" id="actionRowDesc" style="display:none; font-size: 12px; color: var(--muted); margin-top: 8px; margin-bottom: 0; line-height: 1.4;">
+              Share with classmates, groups, or make it available in Community Library.
+            </p>
 
             <section class="detail-summary" aria-label="Document metadata">
               <dl class="detail-meta-list">
@@ -1752,20 +1862,61 @@
 
               <div id="inspectorPaneSharing" class="inspector-tab-pane">
                 <section id="sharesPanel" class="shares-panel" style="display:block;">
-                  <div id="publicVisibilityNote" class="public-doc-info" style="display:none;">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                    <div>
-                      <strong>Public in Community Library</strong>
-                      <p>People in Community Library can open and download this document.</p>
+                  <!-- Visibility & Public status block -->
+                  <div class="share-block" id="visibilityShareBlock">
+                    <h3>Visibility</h3>
+                    <div id="visibilityStatusContent" class="public-doc-info" style="margin-top: 10px; margin-bottom: 0; display: none;">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                      <div>
+                        <strong id="visibilityStatusTitle">Public in Community Library</strong>
+                        <p id="visibilityStatusDesc" style="font-size: 12px; margin: 2px 0 0; line-height: 1.4;">People in Community Library can open and download this document.</p>
+                      </div>
+                    </div>
+                    <div id="privateVisibilityNote" class="public-doc-info private-info" style="margin-top: 10px; margin-bottom: 0; background: #f9fafb; border-color: var(--border); color: var(--text); display: none;">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                      <div>
+                        <strong style="color: var(--text);">Private Document</strong>
+                        <p style="font-size: 12px; color: var(--muted); margin: 2px 0 0; line-height: 1.4;">Only you and people you directly share with can access this document.</p>
+                      </div>
+                    </div>
+                    
+                    <div class="visibility-actions" style="margin-top: 14px; display: flex; gap: 8px;">
+                      <button id="sharingPublishBtn" class="btn btn-secondary" style="display:none; width: 100%; justify-content: center; align-items: center; gap: 6px;">
+                        <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <line x1="2" y1="12" x2="22" y2="12"></line>
+                          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                        </svg>
+                        Publish to Library
+                      </button>
+                      <button id="sharingUnpublishBtn" class="btn btn-secondary btn-unpublish" style="display:none; width: 100%; justify-content: center; align-items: center; gap: 6px;">
+                        <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-3.24-3.24"></path>
+                          <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                        Unpublish
+                      </button>
                     </div>
                   </div>
 
                   <div class="share-block">
-                    <h3>Direct user shares</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                      <h3>Direct user shares</h3>
+                      <button type="button" class="btn-ghost-sm" id="addShareUserLink" style="display: none; padding: 4px 10px; font-size: 11px; gap: 4px;">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                        Share with user
+                      </button>
+                    </div>
                     <div id="directSharesList" class="member-list"></div>
                     <div id="noDirectShares" class="shares-empty-state" style="display:none;">
-                      <p class="shares-empty-text">No direct shares yet.</p>
-                      <button type="button" class="btn-ghost-sm" id="emptyShareUserLink">
+                      <div class="shares-empty-icon" style="margin-bottom: 6px; display: flex; justify-content: center; align-items: center;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--muted); margin-bottom: 2px;">
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+                        </svg>
+                      </div>
+                      <p class="shares-empty-text" style="font-weight: 600; color: var(--text-main); margin-bottom: 4px;">No direct shares yet.</p>
+                      <p style="font-size: 11px; color: var(--muted); margin: 0 0 14px 0; max-width: 220px; line-height: 1.4; text-align: center;">Share this document with specific users to collaborate.</p>
+                      <button type="button" class="btn btn-outline btn-sm" id="emptyShareUserLink" style="font-size: 12px; padding: 6px 14px; display: flex; align-items: center; gap: 6px; border-radius: 20px; font-weight: 500;">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
                         Share with user
                       </button>
@@ -1773,11 +1924,23 @@
                   </div>
 
                   <div class="share-block">
-                    <h3>Group shares</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                      <h3>Group shares</h3>
+                      <button type="button" class="btn-ghost-sm" id="addShareGroupLink" style="display: none; padding: 4px 10px; font-size: 11px; gap: 4px;">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        Share with group
+                      </button>
+                    </div>
                     <div id="groupSharesList" class="member-list"></div>
                     <div id="noGroupShares" class="shares-empty-state" style="display:none;">
-                      <p class="shares-empty-text">Not shared with any groups yet.</p>
-                      <button type="button" class="btn-ghost-sm" id="emptyShareGroupLink">
+                      <div class="shares-empty-icon" style="margin-bottom: 6px; display: flex; justify-content: center; align-items: center;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--muted); margin-bottom: 2px;">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                      </div>
+                      <p class="shares-empty-text" style="font-weight: 600; color: var(--text-main); margin-bottom: 4px;">Not shared with any groups yet.</p>
+                      <p style="font-size: 11px; color: var(--muted); margin: 0 0 14px 0; max-width: 220px; line-height: 1.4; text-align: center;">Share with study groups to study with multiple classmates.</p>
+                      <button type="button" class="btn btn-outline btn-sm" id="emptyShareGroupLink" style="font-size: 12px; padding: 6px 14px; display: flex; align-items: center; gap: 6px; border-radius: 20px; font-weight: 500;">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         Share with group
                       </button>
