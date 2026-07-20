@@ -57,7 +57,7 @@ public class AuthController {
             ResponseCookie cookie = ResponseCookie.from(AuthCookieConstants.COOKIE_NAME, token)
                     .httpOnly(true)
                     .secure(AuthCookieConstants.COOKIE_SECURE)
-                    .sameSite("Strict")
+                    .sameSite(AuthCookieConstants.COOKIE_SAME_SITE)
                     .path("/")
                     .maxAge(jwtUtil.getExpirationMs() / 1000)
                     .build();
@@ -96,7 +96,7 @@ public class AuthController {
         ResponseCookie cookie = ResponseCookie.from(AuthCookieConstants.COOKIE_NAME, "")
                 .httpOnly(true)
                 .secure(AuthCookieConstants.COOKIE_SECURE)
-                .sameSite("Strict")
+                .sameSite(AuthCookieConstants.COOKIE_SAME_SITE)
                 .path("/")
                 .maxAge(0)
                 .build();
