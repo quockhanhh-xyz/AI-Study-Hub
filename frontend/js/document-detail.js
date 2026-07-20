@@ -2498,10 +2498,10 @@ function renderContextualTopBar(doc) {
         backUrl = "folders.html";
     }
 
-    // Update detailBackBtn label in right inspector
+    // Hide duplicate detailBackBtn from right inspector panel
     const detailBackBtn = document.getElementById("detailBackBtn");
     if (detailBackBtn) {
-        detailBackBtn.textContent = backLabel;
+        detailBackBtn.style.display = "none";
     }
 
     if (!globalHeader) return;
@@ -2510,29 +2510,23 @@ function renderContextualTopBar(doc) {
     const docTitleText = doc ? doc.title : "";
     const breadcrumbText = subjectText ? `${subjectText} / ${docTitleText}` : docTitleText;
     
-    globalHeader.innerHTML = `
-        <div class="top-bar-contextual" style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; padding-right: 12px;">
-            <a href="${backUrl}" class="top-bar-back-link" style="display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: color 0.2s;">
-                ${backLabel}
-            </a>
-            <span style="color: var(--border); font-size: 12px;">/</span>
-            <span class="top-bar-breadcrumb" style="font-size: 13px; color: var(--text); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 480px;" title="${breadcrumbText}">
-                ${breadcrumbText}
-            </span>
-        </div>
-        <div class="global-top-bar-right" style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
-            <a href="${backUrl}" class="top-bar-search-btn" title="Search Library" style="display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); color: var(--muted); background: var(--surface); text-decoration: none; transition: all 0.2s;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
-                </svg>
-            </a>
-            <div id="globalHeaderWidgets" class="global-header-widgets"></div>
-        </div>
-    `;
-    
-    if (typeof renderGlobalHeaderWidgets === "function") {
-        renderGlobalHeaderWidgets();
+    let contextualContainer = globalHeader.querySelector(".top-bar-contextual");
+    if (!contextualContainer) {
+        contextualContainer = document.createElement("div");
+        contextualContainer.className = "top-bar-contextual";
+        contextualContainer.style.cssText = "display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; padding-right: 12px;";
+        globalHeader.insertBefore(contextualContainer, globalHeader.firstChild);
     }
+
+    contextualContainer.innerHTML = `
+        <a href="${backUrl}" class="top-bar-back-link" style="display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: color 0.2s;">
+            ${backLabel}
+        </a>
+        ${docTitleText ? `<span style="color: var(--border); font-size: 12px;">/</span>
+        <span class="top-bar-breadcrumb" style="font-size: 13px; color: var(--text); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 480px;" title="${breadcrumbText}">
+            ${breadcrumbText}
+        </span>` : ''}
+    `;
 }
 
 function initTopBarSearch() {

@@ -1725,10 +1725,7 @@
         </section>
 
         <aside class="detail-right-inspector" aria-label="Document information and actions">
-          <div class="inspector-inner" style="padding-top: 8px;">
-            <button id="detailBackBtn" class="btn-back-link" type="button" onclick="handleBack()">
-              ← Back to My Documents
-            </button>
+          <div class="inspector-inner" style="padding-top: 18px;">
 
             <header class="inspector-document-header">
               <div class="document-badge-row">
@@ -1815,19 +1812,27 @@
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     Edit details
                   </button>
-
-                  <div class="danger-zone-wrapper" id="detailsDangerZone" style="display:none;">
-                    <button type="button" class="danger-zone-toggle" id="dangerZoneToggle" onclick="toggleDangerZone()">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
-                      Danger zone
-                    </button>
-                    <div class="danger-zone-body" id="dangerZoneBody">
-                      <span class="danger-zone-label">Destructive action</span>
-                      <p class="danger-zone-copy">Move this document to Trash. You can restore it later from the Trash folder.</p>
-                      <button class="danger-link" id="deleteBtn" onclick="handleDelete()">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-                        Move to Trash
+                  <div class="danger-zone-wrapper" id="detailsDangerZone" style="display:none; margin-top: 24px;">
+                    <div class="danger-zone-box" style="border: 1px solid #fecaca; background: #fef2f2; border-radius: 8px; padding: 12px 14px;">
+                      <button type="button" class="danger-zone-toggle" id="dangerZoneToggle" onclick="toggleDangerZone()" style="width: 100%; display: flex; align-items: center; justify-content: space-between; background: transparent; border: none; padding: 0; cursor: pointer; text-align: left;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                          </svg>
+                          <span style="font-size: 13px; font-weight: 700; color: #991b1b;">Danger zone</span>
+                        </div>
+                        <svg id="dangerChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#991b1b" stroke-width="2" stroke-linecap="round" style="transition: transform 0.2s;"><path d="M6 9l6 6 6-6"/></svg>
                       </button>
+                      <div style="font-size: 12px; color: #7f1d1d; margin-top: 4px;">Destructive actions for this document.</div>
+                      <div class="danger-zone-body" id="dangerZoneBody" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #fca5a5;">
+                        <p class="danger-zone-copy" style="margin: 0 0 10px 0; color: #7f1d1d; font-size: 12px;">Move this document to Trash. You can restore it later from the Trash folder.</p>
+                        <button class="btn btn-outline" id="deleteBtn" onclick="handleDelete()" style="color: #dc2626; border-color: #fca5a5; background: #ffffff; font-size: 12px; font-weight: 600; padding: 6px 14px; display: inline-flex; align-items: center; gap: 6px;">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                          Move to Trash
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </section>
@@ -1862,87 +1867,58 @@
               </div>
 
               <div id="inspectorPaneSharing" class="inspector-tab-pane">
-                <section id="sharesPanel" class="shares-panel" style="display:block;">
+                <section id="sharesPanel" class="shares-panel" style="display:block; padding: 4px 0;">
                   <!-- Visibility & Public status block -->
-                  <div class="share-block" id="visibilityShareBlock">
-                    <h3>Visibility</h3>
-                    <div id="visibilityStatusContent" class="public-doc-info" style="margin-top: 10px; margin-bottom: 0; display: none;">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                      <div>
-                        <strong id="visibilityStatusTitle">Public in Community Library</strong>
-                        <p id="visibilityStatusDesc" style="font-size: 12px; margin: 2px 0 0; line-height: 1.4;">People in Community Library can open and download this document.</p>
-                      </div>
+                  <div class="share-block" id="visibilityShareBlock" style="margin-bottom: 20px;">
+                    <h3 style="font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 10px 0;">Visibility</h3>
+                    <div id="visibilityStatusContent" style="display: none; padding: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;">
+                      <div style="font-weight: 700; font-size: 13px; color: #166534; margin-bottom: 2px;">Public in Community Library</div>
+                      <div style="font-size: 12px; color: #15803d; line-height: 1.4;">People in Community Library can open and download this document.</div>
                     </div>
-                    <div id="privateVisibilityNote" class="public-doc-info private-info" style="margin-top: 10px; margin-bottom: 0; background: #f9fafb; border-color: var(--border); color: var(--text); display: none;">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                      <div>
-                        <strong style="color: var(--text);">Private Document</strong>
-                        <p style="font-size: 12px; color: var(--muted); margin: 2px 0 0; line-height: 1.4;">Only you and people you directly share with can access this document.</p>
-                      </div>
+                    <div id="privateVisibilityNote" style="display: none; padding: 12px; background: #f9fafb; border: 1px solid var(--border); border-radius: 8px;">
+                      <div style="font-weight: 700; font-size: 13px; color: var(--text); margin-bottom: 2px;">Private Document</div>
+                      <div style="font-size: 12px; color: var(--muted); line-height: 1.4;">Only you and people you directly share with can access this document.</div>
                     </div>
                     
-                    <div class="visibility-actions" style="margin-top: 14px; display: flex; gap: 8px;">
-                      <button id="sharingPublishBtn" class="btn btn-secondary" style="display:none; width: 100%; justify-content: center; align-items: center; gap: 6px;">
-                        <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <line x1="2" y1="12" x2="22" y2="12"></line>
-                          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                        </svg>
-                        Publish to Library
+                    <div class="visibility-actions" style="margin-top: 10px; display: flex; gap: 8px;">
+                      <button id="sharingPublishBtn" class="btn btn-secondary" type="button" style="display:none; padding: 7px 14px; font-size: 12px; font-weight: 600;">
+                        Publish to Community Library
                       </button>
-                      <button id="sharingUnpublishBtn" class="btn btn-secondary btn-unpublish" style="display:none; width: 100%; justify-content: center; align-items: center; gap: 6px;">
-                        <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-3.24-3.24"></path>
-                          <line x1="1" y1="1" x2="23" y2="23"></line>
-                        </svg>
-                        Unpublish
+                      <button id="sharingUnpublishBtn" class="btn btn-outline" type="button" style="display:none; padding: 7px 14px; font-size: 12px; font-weight: 600; color: #b45309; border-color: #fde68a; background: #fffbeb;">
+                        Unpublish from Community
                       </button>
                     </div>
                   </div>
 
-                  <div class="share-block">
+                  <!-- Direct user shares block -->
+                  <div class="share-block" style="margin-bottom: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                      <h3>Direct user shares</h3>
+                      <h3 style="font-size: 13px; font-weight: 700; color: var(--text); margin: 0;">Direct user shares</h3>
                       <button type="button" class="btn-ghost-sm" id="addShareUserLink" style="display: none; padding: 4px 10px; font-size: 11px; gap: 4px;">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-                        Share with user
+                        + Share with user
                       </button>
                     </div>
                     <div id="directSharesList" class="member-list"></div>
-                    <div id="noDirectShares" class="shares-empty-state" style="display:none;">
-                      <div class="shares-empty-icon" style="margin-bottom: 6px; display: flex; justify-content: center; align-items: center;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--muted); margin-bottom: 2px;">
-                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
-                        </svg>
-                      </div>
-                      <p class="shares-empty-text" style="font-weight: 600; color: var(--text-main); margin-bottom: 4px;">No direct shares yet.</p>
-                      <p style="font-size: 11px; color: var(--muted); margin: 0 0 14px 0; max-width: 220px; line-height: 1.4; text-align: center;">Share this document with specific users to collaborate.</p>
-                      <button type="button" class="btn btn-outline btn-sm" id="emptyShareUserLink" style="font-size: 12px; padding: 6px 14px; display: flex; align-items: center; gap: 6px; border-radius: 20px; font-weight: 500;">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                    <div id="noDirectShares" style="display:none; flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 6px;">
+                      <p style="font-size: 12px; color: var(--muted); margin: 0;">No direct shares yet.</p>
+                      <button type="button" class="btn btn-secondary" id="emptyShareUserLink" style="font-size: 12px; padding: 6px 12px; font-weight: 600; border-radius: 6px;">
                         Share with user
                       </button>
                     </div>
                   </div>
 
-                  <div class="share-block">
+                  <!-- Group shares block -->
+                  <div class="share-block" style="margin-bottom: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                      <h3>Group shares</h3>
+                      <h3 style="font-size: 13px; font-weight: 700; color: var(--text); margin: 0;">Group shares</h3>
                       <button type="button" class="btn-ghost-sm" id="addShareGroupLink" style="display: none; padding: 4px 10px; font-size: 11px; gap: 4px;">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        Share with group
+                        + Share with group
                       </button>
                     </div>
                     <div id="groupSharesList" class="member-list"></div>
-                    <div id="noGroupShares" class="shares-empty-state" style="display:none;">
-                      <div class="shares-empty-icon" style="margin-bottom: 6px; display: flex; justify-content: center; align-items: center;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--muted); margin-bottom: 2px;">
-                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                        </svg>
-                      </div>
-                      <p class="shares-empty-text" style="font-weight: 600; color: var(--text-main); margin-bottom: 4px;">Not shared with any groups yet.</p>
-                      <p style="font-size: 11px; color: var(--muted); margin: 0 0 14px 0; max-width: 220px; line-height: 1.4; text-align: center;">Share with study groups to study with multiple classmates.</p>
-                      <button type="button" class="btn btn-outline btn-sm" id="emptyShareGroupLink" style="font-size: 12px; padding: 6px 14px; display: flex; align-items: center; gap: 6px; border-radius: 20px; font-weight: 500;">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <div id="noGroupShares" style="display:none; flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 6px;">
+                      <p style="font-size: 12px; color: var(--muted); margin: 0;">Not shared with any groups yet.</p>
+                      <button type="button" class="btn btn-secondary" id="emptyShareGroupLink" style="font-size: 12px; padding: 6px 12px; font-weight: 600; border-radius: 6px;">
                         Share with group
                       </button>
                     </div>
