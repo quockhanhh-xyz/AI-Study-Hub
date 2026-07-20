@@ -542,19 +542,52 @@
       background: #fef3c7 !important;
       border-color: #f59e0b !important;
     }
-    .danger-zone {
-      margin-top: 32px;
-      padding: 16px;
-      background-color: #FEF2F2;
-      border: 1px solid #FCA5A5;
+    /* Danger Zone — collapsible, subtle */
+    .danger-zone-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: none;
+      padding: 6px 0;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      font-family: inherit;
+      transition: color 0.2s;
+    }
+
+    .danger-zone-toggle:hover {
+      color: #b91c1c;
+    }
+
+    .danger-zone-toggle svg {
+      transition: transform 0.2s;
+    }
+
+    .danger-zone-toggle.open svg {
+      transform: rotate(90deg);
+    }
+
+    .danger-zone-body {
+      display: none;
+      margin-top: 10px;
+      padding: 14px 16px;
+      background-color: #fff5f5;
+      border: 1px solid #fecaca;
       border-radius: 8px;
+    }
+
+    .danger-zone-body.open {
+      display: block;
     }
 
     .danger-zone-label {
       display: block;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       color: #991B1B;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
     }
 
@@ -566,21 +599,24 @@
     }
 
     .danger-link {
-      width: auto;
-      padding: 0;
-      color: var(--danger-text);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid #fca5a5;
       background: transparent;
-      border: 0;
-      font: inherit;
+      color: #b91c1c;
+      font-family: inherit;
       font-size: 13px;
-      font-weight: 700;
-      text-decoration: underline;
-      text-underline-offset: 3px;
+      font-weight: 600;
       cursor: pointer;
+      transition: all 0.2s;
     }
 
     .danger-link:hover {
-      color: var(--danger);
+      background: #fee2e2;
+      border-color: #f87171;
     }
 
     .ai-processing-section {
@@ -1017,9 +1053,11 @@
       border-color: var(--primary-border);
       color: var(--primary);
     }
+    /* Danger zone wrapper */
     .danger-zone-wrapper {
-      margin-top: auto;
-      padding-top: 32px;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
     }
 
     @media (max-width: 1180px) {
@@ -1603,6 +1641,21 @@
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     Edit details
                   </button>
+
+                  <div class="danger-zone-wrapper" id="detailsDangerZone" style="display:none;">
+                    <button type="button" class="danger-zone-toggle" id="dangerZoneToggle" onclick="toggleDangerZone()">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                      Danger zone
+                    </button>
+                    <div class="danger-zone-body" id="dangerZoneBody">
+                      <span class="danger-zone-label">Destructive action</span>
+                      <p class="danger-zone-copy">Move this document to Trash. You can restore it later from the Trash folder.</p>
+                      <button class="danger-link" id="deleteBtn" onclick="handleDelete()">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                        Move to Trash
+                      </button>
+                    </div>
+                  </div>
                 </section>
 
                 <section class="edit-section" id="detailsEditSection" style="display:none;">
@@ -1842,13 +1895,7 @@
                 </section>
               </div>
             </div>
-            <div class="danger-zone-wrapper" style="padding-bottom: 40px;">
-              <div class="danger-zone inspector-danger-zone" style="margin-top:0;">
-                <span class="danger-zone-label">Danger zone</span>
-                <p class="danger-zone-copy">Move this document to Trash. You can restore it later.</p>
-                <button class="danger-link" id="deleteBtn" onclick="handleDelete()">Delete document</button>
-              </div>
-            </div>
+
           </div>
         </aside>
       </div>

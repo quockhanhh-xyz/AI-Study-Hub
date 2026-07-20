@@ -426,9 +426,9 @@ function renderDocument(doc) {
     }
 
     // Delete button — only the owner has canDelete
-    const dangerZone = document.querySelector(".inspector-danger-zone");
-    if (dangerZone) {
-        dangerZone.style.display =
+    const detailsDangerZone = document.getElementById("detailsDangerZone");
+    if (detailsDangerZone) {
+        detailsDangerZone.style.display =
             !currentIsCommunityView && doc.canDelete ? "block" : "none";
     }
 
@@ -2308,6 +2308,16 @@ function initAiToolsHandlers() {
 }
 
 document.addEventListener("DOMContentLoaded", initAiToolsHandlers);
+
+// ── Danger Zone collapse toggle ───────────────────────────────────────────
+function toggleDangerZone() {
+    const toggle = document.getElementById("dangerZoneToggle");
+    const body = document.getElementById("dangerZoneBody");
+    if (!toggle || !body) return;
+    const isOpen = body.classList.contains("open");
+    body.classList.toggle("open", !isOpen);
+    toggle.classList.toggle("open", !isOpen);
+}
 
 // ── Find in Document (preview search bar) ────────────────────────────────
 // Shows a search bar in the preview toolbar for text-based previews.
