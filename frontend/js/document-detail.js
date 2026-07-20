@@ -96,7 +96,7 @@ let aiToolsLoaded = false;
 let aiToolsProcessingStatus = "PENDING";
 let currentPlanLimits = null; // { maxQuizQuestionsPerSet, maxFlashcardsPerSet } from Plan API
 
-const AI_SUPPORTED_FILE_TYPES = new Set(["PDF", "TXT"]);
+const AI_SUPPORTED_FILE_TYPES = new Set(["PDF", "TXT", "DOCX", "PPTX", "XLSX"]);
 
 function normalizeDocumentFileType(docOrValue) {
     const rawValue = typeof docOrValue === "string"
@@ -108,6 +108,12 @@ function normalizeDocumentFileType(docOrValue) {
 }
 
 function isDocumentAiSupported(doc) {
+    if (!doc) return false;
+    // Prioritize explicit backend processingStatus if returned (COMPLETED, PROCESSING, PENDING, FAILED)
+    const backendStatus = String(doc.processingStatus || "").trim().toUpperCase();
+    if (backendStatus && backendStatus !== "UNSUPPORTED") {
+        return true;
+    }
     return AI_SUPPORTED_FILE_TYPES.has(normalizeDocumentFileType(doc));
 }
 
