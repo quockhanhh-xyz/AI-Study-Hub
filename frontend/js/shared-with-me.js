@@ -7,7 +7,11 @@
 document.addEventListener("DOMContentLoaded", async function () {
   if (window.authReady) {
     const isAuthenticated = await window.authReady;
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      localStorage.removeItem("currentUser");
+      window.location.href = `login.html?redirect=${encodeURIComponent("shared-with-me.html")}`;
+      return;
+    }
   }
 
   const sharedLoader = document.getElementById("sharedLoader");
@@ -227,6 +231,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     } catch (error) {
       sharedLoader.style.display = "none";
+      if (error && (error.status === 401 || error.statusCode === 401 || String(error.message || "").includes("401"))) {
+        localStorage.removeItem("currentUser");
+        window.location.href = `login.html?redirect=${encodeURIComponent("shared-with-me.html")}`;
+        return;
+      }
       showError(error.message || "Failed to load shared documents.");
     }
   }
@@ -256,6 +265,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     } catch (error) {
       folderLoader.style.display = "none";
+      if (error && (error.status === 401 || error.statusCode === 401 || String(error.message || "").includes("401"))) {
+        localStorage.removeItem("currentUser");
+        window.location.href = `login.html?redirect=${encodeURIComponent("shared-with-me.html")}`;
+        return;
+      }
       showFolderError(error.message || "Failed to load shared folders.");
     }
   }

@@ -1,12 +1,27 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
     if (window.authReady) {
-        window.authReady.then((isAuthenticated) => {
-            if (isAuthenticated) init();
-        });
+        window.authReady
+            .then((isAuthenticated) => {
+                if (isAuthenticated) {
+                    init();
+                } else {
+                    showLoadError("Please log in as an administrator.");
+                }
+            })
+            .catch(() => showLoadError("Unable to verify admin session."));
     } else {
         init();
     }
 });
+
+function showLoadError(message) {
+    const loadingState = document.getElementById("loadingState");
+    const errorState = document.getElementById("errorState");
+    const errorMessage = document.getElementById("errorMessage");
+    if (loadingState) loadingState.style.display = "none";
+    if (errorState) errorState.style.display = "flex";
+    if (errorMessage) errorMessage.textContent = message || "An error occurred.";
+}
 
 let currentDocId = null;
 
