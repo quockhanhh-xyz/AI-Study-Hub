@@ -25,6 +25,10 @@ const newFolderRow = document.getElementById("newFolderRow");
 const newFolderName = document.getElementById("newFolderName");
 const newFolderError = document.getElementById("newFolderError");
 
+// Inline buttons
+const inlineCreateSubjectBtn = document.getElementById("inlineCreateSubjectBtn");
+const inlineCreateFolderBtn = document.getElementById("inlineCreateFolderBtn");
+
 const CREATE_NEW_VALUE = "__new__";
 let lastSubjectValue = "";
 let lastFolderValue = "";
@@ -471,6 +475,92 @@ if (triggerCreateSubjectBtn) {
         subjectSelect.dispatchEvent(new Event("change"));
         if (window.UIHelper && window.UIHelper.convertInputToCustomDropdown) {
              // Force UI dropdown sync if needed, though native change might handle it
+        }
+    });
+}
+
+if (inlineCreateSubjectBtn) {
+    inlineCreateSubjectBtn.addEventListener("click", async () => {
+        const code = newSubjectCode.value.trim();
+        const name = newSubjectName.value.trim();
+        if (!code || !name) {
+            showRowError(newSubjectError, "Subject code and name are required.");
+            return;
+        }
+        
+        inlineCreateSubjectBtn.disabled = true;
+        inlineCreateSubjectBtn.textContent = "Creating...";
+        showRowError(newSubjectError, "");
+        
+        try {
+            const resultSub = await createSubject({ subjectCode: code, subjectName: name });
+            const newId = resultSub.data.subjectId;
+            const newLabel = `${code} - ${name}`;
+            
+            // Add to select
+            const opt = document.createElement("option");
+            opt.value = newLabel;
+            opt.dataset.id = newId;
+            opt.textContent = newLabel;
+            
+            const datalist = document.getElementById("subjectDatalist");
+            if (datalist) datalist.appendChild(opt);
+            
+            subjectSelect.value = newLabel;
+            
+            newSubjectRow.style.display = "none";
+            window.showToast("Subject created successfully!", "success");
+            subjectSelect.dispatchEvent(new Event("syncCustom"));
+            checkFormValidity();
+        } catch (err) {
+            const isDuplicate = err.status === 409;
+            showRowError(
+              newSubjectError,
+              isDuplicate ? "A subject with this code or name already exists." : (err.message || "Failed to create subject.")
+            );
+        } finally {
+            inlineCreateSubjectBtn.disabled = false;
+            inlineCreateSubjectBtn.textContent = "Create";
+        }
+    });
+}
+
+if (inlineCreateFolderBtn) {
+    inlineCreateFolderBtn.addEventListener("click", async () => {
+        const name = newFolderName.value.trim();
+        if (!name) {
+            showRowError(newFolderError, "Folder name is required.");
+            return;
+        }
+        
+        inlineCreateFolderBtn.disabled = true;
+        inlineCreateFolderBtn.textContent = "Creating...";
+        showRowError(newFolderError, "");
+        
+        try {
+            const resultFolder = await createFolder({ folderName: name, parentFolderId: null });
+            const newId = resultFolder.data.folderId;
+            
+            const opt = document.createElement("option");
+            opt.value = newId;
+            opt.textContent = name;
+            
+            folderSelect.appendChild(opt);
+            folderSelect.value = newId;
+            
+            newFolderRow.style.display = "none";
+            window.showToast("Folder created successfully!", "success");
+            folderSelect.dispatchEvent(new Event("syncCustom"));
+            checkFormValidity();
+        } catch (err) {
+            const isDuplicate = err.status === 409;
+            showRowError(
+              newFolderError,
+              isDuplicate ? "A folder with this name already exists here." : (err.message || "Failed to create folder.")
+            );
+        } finally {
+            inlineCreateFolderBtn.disabled = false;
+            inlineCreateFolderBtn.textContent = "Create";
         }
     });
 }

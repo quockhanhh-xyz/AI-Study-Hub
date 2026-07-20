@@ -55,6 +55,7 @@
                                     <input type="text" id="newSubjectName"
                                         placeholder="Subject name, e.g: Software Architecture" autocomplete="off"
                                         style="flex:1 1 200px;" />
+                                    <button type="button" id="inlineCreateSubjectBtn" class="btn btn-secondary" style="padding: 0 16px; height: 38px;">Create</button>
                                 </div>
                             </div>
                             <p id="newSubjectError" class="helper-text error" role="alert" style="display:none;"></p>
@@ -69,8 +70,9 @@
                                 <option value="">Upload to My Documents</option>
                             </select>
 
-                            <div id="newFolderRow" class="inline-create-row" style="display:none;">
-                                <input type="text" id="newFolderName" placeholder="E.g: Math Notes" autocomplete="off" style="width: 100%;" />
+                            <div id="newFolderRow" class="inline-create-row" style="display:none; gap:8px;">
+                                <input type="text" id="newFolderName" placeholder="E.g: Math Notes" autocomplete="off" style="flex:1 1 auto;" />
+                                <button type="button" id="inlineCreateFolderBtn" class="btn btn-secondary" style="padding: 0 16px; height: 38px;">Create</button>
                             </div>
                             <p id="newFolderError" class="helper-text error" role="alert" style="display:none;"></p>
                         </div>
