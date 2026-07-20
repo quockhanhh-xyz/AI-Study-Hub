@@ -260,90 +260,6 @@
       border-color: #d1d5db;
     }
 
-    .preview-toolbar-search {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex: 1;
-      max-width: 280px;
-    }
-
-    .preview-search-input-wrap {
-      position: relative;
-      display: flex;
-      align-items: center;
-      width: 100%;
-    }
-
-    .preview-search-icon {
-      position: absolute;
-      left: 10px;
-      color: var(--muted);
-      pointer-events: none;
-      display: flex;
-      align-items: center;
-    }
-
-    .preview-search-input {
-      width: 100%;
-      padding: 7px 10px 7px 34px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--background);
-      font-size: 13px;
-      font-family: inherit;
-      color: var(--text);
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .preview-search-input:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
-    }
-
-    .preview-search-input::placeholder {
-      color: var(--muted);
-    }
-
-    .preview-search-count {
-      font-size: 11px;
-      color: var(--muted);
-      white-space: nowrap;
-      padding: 0 4px;
-      display: none;
-    }
-
-    .preview-search-nav {
-      display: none;
-      align-items: center;
-      gap: 2px;
-    }
-
-    .preview-search-nav-btn {
-      width: 26px;
-      height: 26px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: transparent;
-      color: var(--muted);
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .preview-search-nav-btn:hover {
-      background: var(--surface-soft);
-      color: var(--text);
-    }
-
-    .preview-toolbar-search.is-active .preview-search-count,
-    .preview-toolbar-search.is-active .preview-search-nav {
-      display: flex;
-    }
-
     .preview-toolbar-title {
       min-width: 0;
     }
@@ -417,36 +333,11 @@
       background: #eef0f3;
     }
 
-    .preview-office-note {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-      flex: 0 0 auto;
-      padding: 8px 14px;
-      border-bottom: 1px solid var(--border);
-      background: #ffffff;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.4;
-    }
-
     .preview-office-frame {
       flex: 1 1 auto;
       width: 100%;
       height: 100%;
       min-height: 0;
-    }
-
-    .preview-office-download {
-      border: 0;
-      background: transparent;
-      padding: 0;
-      color: var(--primary);
-      font: inherit;
-      text-decoration: underline;
-      cursor: pointer;
     }
 
     .preview-image-wrap {
@@ -1979,24 +1870,6 @@
                 <span class="preview-header-separator">&middot;</span>
                 <span id="previewHeaderMetaText">Loading...</span>
                 <span class="preview-header-badge" id="previewHeaderAiBadge" style="display:none;"></span>
-              </div>
-            </div>
-            <div class="preview-toolbar-search" id="previewSearchBar" style="display:none;">
-              <div class="preview-search-input-wrap">
-                <span class="preview-search-icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                </span>
-                <input type="search" class="preview-search-input" id="previewSearchInput"
-                  placeholder="Find in document..." autocomplete="off" />
-              </div>
-              <span class="preview-search-count" id="previewSearchCount"></span>
-              <div class="preview-search-nav" id="previewSearchNav">
-                <button class="preview-search-nav-btn" id="previewSearchPrev" title="Previous match" aria-label="Previous match">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg>
-                </button>
-                <button class="preview-search-nav-btn" id="previewSearchNext" title="Next match" aria-label="Next match">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
               </div>
             </div>
             <div class="preview-toolbar-actions">

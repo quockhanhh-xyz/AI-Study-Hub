@@ -118,16 +118,9 @@ function renderTxtPreview(container, fileUrl) {
 
 function renderOfficePreview(container, previewUrl, doc) {
   const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewUrl)}`;
-  const downloadUrl = doc.downloadUrl || `/api/documents/${doc.documentId}/download`;
-  const openUrl = doc.fileUrl || previewUrl;
 
   container.innerHTML = `
     <div class="preview-office-wrap">
-      <div class="preview-office-note">
-        <span>Office preview may take a moment to load.</span>
-        <span>If it does not load, <a href="${openUrl}" target="_blank" rel="noopener" class="btn-link">open</a>
-        or <button type="button" class="preview-office-download">download</button> the file.</span>
-      </div>
       <iframe
         src="${viewerUrl}"
         class="preview-iframe preview-office-frame"
@@ -137,13 +130,6 @@ function renderOfficePreview(container, previewUrl, doc) {
       ></iframe>
     </div>
   `;
-
-  const downloadButton = container.querySelector(".preview-office-download");
-  if (downloadButton) {
-    downloadButton.addEventListener("click", () => {
-      window.location.href = API_BASE_URL + downloadUrl;
-    });
-  }
 }
 
 function renderFallback(container, doc) {
