@@ -96,12 +96,52 @@ let aiToolsLoaded = false;
 let aiToolsProcessingStatus = "PENDING";
 let currentPlanLimits = null; // { maxQuizQuestionsPerSet, maxFlashcardsPerSet } from Plan API
 
+const AI_SUPPORTED_FILE_TYPES = new Set(["PDF", "TXT"]);
+
+function normalizeDocumentFileType(docOrValue) {
+    const rawValue = typeof docOrValue === "string"
+        ? docOrValue
+        : (docOrValue?.fileType || docOrValue?.originalFileName || docOrValue?.fileName || "");
+    const raw = String(rawValue || "").trim();
+    const extension = raw.includes(".") ? raw.slice(raw.lastIndexOf(".") + 1) : raw;
+    return extension.replace(".", "").toUpperCase();
+}
+
+function isDocumentAiSupported(doc) {
+    return AI_SUPPORTED_FILE_TYPES.has(normalizeDocumentFileType(doc));
+}
+
+function getCurrentDocumentContext() {
+    return currentDocumentForTopBar || window.currentDocumentDetailForTopBar || null;
+}
+
+function getEffectiveAiProcessingStatus(doc, statusOverride) {
+    const status = String(statusOverride || doc?.processingStatus || "PENDING").trim().toUpperCase();
+    if (status === "UNSUPPORTED" || status === "EMPTY_CONTENT") return status;
+    if (doc && !isDocumentAiSupported(doc)) return "UNSUPPORTED";
+    return status || "PENDING";
+}
+
+function getAiStatusLabel(status) {
+    if (status === "COMPLETED") return "AI Ready";
+    if (status === "PROCESSING") return "AI Processing";
+    if (status === "FAILED") return "AI Failed";
+    if (status === "UNSUPPORTED") return "AI: Not supported";
+    if (status === "EMPTY_CONTENT") return "AI: Empty content";
+    return "AI: " + status.charAt(0) + status.slice(1).toLowerCase();
+}
+
+function getAiUnsupportedMessage(doc) {
+    const type = normalizeDocumentFileType(doc) || "This file type";
+    return `${type} files are not supported for AI Q&A or AI learning tools yet. You can still open or download the file.`;
+}
+
 function normalizeProcessingStatusResponse(res) {
     return res?.success && res?.data ? res.data : (res || {});
 }
 
 function setViewerAiProcessingStatus(status) {
-    const nextStatus = status || "PENDING";
+    const nextStatus = getEffectiveAiProcessingStatus(getCurrentDocumentContext(), status);
     aiQaProcessingStatus = nextStatus;
     aiToolsProcessingStatus = nextStatus;
     updateAskAvailability();
@@ -111,8 +151,7 @@ function setViewerAiProcessingStatus(status) {
     const aiStatusInlineRow = document.getElementById("aiStatusInlineRow");
     const aiStatusInlineDot = document.getElementById("aiStatusInlineDot");
     if (processingStatusBadge) {
-        const label = nextStatus === "COMPLETED" ? "AI Ready" : (nextStatus === "UNSUPPORTED" ? "AI: Not supported" : "AI: " + nextStatus.charAt(0) + nextStatus.slice(1).toLowerCase());
-        processingStatusBadge.textContent = label;
+        processingStatusBadge.textContent = getAiStatusLabel(nextStatus);
     }
     if (aiStatusInlineDot) {
         aiStatusInlineDot.className = "ai-status-dot " + nextStatus.toLowerCase();
@@ -128,6 +167,10 @@ function setViewerAiProcessingStatus(status) {
 }
 
 async function refreshViewerProcessingStatusIfMissing(doc) {
+    if (!isDocumentAiSupported(doc)) {
+        setViewerAiProcessingStatus("UNSUPPORTED");
+        return;
+    }
     if (!currentIsAuthenticated || !currentDocumentId || doc.processingStatus) return;
 
     const docId = currentDocumentId;
@@ -269,16 +312,9 @@ function renderDocument(doc) {
     }
     
     if (previewHeaderAiBadge) {
-        const pStatus = doc.processingStatus || "PENDING";
+        const pStatus = getEffectiveAiProcessingStatus(doc);
         previewHeaderAiBadge.className = `preview-header-badge ai-${pStatus.toLowerCase()}`;
-        
-        let label = "AI: Pending";
-        if (pStatus === "COMPLETED") label = "AI Ready";
-        else if (pStatus === "PROCESSING") label = "AI Processing";
-        else if (pStatus === "FAILED") label = "AI Failed";
-        else if (pStatus === "UNSUPPORTED") label = "Not ready for AI";
-        
-        previewHeaderAiBadge.textContent = label;
+        previewHeaderAiBadge.textContent = getAiStatusLabel(pStatus);
         previewHeaderAiBadge.style.display = "inline-flex";
         
         previewHeaderAiBadge.onclick = () => {
@@ -334,9 +370,8 @@ function renderDocument(doc) {
     const aiStatusInlineRow = document.getElementById("aiStatusInlineRow");
     const aiStatusInlineDot = document.getElementById("aiStatusInlineDot");
     if (processingStatusBadge) {
-        const pStatus = doc.processingStatus || "PENDING";
-        const label = pStatus === "COMPLETED" ? "AI Ready" : (pStatus === "UNSUPPORTED" ? "AI: Not supported" : "AI: " + pStatus.charAt(0) + pStatus.slice(1).toLowerCase());
-        processingStatusBadge.textContent = label;
+        const pStatus = getEffectiveAiProcessingStatus(doc);
+        processingStatusBadge.textContent = getAiStatusLabel(pStatus);
         if (aiStatusInlineDot) aiStatusInlineDot.className = "ai-status-dot " + pStatus.toLowerCase();
         if (aiStatusInlineRow) aiStatusInlineRow.style.display = "flex";
     }
@@ -635,9 +670,10 @@ function renderAIProcessingPanel(doc) {
     // lastAttemptStatus...), which the detail DTO does not include. This is
     // also what makes documents that are already COMPLETED from a previous
     // session show their metadata correctly on first load.
-    const status = doc.processingStatus || "PENDING";
+    const status = getEffectiveAiProcessingStatus(doc);
     applyAIProcessingState(status, { processingStatus: status });
 
+    if (status === "UNSUPPORTED") return;
     fetchAndApplyProcessingStatus();
 }
 
@@ -650,9 +686,10 @@ async function fetchAndApplyProcessingStatus() {
         const res = await getProcessingStatus(docId);
         if (docId !== currentDocumentId) return; // navigated away / doc switched meanwhile
         const data = res.data || {};
-        applyAIProcessingState(data.processingStatus, data);
+        const status = getEffectiveAiProcessingStatus(getCurrentDocumentContext(), data.processingStatus);
+        applyAIProcessingState(status, { ...data, processingStatus: status });
 
-        if (data.processingStatus === "PROCESSING") {
+        if (status === "PROCESSING") {
             startAIPolling();
         }
     } catch (err) {
@@ -664,7 +701,7 @@ async function fetchAndApplyProcessingStatus() {
 
 function applyAIProcessingState(status, data) {
     data = data || {};
-    status = status || "PENDING";
+    status = getEffectiveAiProcessingStatus(getCurrentDocumentContext(), status);
     const meta = DOCUMENT_PROCESSING_STATUS[status] || { label: status };
 
     const badge = document.getElementById("aiStatusBadge");
@@ -693,6 +730,9 @@ function applyAIProcessingState(status, data) {
     const messageEl = document.getElementById("aiProcessingMessage");
     if (messageEl) {
         let text = AI_STATUS_DESCRIPTIONS[status] || "";
+        if (status === "UNSUPPORTED") {
+            text = getAiUnsupportedMessage(getCurrentDocumentContext());
+        }
         if (status === "FAILED" && data.lastAttemptError) {
             text = data.lastAttemptError;
         }
@@ -784,9 +824,12 @@ async function handleAIProcessAction(action) {
             ? await reprocessDocument(currentDocumentId)
             : await processDocument(currentDocumentId);
 
-        const status = (res.data && res.data.processingStatus) || "PROCESSING";
-        applyAIProcessingState(status, res.data || {});
-        startAIPolling();
+        const status = getEffectiveAiProcessingStatus(
+            getCurrentDocumentContext(),
+            (res.data && res.data.processingStatus) || "PROCESSING"
+        );
+        applyAIProcessingState(status, { ...(res.data || {}), processingStatus: status });
+        if (status === "PROCESSING") startAIPolling();
     } catch (err) {
         if (err.status === 409) {
             // Already PROCESSING (e.g. duplicate click). startDocumentPolling()
@@ -806,7 +849,7 @@ async function handleAIProcessAction(action) {
 function startAIPolling() {
     startDocumentPolling(
         currentDocumentId,
-        (status, data) => applyAIProcessingState(status, data),
+        (status, data) => applyAIProcessingState(getEffectiveAiProcessingStatus(getCurrentDocumentContext(), status), data),
         (status, data) => {
             if (status === "TIMEOUT") {
                 const messageEl = document.getElementById("aiProcessingMessage");
@@ -819,7 +862,7 @@ function startAIPolling() {
                 window.showToast((data && data.message) || "Failed to check processing status.", "error");
                 return;
             }
-            applyAIProcessingState(status, data);
+            applyAIProcessingState(getEffectiveAiProcessingStatus(getCurrentDocumentContext(), status), data);
         }
     );
 }
@@ -1592,7 +1635,7 @@ function renderAIQaTab(doc) {
     aiQaChatLoaded = false;
     aiQaSending = false;
     aiQaUsageInfo = null;
-    aiQaProcessingStatus = doc.processingStatus || "PENDING";
+    aiQaProcessingStatus = getEffectiveAiProcessingStatus(doc);
 
     const messagesEl = document.getElementById("aiQaMessages");
     if (messagesEl) {
@@ -1787,7 +1830,7 @@ const AI_QA_STATUS_MESSAGES = {
     PENDING: "This document has not been processed for AI yet.",
     PROCESSING: "This document is being processed for AI. Please wait…",
     FAILED: "AI processing failed for this document.",
-    UNSUPPORTED: "This file type is not supported for AI Q&A.",
+    UNSUPPORTED: "This file type is not supported for AI Q&A or AI learning tools yet.",
     EMPTY_CONTENT: "No readable text was found in this document."
 };
 
@@ -1811,6 +1854,7 @@ function updateAskAvailability() {
         // Handle Onboarding state visibility
         if (processingSection) {
             processingSection.style.display = "block";
+            processingSection.classList.toggle("is-unsupported", aiQaProcessingStatus === "UNSUPPORTED");
             const msgEl = document.getElementById("aiProcessingMessage");
             const headEl = processingSection.querySelector(".ai-processing-heading");
             const iconEl = processingSection.querySelector(".ai-processing-icon");
@@ -1829,16 +1873,27 @@ function updateAskAvailability() {
                     actionsEl.innerHTML = `<button class="btn btn-primary" onclick="handleAIProcessAction('process')">Process for AI</button>`;
                 }
             } else {
-                if (iconEl) iconEl.textContent = "⚠️";
-                if (headEl) headEl.textContent = "Cannot process document";
-                if (msgEl) msgEl.textContent = AI_QA_STATUS_MESSAGES[aiQaProcessingStatus] || "Failed to process.";
+                if (iconEl) iconEl.textContent = "!";
+                if (headEl) {
+                    headEl.textContent = aiQaProcessingStatus === "UNSUPPORTED"
+                        ? "AI is not available for this file type"
+                        : "Cannot process document";
+                }
+                if (msgEl) {
+                    msgEl.textContent = aiQaProcessingStatus === "UNSUPPORTED"
+                        ? getAiUnsupportedMessage(getCurrentDocumentContext())
+                        : (AI_QA_STATUS_MESSAGES[aiQaProcessingStatus] || "Failed to process.");
+                }
                 if (actionsEl) actionsEl.innerHTML = "";
             }
         }
         if (aiQaMessages) aiQaMessages.style.display = "none";
         if (sampleRow) sampleRow.style.display = "none";
     } else {
-        if (processingSection) processingSection.style.display = "none";
+        if (processingSection) {
+            processingSection.style.display = "none";
+            processingSection.classList.remove("is-unsupported");
+        }
         if (aiQaMessages) aiQaMessages.style.display = "flex";
         if (sampleRow) sampleRow.style.display = "flex";
         
@@ -1964,7 +2019,7 @@ const AI_TOOLS_NOT_READY_MESSAGES = {
     PENDING: "This document has not been processed for AI yet.",
     PROCESSING: "This document is being processed. Please wait…",
     FAILED: "AI processing failed for this document.",
-    UNSUPPORTED: "This file type is not supported for AI tools.",
+    UNSUPPORTED: "This file type is not supported for AI Q&A or AI learning tools yet.",
     EMPTY_CONTENT: "No readable text was found in this document."
 };
 
@@ -2038,7 +2093,7 @@ function updateFocusCharCount(inputId, countId) {
 // Called every time renderDocument() runs (initial load, after Save/Move/Publish).
 function renderAiToolsTab(doc) {
     aiToolsLoaded = false; // force reload of summary/quiz/flashcard data for the (possibly new) document
-    aiToolsProcessingStatus = doc.processingStatus || "PENDING";
+    aiToolsProcessingStatus = getEffectiveAiProcessingStatus(doc);
 
 
     updateAiToolsAvailability();
@@ -2052,30 +2107,62 @@ function updateAiToolsAvailability() {
     if (notReadyMsg) {
         if (ready) {
             notReadyMsg.style.display = "none";
+            notReadyMsg.classList.remove("is-unsupported");
         } else {
             notReadyMsg.style.display = "flex";
+            notReadyMsg.classList.toggle("is-unsupported", aiToolsProcessingStatus === "UNSUPPORTED");
             const msgEl = document.getElementById("aiToolsProcessingMessage");
+            const headEl = notReadyMsg.querySelector(".ai-processing-heading");
+            const iconEl = notReadyMsg.querySelector(".ai-processing-icon");
             if (msgEl) {
                 msgEl.textContent =
-                    AI_TOOLS_NOT_READY_MESSAGES[aiToolsProcessingStatus] ||
-                    "This document is not ready for AI tools yet.";
+                    aiToolsProcessingStatus === "UNSUPPORTED"
+                    ? getAiUnsupportedMessage(getCurrentDocumentContext())
+                    : (AI_TOOLS_NOT_READY_MESSAGES[aiToolsProcessingStatus] ||
+                    "This document is not ready for AI tools yet.");
+            }
+            if (headEl) {
+                headEl.textContent = aiToolsProcessingStatus === "UNSUPPORTED"
+                    ? "AI tools are not available for this file type"
+                    : "Prepare this document";
+            }
+            if (iconEl) {
+                iconEl.textContent = aiToolsProcessingStatus === "UNSUPPORTED" ? "!" : "✦";
             }
             
             // Build actions similar to AI Q&A
             const actionsEl = document.getElementById("aiToolsProcessingActions");
             if (actionsEl) {
                 actionsEl.innerHTML = "";
-                if (aiToolsProcessingStatus === "PENDING" || aiToolsProcessingStatus === "FAILED" || aiToolsProcessingStatus === "EMPTY_CONTENT" || aiToolsProcessingStatus === "UNSUPPORTED") {
+                if (aiToolsProcessingStatus === "PROCESSING") {
+                    actionsEl.innerHTML = `<span class="ai-processing-spinner"></span> <span style="font-size:13px; color:var(--text);">Processing document...</span>`;
+                } else if (aiToolsProcessingStatus === "PENDING" && currentDocCanProcess) {
                     const btn = document.createElement("button");
                     btn.type = "button";
                     btn.className = "btn btn-primary";
-                    btn.textContent = aiToolsProcessingStatus === "FAILED" ? "Retry Processing" : "Process for AI";
+                    btn.textContent = "Process for AI";
                     btn.onclick = () => {
                         handleAIProcessAction("process");
                     };
                     actionsEl.appendChild(btn);
-                } else if (aiToolsProcessingStatus === "PENDING" || aiToolsProcessingStatus === "PROCESSING") {
-                    actionsEl.innerHTML = `<span class="ai-processing-spinner"></span> <span style="font-size:13px; color:var(--text);">Processing document...</span>`;
+                } else if (aiToolsProcessingStatus === "FAILED" && currentDocCanProcess) {
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "btn btn-primary";
+                    btn.textContent = "Retry Processing";
+                    btn.onclick = () => {
+                        handleAIProcessAction("process");
+                    };
+                    actionsEl.appendChild(btn);
+                } else if (aiToolsProcessingStatus === "EMPTY_CONTENT" && currentDocCanReprocess) {
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "btn btn-primary";
+                    btn.textContent = "Reprocess";
+                    btn.onclick = () => {
+                        handleAIProcessAction("reprocess");
+                    };
+                    actionsEl.appendChild(btn);
                 }
             }
         }
