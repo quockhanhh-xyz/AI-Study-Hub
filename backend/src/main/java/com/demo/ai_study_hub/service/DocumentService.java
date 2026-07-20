@@ -793,8 +793,8 @@ public class DocumentService {
         }
 
         doc.setVisibility("PUBLIC");
-        doc.setApprovalStatus("APPROVED");
-        doc.setPublishedAt(java.time.LocalDateTime.now());
+        doc.setApprovalStatus("PENDING");
+        doc.setPublishedAt(null);
         documentRepository.save(doc);
 
         return mapToResponse(doc, owner);
