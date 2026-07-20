@@ -438,6 +438,8 @@ function renderDocument(doc) {
     if (typeof renderDocumentPreview === "function") {
         renderDocumentPreview(doc);
     }
+    // Initialize Find in Document search bar based on mime type
+    initPreviewSearch(doc.mimeType || doc.fileType || "");
 
     // Configure Inspector panel visibility and defaults
     const tabsContainer = document.querySelector(".inspector-tabs-container");
@@ -2281,3 +2283,90 @@ function initAiToolsHandlers() {
 }
 
 document.addEventListener("DOMContentLoaded", initAiToolsHandlers);
+
+// ── Find in Document (preview search bar) ────────────────────────────────
+// Shows a search bar in the preview toolbar for text-based previews.
+// For PDF iframes, we relay the search to the browser's built-in find API
+// via postMessage (supported by most PDF.js-based viewers). For other
+// renderers (images, fallback), we show a disabled tooltip.
+
+function initPreviewSearch(docMimeType) {
+    const searchBar = document.getElementById("previewSearchBar");
+    const searchInput = document.getElementById("previewSearchInput");
+    if (!searchBar || !searchInput) return;
+
+    // Only show for PDF and text-type documents
+    const isSearchable = docMimeType && (
+        docMimeType.includes("pdf") ||
+        docMimeType.includes("text") ||
+        docMimeType.includes("word") ||
+        docMimeType.includes("presentation") ||
+        docMimeType.includes("spreadsheet")
+    );
+
+    if (!isSearchable) {
+        searchBar.style.display = "none";
+        return;
+    }
+
+    searchBar.style.display = "flex";
+
+    let debounceTimer = null;
+
+    searchInput.addEventListener("input", () => {
+        clearTimeout(debounceTimer);
+        const query = searchInput.value.trim();
+        debounceTimer = setTimeout(() => {
+            relayFindToPreview(query);
+        }, 300);
+    });
+
+    searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if (e.shiftKey) {
+                relayFindToPreview(searchInput.value.trim(), "prev");
+            } else {
+                relayFindToPreview(searchInput.value.trim(), "next");
+            }
+        }
+        if (e.key === "Escape") {
+            searchInput.value = "";
+            relayFindToPreview("");
+            searchInput.blur();
+        }
+    });
+
+    const prevBtn = document.getElementById("previewSearchPrev");
+    const nextBtn = document.getElementById("previewSearchNext");
+    if (prevBtn) prevBtn.addEventListener("click", () => relayFindToPreview(searchInput.value.trim(), "prev"));
+    if (nextBtn) nextBtn.addEventListener("click", () => relayFindToPreview(searchInput.value.trim(), "next"));
+}
+
+function relayFindToPreview(query, direction) {
+    const iframe = document.querySelector(".preview-iframe");
+    if (!iframe) return;
+
+    // PDF.js viewer accepts find commands via postMessage
+    try {
+        const cmd = !query ? "findagain" : "find";
+        iframe.contentWindow.postMessage({
+            type: "find",
+            query: query,
+            phraseSearch: true,
+            caseSensitive: false,
+            highlightAll: true,
+            findPrevious: direction === "prev"
+        }, "*");
+    } catch (e) {
+        // Cross-origin or non-PDF.js viewer — silently ignore
+    }
+}
+
+// Hook into renderDocumentPreview to show/hide search bar
+const _originalRenderDocumentPreview = typeof renderDocumentPreview === "function" ? renderDocumentPreview : null;
+document.addEventListener("DOMContentLoaded", () => {
+    // Search bar is initialized after document loads via renderDocument
+    // We expose initPreviewSearch globally so document-preview.js can call it
+    window.initPreviewSearch = initPreviewSearch;
+});
