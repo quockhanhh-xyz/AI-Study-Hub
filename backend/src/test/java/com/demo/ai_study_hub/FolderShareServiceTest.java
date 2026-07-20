@@ -9,7 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.demo.ai_study_hub.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -33,6 +35,9 @@ class FolderShareServiceTest {
     private FolderRepository folderRepository;
     @Mock
     private UserRepository userRepository;
+
+    @Spy
+    private com.demo.ai_study_hub.service.DocumentPreviewHelper previewHelper;
     @Mock
     private DocumentRepository documentRepository;
     @Mock

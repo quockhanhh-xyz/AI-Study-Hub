@@ -11,7 +11,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.demo.ai_study_hub.service.AdminAiUsageService;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
@@ -30,6 +32,11 @@ class AdminDocumentServiceTest {
 
     @Mock
     private DocumentService documentService;
+
+    @Mock
+    private AdminAiUsageService adminAiUsageService;
+    @Spy
+    private com.demo.ai_study_hub.service.DocumentPreviewHelper previewHelper;
 
     @InjectMocks
     private AdminDocumentService adminDocumentService;

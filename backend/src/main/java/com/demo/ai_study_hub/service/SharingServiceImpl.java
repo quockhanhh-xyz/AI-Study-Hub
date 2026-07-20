@@ -27,6 +27,7 @@ public class SharingServiceImpl implements SharingService {
     private final UsageService usageService;
     private final com.demo.ai_study_hub.repository.DocumentFavoriteRepository documentFavoriteRepository;
     private final NotificationService notificationService;
+    private final DocumentPreviewHelper previewHelper;
 
     @Override
     @Transactional
@@ -290,6 +291,9 @@ public class SharingServiceImpl implements SharingService {
     }
 
     private DocumentShareResponse mapToDirectResponse(DocumentShare share, boolean isOwnerView) {
+        String normalizedFileType = previewHelper.normalizeFileType(share.getDocument().getFileType(), share.getDocument().getOriginalFileName());
+        com.demo.ai_study_hub.enums.PreviewMode previewMode = previewHelper.getPreviewMode(normalizedFileType);
+
         return DocumentShareResponse.builder()
                 .shareId(share.getShareId())
                 .documentId(share.getDocument().getDocumentId())
@@ -304,10 +308,18 @@ public class SharingServiceImpl implements SharingService {
                 .permission(share.getPermission())
                 .status(share.getStatus())
                 .createdAt(share.getCreatedAt())
+                .mimeType(previewHelper.getMimeType(normalizedFileType))
+                .resourceType(previewHelper.getResourceType(normalizedFileType))
+                .previewUrl(previewHelper.getPreviewUrl(share.getDocument().getFileUrl(), previewMode))
+                .downloadUrl("/api/documents/" + share.getDocument().getDocumentId() + "/download")
+                .previewMode(previewMode)
                 .build();
     }
 
     private GroupDocumentShareResponse mapToGroupResponse(GroupDocumentShare share, boolean canRevoke) {
+        String normalizedFileType = previewHelper.normalizeFileType(share.getDocument().getFileType(), share.getDocument().getOriginalFileName());
+        com.demo.ai_study_hub.enums.PreviewMode previewMode = previewHelper.getPreviewMode(normalizedFileType);
+
         return GroupDocumentShareResponse.builder()
                 .shareId(share.getShareId())
                 .documentId(share.getDocument().getDocumentId())
@@ -322,6 +334,11 @@ public class SharingServiceImpl implements SharingService {
                 .status(share.getStatus())
                 .createdAt(share.getCreatedAt())
                 .canRevoke(canRevoke)
+                .mimeType(previewHelper.getMimeType(normalizedFileType))
+                .resourceType(previewHelper.getResourceType(normalizedFileType))
+                .previewUrl(previewHelper.getPreviewUrl(share.getDocument().getFileUrl(), previewMode))
+                .downloadUrl("/api/documents/" + share.getDocument().getDocumentId() + "/download")
+                .previewMode(previewMode)
                 .build();
     }
 }

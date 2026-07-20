@@ -43,6 +43,7 @@ public class DocumentService {
     private final UsageService usageService;
     private final PlatformTransactionManager transactionManager;
     private final com.demo.ai_study_hub.repository.DocumentFavoriteRepository documentFavoriteRepository;
+    private final DocumentPreviewHelper previewHelper;
 
     public DocumentResponse uploadDocument(MultipartFile file, String title, String description, Integer subjectId, Integer folderId, String email) {
         if (title == null || title.trim().isEmpty()) {
@@ -299,10 +300,18 @@ public class DocumentService {
 
         validateDocumentAccess(doc, user);
 
+        String normalizedFileType = normalizeFileType(doc);
+        com.demo.ai_study_hub.enums.PreviewMode previewMode = previewHelper.getPreviewMode(normalizedFileType);
+
         return DocumentDownloadInfo.builder()
                 .fileUrl(doc.getFileUrl())
                 .fileName(resolveDownloadFileName(doc))
                 .contentType(resolveContentType(doc))
+                .mimeType(previewHelper.getMimeType(normalizedFileType))
+                .resourceType(previewHelper.getResourceType(normalizedFileType))
+                .previewUrl(previewHelper.getPreviewUrl(doc.getFileUrl(), previewMode))
+                .downloadUrl("/api/documents/" + doc.getDocumentId() + "/download")
+                .previewMode(previewMode)
                 .build();
     }
 
@@ -468,7 +477,9 @@ public class DocumentService {
         boolean canPublish = false;
         boolean canUnpublish = false;
 
-        boolean previewSupported = isPreviewSupported(doc);
+        String normalizedFileType = normalizeFileType(doc);
+        com.demo.ai_study_hub.enums.PreviewMode previewMode = previewHelper.getPreviewMode(normalizedFileType);
+        boolean previewSupported = previewMode != com.demo.ai_study_hub.enums.PreviewMode.FALLBACK;
         boolean isPublicAndApproved = "PUBLIC".equals(doc.getVisibility()) && "APPROVED".equals(doc.getApprovalStatus());
 
         if (requester != null) {
@@ -546,6 +557,11 @@ public class DocumentService {
                 .fileType(doc.getFileType())
                 .fileSize(doc.getFileSize())
                 .fileUrl(doc.getFileUrl())
+                .mimeType(previewHelper.getMimeType(normalizedFileType))
+                .resourceType(previewHelper.getResourceType(normalizedFileType))
+                .previewUrl(previewHelper.getPreviewUrl(doc.getFileUrl(), previewMode))
+                .downloadUrl("/api/documents/" + doc.getDocumentId() + "/download")
+                .previewMode(previewMode)
                 .publicId(doc.getPublicId())
                 .folderId(doc.getFolder() != null ? doc.getFolder().getFolderId() : null)
                 .folderName(doc.getFolder() != null ? doc.getFolder().getName() : null)
@@ -574,7 +590,9 @@ public class DocumentService {
     }
 
     public PublicDocumentResponse mapToPublicResponse(Document doc, String requesterEmail) {
-        boolean previewSupported = isPreviewSupported(doc);
+        String normalizedFileType = normalizeFileType(doc);
+        com.demo.ai_study_hub.enums.PreviewMode previewMode = previewHelper.getPreviewMode(normalizedFileType);
+        boolean previewSupported = previewMode != com.demo.ai_study_hub.enums.PreviewMode.FALLBACK;
         boolean isPublicAndApproved = "PUBLIC".equals(doc.getVisibility()) && "APPROVED".equals(doc.getApprovalStatus());
         String processingStatusVal = "PENDING";
         if (doc.getDocumentContent() != null) {
@@ -629,6 +647,11 @@ public class DocumentService {
                 .fileType(doc.getFileType())
                 .fileSize(doc.getFileSize())
                 .fileUrl(doc.getFileUrl())
+                .mimeType(previewHelper.getMimeType(normalizedFileType))
+                .resourceType(previewHelper.getResourceType(normalizedFileType))
+                .previewUrl(previewHelper.getPreviewUrl(doc.getFileUrl(), previewMode))
+                .downloadUrl("/api/documents/public/" + doc.getDocumentId() + "/download")
+                .previewMode(previewMode)
                 .visibility(doc.getVisibility())
                 .approvalStatus(doc.getApprovalStatus())
                 .processingStatus(processingStatusVal)
@@ -649,12 +672,7 @@ public class DocumentService {
     }
 
     private boolean isPreviewSupported(Document doc) {
-        String type = normalizeFileType(doc);
-        return "PDF".equals(type)
-                || "PNG".equals(type)
-                || "JPG".equals(type)
-                || "JPEG".equals(type)
-                || "TXT".equals(type);
+        return previewHelper.getPreviewMode(normalizeFileType(doc)) != com.demo.ai_study_hub.enums.PreviewMode.FALLBACK;
     }
 
     public String resolveDownloadFileName(Document doc) {
@@ -670,20 +688,7 @@ public class DocumentService {
     }
 
     public String resolveContentType(Document doc) {
-        String type = normalizeFileType(doc);
-        return switch (type) {
-            case "PDF" -> "application/pdf";
-            case "PNG" -> "image/png";
-            case "JPG", "JPEG" -> "image/jpeg";
-            case "TXT" -> "text/plain";
-            case "DOC" -> "application/msword";
-            case "DOCX" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-            case "PPT" -> "application/vnd.ms-powerpoint";
-            case "PPTX" -> "application/vnd.openxmlformats-officedocument.presentationml.presentation";
-            case "XLS" -> "application/vnd.ms-excel";
-            case "XLSX" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-            default -> "application/octet-stream";
-        };
+        return previewHelper.getMimeType(normalizeFileType(doc));
     }
 
     private String normalizeFileType(Document doc) {
@@ -749,10 +754,18 @@ public class DocumentService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
 
+        String normalizedFileType = normalizeFileType(doc);
+        com.demo.ai_study_hub.enums.PreviewMode previewMode = previewHelper.getPreviewMode(normalizedFileType);
+
         return DocumentDownloadInfo.builder()
                 .fileUrl(doc.getFileUrl())
                 .fileName(resolveDownloadFileName(doc))
                 .contentType(resolveContentType(doc))
+                .mimeType(previewHelper.getMimeType(normalizedFileType))
+                .resourceType(previewHelper.getResourceType(normalizedFileType))
+                .previewUrl(previewHelper.getPreviewUrl(doc.getFileUrl(), previewMode))
+                .downloadUrl("/api/documents/public/" + doc.getDocumentId() + "/download")
+                .previewMode(previewMode)
                 .build();
     }
 
