@@ -605,3 +605,11 @@ Provides demo and verification steps for AI study tools.
 - [ ] Changing password with incorrect current password fails
 - [ ] Changing password with invalid new password fails
 
+
+- [ ] User can preview PDF files natively
+- [ ] User can preview IMAGE files natively
+- [ ] User can preview DOCX/PPTX/XLSX using Office Viewer
+- [ ] Office Viewer shows a fallback hint
+- [ ] Unsupported files show a graceful Fallback UI
+- [ ] Fallback UI provides Open and Download buttons
+
