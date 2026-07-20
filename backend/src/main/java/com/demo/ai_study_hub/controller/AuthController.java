@@ -127,6 +127,7 @@ public class AuthController {
             data.put("userId", user.getUserId());
             data.put("email", user.getEmail());
             data.put("fullName", user.getFullName());
+            data.put("avatarUrl", user.getAvatarUrl());
             data.put("role", normalizedRole);
             data.put("tier", user.getTier());
             data.put("status", user.getStatus());

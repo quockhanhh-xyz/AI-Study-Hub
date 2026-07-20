@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       e.preventDefault();
       const val = searchInput.value.trim();
       if (val) {
-        window.location.href = `documents.html?search=${encodeURIComponent(val)}`;
+        window.location.href = `my-library.html?view=documents&search=${encodeURIComponent(val)}`;
       }
     });
   }

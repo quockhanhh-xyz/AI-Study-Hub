@@ -6,6 +6,11 @@ import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.repository.UserRepository;
 import com.demo.ai_study_hub.service.TierPolicyService;
 import com.demo.ai_study_hub.service.UsageService;
+import com.demo.ai_study_hub.service.AccountAvatarService;
+import com.demo.ai_study_hub.service.AccountPasswordService;
+import com.demo.ai_study_hub.service.AccountProfileService;
+import org.springframework.web.multipart.MultipartFile;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +27,9 @@ public class AccountController {
     private final UserRepository userRepository;
     private final TierPolicyService tierPolicyService;
     private final UsageService usageService;
+    private final AccountProfileService accountProfileService;
+    private final AccountAvatarService accountAvatarService;
+    private final AccountPasswordService accountPasswordService;
 
     @GetMapping("/entitlements")
     public ResponseEntity<ApiResponse<EntitlementResponse>> getEntitlements(Principal principal) {
@@ -94,6 +102,58 @@ public class AccountController {
                     .build();
 
             return ResponseEntity.ok(ApiResponse.success(response, "Usage retrieved successfully"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        }
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<ApiResponse<ProfileResponse>> getProfile(Principal principal) {
+        try {
+            User user = getUser(principal);
+            ProfileResponse response = accountProfileService.getProfile(user);
+            return ResponseEntity.ok(ApiResponse.success(response, "Profile retrieved successfully"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        }
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<ApiResponse<ProfileResponse>> updateProfile(
+            @Valid @RequestBody UpdateProfileRequest request,
+            Principal principal) {
+        try {
+            User user = getUser(principal);
+            ProfileResponse response = accountProfileService.updateProfile(user, request);
+            return ResponseEntity.ok(ApiResponse.success(response, "Profile updated successfully"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        }
+    }
+
+    @PostMapping("/avatar")
+    public ResponseEntity<ApiResponse<ProfileResponse>> uploadAvatar(
+            @RequestParam("file") MultipartFile file,
+            Principal principal) {
+        try {
+            User user = getUser(principal);
+            ProfileResponse response = accountAvatarService.uploadAvatar(user, file);
+            return ResponseEntity.ok(ApiResponse.success(response, "Avatar uploaded successfully"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<ApiResponse<Object>> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            Principal principal) {
+        try {
+            User user = getUser(principal);
+            accountPasswordService.changePassword(user, request);
+            return ResponseEntity.ok(ApiResponse.success(null, "Password changed successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         }

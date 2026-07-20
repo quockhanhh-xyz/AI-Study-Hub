@@ -6,6 +6,13 @@
  */
 
 document.addEventListener("DOMContentLoaded", async function () {
+  // --- BACKWARD COMPATIBILITY REDIRECT ---
+  const folderId = new URLSearchParams(window.location.search).get("folderId");
+  let redirectUrl = "my-library.html?view=folders";
+  if (folderId) redirectUrl += `&folderId=${folderId}`;
+  window.location.replace(redirectUrl);
+  return;
+
   if (window.authReady) {
     const isAuthenticated = await window.authReady;
     if (!isAuthenticated) return;
