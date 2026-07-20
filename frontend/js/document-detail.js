@@ -331,11 +331,25 @@ function renderDocument(doc) {
     const viewDescriptionText = document.getElementById("viewDescriptionText");
     const viewSubjectText = document.getElementById("viewSubjectText");
     if (viewTitleText) viewTitleText.textContent = doc.title || "–";
-    if (viewDescriptionText) viewDescriptionText.textContent = doc.description || "No description provided.";
+    if (viewDescriptionText) {
+        if (doc.description) {
+            viewDescriptionText.textContent = doc.description;
+            viewDescriptionText.classList.remove("empty");
+        } else {
+            viewDescriptionText.textContent = "No description added.";
+            viewDescriptionText.classList.add("empty");
+        }
+    }
     if (viewSubjectText) {
-        viewSubjectText.textContent = doc.subject
-            ? doc.subject
-            : (doc.subjectCode ? `${doc.subjectCode} – ${doc.subjectName}` : "No subject");
+        if (doc.subject || doc.subjectCode) {
+            viewSubjectText.textContent = doc.subject
+                ? doc.subject
+                : `${doc.subjectCode} \u2013 ${doc.subjectName}`;
+            viewSubjectText.classList.remove("empty");
+        } else {
+            viewSubjectText.textContent = "No subject";
+            viewSubjectText.classList.add("empty");
+        }
     }
     
     // Ensure save button is disabled when initially loading

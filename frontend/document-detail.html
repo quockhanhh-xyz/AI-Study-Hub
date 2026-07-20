@@ -965,11 +965,19 @@
       cursor: default;
     }
     
-    .details-view-mode {
-      margin-bottom: 24px;
+    /* Details view polish */
+    .details-view-card {
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
     }
     .details-view-field {
-      margin-bottom: 16px;
+      margin-bottom: 14px;
+    }
+    .details-view-field:last-child {
+      margin-bottom: 0;
     }
     .details-view-label {
       font-size: 11px;
@@ -983,6 +991,31 @@
       font-size: 14px;
       color: var(--text);
       line-height: 1.5;
+    }
+    .details-view-value.empty {
+      color: var(--muted);
+      font-style: italic;
+    }
+    /* Ghost Edit button */
+    .btn-edit-details {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-edit-details:hover {
+      background: var(--surface-soft);
+      border-color: var(--primary-border);
+      color: var(--primary);
     }
     .danger-zone-wrapper {
       margin-top: auto;
@@ -1552,7 +1585,7 @@
             <div class="inspector-panes">
               <div id="inspectorPaneDetails" class="inspector-tab-pane active">
                 <section class="view-section" id="detailsViewSection">
-                  <div class="details-view-mode">
+                  <div class="details-view-card">
                     <div class="details-view-field">
                       <div class="details-view-label">Title</div>
                       <div class="details-view-value" id="viewTitleText"></div>
@@ -1566,7 +1599,10 @@
                       <div class="details-view-value" id="viewSubjectText"></div>
                     </div>
                   </div>
-                  <button type="button" class="btn btn-secondary" id="enableEditBtn" onclick="toggleEditMode(true)" style="width:100%;">Edit details</button>
+                  <button type="button" class="btn-edit-details" id="enableEditBtn" onclick="toggleEditMode(true)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Edit details
+                  </button>
                 </section>
 
                 <section class="edit-section" id="detailsEditSection" style="display:none;">
