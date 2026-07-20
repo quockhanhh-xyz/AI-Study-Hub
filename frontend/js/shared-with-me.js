@@ -143,7 +143,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         <button type="button" class="${favClass}" title="${favTitle}" style="background: none; border: none; cursor: pointer;">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
         </button>
-        <span class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-size: 13px;">Open</span>
+        <span style="color: var(--muted); margin-left: 8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </span>
       </div>
     `;
 
@@ -173,7 +175,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
-        <span class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-size: 13px;">Open Folder</span>
+        <span style="color: var(--muted); margin-left: 8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </span>
       </div>
     `;
 

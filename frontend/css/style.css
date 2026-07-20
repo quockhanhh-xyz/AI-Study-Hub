@@ -2625,8 +2625,9 @@ textarea.success {
   transform: translateY(-10px);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
-  overflow: hidden;
-  padding: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 6px;
 }
 
 .custom-select.active .custom-select-options {
@@ -3794,8 +3795,7 @@ svg {
 }
 
 .custom-select-list-container {
-  max-height: 240px;
-  overflow-y: auto;
+  /* Let this container grow naturally inside the scrolling parent .custom-select-options */
 }
 
 /* ===== BREADCRUMB/TEXT BACK BUTTON ===== */
