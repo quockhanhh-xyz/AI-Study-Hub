@@ -1053,6 +1053,69 @@
       border-color: var(--primary-border);
       color: var(--primary);
     }
+    /* Sharing empty state */
+    .shares-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 0;
+    }
+    .shares-empty-text {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .btn-ghost-sm {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text);
+      font-size: 12px;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-ghost-sm:hover {
+      border-style: solid;
+      border-color: var(--primary-border);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+    /* Public document soft box */
+    .public-doc-info {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      background: #f8faff;
+      border: 1px solid #dbeafe;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      color: #2563eb;
+    }
+    .public-doc-info svg {
+      flex-shrink: 0;
+      margin-top: 1px;
+      color: #3b82f6;
+    }
+    .public-doc-info strong {
+      display: block;
+      margin-bottom: 2px;
+      color: #1d4ed8;
+      font-size: 12px;
+    }
+    .public-doc-info p {
+      margin: 0;
+      color: #3b82f6;
+      line-height: 1.4;
+    }
     /* Danger zone wrapper */
     .danger-zone-wrapper {
       margin-top: 24px;
@@ -1689,30 +1752,35 @@
 
               <div id="inspectorPaneSharing" class="inspector-tab-pane">
                 <section id="sharesPanel" class="shares-panel" style="display:block;">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
-                    <h2 style="margin:0;">Sharing management</h2>
-                  </div>
-                  
-                  <div id="publicVisibilityNote" style="display:none; margin-bottom: 16px; padding: 10px; background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; border-radius: 6px; font-size: 12px;">
-                    <strong>Public Document</strong><br>
-                    People in Community Library can open and download this document.
+                  <div id="publicVisibilityNote" class="public-doc-info" style="display:none;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <div>
+                      <strong>Public in Community Library</strong>
+                      <p>People in Community Library can open and download this document.</p>
+                    </div>
                   </div>
 
                   <div class="share-block">
                     <h3>Direct user shares</h3>
                     <div id="directSharesList" class="member-list"></div>
-                    <div id="noDirectShares" class="shares-empty-state" style="display:none; padding: 12px; background: var(--background); border-radius: 6px;">
-                      <p class="shares-empty-text" style="margin:0 0 8px; font-size:12px;">No direct shares yet.</p>
-                      <button type="button" class="btn btn-secondary btn-sm" id="emptyShareUserLink" style="font-size:12px; padding:4px 8px;">Share with user</button>
+                    <div id="noDirectShares" class="shares-empty-state" style="display:none;">
+                      <p class="shares-empty-text">No direct shares yet.</p>
+                      <button type="button" class="btn-ghost-sm" id="emptyShareUserLink">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                        Share with user
+                      </button>
                     </div>
                   </div>
 
                   <div class="share-block">
                     <h3>Group shares</h3>
                     <div id="groupSharesList" class="member-list"></div>
-                    <div id="noGroupShares" class="shares-empty-state" style="display:none; padding: 12px; background: var(--background); border-radius: 6px;">
-                      <p class="shares-empty-text" style="margin:0 0 8px; font-size:12px;">Not shared in any groups.</p>
-                      <button type="button" class="btn btn-secondary btn-sm" id="emptyShareGroupLink" style="font-size:12px; padding:4px 8px;">Share with group</button>
+                    <div id="noGroupShares" class="shares-empty-state" style="display:none;">
+                      <p class="shares-empty-text">Not shared with any groups yet.</p>
+                      <button type="button" class="btn-ghost-sm" id="emptyShareGroupLink">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        Share with group
+                      </button>
                     </div>
                   </div>
                 </section>
