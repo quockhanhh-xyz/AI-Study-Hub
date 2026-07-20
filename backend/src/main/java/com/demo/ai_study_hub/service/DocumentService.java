@@ -799,6 +799,7 @@ public class DocumentService {
         doc.setVisibility("PUBLIC");
         doc.setApprovalStatus("PENDING");
         doc.setPublishedAt(null);
+        doc.setRejectReason(null);
         documentRepository.save(doc);
 
         return mapToResponse(doc, owner);

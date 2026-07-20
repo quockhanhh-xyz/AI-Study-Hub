@@ -667,11 +667,11 @@ document.addEventListener("DOMContentLoaded", function () {
       reqMsg.textContent = "";
       reqMsg.className = "helper-text";
     }
-    reqModal.classList.add("active");
+    reqModal.classList.add("open");
   }
 
   function closeReqModal() {
-    if (reqModal) reqModal.classList.remove("active");
+    if (reqModal) reqModal.classList.remove("open");
   }
 
   if (openReqLink) {
