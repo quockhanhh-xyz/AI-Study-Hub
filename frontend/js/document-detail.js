@@ -1722,7 +1722,7 @@ function updateAskAvailability() {
                 if (headEl) headEl.textContent = "Prepare this document for AI Q&A";
                 if (msgEl) msgEl.textContent = "We’ll extract the content so AI can answer questions from this document.";
                 if (actionsEl) {
-                    actionsEl.innerHTML = `<button class="btn btn-primary" onclick="window.triggerDocumentProcessing('${currentDocumentId}')">Process for AI</button>`;
+                    actionsEl.innerHTML = `<button class="btn btn-primary" onclick="handleAIProcessAction('process')">Process for AI</button>`;
                 }
             } else {
                 if (iconEl) iconEl.textContent = "⚠️";
@@ -1961,13 +1961,13 @@ function updateAiToolsAvailability() {
             const actionsEl = document.getElementById("aiToolsProcessingActions");
             if (actionsEl) {
                 actionsEl.innerHTML = "";
-                if (aiToolsProcessingStatus === "UNPROCESSED" || aiToolsProcessingStatus === "FAILED" || aiToolsProcessingStatus === "NOT_READY") {
+                if (aiToolsProcessingStatus === "PENDING" || aiToolsProcessingStatus === "FAILED" || aiToolsProcessingStatus === "EMPTY_CONTENT" || aiToolsProcessingStatus === "UNSUPPORTED") {
                     const btn = document.createElement("button");
                     btn.type = "button";
                     btn.className = "btn btn-primary";
-                    btn.textContent = "Process for AI";
+                    btn.textContent = aiToolsProcessingStatus === "FAILED" ? "Retry Processing" : "Process for AI";
                     btn.onclick = () => {
-                        window.startAiProcessing(currentDocumentId);
+                        handleAIProcessAction("process");
                     };
                     actionsEl.appendChild(btn);
                 } else if (aiToolsProcessingStatus === "PENDING" || aiToolsProcessingStatus === "PROCESSING") {
