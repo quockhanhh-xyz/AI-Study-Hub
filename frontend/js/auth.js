@@ -229,11 +229,13 @@
     toggleButtonState(submitBtn, true, "Logging in...");
 
     try {
-      const result = await post("/api/auth/login", { email, password });
-      const user = result.data;
+      await post("/api/auth/login", { email, password });
+      const sessionCheck = await get("/api/auth/me", { skipUnauthorizedRedirect: true });
+      const user = sessionCheck?.data;
 
       if (!user) {
-        throw new Error("Login response payload data is missing.");
+        localStorage.removeItem("currentUser");
+        throw new Error("Login succeeded but the browser did not store the session cookie. Please clear site data and log in again.");
       }
 
       // Explicitly store user metadata for UI consumption, strictly excluding token details
@@ -247,7 +249,7 @@
         })
       );
 
-      setMessage("loginMessage", result.message || "Login successfully.", "success");
+      setMessage("loginMessage", "Login successfully.", "success");
 
       // Trigger confetti celebration from the message position
       if (typeof confetti === "function") {

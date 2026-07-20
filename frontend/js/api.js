@@ -1,12 +1,39 @@
-if (window.location.hostname === "0.0.0.0") {
+const LOCALHOST_ALIASES = ["0.0.0.0", "127.0.0.1"];
+
+if (LOCALHOST_ALIASES.includes(window.location.hostname)) {
   window.location.replace(
     `${window.location.protocol}//localhost:${window.location.port}${window.location.pathname}${window.location.search}`
   );
 }
 
 // Global variable defining the Backend API base URL
-const API_HOST = window.location.hostname === "0.0.0.0" ? "localhost" : window.location.hostname;
+const API_HOST = LOCALHOST_ALIASES.includes(window.location.hostname) ? "localhost" : window.location.hostname;
 const API_BASE_URL = `${window.location.protocol}//${API_HOST}:8080`;
+
+function redirectToLoginWithCurrentIntent() {
+  const currentPage = window.location.pathname.split("/").pop() || "dashboard.html";
+  const currentIntent = `${currentPage}${window.location.search || ""}`;
+  const isGuestAuthPage = ["login.html", "register.html", "verify-otp.html"].includes(currentPage);
+
+  if (isGuestAuthPage) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  window.location.href = `login.html?redirect=${encodeURIComponent(currentIntent)}`;
+}
+
+async function isCurrentSessionStillValid() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      method: "GET",
+      credentials: "include"
+    });
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}
 
 /**
  * Shared API request helper.
@@ -52,6 +79,23 @@ async function apiRequest(endpoint, options = {}) {
         `Unauthorized (HTTP 401) or Blocked for ${endpoint} - Handled locally by calling component.`
       );
     } else {
+      if (endpoint !== "/api/auth/me" && data?.code !== "AUTH_ACCOUNT_BLOCKED") {
+        const sessionStillValid = await isCurrentSessionStillValid();
+        if (sessionStillValid) {
+          const errorMessage =
+            data.message ||
+            data.error ||
+            rawText ||
+            "This request was rejected even though your login session is still active.";
+
+          const error = new Error(errorMessage);
+          error.status = response.status;
+          error.code = data?.code;
+          error.data = data?.data;
+          throw error;
+        }
+      }
+
       console.warn(
         "Session expired, invalid, or account blocked. Executing global redirect to login..."
       );
@@ -59,7 +103,7 @@ async function apiRequest(endpoint, options = {}) {
         alert("Your account has been blocked by an administrator.");
       }
       localStorage.removeItem("currentUser");
-      window.location.href = "login.html";
+      redirectToLoginWithCurrentIntent();
     }
 
     // Preserve backend error message whenever possible

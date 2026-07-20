@@ -148,7 +148,7 @@
                 <div class="dashboard-header-content">
                     <div>
                         <h1 style="margin: 0; font-size: 26px; font-weight: 800; color: var(--text);">Trash</h1>
-                        <p class="dashboard-subtitle" style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Restore deleted items or permanently remove them from your workspace.</p>
+                        <p class="dashboard-subtitle" style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Items in Trash are permanently deleted after 30 days.</p>
                     </div>
                 </div>
                 <div class="header-actions">
@@ -182,7 +182,10 @@
                     </div>
                     <div class="empty-title">Trash is empty</div>
                     <p>Deleted folders and documents will appear here.</p>
-                    <a href="dashboard.html" class="btn btn-secondary empty-action" style="width: auto !important;">Go to Dashboard</a>
+                    <div style="display: flex; gap: 12px; justify-content: center; margin-top: 16px;">
+                        <a href="documents.html" class="btn btn-secondary" style="width: auto !important; text-decoration: none;">My Documents</a>
+                        <a href="folders.html" class="btn btn-secondary" style="width: auto !important; text-decoration: none;">My Folders</a>
+                    </div>
                 </div>
             </div>
         </main>
@@ -203,7 +206,7 @@
     <div id="emptyTrashModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="emptyTrashTitle">
         <div class="modal-box">
             <h3 id="emptyTrashTitle" class="modal-title-danger">Empty Trash?</h3>
-            <p id="emptyTrashMessage" class="modal-warning-text">All folders and documents in the trash will be permanently deleted. This action cannot be undone.</p>
+            <p id="emptyTrashMessage" class="modal-warning-text">All items in Trash will be permanently deleted. This action cannot be undone.</p>
             <div id="emptyTrashError" class="modal-error" role="alert" aria-live="polite"></div>
             <div class="modal-actions">
                 <button type="button" id="cancelEmptyTrashBtn" class="btn btn-secondary">Cancel</button>

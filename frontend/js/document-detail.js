@@ -788,20 +788,20 @@ async function handleSave() {
 async function handleDelete() {
     const confirmed = await window.confirmAction({
         title: "Move this document to Trash?",
-        message: "You can restore it later from Trash.",
-        confirmText: "Delete",
+        message: "It will be removed from My Documents and any folders where it appears.\nYou can restore it from Trash within 30 days.",
+        confirmText: "Move to Trash",
         danger: true
     });
     if (!confirmed) return;
 
     try {
         await deleteDocument(currentDocumentId);
-        window.showToast("Document deleted.", "success");
+        window.showToast("Document moved to Trash.", "success");
         setTimeout(() => {
             window.location.href = "dashboard.html";
         }, 1200);
     } catch (err) {
-        window.showToast(err.message || "Failed to delete document.", "error");
+        window.showToast(err.message || "Failed to move document to Trash.", "error");
     }
 }
 

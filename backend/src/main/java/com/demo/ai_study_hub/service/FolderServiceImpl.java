@@ -4,6 +4,7 @@ import com.demo.ai_study_hub.dto.FolderRequest;
 import com.demo.ai_study_hub.dto.FolderResponse;
 import com.demo.ai_study_hub.entity.Folder;
 import com.demo.ai_study_hub.entity.User;
+import com.demo.ai_study_hub.entity.Document;
 import com.demo.ai_study_hub.repository.DocumentRepository;
 import com.demo.ai_study_hub.repository.FolderRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import com.demo.ai_study_hub.exception.QuotaExceededException;
+import java.util.ArrayList;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -131,16 +133,34 @@ public class FolderServiceImpl implements FolderService {
         User owner = getUser(email);
         Folder folder = getValidatedFolder(folderId, owner);
 
-        long activeDocs = documentRepository.countByFolderAndStatus(folder, "ACTIVE");
-        long activeSubFolders = folderRepository.countByParentFolderAndStatus(folder, "ACTIVE");
-        if (activeDocs > 0 || activeSubFolders > 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Folder must be empty before deleting.");
-        }
+        List<Folder> toDeleteFolders = new ArrayList<>();
+        List<Document> toDeleteDocuments = new ArrayList<>();
+        toDeleteFolders.add(folder);
+        collectActiveSubtree(folder, toDeleteFolders, toDeleteDocuments);
 
-        folder.setStatus("DELETED");
-        folder.setDeletedAt(LocalDateTime.now());
-        folderRepository.save(folder);
+        LocalDateTime now = LocalDateTime.now();
+        for (Folder f : toDeleteFolders) {
+            f.setStatus("DELETED");
+            f.setDeletedAt(now);
+            folderRepository.save(f);
+        }
+        for (Document d : toDeleteDocuments) {
+            d.setStatus("DELETED");
+            d.setDeletedAt(now);
+            documentRepository.save(d);
+        }
+    }
+
+    private void collectActiveSubtree(Folder current, List<Folder> toDeleteFolders, List<Document> toDeleteDocuments) {
+        List<Folder> subfolders = folderRepository.findByOwnerAndStatusAndParentFolder(current.getOwner(), "ACTIVE", current);
+        for (Folder sub : subfolders) {
+            toDeleteFolders.add(sub);
+            collectActiveSubtree(sub, toDeleteFolders, toDeleteDocuments);
+        }
+        List<Document> docs = documentRepository.findByFolder(current).stream()
+                .filter(d -> "ACTIVE".equals(d.getStatus()))
+                .collect(Collectors.toList());
+        toDeleteDocuments.addAll(docs);
     }
 
 
