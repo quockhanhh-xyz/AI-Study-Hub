@@ -4056,6 +4056,117 @@ svg {
   gap: 24px;
 }
 
+/* AI Tools Tool Block */
+.ai-tools-tool-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ai-tools-tool-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.ai-tools-tool-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--primary-light);
+  color: var(--primary);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.ai-tools-tool-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.ai-tools-tool-header p {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.ai-tools-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-tools-input-row-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ai-tools-input-row-flex label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.ai-tools-input-row-flex input[type="number"],
+.ai-tools-input-row-flex select {
+  width: 120px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  font-size: 14px;
+}
+
+.ai-tools-input-group > label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-tools-input-group > label span:not(.helper-text-inline) {
+  font-weight: normal;
+  color: var(--text-muted);
+}
+
+.ai-tools-input-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.ai-tools-char-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: right;
+  display: block;
+}
+
+.ai-tools-limit-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+
 .ai-tools-not-ready {
   background: var(--primary-light);
   border: 1px solid var(--primary-border);

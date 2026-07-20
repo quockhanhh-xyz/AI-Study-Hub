@@ -26,8 +26,7 @@ const ICON_PROFILE = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBo
 
 const NAVIGATION_MENU = [
   { name: "Dashboard", icon: ICON_HOME, url: "dashboard.html", requiresAuth: true },
-  { name: "My Documents", icon: ICON_DOCS, url: "documents.html", requiresAuth: true },
-  { name: "Folders", icon: ICON_FOLDER, url: "folders.html", requiresAuth: true },
+  { name: "My Library", icon: ICON_DOCS, url: "my-library.html", requiresAuth: true },
   { name: "Shared with Me", icon: ICON_SHARED, url: "shared-with-me.html", requiresAuth: true },
   { name: "Study Groups", icon: ICON_GROUPS, url: "groups.html", requiresAuth: true },
   { name: "Community Library", icon: ICON_COMMUNITY, url: "community.html", requiresAuth: false },

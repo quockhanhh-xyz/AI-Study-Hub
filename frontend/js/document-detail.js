@@ -25,7 +25,7 @@ function handleBack() {
     if (currentIsCommunityView) {
         window.location.href = "community.html";
     } else {
-        window.location.href = "dashboard.html";
+        window.location.href = "documents.html";
     }
 }
 
@@ -107,9 +107,17 @@ function setViewerAiProcessingStatus(status) {
     updateAiToolsAvailability();
 
     const processingStatusBadge = document.getElementById("processingStatusBadge");
+    const aiStatusInlineRow = document.getElementById("aiStatusInlineRow");
+    const aiStatusInlineDot = document.getElementById("aiStatusInlineDot");
     if (processingStatusBadge) {
-        processingStatusBadge.textContent = nextStatus === "COMPLETED" ? "Ready for AI" : nextStatus;
-        processingStatusBadge.className = "status-badge " + nextStatus.toLowerCase();
+        const label = nextStatus === "COMPLETED" ? "AI Ready" : (nextStatus === "UNSUPPORTED" ? "AI: Not supported" : "AI: " + nextStatus.charAt(0) + nextStatus.slice(1).toLowerCase());
+        processingStatusBadge.textContent = label;
+    }
+    if (aiStatusInlineDot) {
+        aiStatusInlineDot.className = "ai-status-dot " + nextStatus.toLowerCase();
+    }
+    if (aiStatusInlineRow) {
+        aiStatusInlineRow.style.display = "flex";
     }
 
     const toolsPane = document.getElementById("inspectorPaneTools");
@@ -164,6 +172,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         params.get("mode") === "public";
 
     initInspectorTabs();
+    initEditFormListeners();
 
     if (currentIsCommunityView) {
         const backBtn = document.getElementById("detailBackBtn");
@@ -230,7 +239,48 @@ async function loadPage(id, { isAuthenticated, isCommunityView }) {
 // ── Render document info ──────────────────────────────────────────────────────
 function renderDocument(doc) {
     document.getElementById("fileTypeBadge").textContent = (doc.fileType || "–").toUpperCase();
-    document.getElementById("docTitle").textContent = doc.title || "–";
+    const docTitleEl = document.getElementById("docTitle");
+    if (docTitleEl) {
+        docTitleEl.textContent = doc.title || "–";
+        docTitleEl.title = doc.title || "";
+    }
+
+    renderContextualTopBar(doc);
+
+    // Update Document Reading Header
+    const previewHeaderTitle = document.getElementById("previewHeaderTitle");
+    const previewHeaderMetaText = document.getElementById("previewHeaderMetaText");
+    const previewHeaderAiBadge = document.getElementById("previewHeaderAiBadge");
+    
+    if (previewHeaderTitle) {
+        previewHeaderTitle.textContent = doc.title || "Document Preview";
+        previewHeaderTitle.title = doc.title || "Document Preview";
+    }
+    
+    if (previewHeaderMetaText) {
+        const subjectCtx = doc.subject ? doc.subject : (doc.subjectName ? `${doc.subjectCode} - ${doc.subjectName}` : "");
+        const sizeStr = formatFileSize(doc.fileSize);
+        const typeStr = (doc.fileType || "").toUpperCase();
+        previewHeaderMetaText.textContent = `${subjectCtx ? subjectCtx + ' \u00B7 ' : ''}${typeStr} \u00B7 ${sizeStr}`;
+    }
+    
+    if (previewHeaderAiBadge) {
+        const pStatus = doc.processingStatus || "PENDING";
+        previewHeaderAiBadge.className = `preview-header-badge ai-${pStatus.toLowerCase()}`;
+        
+        let label = "AI: Pending";
+        if (pStatus === "COMPLETED") label = "AI Ready";
+        else if (pStatus === "PROCESSING") label = "AI Processing";
+        else if (pStatus === "FAILED") label = "AI Failed";
+        else if (pStatus === "UNSUPPORTED") label = "Not ready for AI";
+        
+        previewHeaderAiBadge.textContent = label;
+        previewHeaderAiBadge.style.display = "inline-flex";
+        
+        previewHeaderAiBadge.onclick = () => {
+            setActiveTab("ai", true);
+        };
+    }
 
     // Hide email in community view to prevent exposure
     const docUploadedBy = document.getElementById("docUploadedBy");
@@ -249,9 +299,6 @@ function renderDocument(doc) {
     }
 
     document.getElementById("docDescription").textContent = doc.description || "No description provided.";
-    document.getElementById("docSubject").textContent = doc.subject
-        ? doc.subject
-        : (doc.subjectCode ? `${doc.subjectCode} – ${doc.subjectName}` : "No subject");
     document.getElementById("docFileSize").textContent = formatFileSize(doc.fileSize);
     document.getElementById("docCreatedAt").textContent = formatDate(doc.createdAt);
 
@@ -280,11 +327,26 @@ function renderDocument(doc) {
     }
 
     const processingStatusBadge = document.getElementById("processingStatusBadge");
+    const aiStatusInlineRow = document.getElementById("aiStatusInlineRow");
+    const aiStatusInlineDot = document.getElementById("aiStatusInlineDot");
     if (processingStatusBadge) {
         const pStatus = doc.processingStatus || "PENDING";
-        processingStatusBadge.textContent = pStatus === "COMPLETED" ? "Ready for AI" : pStatus;
-        processingStatusBadge.style.display = "inline-flex";
-        processingStatusBadge.className = "status-badge " + pStatus.toLowerCase();
+        const label = pStatus === "COMPLETED" ? "AI Ready" : (pStatus === "UNSUPPORTED" ? "AI: Not supported" : "AI: " + pStatus.charAt(0) + pStatus.slice(1).toLowerCase());
+        processingStatusBadge.textContent = label;
+        if (aiStatusInlineDot) aiStatusInlineDot.className = "ai-status-dot " + pStatus.toLowerCase();
+        if (aiStatusInlineRow) aiStatusInlineRow.style.display = "flex";
+    }
+
+    const visibilityStatusContent = document.getElementById("visibilityStatusContent");
+    const privateVisibilityNote = document.getElementById("privateVisibilityNote");
+    if (visibilityStatusContent && privateVisibilityNote) {
+        if (doc.visibility === "PUBLIC") {
+            visibilityStatusContent.style.display = "flex";
+            privateVisibilityNote.style.display = "none";
+        } else {
+            visibilityStatusContent.style.display = "none";
+            privateVisibilityNote.style.display = "flex";
+        }
     }
 
     // ── Favorite star button (Step: Favorite/Saved Documents) ──
@@ -313,14 +375,44 @@ function renderDocument(doc) {
     if (editTitle) editTitle.value = doc.title || "";
     if (editDesc) editDesc.value = doc.description || "";
 
+    const viewTitleText = document.getElementById("viewTitleText");
+    const viewDescriptionText = document.getElementById("viewDescriptionText");
+    const viewSubjectText = document.getElementById("viewSubjectText");
+    if (viewTitleText) viewTitleText.textContent = doc.title || "–";
+    if (viewDescriptionText) {
+        if (doc.description) {
+            viewDescriptionText.textContent = doc.description;
+            viewDescriptionText.classList.remove("empty");
+        } else {
+            viewDescriptionText.textContent = "No description added.";
+            viewDescriptionText.classList.add("empty");
+        }
+    }
+    if (viewSubjectText) {
+        if (doc.subject || doc.subjectCode) {
+            viewSubjectText.textContent = doc.subject
+                ? doc.subject
+                : `${doc.subjectCode} \u2013 ${doc.subjectName}`;
+            viewSubjectText.classList.remove("empty");
+        } else {
+            viewSubjectText.textContent = "No subject";
+            viewSubjectText.classList.add("empty");
+        }
+    }
+    
+    // Ensure save button is disabled when initially loading
+    const saveBtn = document.getElementById("saveBtn");
+    if (saveBtn) saveBtn.disabled = true;
+
     // ── Action buttons based on permission flags from backend ──
     const openBtn = document.getElementById("openFileBtn");
     const downloadBtn = document.getElementById("downloadFileBtn");
     const shareBtn = document.getElementById("shareBtn");
     const moveBtn = document.getElementById("moveBtn");
-    const publishBtn = document.getElementById("publishBtn");
-    const unpublishBtn = document.getElementById("unpublishBtn");
+    const publishBtn = document.getElementById("sharingPublishBtn");
+    const unpublishBtn = document.getElementById("sharingUnpublishBtn");
     const documentActionRow = document.getElementById("documentActionRow");
+    const actionRowDesc = document.getElementById("actionRowDesc");
 
     currentDocumentFolderId = doc.folderId;
     // ── AI Processing panel (Step 9) — owner only ──
@@ -375,17 +467,22 @@ function renderDocument(doc) {
         }
     }
 
+    // Toggle Share Action row helper description
+    if (actionRowDesc) {
+        actionRowDesc.style.display = (!currentIsCommunityView && doc.canShare) ? "block" : "none";
+    }
+
     // Edit section — only the owner has canEdit
-    const editSec = document.querySelector(".edit-section");
-    if (editSec) {
-        editSec.style.display =
+    const viewSec = document.getElementById("detailsViewSection");
+    if (viewSec) {
+        viewSec.style.display =
             !currentIsCommunityView && doc.canEdit ? "block" : "none";
     }
 
     // Delete button — only the owner has canDelete
-    const dangerZone = document.querySelector(".inspector-danger-zone");
-    if (dangerZone) {
-        dangerZone.style.display =
+    const detailsDangerZone = document.getElementById("detailsDangerZone");
+    if (detailsDangerZone) {
+        detailsDangerZone.style.display =
             !currentIsCommunityView && doc.canDelete ? "block" : "none";
     }
 
@@ -411,7 +508,7 @@ function renderDocument(doc) {
 
     if (documentActionRow) {
         const hasDocumentActions = !currentIsCommunityView && (
-            doc.canShare || doc.canMove || doc.canPublish || doc.canUnpublish
+            doc.canShare || doc.canMove
         );
         documentActionRow.style.display = hasDocumentActions ? "flex" : "none";
     }
@@ -420,6 +517,8 @@ function renderDocument(doc) {
     if (typeof renderDocumentPreview === "function") {
         renderDocumentPreview(doc);
     }
+    // Initialize Find in Document search bar based on mime type
+    initPreviewSearch(doc.mimeType || doc.fileType || "");
 
     // Configure Inspector panel visibility and defaults
     const tabsContainer = document.querySelector(".inspector-tabs-container");
@@ -487,6 +586,7 @@ function renderDocument(doc) {
             tabPanes.style.display = "none";
         }
     }
+    initTopBarSearch();
 }
 
 
@@ -753,6 +853,36 @@ function renderSubjectOptions(subjects, currentSubjectId) {
     }
 }
 
+// ── View/Edit Mode ────────────────────────────────────────────────────────────
+window.toggleEditMode = function(isEdit) {
+    const viewSec = document.getElementById("detailsViewSection");
+    const editSec = document.getElementById("detailsEditSection");
+    if (isEdit) {
+        if (viewSec) viewSec.style.display = "none";
+        if (editSec) editSec.style.display = "block";
+        const saveBtn = document.getElementById("saveBtn");
+        if (saveBtn) saveBtn.disabled = true;
+    } else {
+        if (viewSec) viewSec.style.display = "block";
+        if (editSec) editSec.style.display = "none";
+    }
+};
+
+function initEditFormListeners() {
+    const titleIn = document.getElementById("editTitle");
+    const descIn = document.getElementById("editDescription");
+    const subjIn = document.getElementById("editSubject");
+    const saveBtn = document.getElementById("saveBtn");
+    
+    function checkChanges() {
+        if (saveBtn) saveBtn.disabled = false;
+    }
+    
+    if (titleIn) titleIn.addEventListener("input", checkChanges);
+    if (descIn) descIn.addEventListener("input", checkChanges);
+    if (subjIn) subjIn.addEventListener("change", checkChanges);
+}
+
 // ── Save changes ──────────────────────────────────────────────────────────────
 async function handleSave() {
     const title = document.getElementById("editTitle").value.trim();
@@ -777,6 +907,7 @@ async function handleSave() {
         renderDocument(res.data);
         showEditMessage("", "");
         window.showToast("Changes saved successfully.", "success");
+        window.toggleEditMode(false);
     } catch (err) {
         showEditMessage(err.message || "Failed to save changes.", "error");
     } finally {
@@ -838,7 +969,7 @@ async function handleToggleFavoriteDetail(doc) {
 }
 
 async function handlePublish() {
-    const publishBtn = document.getElementById("publishBtn");
+    const publishBtn = document.getElementById("sharingPublishBtn");
     publishBtn.disabled = true;
     const btnText = publishBtn.querySelector(".btn-text");
     const oldText = btnText ? btnText.textContent : publishBtn.textContent;
@@ -859,7 +990,7 @@ async function handlePublish() {
 }
 
 async function handleUnpublish() {
-    const unpublishBtn = document.getElementById("unpublishBtn");
+    const unpublishBtn = document.getElementById("sharingUnpublishBtn");
     unpublishBtn.disabled = true;
     const btnText = unpublishBtn.querySelector(".btn-text");
     const oldText = btnText ? btnText.textContent : unpublishBtn.textContent;
@@ -1206,18 +1337,30 @@ function initSharingUI() {
         await openShareModal('user');
     });
 
-    // Empty state link triggers
+    // Empty state link triggers & Header buttons
     const emptyShareUserLink = document.getElementById("emptyShareUserLink");
     const emptyShareGroupLink = document.getElementById("emptyShareGroupLink");
+    const addShareUserLink = document.getElementById("addShareUserLink");
+    const addShareGroupLink = document.getElementById("addShareGroupLink");
 
     if (emptyShareUserLink) {
         emptyShareUserLink.addEventListener("click", () => {
             openShareModal('user');
         });
     }
+    if (addShareUserLink) {
+        addShareUserLink.addEventListener("click", () => {
+            openShareModal('user');
+        });
+    }
 
     if (emptyShareGroupLink) {
         emptyShareGroupLink.addEventListener("click", () => {
+            openShareModal('group');
+        });
+    }
+    if (addShareGroupLink) {
+        addShareGroupLink.addEventListener("click", () => {
             openShareModal('group');
         });
     }
@@ -1307,11 +1450,14 @@ async function loadSharingInfo(docId) {
         // Direct shares list
         const directList = document.getElementById("directSharesList");
         const noDirect = document.getElementById("noDirectShares");
+        const addShareUserLink = document.getElementById("addShareUserLink");
         directList.innerHTML = "";
         if (userShares.length === 0) {
             noDirect.style.display = "flex";
+            if (addShareUserLink) addShareUserLink.style.display = "none";
         } else {
             noDirect.style.display = "none";
+            if (addShareUserLink) addShareUserLink.style.display = "inline-flex";
             userShares.forEach(item => {
                 const row = document.createElement("div");
                 row.className = "member-row";
@@ -1324,6 +1470,14 @@ async function loadSharingInfo(docId) {
                 name.textContent = item.sharedWithName || "Unknown User";
 
                 main.append(name);
+                
+                const perm = document.createElement("div");
+                perm.style.fontSize = "11px";
+                perm.style.color = "var(--muted)";
+                perm.style.marginTop = "2px";
+                perm.textContent = "Can open & download";
+                main.append(perm);
+
                 row.appendChild(main);
 
                 const btn = document.createElement("button");
@@ -1340,11 +1494,14 @@ async function loadSharingInfo(docId) {
         // Group shares list
         const groupList = document.getElementById("groupSharesList");
         const noGroup = document.getElementById("noGroupShares");
+        const addShareGroupLink = document.getElementById("addShareGroupLink");
         groupList.innerHTML = "";
         if (groupShares.length === 0) {
             noGroup.style.display = "flex";
+            if (addShareGroupLink) addShareGroupLink.style.display = "none";
         } else {
             noGroup.style.display = "none";
+            if (addShareGroupLink) addShareGroupLink.style.display = "inline-flex";
             groupShares.forEach(item => {
                 const row = document.createElement("div");
                 row.className = "member-row";
@@ -1357,6 +1514,14 @@ async function loadSharingInfo(docId) {
                 name.textContent = groupMap[item.groupId] || `Group (ID: ${item.groupId})`;
 
                 main.append(name);
+
+                const perm = document.createElement("div");
+                perm.style.fontSize = "11px";
+                perm.style.color = "var(--muted)";
+                perm.style.marginTop = "2px";
+                perm.textContent = "Can open & download";
+                main.append(perm);
+                
                 row.appendChild(main);
 
                 const btn = document.createElement("button");
@@ -1531,7 +1696,6 @@ async function loadAiQaChatHistory() {
 }
 
 // Appends one chat bubble (user / assistant / loading) to the messages list.
-// Uses textContent everywhere (never innerHTML with dynamic content) to avoid XSS.
 function appendAiQaMessage(role, content, meta = {}) {
     const messagesEl = document.getElementById("aiQaMessages");
     if (!messagesEl) return null;
@@ -1541,13 +1705,44 @@ function appendAiQaMessage(role, content, meta = {}) {
 
     const bubble = document.createElement("div");
     bubble.className = `ai-qa-message ${role}`;
-    bubble.textContent = content;
+
+    // Simple markdown-like parser to allow paragraphs and bullets without XSS
+    if (role === "assistant" && content) {
+        // Escape HTML first
+        let html = content
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+        
+        // Convert basic lists (- item)
+        html = html.replace(/(?:^|\n)- (.*?)(?=\n|$)/g, "<ul><li>$1</li></ul>");
+        html = html.replace(/<\/ul>\n<ul>/g, ""); // merge adjacent lists
+
+        // Wrap remaining text in paragraphs
+        const parts = html.split(/\n\n+/);
+        bubble.innerHTML = parts.map(p => {
+            if (p.startsWith("<ul>")) return p;
+            return `<p>${p.replace(/\n/g, "<br>")}</p>`;
+        }).join("");
+    } else {
+        bubble.textContent = content;
+    }
 
     if (Array.isArray(meta.sourceChunks) && meta.sourceChunks.length > 0) {
         const sourcesEl = document.createElement("div");
         sourcesEl.className = "ai-qa-message-sources";
-        const labels = meta.sourceChunks.map((c, i) => window.formatAiSourceLabel(c, i));
-        sourcesEl.textContent = "Sources: " + labels.join(", ");
+        
+        const label = document.createElement("span");
+        label.textContent = "Sources: ";
+        sourcesEl.appendChild(label);
+        
+        meta.sourceChunks.forEach((c, i) => {
+            const chip = document.createElement("span");
+            chip.className = "ai-qa-source-chip";
+            chip.textContent = window.formatAiSourceLabel(c, i);
+            sourcesEl.appendChild(chip);
+        });
+        
         bubble.appendChild(sourcesEl);
     }
 
@@ -1559,7 +1754,10 @@ function appendAiQaMessage(role, content, meta = {}) {
     }
 
     messagesEl.appendChild(bubble);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+    // Smooth scroll the new bubble into view within the scrollable container
+    setTimeout(() => {
+        bubble.scrollIntoView({ behavior: "smooth", block: "end" });
+    }, 50);
     return bubble;
 }
 
@@ -1599,12 +1797,50 @@ function updateAskAvailability() {
     if (!textarea || !askBtn) return;
 
     let disabledReason = "";
+    const processingSection = document.getElementById("aiProcessingSection");
+    const aiQaMessages = document.getElementById("aiQaMessages");
+    const sampleRow = document.getElementById("aiQaSampleQuestions");
+
     if (aiQaProcessingStatus !== "COMPLETED") {
-        disabledReason =
-            AI_QA_STATUS_MESSAGES[aiQaProcessingStatus] ||
-            "This document is not ready for AI yet. Please process it first.";
-    } else if (aiQaUsageInfo && aiQaUsageInfo.remainingQuestions <= 0) {
-        disabledReason = "You have reached your daily AI question limit.";
+        disabledReason = "Document not ready for AI.";
+        
+        // Handle Onboarding state visibility
+        if (processingSection) {
+            processingSection.style.display = "block";
+            const msgEl = document.getElementById("aiProcessingMessage");
+            const headEl = processingSection.querySelector(".ai-processing-heading");
+            const iconEl = processingSection.querySelector(".ai-processing-icon");
+            const actionsEl = document.getElementById("aiProcessingActions");
+            
+            if (aiQaProcessingStatus === "PROCESSING") {
+                if (iconEl) iconEl.innerHTML = '<div class="ai-processing-spinner"></div>';
+                if (headEl) headEl.textContent = "Processing document...";
+                if (msgEl) msgEl.textContent = "Please wait while we extract the content.";
+                if (actionsEl) actionsEl.innerHTML = "";
+            } else if (aiQaProcessingStatus === "PENDING") {
+                if (iconEl) iconEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24"><g id="Sparkle"><path id="Vector" fill="currentColor" d="m8.24536 15.7542 1.70215 0.8515 1.78909 0.8945 -1.78909 0.8946 -1.70215 0.8506 -0.85058 1.7021 -0.89454 1.7891 -0.89453 -1.7891 -0.85156 -1.7021 -3.49023 -1.7452 1.78906 -0.8945 1.70117 -0.8515 0.85156 -1.7012 0.89453 -1.7891zM18.2454 9.25415l2.7021 1.35155 1.7891 0.8945 -1.7891 0.8946 -2.7021 1.3506 -1.3506 2.7021 -0.8946 1.7891 -0.8945 -1.7891 -1.3515 -2.7021 -4.49028 -2.2452 1.78908 -0.8945 2.7012 -1.35155 1.3515 -2.70117 0.8945 -1.78906zm-2.8506 1.19335 -0.1494 0.2979 -0.2979 0.1494 -1.2109 0.6054 1.2109 0.6055 0.2979 0.1494 0.1494 0.2979 0.6054 1.2109 0.6055 -1.2109 0.1494 -0.2979 0.2979 -0.1494 1.2109 -0.6055 -1.2109 -0.6054 -0.2979 -0.1494 -0.1494 -0.2979 -0.6055 -1.21093zM8.24536 4.75415l1.70215 0.85156 1.78909 0.89453 -1.78909 0.89454 -1.70215 0.85058 -0.85058 1.70215 -0.89454 1.78909 -0.89453 -1.78909 -0.85156 -1.70215 -3.49023 -1.74512 1.78906 -0.89453 1.70117 -0.85156 0.85156 -1.70117 0.89453 -1.78906z" stroke-width="1"></path></g></svg>`;
+                if (headEl) headEl.textContent = "Prepare this document for AI Q&A";
+                if (msgEl) msgEl.textContent = "We’ll extract the content so AI can answer questions from this document.";
+                if (actionsEl) {
+                    actionsEl.innerHTML = `<button class="btn btn-primary" onclick="handleAIProcessAction('process')">Process for AI</button>`;
+                }
+            } else {
+                if (iconEl) iconEl.textContent = "⚠️";
+                if (headEl) headEl.textContent = "Cannot process document";
+                if (msgEl) msgEl.textContent = AI_QA_STATUS_MESSAGES[aiQaProcessingStatus] || "Failed to process.";
+                if (actionsEl) actionsEl.innerHTML = "";
+            }
+        }
+        if (aiQaMessages) aiQaMessages.style.display = "none";
+        if (sampleRow) sampleRow.style.display = "none";
+    } else {
+        if (processingSection) processingSection.style.display = "none";
+        if (aiQaMessages) aiQaMessages.style.display = "flex";
+        if (sampleRow) sampleRow.style.display = "flex";
+        
+        if (aiQaUsageInfo && aiQaUsageInfo.remainingQuestions <= 0) {
+            disabledReason = "You have reached your daily AI question limit.";
+        }
     }
 
     const disabled = !!disabledReason || aiQaSending;
@@ -1613,7 +1849,12 @@ function updateAskAvailability() {
     sampleButtons.forEach(b => (b.disabled = disabled));
 
     if (!aiQaSending) {
-        showAiQaBanner(disabledReason, "warning");
+        // Only show banner if there's a reason AND it's not just "not ready" (which is handled by onboarding)
+        if (disabledReason && aiQaProcessingStatus === "COMPLETED") {
+            showAiQaBanner(disabledReason, "warning");
+        } else {
+            showAiQaBanner("");
+        }
     }
 }
 
@@ -1800,19 +2041,39 @@ function renderAiToolsTab(doc) {
 }
 
 function updateAiToolsAvailability() {
-    const notReadyMsg = document.getElementById("aiToolsNotReadyMessage");
+    const notReadyMsg = document.getElementById("aiToolsNotReadySection");
     const content = document.getElementById("aiToolsContent");
     const ready = aiToolsProcessingStatus === "COMPLETED";
 
     if (notReadyMsg) {
         if (ready) {
             notReadyMsg.style.display = "none";
-            notReadyMsg.textContent = "";
         } else {
-            notReadyMsg.style.display = "block";
-            notReadyMsg.textContent =
-                AI_TOOLS_NOT_READY_MESSAGES[aiToolsProcessingStatus] ||
-                "This document is not ready for AI tools yet.";
+            notReadyMsg.style.display = "flex";
+            const msgEl = document.getElementById("aiToolsProcessingMessage");
+            if (msgEl) {
+                msgEl.textContent =
+                    AI_TOOLS_NOT_READY_MESSAGES[aiToolsProcessingStatus] ||
+                    "This document is not ready for AI tools yet.";
+            }
+            
+            // Build actions similar to AI Q&A
+            const actionsEl = document.getElementById("aiToolsProcessingActions");
+            if (actionsEl) {
+                actionsEl.innerHTML = "";
+                if (aiToolsProcessingStatus === "PENDING" || aiToolsProcessingStatus === "FAILED" || aiToolsProcessingStatus === "EMPTY_CONTENT" || aiToolsProcessingStatus === "UNSUPPORTED") {
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "btn btn-primary";
+                    btn.textContent = aiToolsProcessingStatus === "FAILED" ? "Retry Processing" : "Process for AI";
+                    btn.onclick = () => {
+                        handleAIProcessAction("process");
+                    };
+                    actionsEl.appendChild(btn);
+                } else if (aiToolsProcessingStatus === "PENDING" || aiToolsProcessingStatus === "PROCESSING") {
+                    actionsEl.innerHTML = `<span class="ai-processing-spinner"></span> <span style="font-size:13px; color:var(--text);">Processing document...</span>`;
+                }
+            }
         }
     }
     if (content) content.style.display = ready ? "block" : "none";
@@ -1849,9 +2110,7 @@ async function loadFlashcardSets() {
     try {
         const res = await AiLearningAPI.getFlashcardSets(currentDocumentId);
         if (loader) loader.style.display = "none";
-        renderSetList(list, empty, res.data || [], "flashcards.html?setId=", set =>
-            `${set.title || "Flashcard set"} — ${set.itemCount || 0} cards`
-        );
+        renderSetList(list, empty, res.data || [], "flashcards.html?setId=", "flashcard");
     } catch (err) {
         if (loader) loader.style.display = "none";
         console.error("Failed to load flashcard sets", err);
@@ -1938,9 +2197,7 @@ async function loadQuizSets() {
     try {
         const res = await AiLearningAPI.getQuizSets(currentDocumentId);
         if (loader) loader.style.display = "none";
-        renderSetList(list, empty, res.data || [], "quiz.html?setId=", set =>
-            `${set.title || "Quiz"} — ${set.questionCount || 0} questions`
-        );
+        renderSetList(list, empty, res.data || [], "quiz.html?setId=", "quiz");
     } catch (err) {
         if (loader) loader.style.display = "none";
         console.error("Failed to load quiz sets", err);
@@ -2019,7 +2276,7 @@ async function handleGenerateQuizSet() {
 
 // Shared renderer for the flashcard-set / quiz-set list items.
 // XSS-safe: uses textContent, never innerHTML, for backend-provided strings.
-function renderSetList(listEl, emptyEl, sets, detailUrlPrefix, labelFn) {
+function renderSetList(listEl, emptyEl, sets, detailUrlPrefix, type) {
     if (!listEl) return;
     listEl.innerHTML = "";
 
@@ -2038,16 +2295,44 @@ function renderSetList(listEl, emptyEl, sets, detailUrlPrefix, labelFn) {
         link.href = `${detailUrlPrefix}${setId}`;
         link.className = "ai-tools-set-link";
 
+        const contentDiv = document.createElement("div");
+        contentDiv.className = "ai-tools-set-content";
+
+        const titleRow = document.createElement("div");
+        titleRow.className = "ai-tools-set-title-row";
+        
+        const badgeSpan = document.createElement("span");
+        badgeSpan.className = "ai-tools-set-badge";
+        badgeSpan.textContent = type === "flashcard" ? "Flashcards" : "Quiz";
+
         const titleSpan = document.createElement("span");
         titleSpan.className = "ai-tools-set-title";
-        titleSpan.textContent = labelFn(set);
+        titleSpan.textContent = set.title || (type === "flashcard" ? "Flashcard set" : "Quiz");
 
-        const meta = document.createElement("span");
-        meta.className = "ai-tools-set-meta";
-        meta.textContent = formatGeneratedAt(set.createdAt);
+        titleRow.appendChild(badgeSpan);
+        titleRow.appendChild(titleSpan);
 
-        link.appendChild(titleSpan);
-        link.appendChild(meta);
+        const metaSpan = document.createElement("span");
+        metaSpan.className = "ai-tools-set-meta";
+        let metaText = "";
+        if (type === "flashcard") {
+            metaText = `${set.itemCount || 0} cards · ${formatGeneratedAt(set.createdAt)}`;
+        } else {
+            const diff = set.difficulty || "Mixed";
+            const formattedDiff = diff.charAt(0).toUpperCase() + diff.slice(1).toLowerCase();
+            metaText = `${set.questionCount || 0} questions · ${formattedDiff} · ${formatGeneratedAt(set.createdAt)}`;
+        }
+        metaSpan.textContent = metaText;
+
+        contentDiv.appendChild(titleRow);
+        contentDiv.appendChild(metaSpan);
+
+        const openBtn = document.createElement("span");
+        openBtn.className = "ai-tools-set-open";
+        openBtn.textContent = "Open";
+
+        link.appendChild(contentDiv);
+        link.appendChild(openBtn);
         li.appendChild(link);
         listEl.appendChild(li);
     });
@@ -2096,3 +2381,154 @@ function initAiToolsHandlers() {
 }
 
 document.addEventListener("DOMContentLoaded", initAiToolsHandlers);
+
+// ── Danger Zone collapse toggle ───────────────────────────────────────────
+function toggleDangerZone() {
+    const toggle = document.getElementById("dangerZoneToggle");
+    const body = document.getElementById("dangerZoneBody");
+    if (!toggle || !body) return;
+    const isOpen = body.classList.contains("open");
+    body.classList.toggle("open", !isOpen);
+    toggle.classList.toggle("open", !isOpen);
+}
+
+// ── Find in Document (preview search bar) ────────────────────────────────
+// Shows a search bar in the preview toolbar for text-based previews.
+// For PDF iframes, we relay the search to the browser's built-in find API
+// via postMessage (supported by most PDF.js-based viewers). For other
+// renderers (images, fallback), we show a disabled tooltip.
+
+function initPreviewSearch(docMimeType) {
+    const searchBar = document.getElementById("previewSearchBar");
+    const searchInput = document.getElementById("previewSearchInput");
+    if (!searchBar || !searchInput) return;
+
+    // Only show for PDF and text-type documents
+    const isSearchable = docMimeType && (
+        docMimeType.includes("pdf") ||
+        docMimeType.includes("text") ||
+        docMimeType.includes("word") ||
+        docMimeType.includes("presentation") ||
+        docMimeType.includes("spreadsheet")
+    );
+
+    if (!isSearchable) {
+        searchBar.style.display = "none";
+        return;
+    }
+
+    searchBar.style.display = "flex";
+
+    let debounceTimer = null;
+
+    searchInput.addEventListener("input", () => {
+        clearTimeout(debounceTimer);
+        const query = searchInput.value.trim();
+        debounceTimer = setTimeout(() => {
+            relayFindToPreview(query);
+        }, 300);
+    });
+
+    searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if (e.shiftKey) {
+                relayFindToPreview(searchInput.value.trim(), "prev");
+            } else {
+                relayFindToPreview(searchInput.value.trim(), "next");
+            }
+        }
+        if (e.key === "Escape") {
+            searchInput.value = "";
+            relayFindToPreview("");
+            searchInput.blur();
+        }
+    });
+
+    const prevBtn = document.getElementById("previewSearchPrev");
+    const nextBtn = document.getElementById("previewSearchNext");
+    if (prevBtn) prevBtn.addEventListener("click", () => relayFindToPreview(searchInput.value.trim(), "prev"));
+    if (nextBtn) nextBtn.addEventListener("click", () => relayFindToPreview(searchInput.value.trim(), "next"));
+}
+
+function relayFindToPreview(query, direction) {
+    const iframe = document.querySelector(".preview-iframe");
+    if (!iframe) return;
+
+    // PDF.js viewer accepts find commands via postMessage
+    try {
+        const cmd = !query ? "findagain" : "find";
+        iframe.contentWindow.postMessage({
+            type: "find",
+            query: query,
+            phraseSearch: true,
+            caseSensitive: false,
+            highlightAll: true,
+            findPrevious: direction === "prev"
+        }, "*");
+    } catch (e) {
+        // Cross-origin or non-PDF.js viewer — silently ignore
+    }
+}
+
+// Hook into renderDocumentPreview to show/hide search bar
+const _originalRenderDocumentPreview = typeof renderDocumentPreview === "function" ? renderDocumentPreview : null;
+document.addEventListener("DOMContentLoaded", () => {
+    // Search bar is initialized after document loads via renderDocument
+    // We expose initPreviewSearch globally so document-preview.js can call it
+    window.initPreviewSearch = initPreviewSearch;
+});
+
+function renderContextualTopBar(doc) {
+    const globalHeader = document.getElementById("globalTopBar");
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromParam = urlParams.get("from");
+    
+    let backLabel = "← Back to My Documents";
+    let backUrl = "documents.html";
+    if (fromParam === "community" || currentIsCommunityView) {
+        backLabel = "← Back to Community Library";
+        backUrl = "community-library.html";
+    } else if (fromParam === "shared") {
+        backLabel = "← Back to Shared with Me";
+        backUrl = "shared-with-me.html";
+    } else if (fromParam === "folders") {
+        backLabel = "← Back to My Folders";
+        backUrl = "folders.html";
+    }
+
+    // Hide duplicate detailBackBtn from right inspector panel
+    const detailBackBtn = document.getElementById("detailBackBtn");
+    if (detailBackBtn) {
+        detailBackBtn.style.display = "none";
+    }
+
+    if (!globalHeader) return;
+    
+    const subjectText = doc ? (doc.subject ? doc.subject : (doc.subjectName ? `${doc.subjectCode} - ${doc.subjectName}` : "")) : "";
+    const docTitleText = doc ? doc.title : "";
+    const breadcrumbText = subjectText ? `${subjectText} / ${docTitleText}` : docTitleText;
+    
+    let contextualContainer = globalHeader.querySelector(".top-bar-contextual");
+    if (!contextualContainer) {
+        contextualContainer = document.createElement("div");
+        contextualContainer.className = "top-bar-contextual";
+        contextualContainer.style.cssText = "display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; padding-right: 12px;";
+        globalHeader.insertBefore(contextualContainer, globalHeader.firstChild);
+    }
+
+    contextualContainer.innerHTML = `
+        <a href="${backUrl}" class="top-bar-back-link" style="display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: color 0.2s;">
+            ${backLabel}
+        </a>
+        ${docTitleText ? `<span style="color: var(--border); font-size: 12px;">/</span>
+        <span class="top-bar-breadcrumb" style="font-size: 13px; color: var(--text); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 480px;" title="${breadcrumbText}">
+            ${breadcrumbText}
+        </span>` : ''}
+    `;
+}
+
+function initTopBarSearch() {
+    renderContextualTopBar(null);
+}

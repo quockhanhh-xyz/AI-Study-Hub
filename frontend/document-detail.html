@@ -13,21 +13,24 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: none;
-      border: none;
-      padding: 0;
-      color: #4B5563;
-      font-size: 14px;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 6px 12px;
+      color: #4b5563;
+      font-size: 13px;
       font-weight: 500;
       cursor: pointer;
       margin-bottom: 16px;
       font-family: inherit;
-      transition: color 0.2s ease, text-decoration 0.2s ease;
+      transition: all 0.2s ease;
+      width: fit-content;
     }
 
     .btn-back-link:hover {
-      color: var(--primary);
-      text-decoration: underline;
+      background: #e5e7eb;
+      color: #1f2937;
+      text-decoration: none;
     }
 
     .document-action-row .btn {
@@ -53,11 +56,38 @@
     }
 
     .detail-main {
+      position: relative;
       height: 100vh;
       min-width: 0;
       min-height: 0;
-      padding: 20px;
+      padding: 68px 20px 20px 20px;
       overflow: hidden;
+    }
+
+    .detail-main .global-top-bar-floating {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      height: 60px !important;
+      background: var(--surface) !important;
+      border-bottom: 1px solid var(--border) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      padding: 0 24px !important;
+      z-index: 99 !important;
+      box-shadow: none !important;
+    }
+
+    .detail-main .global-top-bar-floating .global-top-bar-right {
+      margin-left: auto;
+    }
+
+    .top-bar-search-form {
+      flex: 1;
+      max-width: 520px;
+      margin-right: 24px;
     }
 
     #detailLoader {
@@ -97,11 +127,175 @@
       display: flex;
       min-height: 48px;
       align-items: center;
-      justify-content: flex-end;
-      gap: 16px;
+      justify-content: space-between;
+      gap: 12px;
       padding: 6px 16px;
       border-bottom: 1px solid var(--border);
       background: var(--surface);
+    }
+
+    .preview-header-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+      flex: 1;
+    }
+    
+    .preview-header-top-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .preview-header-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+
+    .preview-header-title {
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 450px;
+    }
+
+    .preview-header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+      margin-left: 4px;
+    }
+    .preview-header-badge:hover {
+      opacity: 0.85;
+    }
+    .preview-header-badge.ai-completed {
+      background: #ecfdf5;
+      color: #065f46;
+      border-color: #a7f3d0;
+    }
+    .preview-header-badge.ai-processing {
+      background: #fff7ed;
+      color: #c2410c;
+      border-color: #fed7aa;
+    }
+    .preview-header-badge.ai-failed {
+      background: #f3f4f6;
+      color: #4b5563;
+      border-color: #d1d5db;
+    }
+    .preview-header-badge.ai-pending {
+      background: #fffbeb;
+      color: #b45309;
+      border-color: #fde68a;
+    }
+    .preview-header-badge.ai-unsupported {
+      background: #f3f4f6;
+      color: #4b5563;
+      border-color: #d1d5db;
+    }
+
+    .preview-toolbar-search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      max-width: 280px;
+    }
+
+    .preview-search-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+
+    .preview-search-icon {
+      position: absolute;
+      left: 10px;
+      color: var(--muted);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+    }
+
+    .preview-search-input {
+      width: 100%;
+      padding: 7px 10px 7px 34px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--background);
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .preview-search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+    }
+
+    .preview-search-input::placeholder {
+      color: var(--muted);
+    }
+
+    .preview-search-count {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+      padding: 0 4px;
+      display: none;
+    }
+
+    .preview-search-nav {
+      display: none;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .preview-search-nav-btn {
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .preview-search-nav-btn:hover {
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+
+    .preview-toolbar-search.is-active .preview-search-count,
+    .preview-toolbar-search.is-active .preview-search-nav {
+      display: flex;
     }
 
     .preview-toolbar-title {
@@ -293,10 +487,15 @@
     .inspector-document-header h1 {
       margin: 0;
       color: var(--text);
-      font-size: 28px;
+      font-size: 18px;
       font-weight: 800;
-      line-height: 1.2;
+      line-height: 1.3;
       overflow-wrap: anywhere;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .detail-uploaded-by {
@@ -418,19 +617,89 @@
       width: 100%;
     }
 
-    .danger-zone {
-      margin-top: 32px;
-      padding: 16px;
-      background-color: #FEF2F2;
-      border: 1px solid #FCA5A5;
+    /* AI Status inline row */
+    .ai-status-inline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .ai-status-inline svg {
+      flex-shrink: 0;
+    }
+    .ai-status-inline .ai-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+    }
+    .ai-status-dot.completed { background: #10b981; }
+    .ai-status-dot.processing { background: #f59e0b; animation: ai-spin-pulse 1s ease infinite; }
+    .ai-status-dot.failed { background: #ef4444; }
+    .ai-status-dot.unsupported,
+    .ai-status-dot.pending { background: #9ca3af; }
+    @keyframes ai-spin-pulse {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+    }
+    /* Unpublish warning button */
+    .btn-unpublish {
+      background: #fffbeb !important;
+      border-color: #fde68a !important;
+      color: #92400e !important;
+    }
+    .btn-unpublish:hover {
+      background: #fef3c7 !important;
+      border-color: #f59e0b !important;
+    }
+    /* Danger Zone — collapsible, subtle */
+    .danger-zone-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: none;
+      padding: 6px 0;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      font-family: inherit;
+      transition: color 0.2s;
+    }
+
+    .danger-zone-toggle:hover {
+      color: #b91c1c;
+    }
+
+    .danger-zone-toggle svg {
+      transition: transform 0.2s;
+    }
+
+    .danger-zone-toggle.open svg {
+      transform: rotate(90deg);
+    }
+
+    .danger-zone-body {
+      display: none;
+      margin-top: 10px;
+      padding: 14px 16px;
+      background-color: #fff5f5;
+      border: 1px solid #fecaca;
       border-radius: 8px;
+    }
+
+    .danger-zone-body.open {
+      display: block;
     }
 
     .danger-zone-label {
       display: block;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       color: #991B1B;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
     }
 
@@ -442,21 +711,24 @@
     }
 
     .danger-link {
-      width: auto;
-      padding: 0;
-      color: var(--danger-text);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid #fca5a5;
       background: transparent;
-      border: 0;
-      font: inherit;
+      color: #b91c1c;
+      font-family: inherit;
       font-size: 13px;
-      font-weight: 700;
-      text-decoration: underline;
-      text-underline-offset: 3px;
+      font-weight: 600;
       cursor: pointer;
+      transition: all 0.2s;
     }
 
     .danger-link:hover {
-      color: var(--danger);
+      background: #fee2e2;
+      border-color: #f87171;
     }
 
     .ai-processing-section {
@@ -616,14 +888,19 @@
       margin: 0;
     }
 
-    .share-block+.share-block {
-      margin-top: 20px;
+    .share-block {
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
     }
 
     .share-block h3 {
-      margin: 0 0 8px;
-      color: var(--muted);
-      font-size: 13px;
+      margin: 0;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
     }
 
     .modal-box.detail-modal {
@@ -705,9 +982,6 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
-      min-height: 120px;
-      max-height: 420px;
-      overflow-y: auto;
       padding: 4px 2px;
     }
 
@@ -837,6 +1111,134 @@
       color: var(--muted);
     }
 
+    .status-badge.badge-system {
+      background: var(--surface-soft, #f3f4f6);
+      border: 1px solid transparent;
+      font-weight: 600;
+      cursor: default;
+    }
+    
+    /* Details view polish */
+    .details-view-card {
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .details-view-field {
+      margin-bottom: 14px;
+    }
+    .details-view-field:last-child {
+      margin-bottom: 0;
+    }
+    .details-view-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .details-view-value {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .details-view-value.empty {
+      color: var(--muted);
+      font-style: italic;
+    }
+    /* Ghost Edit button */
+    .btn-edit-details {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-edit-details:hover {
+      background: var(--surface-soft);
+      border-color: var(--primary-border);
+      color: var(--primary);
+    }
+    /* Sharing empty state */
+    .shares-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 0;
+    }
+    .shares-empty-text {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .btn-ghost-sm {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-ghost-sm:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+    /* Public document soft box */
+    .public-doc-info {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      background: #f8faff;
+      border: 1px solid #dbeafe;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      color: #2563eb;
+    }
+    .public-doc-info svg {
+      flex-shrink: 0;
+      margin-top: 1px;
+      color: #3b82f6;
+    }
+    .public-doc-info strong {
+      display: block;
+      margin-bottom: 2px;
+      color: #1d4ed8;
+      font-size: 12px;
+    }
+    .public-doc-info p {
+      margin: 0;
+      color: #3b82f6;
+      line-height: 1.4;
+    }
+    /* Danger zone wrapper */
+    .danger-zone-wrapper {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
     @media (max-width: 1180px) {
       .detail-workspace {
         grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr);
@@ -873,6 +1275,393 @@
         overflow: visible;
       }
     }
+    /* --- AI QA Layout Overhaul --- */
+    .ai-qa-panel {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+    }
+    .ai-qa-header {
+      margin-bottom: 16px;
+    }
+    .ai-qa-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0 0 4px 0;
+    }
+    .ai-qa-header p {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    /* Onboarding State */
+    .ai-processing-section.onboarding-state {
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 32px 24px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .ai-processing-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+      color: var(--primary);
+      display: flex;
+      justify-content: center;
+    }
+    .onboarding-state h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0 0 8px 0;
+    }
+    .onboarding-state p {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0 0 16px 0;
+    }
+    .ai-processing-section.onboarding-state .ai-processing-actions {
+      justify-content: center;
+    }
+    .ai-processing-spinner {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(249,115,22,0.2);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 1s ease-in-out infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Try Asking Chips */
+    .ai-qa-sample-questions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .ai-qa-sample-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .ai-qa-sample-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .ai-qa-sample-btn {
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 16px;
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .ai-qa-sample-btn:hover {
+      background: #fff7ed; /* light orange hover */
+      border-color: #ffedd5;
+      color: var(--primary);
+    }
+    .ai-qa-sample-btn:active {
+      background: #ffedd5;
+    }
+    .ai-qa-sample-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Messages container */
+    .ai-qa-messages {
+      flex: 1;
+      padding-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Formatted AI Answer */
+    .ai-qa-message {
+      line-height: 1.5;
+      font-size: 14px;
+    }
+    .ai-qa-message.assistant p {
+      margin: 0 0 8px 0;
+    }
+    .ai-qa-message.assistant p:last-child {
+      margin-bottom: 0;
+    }
+    .ai-qa-message.assistant ul {
+      margin: 0 0 12px 0;
+      padding-left: 20px;
+    }
+    .ai-qa-message.assistant li {
+      margin-bottom: 4px;
+    }
+
+    /* Source Chips */
+    .ai-qa-message-sources {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      padding: 8px;
+      background: rgba(0,0,0,0.03);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .ai-qa-source-chip {
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    /* Sticky Footer */
+    .ai-qa-sticky-footer {
+      position: sticky;
+      bottom: 0;
+      background: var(--surface);
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      margin-top: auto;
+    }
+    .ai-qa-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .ai-qa-input-row textarea {
+      flex: 1;
+      resize: none;
+      border-radius: 20px;
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      font-family: inherit;
+      font-size: 14px;
+      background: #f9fafb;
+    }
+    .ai-qa-input-row textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #fff;
+    }
+    #aiQaAskBtn {
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ai-qa-footer-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .ai-qa-usage-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* --- AI Tools Layout Overhaul --- */
+    .ai-tools-panel {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .ai-tools-header {
+      margin-bottom: 24px;
+    }
+    .ai-tools-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0 0 4px 0;
+    }
+    .ai-tools-header p {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    /* Tool Blocks */
+    .ai-tools-tool-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .ai-tools-tool-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .ai-tools-tool-icon {
+      font-size: 24px;
+      background: #f9fafb;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .ai-tools-tool-header h3 {
+      margin: 0 0 4px 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .ai-tools-tool-header p {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Inputs */
+    .ai-tools-input-group {
+      margin-bottom: 16px;
+    }
+    .ai-tools-input-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .ai-tools-input-group label span {
+      color: var(--muted);
+      font-weight: normal;
+    }
+    .helper-text-inline {
+      display: block;
+      font-size: 11px !important;
+      color: var(--muted) !important;
+      margin-top: 4px;
+    }
+    .ai-tools-input-row-flex {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .ai-tools-input-row-flex label {
+      margin-bottom: 0;
+    }
+    .ai-tools-input-row-flex input,
+    .ai-tools-input-row-flex select {
+      width: 120px;
+    }
+    .ai-tools-limit-hint {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .ai-tools-generate-btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 14px;
+      margin-top: 8px;
+      margin-bottom: 16px;
+      border-radius: 8px;
+    }
+
+    /* Generated Sets */
+    .ai-tools-set-list {
+      list-style: none;
+      padding: 0;
+      margin: 12px 0 0 0;
+    }
+    .ai-tools-set-item {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: var(--background);
+      transition: all 0.2s;
+    }
+    .ai-tools-set-item:hover {
+      border-color: #d1d5db;
+      background: #f9fafb;
+    }
+    .ai-tools-set-link {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .ai-tools-set-content {
+      flex: 1;
+      min-width: 0; /* for truncation */
+    }
+    .ai-tools-set-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .ai-tools-set-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ai-tools-set-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      text-transform: uppercase;
+    }
+    .ai-tools-set-meta {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ai-tools-set-open {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      padding: 4px 12px;
+      background: #fff7ed;
+      border-radius: 16px;
+      margin-left: 12px;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 
@@ -889,6 +1678,35 @@
       <div id="detailContent" class="detail-workspace" hidden>
         <section class="preview-workspace" aria-label="Document preview">
           <header class="preview-toolbar">
+            <div class="preview-header-info" id="previewHeaderInfo">
+              <div class="preview-header-top-row">
+                <span id="previewHeaderTopLabel">Document Preview</span>
+              </div>
+              <div class="preview-header-meta-row">
+                <span class="preview-header-title" id="previewHeaderTitle">Document</span>
+                <span class="preview-header-separator">&middot;</span>
+                <span id="previewHeaderMetaText">Loading...</span>
+                <span class="preview-header-badge" id="previewHeaderAiBadge" style="display:none;"></span>
+              </div>
+            </div>
+            <div class="preview-toolbar-search" id="previewSearchBar" style="display:none;">
+              <div class="preview-search-input-wrap">
+                <span class="preview-search-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <input type="search" class="preview-search-input" id="previewSearchInput"
+                  placeholder="Find in document..." autocomplete="off" />
+              </div>
+              <span class="preview-search-count" id="previewSearchCount"></span>
+              <div class="preview-search-nav" id="previewSearchNav">
+                <button class="preview-search-nav-btn" id="previewSearchPrev" title="Previous match" aria-label="Previous match">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg>
+                </button>
+                <button class="preview-search-nav-btn" id="previewSearchNext" title="Next match" aria-label="Next match">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+              </div>
+            </div>
             <div class="preview-toolbar-actions">
               <button id="openFileBtn" class="btn btn-secondary" style="display:none;">
                 Open fullscreen <span aria-hidden="true">&#8599;</span>
@@ -907,17 +1725,13 @@
         </section>
 
         <aside class="detail-right-inspector" aria-label="Document information and actions">
-          <div class="inspector-inner" style="padding-top: 8px;">
-            <button id="detailBackBtn" class="btn-back-link" type="button" onclick="handleBack()">
-              ← Back to My Documents
-            </button>
+          <div class="inspector-inner" style="padding-top: 18px;">
 
             <header class="inspector-document-header">
               <div class="document-badge-row">
                 <span class="detail-type-badge" id="fileTypeBadge">FILE</span>
                 <span id="visibilityBadge" class="status-badge" style="display:none;"></span>
-                <span id="approvalBadge" class="status-badge" style="display:none;"></span>
-                <span id="processingStatusBadge" class="status-badge" style="display:none;"></span>
+                <span id="approvalBadge" class="status-badge badge-system" style="display:none;"></span>
                 <button type="button" id="favoriteDetailBtn" class="favorite-star-btn" style="display:none;">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z" />
@@ -926,53 +1740,38 @@
               </div>
               <h1 id="docTitle">Document</h1>
               <span class="detail-uploaded-by" id="docUploadedBy"></span>
+              <div class="ai-status-inline" id="aiStatusInlineRow" style="display:none;">
+                <span class="ai-status-dot" id="aiStatusInlineDot"></span>
+                <span id="processingStatusBadge"></span>
+              </div>
             </header>
 
-            <div class="document-action-row" id="documentActionRow" aria-label="Document actions">
-              <button id="shareBtn" class="btn btn-secondary" style="display:none;">
+            <div class="document-action-row" id="documentActionRow" aria-label="Document actions" style="margin-top: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+              <button id="shareBtn" class="btn btn-primary" style="display:none; padding: 10px 16px; font-weight: 600;">
                 <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
                   <polyline points="16 6 12 2 8 6"></polyline>
                   <line x1="12" y1="2" x2="12" y2="15"></line>
                 </svg>
-                <span class="btn-text">Share</span>
+                <span class="btn-text">Share document</span>
               </button>
-              <button id="moveBtn" class="btn btn-secondary" style="display:none;" onclick="showMoveModal()">
+              <button id="moveBtn" class="btn btn-outline" style="display:none;" onclick="showMoveModal()">
                 <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                 </svg>
                 <span class="btn-text">Move</span>
               </button>
-              <button id="publishBtn" class="btn btn-primary" style="display:none;">
-                <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="2" y1="12" x2="22" y2="12"></line>
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
-                  </path>
-                </svg>
-                <span class="btn-text">Publish</span>
-              </button>
-              <button id="unpublishBtn" class="btn btn-secondary" style="display:none;">
-                <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path
-                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-3.24-3.24">
-                  </path>
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
-                </svg>
-                <span class="btn-text">Unpublish</span>
-              </button>
             </div>
+            
+            <p class="action-row-desc" id="actionRowDesc" style="display:none; font-size: 12px; color: var(--muted); margin-top: 8px; margin-bottom: 0; line-height: 1.4;">
+              Share with classmates, groups, or make it available in Community Library.
+            </p>
 
             <section class="detail-summary" aria-label="Document metadata">
               <dl class="detail-meta-list">
-                <div class="detail-meta-row">
-                  <dt>Subject</dt>
-                  <dd id="docSubject">No subject</dd>
-                </div>
+                <!-- Subject moved to Edit details section -->
                 <div class="detail-meta-row">
                   <dt>File size</dt>
                   <dd id="docFileSize">-</dd>
@@ -994,7 +1793,51 @@
 
             <div class="inspector-panes">
               <div id="inspectorPaneDetails" class="inspector-tab-pane active">
-                <section class="edit-section">
+                <section class="view-section" id="detailsViewSection">
+                  <div class="details-view-card">
+                    <div class="details-view-field">
+                      <div class="details-view-label">Title</div>
+                      <div class="details-view-value" id="viewTitleText"></div>
+                    </div>
+                    <div class="details-view-field">
+                      <div class="details-view-label">Description</div>
+                      <div class="details-view-value" id="viewDescriptionText"></div>
+                    </div>
+                    <div class="details-view-field">
+                      <div class="details-view-label">Subject</div>
+                      <div class="details-view-value" id="viewSubjectText"></div>
+                    </div>
+                  </div>
+                  <button type="button" class="btn-edit-details" id="enableEditBtn" onclick="toggleEditMode(true)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Edit details
+                  </button>
+                  <div class="danger-zone-wrapper" id="detailsDangerZone" style="display:none; margin-top: 24px;">
+                    <div class="danger-zone-box" style="border: 1px solid #fecaca; background: #fef2f2; border-radius: 8px; padding: 12px 14px;">
+                      <button type="button" class="danger-zone-toggle" id="dangerZoneToggle" onclick="toggleDangerZone()" style="width: 100%; display: flex; align-items: center; justify-content: space-between; background: transparent; border: none; padding: 0; cursor: pointer; text-align: left;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                          </svg>
+                          <span style="font-size: 13px; font-weight: 700; color: #991b1b;">Danger zone</span>
+                        </div>
+                        <svg id="dangerChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#991b1b" stroke-width="2" stroke-linecap="round" style="transition: transform 0.2s;"><path d="M6 9l6 6 6-6"/></svg>
+                      </button>
+                      <div style="font-size: 12px; color: #7f1d1d; margin-top: 4px;">Destructive actions for this document.</div>
+                      <div class="danger-zone-body" id="dangerZoneBody" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #fca5a5;">
+                        <p class="danger-zone-copy" style="margin: 0 0 10px 0; color: #7f1d1d; font-size: 12px;">Move this document to Trash. You can restore it later from the Trash folder.</p>
+                        <button class="btn btn-outline" id="deleteBtn" onclick="handleDelete()" style="color: #dc2626; border-color: #fca5a5; background: #ffffff; font-size: 12px; font-weight: 600; padding: 6px 14px; display: inline-flex; align-items: center; gap: 6px;">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                          Move to Trash
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="edit-section" id="detailsEditSection" style="display:none;">
                   <h2>Edit details</h2>
 
                   <div class="form-group">
@@ -1016,41 +1859,68 @@
 
                   <div id="editMessage" class="helper-text" style="min-height:20px;"></div>
 
-                  <div class="edit-actions">
-                    <button class="btn btn-primary" id="saveBtn" onclick="handleSave()">Save changes</button>
-                  </div>
-
-                  <div class="danger-zone inspector-danger-zone">
-                    <span class="danger-zone-label">Danger zone</span>
-                    <p class="danger-zone-copy">Move this document to Trash. You can restore it later.</p>
-                    <button class="danger-link" id="deleteBtn" onclick="handleDelete()">Delete document</button>
+                  <div class="edit-actions" style="display:flex;gap:8px;">
+                    <button class="btn btn-secondary" type="button" onclick="toggleEditMode(false)" style="flex:1;">Cancel</button>
+                    <button class="btn btn-primary" id="saveBtn" onclick="handleSave()" disabled style="flex:1;">Save changes</button>
                   </div>
                 </section>
               </div>
 
               <div id="inspectorPaneSharing" class="inspector-tab-pane">
-                <section id="sharesPanel" class="shares-panel" style="display:block;">
-                  <h2>Sharing management</h2>
-
-                  <div class="share-block">
-                    <h3>Direct user shares</h3>
-                    <div id="directSharesList" class="member-list"></div>
-                    <div id="noDirectShares" class="shares-empty-state" style="display:none;">
-                      <span class="shares-empty-icon">🔒</span>
-                      <p class="shares-empty-text">Not shared with any users directly.</p>
-                      <button type="button" class="shares-empty-action-link" id="emptyShareUserLink">+ Share with
-                        someone</button>
+                <section id="sharesPanel" class="shares-panel" style="display:block; padding: 4px 0;">
+                  <!-- Visibility & Public status block -->
+                  <div class="share-block" id="visibilityShareBlock" style="margin-bottom: 20px;">
+                    <h3 style="font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 10px 0;">Visibility</h3>
+                    <div id="visibilityStatusContent" style="display: none; padding: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;">
+                      <div style="font-weight: 700; font-size: 13px; color: #166534; margin-bottom: 2px;">Public in Community Library</div>
+                      <div style="font-size: 12px; color: #15803d; line-height: 1.4;">People in Community Library can open and download this document.</div>
+                    </div>
+                    <div id="privateVisibilityNote" style="display: none; padding: 12px; background: #f9fafb; border: 1px solid var(--border); border-radius: 8px;">
+                      <div style="font-weight: 700; font-size: 13px; color: var(--text); margin-bottom: 2px;">Private Document</div>
+                      <div style="font-size: 12px; color: var(--muted); line-height: 1.4;">Only you and people you directly share with can access this document.</div>
+                    </div>
+                    
+                    <div class="visibility-actions" style="margin-top: 10px; display: flex; gap: 8px;">
+                      <button id="sharingPublishBtn" class="btn btn-secondary" type="button" style="display:none; padding: 7px 14px; font-size: 12px; font-weight: 600;">
+                        Publish to Community Library
+                      </button>
+                      <button id="sharingUnpublishBtn" class="btn btn-outline" type="button" style="display:none; padding: 7px 14px; font-size: 12px; font-weight: 600; color: #b45309; border-color: #fde68a; background: #fffbeb;">
+                        Unpublish from Community
+                      </button>
                     </div>
                   </div>
 
-                  <div class="share-block">
-                    <h3>Group shares</h3>
+                  <!-- Direct user shares block -->
+                  <div class="share-block" style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                      <h3 style="font-size: 13px; font-weight: 700; color: var(--text); margin: 0;">Direct user shares</h3>
+                      <button type="button" class="btn-ghost-sm" id="addShareUserLink" style="display: none; padding: 4px 10px; font-size: 11px; gap: 4px;">
+                        + Share with user
+                      </button>
+                    </div>
+                    <div id="directSharesList" class="member-list"></div>
+                    <div id="noDirectShares" style="display:none; flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 6px;">
+                      <p style="font-size: 12px; color: var(--muted); margin: 0;">No direct shares yet.</p>
+                      <button type="button" class="btn btn-secondary" id="emptyShareUserLink" style="font-size: 12px; padding: 6px 12px; font-weight: 600; border-radius: 6px;">
+                        Share with user
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Group shares block -->
+                  <div class="share-block" style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                      <h3 style="font-size: 13px; font-weight: 700; color: var(--text); margin: 0;">Group shares</h3>
+                      <button type="button" class="btn-ghost-sm" id="addShareGroupLink" style="display: none; padding: 4px 10px; font-size: 11px; gap: 4px;">
+                        + Share with group
+                      </button>
+                    </div>
                     <div id="groupSharesList" class="member-list"></div>
-                    <div id="noGroupShares" class="shares-empty-state" style="display:none;">
-                      <span class="shares-empty-icon">👥</span>
-                      <p class="shares-empty-text">Not shared in any groups.</p>
-                      <button type="button" class="shares-empty-action-link" id="emptyShareGroupLink">+ Share with
-                        group</button>
+                    <div id="noGroupShares" style="display:none; flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 6px;">
+                      <p style="font-size: 12px; color: var(--muted); margin: 0;">Not shared with any groups yet.</p>
+                      <button type="button" class="btn btn-secondary" id="emptyShareGroupLink" style="font-size: 12px; padding: 6px 12px; font-weight: 600; border-radius: 6px;">
+                        Share with group
+                      </button>
                     </div>
                   </div>
                 </section>
@@ -1058,110 +1928,171 @@
 
               <div id="inspectorPaneAI" class="inspector-tab-pane">
                 <section class="ai-qa-panel" aria-label="AI Document Q&A">
-                  <section class="ai-processing-section" id="aiProcessingSection"
+                  <div class="ai-qa-header">
+                    <h3>Ask this document</h3>
+                    <p>Ask questions and get answers grounded in this document.</p>
+                  </div>
+
+                  <section class="ai-processing-section onboarding-state" id="aiProcessingSection"
                     aria-label="AI document processing status" style="display:none;">
-                    <h3 class="ai-processing-heading">AI Document Processing</h3>
-                    <div class="ai-processing-status-row">
-                      <span class="status-badge" id="aiStatusBadge">–</span>
-                      <span class="ai-processing-meta" id="aiProcessingMeta"></span>
+                    <div class="ai-processing-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24">
+                        <g id="Sparkle">
+                          <path id="Vector" fill="currentColor" d="m8.24536 15.7542 1.70215 0.8515 1.78909 0.8945 -1.78909 0.8946 -1.70215 0.8506 -0.85058 1.7021 -0.89454 1.7891 -0.89453 -1.7891 -0.85156 -1.7021 -3.49023 -1.7452 1.78906 -0.8945 1.70117 -0.8515 0.85156 -1.7012 0.89453 -1.7891zM18.2454 9.25415l2.7021 1.35155 1.7891 0.8945 -1.7891 0.8946 -2.7021 1.3506 -1.3506 2.7021 -0.8946 1.7891 -0.8945 -1.7891 -1.3515 -2.7021 -4.49028 -2.2452 1.78908 -0.8945 2.7012 -1.35155 1.3515 -2.70117 0.8945 -1.78906zm-2.8506 1.19335 -0.1494 0.2979 -0.2979 0.1494 -1.2109 0.6054 1.2109 0.6055 0.2979 0.1494 0.1494 0.2979 0.6054 1.2109 0.6055 -1.2109 0.1494 -0.2979 0.2979 -0.1494 1.2109 -0.6055 -1.2109 -0.6054 -0.2979 -0.1494 -0.1494 -0.2979 -0.6055 -1.21093zM8.24536 4.75415l1.70215 0.85156 1.78909 0.89453 -1.78909 0.89454 -1.70215 0.85058 -0.85058 1.70215 -0.89454 1.78909 -0.89453 -1.78909 -0.85156 -1.70215 -3.49023 -1.74512 1.78906 -0.89453 1.70117 -0.85156 0.85156 -1.70117 0.89453 -1.78906z" stroke-width="1"></path>
+                        </g>
+                      </svg>
                     </div>
-                    <p class="ai-processing-message" id="aiProcessingMessage"></p>
-                    <p class="ai-processing-warning" id="aiProcessingWarning"></p>
+                    <h3 class="ai-processing-heading">Prepare this document for AI Q&A</h3>
+                    <p class="ai-processing-message" id="aiProcessingMessage">We’ll extract the content so AI can answer questions from this document.</p>
                     <div class="ai-processing-actions" id="aiProcessingActions"></div>
-
-
+                    <p class="ai-processing-warning" id="aiProcessingWarning"></p>
                   </section>
 
-                  <hr class="ai-qa-divider" />
-
                   <div class="ai-qa-sample-questions" id="aiQaSampleQuestions" style="display:none;">
-                    <button type="button" class="ai-qa-sample-btn" data-question="Summarize this document.">Summarize
-                      this document</button>
-                    <button type="button" class="ai-qa-sample-btn" data-question="What are the key points?">What are the
-                      key points?</button>
-                    <button type="button" class="ai-qa-sample-btn"
-                      data-question="Give me examples from this document.">Give me examples</button>
+                    <span class="ai-qa-sample-label">Try asking</span>
+                    <div class="ai-qa-sample-chips">
+                      <button type="button" class="ai-qa-sample-btn" data-question="Summarize this document">Summarize this document</button>
+                      <button type="button" class="ai-qa-sample-btn" data-question="What are the key points?">What are the key points?</button>
+                      <button type="button" class="ai-qa-sample-btn" data-question="Give me examples">Give me examples</button>
+                      <button type="button" class="ai-qa-sample-btn" data-question="Create review questions">Create review questions</button>
+                      <button type="button" class="ai-qa-sample-btn" data-question="Explain simply">Explain simply</button>
+                    </div>
                   </div>
 
                   <div class="ai-qa-messages" id="aiQaMessages">
-                    <div class="ai-qa-empty-state" id="aiQaEmptyState">Ask a question about this document to get
-                      started.</div>
+                    <div class="ai-qa-empty-state" id="aiQaEmptyState">Ask a question about this document to get started.</div>
                   </div>
 
                   <div class="ai-qa-status-banner" id="aiQaStatusBanner" style="display:none;"></div>
 
-                  <form class="ai-qa-input-row" id="aiQaInputForm">
-                    <textarea id="aiQaQuestionInput" placeholder="Ask something about this document..." rows="2"
-                      maxlength="2000" disabled></textarea>
-                    <button type="submit" class="btn btn-primary" id="aiQaAskBtn" disabled>Ask</button>
-                  </form>
-                  <div class="ai-qa-input-meta" id="aiQaInputMeta"></div>
-
-                  <div class="ai-qa-usage-row" id="aiQaUsageRow" style="display:none;">
-                    <span id="aiQaUsageText">–</span>
-                    <span id="aiQaModelLabel" class="ai-qa-model-badge" style="display:none;"></span>
+                  <div class="ai-qa-sticky-footer">
+                    <form class="ai-qa-input-row" id="aiQaInputForm">
+                      <textarea id="aiQaQuestionInput" placeholder="Ask about this document..." rows="1"
+                        maxlength="2000" disabled></textarea>
+                      <button type="submit" class="btn btn-primary btn-icon" id="aiQaAskBtn" disabled aria-label="Send">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm-3.611-1.63 4.338 2.76 7.494-7.493-11.832 4.732Z"/></svg>
+                      </button>
+                    </form>
+                    
+                    <div class="ai-qa-footer-meta">
+                      <div class="ai-qa-usage-row" id="aiQaUsageRow" style="display:none;">
+                        <span id="aiQaUsageText">–</span>
+                        <span id="aiQaModelLabel" class="ai-qa-model-badge" style="display:none;"></span>
+                      </div>
+                      <div class="ai-qa-input-meta" id="aiQaInputMeta"></div>
+                    </div>
                   </div>
                 </section>
               </div>
 
               <div id="inspectorPaneTools" class="inspector-tab-pane">
                 <section class="ai-tools-panel" aria-label="AI Learning Tools">
+                  <div class="ai-tools-header">
+                    <h3>Create study materials</h3>
+                    <p>Generate flashcards and quizzes from this document.</p>
+                  </div>
 
-                  <p class="ai-tools-not-ready" id="aiToolsNotReadyMessage" style="display:none;"></p>
+                  <section class="ai-processing-section onboarding-state" id="aiToolsNotReadySection"
+                    aria-label="AI document processing status" style="display:none;">
+                    <div class="ai-processing-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24">
+                        <g id="Sparkle">
+                          <path id="Vector" fill="currentColor" d="m8.24536 15.7542 1.70215 0.8515 1.78909 0.8945 -1.78909 0.8946 -1.70215 0.8506 -0.85058 1.7021 -0.89454 1.7891 -0.89453 -1.7891 -0.85156 -1.7021 -3.49023 -1.7452 1.78906 -0.8945 1.70117 -0.8515 0.85156 -1.7012 0.89453 -1.7891zM18.2454 9.25415l2.7021 1.35155 1.7891 0.8945 -1.7891 0.8946 -2.7021 1.3506 -1.3506 2.7021 -0.8946 1.7891 -0.8945 -1.7891 -1.3515 -2.7021 -4.49028 -2.2452 1.78908 -0.8945 2.7012 -1.35155 1.3515 -2.70117 0.8945 -1.78906zm-2.8506 1.19335 -0.1494 0.2979 -0.2979 0.1494 -1.2109 0.6054 1.2109 0.6055 0.2979 0.1494 0.1494 0.2979 0.6054 1.2109 0.6055 -1.2109 0.1494 -0.2979 0.2979 -0.1494 1.2109 -0.6055 -1.2109 -0.6054 -0.2979 -0.1494 -0.1494 -0.2979 -0.6055 -1.21093zM8.24536 4.75415l1.70215 0.85156 1.78909 0.89453 -1.78909 0.89454 -1.70215 0.85058 -0.85058 1.70215 -0.89454 1.78909 -0.89453 -1.78909 -0.85156 -1.70215 -3.49023 -1.74512 1.78906 -0.89453 1.70117 -0.85156 0.85156 -1.70117 0.89453 -1.78906z" stroke-width="1"></path>
+                        </g>
+                      </svg>
+                    </div>
+                    <h3 class="ai-processing-heading">Prepare this document</h3>
+                    <p class="ai-processing-message" id="aiToolsProcessingMessage">We’ll extract the content so AI can generate study materials.</p>
+                    <div class="ai-processing-actions" id="aiToolsProcessingActions"></div>
+                  </section>
 
                   <div id="aiToolsContent">
-                    <section class="ai-tools-section" id="flashcardSection">
-                      <div class="ai-tools-section-header">
-                        <h3>AI Flashcards</h3>
+                    <section class="ai-tools-tool-block" id="flashcardSection">
+                      <div class="ai-tools-tool-header">
+                        <div class="ai-tools-tool-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" id="Office-Business-Card--Streamline-Freehand" height="24" width="24">
+                            <path fill="currentColor" fill-rule="evenodd" d="M5.67564 3.55707c0.995 0.09951 1.50246 0.99501 1.82086 2.07957 0.5173 2.00697 0.5173 4.11233 0 6.11926 -0.16982 0.295 -0.42235 0.5336 -0.72635 0.6866 -0.50746 0.3084 -1.11441 -0.4378 -1.24377 -0.995 -0.36092 -1.0846 -0.42279 -2.24638 -0.1791 -3.36314 0.10945 -0.32835 0.71641 -0.64675 0.86566 -0.32835 0.3582 0.78605 -0.2189 2.06961 0.48755 2.06961 0.0889 -0.00964 0.17125 -0.05131 0.23167 -0.11723 0.06043 -0.06591 0.09479 -0.15157 0.09669 -0.24097 0 -0.4179 0.0796 -0.90545 0.04975 -1.35321 -0.1393 -1.99001 -2.18902 -1.46266 -2.63677 -0.34825 -0.37109 1.30073 -0.37109 2.67934 0 3.98004 0.16611 0.7253 0.60416 1.3592 1.22386 1.7711 0.25498 0.1598 0.54981 0.2446 0.85073 0.2446 0.30092 0 0.59575 -0.0848 0.85073 -0.2446 0.51675 -0.2558 0.94103 -0.6662 1.21391 -1.1741 0.92536 -1.7512 0.99501 -9.50233 -2.83577 -9.65158 -0.82342 -0.01522 -1.62249 0.27955 -2.23877 0.82585 -0.40803 0.27679 -0.69878 0.69518 -0.81591 1.17411 -0.1393 0.73631 0.52736 0.57711 0.64676 0.25871 0.20035 -0.44358 0.53199 -0.815 0.95014 -1.06411 0.41815 -0.24911 0.90266 -0.36391 1.38813 -0.32891Z" clip-rule="evenodd" stroke-width="1"></path>
+                            <path fill="currentColor" fill-rule="evenodd" d="M23.9937 12.9898c0 -2.6567 0.1095 -7.31334 -0.587 -8.8954 -0.1592 -0.34826 -0.5871 -0.36816 -0.995 -0.40796 -4.2689 -0.2132 -8.5484 -0.00322 -12.77592 0.62686 -0.0477 0.00915 -0.09312 0.0276 -0.13368 0.0543 -0.04057 0.0267 -0.07547 0.06113 -0.10273 0.10132 -0.02726 0.04019 -0.04633 0.08536 -0.05613 0.13292 -0.0098 0.04757 -0.01014 0.09659 -0.00099 0.14429 0.00915 0.04769 0.0276 0.09312 0.0543 0.13368s0.06113 0.07547 0.10132 0.10272c0.04019 0.02726 0.08536 0.04633 0.13292 0.05613 0.04757 0.0098 0.09659 0.01014 0.14429 0.001 0.91542 -0.16916 1.72132 -0.18906 7.06452 -0.60696 1.917 -0.03027 3.8341 0.0528 5.7412 0.24875 0.4776 1.62187 0.3284 4.20889 0.2886 8.30835 -0.2388 7.174 -0.1493 6.0695 -1.1045 6.3382 -1.4925 0.4278 -4.2288 0.0497 -10.0098 0.2189 -3.87054 0.1094 -5.26355 0.5174 -6.96501 0.587 -0.91596 0.0473 -1.8343 -0.0128 -2.73627 -0.1791 -0.23881 -0.1791 -0.16916 -1.4726 -0.20896 -1.8905 -0.6169 -6.7561 -0.78605 -9.05456 -0.875603 -10.15902 -0.007017 -0.174 0.042503 -0.34558 0.141163 -0.48908 0.09865 -0.14349 0.24112 -0.25117 0.40609 -0.30693 1.34019 -0.50409 2.71316 -0.91632 4.10938 -1.23381 0.04715 0.00265 0.09431 -0.0049 0.13827 -0.02213 0.04396 -0.01723 0.08369 -0.04374 0.11648 -0.07772 0.03278 -0.03399 0.05785 -0.07464 0.0735 -0.11919 0.01564 -0.04455 0.02149 -0.09196 0.01715 -0.13897 -0.00434 -0.04702 -0.01877 -0.09255 -0.0423 -0.13349 -0.02354 -0.04093 -0.05563 -0.07631 -0.09408 -0.10372 -0.03845 -0.0274 -0.08236 -0.04619 -0.12873 -0.05509 -0.04638 -0.00889 -0.09412 -0.00768 -0.13999 0.00356 -0.52735 0.04975 -4.825785 0.62685 -5.363089 1.35321 -0.537305 0.72635 0.10945 4.64668 0.577104 11.58188 0.049751 0.6866 -0.179101 2.0796 0.567155 2.6766 0.47922 0.2693 1.0226 0.4035 1.57211 0.388 1.51231 0.1428 3.03654 0.096 4.53724 -0.1393 5.40289 -0.6268 12.69629 0 14.63659 -0.5373 0.8557 -0.2388 1.7711 -0.2587 1.8507 -1.592 0.0696 -0.6666 -0.0697 1.1741 0.0497 -5.97Z" clip-rule="evenodd" stroke-width="1"></path>
+                            <path fill="currentColor" fill-rule="evenodd" d="M20.8794 8.0147c0.0976 0 0.1912 -0.03879 0.2603 -0.10783 0.069 -0.06904 0.1078 -0.16269 0.1078 -0.26033s-0.0388 -0.19128 -0.1078 -0.26032c-0.0691 -0.06904 -0.1627 -0.10783 -0.2603 -0.10783 -3.3333 -0.0796 -5.8706 -0.38805 -9.8705 0.63681 -0.0858 0.01583 -0.1617 0.06508 -0.2112 0.13693 -0.0494 0.07184 -0.0683 0.16038 -0.0525 0.24614 0.0158 0.08577 0.0651 0.16173 0.1369 0.21118 0.0719 0.04945 0.1604 0.06834 0.2462 0.0525 1.8706 -0.1592 2.3781 0.2388 9.7511 -0.54725Z" clip-rule="evenodd" stroke-width="1"></path>
+                            <path fill="currentColor" fill-rule="evenodd" d="M10.6209 12.8505c3.2136 0.1534 6.4342 -0.0535 9.6018 -0.6169 0.0483 -0.0046 0.0953 -0.0187 0.1382 -0.0414 0.0429 -0.0227 0.081 -0.0537 0.1119 -0.0911 0.031 -0.0374 0.0542 -0.0806 0.0685 -0.127 0.0143 -0.0464 0.0193 -0.0952 0.0147 -0.1435 -0.0046 -0.0484 -0.0186 -0.0953 -0.0413 -0.1383 -0.0228 -0.0429 -0.0537 -0.0809 -0.0911 -0.1118 -0.0375 -0.031 -0.0806 -0.0543 -0.127 -0.0686 -0.0464 -0.0142 -0.0952 -0.0192 -0.1436 -0.0147 -3.8009 0.1095 -4.0297 -0.2487 -9.6018 0.7065 -0.0469 -0.0014 -0.0936 0.0072 -0.1368 0.0254 -0.0433 0.0181 -0.0822 0.0453 -0.1141 0.0797 -0.0319 0.0345 -0.056 0.0753 -0.0708 0.1199 -0.0147 0.0445 -0.0197 0.0917 -0.0147 0.1384 0.005 0.0466 0.02 0.0917 0.0439 0.132 0.0239 0.0404 0.0561 0.0752 0.0946 0.1021 0.0385 0.0268 0.0823 0.0451 0.1285 0.0536 0.0461 0.0085 0.0935 0.007 0.1391 -0.0043Z" clip-rule="evenodd" stroke-width="1"></path>
+                            <path fill="currentColor" fill-rule="evenodd" d="M6.4219 16.3031c-0.32835 0 -0.995 0 -1.11441 0.3383 -0.02523 0.0818 -0.01751 0.1703 0.02152 0.2465 0.03904 0.0762 0.10629 0.1341 0.18744 0.1615 0.32692 0.0793 0.66808 0.0793 0.995 0 4.81285 -0.0074 9.61975 -0.3398 14.38785 -0.995 0.0976 0 0.1913 -0.0388 0.2603 -0.1079 0.069 -0.069 0.1078 -0.1627 0.1078 -0.2603 0 -0.0976 -0.0388 -0.1913 -0.1078 -0.2603 -0.069 -0.0691 -0.1627 -0.1078 -0.2603 -0.1078 -9.2934 0.2288 -7.8407 0.1293 -14.4774 0.985Z" clip-rule="evenodd" stroke-width="1"></path>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3>AI Flashcards</h3>
+                          <p>Create quick review cards from key concepts in this document.</p>
+                        </div>
                       </div>
-                      <div class="ai-tools-generate-row">
-                        <label for="flashcardCountInput">Number of cards</label>
-                        <input type="number" id="flashcardCountInput" min="3" placeholder="Default" />
+                      
+                      <div class="ai-tools-input-group">
+                        <div class="ai-tools-input-row-flex">
+                          <label for="flashcardCountInput">Number of cards</label>
+                          <input type="number" id="flashcardCountInput" min="3" placeholder="Default" />
+                        </div>
                         <small class="ai-tools-limit-hint" id="flashcardCountHint"></small>
-                        <label for="flashcardFocusInput">Focus (optional)</label>
-                        <textarea id="flashcardFocusInput" rows="2" maxlength="300"
-                          placeholder="e.g. Focus on chapter 3 definitions"></textarea>
-                        <small class="ai-tools-char-count" id="flashcardFocusCount">0/300</small>
-                        <button type="button" class="btn btn-secondary btn-sm" id="flashcardGenerateBtn"
-                          disabled>Generate Flashcards</button>
                       </div>
+
+                      <div class="ai-tools-input-group">
+                        <label for="flashcardFocusInput">Focus <span>(optional)</span> <span class="helper-text-inline">Tell AI what part of the document to focus on.</span></label>
+                        <textarea id="flashcardFocusInput" rows="2" maxlength="300"
+                          placeholder="e.g. Focus on chapter 3 definitions, formulas, or exam questions"></textarea>
+                        <small class="ai-tools-char-count" id="flashcardFocusCount">0/300</small>
+                      </div>
+                      
+                      <button type="button" class="btn btn-primary ai-tools-generate-btn" id="flashcardGenerateBtn"
+                        disabled>Generate Flashcards</button>
                       <div class="ai-tools-error" id="flashcardError" style="display:none;"></div>
 
                       <div id="flashcardSetsLoader" class="helper-text">Loading flashcard sets...</div>
-                      <div id="flashcardSetsEmpty" class="helper-text" style="display:none;">No flashcard sets yet.
-                      </div>
+                      <div id="flashcardSetsEmpty" class="helper-text" style="display:none;">No flashcard sets yet.</div>
                       <ul class="ai-tools-set-list" id="flashcardSetsList"></ul>
                     </section>
 
-                    <!-- ── AI Quiz ── -->
-                    <section class="ai-tools-section" id="quizSection">
-                      <div class="ai-tools-section-header">
-                        <h3>AI Quiz</h3>
-                      </div>
-                      <div class="ai-tools-form-stack">
-                        <div class="ai-tools-form-row">
-                          <div class="ai-tools-form-group">
-                            <label for="quizCountInput">Number of questions</label>
-                            <input type="number" id="quizCountInput" min="3" placeholder="Default" />
-                            <small class="ai-tools-limit-hint" id="quizCountHint"></small>
-                          </div>
-                          <div class="ai-tools-form-group">
-                            <label for="quizDifficultySelect">Difficulty</label>
-                            <select id="quizDifficultySelect">
-                              <option value="MIXED">Mixed</option>
-                              <option value="EASY">Easy</option>
-                              <option value="MEDIUM">Medium</option>
-                              <option value="HARD">Hard</option>
-                            </select>
-                          </div>
+                    <section class="ai-tools-tool-block" id="quizSection">
+                      <div class="ai-tools-tool-header">
+                        <div class="ai-tools-tool-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" id="Edit-Pen-Write-Paper--Streamline-Freehand" height="24" width="24">
+                            <path fill="currentColor" fill-rule="evenodd" d="M23.0003 0.681527c-0.5329 -0.402203 -1.1935 -0.597552 -1.8594 -0.549832 -0.2417 0.026717 -0.4778 0.090794 -0.6998 0.189942 -0.2946 0.164351 -0.5667 0.365948 -0.8098 0.599817 -0.0329 0.031713 -0.0591 0.069751 -0.0771 0.111836 -0.0179 0.04209 -0.0271 0.08735 -0.0271 0.13309 0 0.04574 0.0092 0.091 0.0271 0.13309 0.018 0.04208 0.0442 0.08012 0.0771 0.11184 0.0309 0.03267 0.0681 0.0587 0.1093 0.0765 0.0413 0.01779 0.0857 0.02697 0.1307 0.02697 0.0449 0 0.0893 -0.00918 0.1306 -0.02697 0.0413 -0.0178 0.0784 -0.04383 0.1093 -0.0765 0.1646 -0.15143 0.3419 -0.28855 0.5298 -0.40988 0.1789 -0.097602 0.3766 -0.155564 0.5798 -0.169948 0.4672 -0.000913 0.9199 0.161788 1.2797 0.459858 0.1821 0.11521 0.3353 0.27064 0.448 0.45434 0.1126 0.18371 0.1817 0.39079 0.2018 0.60534 0.0036 0.34674 -0.0752 0.68937 -0.23 0.99969 -0.1613 0.31718 -0.3666 0.60999 -0.6098 0.86974l-1.2096 1.35959c-0.2999 -0.31991 -0.6098 -0.63981 -0.9397 -0.93972 -0.16 -0.14995 -0.3299 -0.27991 -0.4899 -0.41987l-0.3299 -0.21993 -0.8397 -0.48985 -0.16 -0.11997 0.2699 -0.38988 0.6798 -0.84974c0.024 -0.0327 0.0408 -0.07006 0.0494 -0.10967 0.0086 -0.0396 0.0088 -0.08057 0.0006 -0.12026 0 -0.14995 -0.1499 -0.37988 -0.4498 -0.19994 -0.29 -0.21993 -0.5399 -0.47985 -0.8198 -0.69979 -0.1702 -0.127698 -0.3547 -0.235062 -0.5498 -0.319899 -0.1584 -0.065993 -0.3283 -0.099969 -0.4999 -0.099969 -0.1716 0 -0.3414 0.033976 -0.4998 0.099969 -0.307 0.150821 -0.59 0.346209 -0.8398 0.579819 -0.3297 0.29301 -0.6402 0.60689 -0.9297 0.93972 -0.4 0.50465 -0.7706 1.03204 -1.1096 1.57952 -0.0642 0.0654 -0.1001 0.15334 -0.1001 0.24492 0 0.09159 0.0359 0.17952 0.1001 0.24493 0.0637 0.06349 0.1499 0.09914 0.2399 0.09914 0.0899 0 0.1762 -0.03565 0.2399 -0.09914 0.2999 -0.30991 0.6098 -0.58982 0.9097 -0.86974 0.4472 -0.4227 0.9178 -0.81987 1.4096 -1.18963 0.14 -0.11997 0.3099 -0.26992 0.4899 -0.39988 0.1799 -0.12996 0.1599 -0.15995 0.2699 -0.13996 0.1299 0.0192 0.2573 0.05273 0.3799 0.09997 0.2799 0.12996 0.5498 0.29991 0.8297 0.43987l-0.3499 0.40987c-1.3896 1.6295 -4.4386 5.19842 -5.6883 6.81792 -0.2833 0.32657 -0.5036 0.70285 -0.6498 1.10965 0 0.2799 -0.1299 2.2893 -0.1099 3.1091 -0.0118 0.0996 -0.0118 0.2003 0 0.2999 -0.1533 0.0935 -0.3003 0.197 -0.4399 0.3099 -0.0874 0.0758 -0.1677 0.1595 -0.2399 0.2499 -0.069 0.0893 -0.1325 0.1828 -0.19 0.2799 -0.5498 0.8997 -0.4298 0.9997 -0.4198 0.9997 0.0138 0.0765 0.0568 0.1446 0.1199 0.19 0.0575 0.0533 0.1317 0.0851 0.21 0.0899 0 0 0.1499 0.09 0.9397 -0.6098 0.0897 -0.0696 0.1703 -0.1502 0.2399 -0.2399 0.0762 -0.0825 0.1432 -0.173 0.1999 -0.2699 0.077 -0.1314 0.1438 -0.2684 0.2 -0.4099 0.2214 0.0408 0.4484 0.0408 0.6698 0 0.8636 -0.2002 1.7121 -0.4607 2.5392 -0.7798 0.1649 -0.0643 0.3098 -0.1712 0.4199 -0.3099 0.2499 -0.2699 0.7398 -0.8397 1.3496 -1.5895 1.7594 -2.15933 4.5686 -5.76823 5.6982 -7.07783 0.2909 -0.33053 0.5333 -0.70081 0.7198 -1.09966 0.2209 -0.41367 0.3472 -0.8712 0.3699 -1.3396 -0.0316 -0.33794 -0.1376 -0.66469 -0.3105 -0.95679 -0.1728 -0.29211 -0.4082 -0.542325 -0.6892 -0.732693ZM15.2427 12.5279l-0.19 0.2c-0.7307 0.3027 -1.4867 0.5402 -2.2593 0.7097v-2.7291c0.09 0 -0.6198 0.4898 5.0885 -6.78796l0.1299 0.12996 0.5399 0.6498c0.2614 0.31786 0.5602 0.60315 0.8897 0.84975 0.3583 0.23831 0.7324 0.45207 1.1196 0.6398 -0.8497 0.9997 -1.8294 2.13935 -2.7291 3.21902 -1.0997 1.34963 -2.0994 2.58923 -2.5892 3.11903Z" clip-rule="evenodd" stroke-width="1"></path>
+                            <path fill="currentColor" fill-rule="evenodd" d="m18.6316 17.5264 -0.6998 -1.5995c-0.0082 -0.0437 -0.0258 -0.0851 -0.0515 -0.1214 -0.0257 -0.0363 -0.0589 -0.0667 -0.0974 -0.089s-0.0813 -0.0361 -0.1256 -0.0404c-0.0442 -0.0043 -0.0889 0.001 -0.131 0.0155 -0.042 0.0145 -0.0804 0.0379 -0.1127 0.0685 -0.0322 0.0307 -0.0574 0.068 -0.0739 0.1092 -0.0166 0.0413 -0.024 0.0857 -0.0219 0.1301 0.0021 0.0444 0.0138 0.0879 0.0342 0.1274l0.6898 1.6995c0.5398 1.0797 0.9997 1.6295 1.2196 2.0694 0.1413 0.2189 0.1915 0.4843 0.14 0.7397 0 0.05 -0.1 0.06 -0.1999 0.12 -0.3488 0.1851 -0.7178 0.3294 -1.0997 0.4299 -2.3271 0.6111 -4.7014 1.0257 -7.0978 1.2396 -2.37019 0.2998 -4.76295 0.3801 -7.14787 0.2399 -0.33743 -0.0283 -0.67186 -0.0852 -0.99969 -0.1699 -0.09652 -0.0361 -0.1901 -0.0795 -0.27992 -0.13 -0.11716 -0.2097 -0.22068 -0.4268 -0.3099 -0.6498 -0.09698 -0.2079 -0.17074 -0.4258 -0.21994 -0.6498 -0.48414 -2.76 -0.79134 -5.5482 -0.91972 -8.3475 -0.207143 -2.6885 -0.207143 -5.38897 0 -8.0775 0.92972 -0.21993 2.18934 -0.42987 3.59891 -0.60982 1.88942 -0.23992 3.99878 -0.40987 5.99813 -0.47985 0.0455 0.00002 0.0906 -0.00909 0.1325 -0.0268 0.0419 -0.0177 0.0798 -0.04363 0.1115 -0.07626 0.0317 -0.03263 0.0565 -0.07129 0.073 -0.11369 0.0165 -0.0424 0.0243 -0.08767 0.0229 -0.13314 -0.0026 -0.09106 -0.0406 -0.17751 -0.1059 -0.24098 -0.0654 -0.06347 -0.1529 -0.09896 -0.244 -0.09892 -1.99935 0 -4.1287 0.15995 -6.04811 0.34989 -1.3436 0.12579 -2.67877 0.32941 -3.998787 0.60982 -0.086422 0.02205 -0.164568 0.06876 -0.224917 0.13443 -0.060349 0.06567 -0.100297 0.14748 -0.114979 0.23546C-0.00966499 7.04 -0.0866254 9.91431 0.0972769 12.7778 0.205629 15.6344 0.509582 18.4802 1.007 21.2952c0.05912 0.2441 0.13256 0.4844 0.21993 0.7198 0.13514 0.3218 0.28868 0.6356 0.45986 0.9397 0.21734 0.2497 0.48419 0.4515 0.78363 0.5926 0.29944 0.1411 0.62493 0.2185 0.95584 0.2272 1.97836 0.1691 3.96913 0.1255 5.93819 -0.13 3.31665 -0.2785 6.58855 -0.9497 9.74705 -1.9994 0.6798 -0.2899 0.9997 -0.6398 1.0697 -0.9097 0.0602 -0.2873 0.0359 -0.5859 -0.07 -0.8597 -0.2399 -0.4899 -0.7698 -0.9997 -1.4796 -2.3493Z" clip-rule="evenodd" stroke-width="1"></path>
+                            <path fill="currentColor" fill-rule="evenodd" d="M9.67431 11.6282c-0.03014 -0.0958 -0.0952 -0.1767 -0.18224 -0.2267 -0.08705 -0.05 -0.18972 -0.0655 -0.28762 -0.0433 -0.07998 0 0 -0.0799 -0.34989 0 -0.76977 0.09 -1.99939 0.2999 -3.05907 0.4499 -0.3199 0.05 -0.62981 0.09 -0.90972 0.15 -0.64981 0.1199 -1.13966 0.2599 -1.3296 0.2799 -0.06394 0.0122 -0.12161 0.0464 -0.16308 0.0965 -0.04148 0.0502 -0.06417 0.1133 -0.06417 0.1784s0.02269 0.1282 0.06417 0.1783c0.04147 0.0502 0.09914 0.0844 0.16308 0.0966 0.49909 0.0792 1.00437 0.1126 1.50954 0.1 0.44986 0 0.9997 -0.06 1.46955 -0.11 0.7872 -0.0756 1.56862 -0.2025 2.33929 -0.3799 0.72978 -0.2399 0.85974 -0.5498 0.79976 -0.7697Z" clip-rule="evenodd" stroke-width="1"></path>
+                            <path fill="currentColor" fill-rule="evenodd" d="M5.45568 7.7694c-0.67735 0.14942 -1.34504 0.33971 -1.99939 0.56983 -0.0719 0.01892 -0.13379 0.06475 -0.17286 0.12801 -0.03907 0.06326 -0.05235 0.13911 -0.03708 0.21188 0.01881 0.07143 0.0651 0.13253 0.12877 0.16999 0.06366 0.03745 0.13956 0.04822 0.21113 0.02995 0.88973 -0.13996 1.74947 -0.16995 2.64919 -0.23992 1.23963 -0.10997 2.52923 -0.23993 3.99876 -0.42987 0.3799 -0.04999 0.7798 -0.07998 1.1797 -0.16995 0.1278 0.00422 0.2557 -0.00924 0.3798 -0.03999 0.06 0 0.08 -0.06998 0.14 -0.10997 0.0975 -0.01716 0.1844 -0.07168 0.2423 -0.15197 0.0579 -0.08029 0.0821 -0.17999 0.0676 -0.2779 -0.06 -0.45986 -0.8597 -0.45986 -0.9397 -0.45986 -1.70948 0.11997 -3.15904 0.3299 -4.50863 0.50985 -0.45986 0.09997 -0.89972 0.15995 -1.33959 0.25992Z" clip-rule="evenodd" stroke-width="1"></path>
+                            <path fill="currentColor" fill-rule="evenodd" d="M8.81459 15.8369c-0.12996 0 -0.28991 0 -0.46985 0.05l-1.29961 0.1999c-0.67979 0.11 -1.39957 0.22 -1.94941 0.3599 -0.30474 0.077 -0.60509 0.1704 -0.89972 0.2799h-0.05998c-0.0489 -0.0147 -0.10106 -0.0147 -0.14996 0 0 0 -0.12996 0.4899 0.27992 0.5299 0.16995 0 0.49985 0.06 0.99969 0.06 0.66898 -0.0216 1.33637 -0.0783 1.99939 -0.17 0.48986 -0.06 0.9997 -0.1299 1.3296 -0.1999 0.14225 -0.0229 0.28259 -0.0563 0.41987 -0.1 0.17098 -0.0712 0.32957 -0.169 0.46986 -0.2899 0.09158 -0.049 0.16052 -0.1316 0.19224 -0.2305 0.03172 -0.0989 0.02372 -0.2062 -0.02229 -0.2993 -0.08998 -0.03 -0.12996 -0.17 -0.83975 -0.19Z" clip-rule="evenodd" stroke-width="1"></path>
+                          </svg>
                         </div>
-                        <label for="quizFocusInput">Focus (optional)</label>
-                        <textarea id="quizFocusInput" rows="2" maxlength="300"
-                          placeholder="e.g. Focus on chapter 3 definitions"></textarea>
-                        <small class="ai-tools-char-count" id="quizFocusCount">0/300</small>
-                        <button type="button" class="btn btn-primary" style="width: 100%; padding: 10px;"
-                          id="quizGenerateBtn" disabled>Generate Quiz</button>
+                        <div>
+                          <h3>AI Quiz</h3>
+                          <p>Practice with multiple-choice questions generated from this document.</p>
+                        </div>
                       </div>
+                      
+                      <div class="ai-tools-input-group">
+                        <div class="ai-tools-input-row-flex">
+                          <label for="quizCountInput">Number of questions</label>
+                          <input type="number" id="quizCountInput" min="3" placeholder="Default" />
+                        </div>
+                        <small class="ai-tools-limit-hint" id="quizCountHint"></small>
+                      </div>
+
+                      <div class="ai-tools-input-group">
+                        <div class="ai-tools-input-row-flex">
+                          <label for="quizDifficultySelect">Difficulty</label>
+                          <select id="quizDifficultySelect">
+                            <option value="MIXED">Mixed</option>
+                            <option value="EASY">Easy</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HARD">Hard</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div class="ai-tools-input-group">
+                        <label for="quizFocusInput">Focus <span>(optional)</span> <span class="helper-text-inline">Tell AI what part of the document to focus on.</span></label>
+                        <textarea id="quizFocusInput" rows="2" maxlength="300"
+                          placeholder="e.g. Focus on chapter 3 definitions, formulas, or exam questions"></textarea>
+                        <small class="ai-tools-char-count" id="quizFocusCount">0/300</small>
+                      </div>
+                      
+                      <button type="button" class="btn btn-primary ai-tools-generate-btn" id="quizGenerateBtn" disabled>Generate Quiz</button>
                       <div class="ai-tools-error" id="quizError" style="display:none;"></div>
 
                       <div id="quizSetsLoader" class="helper-text">Loading quiz sets...</div>
@@ -1172,6 +2103,7 @@
                 </section>
               </div>
             </div>
+
           </div>
         </aside>
       </div>
@@ -1232,6 +2164,17 @@
           <button type="button" class="btn btn-secondary" id="shareGroupCancelBtn">Cancel</button>
           <button type="button" class="btn btn-primary" id="shareGroupConfirmBtn">Share to group</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+    <div class="modal-box detail-modal">
+      <h3 id="deleteModalTitle">Delete Document</h3>
+      <p style="margin-top: 16px; color: var(--muted); font-size: 14px;">Are you sure you want to move this document to Trash? You can restore it later from the Trash folder.</p>
+      <div class="modal-actions" style="margin-top: 24px;">
+        <button class="btn btn-secondary" onclick="hideDeleteModal()">Cancel</button>
+        <button class="btn btn-primary" id="deleteConfirmBtn" style="background-color: var(--danger); border-color: var(--danger);" onclick="handleDelete()">Delete</button>
       </div>
     </div>
   </div>

@@ -7,6 +7,50 @@
   <title>Quiz - AI Study Hub</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    progress#quizProgressBar::-webkit-progress-bar { background-color: #e5e7eb; border-radius: 4px; }
+    progress#quizProgressBar::-webkit-progress-value { background-color: var(--primary); border-radius: 4px; }
+    progress#quizProgressBar::-moz-progress-bar { background-color: var(--primary); border-radius: 4px; }
+
+    .quiz-option-btn.selected {
+      background-color: #fff7ed;
+      border-color: var(--primary);
+    }
+    .quiz-option-btn.correct {
+      background-color: #ecfdf5 !important;
+      border-color: #10b981 !important;
+    }
+    .quiz-option-btn.correct .quiz-option-key {
+      background-color: #10b981 !important;
+      color: white !important;
+    }
+    .quiz-option-btn.incorrect {
+      background-color: #fef2f2 !important;
+      border-color: #ef4444 !important;
+    }
+    .quiz-option-btn.incorrect .quiz-option-key {
+      background-color: #ef4444 !important;
+      color: white !important;
+    }
+    .quiz-option-btn.muted {
+      opacity: 0.6;
+    }
+    
+    .quiz-feedback.correct {
+      background-color: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .quiz-feedback.incorrect {
+      background-color: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      border-radius: 8px;
+      padding: 16px;
+    }
+  </style>
 </head>
 
 <body>
@@ -17,6 +61,7 @@
     </aside>
 
     <main class="main-content">
+      <a href="#" class="back-link" id="quizBackLink" style="margin-bottom: 16px; display: inline-block;">← Back to document</a>
       <section class="page-header">
         <div>
           <h1 id="quizSetTitle">Quiz</h1>
@@ -36,18 +81,28 @@
           <button type="button" class="btn btn-text" id="quizBackToSummaryBtn">← Back to results</button>
         </div>
 
-        <div class="quiz-progress" id="quizProgress"></div>
+        <div class="quiz-header-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+          <div class="quiz-progress-wrapper" style="flex:1; margin-right: 16px;">
+            <div class="quiz-progress-text" id="quizProgressText" style="font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px;"></div>
+            <progress id="quizProgressBar" value="0" max="100" style="width: 100%; height: 6px; border-radius: 4px; overflow: hidden; appearance: none;"></progress>
+          </div>
+          <span class="status-badge quiz-difficulty-badge" id="quizDifficultyBadge"></span>
+        </div>
 
         <h2 class="quiz-question-text" id="quizQuestionText"></h2>
-        <span class="status-badge quiz-difficulty-badge" id="quizDifficultyBadge"></span>
 
         <div class="quiz-options-list" id="quizOptionsList"></div>
 
         <div class="quiz-feedback" id="quizFeedback" style="display:none;"></div>
 
-        <div class="quiz-controls">
-          <button type="button" class="btn btn-secondary" id="quizPrevBtn">← Previous</button>
-          <button type="button" class="btn btn-secondary" id="quizNextBtn">Next →</button>
+        <div class="quiz-controls" style="display:flex; justify-content:space-between; align-items:flex-start; margin-top:24px; gap: 12px;">
+          <div style="flex: 1;">
+            <button type="button" class="btn btn-secondary" id="quizPrevBtn" style="width: 100%;">← Previous</button>
+          </div>
+          <div style="flex: 1; display:flex; flex-direction:column; align-items:stretch;">
+            <button type="button" class="btn btn-primary" id="quizNextBtn" style="width: 100%;">Next →</button>
+            <span id="quizSkipHint" style="font-size:11px; color:var(--muted); margin-top:6px; display:none; text-align:center; line-height:1.2;">Skipping counts as incorrect</span>
+          </div>
         </div>
       </section>
 
@@ -58,25 +113,37 @@
         <div id="quizSummaryError" class="status-box status-error" style="display:none;"></div>
 
         <div id="quizSummaryResult" style="display:none;">
-          <div class="quiz-summary-score">
-            <span class="quiz-summary-score-value" id="quizSummaryScoreValue"></span>
-            <span class="quiz-summary-score-label" id="quizSummaryScoreLabel"></span>
+          
+          <div class="quiz-summary-stats" style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 24px 0;">
+            <div class="quiz-stat-card" style="background:#f9fafb; padding:16px; border-radius:8px; text-align:center; border:1px solid var(--border);">
+              <div id="quizStatScore" style="font-size:24px; font-weight:700; color:var(--primary); margin-bottom:4px;">0%</div>
+              <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">Score</div>
+            </div>
+            <div class="quiz-stat-card" style="background:#f9fafb; padding:16px; border-radius:8px; text-align:center; border:1px solid var(--border);">
+              <div id="quizStatCorrect" style="font-size:24px; font-weight:700; color:#10b981; margin-bottom:4px;">0</div>
+              <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">Correct</div>
+            </div>
+            <div class="quiz-stat-card" style="background:#f9fafb; padding:16px; border-radius:8px; text-align:center; border:1px solid var(--border);">
+              <div id="quizStatIncorrect" style="font-size:24px; font-weight:700; color:#ef4444; margin-bottom:4px;">0</div>
+              <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">Incorrect</div>
+            </div>
+            <div class="quiz-stat-card" style="background:#f9fafb; padding:16px; border-radius:8px; text-align:center; border:1px solid var(--border);">
+              <div id="quizStatSkipped" style="font-size:24px; font-weight:700; color:var(--muted); margin-bottom:4px;">0</div>
+              <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">Skipped</div>
+            </div>
           </div>
-          <p id="quizSummaryText"></p>
 
-          <div class="quiz-summary-actions">
-            <button type="button" class="btn btn-secondary" id="quizReviewAnswersBtn">Review your answers</button>
-            <button type="button" class="btn btn-primary" id="quizRetakeBtn">Retry quiz</button>
+          <div class="quiz-summary-actions" style="display:flex; flex-direction:column; gap:12px; margin-top:32px;">
+            <button type="button" class="btn btn-primary" id="quizReviewAnswersBtn" style="width:100%; padding:12px;">Review your answers</button>
+            <button type="button" class="btn btn-secondary" id="quizRetakeBtn" style="width:100%; padding:12px;">Retry quiz</button>
           </div>
 
-          <div class="quiz-history" id="quizHistorySection" style="display:none;">
+          <div class="quiz-history" id="quizHistorySection" style="display:none; margin-top:32px; padding-top:24px; border-top:1px solid var(--border);">
             <h3>Past attempts</h3>
             <ul class="quiz-history-list" id="quizHistoryList"></ul>
           </div>
         </div>
       </section>
-
-      <a href="#" class="back-link" id="quizBackLink">← Back to document</a>
     </main>
   </div>
 

@@ -21,6 +21,11 @@ function initGlobalHeader() {
     const mainContent = document.querySelector(".main-content");
     if (!mainContent) return;
 
+    // Do not inject the floating header (bell & profile) into document detail page
+    if (mainContent.classList.contains("detail-main")) {
+        return;
+    }
+
     // Check if a local widget container exists
     let globalHeader = document.getElementById("globalHeaderWidgets");
     let isFloating = false;
