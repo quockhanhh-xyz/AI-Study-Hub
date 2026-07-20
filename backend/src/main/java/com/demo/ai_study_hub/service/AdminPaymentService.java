@@ -75,7 +75,13 @@ public class AdminPaymentService {
                 row.createCell(2).setCellValue(order.getPlanCode());
                 row.createCell(3).setCellValue(order.getAmount() != null ? order.getAmount() : 0L);
                 row.createCell(4).setCellValue(order.getPaymentProvider());
-                row.createCell(5).setCellValue(order.getStatus());
+                
+                String orderStatus = order.getStatus();
+                if ("PENDING".equals(orderStatus) && order.getCreatedAt() != null && order.getCreatedAt().plusMinutes(15).isBefore(LocalDateTime.now())) {
+                    orderStatus = "EXPIRED";
+                }
+                row.createCell(5).setCellValue(orderStatus);
+                
                 row.createCell(6).setCellValue(order.getVnpTransactionNo());
                 row.createCell(7).setCellValue(order.getCreatedAt() != null ? order.getCreatedAt().toString() : "");
                 row.createCell(8).setCellValue(order.getPaidAt() != null ? order.getPaidAt().toString() : "");
@@ -128,7 +134,11 @@ public class AdminPaymentService {
         item.setPlanCode(order.getPlanCode());
         item.setAmount(order.getAmount());
         item.setPaymentProvider(order.getPaymentProvider());
-        item.setStatus(order.getStatus());
+        String status = order.getStatus();
+        if ("PENDING".equals(status) && order.getCreatedAt() != null && order.getCreatedAt().plusMinutes(15).isBefore(LocalDateTime.now())) {
+            status = "EXPIRED";
+        }
+        item.setStatus(status);
         item.setCreatedAt(order.getCreatedAt());
         item.setPaidAt(order.getPaidAt());
         item.setTransactionNo(order.getVnpTransactionNo());
