@@ -2540,7 +2540,17 @@ function renderContextualTopBar(doc) {
         detailBackBtn.style.display = "none";
     }
 
-    if (!globalHeader) return;
+    if (!globalHeader) {
+        globalHeader = document.createElement("header");
+        globalHeader.className = "global-top-bar-floating";
+        globalHeader.id = "globalTopBar";
+        const mainContent = document.querySelector(".main-content");
+        if (mainContent) {
+            mainContent.insertBefore(globalHeader, mainContent.firstChild);
+        } else {
+            return;
+        }
+    }
     
     const subjectText = topBarDoc ? (topBarDoc.subject ? topBarDoc.subject : (topBarDoc.subjectName ? `${topBarDoc.subjectCode} - ${topBarDoc.subjectName}` : "")) : "";
     const docTitleText = topBarDoc ? topBarDoc.title : "";

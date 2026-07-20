@@ -2347,11 +2347,11 @@
 
   <div class="modal-overlay" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
     <div class="modal-box detail-modal">
-      <h3 id="deleteModalTitle">Delete Document</h3>
-      <p style="margin-top: 16px; color: var(--muted); font-size: 14px;">Are you sure you want to move this document to Trash? You can restore it later from the Trash folder.</p>
+      <h3 id="deleteModalTitle" class="modal-title-danger">Move Document to Trash?</h3>
+      <p style="margin-top: 16px; color: var(--text); font-size: 14px;">Are you sure you want to move this document to Trash? You can restore it later from the Trash folder.</p>
       <div class="modal-actions" style="margin-top: 24px;">
         <button class="btn btn-secondary" onclick="hideDeleteModal()">Cancel</button>
-        <button class="btn btn-primary" id="deleteConfirmBtn" style="background-color: var(--danger); border-color: var(--danger);" onclick="handleDelete()">Delete</button>
+        <button class="btn btn-danger" id="deleteConfirmBtn" onclick="handleDelete()">Move to Trash</button>
       </div>
     </div>
   </div>
