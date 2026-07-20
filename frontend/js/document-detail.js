@@ -81,6 +81,7 @@ let currentIsCommunityView = false;
 let currentIsAuthenticated = false;
 let currentDocCanProcess = false;
 let currentDocCanReprocess = false;
+let currentDocumentForTopBar = null;
 let aiExtractedTextLoaded = false;
 let aiExtractedTextExpanded = true;
 
@@ -238,6 +239,9 @@ async function loadPage(id, { isAuthenticated, isCommunityView }) {
 
 // ── Render document info ──────────────────────────────────────────────────────
 function renderDocument(doc) {
+    currentDocumentForTopBar = doc;
+    window.currentDocumentDetailForTopBar = doc;
+
     document.getElementById("fileTypeBadge").textContent = (doc.fileType || "–").toUpperCase();
     const docTitleEl = document.getElementById("docTitle");
     if (docTitleEl) {
@@ -2387,10 +2391,19 @@ function toggleDangerZone() {
     const toggle = document.getElementById("dangerZoneToggle");
     const body = document.getElementById("dangerZoneBody");
     if (!toggle || !body) return;
-    const isOpen = body.classList.contains("open");
-    body.classList.toggle("open", !isOpen);
-    toggle.classList.toggle("open", !isOpen);
+    const nextOpen = !body.classList.contains("open");
+    body.classList.toggle("open", nextOpen);
+    toggle.classList.toggle("open", nextOpen);
+    body.style.display = nextOpen ? "block" : "none";
+    toggle.setAttribute("aria-expanded", String(nextOpen));
+
+    const chevron = document.getElementById("dangerChevron");
+    if (chevron) {
+        chevron.style.transform = nextOpen ? "rotate(180deg)" : "rotate(0deg)";
+    }
 }
+
+window.toggleDangerZone = toggleDangerZone;
 
 // ── Find in Document (preview search bar) ────────────────────────────────
 // Shows a search bar in the preview toolbar for text-based previews.
@@ -2481,6 +2494,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function renderContextualTopBar(doc) {
     const globalHeader = document.getElementById("globalTopBar");
+    const topBarDoc = doc || currentDocumentForTopBar || window.currentDocumentDetailForTopBar || null;
     
     const urlParams = new URLSearchParams(window.location.search);
     const fromParam = urlParams.get("from");
@@ -2489,7 +2503,7 @@ function renderContextualTopBar(doc) {
     let backUrl = "documents.html";
     if (fromParam === "community" || currentIsCommunityView) {
         backLabel = "← Back to Community Library";
-        backUrl = "community-library.html";
+        backUrl = "community.html";
     } else if (fromParam === "shared") {
         backLabel = "← Back to Shared with Me";
         backUrl = "shared-with-me.html";
@@ -2506,8 +2520,8 @@ function renderContextualTopBar(doc) {
 
     if (!globalHeader) return;
     
-    const subjectText = doc ? (doc.subject ? doc.subject : (doc.subjectName ? `${doc.subjectCode} - ${doc.subjectName}` : "")) : "";
-    const docTitleText = doc ? doc.title : "";
+    const subjectText = topBarDoc ? (topBarDoc.subject ? topBarDoc.subject : (topBarDoc.subjectName ? `${topBarDoc.subjectCode} - ${topBarDoc.subjectName}` : "")) : "";
+    const docTitleText = topBarDoc ? topBarDoc.title : "";
     const breadcrumbText = subjectText ? `${subjectText} / ${docTitleText}` : docTitleText;
     
     let contextualContainer = globalHeader.querySelector(".top-bar-contextual");
@@ -2532,3 +2546,5 @@ function renderContextualTopBar(doc) {
 function initTopBarSearch() {
     renderContextualTopBar(null);
 }
+
+window.renderContextualTopBar = renderContextualTopBar;

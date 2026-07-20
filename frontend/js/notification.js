@@ -20,11 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 function initGlobalHeader() {
     const mainContent = document.querySelector(".main-content");
     if (!mainContent) return;
-
-    // Do not inject the floating header (bell & profile) into document detail page
-    if (mainContent.classList.contains("detail-main")) {
-        return;
-    }
+    const isDocumentDetailPage = mainContent.classList.contains("detail-main");
 
     // Check if a local widget container exists
     let globalHeader = document.getElementById("globalHeaderWidgets");
@@ -35,13 +31,15 @@ function initGlobalHeader() {
         globalHeader = document.createElement("header");
         globalHeader.className = "global-top-bar-floating";
         globalHeader.id = "globalTopBar";
-        globalHeader.style.cssText = `
-            background: transparent !important;
-            border: none !important;
-            padding: 0 !important;
-            box-shadow: none !important;
-            min-height: auto !important;
-        `;
+        if (!isDocumentDetailPage) {
+            globalHeader.style.cssText = `
+                background: transparent !important;
+                border: none !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                min-height: auto !important;
+            `;
+        }
         isFloating = true;
     }
 
@@ -115,6 +113,10 @@ function initGlobalHeader() {
 
     if (isFloating) {
         mainContent.insertBefore(globalHeader, mainContent.firstChild);
+    }
+
+    if (isDocumentDetailPage && typeof window.renderContextualTopBar === "function") {
+        window.renderContextualTopBar(window.currentDocumentDetailForTopBar || null);
     }
 }
 
