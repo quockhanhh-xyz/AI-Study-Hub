@@ -2109,7 +2109,7 @@ function updateAiToolsAvailability() {
             notReadyMsg.style.display = "none";
             notReadyMsg.classList.remove("is-unsupported");
         } else {
-            notReadyMsg.style.display = "flex";
+            notReadyMsg.style.display = "block";
             notReadyMsg.classList.toggle("is-unsupported", aiToolsProcessingStatus === "UNSUPPORTED");
             const msgEl = document.getElementById("aiToolsProcessingMessage");
             const headEl = notReadyMsg.querySelector(".ai-processing-heading");
