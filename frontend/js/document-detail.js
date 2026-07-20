@@ -343,7 +343,7 @@ function renderDocument(doc) {
 
             if (currentIsCommunityView) {
                 downloadBtn.onclick = () =>
-                    downloadPublicDocument(doc.documentId || doc.id);
+                    downloadPublicDocument(doc);
             } else {
                 downloadBtn.onclick = () =>
                     downloadDocument(doc);
