@@ -6,6 +6,13 @@
  * Relies on document-api.js, subject-api.js, folder-api.js; never uses raw fetch directly.
  */
 document.addEventListener("DOMContentLoaded", async function () {
+  // --- BACKWARD COMPATIBILITY REDIRECT ---
+  const searchParam = new URLSearchParams(window.location.search).get("search");
+  let redirectUrl = "my-library.html?view=documents";
+  if (searchParam) redirectUrl += `&search=${encodeURIComponent(searchParam)}`;
+  window.location.replace(redirectUrl);
+  return;
+  
   if (window.authReady) {
     const isAuthenticated = await window.authReady;
     if (!isAuthenticated) return;
