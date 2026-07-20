@@ -505,6 +505,33 @@
       width: 100%;
     }
 
+    /* AI Status inline row */
+    .ai-status-inline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .ai-status-inline svg {
+      flex-shrink: 0;
+    }
+    .ai-status-inline .ai-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+    }
+    .ai-status-dot.completed { background: #10b981; }
+    .ai-status-dot.processing { background: #f59e0b; animation: ai-spin-pulse 1s ease infinite; }
+    .ai-status-dot.failed { background: #ef4444; }
+    .ai-status-dot.unsupported,
+    .ai-status-dot.pending { background: #9ca3af; }
+    @keyframes ai-spin-pulse {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+    }
     .danger-zone {
       margin-top: 32px;
       padding: 16px;
@@ -1437,7 +1464,6 @@
                 <span class="detail-type-badge" id="fileTypeBadge">FILE</span>
                 <span id="visibilityBadge" class="status-badge" style="display:none;"></span>
                 <span id="approvalBadge" class="status-badge badge-system" style="display:none;"></span>
-                <span id="processingStatusBadge" class="status-badge badge-system" style="display:none;"></span>
                 <button type="button" id="favoriteDetailBtn" class="favorite-star-btn" style="display:none;">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z" />
@@ -1446,6 +1472,10 @@
               </div>
               <h1 id="docTitle">Document</h1>
               <span class="detail-uploaded-by" id="docUploadedBy"></span>
+              <div class="ai-status-inline" id="aiStatusInlineRow" style="display:none;">
+                <span class="ai-status-dot" id="aiStatusInlineDot"></span>
+                <span id="processingStatusBadge"></span>
+              </div>
             </header>
 
             <div class="document-action-row" id="documentActionRow" aria-label="Document actions">

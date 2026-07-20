@@ -107,9 +107,17 @@ function setViewerAiProcessingStatus(status) {
     updateAiToolsAvailability();
 
     const processingStatusBadge = document.getElementById("processingStatusBadge");
+    const aiStatusInlineRow = document.getElementById("aiStatusInlineRow");
+    const aiStatusInlineDot = document.getElementById("aiStatusInlineDot");
     if (processingStatusBadge) {
-        processingStatusBadge.textContent = nextStatus === "COMPLETED" ? "Ready for AI" : nextStatus;
-        processingStatusBadge.className = "status-badge " + nextStatus.toLowerCase();
+        const label = nextStatus === "COMPLETED" ? "AI Ready" : (nextStatus === "UNSUPPORTED" ? "AI: Not supported" : "AI: " + nextStatus.charAt(0) + nextStatus.slice(1).toLowerCase());
+        processingStatusBadge.textContent = label;
+    }
+    if (aiStatusInlineDot) {
+        aiStatusInlineDot.className = "ai-status-dot " + nextStatus.toLowerCase();
+    }
+    if (aiStatusInlineRow) {
+        aiStatusInlineRow.style.display = "flex";
     }
 
     const toolsPane = document.getElementById("inspectorPaneTools");
@@ -278,11 +286,14 @@ function renderDocument(doc) {
     }
 
     const processingStatusBadge = document.getElementById("processingStatusBadge");
+    const aiStatusInlineRow = document.getElementById("aiStatusInlineRow");
+    const aiStatusInlineDot = document.getElementById("aiStatusInlineDot");
     if (processingStatusBadge) {
         const pStatus = doc.processingStatus || "PENDING";
-        processingStatusBadge.textContent = pStatus === "COMPLETED" ? "Ready for AI" : pStatus;
-        processingStatusBadge.style.display = "inline-flex";
-        processingStatusBadge.className = "status-badge badge-system " + pStatus.toLowerCase();
+        const label = pStatus === "COMPLETED" ? "AI Ready" : (pStatus === "UNSUPPORTED" ? "AI: Not supported" : "AI: " + pStatus.charAt(0) + pStatus.slice(1).toLowerCase());
+        processingStatusBadge.textContent = label;
+        if (aiStatusInlineDot) aiStatusInlineDot.className = "ai-status-dot " + pStatus.toLowerCase();
+        if (aiStatusInlineRow) aiStatusInlineRow.style.display = "flex";
     }
 
     const publicVisibilityNote = document.getElementById("publicVisibilityNote");
