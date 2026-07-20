@@ -24,6 +24,7 @@ public class TrashResponse {
         private Integer folderId;
         private String originalFolderName;
         private LocalDateTime deletedAt;
+        private Boolean parentDeleted;
     }
 
     @Data
@@ -36,5 +37,8 @@ public class TrashResponse {
         private String description;
         private Integer parentFolderId;
         private LocalDateTime deletedAt;
+        private Integer fileCount;
+        private Integer subfolderCount;
+        private Boolean parentDeleted;
     }
 }

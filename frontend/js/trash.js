@@ -151,8 +151,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Permanent Delete Modal methods
   function openPermanentDeleteModal(item) {
     pendingPermanentDelete = item;
-    confirmTitle.textContent = `Permanently delete ${item.type}?`;
-    confirmMessage.textContent = `"${item.name}" will be permanently deleted. This action cannot be undone.`;
+    confirmTitle.textContent = `Permanently delete “${item.name}”?`;
+    confirmMessage.textContent = "This action cannot be undone.";
     confirmError.style.display = "none";
     confirmError.textContent = "";
     openModal(confirmModal);
@@ -179,8 +179,19 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   // Operations
-  async function restoreItem(type, id, button) {
+  async function restoreItem(type, item, button) {
+    if (item.parentDeleted === true) {
+      const confirmed = await window.confirmAction({
+        title: "Original location is unavailable",
+        message: "The parent folder containing this item has been deleted.\nRestore to My Folders?",
+        confirmText: "Restore",
+        danger: false
+      });
+      if (!confirmed) return;
+    }
+
     setButtonLoading(button, "Restoring...");
+    const id = type === "folder" ? item.folderId : item.documentId;
     try {
       if (type === "folder") {
         await restoreFolder(id);
@@ -286,11 +297,52 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  function getTrashRowCenterHtml(deletedAtStr) {
+    if (!deletedAtStr) return "";
+    const deletedDate = new Date(deletedAtStr);
+    if (Number.isNaN(deletedDate.getTime())) return "";
+
+    const permDeleteDate = new Date(deletedDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const today = new Date();
+
+    const diffTime = permDeleteDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const formatDateShort = (d) => {
+      return d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit"
+      });
+    };
+
+    const isToday = deletedDate.toDateString() === today.toDateString();
+    const deletedText = isToday ? "Deleted today" : `Deleted ${formatDateShort(deletedDate)}`;
+
+    let deletesText = "";
+    if (diffDays <= 0) {
+      deletesText = "Deletes today";
+    } else if (diffDays === 1) {
+      deletesText = "Deletes in 1 day";
+    } else if (diffDays > 0 && diffDays <= 30) {
+      deletesText = `Deletes in ${diffDays} days`;
+    } else {
+      deletesText = `Deletes permanently on ${formatDateShort(permDeleteDate)}`;
+    }
+
+    return `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="14" width="14" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 6v6l4 2"/>
+      </svg>
+      <span>${deletedText} · ${deletesText}</span>
+    `;
+  }
+
   function createTrashDocumentRow(documentItem) {
     const row = document.createElement("div");
     row.className = "trash-row";
 
-    // Left Section: Icon + Info (Title & Subtitle with size)
+    // Left Section: Icon + Info
     const left = document.createElement("div");
     left.className = "trash-row-left";
 
@@ -314,21 +366,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const subtitleEl = document.createElement("span");
     subtitleEl.className = "trash-row-subtitle";
-    subtitleEl.textContent = `${documentItem.originalFileName || "Deleted document."} • ${formatFileSize(documentItem.fileSize)}`;
+    subtitleEl.textContent = `Document · ${documentItem.originalFileName || "Deleted document"} · ${formatFileSize(documentItem.fileSize)}`;
 
     info.append(titleEl, subtitleEl);
     left.append(iconContainer, info);
 
-    // Center Section: Deleted on date
+    // Center Section: Deleted schedule
     const center = document.createElement("div");
     center.className = "trash-row-center";
-    center.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="14" width="14" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M12 6v6l4 2"/>
-      </svg>
-      Deleted on: ${formatDate(documentItem.deletedAt)}
-    `;
+    center.innerHTML = getTrashRowCenterHtml(documentItem.deletedAt);
 
     // Right Section: Action Buttons
     const right = document.createElement("div");
@@ -344,13 +390,13 @@ document.addEventListener("DOMContentLoaded", async function () {
       </svg>
     `;
     restoreBtn.addEventListener("click", function () {
-      restoreItem("document", documentItem.documentId, restoreBtn);
+      restoreItem("document", documentItem, restoreBtn);
     });
 
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
     deleteBtn.className = "trash-action-btn btn-delete-perm";
-    deleteBtn.title = "Delete Permanently";
+    deleteBtn.title = "Delete permanently";
     deleteBtn.innerHTML = `
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2.5">
         <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -391,21 +437,20 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const subtitleEl = document.createElement("span");
     subtitleEl.className = "trash-row-subtitle";
-    subtitleEl.textContent = "Deleted folder. Restores folder and documents.";
+    
+    const fileCount = folderItem.fileCount || 0;
+    const subfolderCount = folderItem.subfolderCount || 0;
+    const fileWord = fileCount === 1 ? "document" : "documents";
+    const subWord = subfolderCount === 1 ? "subfolder" : "subfolders";
+    subtitleEl.textContent = `Folder · ${fileCount} ${fileWord} · ${subfolderCount} ${subWord}`;
 
     info.append(titleEl, subtitleEl);
     left.append(iconContainer, info);
 
-    // Center Section: Deleted on date
+    // Center Section: Deleted schedule
     const center = document.createElement("div");
     center.className = "trash-row-center";
-    center.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="14" width="14" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M12 6v6l4 2"/>
-      </svg>
-      Deleted on: ${formatDate(folderItem.deletedAt)}
-    `;
+    center.innerHTML = getTrashRowCenterHtml(folderItem.deletedAt);
 
     // Right Section: Actions
     const right = document.createElement("div");
@@ -421,13 +466,13 @@ document.addEventListener("DOMContentLoaded", async function () {
       </svg>
     `;
     restoreBtn.addEventListener("click", function () {
-      restoreItem("folder", folderItem.folderId, restoreBtn);
+      restoreItem("folder", folderItem, restoreBtn);
     });
 
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
     deleteBtn.className = "trash-action-btn btn-delete-perm";
-    deleteBtn.title = "Delete Permanently";
+    deleteBtn.title = "Delete permanently";
     deleteBtn.innerHTML = `
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2.5">
         <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -452,10 +497,21 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const hasDocuments = documents.length > 0;
     const hasFolders = folders.length > 0;
+    const totalItems = documents.length + folders.length;
 
-    // Show/hide Empty Trash button based on item existence
+    // Show/hide and update Empty Trash button based on item existence
     if (emptyTrashBtn) {
-      emptyTrashBtn.style.display = (hasDocuments || hasFolders) ? "inline-block" : "none";
+      if (totalItems > 0) {
+        emptyTrashBtn.style.display = "inline-flex";
+        emptyTrashBtn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2" style="margin-right: 4px; vertical-align: middle;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Empty Trash (${totalItems} item${totalItems !== 1 ? 's' : ''})
+        `;
+      } else {
+        emptyTrashBtn.style.display = "none";
+      }
     }
 
     if (!hasDocuments && !hasFolders) {

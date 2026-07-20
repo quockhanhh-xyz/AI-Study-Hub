@@ -59,7 +59,9 @@ public class TrashService {
         List<Folder> deletedFolders = folderRepository.findByOwnerAndStatusOrderByCreatedAtDesc(user, "DELETED");
 
         List<TrashResponse.TrashDocumentItem> docItems = deletedDocs.stream()
-                .map(d -> TrashResponse.TrashDocumentItem.builder()
+                .map(d -> {
+                    boolean parentDel = d.getFolder() != null && "DELETED".equals(d.getFolder().getStatus());
+                    return TrashResponse.TrashDocumentItem.builder()
                         .type("DOCUMENT")
                         .documentId(d.getDocumentId())
                         .title(d.getTitle())
@@ -69,18 +71,28 @@ public class TrashService {
                         .folderId(d.getFolder() != null ? d.getFolder().getFolderId() : null)
                         .originalFolderName(d.getFolder() != null ? d.getFolder().getName() : null)
                         .deletedAt(d.getDeletedAt())
-                        .build())
+                        .parentDeleted(parentDel)
+                        .build();
+                })
                 .collect(Collectors.toList());
 
         List<TrashResponse.TrashFolderItem> folderItems = deletedFolders.stream()
-                .map(f -> TrashResponse.TrashFolderItem.builder()
+                .map(f -> {
+                    long fileCount = documentRepository.countByFolderAndStatus(f, "DELETED");
+                    long subfolderCount = folderRepository.countByParentFolderAndStatus(f, "DELETED");
+                    boolean parentDel = f.getParentFolder() != null && "DELETED".equals(f.getParentFolder().getStatus());
+                    return TrashResponse.TrashFolderItem.builder()
                         .type("FOLDER")
                         .folderId(f.getFolderId())
                         .folderName(f.getName())
                         .description(f.getDescription())
                         .parentFolderId(f.getParentFolder() != null ? f.getParentFolder().getFolderId() : null)
                         .deletedAt(f.getDeletedAt())
-                        .build())
+                        .fileCount((int) fileCount)
+                        .subfolderCount((int) subfolderCount)
+                        .parentDeleted(parentDel)
+                        .build();
+                })
                 .collect(Collectors.toList());
 
         return TrashResponse.builder()

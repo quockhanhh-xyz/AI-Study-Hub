@@ -196,7 +196,7 @@ function renderDynamicSidebar(isAuthenticated) {
   // Re-render links safely inside the container with standardized icon and text wrappers
   navContainer.innerHTML = visibleMenus
     .map(item => `
-      <a href="${item.url}" class="nav-link">
+      <a href="${item.url}" class="nav-link" title="${item.name}">
         <span class="nav-icon">${item.icon || ICON_INFO}</span>
         <span class="nav-text">${item.name}</span>
       </a>
@@ -216,7 +216,7 @@ function renderDynamicSidebar(isAuthenticated) {
       logoutContainer.className = "sidebar-footer";
       logoutContainer.innerHTML = `
         <hr class="sidebar-divider" />
-        <a href="#" id="sidebarLogoutBtn" class="nav-link nav-link-logout">
+        <a href="#" id="sidebarLogoutBtn" class="nav-link nav-link-logout" title="Logout">
           <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg></span>
           <span class="nav-text">Logout</span>
         </a>
