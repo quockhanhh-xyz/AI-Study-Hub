@@ -310,79 +310,147 @@
 /* Admin Filters & Actions */
 .admin-actions-bar {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: 24px;
+    justify-content: space-between;
+    align-items: center;
     gap: 16px;
-}
-
-.admin-filters {
-    display: flex;
-    flex-direction: row;
+    margin-bottom: 24px;
     flex-wrap: wrap;
+}
+
+.admin-filters-main {
+    display: flex;
+    align-items: center;
     gap: 12px;
+    flex: 1;
+    flex-wrap: wrap;
+    min-width: 280px;
+}
+
+.admin-search-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+}
+
+.admin-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted, #64748b);
+    pointer-events: none;
+}
+
+.admin-search-input {
+    padding-left: 38px !important;
     width: 100%;
-    max-width: none;
-}
-
-.admin-card .table {
-    width: 100%;
-    min-width: 800px; /* Ensures horizontal scroll on small screens instead of squishing */
-}
-
-.admin-card .table th {
-    white-space: nowrap;
-    text-align: left;
-    padding: 16px 12px;
-    border-bottom: 1px solid var(--border, #eadfdd);
-}
-
-.admin-card .table td {
-    padding: 16px 12px;
-    border-bottom: 1px solid var(--border, #eadfdd);
-}
-
-.admin-card .table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.admin-card .table th:first-child,
-.admin-card .table td:first-child {
-    padding-left: 24px;
-}
-
-.admin-card .table th:last-child,
-.admin-card .table td:last-child {
-    padding-right: 24px;
 }
 
 .admin-filter-input {
-    flex: 1;
-    min-width: 150px;
+    height: 40px;
     padding: 8px 12px;
     border: 1px solid var(--border, #eadfdd);
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 14px;
     background-color: var(--surface, #ffffff);
     color: var(--text-main, #172033);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .admin-filter-input:focus {
     outline: none;
-    border-color: var(--primary, #ff5858);
+    border-color: var(--primary, #6366f1);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* Custom Dropdown Styling across all Admin pages */
+select.admin-filter-input,
+select.admin-select,
+.admin-actions-bar select,
+#chartDateRange {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: var(--surface, #ffffff);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px !important;
+    border: 1px solid var(--border, #eadfdd);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-main, #172033);
+    height: 40px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+select.admin-filter-input:focus,
+select.admin-select:focus,
+#chartDateRange:focus {
+    outline: none;
+    border-color: var(--primary, #6366f1);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .admin-actions-buttons {
     display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
+    gap: 10px;
     align-items: center;
 }
 
 .admin-actions-buttons .btn {
-    width: 160px;
+    height: 40px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 500;
     margin: 0;
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
+    border-radius: 8px;
+    width: auto;
+}
+
+/* Table Actions Column Group Styling */
+.admin-action-group {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.admin-action-group .btn-sm {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-outline-success {
+    color: var(--success, #16a34a);
+    border: 1px solid rgba(22, 163, 74, 0.4);
+    background: transparent;
+}
+
+.btn-outline-success:hover {
+    background-color: var(--success, #16a34a);
+    color: #ffffff;
+}
+
+.admin-self-badge {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted, #64748b);
+    padding: 2px 6px;
+    background: rgba(100, 116, 139, 0.1);
+    border-radius: 4px;
 }
 
 /* Admin Pagination */

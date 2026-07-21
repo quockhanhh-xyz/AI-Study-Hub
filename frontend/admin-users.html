@@ -45,20 +45,25 @@
 
                     <div id="usersContent" style="display: none;">
                         <div class="admin-actions-bar">
-                            <div class="admin-filters">
-                                <input type="text" id="filterSearch" class="admin-filter-input" placeholder="Search by email/name" onkeyup="handleSearch(event)">
-                                <select id="filterRole" class="admin-filter-input" onchange="loadUsers(0)">
+                            <div class="admin-filters-main">
+                                <div class="admin-search-wrapper">
+                                    <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                    </svg>
+                                    <input type="text" id="filterSearch" class="admin-filter-input admin-search-input" placeholder="Search by name or email..." onkeyup="handleSearch(event)">
+                                </div>
+                                <select id="filterRole" class="admin-filter-input admin-select" onchange="loadUsers(0)">
                                     <option value="">All Roles</option>
                                     <option value="USER">User</option>
                                     <option value="ADMIN">Admin</option>
                                 </select>
-                                <select id="filterTier" class="admin-filter-input" onchange="loadUsers(0)">
+                                <select id="filterTier" class="admin-filter-input admin-select" onchange="loadUsers(0)">
                                     <option value="">All Tiers</option>
                                     <option value="FREE">Free</option>
                                     <option value="PREMIUM">Premium</option>
                                     <option value="ULTRA">Ultra</option>
                                 </select>
-                                <select id="filterStatus" class="admin-filter-input" onchange="loadUsers(0)">
+                                <select id="filterStatus" class="admin-filter-input admin-select" onchange="loadUsers(0)">
                                     <option value="">All Statuses</option>
                                     <option value="ACTIVE">Active</option>
                                     <option value="INACTIVE">Inactive</option>
@@ -66,17 +71,17 @@
                                 </select>
                             </div>
                             <div class="admin-actions-buttons">
-                                <button class="btn btn-primary" onclick="handleExport()">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                                    </svg>
-                                    Export
-                                </button>
-                                <button class="btn btn-outline" onclick="clearFilters()">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
+                                <button class="btn btn-outline" onclick="clearFilters()" title="Reset all filters">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                                     </svg>
                                     Clear Filters
+                                </button>
+                                <button class="btn btn-primary" onclick="handleExport()" title="Export users list">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                    </svg>
+                                    Export
                                 </button>
                             </div>
                         </div>
@@ -117,6 +122,7 @@
     <div class="admin-modal-overlay" id="confirmModal">
         <div class="admin-modal">
             <h3 class="admin-modal-title" id="modalTitle">Confirm Action</h3>
+            <div id="modalAlert" style="display: none; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; background: rgba(220, 38, 38, 0.1); color: var(--danger, #dc2626); border: 1px solid rgba(220, 38, 38, 0.2);"></div>
             <div class="admin-modal-body" id="modalBody">
                 Are you sure you want to perform this action?
             </div>

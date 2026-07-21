@@ -143,21 +143,37 @@ function renderActionButtons(user) {
     let currentUserId = -1;
     if (currentUserStr) {
         try {
-            currentUserId = JSON.parse(currentUserStr).id || JSON.parse(currentUserStr).userId;
+            const parsed = JSON.parse(currentUserStr);
+            currentUserId = parsed.id || parsed.userId;
         } catch(e) {}
     }
 
     if (user.userId === currentUserId) {
-        return `<span style="color: var(--text-muted); font-size: 12px;">(You)</span> <button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; margin-left: 4px;" onclick="viewUserDetails(${user.userId})">View</button>`;
+        return `
+            <div class="admin-action-group">
+                <span class="admin-self-badge">(You)</span>
+                <button class="btn btn-sm btn-outline" onclick="viewUserDetails(${user.userId})">View</button>
+            </div>
+        `;
     }
 
-    const blockMessage = `This user will no longer be able to sign in or use AI Study Hub. Their documents, shares, groups, chat messages, and payment history will not be deleted. Are you sure you want to block this user?`;
-    const unblockMessage = `This user will regain access to their account and all previous features. Are you sure you want to unblock this user?`;
+    const blockMessage = `This user will no longer be able to sign in or use AI Study Hub. Their documents, shares, groups, and payment history will not be deleted.<br><br>Are you sure you want to block <strong>${escapeHtml(user.fullName || user.email)}</strong>?`;
+    const unblockMessage = `This user will regain full access to their account and features.<br><br>Are you sure you want to unblock <strong>${escapeHtml(user.fullName || user.email)}</strong>?`;
 
     if (user.status === 'BLOCKED') {
-        return `<button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; margin-right: 4px;" onclick="viewUserDetails(${user.userId})">View</button><button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;" onclick="promptUpdateStatus(${user.userId}, 'ACTIVE', \`${unblockMessage}\`)">Unblock</button>`;
+        return `
+            <div class="admin-action-group">
+                <button class="btn btn-sm btn-outline" onclick="viewUserDetails(${user.userId})">View</button>
+                <button class="btn btn-sm btn-outline-success" onclick="promptUpdateStatus(${user.userId}, 'ACTIVE', \`${unblockMessage}\`)">Unblock</button>
+            </div>
+        `;
     } else {
-        return `<button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; margin-right: 4px;" onclick="viewUserDetails(${user.userId})">View</button><button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; color: var(--danger); border-color: var(--danger);" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">Block</button>`;
+        return `
+            <div class="admin-action-group">
+                <button class="btn btn-sm btn-outline" onclick="viewUserDetails(${user.userId})">View</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">Block</button>
+            </div>
+        `;
     }
 }
 
@@ -217,24 +233,30 @@ function promptUpdateStatus(userId, newStatus, message) {
     targetUserIdToUpdate = userId;
     targetStatusToUpdate = newStatus;
 
+    const modalAlert = document.getElementById("modalAlert");
+    if (modalAlert) {
+        modalAlert.style.display = "none";
+        modalAlert.textContent = "";
+    }
+
     document.getElementById("modalTitle").textContent = newStatus === 'BLOCKED' ? "Block User" : "Unblock User";
-    document.getElementById("modalBody").textContent = message;
+    document.getElementById("modalBody").innerHTML = message;
 
     const confirmBtn = document.getElementById("modalConfirmBtn");
-    // Remove old listeners
     const newConfirmBtn = confirmBtn.cloneNode(true);
     confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
 
     if (newStatus === 'BLOCKED') {
         newConfirmBtn.style.backgroundColor = 'var(--danger)';
         newConfirmBtn.style.borderColor = 'var(--danger)';
+        newConfirmBtn.textContent = 'Block User';
     } else {
-        newConfirmBtn.style.backgroundColor = 'var(--primary)';
-        newConfirmBtn.style.borderColor = 'var(--primary)';
+        newConfirmBtn.style.backgroundColor = 'var(--success, #16a34a)';
+        newConfirmBtn.style.borderColor = 'var(--success, #16a34a)';
+        newConfirmBtn.textContent = 'Unblock User';
     }
 
     newConfirmBtn.addEventListener("click", executeUpdateStatus);
-
     document.getElementById("confirmModal").classList.add("active");
 }
 
@@ -242,10 +264,16 @@ function closeModal() {
     document.getElementById("confirmModal").classList.remove("active");
     targetUserIdToUpdate = null;
     targetStatusToUpdate = null;
+    const modalAlert = document.getElementById("modalAlert");
+    if (modalAlert) modalAlert.style.display = "none";
 }
 
 async function executeUpdateStatus() {
     if (!targetUserIdToUpdate || !targetStatusToUpdate) return;
+
+    const modalAlert = document.getElementById("modalAlert");
+    const confirmBtn = document.getElementById("modalConfirmBtn");
+    if (confirmBtn) confirmBtn.disabled = true;
 
     try {
         const response = await updateAdminUserStatus(targetUserIdToUpdate, targetStatusToUpdate);
@@ -253,16 +281,34 @@ async function executeUpdateStatus() {
             closeModal();
             loadUsers(currentPage); // Reload current page
         } else {
-            alert(response.message || "Failed to update user status");
+            showModalError(response?.message || "Failed to update user status");
         }
     } catch (error) {
         console.error("Error updating status:", error);
-        // Handle "last admin" constraint error
-        if (error.response && error.response.status === 400 && error.response.data && error.response.data.message) {
-            alert(error.response.data.message);
-        } else {
-            alert("An error occurred while updating user status.");
+        
+        let errorMsg = "An error occurred while updating user status.";
+        if (error.status === 401) {
+            errorMsg = "Your session has expired. Redirecting to login...";
+            setTimeout(() => {
+                window.location.href = "login.html";
+            }, 1500);
+        } else if (error.status === 403) {
+            errorMsg = "You do not have permission to block/unblock users.";
+        } else if (error.message) {
+            errorMsg = error.message;
         }
+
+        showModalError(errorMsg);
+    } finally {
+        if (confirmBtn) confirmBtn.disabled = false;
+    }
+}
+
+function showModalError(msg) {
+    const modalAlert = document.getElementById("modalAlert");
+    if (modalAlert) {
+        modalAlert.textContent = msg;
+        modalAlert.style.display = "block";
     }
 }
 
