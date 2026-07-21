@@ -95,6 +95,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         createFolderBtn.style.display = tabId === "folders" ? "inline-flex" : "none";
       }
 
+      const shareFolderBtn = document.getElementById("shareFolderBtn");
+      if (shareFolderBtn) {
+        shareFolderBtn.style.display = (tabId === "folders" && currentParentFolderId) ? "inline-flex" : "none";
+      }
+
       if (loadData) {
         if (tabId === "documents") loadDocuments();
         if (tabId === "folders") loadFolders(currentParentFolderId);
@@ -129,10 +134,17 @@ document.addEventListener("DOMContentLoaded", async function () {
       uploadDocumentBtn.addEventListener("click", () => {
         const params = new URLSearchParams(window.location.search);
         let returnUrl = 'my-library.html?view=documents';
+        let uploadTarget = 'upload.html';
+
         if (params.get('view') === 'folders' && currentParentFolderId) {
           returnUrl = `my-library.html?view=folders&folderId=${currentParentFolderId}`;
+          const currentFolder = userFolders.find(x => x.folderId === currentParentFolderId);
+          const folderName = currentFolder ? currentFolder.folderName : "";
+          uploadTarget = `upload.html?source=folder&folderId=${currentParentFolderId}&folderName=${encodeURIComponent(folderName)}`;
         }
-        window.location.href = `upload.html?returnUrl=${encodeURIComponent(returnUrl)}`;
+
+        const separator = uploadTarget.includes('?') ? '&' : '?';
+        window.location.href = `${uploadTarget}${separator}returnUrl=${encodeURIComponent(returnUrl)}`;
       });
     }
 
@@ -147,7 +159,390 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
       });
     }
-    
+
+    // Share Folder Modal Bindings
+    const shareFolderBtn = document.getElementById("shareFolderBtn");
+    const shareFolderModal = document.getElementById("shareFolderModal");
+    const shareFolderModalTitle = document.getElementById("shareFolderModalTitle");
+    const modalTabUserBtn = document.getElementById("modalTabUserBtn");
+    const modalTabGroupBtn = document.getElementById("modalTabGroupBtn");
+    const modalUserPanel = document.getElementById("modalUserPanel");
+    const modalGroupPanel = document.getElementById("modalGroupPanel");
+    const shareFolderCloseBtn = document.getElementById("shareFolderCloseBtn");
+    const shareUserConfirmBtn = document.getElementById("shareUserConfirmBtn");
+    const shareGroupConfirmBtn = document.getElementById("shareGroupConfirmBtn");
+    const shareUserEmail = document.getElementById("shareUserEmail");
+    const shareGroupSelect = document.getElementById("shareGroupSelect");
+    const shareUserError = document.getElementById("shareUserError");
+    const shareGroupError = document.getElementById("shareGroupError");
+    const sharesList = document.getElementById("sharesList");
+    const sharesEmpty = document.getElementById("sharesEmpty");
+    const sharesLoader = document.getElementById("sharesLoader");
+
+    if (modalTabUserBtn && modalTabGroupBtn) {
+      modalTabUserBtn.addEventListener("click", () => {
+        modalTabUserBtn.classList.add("active");
+        modalTabGroupBtn.classList.remove("active");
+        modalTabUserBtn.style.borderBottomColor = "var(--primary)";
+        modalTabUserBtn.style.color = "var(--primary)";
+        modalTabGroupBtn.style.borderBottomColor = "transparent";
+        modalTabGroupBtn.style.color = "var(--muted)";
+        if (modalUserPanel) modalUserPanel.style.display = "block";
+        if (modalGroupPanel) modalGroupPanel.style.display = "none";
+      });
+
+      modalTabGroupBtn.addEventListener("click", () => {
+        modalTabGroupBtn.classList.add("active");
+        modalTabUserBtn.classList.remove("active");
+        modalTabGroupBtn.style.borderBottomColor = "var(--primary)";
+        modalTabGroupBtn.style.color = "var(--primary)";
+        modalTabUserBtn.style.borderBottomColor = "transparent";
+        modalTabUserBtn.style.color = "var(--muted)";
+        if (modalGroupPanel) modalGroupPanel.style.display = "block";
+        if (modalUserPanel) modalUserPanel.style.display = "none";
+      });
+    }
+
+    if (shareFolderCloseBtn && shareFolderModal) {
+      shareFolderCloseBtn.addEventListener("click", () => {
+        shareFolderModal.classList.remove("open");
+      });
+    }
+
+    const shareFolderModalXBtn = document.getElementById("shareFolderModalXBtn");
+    if (shareFolderModalXBtn && shareFolderModal) {
+      shareFolderModalXBtn.addEventListener("click", () => {
+        shareFolderModal.classList.remove("open");
+      });
+    }
+
+    if (shareFolderBtn && shareFolderModal) {
+      shareFolderBtn.addEventListener("click", async () => {
+        if (!currentParentFolderId) return;
+        const currentFolder = userFolders.find(x => x.folderId === currentParentFolderId);
+        const folderName = currentFolder ? currentFolder.folderName : "Folder";
+        if (shareFolderModalTitle) shareFolderModalTitle.textContent = `Share “${folderName}”`;
+
+        if (shareUserError) shareUserError.style.display = "none";
+        if (shareGroupError) shareGroupError.style.display = "none";
+        if (shareUserEmail) shareUserEmail.value = "";
+        if (shareGroupSelect) shareGroupSelect.value = "";
+
+        if (modalTabUserBtn) modalTabUserBtn.click();
+        shareFolderModal.classList.add("open");
+
+        if (typeof getFolderShares === "function") {
+          loadFolderSharesList(currentParentFolderId);
+        }
+        if (typeof getMyGroups === "function") {
+          loadFolderGroupsList();
+        }
+      });
+    }
+
+    let libraryFolderUserShares = [];
+    let libraryFolderGroupShares = [];
+
+    function isValidShareEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    if (shareUserConfirmBtn) shareUserConfirmBtn.disabled = true;
+    if (shareGroupConfirmBtn) shareGroupConfirmBtn.disabled = true;
+
+    if (shareUserEmail) {
+      shareUserEmail.addEventListener("input", () => {
+        if (shareUserError) shareUserError.style.display = "none";
+        const email = shareUserEmail.value.trim();
+        if (shareUserConfirmBtn) shareUserConfirmBtn.disabled = !email || !isValidShareEmail(email);
+      });
+    }
+
+    if (shareGroupSelect) {
+      shareGroupSelect.addEventListener("change", () => {
+        if (shareGroupError) shareGroupError.style.display = "none";
+        if (shareGroupConfirmBtn) shareGroupConfirmBtn.disabled = !shareGroupSelect.value;
+      });
+    }
+
+    async function loadFolderSharesList(folderId) {
+      if (!sharesList || !sharesEmpty) return;
+      if (sharesLoader) sharesLoader.style.display = "flex";
+      sharesList.innerHTML = "";
+      sharesEmpty.style.display = "none";
+
+      try {
+        const res = await getFolderShares(folderId);
+        if (sharesLoader) sharesLoader.style.display = "none";
+        const shares = res.data || res || {};
+        const userShares = Array.isArray(shares.userShares) ? shares.userShares : [];
+        const groupShares = Array.isArray(shares.groupShares) ? shares.groupShares : [];
+
+        libraryFolderUserShares = userShares;
+        libraryFolderGroupShares = groupShares;
+
+        if (userShares.length === 0 && groupShares.length === 0) {
+          sharesEmpty.style.display = "block";
+          return;
+        }
+
+        // Users Section
+        const userSection = document.createElement("div");
+        userSection.className = "share-section";
+        userSection.style.cssText = "margin-bottom: 16px;";
+
+        const userHeader = document.createElement("div");
+        userHeader.style.cssText = "font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;";
+        userHeader.textContent = `Users (${userShares.length})`;
+        userSection.appendChild(userHeader);
+
+        if (userShares.length === 0) {
+          const emptyUser = document.createElement("div");
+          emptyUser.style.cssText = "font-size: 12px; color: var(--muted); padding: 4px 0; font-style: italic;";
+          emptyUser.textContent = "No direct user shares.";
+          userSection.appendChild(emptyUser);
+        } else {
+          userShares.forEach(share => {
+            const item = document.createElement("div");
+            item.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; background: #fafafa;";
+
+            const info = document.createElement("div");
+            info.style.cssText = "display: flex; align-items: center; gap: 8px;";
+            info.innerHTML = `<span>👤</span><span style="font-size: 13px; font-weight: 500;">${share.sharedWithEmail || share.sharedWithName || share.email || "User"}</span>`;
+
+            const revokeBtn = document.createElement("button");
+            revokeBtn.type = "button";
+            revokeBtn.className = "btn btn-danger btn-sm";
+            revokeBtn.style.cssText = "padding: 4px 10px; font-size: 12px;";
+            revokeBtn.textContent = "Revoke";
+            revokeBtn.addEventListener("click", async () => {
+              revokeBtn.disabled = true;
+              try {
+                if (typeof revokeFolderShare === "function") {
+                  await revokeFolderShare(share.shareId);
+                  if (typeof showToast === "function") showToast("User access revoked.", "success");
+                  loadFolderSharesList(folderId);
+                }
+              } catch (err) {
+                alert(err.message || "Failed to revoke share.");
+              } finally {
+                revokeBtn.disabled = false;
+              }
+            });
+
+            item.append(info, revokeBtn);
+            userSection.appendChild(item);
+          });
+        }
+
+        // Groups Section
+        const groupSection = document.createElement("div");
+        groupSection.className = "share-section";
+        groupSection.style.cssText = "margin-bottom: 8px;";
+
+        const groupHeader = document.createElement("div");
+        groupHeader.style.cssText = "font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;";
+        groupHeader.textContent = `Groups (${groupShares.length})`;
+        groupSection.appendChild(groupHeader);
+
+        if (groupShares.length === 0) {
+          const emptyGroup = document.createElement("div");
+          emptyGroup.style.cssText = "font-size: 12px; color: var(--muted); padding: 4px 0; font-style: italic;";
+          emptyGroup.textContent = "No group shares.";
+          groupSection.appendChild(emptyGroup);
+        } else {
+          groupShares.forEach(share => {
+            const item = document.createElement("div");
+            item.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; background: #fafafa;";
+
+            const info = document.createElement("div");
+            info.style.cssText = "display: flex; align-items: center; gap: 8px;";
+            info.innerHTML = `<span>👥</span><span style="font-size: 13px; font-weight: 500;">${share.groupName || "Group"}</span>`;
+
+            const revokeBtn = document.createElement("button");
+            revokeBtn.type = "button";
+            revokeBtn.className = "btn btn-danger btn-sm";
+            revokeBtn.style.cssText = "padding: 4px 10px; font-size: 12px;";
+            revokeBtn.textContent = "Revoke";
+            revokeBtn.addEventListener("click", async () => {
+              revokeBtn.disabled = true;
+              try {
+                if (typeof revokeGroupFolderShare === "function") {
+                  await revokeGroupFolderShare(share.shareId);
+                  if (typeof showToast === "function") showToast("Group access revoked.", "success");
+                  loadFolderSharesList(folderId);
+                }
+              } catch (err) {
+                alert(err.message || "Failed to revoke group share.");
+              } finally {
+                revokeBtn.disabled = false;
+              }
+            });
+
+            item.append(info, revokeBtn);
+            groupSection.appendChild(item);
+          });
+        }
+
+        sharesList.append(userSection, groupSection);
+        sharesList.style.display = "block";
+      } catch (err) {
+        if (sharesLoader) sharesLoader.style.display = "none";
+        sharesEmpty.textContent = "Failed to load shares.";
+        sharesEmpty.style.display = "block";
+      }
+    }
+
+    async function loadFolderGroupsList() {
+      if (!shareGroupSelect) return;
+      try {
+        const res = await getMyGroups();
+        const groups = Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
+        shareGroupSelect.innerHTML = `<option value="">-- Choose a Group --</option>`;
+        groups.forEach(g => {
+          const opt = document.createElement("option");
+          opt.value = g.groupId || g.id;
+          opt.textContent = `👥 ${g.groupName || g.name}`;
+          shareGroupSelect.appendChild(opt);
+        });
+      } catch (err) {
+        console.warn("Failed to load groups:", err);
+      }
+    }
+
+    if (shareUserConfirmBtn) {
+      shareUserConfirmBtn.addEventListener("click", async () => {
+        const email = shareUserEmail.value.trim();
+        if (!email) {
+          if (shareUserError) {
+            shareUserError.textContent = "User email is required.";
+            shareUserError.style.display = "block";
+          }
+          shareUserConfirmBtn.disabled = true;
+          return;
+        }
+        if (!isValidShareEmail(email)) {
+          if (shareUserError) {
+            shareUserError.textContent = "Please enter a valid email address.";
+            shareUserError.style.display = "block";
+          }
+          shareUserConfirmBtn.disabled = true;
+          return;
+        }
+
+        // Check self share
+        let currentUserEmail = "";
+        if (typeof getStoredUser === "function") {
+          const user = getStoredUser();
+          if (user && user.email) currentUserEmail = user.email;
+        }
+        if (!currentUserEmail && localStorage.getItem("user")) {
+          try { currentUserEmail = JSON.parse(localStorage.getItem("user")).email || ""; } catch (e) {}
+        }
+        if (currentUserEmail && email.toLowerCase() === currentUserEmail.toLowerCase()) {
+          if (shareUserError) {
+            shareUserError.textContent = "You cannot share a folder with yourself.";
+            shareUserError.style.display = "block";
+          }
+          return;
+        }
+
+        // Check already shared
+        const isAlreadyShared = libraryFolderUserShares.some(s =>
+          (s.sharedWithEmail || s.email || s.sharedWithName || "").toLowerCase() === email.toLowerCase()
+        );
+        if (isAlreadyShared) {
+          if (shareUserError) {
+            shareUserError.textContent = "This folder is already shared with this user.";
+            shareUserError.style.display = "block";
+          }
+          return;
+        }
+
+        if (shareUserError) shareUserError.style.display = "none";
+        shareUserConfirmBtn.disabled = true;
+        const origText = shareUserConfirmBtn.textContent;
+        shareUserConfirmBtn.textContent = "Sharing...";
+
+        try {
+          if (typeof shareFolderToUser === "function") {
+            await shareFolderToUser(currentParentFolderId, email);
+            shareUserEmail.value = "";
+            shareUserConfirmBtn.disabled = true;
+            if (typeof showToast === "function") showToast("Folder shared with user successfully.", "success");
+            loadFolderSharesList(currentParentFolderId);
+          }
+        } catch (err) {
+          const msg = err.message || "";
+          if (shareUserError) {
+            if (msg.includes("404") || msg.toLowerCase().includes("not found")) {
+              shareUserError.textContent = "User email does not exist.";
+            } else if (msg.includes("409") || msg.toLowerCase().includes("already shared")) {
+              shareUserError.textContent = "This folder is already shared with this user.";
+            } else {
+              shareUserError.textContent = msg || "Failed to share folder.";
+            }
+            shareUserError.style.display = "block";
+          }
+        } finally {
+          shareUserConfirmBtn.textContent = origText;
+        }
+      });
+    }
+
+    if (shareGroupConfirmBtn) {
+      shareGroupConfirmBtn.addEventListener("click", async () => {
+        const groupId = shareGroupSelect.value;
+        if (!groupId) {
+          if (shareGroupError) {
+            shareGroupError.textContent = "Please select a group.";
+            shareGroupError.style.display = "block";
+          }
+          shareGroupConfirmBtn.disabled = true;
+          return;
+        }
+
+        // Check already shared to group
+        const isGroupShared = libraryFolderGroupShares.some(s =>
+          String(s.groupId || s.id) === String(groupId)
+        );
+        if (isGroupShared) {
+          if (shareGroupError) {
+            shareGroupError.textContent = "This folder is already shared to this group.";
+            shareGroupError.style.display = "block";
+          }
+          return;
+        }
+
+        if (shareGroupError) shareGroupError.style.display = "none";
+        shareGroupConfirmBtn.disabled = true;
+        const origText = shareGroupConfirmBtn.textContent;
+        shareGroupConfirmBtn.textContent = "Sharing...";
+
+        try {
+          if (typeof shareFolderToGroup === "function") {
+            await shareFolderToGroup(currentParentFolderId, groupId);
+            shareGroupSelect.value = "";
+            shareGroupConfirmBtn.disabled = true;
+            if (typeof showToast === "function") showToast("Folder shared with group successfully.", "success");
+            loadFolderSharesList(currentParentFolderId);
+          }
+        } catch (err) {
+          const msg = err.message || "";
+          if (shareGroupError) {
+            if (msg.includes("409") || msg.toLowerCase().includes("already shared")) {
+              shareGroupError.textContent = "This folder is already shared to this group.";
+            } else {
+              shareGroupError.textContent = msg || "Failed to share folder.";
+            }
+            shareGroupError.style.display = "block";
+          }
+        } finally {
+          shareGroupConfirmBtn.textContent = origText;
+        }
+      });
+    }
+
     const clearFiltersBtn = document.getElementById("clearFiltersBtn");
     if (clearFiltersBtn) {
       clearFiltersBtn.addEventListener("click", () => {
@@ -244,7 +639,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           fileType: fileTypeFilter ? fileTypeFilter.value : "",
           folderId: folderFilter ? folderFilter.value : ""
         };
-        
+
         const subjId = getSubjectIdFromInput();
         if (subjId) params.subjectId = subjId;
 
@@ -422,6 +817,41 @@ document.addEventListener("DOMContentLoaded", async function () {
       }
       folderBreadcrumb.appendChild(link);
     });
+
+    // Subfolder wording update on button, share button & empty states
+    const createFolderBtn = document.getElementById("createFolderBtn");
+    const shareFolderBtn = document.getElementById("shareFolderBtn");
+    const folderEmptyTitle = folderEmptyState ? folderEmptyState.querySelector("h3") : null;
+    const folderEmptyDesc = folderEmptyState ? folderEmptyState.querySelector("p") : null;
+    const folderEmptyBtn = folderEmptyState ? folderEmptyState.querySelector("button") : null;
+
+    if (currentParentFolderId) {
+      if (shareFolderBtn) shareFolderBtn.style.display = "inline-flex";
+      if (createFolderBtn) {
+        createFolderBtn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" aria-hidden="true">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          New Subfolder
+        `;
+      }
+      if (folderEmptyTitle) folderEmptyTitle.textContent = "No subfolders yet";
+      if (folderEmptyDesc) folderEmptyDesc.textContent = "Create a subfolder to organize documents inside this folder.";
+      if (folderEmptyBtn) folderEmptyBtn.textContent = "New Subfolder";
+    } else {
+      if (shareFolderBtn) shareFolderBtn.style.display = "none";
+      if (createFolderBtn) {
+        createFolderBtn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" aria-hidden="true">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          New Folder
+        `;
+      }
+      if (folderEmptyTitle) folderEmptyTitle.textContent = "No Folders Here";
+      if (folderEmptyDesc) folderEmptyDesc.textContent = "Create a folder to organize your study materials.";
+      if (folderEmptyBtn) folderEmptyBtn.textContent = "Create Folder";
+    }
   }
 
   function navigateToFolder(id) {
@@ -449,6 +879,24 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       if (kw) {
         list = list.filter(f => f.folderName && f.folderName.toLowerCase().includes(kw));
+      }
+
+      // Render folder summary info under breadcrumb when inside a folder
+      let summaryEl = document.getElementById("folderDetailSummary");
+      if (currentParentFolderId) {
+        let currentFolder = userFolders.find(x => x.folderId === currentParentFolderId);
+        let fileCount = currentFolder?.fileCount || 0;
+        let subfolderCount = list.length;
+        if (!summaryEl) {
+          summaryEl = document.createElement("div");
+          summaryEl.id = "folderDetailSummary";
+          summaryEl.style.cssText = "font-size: 13px; color: var(--muted); margin-top: 4px; margin-bottom: 16px;";
+          folderBreadcrumb.parentNode.insertBefore(summaryEl, folderBreadcrumb.nextSibling);
+        }
+        summaryEl.innerHTML = `<strong>${subfolderCount} subfolders · ${fileCount} documents</strong><br><span style="font-size: 12px; color: var(--muted-light);">Uploaded files will be saved to this folder.</span>`;
+        summaryEl.style.display = "block";
+      } else if (summaryEl) {
+        summaryEl.style.display = "none";
       }
 
       folderGrid.innerHTML = "";
@@ -485,33 +933,113 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const title = document.createElement("h3");
     title.className = "folder-name";
-    title.textContent = f.folderName;
+    title.textContent = f.folderName || "Untitled Folder";
     text.appendChild(title);
 
     const meta = document.createElement("p");
     meta.className = "folder-meta";
-    let metaTxt = [];
-    if (f.subfolderCount !== undefined) metaTxt.push(`${f.subfolderCount} subfolders`);
-    if (f.documentCount !== undefined) metaTxt.push(`${f.documentCount} files`);
-    metaTxt.push(formatDate(f.createdAt));
-    meta.textContent = metaTxt.join(" • ");
+    const fileCount = f.fileCount ?? f.documentCount ?? 0;
+    const subCount = f.subfolderCount ?? 0;
+    meta.textContent = `${fileCount} files · ${subCount} subfolders`;
     text.appendChild(meta);
 
     main.appendChild(text);
-    card.appendChild(main);
 
-    // Actions kebab
+    // Actions kebab (positioned absolutely in top right by CSS)
     const actions = document.createElement("div");
     actions.className = "folder-card-actions";
-    actions.innerHTML = `<button class="btn-kebab" title="More actions"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg></button>`;
 
-    // Clicking the card body navigates to it
+    const kebabBtn = document.createElement("button");
+    kebabBtn.type = "button";
+    kebabBtn.className = "btn-kebab";
+    kebabBtn.title = "More actions";
+    kebabBtn.style.cssText = "font-size: 22px; font-weight: bold; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;";
+    kebabBtn.innerHTML = `⋮`;
+
+    const dropdown = document.createElement("div");
+    dropdown.className = "kebab-dropdown";
+    dropdown.style.cssText = "display: none; position: absolute; right: 0; top: 100%; background: #ffffff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 20; min-width: 140px; padding: 4px 0;";
+
+    const renameItem = document.createElement("button");
+    renameItem.type = "button";
+    renameItem.className = "dropdown-item";
+    renameItem.style.cssText = "display: block; width: 100%; padding: 8px 14px; text-align: left; background: none; border: none; font-size: 13px; color: var(--text-main); cursor: pointer;";
+    renameItem.textContent = "Rename";
+
+    const trashItem = document.createElement("button");
+    trashItem.type = "button";
+    trashItem.className = "dropdown-item";
+    trashItem.style.cssText = "display: block; width: 100%; padding: 8px 14px; text-align: left; background: none; border: none; font-size: 13px; color: var(--danger, #dc3545); cursor: pointer;";
+    trashItem.textContent = "Move to Trash";
+
+    dropdown.append(renameItem, trashItem);
+    actions.append(kebabBtn, dropdown);
+
+    // Kebab toggle
+    kebabBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      document.querySelectorAll(".kebab-dropdown").forEach(d => {
+        if (d !== dropdown) d.style.display = "none";
+      });
+      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    });
+
+    document.addEventListener("click", () => {
+      dropdown.style.display = "none";
+    });
+
+    // Rename action
+    renameItem.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      dropdown.style.display = "none";
+      const newName = prompt("Enter new folder name:", f.folderName);
+      if (newName && newName.trim() && newName.trim() !== f.folderName) {
+        try {
+          if (typeof updateFolder === "function") {
+            await updateFolder(f.folderId, { folderName: newName.trim() });
+            if (typeof showToast === "function") showToast("Folder renamed successfully.", "success");
+            loadFolders(currentParentFolderId);
+          }
+        } catch (err) {
+          alert(err.message || "Failed to rename folder.");
+        }
+      }
+    });
+
+    // Move to Trash action
+    trashItem.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      dropdown.style.display = "none";
+      
+      const confirmed = typeof window.confirmAction === "function"
+        ? await window.confirmAction({
+            title: "Move this folder to Trash?",
+            message: "You can restore it later from Trash Can.",
+            confirmText: "Move to Trash",
+            danger: true
+          })
+        : confirm(`Move "${f.folderName}" to Trash?\nYou can restore it later from Trash Can.`);
+
+      if (confirmed) {
+        try {
+          if (typeof deleteFolder === "function") {
+            await deleteFolder(f.folderId);
+            if (typeof showToast === "function") showToast("Folder moved to Trash.", "success");
+            loadFolders(currentParentFolderId);
+          }
+        } catch (err) {
+          alert(err.message || "Failed to move folder to Trash.");
+        }
+      }
+    });
+
+    // Clicking card body navigates to subfolder
     card.addEventListener("click", (e) => {
-      if (e.target.closest('.btn-kebab')) return;
+      if (e.target.closest('.folder-card-actions')) return;
       navigateToFolder(f.folderId);
     });
 
-    card.appendChild(actions);
+    card.append(main, actions);
     return card;
   }
 });
