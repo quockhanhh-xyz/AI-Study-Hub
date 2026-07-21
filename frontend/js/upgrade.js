@@ -685,34 +685,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     statusBadge.textContent = statusInfo.label;
     statusTd.appendChild(statusBadge);
 
-    // Col 4: Action
-    const actionTd = document.createElement("td");
-    actionTd.style.textAlign = "right";
-
-    if (canContinueVNPay(payment) || (typeof isMockPayment === "function" && isMockPayment(payment) && payment.status === "PENDING")) {
-      const continueBtn = document.createElement("button");
-      continueBtn.className = "btn btn-primary btn-sm";
-      continueBtn.textContent = "Pay Now";
-      continueBtn.style.marginRight = "8px";
-      continueBtn.addEventListener("click", function () {
-        if (payment.paymentProvider === "MOCK") {
-          openMockCheckout(payment);
-        } else if (payment.paymentUrl) {
-          window.location.href = payment.paymentUrl;
-        }
-      });
-      actionTd.appendChild(continueBtn);
-
-      const cancelBtn = document.createElement("button");
-      cancelBtn.className = "btn btn-secondary btn-sm";
-      cancelBtn.textContent = "Cancel";
-      cancelBtn.addEventListener("click", function () {
-        cancelPaymentOrder(payment.paymentId, cancelBtn);
-      });
-      actionTd.appendChild(cancelBtn);
-    }
-    
-    tr.append(planTd, dateTd, statusTd, actionTd);
+    tr.append(planTd, dateTd, statusTd);
     return tr;
   }
 
@@ -730,6 +703,42 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       const historyListContainer = document.getElementById("historyListContainer");
       
+      // Check for pending payment to show in the highlighted card
+      const pendingPayment = payments.find(p => p.status === "PENDING" && (canContinueVNPay(p) || (typeof isMockPayment === "function" && isMockPayment(p))));
+      const pendingSection = document.getElementById("pendingPaymentSection");
+      if (pendingPayment && pendingSection) {
+        document.getElementById("pendingPaymentPlan").textContent = pendingPayment.planName || pendingPayment.planCode;
+        document.getElementById("pendingPaymentDate").textContent = formatDate(pendingPayment.createdAt);
+        
+        const actionsContainer = document.getElementById("pendingPaymentActions");
+        actionsContainer.innerHTML = "";
+        
+        const continueBtn = document.createElement("button");
+        continueBtn.className = "btn btn-primary";
+        continueBtn.textContent = "Pay Now";
+        continueBtn.addEventListener("click", function () {
+          if (pendingPayment.paymentProvider === "MOCK") {
+            openMockCheckout(pendingPayment);
+          } else if (pendingPayment.paymentUrl) {
+            window.location.href = pendingPayment.paymentUrl;
+          }
+        });
+        
+        const cancelBtn = document.createElement("button");
+        cancelBtn.className = "btn btn-secondary";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.addEventListener("click", function () {
+          cancelPaymentOrder(pendingPayment.paymentId, cancelBtn);
+        });
+        
+        actionsContainer.appendChild(cancelBtn);
+        actionsContainer.appendChild(continueBtn);
+        
+        pendingSection.style.display = "block";
+      } else if (pendingSection) {
+        pendingSection.style.display = "none";
+      }
+
       if (payments.length === 0) {
         historyList.innerHTML = "";
         historyList.style.display = "none";
