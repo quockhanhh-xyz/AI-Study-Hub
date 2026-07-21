@@ -98,17 +98,18 @@
       .btn-kebab {
         background: transparent;
         border: none;
-        font-size: 18px;
+        font-size: 22px;
+        font-weight: bold;
         color: var(--muted);
         cursor: pointer;
-        padding: 4px;
+        padding: 6px;
         line-height: 1;
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: 50%;
-        width: 24px;
-        height: 24px;
+        width: 32px;
+        height: 32px;
         transition: all 0.2s ease;
       }
       .btn-kebab:hover {
@@ -300,18 +301,25 @@
     </div>
 
     <div class="modal-overlay" id="shareFolderModal" role="dialog" aria-modal="true" aria-labelledby="shareFolderModalTitle">
-        <div class="modal-box modal-box-share">
-            <h3 id="shareFolderModalTitle">Share Folder</h3>
+        <div class="modal-box modal-box-share" style="position: relative;">
+            <button type="button" id="shareFolderModalXBtn" aria-label="Close modal" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; font-size: 20px; color: var(--muted); cursor: pointer; padding: 4px 8px; border-radius: 4px; line-height: 1;">✕</button>
+            <h3 id="shareFolderModalTitle" style="margin-bottom: 4px; padding-right: 32px;">Share Folder</h3>
+            <p id="shareFolderModalSubtitle" style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">
+                People you share with can open and download documents in this folder.
+            </p>
 
-            <div class="tab-header">
-                <button type="button" class="tab-btn active" id="modalTabUserBtn">User</button>
-                <button type="button" class="tab-btn" id="modalTabGroupBtn">Group</button>
+            <div class="tab-header" style="display: flex; gap: 8px; border-bottom: 1px solid var(--border); margin-bottom: 16px;">
+                <button type="button" class="tab-btn active" id="modalTabUserBtn" style="flex: 1; padding: 10px 16px; border-bottom: 2px solid var(--primary); font-weight: 600; color: var(--primary);">User</button>
+                <button type="button" class="tab-btn" id="modalTabGroupBtn" style="flex: 1; padding: 10px 16px; border-bottom: 2px solid transparent; font-weight: 600; color: var(--muted);">Group</button>
             </div>
 
             <div id="modalUserPanel">
                 <div class="form-group">
                     <label for="shareUserEmail">User Email <span class="label-required">*</span></label>
                     <input type="email" id="shareUserEmail" placeholder="E.g: friend@gmail.com" autocomplete="off" class="modal-form-input" />
+                </div>
+                <div style="font-size: 12px; color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                    <span>ℹ️</span> <span>Recipients can open and download documents in this folder.</span>
                 </div>
                 <p id="shareUserError" class="modal-error-text" role="alert"></p>
                 <button type="button" class="btn btn-primary modal-btn-full" id="shareUserConfirmBtn">Share with User</button>
@@ -324,24 +332,27 @@
                         <option value="">-- Choose a Group --</option>
                     </select>
                 </div>
+                <div style="font-size: 12px; color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                    <span>ℹ️</span> <span>Group members can access documents in this folder from the group.</span>
+                </div>
                 <p id="shareGroupError" class="modal-error-text" role="alert"></p>
                 <button type="button" class="btn btn-primary modal-btn-full" id="shareGroupConfirmBtn">Share to Group</button>
             </div>
 
-            <hr class="modal-divider" />
+            <hr class="modal-divider" style="margin: 20px 0;" />
 
-            <h4 class="modal-section-title">Shared with</h4>
+            <h4 class="modal-section-title" style="margin-bottom: 12px;">Shared with</h4>
             <div id="sharesLoader" class="document-state" style="display: none; justify-content: center;">
                 <span>Loading shares...</span>
             </div>
             <div id="sharesList" class="shares-list-container">
-                </div>
-            <div id="sharesEmpty" class="share-roster-empty">
+            </div>
+            <div id="sharesEmpty" class="share-roster-empty" style="font-size: 13px; color: var(--muted); text-align: center; padding: 12px;">
                 This folder is not shared with anyone yet.
             </div>
 
-            <div class="modal-actions">
-                <button type="button" class="btn btn-secondary modal-btn-full" id="shareFolderCloseBtn">Close</button>
+            <div class="modal-actions" style="margin-top: 20px; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary btn-sm" id="shareFolderCloseBtn" style="padding: 6px 16px; font-size: 13px; font-weight: 500; background: #f1f5f9; border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; cursor: pointer;">Close</button>
             </div>
         </div>
     </div>

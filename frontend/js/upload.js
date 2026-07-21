@@ -799,6 +799,29 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // Folder auto-fill notice context
+  if (folderName && (folderId || urlParams.get("parentFolderId"))) {
+    const pageHeader = document.querySelector(".page-header");
+    if (pageHeader) {
+      const h1 = pageHeader.querySelector("h1");
+      const p = pageHeader.querySelector("p");
+      if (h1) h1.textContent = `Uploading to ${folderName}`;
+      if (p) p.textContent = `Uploading your study document into "${folderName}".`;
+    }
+
+    const folderFormGroup = document.querySelector("#folderSelect")?.closest(".form-group");
+    if (folderFormGroup) {
+      let notice = document.getElementById("folderUploadNotice");
+      if (!notice) {
+        notice = document.createElement("div");
+        notice.id = "folderUploadNotice";
+        notice.style.cssText = "font-size: 13px; color: var(--primary); font-weight: 600; margin-top: 6px; display: flex; align-items: center; gap: 6px;";
+        folderFormGroup.appendChild(notice);
+      }
+      notice.innerHTML = `<span>📂 Target Folder:</span> <strong>${folderName}</strong>`;
+    }
+  }
+
   // ── Subject Request Modal Bindings ──
   const openReqLink = document.getElementById("openSubjectReqLink");
   const reqModal = document.getElementById("subjectReqModal");
