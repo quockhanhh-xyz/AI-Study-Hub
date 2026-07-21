@@ -25,6 +25,10 @@ const newFolderRow = document.getElementById("newFolderRow");
 const newFolderName = document.getElementById("newFolderName");
 const newFolderError = document.getElementById("newFolderError");
 
+// Inline buttons
+const inlineCreateSubjectBtn = document.getElementById("inlineCreateSubjectBtn");
+const inlineCreateFolderBtn = document.getElementById("inlineCreateFolderBtn");
+
 const CREATE_NEW_VALUE = "__new__";
 let lastSubjectValue = "";
 let lastFolderValue = "";
@@ -122,9 +126,30 @@ async function loadFolderOptions() {
   // Auto-select folder if folderId is provided in URL query params
   const urlParams = new URLSearchParams(window.location.search);
   const preselectedFolderId = urlParams.get("folderId") || urlParams.get("parentFolderId");
+  const folderNameParam = urlParams.get("folderName");
+  const uploadBackLink = document.getElementById("uploadBackLink");
+  const uploadContextBanner = document.getElementById("uploadContextBanner");
+  
   if (preselectedFolderId) {
     folderSelect.value = preselectedFolderId;
     lastFolderValue = preselectedFolderId;
+    folderSelect.disabled = true; // Lock folder selection
+    
+    if (uploadContextBanner) {
+        uploadContextBanner.textContent = folderNameParam ? `Uploading to ${folderNameParam}` : "Uploading to Folder";
+    }
+    if (uploadBackLink) {
+        uploadBackLink.href = `folders.html?folderId=${preselectedFolderId}`;
+        uploadBackLink.textContent = folderNameParam ? `← ${folderNameParam}` : "← Back to Folder";
+    }
+  } else {
+    if (uploadContextBanner) {
+        uploadContextBanner.textContent = "Uploading to My Documents";
+    }
+    if (uploadBackLink) {
+        uploadBackLink.href = "documents.html";
+        uploadBackLink.textContent = "← Back to My Documents";
+    }
   }
 
   // Initialize the custom dropdown component
@@ -263,7 +288,7 @@ function updateDropZone(file) {
             </svg>
         </div>
         <span class="drop-zone-text" id="dropZoneText">
-            Drag & drop or click to select a file<br />
+            Select one file to upload<br />
             <small>(PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG — max ${formatFileSize(maxFileSizeBytes)})</small>
         </span>
     `;
@@ -336,6 +361,7 @@ fileInput.addEventListener("change", () => {
   updateDropZone(file);
   autofillTitleFromFile(file);
   hideMessage();
+  checkFormValidity();
 });
 
 // Keyboard accessibility for drop zone
@@ -411,11 +437,13 @@ subjectSelect.addEventListener("change", () => {
   const isCreateNew = subjectSelect.value === CREATE_NEW_VALUE ||
     subjectSelect.value === "+ Create new subject…";
   if (isCreateNew) {
-    newSubjectRow.style.display = "flex";
-    showRowError(newSubjectError, "");
-    newSubjectCode.value = "";
-    newSubjectName.value = "";
-    newSubjectCode.focus();
+    if (newSubjectRow.style.display !== "flex") {
+      newSubjectRow.style.display = "flex";
+      showRowError(newSubjectError, "");
+      newSubjectCode.value = "";
+      newSubjectName.value = "";
+      newSubjectCode.focus();
+    }
     subjectSelect.value = "";
     subjectSelect.dispatchEvent(new Event("syncCustom"));
   } else {
@@ -436,7 +464,131 @@ folderSelect.addEventListener("change", () => {
     newFolderRow.style.display = "none";
     lastFolderValue = folderSelect.value;
   }
+  checkFormValidity();
 });
+
+const triggerCreateSubjectBtn = document.getElementById("triggerCreateSubjectBtn");
+if (triggerCreateSubjectBtn) {
+    triggerCreateSubjectBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        subjectSelect.value = CREATE_NEW_VALUE;
+        subjectSelect.dispatchEvent(new Event("change"));
+        if (window.UIHelper && window.UIHelper.convertInputToCustomDropdown) {
+             // Force UI dropdown sync if needed, though native change might handle it
+        }
+    });
+}
+
+if (inlineCreateSubjectBtn) {
+    inlineCreateSubjectBtn.addEventListener("click", async () => {
+        const code = newSubjectCode.value.trim();
+        const name = newSubjectName.value.trim();
+        if (!code || !name) {
+            showRowError(newSubjectError, "Subject code and name are required.");
+            return;
+        }
+        
+        inlineCreateSubjectBtn.disabled = true;
+        inlineCreateSubjectBtn.textContent = "Creating...";
+        showRowError(newSubjectError, "");
+        
+        try {
+            const resultSub = await createSubject({ subjectCode: code, subjectName: name });
+            const newId = resultSub.data.subjectId;
+            const newLabel = `${code} - ${name}`;
+            
+            // Add to select
+            const opt = document.createElement("option");
+            opt.value = newLabel;
+            opt.dataset.id = newId;
+            opt.textContent = newLabel;
+            
+            const datalist = document.getElementById("subjectDatalist");
+            if (datalist) datalist.appendChild(opt);
+            
+            subjectSelect.value = newLabel;
+            
+            newSubjectRow.style.display = "none";
+            window.showToast("Subject created successfully!", "success");
+            subjectSelect.dispatchEvent(new Event("syncCustom"));
+            checkFormValidity();
+        } catch (err) {
+            const isDuplicate = err.status === 409;
+            showRowError(
+              newSubjectError,
+              isDuplicate ? "A subject with this code or name already exists." : (err.message || "Failed to create subject.")
+            );
+        } finally {
+            inlineCreateSubjectBtn.disabled = false;
+            inlineCreateSubjectBtn.textContent = "Create";
+        }
+    });
+}
+
+if (inlineCreateFolderBtn) {
+    inlineCreateFolderBtn.addEventListener("click", async () => {
+        const name = newFolderName.value.trim();
+        if (!name) {
+            showRowError(newFolderError, "Folder name is required.");
+            return;
+        }
+        
+        inlineCreateFolderBtn.disabled = true;
+        inlineCreateFolderBtn.textContent = "Creating...";
+        showRowError(newFolderError, "");
+        
+        try {
+            const resultFolder = await createFolder({ folderName: name, parentFolderId: null });
+            const newId = resultFolder.data.folderId;
+            
+            const opt = document.createElement("option");
+            opt.value = newId;
+            opt.textContent = name;
+            
+            folderSelect.appendChild(opt);
+            folderSelect.value = newId;
+            
+            newFolderRow.style.display = "none";
+            window.showToast("Folder created successfully!", "success");
+            folderSelect.dispatchEvent(new Event("syncCustom"));
+            checkFormValidity();
+        } catch (err) {
+            const isDuplicate = err.status === 409;
+            showRowError(
+              newFolderError,
+              isDuplicate ? "A folder with this name already exists here." : (err.message || "Failed to create folder.")
+            );
+        } finally {
+            inlineCreateFolderBtn.disabled = false;
+            inlineCreateFolderBtn.textContent = "Create";
+        }
+    });
+}
+
+function checkFormValidity() {
+    const title = titleInput.value.trim();
+    const hasFile = fileInput.files && fileInput.files.length > 0;
+    
+    const isCreatingSubject = (newSubjectRow.style.display === "flex");
+    let hasSubject = false;
+    if (isCreatingSubject) {
+        hasSubject = newSubjectCode.value.trim() !== "" && newSubjectName.value.trim() !== "";
+    } else {
+        hasSubject = subjectSelect.value.trim() !== "";
+    }
+    
+    if (title && hasFile && hasSubject) {
+        submitBtn.disabled = false;
+    } else {
+        submitBtn.disabled = true;
+    }
+}
+
+titleInput.addEventListener("input", checkFormValidity);
+subjectSelect.addEventListener("input", checkFormValidity);
+subjectSelect.addEventListener("change", checkFormValidity);
+newSubjectCode.addEventListener("input", checkFormValidity);
+newSubjectName.addEventListener("input", checkFormValidity);
 
 // Form submit
 uploadForm.addEventListener("submit", async (e) => {
@@ -645,6 +797,89 @@ document.addEventListener("DOMContentLoaded", function () {
       backLink.href = "documents.html";
       backLink.textContent = "← Back to My Documents";
     }
+  }
+
+  // ── Subject Request Modal Bindings ──
+  const openReqLink = document.getElementById("openSubjectReqLink");
+  const reqModal = document.getElementById("subjectReqModal");
+  const cancelReqBtn = document.getElementById("cancelSubjectReqBtn");
+  const submitReqBtn = document.getElementById("submitSubjectReqBtn");
+  const reqCodeInput = document.getElementById("reqSubjectCode");
+  const reqNameInput = document.getElementById("reqSubjectName");
+  const reqDescInput = document.getElementById("reqSubjectDesc");
+  const reqMsg = document.getElementById("reqSubjectMsg");
+
+  function openReqModal() {
+    if (!reqModal) return;
+    if (reqCodeInput) reqCodeInput.value = "";
+    if (reqNameInput) reqNameInput.value = "";
+    if (reqDescInput) reqDescInput.value = "";
+    if (reqMsg) {
+      reqMsg.style.display = "none";
+      reqMsg.textContent = "";
+      reqMsg.className = "helper-text";
+    }
+    reqModal.classList.add("open");
+  }
+
+  function closeReqModal() {
+    if (reqModal) reqModal.classList.remove("open");
+  }
+
+  if (openReqLink) {
+    openReqLink.addEventListener("click", function (e) {
+      e.preventDefault();
+      openReqModal();
+    });
+  }
+
+  if (cancelReqBtn) cancelReqBtn.addEventListener("click", closeReqModal);
+  if (reqModal) {
+    reqModal.addEventListener("click", function (e) {
+      if (e.target === reqModal) closeReqModal();
+    });
+  }
+
+  if (submitReqBtn) {
+    submitReqBtn.addEventListener("click", async function () {
+      const code = reqCodeInput ? reqCodeInput.value.trim() : "";
+      const name = reqNameInput ? reqNameInput.value.trim() : "";
+      const desc = reqDescInput ? reqDescInput.value.trim() : "";
+
+      if (!code || !name) {
+        if (reqMsg) {
+          reqMsg.textContent = "Subject Code and Subject Name are required.";
+          reqMsg.className = "helper-text error";
+          reqMsg.style.display = "block";
+        }
+        return;
+      }
+
+      submitReqBtn.disabled = true;
+      submitReqBtn.textContent = "Submitting...";
+      if (reqMsg) reqMsg.style.display = "none";
+
+      try {
+        await createSubjectRequest({
+          requestedCode: code,
+          requestedName: name,
+          description: desc
+        });
+        if (window.showToast) {
+          window.showToast("Your subject request has been submitted for admin review.", "success");
+        }
+        closeReqModal();
+      } catch (err) {
+        if (reqMsg) {
+          reqMsg.textContent = err.message || "Failed to submit subject request.";
+          reqMsg.className = "helper-text error";
+          reqMsg.style.display = "block";
+        }
+      } finally {
+        submitReqBtn.disabled = false;
+        submitReqBtn.textContent = "Submit Request";
+      }
+    });
   }
 });
 

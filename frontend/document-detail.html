@@ -90,6 +90,52 @@
       margin-right: 24px;
     }
 
+    .detail-main .global-top-bar-floating .top-bar-search-form {
+      display: none !important;
+    }
+
+    .top-bar-contextual {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+      padding-right: 16px;
+    }
+
+    .top-bar-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: color 0.2s ease;
+    }
+
+    .top-bar-back-link:hover {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .top-bar-separator {
+      color: var(--border-strong, var(--border));
+      font-size: 12px;
+    }
+
+    .top-bar-breadcrumb {
+      min-width: 0;
+      max-width: 560px;
+      overflow: hidden;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     #detailLoader {
       display: grid;
       flex: 1;
@@ -214,90 +260,6 @@
       border-color: #d1d5db;
     }
 
-    .preview-toolbar-search {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex: 1;
-      max-width: 280px;
-    }
-
-    .preview-search-input-wrap {
-      position: relative;
-      display: flex;
-      align-items: center;
-      width: 100%;
-    }
-
-    .preview-search-icon {
-      position: absolute;
-      left: 10px;
-      color: var(--muted);
-      pointer-events: none;
-      display: flex;
-      align-items: center;
-    }
-
-    .preview-search-input {
-      width: 100%;
-      padding: 7px 10px 7px 34px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--background);
-      font-size: 13px;
-      font-family: inherit;
-      color: var(--text);
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .preview-search-input:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
-    }
-
-    .preview-search-input::placeholder {
-      color: var(--muted);
-    }
-
-    .preview-search-count {
-      font-size: 11px;
-      color: var(--muted);
-      white-space: nowrap;
-      padding: 0 4px;
-      display: none;
-    }
-
-    .preview-search-nav {
-      display: none;
-      align-items: center;
-      gap: 2px;
-    }
-
-    .preview-search-nav-btn {
-      width: 26px;
-      height: 26px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: transparent;
-      color: var(--muted);
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .preview-search-nav-btn:hover {
-      background: var(--surface-soft);
-      color: var(--text);
-    }
-
-    .preview-toolbar-search.is-active .preview-search-count,
-    .preview-toolbar-search.is-active .preview-search-nav {
-      display: flex;
-    }
-
     .preview-toolbar-title {
       min-width: 0;
     }
@@ -359,6 +321,23 @@
       min-height: 0;
       border: 0;
       background: #ffffff;
+    }
+
+    .preview-office-wrap {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      background: #eef0f3;
+    }
+
+    .preview-office-frame {
+      flex: 1 1 auto;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
     }
 
     .preview-image-wrap {
@@ -678,8 +657,8 @@
       transition: transform 0.2s;
     }
 
-    .danger-zone-toggle.open svg {
-      transform: rotate(90deg);
+    .danger-zone-toggle.open #dangerChevron {
+      transform: rotate(180deg);
     }
 
     .danger-zone-body {
@@ -729,6 +708,193 @@
     .danger-link:hover {
       background: #fee2e2;
       border-color: #f87171;
+    }
+
+    .danger-zone-wrapper {
+      margin-top: 24px;
+    }
+
+    .danger-zone-box {
+      border: 1px solid #fecaca;
+      background: #fff1f2;
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .danger-zone-toggle {
+      width: 100%;
+      justify-content: space-between;
+      padding: 0;
+      color: #991b1b;
+      text-align: left;
+    }
+
+    .danger-zone-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #991b1b;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .danger-zone-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: #fee2e2;
+      color: #dc2626;
+      flex-shrink: 0;
+    }
+
+    .danger-zone-summary {
+      margin-top: 6px;
+      color: #7f1d1d;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .danger-zone-body {
+      padding: 12px 0 0;
+      background: transparent;
+      border: 0;
+      border-top: 1px solid #fca5a5;
+      border-radius: 0;
+    }
+
+    .danger-zone-action {
+      display: inline-flex !important;
+      align-items: center;
+      gap: 6px;
+      width: auto;
+      border-color: #fca5a5 !important;
+      background: #fff !important;
+      color: #dc2626 !important;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 14px;
+    }
+
+    .danger-zone-action:hover {
+      background: #fee2e2 !important;
+      border-color: #f87171 !important;
+    }
+
+    .shares-panel {
+      padding: 4px 0;
+    }
+
+    .share-block {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .share-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .share-block-title {
+      margin: 0;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .visibility-status-card {
+      display: none;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 10px;
+      line-height: 1.4;
+    }
+
+    .visibility-status-card.public {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #166534;
+    }
+
+    .visibility-status-card.private {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .visibility-status-card svg {
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .visibility-status-title {
+      margin-bottom: 2px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .visibility-status-copy {
+      color: inherit;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .visibility-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .visibility-actions .btn {
+      width: auto;
+      justify-content: center;
+    }
+
+    .share-empty-state {
+      display: none;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      min-height: 88px;
+      margin-top: 6px;
+      padding: 14px;
+      border: 1px dashed #f1d9d4;
+      border-radius: 10px;
+      background: #fffafa;
+    }
+
+    .share-empty-state p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .share-empty-title {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .share-empty-action {
+      display: inline-flex !important;
+      width: auto;
+      border-radius: 999px;
+      background: #fff !important;
+      border: 1px solid var(--border) !important;
+      color: var(--text) !important;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 12px;
     }
 
     .ai-processing-section {
@@ -1276,7 +1442,15 @@
       }
     }
     /* --- AI QA Layout Overhaul --- */
-    .ai-qa-panel {
+    .detail-right-inspector,
+    .inspector-tab-pane,
+    .ai-qa-panel,
+    .ai-tools-panel {
+      min-width: 0;
+      box-sizing: border-box;
+    }
+    .ai-qa-panel,
+    .ai-tools-panel {
       display: flex;
       flex-direction: column;
       height: 100%;
@@ -1299,12 +1473,28 @@
 
     /* Onboarding State */
     .ai-processing-section.onboarding-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       background: var(--surface);
       border: 1px dashed var(--border);
       border-radius: 12px;
-      padding: 32px 24px;
+      padding: clamp(20px, 4vw, 32px) 16px;
       text-align: center;
       margin-bottom: 24px;
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      gap: 12px;
+    }
+    .ai-processing-section.onboarding-state[style*="display: none"] {
+      display: none !important;
+    }
+    .ai-processing-section.onboarding-state.is-unsupported {
+      background: #f8fafc;
+      border-style: solid;
+      border-color: #e2e8f0;
     }
     .ai-processing-icon {
       font-size: 32px;
@@ -1313,19 +1503,33 @@
       display: flex;
       justify-content: center;
     }
-    .onboarding-state h3 {
+    .ai-processing-section.onboarding-state.is-unsupported .ai-processing-icon {
+      color: var(--muted);
+    }
+    .onboarding-state h3,
+    .ai-processing-section.onboarding-state .ai-processing-heading {
       font-size: 15px;
       font-weight: 600;
       color: var(--text);
       margin: 0 0 8px 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
-    .onboarding-state p {
+    .onboarding-state p,
+    .ai-processing-section.onboarding-state .ai-processing-message {
+      max-width: 100%;
       font-size: 13px;
       color: var(--muted);
       margin: 0 0 16px 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .ai-processing-section.onboarding-state .ai-processing-actions {
+      display: flex;
       justify-content: center;
+      flex-wrap: wrap;
+      width: 100%;
     }
     .ai-processing-spinner {
       display: inline-block;
@@ -1689,24 +1893,6 @@
                 <span class="preview-header-badge" id="previewHeaderAiBadge" style="display:none;"></span>
               </div>
             </div>
-            <div class="preview-toolbar-search" id="previewSearchBar" style="display:none;">
-              <div class="preview-search-input-wrap">
-                <span class="preview-search-icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                </span>
-                <input type="search" class="preview-search-input" id="previewSearchInput"
-                  placeholder="Find in document..." autocomplete="off" />
-              </div>
-              <span class="preview-search-count" id="previewSearchCount"></span>
-              <div class="preview-search-nav" id="previewSearchNav">
-                <button class="preview-search-nav-btn" id="previewSearchPrev" title="Previous match" aria-label="Previous match">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg>
-                </button>
-                <button class="preview-search-nav-btn" id="previewSearchNext" title="Next match" aria-label="Next match">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
-              </div>
-            </div>
             <div class="preview-toolbar-actions">
               <button id="openFileBtn" class="btn btn-secondary" style="display:none;">
                 Open fullscreen <span aria-hidden="true">&#8599;</span>
@@ -1812,23 +1998,25 @@
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     Edit details
                   </button>
-                  <div class="danger-zone-wrapper" id="detailsDangerZone" style="display:none; margin-top: 24px;">
-                    <div class="danger-zone-box" style="border: 1px solid #fecaca; background: #fef2f2; border-radius: 8px; padding: 12px 14px;">
-                      <button type="button" class="danger-zone-toggle" id="dangerZoneToggle" onclick="toggleDangerZone()" style="width: 100%; display: flex; align-items: center; justify-content: space-between; background: transparent; border: none; padding: 0; cursor: pointer; text-align: left;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <div class="danger-zone-wrapper" id="detailsDangerZone" style="display:none;">
+                    <div class="danger-zone-box">
+                      <button type="button" class="danger-zone-toggle" id="dangerZoneToggle" onclick="toggleDangerZone()" aria-expanded="false">
+                        <div class="danger-zone-title">
+                          <span class="danger-zone-icon" aria-hidden="true">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
                             <line x1="12" y1="9" x2="12" y2="13"></line>
                             <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                          </svg>
-                          <span style="font-size: 13px; font-weight: 700; color: #991b1b;">Danger zone</span>
+                            </svg>
+                          </span>
+                          <span>Danger zone</span>
                         </div>
                         <svg id="dangerChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#991b1b" stroke-width="2" stroke-linecap="round" style="transition: transform 0.2s;"><path d="M6 9l6 6 6-6"/></svg>
                       </button>
-                      <div style="font-size: 12px; color: #7f1d1d; margin-top: 4px;">Destructive actions for this document.</div>
-                      <div class="danger-zone-body" id="dangerZoneBody" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #fca5a5;">
-                        <p class="danger-zone-copy" style="margin: 0 0 10px 0; color: #7f1d1d; font-size: 12px;">Move this document to Trash. You can restore it later from the Trash folder.</p>
-                        <button class="btn btn-outline" id="deleteBtn" onclick="handleDelete()" style="color: #dc2626; border-color: #fca5a5; background: #ffffff; font-size: 12px; font-weight: 600; padding: 6px 14px; display: inline-flex; align-items: center; gap: 6px;">
+                      <div class="danger-zone-summary">Destructive actions for this document.</div>
+                      <div class="danger-zone-body" id="dangerZoneBody">
+                        <p class="danger-zone-copy">Move this document to Trash. You can restore it later from the Trash folder.</p>
+                        <button class="btn btn-outline danger-zone-action" id="deleteBtn" onclick="handleDelete()">
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
                           Move to Trash
                         </button>
@@ -1867,58 +2055,84 @@
               </div>
 
               <div id="inspectorPaneSharing" class="inspector-tab-pane">
-                <section id="sharesPanel" class="shares-panel" style="display:block; padding: 4px 0;">
+                <section id="sharesPanel" class="shares-panel" style="display:block;">
                   <!-- Visibility & Public status block -->
-                  <div class="share-block" id="visibilityShareBlock" style="margin-bottom: 20px;">
-                    <h3 style="font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 10px 0;">Visibility</h3>
-                    <div id="visibilityStatusContent" style="display: none; padding: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;">
-                      <div style="font-weight: 700; font-size: 13px; color: #166534; margin-bottom: 2px;">Public in Community Library</div>
-                      <div style="font-size: 12px; color: #15803d; line-height: 1.4;">People in Community Library can open and download this document.</div>
+                  <div class="share-block" id="visibilityShareBlock">
+                    <div class="share-block-header">
+                      <h3 class="share-block-title">Visibility</h3>
                     </div>
-                    <div id="privateVisibilityNote" style="display: none; padding: 12px; background: #f9fafb; border: 1px solid var(--border); border-radius: 8px;">
-                      <div style="font-weight: 700; font-size: 13px; color: var(--text); margin-bottom: 2px;">Private Document</div>
-                      <div style="font-size: 12px; color: var(--muted); line-height: 1.4;">Only you and people you directly share with can access this document.</div>
+                    <div id="visibilityStatusContent" class="visibility-status-card public">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 0 20"/><path d="M12 2a15.3 15.3 0 0 0 0 20"/></svg>
+                      <div>
+                        <div class="visibility-status-title">Public in Community Library</div>
+                        <div class="visibility-status-copy">People in Community Library can open and download this document.</div>
+                      </div>
+                    </div>
+                    <div id="privateVisibilityNote" class="visibility-status-card private">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      <div>
+                        <div class="visibility-status-title">Private Document</div>
+                        <div class="visibility-status-copy">Only you and people you directly share with can access this document.</div>
+                      </div>
+                    </div>
+
+                    <div id="pendingVisibilityNote" class="visibility-status-card pending" style="display:none; background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      <div>
+                        <div class="visibility-status-title" style="color:#1e40af;">Pending Admin Review</div>
+                        <div class="visibility-status-copy" style="color:#1e3a8a;">This document has been submitted and is waiting for admin approval before appearing in the Community Library.</div>
+                      </div>
+                    </div>
+
+                    <div id="rejectedVisibilityNote" class="visibility-status-card rejected" style="display:none; background:#fef2f2; border:1px solid #fecaca; color:#991b1b;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                      <div>
+                        <div class="visibility-status-title" style="color:#991b1b;">Review Rejected</div>
+                        <div id="rejectedVisibilityCopy" class="visibility-status-copy" style="color:#7f1d1d;">This document submission was rejected by the admin. You can edit and resubmit for review.</div>
+                      </div>
                     </div>
                     
-                    <div class="visibility-actions" style="margin-top: 10px; display: flex; gap: 8px;">
+                    <div class="visibility-actions">
                       <button id="sharingPublishBtn" class="btn btn-secondary" type="button" style="display:none; padding: 7px 14px; font-size: 12px; font-weight: 600;">
-                        Publish to Community Library
+                        Submit for Review
                       </button>
                       <button id="sharingUnpublishBtn" class="btn btn-outline" type="button" style="display:none; padding: 7px 14px; font-size: 12px; font-weight: 600; color: #b45309; border-color: #fde68a; background: #fffbeb;">
-                        Unpublish from Community
+                        Cancel Review Submission
                       </button>
                     </div>
                   </div>
 
                   <!-- Direct user shares block -->
-                  <div class="share-block" style="margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                      <h3 style="font-size: 13px; font-weight: 700; color: var(--text); margin: 0;">Direct user shares</h3>
+                  <div class="share-block">
+                    <div class="share-block-header">
+                      <h3 class="share-block-title">Direct user shares</h3>
                       <button type="button" class="btn-ghost-sm" id="addShareUserLink" style="display: none; padding: 4px 10px; font-size: 11px; gap: 4px;">
                         + Share with user
                       </button>
                     </div>
                     <div id="directSharesList" class="member-list"></div>
-                    <div id="noDirectShares" style="display:none; flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 6px;">
-                      <p style="font-size: 12px; color: var(--muted); margin: 0;">No direct shares yet.</p>
-                      <button type="button" class="btn btn-secondary" id="emptyShareUserLink" style="font-size: 12px; padding: 6px 12px; font-weight: 600; border-radius: 6px;">
+                    <div id="noDirectShares" class="share-empty-state" style="display:none;">
+                      <div class="share-empty-title">No direct shares yet.</div>
+                      <p>Share this document with specific users to collaborate.</p>
+                      <button type="button" class="btn share-empty-action" id="emptyShareUserLink">
                         Share with user
                       </button>
                     </div>
                   </div>
 
                   <!-- Group shares block -->
-                  <div class="share-block" style="margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                      <h3 style="font-size: 13px; font-weight: 700; color: var(--text); margin: 0;">Group shares</h3>
+                  <div class="share-block">
+                    <div class="share-block-header">
+                      <h3 class="share-block-title">Group shares</h3>
                       <button type="button" class="btn-ghost-sm" id="addShareGroupLink" style="display: none; padding: 4px 10px; font-size: 11px; gap: 4px;">
                         + Share with group
                       </button>
                     </div>
                     <div id="groupSharesList" class="member-list"></div>
-                    <div id="noGroupShares" style="display:none; flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 6px;">
-                      <p style="font-size: 12px; color: var(--muted); margin: 0;">Not shared with any groups yet.</p>
-                      <button type="button" class="btn btn-secondary" id="emptyShareGroupLink" style="font-size: 12px; padding: 6px 12px; font-weight: 600; border-radius: 6px;">
+                    <div id="noGroupShares" class="share-empty-state" style="display:none;">
+                      <div class="share-empty-title">Not shared with any groups yet.</div>
+                      <p>Share with study groups so classmates can open and download it.</p>
+                      <button type="button" class="btn share-empty-action" id="emptyShareGroupLink">
                         Share with group
                       </button>
                     </div>
@@ -2170,11 +2384,11 @@
 
   <div class="modal-overlay" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
     <div class="modal-box detail-modal">
-      <h3 id="deleteModalTitle">Delete Document</h3>
-      <p style="margin-top: 16px; color: var(--muted); font-size: 14px;">Are you sure you want to move this document to Trash? You can restore it later from the Trash folder.</p>
+      <h3 id="deleteModalTitle" class="modal-title-danger">Move Document to Trash?</h3>
+      <p style="margin-top: 16px; color: var(--text); font-size: 14px;">Are you sure you want to move this document to Trash? You can restore it later from the Trash folder.</p>
       <div class="modal-actions" style="margin-top: 24px;">
         <button class="btn btn-secondary" onclick="hideDeleteModal()">Cancel</button>
-        <button class="btn btn-primary" id="deleteConfirmBtn" style="background-color: var(--danger); border-color: var(--danger);" onclick="handleDelete()">Delete</button>
+        <button class="btn btn-danger" id="deleteConfirmBtn" onclick="handleDelete()">Move to Trash</button>
       </div>
     </div>
   </div>

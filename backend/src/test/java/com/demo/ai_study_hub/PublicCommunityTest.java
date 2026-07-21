@@ -80,6 +80,7 @@ class PublicCommunityTest {
 
         assertEquals("PUBLIC", res.getVisibility());
         assertEquals("PENDING", res.getApprovalStatus());
+        assertNull(res.getPublishedAt());
         verify(documentRepository, times(1)).save(mockDoc);
     }
 

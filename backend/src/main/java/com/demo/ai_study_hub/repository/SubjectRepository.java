@@ -41,6 +41,7 @@ public interface SubjectRepository extends JpaRepository<Subject, Integer>, JpaS
     @Query("SELECT DISTINCT s FROM Subject s " +
            "JOIN Document d ON d.subject = s " +
            "WHERE s.status = 'ACTIVE' " +
+           "AND s.scope = 'SYSTEM' " +
            "AND d.status = 'ACTIVE' " +
            "AND d.visibility = 'PUBLIC' " +
            "AND d.approvalStatus = 'APPROVED'")

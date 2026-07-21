@@ -8,6 +8,56 @@
     <meta name="description" content="Upgrade your account plan for higher AI usage limits." />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+      /* ===== PAYMENT HISTORY TABLE ===== */
+      .payment-history-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 600px;
+        margin-top: 16px;
+      }
+      .payment-history-table th {
+        text-align: left;
+        padding: 12px 16px;
+        background: #f8fafc;
+        color: var(--text-muted);
+        font-size: 13px;
+        font-weight: 600;
+        border-bottom: 2px solid var(--border);
+      }
+      .payment-history-table td {
+        padding: 14px 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-main);
+        font-size: 14px;
+      }
+      .payment-history-table tr:last-child td {
+        border-bottom: none;
+      }
+      .payment-history-table tr:hover td {
+        background-color: #f8fafc;
+      }
+      
+      .payment-plan-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .payment-plan-name {
+        font-weight: 600;
+        font-size: 15px;
+        color: var(--text-main);
+      }
+      .payment-amount {
+        color: var(--text-muted);
+        font-size: 13px;
+      }
+      .payment-date-cell {
+        color: var(--text-muted);
+        font-size: 13px;
+      }
+    </style>
 </head>
 
 <body>
@@ -83,7 +133,19 @@
                 <div id="historyError" class="status-box status-error dashboard-document-error" style="display: none;">
                 </div>
 
-                <div id="historyList" style="display: none;"></div>
+                <div id="historyListContainer" style="display: none; overflow-x: auto;">
+                    <table class="payment-history-table">
+                        <thead>
+                            <tr>
+                                <th>Plan Details</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyList"></tbody>
+                    </table>
+                </div>
 
                 <div id="historyEmpty" class="empty-state" style="display: none;">
                     <div class="empty-title">No payment history yet</div>

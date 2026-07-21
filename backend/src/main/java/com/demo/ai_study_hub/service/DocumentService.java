@@ -792,9 +792,14 @@ public class DocumentService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
 
+        if (doc.getSubject() != null && "USER_CUSTOM".equalsIgnoreCase(doc.getSubject().getScope())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This subject is personal. Please request it as a system subject before publishing to Community Library.");
+        }
+
         doc.setVisibility("PUBLIC");
         doc.setApprovalStatus("PENDING");
         doc.setPublishedAt(null);
+        doc.setRejectReason(null);
         documentRepository.save(doc);
 
         return mapToResponse(doc, owner);
