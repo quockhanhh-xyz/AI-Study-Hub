@@ -284,10 +284,10 @@ function renderNotificationList() {
         } else if (notif.type === "GROUP_INVITE") {
             iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>`;
             iconColorClass = "info";
-        } else if (notif.type === "GROUP_JOIN_APPROVED") {
+        } else if (notif.type === "GROUP_JOIN_APPROVED" || notif.type === "INVITE_ACCEPTED") {
             iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
             iconColorClass = "success";
-        } else if (notif.type === "GROUP_JOIN_REJECTED" || notif.type === "GROUP_MEMBER_REMOVED") {
+        } else if (notif.type === "GROUP_JOIN_REJECTED" || notif.type === "GROUP_MEMBER_REMOVED" || notif.type === "INVITE_DECLINED") {
             iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>`;
             iconColorClass = "danger";
         } else if (notif.type === "GROUP_MEMBER_LEFT") {

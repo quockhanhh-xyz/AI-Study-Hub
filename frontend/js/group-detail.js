@@ -482,7 +482,34 @@ document.addEventListener("DOMContentLoaded", async function () {
     main.append(name, statusBadge);
     row.appendChild(main);
     
-    // In MVP, no cancel invite action, so we just display it
+    // Add Revoke Button
+    const actions = document.createElement("div");
+    actions.className = "member-actions";
+
+    const revokeBtn = document.createElement("button");
+    revokeBtn.className = "btn btn-danger btn-sm";
+    revokeBtn.textContent = "Revoke";
+    revokeBtn.style.padding = "4px 8px";
+    revokeBtn.style.fontSize = "12px";
+
+    revokeBtn.addEventListener("click", async () => {
+      if (!confirm("Are you sure you want to revoke this invitation?")) return;
+      revokeBtn.disabled = true;
+      revokeBtn.textContent = "Revoking...";
+      try {
+        await del(`/api/group-invites/${invite.id}/revoke`);
+        showToast("Invitation revoked successfully", "success");
+        await loadPendingInvites();
+      } catch (error) {
+        showToast(error.message || "Failed to revoke invitation", "danger");
+        revokeBtn.disabled = false;
+        revokeBtn.textContent = "Revoke";
+      }
+    });
+
+    actions.appendChild(revokeBtn);
+    row.appendChild(actions);
+
     return row;
   }
 
