@@ -61,7 +61,7 @@ async function loadPayments(page = currentPage) {
             search: document.getElementById('filterSearch').value.trim(),
             plan: document.getElementById('filterPlan').value,
             status: document.getElementById('filterStatus').value,
-            provider: document.getElementById('filterProvider').value,
+            provider: document.getElementById('filterProvider') ? document.getElementById('filterProvider').value : '',
             startDate: startDateVal ? `${startDateVal}T00:00:00` : '',
             endDate: endDateVal ? `${endDateVal}T23:59:59` : ''
         };
@@ -77,6 +77,7 @@ async function loadPayments(page = currentPage) {
             currentPage = page;
             renderPayments(response.data.payments);
             updatePagination(response.data.currentPage, response.data.totalPages, response.data.totalElements);
+            renderActiveFilterChips();
         } else {
             document.getElementById('paymentsContent').style.display = 'none';
             document.getElementById('paymentsErrorState').style.display = 'flex';
@@ -105,7 +106,7 @@ function renderPayments(payments) {
     let countFailed = 0;
 
     if (!payments || payments.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 24px; color: #666;">No payments found matching the criteria.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 32px 16px; color: var(--text-muted, #64748b);">No payments found matching the selected criteria.</td></tr>';
         return;
     }
 
@@ -115,28 +116,38 @@ function renderPayments(payments) {
         // Trxn ID
         const tdId = document.createElement('td');
         tdId.textContent = `#${payment.paymentId}`;
-        tdId.style.fontWeight = '500';
+        tdId.style.fontWeight = '600';
+        tdId.style.color = 'var(--text-muted, #64748b)';
+        tdId.style.fontSize = '13px';
 
-        // Customer (Email)
+        // Customer (Avatar + Email/Name)
         const tdCustomer = document.createElement('td');
-        const customerWrapper = document.createElement('div');
-        customerWrapper.className = 'user-info';
-        // Backend only provides userEmail, no userFullName
-        customerWrapper.innerHTML = `
-            <div class="user-details">
-                <span class="user-name" style="font-weight: 500;">${payment.userEmail ? payment.userEmail.split('@')[0] : 'N/A'}</span>
-                <span class="user-email" style="font-size: 13px; color: #64748b;">${payment.userEmail || ''}</span>
+        const customerCell = document.createElement('div');
+        customerCell.className = 'customer-cell';
+        
+        const rawEmail = payment.userEmail || 'N/A';
+        const namePart = rawEmail.includes('@') ? rawEmail.split('@')[0] : rawEmail;
+        const initial = namePart.charAt(0).toUpperCase() || 'U';
+
+        customerCell.innerHTML = `
+            <div class="customer-avatar-pill">${initial}</div>
+            <div class="customer-info">
+                <span class="customer-name">${namePart}</span>
+                <span class="customer-email">${rawEmail}</span>
             </div>
         `;
-        tdCustomer.appendChild(customerWrapper);
+        tdCustomer.appendChild(customerCell);
 
         // Plan
         const tdPlan = document.createElement('td');
         let planStr = payment.planCode || 'N/A';
         if (planStr.includes('_1_MONTH')) {
-            planStr = planStr.replace('_1_MONTH', '').charAt(0).toUpperCase() + planStr.replace('_1_MONTH', '').slice(1).toLowerCase() + ' · 1 month';
+            planStr = planStr.replace('_1_MONTH', '').charAt(0).toUpperCase() + planStr.replace('_1_MONTH', '').slice(1).toLowerCase() + ' · 1 mo';
         }
         tdPlan.textContent = planStr;
+        tdPlan.style.fontWeight = '500';
+        tdPlan.style.fontSize = '12.5px';
+        tdPlan.style.whiteSpace = 'nowrap';
 
         // Amount (VND Format)
         const tdAmount = document.createElement('td');
@@ -145,54 +156,65 @@ function renderPayments(payments) {
             currency: 'VND'
         });
         tdAmount.textContent = formatter.format(payment.amount);
-        tdAmount.style.fontWeight = '600';
-
-        // Provider
-        const tdProvider = document.createElement('td');
-        let provStr = payment.paymentProvider || 'UNKNOWN';
-        if (provStr === 'VNPAY_SANDBOX') provStr = 'VNPay (Sandbox)';
-        else if (provStr === 'MOCK') provStr = 'Mock Provider';
-        tdProvider.textContent = provStr;
+        tdAmount.style.fontWeight = '700';
+        tdAmount.style.color = 'var(--text-main, #172033)';
 
         // Status Badge
         const tdStatus = document.createElement('td');
         const badge = document.createElement('span');
-        badge.className = `status-badge status-${(payment.status || 'PENDING').toLowerCase()}`;
         
+        let statusKey = (payment.status || 'PENDING').toLowerCase();
         let statusText = payment.status;
-        if (statusText === 'SUCCESS') statusText = 'Paid';
-        else if (statusText === 'PENDING') statusText = 'Pending';
-        else if (statusText === 'FAILED') statusText = 'Failed';
-        else if (statusText === 'CANCELLED') statusText = 'Cancelled';
-        else if (statusText === 'EXPIRED') statusText = 'Expired';
         
-        if (payment.status === 'PENDING') {
+        if (payment.status === 'SUCCESS') {
+            statusText = 'Paid';
+            statusKey = 'paid';
+        } else if (payment.status === 'PENDING') {
             const createdAtDate = new Date(payment.createdAt);
             const expiresAtDate = new Date(createdAtDate.getTime() + 15 * 60000); // 15 mins
             const now = new Date();
             if (now < expiresAtDate) {
                 const diffMin = Math.ceil((expiresAtDate - now) / 60000);
-                statusText = `Pending · expires in ${diffMin} min`;
+                statusText = `Pending (${diffMin}m)`;
+                statusKey = 'pending';
             } else {
                 statusText = 'Expired';
-                badge.className = 'status-badge status-expired';
+                statusKey = 'expired';
             }
+        } else if (payment.status === 'FAILED') {
+            statusText = 'Failed';
+            statusKey = 'failed';
+        } else if (payment.status === 'CANCELLED') {
+            statusText = 'Cancelled';
+            statusKey = 'cancelled';
+        } else if (payment.status === 'EXPIRED') {
+            statusText = 'Expired';
+            statusKey = 'expired';
         }
         
+        badge.className = `status-badge status-${statusKey}`;
         badge.textContent = statusText;
         tdStatus.appendChild(badge);
 
-        // Date (CreatedAt in local timezone)
+        // Date (Windows taskbar clock format: HH:mm on top, M/D/YY on bottom)
         const tdDate = document.createElement('td');
-        const localDate = new Date(payment.createdAt).toLocaleString('en-US', {
-            month: 'short',
-            day: '2-digit',
-            year: 'numeric',
+        const createdDate = new Date(payment.createdAt);
+        const timeStr = createdDate.toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
             hour12: false
-        }).replace(',', ' ·');
-        tdDate.textContent = localDate;
+        });
+        const month = createdDate.getMonth() + 1;
+        const day = createdDate.getDate();
+        const yearShort = String(createdDate.getFullYear()).slice(-2);
+        const dateStr = `${month}/${day}/${yearShort}`;
+
+        tdDate.innerHTML = `
+            <div style="display: flex; flex-direction: column; line-height: 1.25;">
+                <span style="font-weight: 600; font-size: 13px; color: var(--text-main, #172033);">${timeStr}</span>
+                <span style="font-size: 11.5px; color: var(--text-muted, #64748b);">${dateStr}</span>
+            </div>
+        `;
 
         // Actions
         const tdActions = document.createElement('td');
@@ -207,7 +229,6 @@ function renderPayments(payments) {
         row.appendChild(tdCustomer);
         row.appendChild(tdPlan);
         row.appendChild(tdAmount);
-        row.appendChild(tdProvider);
         row.appendChild(tdStatus);
         row.appendChild(tdDate);
         row.appendChild(tdActions);
@@ -234,6 +255,67 @@ function renderPayments(payments) {
 }
 
 /**
+ * Renders active filter chips in the row 2 container.
+ */
+function renderActiveFilterChips() {
+    const container = document.getElementById('activeFilterChips');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const search = document.getElementById('filterSearch').value.trim();
+    const plan = document.getElementById('filterPlan').value;
+    const status = document.getElementById('filterStatus').value;
+    const provider = document.getElementById('filterProvider') ? document.getElementById('filterProvider').value : '';
+    const startDate = document.getElementById('filterStartDate').value;
+    const endDate = document.getElementById('filterEndDate').value;
+
+    const chips = [];
+
+    if (search) {
+        chips.push({ label: `Search: "${search}"`, reset: () => { document.getElementById('filterSearch').value = ''; } });
+    }
+    if (plan) {
+        const planText = plan.replace('_1_MONTH', '');
+        chips.push({ label: `Plan: ${planText}`, reset: () => { document.getElementById('filterPlan').value = ''; } });
+    }
+    if (status) {
+        chips.push({ label: `Status: ${status}`, reset: () => { document.getElementById('filterStatus').value = ''; } });
+    }
+    if (provider) {
+        chips.push({ label: `Provider: ${provider}`, reset: () => { document.getElementById('filterProvider').value = ''; } });
+    }
+    if (startDate) {
+        chips.push({ label: `From: ${startDate}`, reset: () => { 
+            document.getElementById('filterStartDate').value = ''; 
+            document.getElementById('startDateDisplay').textContent = 'Start Date';
+            document.getElementById('startDateDisplay').style.fontWeight = '500';
+        } });
+    }
+    if (endDate) {
+        chips.push({ label: `To: ${endDate}`, reset: () => { 
+            document.getElementById('filterEndDate').value = ''; 
+            document.getElementById('endDateDisplay').textContent = 'End Date';
+            document.getElementById('endDateDisplay').style.fontWeight = '500';
+        } });
+    }
+
+    chips.forEach(chip => {
+        const span = document.createElement('span');
+        span.className = 'filter-chip';
+        span.innerHTML = `
+            ${chip.label}
+            <span class="filter-chip-remove" title="Remove filter">&times;</span>
+        `;
+        span.querySelector('.filter-chip-remove').onclick = () => {
+            chip.reset();
+            loadPayments(0);
+        };
+        container.appendChild(span);
+    });
+}
+
+/**
  * Updates the pagination UI state.
  */
 function updatePagination(pageNumber, totalPages, totalElements) {
@@ -242,18 +324,22 @@ function updatePagination(pageNumber, totalPages, totalElements) {
     const indicator = document.getElementById('pageIndicator');
     const paginationContainer = document.getElementById('paginationControls');
 
-    if (totalPages <= 1) {
-        if (paginationContainer) paginationContainer.style.display = 'none';
-    } else {
-        if (paginationContainer) paginationContainer.style.display = 'flex';
-
-        if (indicator) {
-            indicator.textContent = `Page ${pageNumber + 1} of ${Math.max(1, totalPages)} (${totalElements} total)`;
-        }
-
-        if (prevBtn) prevBtn.disabled = (pageNumber <= 0);
-        if (nextBtn) nextBtn.disabled = (pageNumber >= totalPages - 1);
+    if (!totalElements || totalElements === 0) {
+        if (indicator) indicator.textContent = 'Showing 0 payments';
+        if (prevBtn) prevBtn.disabled = true;
+        if (nextBtn) nextBtn.disabled = true;
+        return;
     }
+
+    const startItem = pageNumber * PAGE_SIZE + 1;
+    const endItem = Math.min((pageNumber + 1) * PAGE_SIZE, totalElements);
+
+    if (indicator) {
+        indicator.textContent = `Showing ${startItem}–${endItem} of ${totalElements} payments`;
+    }
+
+    if (prevBtn) prevBtn.disabled = (pageNumber <= 0);
+    if (nextBtn) nextBtn.disabled = (pageNumber >= totalPages - 1);
 }
 
 /**
@@ -274,7 +360,7 @@ function handleExport() {
         search: document.getElementById('filterSearch').value.trim(),
         plan: document.getElementById('filterPlan').value,
         status: document.getElementById('filterStatus').value,
-        provider: document.getElementById('filterProvider').value,
+        provider: document.getElementById('filterProvider') ? document.getElementById('filterProvider').value : '',
         startDate: startDateVal ? `${startDateVal}T00:00:00` : '',
         endDate: endDateVal ? `${endDateVal}T23:59:59` : ''
     };
@@ -288,7 +374,7 @@ function clearFilters() {
     document.getElementById('filterSearch').value = '';
     document.getElementById('filterPlan').value = '';
     document.getElementById('filterStatus').value = '';
-    document.getElementById('filterProvider').value = '';
+    if (document.getElementById('filterProvider')) document.getElementById('filterProvider').value = '';
     document.getElementById('filterStartDate').value = '';
     document.getElementById('filterEndDate').value = '';
 
