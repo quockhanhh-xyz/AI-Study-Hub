@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/admin.css">
 </head>
+
 <body>
     <div class="app-layout">
         <aside class="sidebar">
@@ -18,157 +20,199 @@
         <main class="main-content">
             <div class="admin-layout">
                 <div class="admin-content-wrapper">
-            <header class="admin-page-header">
-                <div>
-                    <h1 class="admin-page-title">AI Usage Monitoring</h1>
-                    <p class="admin-page-subtitle" style="margin-top: 4px; color: var(--text-muted); font-size: 0.875rem;">Monitor AI usage logs by user, tier, feature, status, and date range.</p>
-                    <p id="dynamicSubtitle" style="margin-top: 2px; color: var(--primary); font-size: 0.875rem; font-weight: 500;">Showing all-time AI usage logs.</p>
-                </div>
-                <div class="admin-header-actions">
-                    <button id="exportBtn" class="btn btn-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                        </svg>
-                        <span id="exportBtnText">Export all AI usage logs</span>
-                    </button>
-                </div>
-            </header>
-
-            <div class="admin-state-container" id="usageLoadingState">
-                <div class="admin-state-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                    </svg>
-                </div>
-                <p>Loading AI usage data...</p>
-            </div>
-
-            <div class="admin-state-container" id="usageErrorState" style="display: none;">
-                <div class="admin-state-icon" style="color: var(--danger);">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                </div>
-                <p id="usageErrorMessage">Failed to load AI usage data.</p>
-                <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 16px;">Retry</button>
-            </div>
-
-            <div id="usageContent" style="display: none;">
-
-            <!-- KPI Summary Cards -->
-            <div class="admin-stats-grid" style="margin-bottom: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
-                <div class="admin-card" style="padding: 16px;">
-                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Total Requests</div>
-                    <div id="kpiTotal" style="font-size: 1.5rem; font-weight: 700; margin-top: 8px;">0</div>
-                </div>
-                <div class="admin-card" style="padding: 16px;">
-                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Success</div>
-                    <div id="kpiSuccess" style="font-size: 1.5rem; font-weight: 700; margin-top: 8px; color: var(--success);">0</div>
-                </div>
-                <div class="admin-card" style="padding: 16px;">
-                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Failed / Errors</div>
-                    <div id="kpiFailed" style="font-size: 1.5rem; font-weight: 700; margin-top: 8px; color: var(--danger);">0</div>
-                </div>
-                <div class="admin-card" style="padding: 16px;">
-                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Quota Blocked</div>
-                    <div id="kpiQuota" style="font-size: 1.5rem; font-weight: 700; margin-top: 8px; color: var(--warning);">0</div>
-                </div>
-                <div class="admin-card" style="padding: 16px;">
-                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Active AI Users</div>
-                    <div id="kpiUsers" style="font-size: 1.5rem; font-weight: 700; margin-top: 8px; color: var(--primary);">0</div>
-                </div>
-            </div>
-
-            <!-- Filters -->
-            <div class="admin-actions-bar">
-                <div class="admin-filters">
-                    <input type="text" id="searchInput" class="admin-filter-input" placeholder="Search by User Email...">
-                    <select id="tierFilter" class="admin-filter-input">
-                        <option value="">All Tiers</option>
-                        <option value="FREE">FREE</option>
-                        <option value="PREMIUM">PREMIUM</option>
-                        <option value="ULTRA">ULTRA</option>
-                    </select>
-                    <select id="featureFilter" class="admin-filter-input">
-                        <option value="">All Features</option>
-                        <option value="AI_QA">AI Q&A</option>
-                        <option value="AI_SUMMARY">AI Summary</option>
-                        <option value="AI_FLASHCARD">AI Flashcard</option>
-                        <option value="AI_QUIZ">AI Quiz</option>
-                    </select>
-                    <select id="statusFilter" class="admin-filter-input">
-                        <option value="">All Statuses</option>
-                        <option value="SUCCESS">Success</option>
-                        <option value="FAILED">Failed</option>
-                        <option value="QUOTA_EXCEEDED">Quota Exceeded</option>
-                        <option value="SKIPPED_NO_CONTEXT">Skipped - No Context</option>
-                        <option value="AI_PROVIDER_ERROR">AI Provider Error</option>
-                        <option value="AI_NOT_CONFIGURED">AI Not Configured</option>
-                    </select>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <label for="startDateFilter" style="font-size: 0.875rem; color: var(--text-muted);">Start date</label>
-                        <input type="date" id="startDateFilter" class="admin-filter-input">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <label for="endDateFilter" style="font-size: 0.875rem; color: var(--text-muted);">End date</label>
-                        <input type="date" id="endDateFilter" class="admin-filter-input">
-                    </div>
-                </div>
-                <div class="admin-actions-buttons">
-                    <button class="btn btn-outline" onclick="clearFilters()">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                        </svg>
-                        Clear Filters
-                    </button>
-                </div>
-            </div>
-
-            <!-- Table -->
-            <div class="admin-table-container">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>User Email</th>
-                            <th>Tier</th>
-                            <th>AI Q&A</th>
-                            <th>Summary</th>
-                            <th>Flashcard</th>
-                            <th>Quiz</th>
-                            <th>Total Requests</th>
-                            <th>Last Used At</th>
-                        </tr>
-                    </thead>
-                    <tbody id="usageTableBody">
-                        <tr><td colspan="8" style="text-align: center;">Loading...</td></tr>
-                    </tbody>
-                </table>
-                
-                <div class="admin-state-container" id="emptyState" style="display: none; padding: 40px 0;">
-                    <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;">No AI usage found</p>
-                    <p style="color: var(--text-muted);">Try changing the date range, tier, feature, or status filter.</p>
-                </div>
-
-                <div id="pagination" class="pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 16px 0; border-top: 1px solid var(--border-color);">
-                    <div id="pageInfo" style="font-size: 0.875rem; color: var(--text-muted);">Showing 0-0 of 0 users</div>
-                    <div style="display: flex; align-items: center; gap: 16px;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <label for="pageSize" style="font-size: 0.875rem; color: var(--text-muted);">Page size:</label>
-                            <select id="pageSize" class="admin-filter-input" style="padding: 4px 8px;">
-                                <option value="10">10</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                            </select>
+                    <header class="admin-page-header">
+                        <div>
+                            <h1 class="admin-page-title">AI Usage Monitoring</h1>
+                            <p class="admin-page-subtitle"
+                                style="margin-top: 4px; color: var(--text-muted); font-size: 0.875rem;">Monitor AI usage
+                                logs by user, tier, feature, status, and date range.</p>
+                            <p id="dynamicSubtitle"
+                                style="margin-top: 2px; color: var(--primary); font-size: 0.875rem; font-weight: 500;">
+                                Showing all-time AI usage logs.</p>
                         </div>
-                        <div id="paginationControls" style="display: flex; gap: 8px;">
-                            <!-- Pagination buttons -->
+                        <div class="admin-header-actions">
+                            <button id="exportBtn" class="btn btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18"
+                                    width="18" stroke="currentColor" stroke-width="2"
+                                    style="margin-right: 6px; vertical-align: text-bottom;">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18"
+                                        width="18" stroke="currentColor" stroke-width="2"
+                                        style="margin-right: 6px; vertical-align: text-bottom;">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                    </svg>
+                                    <span id="exportBtnText">Export all AI usage logs</span>
+                            </button>
+                        </div>
+                    </header>
+
+                    <div class="admin-state-container" id="usageLoadingState">
+                        <div class="admin-state-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40"
+                                width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                        </div>
+                        <p>Loading AI usage data...</p>
+                    </div>
+
+                    <div class="admin-state-container" id="usageErrorState" style="display: none;">
+                        <div class="admin-state-icon" style="color: var(--danger);">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40"
+                                width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <p id="usageErrorMessage">Failed to load AI usage data.</p>
+                        <button class="btn btn-primary" onclick="location.reload()"
+                            style="margin-top: 16px;">Retry</button>
+                    </div>
+
+                    <div id="usageContent" style="display: none;">
+
+                        <!-- KPI Summary Cards -->
+                        <div class="admin-stats-grid"
+                            style="margin-bottom: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
+                            <div class="admin-card" style="padding: 16px;">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">
+                                    Total Requests</div>
+                                <div id="kpiTotal" style="font-size: 1.5rem; font-weight: 700; margin-top: 8px;">0</div>
+                            </div>
+                            <div class="admin-card" style="padding: 16px;">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">
+                                    Success</div>
+                                <div id="kpiSuccess"
+                                    style="font-size: 1.5rem; font-weight: 700; margin-top: 8px; color: var(--success);">
+                                    0</div>
+                            </div>
+                            <div class="admin-card" style="padding: 16px;">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">
+                                    Failed / Errors</div>
+                                <div id="kpiFailed"
+                                    style="font-size: 1.5rem; font-weight: 700; margin-top: 8px; color: var(--danger);">
+                                    0</div>
+                            </div>
+                            <div class="admin-card" style="padding: 16px;">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">
+                                    Quota Blocked</div>
+                                <div id="kpiQuota"
+                                    style="font-size: 1.5rem; font-weight: 700; margin-top: 8px; color: var(--warning);">
+                                    0</div>
+                            </div>
+                            <div class="admin-card" style="padding: 16px;">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">
+                                    Active AI Users</div>
+                                <div id="kpiUsers"
+                                    style="font-size: 1.5rem; font-weight: 700; margin-top: 8px; color: var(--primary);">
+                                    0</div>
+                            </div>
+                        </div>
+
+                        <!-- Filters -->
+                        <div class="admin-actions-bar">
+                            <div class="admin-filters">
+                                <input type="text" id="searchInput" class="admin-filter-input"
+                                    placeholder="Search by User Email...">
+                                <select id="tierFilter" class="admin-filter-input">
+                                    <option value="">All Tiers</option>
+                                    <option value="FREE">FREE</option>
+                                    <option value="PREMIUM">PREMIUM</option>
+                                    <option value="ULTRA">ULTRA</option>
+                                </select>
+                                <select id="featureFilter" class="admin-filter-input">
+                                    <option value="">All Features</option>
+                                    <option value="AI_QA">AI Q&A</option>
+                                    <option value="AI_SUMMARY">AI Summary</option>
+                                    <option value="AI_FLASHCARD">AI Flashcard</option>
+                                    <option value="AI_QUIZ">AI Quiz</option>
+                                </select>
+                                <select id="statusFilter" class="admin-filter-input">
+                                    <option value="">All Statuses</option>
+                                    <option value="SUCCESS">Success</option>
+                                    <option value="FAILED">Failed</option>
+                                    <option value="QUOTA_EXCEEDED">Quota Exceeded</option>
+                                    <option value="SKIPPED_NO_CONTEXT">Skipped - No Context</option>
+                                    <option value="AI_PROVIDER_ERROR">AI Provider Error</option>
+                                    <option value="AI_NOT_CONFIGURED">AI Not Configured</option>
+                                </select>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <label for="startDateFilter"
+                                        style="font-size: 0.875rem; color: var(--text-muted);">Start date</label>
+                                    <input type="date" id="startDateFilter" class="admin-filter-input">
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <label for="endDateFilter"
+                                        style="font-size: 0.875rem; color: var(--text-muted);">End date</label>
+                                    <input type="date" id="endDateFilter" class="admin-filter-input">
+                                </div>
+                            </div>
+                            <div class="admin-actions-buttons">
+                                <button class="btn btn-outline" onclick="clearFilters()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18"
+                                        width="18" stroke="currentColor" stroke-width="2"
+                                        style="margin-right: 6px; vertical-align: text-bottom;">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                    </svg>
+                                    Clear Filters
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="admin-table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>User Email</th>
+                                        <th>Tier</th>
+                                        <th>AI Q&A</th>
+                                        <th>Summary</th>
+                                        <th>Flashcard</th>
+                                        <th>Quiz</th>
+                                        <th>Total Requests</th>
+                                        <th>Last Used At</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usageTableBody">
+                                    <tr>
+                                        <td colspan="8" style="text-align: center;">Loading...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="admin-state-container" id="emptyState" style="display: none; padding: 40px 0;">
+                                <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;">No AI usage found
+                                </p>
+                                <p style="color: var(--text-muted);">Try changing the date range, tier, feature, or
+                                    status filter.</p>
+                            </div>
+
+                            <div id="pagination" class="pagination"
+                                style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 16px 0; border-top: 1px solid var(--border-color);">
+                                <div id="pageInfo" style="font-size: 0.875rem; color: var(--text-muted);">Showing 0-0 of
+                                    0 users</div>
+                                <div style="display: flex; align-items: center; gap: 16px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <label for="pageSize"
+                                            style="font-size: 0.875rem; color: var(--text-muted);">Page size:</label>
+                                        <select id="pageSize" class="admin-filter-input" style="padding: 4px 8px;">
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                        </select>
+                                    </div>
+                                    <div id="paginationControls" style="display: flex; gap: 8px;">
+                                        <!-- Pagination buttons -->
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            </div>
                 </div>
             </div>
         </main>
@@ -183,4 +227,5 @@
     <script src="js/admin-ai-usage-api.js"></script>
     <script src="js/admin-ai-usage.js"></script>
 </body>
+
 </html>
