@@ -28,41 +28,64 @@ async function initializeLayout() {
 }
 
 function renderAdminTopbar() {
-  const adminWrapper = document.querySelector(".admin-content-wrapper");
-  if (!adminWrapper || document.querySelector(".admin-topbar")) return;
+  const oldTopbar = document.querySelector(".admin-topbar");
+  if (oldTopbar) {
+    oldTopbar.remove();
+  }
+
+  const pageHeader = document.querySelector(".admin-page-header");
+  if (!pageHeader || pageHeader.querySelector(".admin-profile-pill")) return;
 
   let adminName = "System Admin";
-  let adminEmail = "admin@test.com";
   const userStr = localStorage.getItem("currentUser");
   if (userStr) {
     try {
       const user = JSON.parse(userStr);
       adminName = user.fullName || user.email || adminName;
-      adminEmail = user.email || adminEmail;
-    } catch(e) {}
+    } catch (e) { }
   }
 
   const initialLetter = (adminName || "A").charAt(0).toUpperCase();
 
-  const topbar = document.createElement("header");
-  topbar.className = "admin-topbar";
-  topbar.innerHTML = `
-    <div class="admin-topbar-brand">
-      <span class="brand-title"><strong>AI Study Hub Admin</strong></span>
-      <span class="brand-badge">Console</span>
-    </div>
-    <div class="admin-topbar-user">
-      <div class="admin-profile-pill">
-        <span class="admin-avatar">${initialLetter}</span>
-        <div class="admin-profile-info">
-          <strong>${adminName}</strong>
-          <span>${adminEmail}</span>
-        </div>
-      </div>
-    </div>
+  const profilePill = document.createElement("div");
+  profilePill.className = "admin-profile-pill";
+  profilePill.innerHTML = `
+    <span class="admin-avatar">${initialLetter}</span>
+    <span class="admin-profile-name">${adminName}</span>
   `;
 
-  adminWrapper.parentNode.insertBefore(topbar, adminWrapper);
+  let rightContainer = pageHeader.querySelector(".admin-header-right");
+  if (!rightContainer) {
+    const children = Array.from(pageHeader.children);
+    if (children.length > 1 && children[1].tagName === 'DIV') {
+      rightContainer = children[1];
+    } else {
+      rightContainer = document.createElement("div");
+      rightContainer.className = "admin-header-right";
+      rightContainer.style.display = "flex";
+      rightContainer.style.alignItems = "center";
+      rightContainer.style.gap = "12px";
+      pageHeader.appendChild(rightContainer);
+    }
+  }
+
+  // Create notification bell button matching user page design
+  if (!rightContainer.querySelector("#adminNotifBellBtn")) {
+    const bellWrapper = document.createElement("div");
+    bellWrapper.className = "admin-notification-wrapper";
+    bellWrapper.style.position = "relative";
+    bellWrapper.innerHTML = `
+      <button class="notification-bell-btn" id="adminNotifBellBtn" aria-label="Notifications" title="Notifications">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+        </svg>
+        <span class="notification-badge" id="adminNotifBadge" style="display: none;">0</span>
+      </button>
+    `;
+    rightContainer.appendChild(bellWrapper);
+  }
+
+  rightContainer.appendChild(profilePill);
 }
 
 
@@ -242,9 +265,9 @@ function renderDynamicSidebar(isAuthenticated) {
   // Re-render links safely inside the container with standardized icon and text wrappers
   let navHtml = "";
   if (isAdminView) {
-      navHtml += `<div class="nav-section-title" style="padding: 12px 24px 8px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; transition: opacity 0.3s ease; overflow: hidden; white-space: nowrap;">Admin Console</div>`;
+    navHtml += `<div class="nav-section-title" style="padding: 12px 24px 8px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; transition: opacity 0.3s ease; overflow: hidden; white-space: nowrap;">Admin Console</div>`;
   }
-  
+
   navHtml += visibleMenus
     .map(item => `
       <a href="${item.url}" class="nav-link" title="${item.name}">
