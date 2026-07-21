@@ -2,6 +2,16 @@
 // Standardized UI styles and theme configurations.
 
 function handleBack() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const from = urlParams.get('from');
+    if (from === 'group') {
+        const groupId = urlParams.get('groupId');
+        if (groupId) {
+            window.location.href = `group-detail.html?id=${groupId}`;
+            return;
+        }
+    }
+
     if (document.referrer) {
         try {
             const refUrl = new URL(document.referrer);
