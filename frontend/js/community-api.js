@@ -68,7 +68,9 @@ async function publishDocument(id) {
   try {
     return await put(`/api/documents/${id}/publish`);
   } catch (error) {
-    console.error(`Failed to execute community publish catalog sequence transaction for item ID ${id}:`, error);
+    if ((error?.status || 0) >= 500) {
+      console.error(`Failed to execute community publish catalog sequence transaction for item ID ${id}:`, error);
+    }
     throw error;
   }
 }

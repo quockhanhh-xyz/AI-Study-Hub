@@ -3844,6 +3844,51 @@ svg {
   height: 100%;
 }
 
+#pricingGrid .plan-pricing-card {
+  align-items: stretch;
+  min-height: 100%;
+  padding-bottom: 24px;
+}
+
+#pricingGrid .plan-pricing-card > h2,
+#pricingGrid .plan-pricing-card > p {
+  text-align: center;
+}
+
+#pricingGrid .plan-feature-list {
+  flex: 1 1 auto;
+  width: 100%;
+  margin-bottom: 20px !important;
+}
+
+#pricingGrid .plan-current-badge {
+  align-self: center;
+}
+
+#pricingGrid .plan-purchase-actions {
+  align-items: stretch;
+  margin-top: auto !important;
+  width: 100%;
+}
+
+#pricingGrid .plan-action-label {
+  min-height: 20px;
+}
+
+#pricingGrid .plan-vnpay-button {
+  justify-content: center;
+  min-height: 48px;
+  width: 100%;
+}
+
+#pricingGrid .plan-payment-note {
+  min-height: 32px;
+}
+
+#pricingGrid .plan-mock-link {
+  align-self: center;
+}
+
 .member-row-main {
   flex-wrap: wrap;
 }
