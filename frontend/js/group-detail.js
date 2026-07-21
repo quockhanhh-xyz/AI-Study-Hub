@@ -58,6 +58,29 @@ document.addEventListener("DOMContentLoaded", async function () {
     folders: document.getElementById("groupTabPanelFolders"),
     chat: document.getElementById("groupTabPanelChat"),
   };
+
+  // Invite Modal
+  const inviteMemberBtn = document.getElementById("inviteMemberBtn");
+  const inviteMemberModal = document.getElementById("inviteMemberModal");
+  const closeInviteMemberModalBtn = document.getElementById("closeInviteMemberModal");
+  const cancelInviteMemberBtn = document.getElementById("cancelInviteMemberBtn");
+  const confirmInviteMemberBtn = document.getElementById("confirmInviteMemberBtn");
+  const inviteMemberForm = document.getElementById("inviteMemberForm");
+  const inviteEmailInput = document.getElementById("inviteEmailInput");
+  const inviteMemberError = document.getElementById("inviteMemberError");
+  const pendingInvitesSection = document.getElementById("pendingInvitesSection");
+  const pendingInvitesLoader = document.getElementById("pendingInvitesLoader");
+  const pendingInvitesError = document.getElementById("pendingInvitesError");
+  const pendingInvitesList = document.getElementById("pendingInvitesList");
+
+  // Share Modal
+  const shareDocBtn = document.getElementById("shareDocBtn");
+  const shareModal = document.getElementById("shareModal");
+  const closeShareModalBtn = document.getElementById("closeShareModal");
+  const cancelShareBtn = document.getElementById("cancelShareBtn");
+  const confirmShareBtn = document.getElementById("confirmShareBtn");
+  const shareItemSelect = document.getElementById("shareItemSelect");
+  const shareModalError = document.getElementById("shareModalError");
   let isChatTabInitialized = false;
   const chatLoader = document.getElementById("chatLoader");
   const chatError = document.getElementById("chatError");
@@ -250,12 +273,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     const isOwner = myRole === "OWNER";
 
     // OWNER-only actions
-    editGroupBtn.style.display = isOwner ? "inline-flex" : "none";
+    editGroupBtn.style.display = isOwner ? "flex" : "none";
     const dangerZoneSection = document.getElementById("dangerZoneSection");
     if (dangerZoneSection) {
       dangerZoneSection.style.display = isOwner ? "block" : "none";
     }
     deleteGroupBtn.style.display = isOwner ? "inline-flex" : "none";
+    
+    inviteMemberBtn.style.display = isOwner ? "inline-flex" : "none";
+    pendingInvitesSection.style.display = isOwner ? "block" : "none";
 
     // MEMBER-only action (OWNER does not use leave in MVP)
     leaveGroupBtn.style.display = !isOwner ? "inline-flex" : "none";
@@ -423,16 +449,70 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     if (members.length === 0) {
-      pendingMemberEmpty.style.display = "flex";
       pendingMemberList.style.display = "none";
+      pendingMemberEmpty.style.display = "block";
+    } else {
+      pendingMemberList.style.display = "block";
+      pendingMemberEmpty.style.display = "none";
+      members.forEach(function (member) {
+        pendingMemberList.appendChild(createPendingMemberRow(member));
+      });
+    }
+  }
+
+  function createPendingInviteRow(invite) {
+    const row = document.createElement("div");
+    row.className = "member-row";
+
+    const main = document.createElement("div");
+    main.className = "member-row-main";
+
+    const name = document.createElement("span");
+    name.className = "member-row-name";
+    name.textContent = invite.email;
+
+    const statusBadge = document.createElement("span");
+    statusBadge.className = "badge-role-member";
+    statusBadge.style.color = "var(--primary, #2563eb)";
+    statusBadge.textContent = "INVITED";
+
+    main.append(name, statusBadge);
+    row.appendChild(main);
+    
+    // In MVP, no cancel invite action, so we just display it
+    return row;
+  }
+
+  async function loadPendingInvites() {
+    if (myRole !== "OWNER") {
+      pendingInvitesSection.style.display = "none";
       return;
     }
-
-    pendingMemberEmpty.style.display = "none";
-    pendingMemberList.style.display = "block";
-    members.forEach(function (member) {
-      pendingMemberList.appendChild(createPendingMemberRow(member));
-    });
+    
+    pendingInvitesLoader.style.display = "flex";
+    pendingInvitesList.style.display = "none";
+    hideError(pendingInvitesError);
+    
+    try {
+      const response = await get(`/api/group-invites/groups/${groupId}/invites`);
+      const groupInvites = response.data || [];
+      
+      pendingInvitesLoader.style.display = "none";
+      pendingInvitesList.innerHTML = "";
+      
+      if (groupInvites.length === 0) {
+        pendingInvitesSection.style.display = "none";
+      } else {
+        pendingInvitesSection.style.display = "block";
+        pendingInvitesList.style.display = "block";
+        groupInvites.forEach(inv => {
+          pendingInvitesList.appendChild(createPendingInviteRow(inv));
+        });
+      }
+    } catch (error) {
+      pendingInvitesLoader.style.display = "none";
+      showError(pendingInvitesError, error.message || "Failed to load pending invitations.");
+    }
   }
 
   async function loadPendingMembers() {
@@ -488,7 +568,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const titleEl = document.createElement("h3");
     const titleLink = document.createElement("a");
-    titleLink.href = `document-detail.html?id=${doc.documentId}`;
+    titleLink.href = `document-detail.html?id=${doc.documentId}&from=group&groupId=${groupId}`;
     titleLink.textContent = doc.title || doc.originalFileName || "Untitled";
     titleLink.style.color = "inherit";
     titleLink.style.textDecoration = "none";
@@ -993,6 +1073,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       renderGroupInfo(group);
       renderMembers(Array.isArray(group.members) ? group.members : []);
       await loadPendingMembers();
+      await loadPendingInvites();
 
     } catch (error) {
       detailLoader.style.display = "none";
@@ -1098,9 +1179,126 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   });
 
+  // Invite Member logic
+  inviteMemberBtn.addEventListener("click", function () {
+    inviteEmailInput.value = "";
+    hideError(inviteMemberError);
+    openModal(inviteMemberModal);
+    inviteEmailInput.focus();
+  });
+  
+  closeInviteMemberModalBtn.addEventListener("click", function () { closeModal(inviteMemberModal); });
+  cancelInviteMemberBtn.addEventListener("click", function () { closeModal(inviteMemberModal); });
+
+  inviteMemberForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const email = inviteEmailInput.value.trim();
+    if (!email) return;
+
+    confirmInviteMemberBtn.disabled = true;
+    confirmInviteMemberBtn.textContent = "Sending...";
+    hideError(inviteMemberError);
+
+    try {
+      const response = await post(`/api/groups/${groupId}/invites/email`, { email });
+      showToast("Invitation sent successfully", "success");
+      closeModal(inviteMemberModal);
+      await loadGroupDetail();
+    } catch (error) {
+      showError(inviteMemberError, error.message);
+    } finally {
+      confirmInviteMemberBtn.disabled = false;
+      confirmInviteMemberBtn.textContent = "Send Invite";
+    }
+  });
+
+  // Share Doc/Folder logic
+  const shareTypeRadios = document.querySelectorAll('input[name="shareType"]');
+  const shareItemSelectLabel = document.getElementById("shareItemSelectLabel");
+
+  async function loadShareItems(type) {
+    shareItemSelect.innerHTML = `<option value="">Loading your ${type}s...</option>`;
+    shareItemSelectLabel.textContent = `Select ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+    try {
+      const response = await get(`/api/${type}s/my`);
+      shareItemSelect.innerHTML = `<option value="">-- Select a ${type} to share --</option>`;
+      (response.data || []).forEach(item => {
+        const opt = document.createElement("option");
+        opt.value = type === "document" ? item.documentId : item.folderId;
+        opt.textContent = type === "document" ? (item.title || "Untitled Document") : (item.folderName || "Untitled Folder");
+        shareItemSelect.appendChild(opt);
+      });
+    } catch (error) {
+      showError(shareModalError, error.message);
+    }
+  }
+
+  shareTypeRadios.forEach(radio => {
+    radio.addEventListener("change", function () {
+      if (this.checked) loadShareItems(this.value);
+    });
+  });
+
+  function openShareModalFor(type) {
+    hideError(shareModalError);
+    const radio = document.querySelector(`input[name="shareType"][value="${type}"]`);
+    if (radio) radio.checked = true;
+    loadShareItems(type);
+    openModal(shareModal);
+  }
+
+  shareDocBtn.addEventListener("click", () => openShareModalFor("document"));
+  
+  const shareFolderBtn = document.getElementById("shareFolderBtn");
+  if (shareFolderBtn) {
+    shareFolderBtn.addEventListener("click", () => openShareModalFor("folder"));
+  }
+
+  closeShareModalBtn.addEventListener("click", function () { closeModal(shareModal); });
+  cancelShareBtn.addEventListener("click", function () { closeModal(shareModal); });
+
+  confirmShareBtn.addEventListener("click", async function () {
+    const selectedId = shareItemSelect.value;
+    if (!selectedId) {
+      showError(shareModalError, "Please select an item to share");
+      return;
+    }
+    
+    confirmShareBtn.disabled = true;
+    confirmShareBtn.textContent = "Sharing...";
+    hideError(shareModalError);
+
+    const type = document.querySelector('input[name="shareType"]:checked').value;
+
+    try {
+      if (type === "document") {
+        await post(`/api/documents/${selectedId}/shares/groups`, {
+          groupId: parseInt(groupId, 10),
+          permissions: "VIEW"
+        });
+        showToast("Document shared successfully", "success");
+        closeModal(shareModal);
+        await loadGroupDocuments();
+      } else {
+        await post(`/api/folders/${selectedId}/shares/groups`, {
+          groupId: parseInt(groupId, 10),
+          permissions: "VIEW"
+        });
+        showToast("Folder shared successfully", "success");
+        closeModal(shareModal);
+        await loadGroupFolders();
+      }
+    } catch (error) {
+      showError(shareModalError, error.message);
+    } finally {
+      confirmShareBtn.disabled = false;
+      confirmShareBtn.textContent = "Share";
+    }
+  });
+
   // Close modals on overlay click
 
-  [editModal, deleteModal].forEach(function (overlay) {
+  [editModal, deleteModal, inviteMemberModal, shareModal].forEach(function (overlay) {
     overlay.addEventListener("click", function (e) {
       if (e.target === overlay) closeModal(overlay);
     });
@@ -1109,11 +1307,13 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Setup focus traps
   setupFocusTrap(editModal);
   setupFocusTrap(deleteModal);
+  setupFocusTrap(inviteMemberModal);
+  setupFocusTrap(shareModal);
 
   // Global Escape key modal closer
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
-      [editModal, deleteModal].forEach(function (overlay) {
+      [editModal, deleteModal, inviteMemberModal, shareModal].forEach(function (overlay) {
         if (overlay && overlay.classList.contains("open")) {
           closeModal(overlay);
         }

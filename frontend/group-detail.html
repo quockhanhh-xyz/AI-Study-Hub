@@ -152,27 +152,6 @@
                             style="margin: 4px 0 0 0; font-size: 28px; font-weight: 800; color: var(--text);">Group Name
                         </h1>
                     </div>
-                    <div class="header-actions" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                        <button type="button" id="leaveGroupBtn" class="btn btn-secondary"
-                            style="display:none; align-items: center; gap: 6px; padding: 10px 16px; width: auto !important;">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"
-                                id="Logout-1--Streamline-Core" height="14" width="14" aria-hidden="true"
-                                focusable="false">
-                                <desc>Logout 1 Streamline Icon: https://streamlinehq.com</desc>
-                                <g id="logout-1--arrow-exit-frame-leave-logout-rectangle-right">
-                                    <path id="Vector" stroke="currentColor" stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M9.5 10.5v2c0 0.2652 -0.10536 0.5196 -0.29289 0.7071 -0.18754 0.1875 -0.44189 0.2929 -0.70711 0.2929h-7c-0.26522 0 -0.51957 -0.1054 -0.707107 -0.2929C0.605357 13.0196 0.5 12.7652 0.5 12.5v-11c0 -0.26522 0.105357 -0.51957 0.292893 -0.707107C0.98043 0.605357 1.23478 0.5 1.5 0.5h7c0.26522 0 0.51957 0.105357 0.70711 0.292893C9.39464 0.98043 9.5 1.23478 9.5 1.5v2"
-                                        stroke-width="1"></path>
-                                    <path id="Vector_2" stroke="currentColor" stroke-linecap="round"
-                                        stroke-linejoin="round" d="M6.5 7h7" stroke-width="1"></path>
-                                    <path id="Vector_3" stroke="currentColor" stroke-linecap="round"
-                                        stroke-linejoin="round" d="m11.5 5 2 2 -2 2" stroke-width="1"></path>
-                                </g>
-                            </svg>
-                            Leave Group
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Group Metadata Card (no wrapper cards, direct display) -->
@@ -193,20 +172,34 @@
                             <span id="groupCounts" style="color: var(--text-muted);"></span>
                         </p>
                     </div>
-                    <!-- Relocated Edit Group button inside metadata card -->
-                    <button type="button" id="editGroupBtn" class="btn btn-secondary"
-                        style="display:none; position: absolute; top: 16px; right: 16px; width: 32px !important; height: 32px !important; padding: 0 !important; align-items: center; justify-content: center; border-radius: 50%;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"
-                            id="Pencil--Streamline-Core" height="14" width="14" aria-hidden="true" focusable="false"
-                            style="margin: 0;">
-                            <desc>Pencil Streamline Icon: https://streamlinehq.com</desc>
-                            <g id="pencil--change-edit-modify-pencil-write-writing">
-                                <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                    d="M5 12.24 0.5 13.5l1.26 -4.49998L10 0.800021c0.0931 -0.095246 0.2044 -0.170925 0.3271 -0.222592 0.1228 -0.051668 0.2547 -0.078283 0.3879 -0.078283 0.1332 0 0.2651 0.026615 0.3879 0.078283 0.1227 0.051667 0.234 0.127346 0.3271 0.222592L13.2 2.58002c0.0937 0.09296 0.1681 0.20357 0.2189 0.32542 0.0508 0.12186 0.0769 0.25257 0.0769 0.38458 0 0.13201 -0.0261 0.26272 -0.0769 0.38458 -0.0508 0.12186 -0.1252 0.23246 -0.2189 0.32542L5 12.24Z"
-                                    stroke-width="1.2"></path>
-                            </g>
-                        </svg>
-                    </button>
+                    <!-- Card top right actions container -->
+                    <div style="position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; align-items: center;">
+                        <button type="button" id="leaveGroupBtn" class="btn btn-secondary"
+                            style="display:none; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px; font-weight: 500; color: var(--danger); border-color: var(--danger-light); background: transparent;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14" aria-hidden="true" focusable="false">
+                                <g>
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 10.5v2c0 0.2652 -0.10536 0.5196 -0.29289 0.7071 -0.18754 0.1875 -0.44189 0.2929 -0.70711 0.2929h-7c-0.26522 0 -0.51957 -0.1054 -0.707107 -0.2929C0.605357 13.0196 0.5 12.7652 0.5 12.5v-11c0 -0.26522 0.105357 -0.51957 0.292893 -0.707107C0.98043 0.605357 1.23478 0.5 1.5 0.5h7c0.26522 0 0.51957 0.105357 0.70711 0.292893C9.39464 0.98043 9.5 1.23478 9.5 1.5v2" stroke-width="1"></path>
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M6.5 7h7" stroke-width="1"></path>
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m11.5 5 2 2 -2 2" stroke-width="1"></path>
+                                </g>
+                            </svg>
+                            Leave
+                        </button>
+                        <!-- Relocated Edit Group button inside metadata card -->
+                        <button type="button" id="editGroupBtn" class="btn btn-secondary"
+                            style="display:none; width: 32px !important; height: 32px !important; padding: 0 !important; align-items: center; justify-content: center; border-radius: 50%;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"
+                                id="Pencil--Streamline-Core" height="14" width="14" aria-hidden="true" focusable="false"
+                                style="margin: 0;">
+                                <desc>Pencil Streamline Icon: https://streamlinehq.com</desc>
+                                <g id="pencil--change-edit-modify-pencil-write-writing">
+                                    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                        d="M5 12.24 0.5 13.5l1.26 -4.49998L10 0.800021c0.0931 -0.095246 0.2044 -0.170925 0.3271 -0.222592 0.1228 -0.051668 0.2547 -0.078283 0.3879 -0.078283 0.1332 0 0.2651 0.026615 0.3879 0.078283 0.1227 0.051667 0.234 0.127346 0.3271 0.222592L13.2 2.58002c0.0937 0.09296 0.1681 0.20357 0.2189 0.32542 0.0508 0.12186 0.0769 0.25257 0.0769 0.38458 0 0.13201 -0.0261 0.26272 -0.0769 0.38458 -0.0508 0.12186 -0.1252 0.23246 -0.2189 0.32542L5 12.24Z"
+                                        stroke-width="1.2"></path>
+                                </g>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Group Detail Tabs -->
@@ -250,7 +243,7 @@
                     </div>
 
                     <div class="dashboard-panel" style="margin-bottom: 32px;">
-                        <div class="section-header" style="margin-bottom: 12px;">
+                        <div class="section-header" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                             <div>
                                 <h2 class="section-title" id="memberSectionTitle"
                                     style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Members
@@ -258,15 +251,38 @@
                                 <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">People who belong to
                                     this study group.</p>
                             </div>
+                            <button type="button" id="inviteMemberBtn" class="btn btn-primary" style="display: none; align-items: center; gap: 6px; padding: 8px 16px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="16" width="16" aria-hidden="true">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M7 1v12M1 7h12"></path>
+                                </svg>
+                                Invite Member
+                            </button>
                         </div>
                         <div id="memberList" class="member-list"></div>
                     </div>
+                    <!-- Pending Invites Section -->
+                    <div id="pendingInvitesSection" class="dashboard-panel" style="display:none; margin-bottom: 32px;">
+                        <div class="section-header" style="margin-bottom: 12px;">
+                            <div>
+                                <h2 class="section-title"
+                                    style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Pending Invitations
+                                </h2>
+                                <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">People you have invited who haven't responded yet.</p>
+                            </div>
+                        </div>
+                        <div id="pendingInvitesLoader" class="document-state" style="display: none; justify-content: center; padding: 24px;">
+                            <span>Loading invitations...</span>
+                        </div>
+                        <p id="pendingInvitesError" class="helper-text error" role="alert" style="display: none;"></p>
+                        <div id="pendingInvitesList" class="member-list"></div>
+                    </div>
+
                 </div>
 
                 <!-- Documents Panel -->
                 <div id="groupTabPanelDocuments" class="group-tab-panel" style="display:none;">
                     <div class="dashboard-panel" style="margin-bottom: 32px;">
-                        <div class="section-header" style="margin-bottom: 12px;">
+                        <div class="section-header" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                             <div>
                                 <h2 class="section-title" id="docSectionTitle"
                                     style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Shared
@@ -275,7 +291,14 @@
                                     into
                                     this group by its members.</p>
                             </div>
+                            <button type="button" id="shareDocBtn" class="btn btn-primary" style="display:flex; align-items: center; gap: 6px; padding: 8px 16px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="16" width="16" aria-hidden="true">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M7 1v12M1 7h12"></path>
+                                </svg>
+                                Share Document
+                            </button>
                         </div>
+
 
                         <div id="docLoader" class="document-state"
                             style="display: none; justify-content: center; padding: 24px;">
@@ -311,7 +334,7 @@
                 <!-- Folders Panel -->
                 <div id="groupTabPanelFolders" class="group-tab-panel" style="display:none;">
                     <div class="dashboard-panel" style="margin-bottom: 32px;">
-                        <div class="section-header" style="margin-bottom: 12px;">
+                        <div class="section-header" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                             <div>
                                 <h2 class="section-title" id="folderSectionTitle"
                                     style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text);">Shared
@@ -321,6 +344,12 @@
                                     this
                                     group by its members.</p>
                             </div>
+                            <button type="button" id="shareFolderBtn" class="btn btn-primary" style="display:flex; align-items: center; gap: 6px; padding: 8px 16px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="16" width="16" aria-hidden="true">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M7 1v12M1 7h12"></path>
+                                </svg>
+                                Share Folder
+                            </button>
                         </div>
 
                         <div id="folderLoader" class="document-state"
@@ -504,6 +533,58 @@
     <script src="js/group-detail.js"></script>
     <script src="js/notification-api.js"></script>
     <script src="js/notification.js"></script>
+    <!-- Share Modal -->
+    <div class="modal-overlay" id="shareModal" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
+        <div class="modal-box" style="max-width: 400px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="shareModalTitle" style="margin: 0;">Share to Group</h3>
+                <button type="button" id="closeShareModal" style="background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+            </div>
+            <div class="form-group" style="margin-top: 16px;">
+                <label>Item Type</label>
+                <div style="display: flex; gap: 16px; margin-top: 4px;">
+                    <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        <input type="radio" name="shareType" value="document" checked style="margin: 0;"> Document
+                    </label>
+                    <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        <input type="radio" name="shareType" value="folder" style="margin: 0;"> Folder
+                    </label>
+                </div>
+            </div>
+            <div class="form-group" style="margin-top: 16px;">
+                <label for="shareItemSelect" id="shareItemSelectLabel">Select Document</label>
+                <select id="shareItemSelect" class="form-control" style="width: 100%;">
+                    <option value="">Loading...</option>
+                </select>
+                <p id="shareModalError" class="helper-text error" role="alert" style="display: none; margin-top: 8px;"></p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="cancelShareBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmShareBtn">Share</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invite Member Modal -->
+    <div class="modal-overlay" id="inviteMemberModal" role="dialog" aria-modal="true" aria-labelledby="inviteMemberModalTitle">
+        <div class="modal-box" style="max-width: 400px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="inviteMemberModalTitle" style="margin: 0;">Invite Member</h3>
+                <button type="button" id="closeInviteMemberModal" style="background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+            </div>
+            <form id="inviteMemberForm" style="margin-top: 16px;">
+                <div class="form-group">
+                    <label for="inviteEmailInput">Email address</label>
+                    <input type="email" id="inviteEmailInput" class="form-control" placeholder="user@example.com" required style="width: 100%;">
+                </div>
+                <p id="inviteMemberError" class="helper-text error" role="alert" style="display:none; margin-top:8px;"></p>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelInviteMemberBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="confirmInviteMemberBtn">Send Invite</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 
 </html>
