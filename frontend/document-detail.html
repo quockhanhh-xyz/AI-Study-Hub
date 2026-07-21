@@ -564,8 +564,14 @@
     }
 
     .inspector-panes {
-      flex: 1;
+      flex: 0 0 auto;
       padding-top: 18px;
+    }
+
+    .inspector-panes:has(#inspectorPaneAI.active),
+    .inspector-panes:has(#inspectorPaneTools.active) {
+      flex: 1;
+      min-height: 0;
     }
 
     .inspector-tab-pane {
@@ -584,8 +590,9 @@
 
     .edit-section {
       display: grid;
-      gap: 14px;
+      gap: 12px;
       align-content: start;
+      min-height: 0;
     }
 
     .edit-section .form-group {
@@ -593,27 +600,37 @@
     }
 
     .edit-section textarea {
-      min-height: 52px;
-      max-height: 112px;
+      min-height: 48px;
+      max-height: 96px;
       resize: vertical;
     }
 
     #editMessage {
-      margin: -2px 0 0;
+      display: none;
+      margin: 0;
       min-height: 0 !important;
+    }
+
+    #editMessage:not(:empty) {
+      display: block;
+      margin: 2px 0 0;
     }
 
     .edit-actions {
       display: grid !important;
       grid-template-columns: 1fr 1fr;
       gap: 10px !important;
-      margin-top: 2px;
+      margin-top: 10px;
     }
 
     .edit-actions .btn {
       width: 100%;
       min-height: 44px;
       margin: 0;
+    }
+
+    #detailsEditSection #editSubject {
+      margin-bottom: 0;
     }
 
     /* AI Status inline row */
@@ -2160,11 +2177,11 @@
                     </select>
                   </div>
 
-                  <div id="editMessage" class="helper-text" style="min-height:20px;"></div>
+                  <div id="editMessage" class="helper-text" aria-live="polite"></div>
 
-                  <div class="edit-actions" style="display:flex;gap:8px;">
-                    <button class="btn btn-secondary" type="button" onclick="toggleEditMode(false)" style="flex:1;">Cancel</button>
-                    <button class="btn btn-primary" id="saveBtn" onclick="handleSave()" disabled style="flex:1;">Save changes</button>
+                  <div class="edit-actions">
+                    <button class="btn btn-secondary" type="button" onclick="toggleEditMode(false)">Cancel</button>
+                    <button class="btn btn-primary" id="saveBtn" onclick="handleSave()" disabled>Save changes</button>
                   </div>
                 </section>
               </div>
