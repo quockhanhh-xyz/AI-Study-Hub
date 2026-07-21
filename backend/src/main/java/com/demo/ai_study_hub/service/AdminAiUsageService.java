@@ -27,9 +27,15 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Arrays;
 
 @Service
 public class AdminAiUsageService {
+
+    private static final List<String> QA_ALIASES = Arrays.asList("QA", "ASK", "AI_QA");
+    private static final List<String> SUMMARY_ALIASES = Arrays.asList("SUMMARY", "AI_SUMMARY");
+    private static final List<String> FLASHCARD_ALIASES = Arrays.asList("FLASHCARD", "AI_FLASHCARD");
+    private static final List<String> QUIZ_ALIASES = Arrays.asList("QUIZ", "AI_QUIZ");
 
     @Autowired
     private AiUsageLogRepository aiUsageLogRepository;
@@ -112,7 +118,13 @@ public class AdminAiUsageService {
 
                 List<Predicate> subPredicates = new ArrayList<>();
                 if ("QA".equals(mappedFeature)) {
-                    subPredicates.add(subRoot.get("requestType").in("ASK", "QA", "AI_QA"));
+                    subPredicates.add(subRoot.get("requestType").in(QA_ALIASES));
+                } else if ("SUMMARY".equals(mappedFeature)) {
+                    subPredicates.add(subRoot.get("requestType").in(SUMMARY_ALIASES));
+                } else if ("FLASHCARD".equals(mappedFeature)) {
+                    subPredicates.add(subRoot.get("requestType").in(FLASHCARD_ALIASES));
+                } else if ("QUIZ".equals(mappedFeature)) {
+                    subPredicates.add(subRoot.get("requestType").in(QUIZ_ALIASES));
                 } else {
                     subPredicates.add(cb.equal(subRoot.get("requestType"), mappedFeature));
                 }
@@ -158,11 +170,11 @@ public class AdminAiUsageService {
         LocalDateTime lastUsed = null;
 
         for (AiUsageLog log : logs) {
-            String type = log.getRequestType();
-            if ("QA".equalsIgnoreCase(type) || "ASK".equalsIgnoreCase(type) || "AI_QA".equalsIgnoreCase(type)) qa++;
-            else if ("SUMMARY".equalsIgnoreCase(type)) summary++;
-            else if ("FLASHCARD".equalsIgnoreCase(type)) flashcard++;
-            else if ("QUIZ".equalsIgnoreCase(type)) quiz++;
+            String type = log.getRequestType() != null ? log.getRequestType().toUpperCase() : "";
+            if (QA_ALIASES.contains(type)) qa++;
+            else if (SUMMARY_ALIASES.contains(type)) summary++;
+            else if (FLASHCARD_ALIASES.contains(type)) flashcard++;
+            else if (QUIZ_ALIASES.contains(type)) quiz++;
 
             if (lastUsed == null || log.getCreatedAt().isAfter(lastUsed)) {
                 lastUsed = log.getCreatedAt();
