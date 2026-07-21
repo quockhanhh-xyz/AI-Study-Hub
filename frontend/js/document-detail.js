@@ -2670,7 +2670,7 @@ function toggleDangerZone() {
 window.toggleDangerZone = toggleDangerZone;
 
 function renderContextualTopBar(doc) {
-    const globalHeader = document.getElementById("globalTopBar");
+    let globalHeader = document.getElementById("globalTopBar");
     const topBarDoc = doc || currentDocumentForTopBar || window.currentDocumentDetailForTopBar || null;
     
     const urlParams = new URLSearchParams(window.location.search);
