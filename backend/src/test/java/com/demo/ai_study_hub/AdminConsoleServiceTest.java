@@ -156,7 +156,7 @@ class AdminConsoleServiceTest {
         when(userRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(userPage);
         when(aiUsageLogRepository.findAll(any(Specification.class))).thenReturn(List.of(usageLog));
 
-        AdminAiUsageListResponse response = adminAiUsageService.getAiUsages(null, null, null, null, null, PageRequest.of(0, 10));
+        AdminAiUsageListResponse response = adminAiUsageService.getAiUsages(null, null, null, null, null, null, PageRequest.of(0, 10));
 
         assertNotNull(response);
         assertEquals(1, response.getUsages().size());

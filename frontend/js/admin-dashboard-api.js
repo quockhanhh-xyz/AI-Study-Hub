@@ -14,8 +14,9 @@ async function fetchAdminDashboardSummary() {
 /**
  * Fetch the admin dashboard charts data
  * Endpoint: GET /api/admin/dashboard/charts
+ * @param {number} days - Number of days to fetch data for (e.g., 7, 30, 31)
  * @returns {Promise<Object>} Dashboard charts data
  */
-async function fetchAdminDashboardCharts() {
-    return await fetchAdmin('/api/admin/dashboard/charts', { method: 'GET' });
+async function fetchAdminDashboardCharts(days = 30) {
+    return await fetchAdmin(`/api/admin/dashboard/charts?days=${days}`, { method: 'GET' });
 }

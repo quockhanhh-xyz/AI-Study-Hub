@@ -30,6 +30,7 @@ public class AdminAiUsageController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String tier,
             @RequestParam(required = false) String feature,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             @RequestParam(defaultValue = "0") int page,
@@ -45,7 +46,7 @@ public class AdminAiUsageController {
         }
         Sort sort = direction.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        AdminAiUsageListResponse response = adminAiUsageService.getAiUsages(search, tier, feature, startDate, endDate, pageable);
+        AdminAiUsageListResponse response = adminAiUsageService.getAiUsages(search, tier, feature, status, startDate, endDate, pageable);
         return ResponseEntity.ok(ApiResponse.success(response, "AI usages retrieved successfully"));
     }
 
@@ -54,10 +55,11 @@ public class AdminAiUsageController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String tier,
             @RequestParam(required = false) String feature,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate
     ) {
-        byte[] data = adminAiUsageService.exportAiUsage(search, tier, feature, startDate, endDate);
+        byte[] data = adminAiUsageService.exportAiUsage(search, tier, feature, status, startDate, endDate);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
         headers.setContentDispositionFormData("attachment", "ai_usages.xlsx");

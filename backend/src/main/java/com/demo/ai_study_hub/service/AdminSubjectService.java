@@ -7,6 +7,7 @@ import com.demo.ai_study_hub.dto.AdminSubjectItem;
 import com.demo.ai_study_hub.dto.AdminSubjectListResponse;
 import com.demo.ai_study_hub.dto.AdminSubjectRequest;
 import com.demo.ai_study_hub.entity.Subject;
+import com.demo.ai_study_hub.repository.DocumentRepository;
 import com.demo.ai_study_hub.repository.SubjectRepository;
 import jakarta.persistence.criteria.Predicate;
 import org.apache.poi.ss.usermodel.Row;
@@ -30,6 +31,9 @@ public class AdminSubjectService {
 
     @Autowired
     private SubjectRepository subjectRepository;
+
+    @Autowired
+    private DocumentRepository documentRepository;
 
     public AdminSubjectListResponse getSystemSubjects(String search, String status, Pageable pageable) {
         Specification<Subject> spec = buildSpecification(search, status);
@@ -166,6 +170,7 @@ public class AdminSubjectService {
         item.setStatus(subject.getStatus());
         item.setCreatedAt(subject.getCreatedAt());
         item.setUpdatedAt(subject.getUpdatedAt());
+        item.setDocumentsCount(documentRepository.countBySubject(subject));
         return item;
     }
 }

@@ -22,4 +22,6 @@ public interface SubjectRequestRepository extends JpaRepository<SubjectRequest, 
     boolean existsByRequestedCodeAndStatus(String requestedCode, String status);
 
     boolean existsByRequestedNameAndStatus(String requestedName, String status);
+
+    long countByStatus(String status);
 }

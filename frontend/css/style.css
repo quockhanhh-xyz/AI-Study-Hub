@@ -1409,6 +1409,7 @@ textarea.success {
 
 .sidebar.collapsed .logo-text,
 .sidebar.collapsed .nav-text,
+.sidebar.collapsed .nav-section-title,
 .sidebar.collapsed .logout-text {
   opacity: 0;
   max-width: 0;

@@ -81,6 +81,27 @@
                     </div>
 
                     <div id="paymentsContent" style="display: none;">
+                        
+                        <!-- Summary Cards -->
+                        <div class="admin-dashboard-metrics" id="paymentSummaryCards" style="margin-bottom: 24px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;">
+                            <div class="metric-card">
+                                <h3>Filtered Revenue</h3>
+                                <p class="metric-value" id="cardRevenue">0 đ</p>
+                            </div>
+                            <div class="metric-card">
+                                <h3>Successful Payments</h3>
+                                <p class="metric-value" id="cardSuccess">0</p>
+                            </div>
+                            <div class="metric-card">
+                                <h3>Pending Payments</h3>
+                                <p class="metric-value" id="cardPending">0</p>
+                            </div>
+                            <div class="metric-card">
+                                <h3>Failed / Cancelled / Expired</h3>
+                                <p class="metric-value" id="cardFailed">0</p>
+                            </div>
+                        </div>
+
                         <div class="admin-actions-bar">
                             <div class="admin-filters">
                                 <input type="text" id="filterSearch" class="admin-filter-input" placeholder="Search by ID, email, name..." onkeyup="handleSearch(event)">

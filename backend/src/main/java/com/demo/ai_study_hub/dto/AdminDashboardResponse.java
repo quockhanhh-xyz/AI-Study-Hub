@@ -18,11 +18,13 @@ public class AdminDashboardResponse {
     private long totalDocuments;
     private long pendingPublicDocuments;
     private long approvedPublicDocuments;
-    private long totalRevenue;
-    private long successfulPayments;
+    private long lifetimeRevenue;
+    private long allTimeSuccessfulPayments;
     private long aiRequestsToday;
     private long aiRequestsThisMonth;
     private long aiRequestsTotal;
+
+    private NeedsAttentionInfo needsAttention;
 
     private List<TierCountItem> usersByTier;
     private List<ApprovalStatusCountItem> documentsByApprovalStatus;
@@ -63,5 +65,15 @@ public class AdminDashboardResponse {
     public static class AiFeatureUsageItem {
         private String feature;
         private long count;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NeedsAttentionInfo {
+        private long pendingPublicDocuments;
+        private long pendingSubjectRequests;
+        private long failedPayments;
     }
 }

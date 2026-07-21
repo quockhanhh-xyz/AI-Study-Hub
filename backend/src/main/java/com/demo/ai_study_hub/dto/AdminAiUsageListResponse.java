@@ -9,4 +9,5 @@ public class AdminAiUsageListResponse {
     private int totalPages;
     private long totalElements;
     private int currentPage;
+    private AdminAiUsageSummaryResponse summary;
 }
