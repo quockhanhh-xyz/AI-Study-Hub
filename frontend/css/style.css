@@ -2616,7 +2616,8 @@ textarea.success {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  right: 0;
+  min-width: 100%;
+  width: max-content;
   background-color: #ffffff;
   border: 1.5px solid var(--border);
   border-radius: 12px;
@@ -2674,6 +2675,9 @@ textarea.success {
   transition: all 0.15s ease;
   user-select: none;
   text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .custom-select-option:hover {
