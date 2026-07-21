@@ -447,16 +447,16 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
         String inviteeEmail = request.getEmail().trim().toLowerCase();
 
-        User invitee = userRepository.findByEmail(inviteeEmail).orElse(null);
-        if (invitee != null) {
-            boolean alreadyMember = studyGroupMemberRepository
-                    .existsByGroupAndUserAndStatus(group, invitee, "ACTIVE");
-            if (alreadyMember) {
-                throw new QuotaExceededException(
-                        HttpStatus.BAD_REQUEST,
-                        "This user is already an active member of the group",
-                        "GROUP_MEMBER_ALREADY_EXISTS");
-            }
+        User invitee = userRepository.findByEmail(inviteeEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found in the system"));
+                
+        boolean alreadyMember = studyGroupMemberRepository
+                .existsByGroupAndUserAndStatus(group, invitee, "ACTIVE");
+        if (alreadyMember) {
+            throw new QuotaExceededException(
+                    HttpStatus.BAD_REQUEST,
+                    "This user is already an active member of the group",
+                    "GROUP_MEMBER_ALREADY_EXISTS");
         }
 
         // Check for existing PENDING invite
@@ -478,24 +478,20 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         invite.setInvitedAt(LocalDateTime.now(ZoneOffset.UTC));
         groupInvitationRepository.save(invite);
 
-        if (invitee != null) {
-            notificationService.createNotification(
-                    invitee,
-                    "GROUP_INVITE",
-                    "Study Group Invitation",
-                    sender.getFullName() + " invited you to join the study group: " + group.getGroupName(),
-                    "GROUP_INVITE",
-                    invite.getId(),
-                    sender.getUserId()
-            );
-        }
+        notificationService.createNotification(
+                invitee,
+                "GROUP_INVITE",
+                "Study Group Invitation",
+                sender.getFullName() + " invited you to join the study group: " + group.getGroupName(),
+                "GROUP_INVITE",
+                invite.getId(),
+                sender.getUserId()
+        );
 
         String base = frontendProperties.getBaseUrl();
         if (base == null) base = "";
         if (base.endsWith("/")) base = base.substring(0, base.length() - 1);
         String joinUrl = base + "/frontend/groups.html?inviteCode=" + group.getInviteCode();
-
-        emailService.sendGroupInviteEmail(inviteeEmail, group.getGroupName(), joinUrl);
 
         return GroupEmailInviteResponse.builder()
                 .groupId(group.getGroupId())
@@ -637,6 +633,18 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         groupInvitationRepository.save(invite);
 
         StudyGroup group = invite.getGroup();
+        User inviter = invite.getInviter();
+        if (inviter != null) {
+            notificationService.createNotification(
+                    inviter,
+                    "INVITE_ACCEPTED",
+                    "Invitation Accepted",
+                    user.getFullName() + " has accepted the invitation to join group " + group.getGroupName(),
+                    "GROUP",
+                    (long) group.getGroupId(),
+                    user.getUserId()
+            );
+        }
         boolean alreadyMember = studyGroupMemberRepository.existsByGroupAndUserAndStatus(group, user, "ACTIVE");
         if (!alreadyMember) {
             StudyGroupMember member = new StudyGroupMember();
@@ -666,5 +674,44 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
         invite.setStatus("DECLINED");
         groupInvitationRepository.save(invite);
+
+        StudyGroup group = invite.getGroup();
+        User inviter = invite.getInviter();
+        if (inviter != null) {
+            notificationService.createNotification(
+                    inviter,
+                    "INVITE_DECLINED",
+                    "Invitation Declined",
+                    user.getFullName() + " has declined the invitation to join group " + group.getGroupName(),
+                    "GROUP",
+                    (long) group.getGroupId(),
+                    user.getUserId()
+            );
+        }
+    }
+
+    @Override
+    @Transactional
+    public void revokeInvite(Long inviteId, String ownerEmail) {
+        User owner = getUser(ownerEmail);
+        GroupInvitation invite = groupInvitationRepository.findById(inviteId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invite not found"));
+        
+        StudyGroup group = invite.getGroup();
+        StudyGroupMember ownerMembership = studyGroupMemberRepository.findByGroupAndUserAndStatus(group, owner, "ACTIVE")
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Not a group member"));
+                
+        if (!"OWNER".equals(ownerMembership.getRole())) {
+            throw new QuotaExceededException(
+                    HttpStatus.FORBIDDEN,
+                    "Only the group owner can revoke invites",
+                    "GROUP_INVITE_FORBIDDEN");
+        }
+        
+        if (!"PENDING".equals(invite.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can only revoke pending invites");
+        }
+        
+        groupInvitationRepository.delete(invite);
     }
 }

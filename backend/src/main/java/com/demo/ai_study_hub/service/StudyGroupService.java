@@ -45,4 +45,6 @@ public interface StudyGroupService {
     Integer acceptInvite(Long inviteId, String email);
 
     void declineInvite(Long inviteId, String email);
+    
+    void revokeInvite(Long inviteId, String ownerEmail);
 }

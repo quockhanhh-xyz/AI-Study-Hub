@@ -70,4 +70,18 @@ public class GroupInviteController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
         }
     }
+
+    @DeleteMapping("/{id}/revoke")
+    public ResponseEntity<ApiResponse<Void>> revokeInvite(
+            @PathVariable Long id,
+            Principal principal) {
+        try {
+            studyGroupService.revokeInvite(id, principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(null, "Invite revoked successfully"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
 }
