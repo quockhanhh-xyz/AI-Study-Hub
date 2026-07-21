@@ -582,18 +582,38 @@
       font-size: 16px;
     }
 
+    .edit-section {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .edit-section .form-group {
+      margin: 0;
+    }
+
     .edit-section textarea {
       min-height: 52px;
+      max-height: 112px;
       resize: vertical;
     }
 
+    #editMessage {
+      margin: -2px 0 0;
+      min-height: 0 !important;
+    }
+
     .edit-actions {
-      display: block;
-      margin-top: 24px;
+      display: grid !important;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px !important;
+      margin-top: 2px;
     }
 
     .edit-actions .btn {
       width: 100%;
+      min-height: 44px;
+      margin: 0;
     }
 
     /* AI Status inline row */
@@ -1641,7 +1661,8 @@
       position: sticky;
       bottom: 0;
       background: var(--surface);
-      padding-top: 12px;
+      display: block !important;
+      padding-top: 10px;
       border-top: 1px solid var(--border);
       margin-top: auto;
       width: 100%;
@@ -1649,9 +1670,9 @@
     }
     .ai-qa-sticky-footer .ai-qa-input-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 48px;
-      gap: 10px;
-      align-items: stretch;
+      grid-template-columns: minmax(0, 1fr) 46px;
+      gap: 8px;
+      align-items: end;
       width: 100%;
       min-width: 0;
       box-sizing: border-box;
@@ -1659,11 +1680,11 @@
     .ai-qa-sticky-footer .ai-qa-input-row textarea {
       width: 100%;
       min-width: 0;
-      min-height: 48px;
-      max-height: 112px;
+      min-height: 46px;
+      max-height: 96px;
       resize: none;
-      border-radius: 12px;
-      padding: 10px 14px;
+      border-radius: 14px;
+      padding: 11px 12px;
       border: 1px solid var(--border);
       font-family: inherit;
       font-size: 13px;
@@ -1678,10 +1699,10 @@
       background: #fff;
     }
     .ai-qa-sticky-footer #aiQaAskBtn {
-      border-radius: 12px;
-      width: 48px;
-      height: 48px;
-      min-width: 48px;
+      border-radius: 14px;
+      width: 46px;
+      height: 46px;
+      min-width: 46px;
       padding: 0;
       flex-shrink: 0;
       display: flex;
@@ -1689,20 +1710,30 @@
       justify-content: center;
     }
     .ai-qa-footer-meta {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 4px;
+      display: flex !important;
+      flex-direction: column;
+      gap: 3px;
       align-items: start;
-      margin-top: 8px;
+      width: 100%;
+      margin: 0 0 8px;
       font-size: 11.5px;
+      line-height: 1.35;
       color: var(--muted);
     }
     .ai-qa-usage-row {
       display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
       min-width: 0;
       flex-wrap: wrap;
+    }
+
+    .ai-qa-input-meta {
+      display: block;
+      width: 100%;
+      overflow-wrap: anywhere;
     }
 
     /* --- AI Tools Layout Overhaul --- */
@@ -1737,32 +1768,44 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 16px;
+      padding: 14px;
       margin-bottom: 0;
       display: grid;
-      gap: 12px;
+      gap: 10px;
       min-width: 0;
     }
     .ai-tools-tool-header {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 10px;
       margin-bottom: 0;
       min-width: 0;
     }
     .ai-tools-tool-icon {
-      font-size: 18px;
-      background: #f9fafb;
-      width: 36px;
-      height: 36px;
-      min-width: 36px;
+      color: var(--primary);
+      background: var(--primary-light);
+      width: 34px;
+      height: 34px;
+      min-width: 34px;
       display: flex;
       align-items: center;
       justify-content: center;
       border-radius: 8px;
-      border: 1px solid var(--border);
+      border: 1px solid var(--primary-border);
       flex-shrink: 0;
     }
+
+    .ai-tools-tool-icon svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+      stroke: currentColor;
+    }
+
+    .ai-tools-tool-header > div:last-child {
+      min-width: 0;
+    }
+
     .ai-tools-tool-header h3 {
       margin: 0;
       font-size: 14px;
@@ -1798,7 +1841,7 @@
     }
     .ai-tools-input-row-flex {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(96px, 128px);
+      grid-template-columns: minmax(0, 1fr) minmax(92px, 118px);
       align-items: center;
       gap: 12px;
     }
@@ -1808,6 +1851,7 @@
     .ai-tools-input-row-flex input,
     .ai-tools-input-row-flex select {
       width: 100%;
+      height: 40px;
       min-width: 0;
     }
     .ai-tools-limit-hint {
@@ -1834,6 +1878,7 @@
       padding: 0;
       cursor: pointer;
       text-decoration: underline;
+      line-height: 1.3;
     }
     .ai-tools-focus-panel {
       display: none;
@@ -1869,9 +1914,9 @@
     .ai-tools-set-link {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
-      gap: 10px;
+      gap: 8px;
       align-items: center;
-      padding: 12px 16px;
+      padding: 10px 12px;
       text-decoration: none;
       color: inherit;
     }
@@ -1884,6 +1929,7 @@
       align-items: center;
       gap: 8px;
       margin-bottom: 4px;
+      min-width: 0;
     }
     .ai-tools-set-title {
       font-size: 14px;
@@ -1914,10 +1960,21 @@
       font-size: 12px;
       font-weight: 600;
       color: var(--primary);
-      padding: 4px 12px;
+      padding: 5px 12px;
       background: #fff7ed;
       border-radius: 16px;
       flex-shrink: 0;
+    }
+    @media (max-width: 1280px) {
+      .ai-qa-sticky-footer .ai-qa-input-row {
+        grid-template-columns: minmax(0, 1fr) 44px;
+      }
+
+      .ai-qa-sticky-footer #aiQaAskBtn {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+      }
     }
     @media (max-width: 1080px) {
       .ai-tools-input-row-flex {
@@ -2238,6 +2295,14 @@
                   <div class="ai-qa-status-banner" id="aiQaStatusBanner" style="display:none;"></div>
 
                   <div class="ai-qa-sticky-footer">
+                    <div class="ai-qa-footer-meta">
+                      <div class="ai-qa-usage-row" id="aiQaUsageRow" style="display:none;">
+                        <span id="aiQaUsageText">-</span>
+                        <span id="aiQaModelLabel" class="ai-qa-model-badge" style="display:none;"></span>
+                      </div>
+                      <div class="ai-qa-input-meta" id="aiQaInputMeta"></div>
+                    </div>
+
                     <form class="ai-qa-input-row" id="aiQaInputForm">
                       <textarea id="aiQaQuestionInput" placeholder="Ask about this document..." rows="1"
                         maxlength="2000" disabled></textarea>
@@ -2245,14 +2310,6 @@
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm-3.611-1.63 4.338 2.76 7.494-7.493-11.832 4.732Z"/></svg>
                       </button>
                     </form>
-                    
-                    <div class="ai-qa-footer-meta">
-                      <div class="ai-qa-usage-row" id="aiQaUsageRow" style="display:none;">
-                        <span id="aiQaUsageText">–</span>
-                        <span id="aiQaModelLabel" class="ai-qa-model-badge" style="display:none;"></span>
-                      </div>
-                      <div class="ai-qa-input-meta" id="aiQaInputMeta"></div>
-                    </div>
                   </div>
                 </section>
               </div>
@@ -2276,8 +2333,11 @@
                     <section class="ai-tools-tool-block" id="flashcardSection">
                       <div class="ai-tools-tool-header">
                         <div class="ai-tools-tool-icon">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20">
-                            <path fill="currentColor" fill-rule="evenodd" d="M5.67564 3.55707c0.995 0.09951 1.50246 0.99501 1.82086 2.07957 0.5173 2.00697 0.5173 4.11233 0 6.11926 -0.16982 0.295 -0.42235 0.5336 -0.72635 0.6866 -0.50746 0.3084 -1.11441 -0.4378 -1.24377 -0.995 -0.36092 -1.0846 -0.42279 -2.24638 -0.1791 -3.36314 0.10945 -0.32835 0.71641 -0.64675 0.86566 -0.32835 0.3582 0.78605 -0.2189 2.06961 0.48755 2.06961 0.0889 -0.00964 0.17125 -0.05131 0.23167 -0.11723 0.06043 -0.06591 0.09479 -0.15157 0.09669 -0.24097 0 -0.4179 0.0796 -0.90545 0.04975 -1.35321 -0.1393 -1.99001 -2.18902 -1.46266 -2.63677 -0.34825 -0.37109 1.30073 -0.37109 2.67934 0 3.98004 0.16611 0.7253 0.60416 1.3592 1.22386 1.7711 0.25498 0.1598 0.54981 0.2446 0.85073 0.2446 0.30092 0 0.59575 -0.0848 0.85073 -0.2446 0.51675 -0.2558 0.94103 -0.6662 1.21391 -1.1741 0.92536 -1.7512 0.99501 -9.50233 -2.83577 -9.65158 -0.82342 -0.01522 -1.62249 0.27955 -2.23877 0.82585 -0.40803 0.27679 -0.69878 0.69518 -0.81591 1.17411 -0.1393 0.73631 0.52736 0.57711 0.64676 0.25871 0.20035 -0.44358 0.53199 -0.815 0.95014 -1.06411 0.41815 -0.24911 0.90266 -0.36391 1.38813 -0.32891Z" clip-rule="evenodd" stroke-width="1"></path>
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="4" y="6" width="14" height="11" rx="2"></rect>
+                            <path d="M8 10h6"></path>
+                            <path d="M8 13h4"></path>
+                            <path d="M7 4h11a2 2 0 0 1 2 2v9"></path>
                           </svg>
                         </div>
                         <div>
@@ -2315,8 +2375,13 @@
                     <section class="ai-tools-tool-block" id="quizSection">
                       <div class="ai-tools-tool-header">
                         <div class="ai-tools-tool-icon">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20">
-                            <path fill="currentColor" fill-rule="evenodd" d="M23.0003 0.681527c-0.5329 -0.402203 -1.1935 -0.597552 -1.8594 -0.549832 -0.2417 0.026717 -0.4778 0.090794 -0.6998 0.189942 -0.2946 0.164351 -0.5667 0.365948 -0.8098 0.599817 -0.0329 0.031713 -0.0591 0.069751 -0.0771 0.111836 -0.0179 0.04209 -0.0271 0.08735 -0.0271 0.13309 0 0.04574 0.0092 0.091 0.0271 0.13309 0.018 0.04208 0.0442 0.08012 0.0771 0.11184 0.0309 0.03267 0.0681 0.0587 0.1093 0.0765 0.0413 0.01779 0.0857 0.02697 0.1307 0.02697 0.0449 0 0.0893 -0.00918 0.1306 -0.02697 0.0413 -0.0178 0.0784 -0.04383 0.1093 -0.0765 1.7594 -2.15933 4.5686 -5.76823 5.6982 -7.07783Z" clip-rule="evenodd" stroke-width="1"></path>
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M9 7h8"></path>
+                            <path d="M9 12h8"></path>
+                            <path d="M9 17h5"></path>
+                            <path d="m4 7 1 1 2-2"></path>
+                            <path d="m4 12 1 1 2-2"></path>
+                            <path d="m4 17 1 1 2-2"></path>
                           </svg>
                         </div>
                         <div>
