@@ -30,6 +30,7 @@ public class GroupInvitation {
     @JoinColumn(name = "inviter_id")
     private User inviter;
 
+    @Builder.Default
     @Column(name = "status", nullable = false, length = 20)
     private String status = "PENDING"; // PENDING, ACCEPTED, DECLINED
 

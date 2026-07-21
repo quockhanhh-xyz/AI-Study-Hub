@@ -339,10 +339,10 @@ function renderNotificationList() {
                 declineBtn.disabled = true;
                 acceptBtn.textContent = "Accepting...";
                 try {
-                    await post(`/api/group-invites/${notif.referenceId}/accept`, {});
+                    const response = await post(`/api/group-invites/${notif.targetId}/accept`, {});
                     if (typeof window.showToast === "function") window.showToast("Group invitation accepted!", "success");
                     await handleMarkRead(notif.notificationId);
-                    window.location.href = `group-detail.html?id=${notif.targetId}`;
+                    window.location.href = `group-detail.html?id=${response.data}`;
                 } catch (err) {
                     if (typeof window.showToast === "function") window.showToast("Failed to accept invitation.", "error");
                     acceptBtn.disabled = false;
@@ -357,7 +357,7 @@ function renderNotificationList() {
                 declineBtn.disabled = true;
                 declineBtn.textContent = "Declining...";
                 try {
-                    await post(`/api/group-invites/${notif.referenceId}/decline`, {});
+                    await post(`/api/group-invites/${notif.targetId}/decline`, {});
                     if (typeof window.showToast === "function") window.showToast("Group invitation declined.", "info");
                     await handleMarkRead(notif.notificationId);
                     fetchAndRenderNotifications();

@@ -447,7 +447,6 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
         String inviteeEmail = request.getEmail().trim().toLowerCase();
 
-        // Reject if the invitee is already an ACTIVE member
         User invitee = userRepository.findByEmail(inviteeEmail).orElse(null);
         if (invitee != null) {
             boolean alreadyMember = studyGroupMemberRepository
@@ -469,14 +468,14 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                     "GROUP_INVITE_ALREADY_EXISTS");
         }
 
-        // Save invitation record
-        GroupInvitation invite = GroupInvitation.builder()
-                .group(group)
-                .email(inviteeEmail)
-                .inviter(sender)
-                .status("PENDING")
-                .invitedAt(LocalDateTime.now(ZoneOffset.UTC))
-                .build();
+        // Save or update invitation record
+        GroupInvitation invite = groupInvitationRepository.findByGroupAndEmail(group, inviteeEmail)
+                .orElse(new GroupInvitation());
+        invite.setGroup(group);
+        invite.setEmail(inviteeEmail);
+        invite.setInviter(sender);
+        invite.setStatus("PENDING");
+        invite.setInvitedAt(LocalDateTime.now(ZoneOffset.UTC));
         groupInvitationRepository.save(invite);
 
         if (invitee != null) {
@@ -485,8 +484,8 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                     "GROUP_INVITE",
                     "Study Group Invitation",
                     sender.getFullName() + " invited you to join the study group: " + group.getGroupName(),
-                    "GROUP",
-                    group.getGroupId().longValue(),
+                    "GROUP_INVITE",
+                    invite.getId(),
                     sender.getUserId()
             );
         }
@@ -622,7 +621,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
     @Override
     @Transactional
-    public void acceptInvite(Long inviteId, String email) {
+    public Integer acceptInvite(Long inviteId, String email) {
         User user = getUser(email);
         GroupInvitation invite = groupInvitationRepository.findById(inviteId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invite not found"));
@@ -647,6 +646,8 @@ public class StudyGroupServiceImpl implements StudyGroupService {
             member.setStatus("ACTIVE");
             studyGroupMemberRepository.save(member);
         }
+        
+        return group.getGroupId();
     }
 
     @Override

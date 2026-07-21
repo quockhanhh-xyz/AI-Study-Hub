@@ -42,7 +42,7 @@ public interface StudyGroupService {
     
     List<GroupInviteResponse> listPendingInvites(Integer groupId, String email);
 
-    void acceptInvite(Long inviteId, String email);
+    Integer acceptInvite(Long inviteId, String email);
 
     void declineInvite(Long inviteId, String email);
 }

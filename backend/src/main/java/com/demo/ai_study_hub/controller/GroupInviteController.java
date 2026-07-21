@@ -44,12 +44,12 @@ public class GroupInviteController {
     }
 
     @PostMapping("/{id}/accept")
-    public ResponseEntity<ApiResponse<Void>> acceptInvite(
+    public ResponseEntity<ApiResponse<Integer>> acceptInvite(
             @PathVariable Long id,
             Principal principal) {
         try {
-            studyGroupService.acceptInvite(id, principal.getName());
-            return ResponseEntity.ok(ApiResponse.success(null, "Invite accepted successfully"));
+            Integer groupId = studyGroupService.acceptInvite(id, principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(groupId, "Invite accepted successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {
