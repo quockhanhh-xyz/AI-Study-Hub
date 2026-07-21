@@ -481,10 +481,14 @@ public class DocumentService {
         com.demo.ai_study_hub.enums.PreviewMode previewMode = previewHelper.getPreviewMode(normalizedFileType);
         boolean previewSupported = previewMode != com.demo.ai_study_hub.enums.PreviewMode.FALLBACK;
         boolean isPublicAndApproved = "PUBLIC".equals(doc.getVisibility()) && "APPROVED".equals(doc.getApprovalStatus());
+        String subjectScope = doc.getSubject() != null ? doc.getSubject().getScope() : null;
+        boolean usesPersonalSubject = "USER_CUSTOM".equalsIgnoreCase(subjectScope);
+        boolean isOwnerForRequester = false;
 
         if (requester != null) {
-            boolean isOwner = doc.getOwner().getUserId().equals(requester.getUserId());
-            if (isOwner) {
+            isOwnerForRequester = doc.getOwner() != null
+                    && doc.getOwner().getUserId().equals(requester.getUserId());
+            if (isOwnerForRequester) {
                 canPreview = previewSupported;
                 canOpen = true;
                 canDownload = true;
@@ -533,6 +537,12 @@ public class DocumentService {
             }
         }
 
+        boolean requiresSystemSubjectRequest = isOwnerForRequester && canPublish && usesPersonalSubject;
+        if (requiresSystemSubjectRequest) {
+            canPublish = false;
+        }
+        boolean canRequestSystemSubject = requiresSystemSubjectRequest;
+
         String processingStatusVal = "PENDING";
         if (doc.getDocumentContent() != null) {
             processingStatusVal = doc.getDocumentContent().getProcessingStatus().name();
@@ -553,6 +563,7 @@ public class DocumentService {
                 .subjectId(doc.getSubject() != null ? doc.getSubject().getSubjectId() : null)
                 .subjectCode(doc.getSubject() != null ? doc.getSubject().getSubjectCode() : null)
                 .subjectName(doc.getSubject() != null ? doc.getSubject().getSubjectName() : null)
+                .subjectScope(subjectScope)
                 .originalFileName(doc.getOriginalFileName())
                 .fileType(doc.getFileType())
                 .fileSize(doc.getFileSize())
@@ -585,6 +596,8 @@ public class DocumentService {
                 .canShare(canShare)
                 .canPublish(canPublish)
                 .canUnpublish(canUnpublish)
+                .requiresSystemSubjectRequest(requiresSystemSubjectRequest)
+                .canRequestSystemSubject(canRequestSystemSubject)
                 .favoritedByMe(favoritedByMe)
                 .build();
     }

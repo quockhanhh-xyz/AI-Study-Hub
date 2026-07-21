@@ -561,10 +561,13 @@ function renderDocument(doc) {
 
     // Publish button
     if (publishBtn) {
-        if (doc.canPublish) {
+        const canRequestSystemSubject = Boolean(doc.canRequestSystemSubject || doc.requiresSystemSubjectRequest);
+        if (doc.canPublish || canRequestSystemSubject) {
             publishBtn.style.display = "inline-flex";
             const btnTextEl = publishBtn.querySelector(".btn-text");
-            const isPersonalSubject = (doc.subject && doc.subject.scope === "USER_CUSTOM") || doc.subjectScope === "USER_CUSTOM" || doc.requiresSystemSubjectRequest;
+            const isPersonalSubject = (doc.subject && doc.subject.scope === "USER_CUSTOM")
+                || doc.subjectScope === "USER_CUSTOM"
+                || canRequestSystemSubject;
 
             if (isPersonalSubject) {
                 const label = "Request System Subject";
@@ -2237,6 +2240,20 @@ function updateFocusCharCount(inputId, countId) {
     countEl.textContent = `${input.value.length}/300`;
 }
 
+function setupFocusToggle(buttonId, panelId) {
+    const button = document.getElementById(buttonId);
+    const panel = document.getElementById(panelId);
+    if (!button || !panel) return;
+
+    button.addEventListener("click", () => {
+        const expanded = button.getAttribute("aria-expanded") === "true";
+        const nextExpanded = !expanded;
+        button.setAttribute("aria-expanded", String(nextExpanded));
+        panel.classList.toggle("open", nextExpanded);
+        button.textContent = nextExpanded ? "- Hide focus topic" : "+ Add focus topic";
+    });
+}
+
 // Resets the tab state and gates generate buttons based on processingStatus.
 // Called every time renderDocument() runs (initial load, after Save/Move/Publish).
 function renderAiToolsTab(doc) {
@@ -2596,6 +2613,8 @@ function initAiToolsHandlers() {
             updateFocusCharCount("quizFocusInput", "quizFocusCount")
         );
     }
+    setupFocusToggle("flashcardFocusToggle", "flashcardFocusContainer");
+    setupFocusToggle("quizFocusToggle", "quizFocusContainer");
 
     const flashcardCountInput = document.getElementById("flashcardCountInput");
     if (flashcardCountInput) {

@@ -20,6 +20,7 @@ public class DocumentResponse {
     private Integer subjectId;
     private String subjectCode;
     private String subjectName;
+    private String subjectScope;
     private String originalFileName;
     private String fileType;
     private Long fileSize;
@@ -54,5 +55,7 @@ public class DocumentResponse {
     private Boolean canShare;
     private Boolean canPublish;
     private Boolean canUnpublish;
+    private Boolean requiresSystemSubjectRequest;
+    private Boolean canRequestSystemSubject;
     private Boolean favoritedByMe;
 }

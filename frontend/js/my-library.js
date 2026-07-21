@@ -363,7 +363,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (!rawVal) return "";
 
     const codePart = rawVal.split(" - ")[0].trim();
-    const found = allSubjects.find(s => 
+    const found = allSubjects.find(s =>
       String(s.subjectId) === rawVal ||
       (s.subjectCode && s.subjectCode.toLowerCase() === codePart.toLowerCase()) ||
       (s.subjectName && s.subjectName.toLowerCase() === rawVal.toLowerCase()) ||
@@ -652,7 +652,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       // Keyword search filter for folders view
       if (kw) {
         subfolders = subfolders.filter(f => f.folderName && f.folderName.toLowerCase().includes(kw));
-        docs = docs.filter(d => 
+        docs = docs.filter(d =>
           (d.title && d.title.toLowerCase().includes(kw)) ||
           (d.originalFileName && d.originalFileName.toLowerCase().includes(kw))
         );
@@ -751,13 +751,13 @@ document.addEventListener("DOMContentLoaded", async function () {
       const fId = folderFilter ? folderFilter.value : "";
 
       if (kw) {
-        docs = docs.filter(d => 
+        docs = docs.filter(d =>
           (d.title && d.title.toLowerCase().includes(kw)) ||
           (d.originalFileName && d.originalFileName.toLowerCase().includes(kw))
         );
       }
       if (subjId) {
-        docs = docs.filter(d => 
+        docs = docs.filter(d =>
           String(d.subjectId) === String(subjId) ||
           (d.subject && String(d.subject.subjectId) === String(subjId))
         );
@@ -769,7 +769,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (fId === "0") {
           docs = docs.filter(d => !d.folderId || d.folderId === 0);
         } else {
-          docs = docs.filter(d => 
+          docs = docs.filter(d =>
             String(d.folderId) === String(fId) ||
             (d.folder && String(d.folder.folderId) === String(fId))
           );
