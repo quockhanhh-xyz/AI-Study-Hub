@@ -19,7 +19,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   const subjectDatalist = document.getElementById("subjectDatalist");
   const fileTypeFilter = document.getElementById("fileTypeFilter");
   const folderFilter = document.getElementById("folderFilter");
-  const toggleFavoritesBtn = document.getElementById("toggleFavoritesBtn");
 
   const documentGrid = document.getElementById("documentGrid");
   const documentEmptyState = document.getElementById("documentEmptyState");
@@ -52,7 +51,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Initial Load based on current tab
     const currentTab = new URLSearchParams(window.location.search).get("view") || "documents";
-    if (currentTab === "documents") {
+    if (currentTab === "documents" || currentTab === "favorites") {
       const searchParam = new URLSearchParams(window.location.search).get("search");
       if (searchParam && searchInput) {
         searchInput.value = searchParam;
@@ -82,7 +81,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     contents.forEach(c => c.classList.remove("active"));
 
     const activeTab = document.querySelector(`.library-tab[data-tab="${tabId}"]`);
-    const activeContent = document.getElementById(`${tabId}Tab`);
+    
+    // For favorites tab, we use the documentsTab content
+    const contentId = (tabId === "favorites") ? "documentsTab" : `${tabId}Tab`;
+    const activeContent = document.getElementById(contentId);
 
     if (activeTab && activeContent) {
       activeTab.classList.add("active");
@@ -95,13 +97,11 @@ document.addEventListener("DOMContentLoaded", async function () {
       if (createFolderBtn) {
         createFolderBtn.style.display = tabId === "folders" ? "inline-flex" : "none";
       }
-      
-      if (toggleFavoritesBtn) {
-        toggleFavoritesBtn.style.display = tabId === "documents" ? "inline-flex" : "none";
-      }
+
+      showFavoritesOnly = (tabId === "favorites");
 
       if (loadData) {
-        if (tabId === "documents") loadDocuments();
+        if (tabId === "documents" || tabId === "favorites") loadDocuments();
         if (tabId === "folders") loadFolders(currentParentFolderId);
       }
     }
@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
           const activeTab = document.querySelector(".library-tab.active").dataset.tab;
-          if (activeTab === "documents") loadDocuments();
+          if (activeTab === "documents" || activeTab === "favorites") loadDocuments();
           else loadFolders(currentParentFolderId);
         }, 500);
       });
@@ -153,20 +153,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       });
     }
 
-    if (toggleFavoritesBtn) {
-      toggleFavoritesBtn.addEventListener("click", () => {
-        showFavoritesOnly = !showFavoritesOnly;
-        if (showFavoritesOnly) {
-          toggleFavoritesBtn.classList.remove("btn-secondary");
-          toggleFavoritesBtn.classList.add("btn-primary");
-        } else {
-          toggleFavoritesBtn.classList.remove("btn-primary");
-          toggleFavoritesBtn.classList.add("btn-secondary");
-        }
-        loadDocuments();
-      });
-    }
-    
+
     const clearFiltersBtn = document.getElementById("clearFiltersBtn");
     if (clearFiltersBtn) {
       clearFiltersBtn.addEventListener("click", () => {
@@ -175,11 +162,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (fileTypeFilter) { fileTypeFilter.value = ""; fileTypeFilter.dispatchEvent(new Event("syncCustom")); }
         if (folderFilter) { folderFilter.value = ""; folderFilter.dispatchEvent(new Event("syncCustom")); }
         
-        showFavoritesOnly = false;
-        if (toggleFavoritesBtn) {
-          toggleFavoritesBtn.classList.remove("btn-primary");
-          toggleFavoritesBtn.classList.add("btn-secondary");
-        }
+        // Do not force switch to documents tab
+        // const currentTab = document.querySelector(".library-tab.active");
+        // if (currentTab && currentTab.dataset.tab === "favorites") {
+        //   switchTab("documents", false); // loadDocuments is called below
+        // }
         
         loadDocuments();
       });
@@ -261,19 +248,19 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     try {
       let docs = [];
+      const params = {
+        keyword: searchInput ? searchInput.value.trim() : "",
+        fileType: fileTypeFilter ? fileTypeFilter.value : "",
+        folderId: folderFilter ? folderFilter.value : ""
+      };
+      
+      const subjId = getSubjectIdFromInput();
+      if (subjId) params.subjectId = subjId;
+
       if (showFavoritesOnly && typeof getFavoriteDocuments === "function") {
-        const res = await getFavoriteDocuments();
+        const res = await getFavoriteDocuments(params);
         docs = Array.isArray(res.data) ? res.data : [];
       } else {
-        const params = {
-          keyword: searchInput ? searchInput.value.trim() : "",
-          fileType: fileTypeFilter ? fileTypeFilter.value : "",
-          folderId: folderFilter ? folderFilter.value : ""
-        };
-        
-        const subjId = getSubjectIdFromInput();
-        if (subjId) params.subjectId = subjId;
-
         // Fetch filtered documents from API
         const res = await getMyDocuments(params);
         docs = Array.isArray(res.data) ? res.data : (res.data?.content || []);
@@ -299,6 +286,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   function createDocumentCard(doc) {
     const card = document.createElement("article");
     card.className = "document-card";
+    card.style.position = "relative";
 
     // Icon
     const tempDiv = document.createElement("div");
@@ -322,6 +310,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const header = document.createElement("div");
     header.className = "document-card-header";
+    header.style.paddingRight = "28px"; // Prevent long text from overlapping star
 
     const title = document.createElement("h3");
     const link = document.createElement("a");
@@ -335,11 +324,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Favorite Button
     if (typeof isDocumentFavorited === "function") {
       const favBtn = document.createElement("button");
+      favBtn.type = "button";
       const isFav = isDocumentFavorited(doc);
       favBtn.className = "favorite-star-btn" + (isFav ? " favorited" : "");
       favBtn.style.position = "absolute";
-      favBtn.style.top = "4px";
-      favBtn.style.right = "6px";
+      favBtn.style.top = "8px";
+      favBtn.style.right = "8px";
       favBtn.style.margin = "0";
       favBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>';
       favBtn.addEventListener("click", async (e) => {
@@ -364,8 +354,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     meta.className = "document-meta";
 
     meta.innerHTML += `<span class="document-meta-item">📅 ${formatDate(doc.createdAt)}</span>`;
-    if (doc.subjectCode) {
-      meta.innerHTML += `<span class="document-meta-item">📚 ${doc.subjectCode}</span>`;
+    let subjectText = doc.subjectCode || (doc.subject && doc.subject.subjectCode) || doc.subject;
+    if (!subjectText && doc.subjectId && typeof allSubjects !== "undefined") {
+      const foundSubj = allSubjects.find(s => s.subjectId === doc.subjectId);
+      if (foundSubj) subjectText = foundSubj.subjectCode || foundSubj.subjectName;
+    }
+    
+    if (subjectText) {
+      meta.innerHTML += `<span class="document-meta-item">📚 ${subjectText}</span>`;
     }
     if (doc.folderId && doc.folderId !== 0) {
       const folderName = userFolders.find(f => f.folderId === doc.folderId)?.folderName || "Folder";
