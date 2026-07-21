@@ -564,10 +564,19 @@ function renderDocument(doc) {
         if (doc.canPublish) {
             publishBtn.style.display = "inline-flex";
             const btnTextEl = publishBtn.querySelector(".btn-text");
-            const label = doc.approvalStatus === "REJECTED" ? "Resubmit for Review" : "Submit for Review";
-            if (btnTextEl) btnTextEl.textContent = label;
-            else publishBtn.textContent = label;
-            publishBtn.onclick = () => handlePublish();
+            const isPersonalSubject = (doc.subject && doc.subject.scope === "USER_CUSTOM") || doc.subjectScope === "USER_CUSTOM" || doc.requiresSystemSubjectRequest;
+
+            if (isPersonalSubject) {
+                const label = "Request System Subject";
+                if (btnTextEl) btnTextEl.textContent = label;
+                else publishBtn.textContent = label;
+                publishBtn.onclick = () => openSubjectRequestModalForDoc(doc);
+            } else {
+                const label = doc.approvalStatus === "REJECTED" ? "Resubmit for Review" : "Submit for Review";
+                if (btnTextEl) btnTextEl.textContent = label;
+                else publishBtn.textContent = label;
+                publishBtn.onclick = () => handlePublish();
+            }
         } else {
             publishBtn.style.display = "none";
         }
@@ -1085,6 +1094,71 @@ async function handlePublish() {
         publishBtn.disabled = false;
         if (btnText) btnText.textContent = oldText;
         else publishBtn.textContent = oldText;
+    }
+}
+
+function openSubjectRequestModalForDoc(doc) {
+    const modal = document.getElementById("subjectReqModal");
+    if (!modal) {
+        window.showToast("This document uses a personal subject. Please request a system subject before publishing.", "info");
+        return;
+    }
+
+    const codeInput = document.getElementById("reqSubjectCode");
+    const nameInput = document.getElementById("reqSubjectName");
+    const descInput = document.getElementById("reqSubjectDesc");
+    const msgEl = document.getElementById("reqSubjectMsg");
+
+    if (msgEl) msgEl.style.display = "none";
+    if (codeInput && doc) codeInput.value = doc.subjectCode || (doc.subject ? doc.subject.subjectCode : "") || "";
+    if (nameInput && doc) nameInput.value = doc.subjectName || (doc.subject ? doc.subject.subjectName : "") || "";
+    if (descInput && doc) descInput.value = `Request system subject for document: ${doc.title || doc.documentId}`;
+
+    modal.classList.add("open");
+
+    const cancelBtn = document.getElementById("cancelSubjectReqBtn");
+    if (cancelBtn) {
+        cancelBtn.onclick = () => modal.classList.remove("open");
+    }
+
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.classList.remove("open");
+    };
+
+    const submitBtn = document.getElementById("submitSubjectReqBtn");
+    if (submitBtn) {
+        submitBtn.onclick = async () => {
+            const subjectCode = codeInput ? codeInput.value.trim() : "";
+            const subjectName = nameInput ? nameInput.value.trim() : "";
+            const description = descInput ? descInput.value.trim() : "";
+
+            if (!subjectCode || !subjectName) {
+                if (msgEl) {
+                    msgEl.textContent = "Subject Code and Name are required.";
+                    msgEl.style.display = "block";
+                }
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Submitting...";
+
+            try {
+                if (typeof createSubjectRequest === "function") {
+                    await createSubjectRequest({ subjectCode, subjectName, description });
+                }
+                modal.classList.remove("open");
+                window.showToast("System subject request submitted for admin review.", "success");
+            } catch (err) {
+                if (msgEl) {
+                    msgEl.textContent = err.message || "Failed to submit request.";
+                    msgEl.style.display = "block";
+                }
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Submit Request";
+            }
+        };
     }
 }
 

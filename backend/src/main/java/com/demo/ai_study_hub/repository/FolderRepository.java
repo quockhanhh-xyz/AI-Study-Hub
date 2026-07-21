@@ -21,6 +21,9 @@ public interface FolderRepository extends JpaRepository<Folder, Integer> {
 
     List<Folder> findByOwnerAndStatusAndParentFolderIsNull(User owner, String status);
 
+    @Query("SELECT f FROM Folder f WHERE f.owner = :owner AND f.status = 'ACTIVE' AND (f.parentFolder IS NULL OR f.parentFolder.folderId = 0)")
+    List<Folder> findRootFoldersByOwner(@Param("owner") User owner);
+
     List<Folder> findByOwnerAndStatusAndParentFolder(User owner, String status, Folder parentFolder);
 
     boolean existsByParentFolderAndStatus(Folder parentFolder, String status);
