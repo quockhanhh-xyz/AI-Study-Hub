@@ -460,14 +460,36 @@ public class StudyGroupServiceImpl implements StudyGroupService {
             }
         }
 
+        // Check for existing PENDING invite
+        boolean existingPending = groupInvitationRepository.existsByGroupAndEmailAndStatus(group, inviteeEmail, "PENDING");
+        if (existingPending) {
+            throw new QuotaExceededException(
+                    HttpStatus.BAD_REQUEST,
+                    "A pending invitation already exists for this email",
+                    "GROUP_INVITE_ALREADY_EXISTS");
+        }
+
         // Save invitation record
-        GroupInvitation invite = groupInvitationRepository.findByGroupAndEmail(group, inviteeEmail)
-                .orElseGet(() -> GroupInvitation.builder()
-                        .group(group)
-                        .email(inviteeEmail)
-                        .build());
-        invite.setInvitedAt(LocalDateTime.now(ZoneOffset.UTC));
+        GroupInvitation invite = GroupInvitation.builder()
+                .group(group)
+                .email(inviteeEmail)
+                .inviter(sender)
+                .status("PENDING")
+                .invitedAt(LocalDateTime.now(ZoneOffset.UTC))
+                .build();
         groupInvitationRepository.save(invite);
+
+        if (invitee != null) {
+            notificationService.createNotification(
+                    invitee,
+                    "GROUP_INVITE",
+                    "Study Group Invitation",
+                    sender.getFullName() + " invited you to join the study group: " + group.getGroupName(),
+                    "GROUP",
+                    group.getGroupId().longValue(),
+                    sender.getUserId()
+            );
+        }
 
         String base = frontendProperties.getBaseUrl();
         if (base == null) base = "";
@@ -554,5 +576,94 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 "GROUP",
                 Long.valueOf(groupId)
         );
+    }
+    @Override
+    public List<GroupInviteResponse> getMyInvites(String email) {
+        User user = getUser(email);
+        List<GroupInvitation> invites = groupInvitationRepository.findByEmailAndStatus(user.getEmail(), "PENDING");
+        return invites.stream().map(inv -> GroupInviteResponse.builder()
+                .id(inv.getId())
+                .groupId(inv.getGroup().getGroupId())
+                .groupName(inv.getGroup().getGroupName())
+                .groupInviteCode(inv.getGroup().getInviteCode())
+                .inviterName(inv.getInviter() != null ? inv.getInviter().getFullName() : null)
+                .inviterEmail(inv.getInviter() != null ? inv.getInviter().getEmail() : null)
+                .email(inv.getEmail())
+                .status(inv.getStatus())
+                .invitedAt(inv.getInvitedAt())
+                .build()).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<GroupInviteResponse> listPendingInvites(Integer groupId, String email) {
+        User user = getUser(email);
+        StudyGroup group = getActiveGroup(groupId);
+        
+        StudyGroupMember membership = studyGroupMemberRepository.findByGroupAndUserAndStatus(group, user, "ACTIVE")
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Not a member"));
+        
+        if (!"OWNER".equals(membership.getRole())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner can view pending invites");
+        }
+        
+        List<GroupInvitation> invites = groupInvitationRepository.findByGroupAndStatus(group, "PENDING");
+        return invites.stream().map(inv -> GroupInviteResponse.builder()
+                .id(inv.getId())
+                .groupId(inv.getGroup().getGroupId())
+                .groupName(inv.getGroup().getGroupName())
+                .groupInviteCode(inv.getGroup().getInviteCode())
+                .inviterName(inv.getInviter() != null ? inv.getInviter().getFullName() : null)
+                .inviterEmail(inv.getInviter() != null ? inv.getInviter().getEmail() : null)
+                .email(inv.getEmail())
+                .status(inv.getStatus())
+                .invitedAt(inv.getInvitedAt())
+                .build()).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void acceptInvite(Long inviteId, String email) {
+        User user = getUser(email);
+        GroupInvitation invite = groupInvitationRepository.findById(inviteId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invite not found"));
+        
+        if (!invite.getEmail().equalsIgnoreCase(user.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This invite does not belong to you");
+        }
+        if (!"PENDING".equals(invite.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invite is no longer pending");
+        }
+
+        invite.setStatus("ACCEPTED");
+        groupInvitationRepository.save(invite);
+
+        StudyGroup group = invite.getGroup();
+        boolean alreadyMember = studyGroupMemberRepository.existsByGroupAndUserAndStatus(group, user, "ACTIVE");
+        if (!alreadyMember) {
+            StudyGroupMember member = new StudyGroupMember();
+            member.setGroup(group);
+            member.setUser(user);
+            member.setRole("MEMBER");
+            member.setStatus("ACTIVE");
+            studyGroupMemberRepository.save(member);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void declineInvite(Long inviteId, String email) {
+        User user = getUser(email);
+        GroupInvitation invite = groupInvitationRepository.findById(inviteId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invite not found"));
+        
+        if (!invite.getEmail().equalsIgnoreCase(user.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This invite does not belong to you");
+        }
+        if (!"PENDING".equals(invite.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invite is no longer pending");
+        }
+
+        invite.setStatus("DECLINED");
+        groupInvitationRepository.save(invite);
     }
 }

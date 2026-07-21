@@ -281,6 +281,9 @@ function renderNotificationList() {
         if (notif.type === "GROUP_JOIN_REQUEST") {
             iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" /></svg>`;
             iconColorClass = "info";
+        } else if (notif.type === "GROUP_INVITE") {
+            iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>`;
+            iconColorClass = "info";
         } else if (notif.type === "GROUP_JOIN_APPROVED") {
             iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
             iconColorClass = "success";
@@ -311,6 +314,66 @@ function renderNotificationList() {
         time.textContent = formatTimeAgo(notif.createdAt);
 
         contentContainer.appendChild(message);
+        
+        if (notif.type === "GROUP_INVITE") {
+            const btnContainer = document.createElement("div");
+            btnContainer.style.display = "flex";
+            btnContainer.style.gap = "8px";
+            btnContainer.style.marginTop = "8px";
+            
+            const acceptBtn = document.createElement("button");
+            acceptBtn.className = "btn btn-primary btn-sm";
+            acceptBtn.textContent = "Accept";
+            acceptBtn.style.padding = "4px 8px";
+            acceptBtn.style.fontSize = "12px";
+            
+            const declineBtn = document.createElement("button");
+            declineBtn.className = "btn btn-secondary btn-sm";
+            declineBtn.textContent = "Decline";
+            declineBtn.style.padding = "4px 8px";
+            declineBtn.style.fontSize = "12px";
+            
+            acceptBtn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                acceptBtn.disabled = true;
+                declineBtn.disabled = true;
+                acceptBtn.textContent = "Accepting...";
+                try {
+                    await post(`/api/group-invites/${notif.referenceId}/accept`, {});
+                    if (typeof window.showToast === "function") window.showToast("Group invitation accepted!", "success");
+                    await handleMarkRead(notif.notificationId);
+                    window.location.href = `group-detail.html?id=${notif.targetId}`;
+                } catch (err) {
+                    if (typeof window.showToast === "function") window.showToast("Failed to accept invitation.", "error");
+                    acceptBtn.disabled = false;
+                    declineBtn.disabled = false;
+                    acceptBtn.textContent = "Accept";
+                }
+            });
+
+            declineBtn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                acceptBtn.disabled = true;
+                declineBtn.disabled = true;
+                declineBtn.textContent = "Declining...";
+                try {
+                    await post(`/api/group-invites/${notif.referenceId}/decline`, {});
+                    if (typeof window.showToast === "function") window.showToast("Group invitation declined.", "info");
+                    await handleMarkRead(notif.notificationId);
+                    fetchAndRenderNotifications();
+                } catch (err) {
+                    if (typeof window.showToast === "function") window.showToast("Failed to decline invitation.", "error");
+                    acceptBtn.disabled = false;
+                    declineBtn.disabled = false;
+                    declineBtn.textContent = "Decline";
+                }
+            });
+
+            btnContainer.appendChild(acceptBtn);
+            btnContainer.appendChild(declineBtn);
+            contentContainer.appendChild(btnContainer);
+        }
+
         contentContainer.appendChild(time);
 
         item.appendChild(iconContainer);

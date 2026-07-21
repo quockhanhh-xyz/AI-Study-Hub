@@ -4,6 +4,7 @@ import com.demo.ai_study_hub.dto.CreateGroupRequest;
 import com.demo.ai_study_hub.dto.GroupDetailResponse;
 import com.demo.ai_study_hub.dto.GroupEmailInviteRequest;
 import com.demo.ai_study_hub.dto.GroupEmailInviteResponse;
+import com.demo.ai_study_hub.dto.GroupInviteResponse;
 import com.demo.ai_study_hub.dto.GroupResponse;
 import com.demo.ai_study_hub.dto.JoinGroupRequest;
 import com.demo.ai_study_hub.dto.PendingMemberResponse;
@@ -36,4 +37,12 @@ public interface StudyGroupService {
     void rejectJoinRequest(Integer groupId, Integer userId, String ownerEmail);
 
     List<PendingMemberResponse> listPendingMembers(Integer groupId, String ownerEmail);
+
+    List<GroupInviteResponse> getMyInvites(String email);
+    
+    List<GroupInviteResponse> listPendingInvites(Integer groupId, String email);
+
+    void acceptInvite(Long inviteId, String email);
+
+    void declineInvite(Long inviteId, String email);
 }
