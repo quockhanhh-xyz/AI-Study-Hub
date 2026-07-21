@@ -1059,14 +1059,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     buildBreadcrumb();
 
     const foldersSection = document.getElementById("foldersSection");
-    const folderDocsSection = document.getElementById("folderDocsSection");
     const folderGrid = document.getElementById("folderGrid");
-    const folderDocsGrid = document.getElementById("folderDocsGrid");
     const subfoldersHeading = document.getElementById("subfoldersHeading");
-    const folderDocsHeading = document.getElementById("folderDocsHeading");
 
     if (foldersSection) foldersSection.style.display = "none";
-    if (folderDocsSection) folderDocsSection.style.display = "none";
     if (folderEmptyState) folderEmptyState.style.display = "none";
 
     // Dynamic section headings according to current folder name
@@ -1075,48 +1071,34 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (subfoldersHeading) {
       subfoldersHeading.textContent = parentId ? `Subfolders in ${locationName}` : "Subfolders";
     }
-    if (folderDocsHeading) {
-      folderDocsHeading.textContent = `Documents in ${locationName}`;
-    }
 
     try {
       const kw = searchInput ? searchInput.value.trim().toLowerCase() : "";
 
-      const [foldersRes, docsRes] = await Promise.all([
-        typeof getMyFolders === "function" ? getMyFolders(parentId, false).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-        typeof getMyDocuments === "function" ? getMyDocuments({ folderId: parentId || 0, includeSubfolders: false }).catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
-      ]);
+      const foldersRes = await (typeof getMyFolders === "function" ? getMyFolders(parentId, false).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }));
 
       let subfolders = Array.isArray(foldersRes.data) ? foldersRes.data : [];
-      let docs = Array.isArray(docsRes.data) ? docsRes.data : (docsRes.data?.content || []);
 
       // Keyword search filter for folders view
       if (kw) {
         subfolders = subfolders.filter(f => f.folderName && f.folderName.toLowerCase().includes(kw));
-        docs = docs.filter(d =>
-          (d.title && d.title.toLowerCase().includes(kw)) ||
-          (d.originalFileName && d.originalFileName.toLowerCase().includes(kw))
-        );
       }
 
       const hasSubfolders = subfolders.length > 0;
-      const hasDocs = docs.length > 0;
 
-      if (!hasSubfolders && !hasDocs) {
+      if (!hasSubfolders) {
         if (folderEmptyState) folderEmptyState.style.display = "flex";
       } else {
         if (folderEmptyState) folderEmptyState.style.display = "none";
 
-        if (hasSubfolders && foldersSection && folderGrid) {
+        if (foldersSection && folderGrid) {
           folderGrid.innerHTML = "";
-          subfolders.forEach(f => folderGrid.appendChild(createFolderCard(f)));
+          if (hasSubfolders) {
+            subfolders.forEach(f => folderGrid.appendChild(createFolderCard(f)));
+          } else {
+            folderGrid.innerHTML = "<p style='color: var(--muted); font-size: 14px;'>No folders here.</p>";
+          }
           foldersSection.style.display = "block";
-        }
-
-        if (hasDocs && folderDocsSection && folderDocsGrid) {
-          folderDocsGrid.innerHTML = "";
-          docs.forEach(doc => folderDocsGrid.appendChild(createDocumentCard(doc)));
-          folderDocsSection.style.display = "block";
         }
       }
     } catch (e) {
