@@ -1,249 +1,351 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Library - AI Study Hub</title>
-    <meta name="description" content="Manage all your personal documents and folders in your library." />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
-    <link rel="stylesheet" href="css/style.css" />
-    <style>
-      /* ===== MY LIBRARY TABS ===== */
-      .library-tabs {
-        display: flex;
-        gap: 24px;
-        border-bottom: 1px solid var(--border);
-        margin-bottom: 24px;
-        padding-bottom: 0;
-      }
-      .library-tab {
-        padding: 12px 16px;
-        font-weight: 600;
-        color: var(--muted);
-        cursor: pointer;
-        border-bottom: 2px solid transparent;
-        transition: all 0.2s;
-        margin-bottom: -1px;
-      }
-      .library-tab:hover {
-        color: var(--text-main);
-      }
-      .library-tab.active {
-        color: var(--primary);
-        border-bottom-color: var(--primary);
-      }
-      
-      .tab-content {
-        display: none;
-      }
-      .tab-content.active {
-        display: block;
-      }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Library - AI Study Hub</title>
+  <meta name="description" content="Manage all your personal documents and folders in your library." />
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ===== MY LIBRARY TABS ===== */
+    .library-tabs {
+      display: flex;
+      gap: 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+      padding-bottom: 0;
+    }
 
-      /* ===== COMPACT FOLDER CARD SYSTEM ===== */
-      .folder-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-        gap: 16px;
-        margin-top: 12px;
-      }
-      .folder-card {
-        position: relative;
-        background: #ffffff;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 16px;
-        height: 110px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: center !important;
-        cursor: pointer;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        box-sizing: border-box;
-      }
-      .folder-card:hover {
-        border-color: var(--primary);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
-      }
-      .folder-card-main {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        gap: 12px !important;
-        width: calc(100% - 24px) !important;
-        text-align: left !important;
-      }
-      .folder-icon {
-        color: var(--primary) !important;
-        flex-shrink: 0;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-      }
-      .folder-icon svg {
-        width: 32px !important;
-        height: 32px !important;
-      }
-      .folder-info-text {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 4px !important;
-        align-items: flex-start !important;
-        text-align: left !important;
-        min-width: 0 !important;
-      }
-      .folder-name {
-        margin: 0 !important;
-        font-size: 15px !important;
-        font-weight: 700 !important;
-        color: var(--text-main) !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        white-space: nowrap !important;
-        text-align: left !important;
-        width: 100% !important;
-      }
-      .folder-meta {
-        margin: 0 !important;
-        font-size: 12px !important;
-        color: var(--muted) !important;
-        text-align: left !important;
-      }
-      .folder-card-actions {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        z-index: 5;
-      }
-      .btn-kebab {
-        background: transparent;
-        border: none;
-        color: var(--muted);
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background-color 0.2s, color 0.2s;
-      }
-      .btn-kebab:hover {
-        background-color: var(--bg-hover);
-        color: var(--text-main);
-      }
-    </style>
+    .library-tab {
+      padding: 12px 16px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      margin-bottom: -1px;
+    }
+
+    .library-tab:hover {
+      color: var(--text-main);
+    }
+
+    .library-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* ===== COMPACT FOLDER CARD SYSTEM ===== */
+    .folder-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .folder-card {
+      position: relative;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      height: 110px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-sizing: border-box;
+    }
+
+    .folder-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+    }
+
+    .folder-card-main {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      gap: 12px !important;
+      width: calc(100% - 24px) !important;
+      text-align: left !important;
+    }
+
+    .folder-icon {
+      color: var(--primary) !important;
+      flex-shrink: 0;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    .folder-icon svg {
+      width: 32px !important;
+      height: 32px !important;
+    }
+
+    .folder-info-text {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 4px !important;
+      align-items: flex-start !important;
+      text-align: left !important;
+      min-width: 0 !important;
+    }
+
+    .folder-name {
+      margin: 0 !important;
+      font-size: 15px !important;
+      font-weight: 700 !important;
+      color: var(--text-main) !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      text-align: left !important;
+      width: 100% !important;
+    }
+
+    .folder-meta {
+      margin: 0 !important;
+      font-size: 12px !important;
+      color: var(--muted) !important;
+      text-align: left !important;
+    }
+
+    .folder-card-actions {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 5;
+    }
+
+    .btn-kebab {
+      background: transparent;
+      border: none;
+      font-size: 22px;
+      font-weight: bold;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 6px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    .btn-kebab:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-main);
+    }
+  </style>
 </head>
+
 <body>
-    <div class="app-layout">
-        <aside class="sidebar">
-            <h2 class="logo">AI Study Hub</h2>
-            <nav class="sidebar-nav"></nav>
-        </aside>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <h2 class="logo">AI Study Hub</h2>
+      <nav class="sidebar-nav"></nav>
+    </aside>
 
-        <main class="main-content">
-            <section class="page-header dashboard-header">
-                <div class="dashboard-header-content">
-                    <div>
-                        <h1>My Library</h1>
-                        <p class="dashboard-subtitle" id="breadcrumbPath">Your personal workspace.</p>
-                    </div>
-                    <div style="display: flex; gap: 12px;">
-                        <button type="button" id="createFolderBtn" class="btn btn-secondary" style="display: none; align-items: center; gap: 6px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" aria-hidden="true">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            New Folder
-                        </button>
-                        <button type="button" id="uploadDocumentBtn" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" aria-hidden="true">
-                                <path fill="currentColor" d="M6 18h12v-3h2v5H4v-5h2zm11.207 -8.707L15.793 10.707 13 7.914V16h-2V7.914L8.207 10.707 6.793 9.293 12 4.086z"></path>
-                            </svg>
-                            Upload Document
-                        </button>
-                    </div>
-                </div>
-            </section>
-            
-            <section class="card dashboard-panel">
-                <div class="library-tabs">
-                    <div class="library-tab active" data-tab="documents">Documents</div>
-                    <div class="library-tab" data-tab="folders">Folders</div>
-                </div>
-                
-                <div class="dashboard-search" style="max-width: 480px; margin-bottom: 20px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" class="search-icon">
-                        <path fill="currentColor" d="M11 2c4.9706 0 9 4.0294 9 9 0 2.125-0.7381 4.0766-1.9697 5.6162l4.1767 4.1768-1.414 1.414-4.1768-4.1767C15.0766 19.2619 13.125 20 11 20c-4.9706 0-9-4.0294-9-9 0-4.9706 4.0294-9 9-9m0 2c-3.866 0-7 3.134-7 7 0 3.866 3.134 7 7 7 3.866 0 7-3.134 7-7 0-3.866-3.134-7-7-7" />
-                    </svg>
-                    <input type="text" id="searchInput" placeholder="Search your library..." style="padding-left: 40px; width: 100%;" />
-                </div>
-                
-                <div id="documentsTab" class="tab-content active">
-                      <div class="toolbar" style="margin-bottom: 20px; display: flex; gap: 16px; align-items: center; flex-wrap: nowrap; width: 100%;">
-                          <div class="filter-group" style="flex: 1; min-width: 0;">
-                              <input type="text" id="subjectFilter" list="subjectDatalist" placeholder="Filter by Subject..." style="width: 100%; min-width: unset; max-width: none;" />
-                              <datalist id="subjectDatalist"></datalist>
-                          </div>
-                          <div class="filter-group" style="flex: 1; min-width: 0;">
-                              <select id="fileTypeFilter" style="width: 100%; min-width: unset; max-width: none;">
-                                  <option value="">All File Types</option>
-                                  <option value="PDF">PDF</option>
-                                  <option value="DOC">Word</option>
-                                  <option value="XLS">Excel</option>
-                                  <option value="PPT">PowerPoint</option>
-                                  <option value="IMAGE">Image</option>
-                              </select>
-                          </div>
-                          <div class="filter-group" style="flex: 1; min-width: 0;">
-                              <select id="folderFilter" style="width: 100%; min-width: unset; max-width: none;">
-                                  <option value="">All Folders</option>
-                                  <option value="0">Root (My Library)</option>
-                              </select>
-                          </div>
-                          <button type="button" id="clearFiltersBtn" style="flex: 1; min-width: 0; padding: 11px 16px; border: 1.5px solid var(--border); border-radius: 12px; background-color: #ffffff; color: var(--text-main); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 2px 8px rgba(23, 32, 51, 0.02); height: 45.5px;">Clear Filters</button>
-                      </div>
+    <main class="main-content">
+      <section class="page-header dashboard-header">
+        <div class="dashboard-header-content">
+          <div>
+            <h1>My Library</h1>
+            <p class="dashboard-subtitle" id="breadcrumbPath">Your personal workspace.</p>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: center; justify-content: flex-end; flex-wrap: wrap;">
+            <button type="button" id="shareFolderBtn" class="btn btn-secondary"
+              style="display: none; align-items: center; gap: 6px; width: auto !important; white-space: nowrap !important;">
+              🔗 Share Folder
+            </button>
+            <button type="button" id="createFolderBtn" class="btn btn-secondary"
+              style="display: none; align-items: center; gap: 6px; width: auto !important; white-space: nowrap !important;">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16"
+                aria-hidden="true">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 4v16m8-8H4"></path>
+              </svg>
+              <span id="createFolderBtnText">New Folder</span>
+            </button>
+            <button type="button" id="uploadDocumentBtn" class="btn btn-primary"
+              style="display: inline-flex; align-items: center; gap: 6px; width: auto !important; white-space: nowrap !important;">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16"
+                aria-hidden="true">
+                <path fill="currentColor"
+                  d="M6 18h12v-3h2v5H4v-5h2zm11.207 -8.707L15.793 10.707 13 7.914V16h-2V7.914L8.207 10.707 6.793 9.293 12 4.086z">
+                </path>
+              </svg>
+              Upload File
+            </button>
+          </div>
+        </div>
+      </section>
 
-                    <div id="documentGrid" class="document-grid">
-                        <div style="text-align: center; padding: 40px; color: var(--muted); width: 100%;">
-                            <p>Loading documents...</p>
-                        </div>
-                    </div>
-                    <div id="documentEmptyState" class="empty-state" style="display: none;">
-                        <div class="empty-state-icon">📄</div>
-                        <h3>No Documents Found</h3>
-                        <p>You haven't uploaded any documents matching this criteria yet.</p>
-                        <button type="button" class="btn btn-primary" style="margin-top: 16px;" onclick="document.getElementById('uploadDocumentBtn').click()">Upload Your First Document</button>
-                    </div>
-                </div>
-                
-                <div id="foldersTab" class="tab-content">
-                    <div id="folderBreadcrumb" style="margin-bottom: 20px; font-weight: 500; display: flex; align-items: center; gap: 8px;">
-                        <a href="#" class="breadcrumb-link" data-id="null">My Library</a>
-                    </div>
-                    <div id="folderGrid" class="folder-grid">
-                        <div style="text-align: center; padding: 40px; color: var(--muted); width: 100%;">
-                            <p>Loading folders...</p>
-                        </div>
-                    </div>
-                    <div id="folderEmptyState" class="empty-state" style="display: none;">
-                        <div class="empty-state-icon">📁</div>
-                        <h3>No Folders Here</h3>
-                        <p>Create a folder to organize your study materials.</p>
-                        <button type="button" class="btn btn-primary" style="margin-top: 16px;" onclick="document.getElementById('createFolderBtn').click()">Create Folder</button>
-                    </div>
-                </div>
-            </section>
-        </main>
-    </div>
-    
-    <script src="js/api.js"></script>
-    <script src="js/account-api.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/navigation.js"></script>
-    <script src="js/layout.js"></script>
-    <script src="js/folder-api.js"></script>
-    <script src="js/document-api.js"></script>
-    <script src="js/my-library.js"></script>
+      <section class="card dashboard-panel">
+        <div class="library-tabs">
+          <div class="library-tab active" data-tab="documents">Documents</div>
+          <div class="library-tab" data-tab="folders">Folders</div>
+        </div>
+
+        <div class="dashboard-search" style="max-width: 480px; margin-bottom: 20px;">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24"
+            class="search-icon">
+            <path fill="currentColor"
+              d="M11 2c4.9706 0 9 4.0294 9 9 0 2.125-0.7381 4.0766-1.9697 5.6162l4.1767 4.1768-1.414 1.414-4.1768-4.1767C15.0766 19.2619 13.125 20 11 20c-4.9706 0-9-4.0294-9-9 0-4.9706 4.0294-9 9-9m0 2c-3.866 0-7 3.134-7 7 0 3.866 3.134 7 7 7 3.866 0 7-3.134 7-7 0-3.866-3.134-7-7-7" />
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search your library..."
+            style="padding-left: 40px; width: 100%;" />
+        </div>
+
+        <div id="documentsTab" class="tab-content active">
+          <div class="toolbar"
+            style="margin-bottom: 20px; display: flex; gap: 16px; align-items: center; flex-wrap: nowrap; width: 100%;">
+            <div class="filter-group" style="flex: 1; min-width: 0;">
+              <input type="text" id="subjectFilter" list="subjectDatalist" placeholder="Filter by Subject..."
+                style="width: 100%; min-width: unset; max-width: none;" />
+              <datalist id="subjectDatalist"></datalist>
+            </div>
+            <div class="filter-group" style="flex: 1; min-width: 0;">
+              <select id="fileTypeFilter" style="width: 100%; min-width: unset; max-width: none;">
+                <option value="">All File Types</option>
+                <option value="PDF">PDF</option>
+                <option value="DOC">Word</option>
+                <option value="XLS">Excel</option>
+                <option value="PPT">PowerPoint</option>
+                <option value="IMAGE">Image</option>
+              </select>
+            </div>
+            <div class="filter-group" style="flex: 1; min-width: 0;">
+              <select id="folderFilter" style="width: 100%; min-width: unset; max-width: none;">
+                <option value="">All Folders</option>
+                <option value="0">Root (My Library)</option>
+              </select>
+            </div>
+            <button type="button" id="clearFiltersBtn"
+              style="flex: 1; min-width: 0; padding: 11px 16px; border: 1.5px solid var(--border); border-radius: 12px; background-color: #ffffff; color: var(--text-main); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 2px 8px rgba(23, 32, 51, 0.02); height: 45.5px;">Clear
+              Filters</button>
+          </div>
+
+          <div id="documentGrid" class="document-grid">
+            <div style="text-align: center; padding: 40px; color: var(--muted); width: 100%;">
+              <p>Loading documents...</p>
+            </div>
+          </div>
+          <div id="documentEmptyState" class="empty-state" style="display: none;">
+            <div class="empty-state-icon">📄</div>
+            <h3>No Documents Found</h3>
+            <p>You haven't uploaded any documents matching this criteria yet.</p>
+            <button type="button" class="btn btn-primary" style="margin-top: 16px;"
+              onclick="document.getElementById('uploadDocumentBtn').click()">Upload Your First Document</button>
+          </div>
+        </div>
+
+        <div id="foldersTab" class="tab-content">
+          <div id="folderBreadcrumb"
+            style="margin-bottom: 20px; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+            <a href="#" class="breadcrumb-link" data-id="null">My Library</a>
+          </div>
+          <div id="folderGrid" class="folder-grid">
+            <div style="text-align: center; padding: 40px; color: var(--muted); width: 100%;">
+              <p>Loading folders...</p>
+            </div>
+          </div>
+          <div id="folderEmptyState" class="empty-state" style="display: none;">
+            <div class="empty-state-icon">📁</div>
+            <h3>No Folders Here</h3>
+            <p>Create a folder to organize your study materials.</p>
+            <button type="button" class="btn btn-primary" style="margin-top: 16px;"
+              onclick="document.getElementById('createFolderBtn').click()">Create Folder</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="shareFolderModal" role="dialog" aria-modal="true" aria-labelledby="shareFolderModalTitle">
+      <div class="modal-box modal-box-share" style="position: relative;">
+          <button type="button" id="shareFolderModalXBtn" aria-label="Close modal" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; font-size: 20px; color: var(--muted); cursor: pointer; padding: 4px 8px; border-radius: 4px; line-height: 1;">✕</button>
+          <h3 id="shareFolderModalTitle" style="margin-bottom: 4px; padding-right: 32px;">Share Folder</h3>
+          <p id="shareFolderModalSubtitle" style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">
+              People you share with can open and download documents in this folder.
+          </p>
+
+          <div class="tab-header" style="display: flex; gap: 8px; border-bottom: 1px solid var(--border); margin-bottom: 16px;">
+              <button type="button" class="tab-btn active" id="modalTabUserBtn" style="flex: 1; padding: 10px 16px; border-bottom: 2px solid var(--primary); font-weight: 600; color: var(--primary);">User</button>
+              <button type="button" class="tab-btn" id="modalTabGroupBtn" style="flex: 1; padding: 10px 16px; border-bottom: 2px solid transparent; font-weight: 600; color: var(--muted);">Group</button>
+          </div>
+
+          <div id="modalUserPanel">
+              <div class="form-group">
+                  <label for="shareUserEmail">User Email <span class="label-required">*</span></label>
+                  <input type="email" id="shareUserEmail" placeholder="E.g: friend@gmail.com" autocomplete="off" class="modal-form-input" />
+              </div>
+              <div style="font-size: 12px; color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                  <span>ℹ️</span> <span>Recipients can open and download documents in this folder.</span>
+              </div>
+              <p id="shareUserError" class="modal-error-text" role="alert"></p>
+              <button type="button" class="btn btn-primary modal-btn-full" id="shareUserConfirmBtn">Share with User</button>
+          </div>
+
+          <div id="modalGroupPanel" style="display: none;">
+              <div class="form-group">
+                  <label for="shareGroupSelect">Select Group <span class="label-required">*</span></label>
+                  <select id="shareGroupSelect" class="modal-form-input">
+                      <option value="">-- Choose a Group --</option>
+                  </select>
+              </div>
+              <div style="font-size: 12px; color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                  <span>ℹ️</span> <span>Group members can access documents in this folder from the group.</span>
+              </div>
+              <p id="shareGroupError" class="modal-error-text" role="alert"></p>
+              <button type="button" class="btn btn-primary modal-btn-full" id="shareGroupConfirmBtn">Share to Group</button>
+          </div>
+
+          <hr class="modal-divider" style="margin: 20px 0;" />
+
+          <h4 class="modal-section-title" style="margin-bottom: 12px;">Shared with</h4>
+          <div id="sharesLoader" class="document-state" style="display: none; justify-content: center;">
+              <span>Loading shares...</span>
+          </div>
+          <div id="sharesList" class="shares-list-container">
+          </div>
+          <div id="sharesEmpty" class="share-roster-empty" style="font-size: 13px; color: var(--muted); text-align: center; padding: 12px;">
+              This folder is not shared with anyone yet.
+          </div>
+
+          <div class="modal-actions" style="margin-top: 20px; display: flex; justify-content: flex-end;">
+              <button type="button" class="btn btn-secondary btn-sm" id="shareFolderCloseBtn" style="padding: 6px 16px; font-size: 13px; font-weight: 500; background: #f1f5f9; border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; cursor: pointer;">Close</button>
+          </div>
+      </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/account-api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/folder-api.js"></script>
+  <script src="js/document-api.js"></script>
+  <script src="js/group-api.js"></script>
+  <script src="js/folder-share-api.js"></script>
+  <script src="js/my-library.js"></script>
 </body>
+
 </html>
