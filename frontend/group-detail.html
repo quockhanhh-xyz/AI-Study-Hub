@@ -277,6 +277,34 @@
                         <div id="pendingInvitesList" class="member-list"></div>
                     </div>
 
+                    <!-- Danger Zone Section at the bottom -->
+                    <div id="dangerZoneSection" class="card dashboard-panel"
+                        style="display: none; border-color: var(--danger); margin-top: 32px; background: rgba(220, 38, 38, 0.02); max-width: none; width: 100%;">
+                        <div class="section-header"
+                            style="margin-bottom: 0; display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 16px;">
+                            <div>
+                                <h2 class="section-title" style="color: var(--danger); font-size: 18px; margin: 0 0 4px;">
+                                    Danger Zone</h2>
+                                <p style="margin: 0; font-size: 13px; color: var(--text-muted);">Irreversible actions for
+                                    group owners.</p>
+                            </div>
+                            <div>
+                                <button type="button" id="deleteGroupBtn" class="btn btn-danger"
+                                    style="display: none; align-items: center; gap: 6px; padding: 10px 16px; width: auto !important;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        id="Bin--Streamline-Guidance-Free" height="14" width="14" aria-hidden="true"
+                                        focusable="false">
+                                        <desc>Bin Streamline Icon: https://streamlinehq.com</desc>
+                                        <path stroke="currentColor"
+                                            d="M9.5 9v9m5 -9v9m-6 -13.5h-6v0.25l0.24 1.05A70 70 0 0 1 4.5 21.398V22.5h15v-1.102c0 -5.249 0.59 -10.48 1.76 -15.598l0.24 -1.05V4.5h-6m-7 0V4a3.5 3.5 0 1 1 7 0v0.5m-7 0h7"
+                                            stroke-width="1"></path>
+                                    </svg>
+                                    Delete Group
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <!-- Documents Panel -->
@@ -291,7 +319,7 @@
                                     into
                                     this group by its members.</p>
                             </div>
-                            <button type="button" id="shareDocBtn" class="btn btn-primary" style="display:flex; align-items: center; gap: 6px; padding: 8px 16px;">
+                            <button type="button" id="shareDocBtn" class="btn btn-primary" style="display: none; align-items: center; gap: 6px; padding: 8px 16px; width: fit-content !important; margin-left: auto;">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="16" width="16" aria-hidden="true">
                                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M7 1v12M1 7h12"></path>
                                 </svg>
@@ -327,6 +355,10 @@
                             </div>
                             <div class="empty-title">No documents shared yet</div>
                             <p>Members can share their own documents into this group from the Document Detail page.</p>
+                            <div class="empty-actions"
+                                style="margin-top: 12px; display: flex; justify-content: center;">
+                                <button type="button" id="shareDocBtnEmpty" class="btn btn-secondary">Share a Document</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -344,7 +376,7 @@
                                     this
                                     group by its members.</p>
                             </div>
-                            <button type="button" id="shareFolderBtn" class="btn btn-primary" style="display:flex; align-items: center; gap: 6px; padding: 8px 16px;">
+                            <button type="button" id="shareFolderBtn" class="btn btn-primary" style="display: none; align-items: center; gap: 6px; padding: 8px 16px; width: fit-content !important; margin-left: auto;">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="16" width="16" aria-hidden="true">
                                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M7 1v12M1 7h12"></path>
                                 </svg>
@@ -379,8 +411,7 @@
                             <p>Members can share their own folders into this group from the Folders page.</p>
                             <div class="empty-actions"
                                 style="margin-top: 12px; display: flex; justify-content: center;">
-                                <a href="folders.html" class="btn btn-secondary" style="text-decoration: none;">Share a
-                                    Folder</a>
+                                <button type="button" id="shareFolderBtnEmpty" class="btn btn-secondary">Share a Folder</button>
                             </div>
                         </div>
                     </div>
@@ -451,33 +482,7 @@
                     </div>
                 </div>
 
-                <!-- Danger Zone Section at the bottom -->
-                <div id="dangerZoneSection" class="card dashboard-panel"
-                    style="display: none; border-color: var(--danger); margin-top: 32px; background: rgba(220, 38, 38, 0.02); max-width: none; width: 100%;">
-                    <div class="section-header"
-                        style="margin-bottom: 0; display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 16px;">
-                        <div>
-                            <h2 class="section-title" style="color: var(--danger); font-size: 18px; margin: 0 0 4px;">
-                                Danger Zone</h2>
-                            <p style="margin: 0; font-size: 13px; color: var(--text-muted);">Irreversible actions for
-                                group owners.</p>
-                        </div>
-                        <div>
-                            <button type="button" id="deleteGroupBtn" class="btn btn-danger"
-                                style="display: none; align-items: center; gap: 6px; padding: 10px 16px; width: auto !important;">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    id="Bin--Streamline-Guidance-Free" height="14" width="14" aria-hidden="true"
-                                    focusable="false">
-                                    <desc>Bin Streamline Icon: https://streamlinehq.com</desc>
-                                    <path stroke="currentColor"
-                                        d="M9.5 9v9m5 -9v9m-6 -13.5h-6v0.25l0.24 1.05A70 70 0 0 1 4.5 21.398V22.5h15v-1.102c0 -5.249 0.59 -10.48 1.76 -15.598l0.24 -1.05V4.5h-6m-7 0V4a3.5 3.5 0 1 1 7 0v0.5m-7 0h7"
-                                        stroke-width="1"></path>
-                                </svg>
-                                Delete Group
-                            </button>
-                        </div>
-                    </div>
-                </div>
+
 
             </div>
 
