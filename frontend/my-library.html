@@ -180,36 +180,37 @@
                     <input type="text" id="searchInput" placeholder="Search documents by title or keyword..." style="padding-left: 40px; width: 100%;" />
                 </div>
                 
+                <div id="libraryToolbar" class="toolbar" style="margin-bottom: 20px; display: flex; gap: 16px; align-items: center; flex-wrap: nowrap; width: 100%;">
+                    <div class="filter-group" style="flex: 1; min-width: 0;">
+                        <input type="text" id="subjectFilter" list="subjectDatalist" placeholder="Filter by Subject..." style="width: 100%; min-width: unset; max-width: none;" />
+                        <datalist id="subjectDatalist"></datalist>
+                    </div>
+                    <div class="filter-group" style="flex: 1; min-width: 0;">
+                        <select id="fileTypeFilter" style="width: 100%; min-width: unset; max-width: none;">
+                            <option value="">All File Types</option>
+                            <option value="PDF">PDF</option>
+                            <option value="DOC">DOC</option>
+                            <option value="DOCX">DOCX</option>
+                            <option value="XLS">XLS</option>
+                            <option value="XLSX">XLSX</option>
+                            <option value="PPT">PPT</option>
+                            <option value="PPTX">PPTX</option>
+                            <option value="TXT">TXT</option>
+                            <option value="PNG">PNG</option>
+                            <option value="JPG">JPG</option>
+                            <option value="JPEG">JPEG</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" style="flex: 1; min-width: 0;">
+                        <select id="folderFilter" style="width: 100%; min-width: unset; max-width: none;">
+                            <option value="">All Folders</option>
+                            <option value="0">My Documents (no folder)</option>
+                        </select>
+                    </div>
+                    <button type="button" id="clearFiltersBtn" style="flex: 1; min-width: 0; padding: 11px 16px; border: 1.5px solid var(--border); border-radius: 12px; background-color: #ffffff; color: var(--text-main); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 2px 8px rgba(23, 32, 51, 0.02); height: 45.5px;">Clear Filters</button>
+                </div>
+
                 <div id="documentsTab" class="tab-content active">
-                      <div class="toolbar" style="margin-bottom: 20px; display: flex; gap: 16px; align-items: center; flex-wrap: nowrap; width: 100%;">
-                          <div class="filter-group" style="flex: 1; min-width: 0;">
-                              <input type="text" id="subjectFilter" list="subjectDatalist" placeholder="Filter by Subject..." style="width: 100%; min-width: unset; max-width: none;" />
-                              <datalist id="subjectDatalist"></datalist>
-                          </div>
-                          <div class="filter-group" style="flex: 1; min-width: 0;">
-                              <select id="fileTypeFilter" style="width: 100%; min-width: unset; max-width: none;">
-                                  <option value="">All File Types</option>
-                                  <option value="PDF">PDF</option>
-                                  <option value="DOC">DOC</option>
-                                  <option value="DOCX">DOCX</option>
-                                  <option value="XLS">XLS</option>
-                                  <option value="XLSX">XLSX</option>
-                                  <option value="PPT">PPT</option>
-                                  <option value="PPTX">PPTX</option>
-                                  <option value="TXT">TXT</option>
-                                  <option value="PNG">PNG</option>
-                                  <option value="JPG">JPG</option>
-                                  <option value="JPEG">JPEG</option>
-                              </select>
-                          </div>
-                          <div class="filter-group" style="flex: 1; min-width: 0;">
-                              <select id="folderFilter" style="width: 100%; min-width: unset; max-width: none;">
-                                  <option value="">All Folders</option>
-                                  <option value="0">My Documents (no folder)</option>
-                              </select>
-                          </div>
-                          <button type="button" id="clearFiltersBtn" style="flex: 1; min-width: 0; padding: 11px 16px; border: 1.5px solid var(--border); border-radius: 12px; background-color: #ffffff; color: var(--text-main); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 2px 8px rgba(23, 32, 51, 0.02); height: 45.5px;">Clear Filters</button>
-                      </div>
 
                     <div id="documentGrid" class="document-grid">
                         <div style="text-align: center; padding: 40px; color: var(--muted); width: 100%;">

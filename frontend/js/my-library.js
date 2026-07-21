@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const contents = document.querySelectorAll(".tab-content");
 
   const searchInput = document.getElementById("searchInput");
+  const libraryToolbar = document.getElementById("libraryToolbar");
   const subjectFilter = document.getElementById("subjectFilter");
   const subjectDatalist = document.getElementById("subjectDatalist");
   const fileTypeFilter = document.getElementById("fileTypeFilter");
@@ -101,6 +102,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       if (createFolderBtn) {
         createFolderBtn.style.display = tabId === "folders" ? "inline-flex" : "none";
+      }
+
+      if (libraryToolbar) {
+        libraryToolbar.style.display = (tabId === "documents" || tabId === "favorites") ? "flex" : "none";
       }
 
       // Update contextual search placeholder
@@ -435,13 +440,33 @@ document.addEventListener("DOMContentLoaded", async function () {
     meta.className = "document-meta";
 
     meta.innerHTML += `<span class="document-meta-item">📅 ${formatDate(doc.createdAt)}</span>`;
-    if (doc.subjectCode) {
-      meta.innerHTML += `<span class="document-meta-item">📚 ${doc.subjectCode}</span>`;
+
+    // Robust Subject Fallback: subjectCode -> subjectName -> lookup via subjectId -> nested subject object
+    let subjectTag = doc.subjectCode || doc.subjectName || "";
+    if (!subjectTag && doc.subjectId) {
+      const foundSubj = allSubjects.find(s => String(s.subjectId) === String(doc.subjectId));
+      if (foundSubj) {
+        subjectTag = foundSubj.subjectCode || foundSubj.subjectName || "";
+      }
     }
-    if (doc.folderId && doc.folderId !== 0) {
-      const folderObj = userFolders.find(f => f.folderId === doc.folderId);
-      const folderName = folderObj ? folderObj.folderName : "Folder";
-      meta.innerHTML += `<span class="document-meta-item">📁 ${folderName}</span>`;
+    if (!subjectTag && doc.subject && typeof doc.subject === "object") {
+      subjectTag = doc.subject.subjectCode || doc.subject.subjectName || "";
+    }
+    if (subjectTag) {
+      meta.innerHTML += `<span class="document-meta-item">📚 ${subjectTag}</span>`;
+    }
+
+    // Robust Folder Fallback: folderName -> lookup via folderId -> nested folder object
+    let folderTag = doc.folderName || "";
+    if (!folderTag && doc.folderId && doc.folderId !== 0) {
+      const folderObj = userFolders.find(f => String(f.folderId) === String(doc.folderId));
+      if (folderObj) folderTag = folderObj.folderName;
+    }
+    if (!folderTag && doc.folder && typeof doc.folder === "object") {
+      folderTag = doc.folder.folderName || doc.folder.name || "";
+    }
+    if (folderTag) {
+      meta.innerHTML += `<span class="document-meta-item">📁 ${folderTag}</span>`;
     }
 
     content.appendChild(meta);
@@ -644,9 +669,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     try {
       const res = await getFavoriteDocuments();
-      let docs = Array.isArray(res.data) ? res.data : [];
+      let docs = [];
+      if (Array.isArray(res.data)) docs = res.data;
+      else if (Array.isArray(res)) docs = res;
+      else if (res && res.data && Array.isArray(res.data.content)) docs = res.data.content;
 
-      // Apply client-side filters to favorites
+      // Apply filters to favorite documents
       const kw = searchInput ? searchInput.value.trim().toLowerCase() : "";
       const subjId = getSubjectIdFromInput();
       const fType = fileTypeFilter ? fileTypeFilter.value : "";
@@ -659,7 +687,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         );
       }
       if (subjId) {
-        docs = docs.filter(d => String(d.subjectId) === String(subjId));
+        docs = docs.filter(d => 
+          String(d.subjectId) === String(subjId) ||
+          (d.subject && String(d.subject.subjectId) === String(subjId))
+        );
       }
       if (fType) {
         docs = docs.filter(d => d.fileType && d.fileType.toUpperCase() === fType.toUpperCase());
@@ -668,7 +699,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (fId === "0") {
           docs = docs.filter(d => !d.folderId || d.folderId === 0);
         } else {
-          docs = docs.filter(d => String(d.folderId) === String(fId));
+          docs = docs.filter(d => 
+            String(d.folderId) === String(fId) ||
+            (d.folder && String(d.folder.folderId) === String(fId))
+          );
         }
       }
 
