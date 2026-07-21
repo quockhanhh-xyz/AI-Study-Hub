@@ -65,14 +65,14 @@ document.addEventListener("DOMContentLoaded", async function () {
   const FALLBACK_TIER_FEATURES = {
     FREE: [
       "5 AI questions/day",
-      "3 AI flashcard sets/day",
-      "3 AI quiz sets/day",
+      "2 AI flashcard sets/day",
+      "2 AI quiz sets/day",
       "3 AI summary generations/day",
       "Upload files up to 10MB",
       "100MB storage",
       "Up to 30 documents",
       "Up to 20 folders (3 levels deep)",
-      "Join up to 3 study groups (cannot create groups)",
+      "Create up to 3 study groups (up to 3 members per group)",
       "Up to 30 active document shares",
       "View documents shared by the community"
     ],
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       "2GB storage",
       "Up to 500 documents",
       "Up to 200 folders (8 levels deep)",
-      "Create up to 5 study groups (up to 30 members per group)",
+      "Create up to 30 study groups (up to 100 members per group)",
       "Up to 1,000 active document shares"
     ],
     ULTRA: [
@@ -97,7 +97,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       "10GB storage",
       "Up to 2,000 documents",
       "Up to 1,000 folders (12 levels deep)",
-      "Create up to 30 study groups (up to 100 members per group)",
+      "Create up to 100 study groups (up to 300 members per group)",
       "Up to 5,000 active document shares",
       "Priority AI processing"
     ]
@@ -140,14 +140,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Groups
     if (limits.maxGroupsOwned != null) {
       if (limits.maxGroupsOwned === 0) {
-        const joinLimit = limits.maxGroupsJoined != null ? ` up to ${limits.maxGroupsJoined}` : "";
-        features.push(`Join${joinLimit} study groups (cannot create groups)`);
+        features.push(`Join study groups (cannot create groups)`);
       } else {
         const memberStr = limits.maxGroupMembers != null ? ` (up to ${limits.maxGroupMembers} members per group)` : "";
         features.push(`Create up to ${limits.maxGroupsOwned.toLocaleString()} study groups${memberStr}`);
       }
-    } else if (limits.maxGroupsJoined != null) {
-      features.push(`Join up to ${limits.maxGroupsJoined.toLocaleString()} study groups`);
     }
 
     // Document shares
