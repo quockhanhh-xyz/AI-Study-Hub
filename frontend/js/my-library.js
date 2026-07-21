@@ -823,7 +823,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (documentEmptyState) documentEmptyState.style.display = "none";
         documentGrid.style.display = "grid";
         docs.forEach(doc => {
-          documentGrid.appendChild(createDocumentCard(doc));
+          documentGrid.appendChild(createDocumentCard(doc, { sourceTab: "documents" }));
         });
       }
     } catch (e) {
@@ -832,8 +832,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
-  function createDocumentCard(doc, folderContext) {
-    // folderContext: { folderId, folderName } – when opened from inside a folder
+  function createDocumentCard(doc, options = {}) {
+    // options: { sourceTab, folderId, folderName }
     const card = document.createElement("article");
     card.className = "document-card";
 
@@ -862,11 +862,17 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const title = document.createElement("h3");
     const link = document.createElement("a");
-    // Build link with folder context if available
+    
+    // Build link with context if available
     let detailUrl = `document-detail.html?id=${doc.documentId}`;
-    if (folderContext && folderContext.folderId) {
-      detailUrl += `&from=mylibrary&folderId=${folderContext.folderId}&folderName=${encodeURIComponent(folderContext.folderName || "Folder")}`;
+    if (options.sourceTab === "folders" && options.folderId) {
+      detailUrl += `&from=mylibrary_folders&folderId=${options.folderId}&folderName=${encodeURIComponent(options.folderName || "Folder")}`;
+    } else if (options.sourceTab === "documents") {
+      detailUrl += `&from=mylibrary_documents`;
+    } else if (options.sourceTab === "favorites") {
+      detailUrl += `&from=mylibrary_favorites`;
     }
+    
     link.href = detailUrl;
     link.textContent = doc.title || doc.originalFileName || "Untitled";
     link.style.color = "inherit";
@@ -953,8 +959,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     card.addEventListener("click", (e) => {
       if (e.target.closest("button") || e.target.closest("a")) return;
       let url = `document-detail.html?id=${doc.documentId}`;
-      if (folderContext && folderContext.folderId) {
-        url += `&from=mylibrary&folderId=${folderContext.folderId}&folderName=${encodeURIComponent(folderContext.folderName || "Folder")}`;
+      if (options.sourceTab === "folders" && options.folderId) {
+        url += `&from=mylibrary_folders&folderId=${options.folderId}&folderName=${encodeURIComponent(options.folderName || "Folder")}`;
+      } else if (options.sourceTab === "documents") {
+        url += `&from=mylibrary_documents`;
+      } else if (options.sourceTab === "favorites") {
+        url += `&from=mylibrary_favorites`;
       }
       window.location.href = url;
     });
@@ -1190,12 +1200,12 @@ document.addEventListener("DOMContentLoaded", async function () {
       if (parentId !== null && folderDocsSection && folderDocsGrid) {
         folderDocsGrid.innerHTML = "";
         if (hasDocs) {
-          // Build folderContext for back navigation from document-detail
+          // Build options for back navigation from document-detail
           const currentCrumbForDocs = breadcrumbTrail[breadcrumbTrail.length - 1];
-          const folderCtx = currentCrumbForDocs && currentCrumbForDocs.folderId
-            ? { folderId: currentCrumbForDocs.folderId, folderName: currentCrumbForDocs.name }
-            : null;
-          docs.forEach(doc => folderDocsGrid.appendChild(createDocumentCard(doc, folderCtx)));
+          const folderOpts = currentCrumbForDocs && currentCrumbForDocs.folderId
+            ? { sourceTab: "folders", folderId: currentCrumbForDocs.folderId, folderName: currentCrumbForDocs.name }
+            : { sourceTab: "folders" };
+          docs.forEach(doc => folderDocsGrid.appendChild(createDocumentCard(doc, folderOpts)));
         } else {
           folderDocsGrid.innerHTML = "<p style='color:#9ca3af;font-size:14px;'>No documents here.</p>";
         }
@@ -1359,7 +1369,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       } else {
         if (favoritesEmptyState) favoritesEmptyState.style.display = "none";
         favoritesGrid.style.display = "grid";
-        docs.forEach(doc => favoritesGrid.appendChild(createDocumentCard(doc)));
+        docs.forEach(doc => favoritesGrid.appendChild(createDocumentCard(doc, { sourceTab: "favorites" })));
       }
     } catch (e) {
       console.error("Failed to load favorites:", e);
