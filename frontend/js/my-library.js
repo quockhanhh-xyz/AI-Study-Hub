@@ -1052,6 +1052,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     else newUrl.searchParams.delete("folderId");
     window.history.pushState({}, "", newUrl);
 
+    currentParentFolderId = id || null;
     loadFolders(currentParentFolderId);
   }
 
@@ -1059,10 +1060,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     buildBreadcrumb();
 
     const foldersSection = document.getElementById("foldersSection");
+    const folderDocsSection = document.getElementById("folderDocsSection");
     const folderGrid = document.getElementById("folderGrid");
+    const folderDocsGrid = document.getElementById("folderDocsGrid");
     const subfoldersHeading = document.getElementById("subfoldersHeading");
+    const folderDocsHeading = document.getElementById("folderDocsHeading");
 
     if (foldersSection) foldersSection.style.display = "none";
+    if (folderDocsSection) folderDocsSection.style.display = "none";
     if (folderEmptyState) folderEmptyState.style.display = "none";
 
     // Dynamic section headings according to current folder name
@@ -1071,22 +1076,34 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (subfoldersHeading) {
       subfoldersHeading.textContent = parentId ? `Subfolders in ${locationName}` : "Subfolders";
     }
+    if (folderDocsHeading) {
+      folderDocsHeading.textContent = `Documents in ${locationName}`;
+    }
 
     try {
       const kw = searchInput ? searchInput.value.trim().toLowerCase() : "";
 
-      const foldersRes = await (typeof getMyFolders === "function" ? getMyFolders(parentId, false).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }));
+      const [foldersRes, docsRes] = await Promise.all([
+        typeof getMyFolders === "function" ? getMyFolders(parentId, false).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
+        (parentId !== null && typeof getMyDocuments === "function") ? getMyDocuments({ folderId: parentId, includeSubfolders: false }).catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
+      ]);
 
       let subfolders = Array.isArray(foldersRes.data) ? foldersRes.data : [];
+      let docs = Array.isArray(docsRes.data) ? docsRes.data : (docsRes.data?.content || []);
 
       // Keyword search filter for folders view
       if (kw) {
         subfolders = subfolders.filter(f => f.folderName && f.folderName.toLowerCase().includes(kw));
+        docs = docs.filter(d =>
+          (d.title && d.title.toLowerCase().includes(kw)) ||
+          (d.originalFileName && d.originalFileName.toLowerCase().includes(kw))
+        );
       }
 
       const hasSubfolders = subfolders.length > 0;
+      const hasDocs = docs.length > 0;
 
-      if (!hasSubfolders) {
+      if (!hasSubfolders && (!hasDocs || parentId === null)) {
         if (folderEmptyState) folderEmptyState.style.display = "flex";
       } else {
         if (folderEmptyState) folderEmptyState.style.display = "none";
@@ -1100,6 +1117,16 @@ document.addEventListener("DOMContentLoaded", async function () {
           }
           foldersSection.style.display = "block";
         }
+
+        if (parentId !== null && folderDocsSection && folderDocsGrid) {
+          folderDocsGrid.innerHTML = "";
+          if (hasDocs) {
+            docs.forEach(doc => folderDocsGrid.appendChild(createDocumentCard(doc)));
+          } else {
+            folderDocsGrid.innerHTML = "<p style='color: var(--muted); font-size: 14px;'>No documents here.</p>";
+          }
+          folderDocsSection.style.display = "block";
+        }
       }
     } catch (e) {
       console.error("Failed to load folders & documents:", e);
@@ -1109,42 +1136,50 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   function createFolderCard(f) {
     const card = document.createElement("div");
-    card.className = "folder-card";
+    card.className = "document-card folder-card-alt"; // Reusing document-card styling
 
-    const main = document.createElement("div");
-    main.className = "folder-card-main";
-
+    // Preview area (Top half)
+    const preview = document.createElement("div");
+    preview.className = "document-preview";
+    preview.style.cssText = "display: flex; align-items: center; justify-content: center; background: #f8f9fa; height: 140px;";
+    
     const icon = document.createElement("div");
-    icon.className = "folder-icon";
-    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>';
-    main.appendChild(icon);
+    icon.style.cssText = "color: var(--primary); transform: scale(1.5);";
+    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="48" height="48"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>';
+    preview.appendChild(icon);
 
-    const text = document.createElement("div");
-    text.className = "folder-info-text";
+    // Info area (Bottom half)
+    const info = document.createElement("div");
+    info.className = "document-info";
+
+    const header = document.createElement("div");
+    header.className = "document-header";
+    header.style.cssText = "display: flex; justify-content: space-between; align-items: flex-start;";
 
     const title = document.createElement("h3");
-    title.className = "folder-name";
+    title.className = "document-title";
     title.textContent = f.folderName || "Untitled Folder";
-    text.appendChild(title);
+    
+    header.appendChild(title);
 
-    const meta = document.createElement("p");
-    meta.className = "folder-meta";
+    const meta = document.createElement("div");
+    meta.className = "document-meta";
     let metaTxt = [];
-
-    // Always show subfolderCount and documentCount (even when 0)
     const subCount = Number(f.subfolderCount ?? 0);
     const docCount = Number(f.documentCount ?? f.fileCount ?? 0);
-    metaTxt.push(`${subCount} subfolders`);
-    metaTxt.push(`${docCount} documents`);
+    metaTxt.push(`${subCount} folders`);
+    metaTxt.push(`${docCount} docs`);
     if (f.createdAt) metaTxt.push(formatDate(f.createdAt));
-    meta.textContent = metaTxt.join(" • ");
-    text.appendChild(meta);
+    
+    meta.innerHTML = `<span>${metaTxt.join(" &bull; ")}</span>`;
 
-    main.appendChild(text);
+    info.appendChild(header);
+    info.appendChild(meta);
 
-    // Actions kebab (positioned absolutely in top right by CSS)
+    // Actions kebab (positioned absolutely in top right)
     const actions = document.createElement("div");
     actions.className = "folder-card-actions";
+    actions.style.cssText = "position: absolute; top: 8px; right: 8px; z-index: 10;";
 
     const kebabBtn = document.createElement("button");
     kebabBtn.type = "button";
@@ -1231,7 +1266,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       navigateToFolder(f.folderId);
     });
 
-    card.append(main, actions);
+    card.append(preview, info, actions);
     return card;
   }
 
