@@ -5,6 +5,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (!isAuthenticated) return;
   }
 
+  // Streamline SVG Meta Icons
+  const META_ICONS = {
+    calendar: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+    subject: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+    folder: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`
+  };
+
   // State
   let userFolders = [];
   let currentParentFolderId = getParentFolderIdFromUrl();
@@ -108,7 +115,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         libraryToolbar.style.display = (tabId === "documents" || tabId === "favorites") ? "flex" : "none";
       }
 
-      // Update contextual search placeholder
+      // Contextual search placeholders
       if (searchInput) {
         if (tabId === "documents") {
           searchInput.placeholder = "Search documents by title or keyword...";
@@ -267,13 +274,51 @@ document.addEventListener("DOMContentLoaded", async function () {
     return `<span>📄</span>`;
   }
 
+  function matchesFileTypeFilter(docFileType, filterVal) {
+    if (!filterVal) return true;
+    if (!docFileType) return false;
+    const typeUpper = docFileType.toUpperCase();
+    const valUpper = filterVal.toUpperCase();
+
+    if (valUpper === "WORD") {
+      return typeUpper === "DOC" || typeUpper === "DOCX";
+    }
+    if (valUpper === "EXCEL") {
+      return typeUpper === "XLS" || typeUpper === "XLSX";
+    }
+    if (valUpper === "POWERPOINT") {
+      return typeUpper === "PPT" || typeUpper === "PPTX";
+    }
+    if (valUpper === "IMAGE") {
+      return typeUpper === "PNG" || typeUpper === "JPG" || typeUpper === "JPEG" || typeUpper === "IMAGE";
+    }
+    return typeUpper === valUpper;
+  }
+
   // --- API LOADERS ---
   let allSubjects = [];
   async function loadSubjects() {
     if (typeof getSubjects !== "function") return;
     try {
       const res = await getSubjects();
-      allSubjects = Array.isArray(res.data) ? res.data : [];
+      const payload = res?.data;
+      allSubjects = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.content)
+          ? payload.content
+          : Array.isArray(payload?.subjects)
+            ? payload.subjects
+            : Array.isArray(res)
+              ? res
+              : [];
+
+      // Sort subjects alphabetically by code then name
+      allSubjects.sort((a, b) => {
+        const codeA = (a.subjectCode || a.subjectName || "").toUpperCase();
+        const codeB = (b.subjectCode || b.subjectName || "").toUpperCase();
+        return codeA.localeCompare(codeB);
+      });
+
       if (subjectDatalist) {
         subjectDatalist.innerHTML = "";
         allSubjects.forEach(s => {
@@ -298,7 +343,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       const res = await getMyFolders(null, true);
       userFolders = Array.isArray(res.data) ? res.data : [];
       if (folderFilter) {
-        folderFilter.innerHTML = `<option value="">All Folders</option><option value="0">My Documents (no folder)</option>`;
+        folderFilter.innerHTML = `<option value="">All Folders</option><option value="0">My Documents</option>`;
         userFolders.forEach(f => {
           const opt = document.createElement("option");
           opt.value = f.folderId;
@@ -333,17 +378,27 @@ document.addEventListener("DOMContentLoaded", async function () {
     documentGrid.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted); grid-column: 1/-1;">Loading documents...</div>`;
 
     try {
+      const filterVal = fileTypeFilter ? fileTypeFilter.value : "";
       const params = {
         keyword: searchInput ? searchInput.value.trim() : "",
-        fileType: fileTypeFilter ? fileTypeFilter.value : "",
         folderId: folderFilter ? folderFilter.value : ""
       };
-      
+
+      // Pass single-extension filter directly to API if explicit (e.g. PDF/TXT)
+      if (filterVal && !["WORD", "EXCEL", "POWERPOINT", "IMAGE"].includes(filterVal.toUpperCase())) {
+        params.fileType = filterVal;
+      }
+
       const subjId = getSubjectIdFromInput();
       if (subjId) params.subjectId = subjId;
 
       const res = await getMyDocuments(params);
-      const docs = Array.isArray(res.data) ? res.data : (res.data?.content || []);
+      let docs = Array.isArray(res.data) ? res.data : (res.data?.content || []);
+
+      // Client-side group filter fallback for group types like WORD/EXCEL/POWERPOINT/IMAGE
+      if (filterVal) {
+        docs = docs.filter(d => matchesFileTypeFilter(d.fileType, filterVal));
+      }
 
       documentGrid.innerHTML = "";
       if (docs.length === 0) {
@@ -435,11 +490,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     content.appendChild(header);
 
-    // Meta details
+    // Meta details with Streamline SVG icons (No Emojis)
     const meta = document.createElement("div");
     meta.className = "document-meta";
 
-    meta.innerHTML += `<span class="document-meta-item">📅 ${formatDate(doc.createdAt)}</span>`;
+    meta.innerHTML += `<span class="document-meta-item">${META_ICONS.calendar}${formatDate(doc.createdAt)}</span>`;
 
     // Robust Subject Fallback: subjectCode -> subjectName -> lookup via subjectId -> nested subject object
     let subjectTag = doc.subjectCode || doc.subjectName || "";
@@ -453,7 +508,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       subjectTag = doc.subject.subjectCode || doc.subject.subjectName || "";
     }
     if (subjectTag) {
-      meta.innerHTML += `<span class="document-meta-item">📚 ${subjectTag}</span>`;
+      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.subject}${subjectTag}</span>`;
     }
 
     // Robust Folder Fallback: folderName -> lookup via folderId -> nested folder object
@@ -466,7 +521,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       folderTag = doc.folder.folderName || doc.folder.name || "";
     }
     if (folderTag) {
-      meta.innerHTML += `<span class="document-meta-item">📁 ${folderTag}</span>`;
+      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.folder}${folderTag}</span>`;
     }
 
     content.appendChild(meta);
@@ -566,10 +621,22 @@ document.addEventListener("DOMContentLoaded", async function () {
     const folderDocsSection = document.getElementById("folderDocsSection");
     const folderGrid = document.getElementById("folderGrid");
     const folderDocsGrid = document.getElementById("folderDocsGrid");
+    const subfoldersHeading = document.getElementById("subfoldersHeading");
+    const folderDocsHeading = document.getElementById("folderDocsHeading");
 
     if (foldersSection) foldersSection.style.display = "none";
     if (folderDocsSection) folderDocsSection.style.display = "none";
     if (folderEmptyState) folderEmptyState.style.display = "none";
+
+    // Dynamic section headings according to current folder name
+    const currentCrumb = breadcrumbTrail[breadcrumbTrail.length - 1];
+    const locationName = currentCrumb ? currentCrumb.name : "this folder";
+    if (subfoldersHeading) {
+      subfoldersHeading.textContent = parentId ? `Subfolders in ${locationName}` : "Subfolders";
+    }
+    if (folderDocsHeading) {
+      folderDocsHeading.textContent = `Documents in ${locationName}`;
+    }
 
     try {
       const kw = searchInput ? searchInput.value.trim().toLowerCase() : "";
@@ -640,9 +707,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     const meta = document.createElement("p");
     meta.className = "folder-meta";
     let metaTxt = [];
-    if (f.subfolderCount !== undefined) metaTxt.push(`${f.subfolderCount} subfolders`);
-    const docCount = f.documentCount !== undefined ? f.documentCount : f.fileCount;
-    if (docCount !== undefined) metaTxt.push(`${docCount} files`);
+
+    // Always show subfolderCount and documentCount (even when 0)
+    const subCount = Number(f.subfolderCount ?? 0);
+    const docCount = Number(f.documentCount ?? f.fileCount ?? 0);
+    metaTxt.push(`${subCount} subfolders`);
+    metaTxt.push(`${docCount} documents`);
     metaTxt.push(formatDate(f.createdAt));
     meta.textContent = metaTxt.join(" • ");
     text.appendChild(meta);
@@ -674,7 +744,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       else if (Array.isArray(res)) docs = res;
       else if (res && res.data && Array.isArray(res.data.content)) docs = res.data.content;
 
-      // Apply filters to favorite documents
+      // Apply search & toolbar filters to favorite documents
       const kw = searchInput ? searchInput.value.trim().toLowerCase() : "";
       const subjId = getSubjectIdFromInput();
       const fType = fileTypeFilter ? fileTypeFilter.value : "";
@@ -693,7 +763,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         );
       }
       if (fType) {
-        docs = docs.filter(d => d.fileType && d.fileType.toUpperCase() === fType.toUpperCase());
+        docs = docs.filter(d => matchesFileTypeFilter(d.fileType, fType));
       }
       if (fId) {
         if (fId === "0") {
