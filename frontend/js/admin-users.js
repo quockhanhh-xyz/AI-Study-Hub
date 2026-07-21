@@ -104,22 +104,6 @@ function renderFilterChips(filters) {
     }
 }
 
-function removeFilter(type) {
-    if (type === 'search') document.getElementById("filterSearch").value = "";
-    if (type === 'role') document.getElementById("filterRole").value = "";
-    if (type === 'tier') document.getElementById("filterTier").value = "";
-    if (type === 'status') document.getElementById("filterStatus").value = "";
-    onFilterChange();
-}
-
-function clearFilters() {
-    document.getElementById("filterSearch").value = "";
-    document.getElementById("filterRole").value = "";
-    document.getElementById("filterTier").value = "";
-    document.getElementById("filterStatus").value = "";
-    onFilterChange();
-}
-
 async function loadUsers(page = 0) {
     currentPage = page;
 
@@ -153,7 +137,11 @@ async function loadUsers(page = 0) {
         const response = await fetchAdminUsers(params);
         if (response && response.success && response.data) {
             renderUsersTable(response.data);
-            renderSummaryCards(response.data);
+            try {
+                renderSummaryCards(response.data);
+            } catch (summaryErr) {
+                console.warn("Failed to render summary cards:", summaryErr);
+            }
 
             loadingState.style.display = "none";
             errorState.style.display = "none";
@@ -170,7 +158,14 @@ async function loadUsers(page = 0) {
     }
 }
 
+function setText(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = (value !== null && value !== undefined) ? value : "0";
+}
+
 function renderSummaryCards(data) {
+    if (!data) return;
     const totalElements = data.totalElements || 0;
     const users = data.users || [];
 
@@ -186,11 +181,11 @@ function renderSummaryCards(data) {
         if (u.tier === 'PREMIUM' || u.tier === 'ULTRA') paidCount++;
     });
 
-    document.getElementById("summaryTotalUsers").textContent = totalElements.toLocaleString();
-    document.getElementById("summaryActiveUsers").textContent = activeCount.toLocaleString();
-    document.getElementById("summaryBlockedUsers").textContent = blockedCount.toLocaleString();
-    document.getElementById("summaryAdminUsers").textContent = adminCount.toLocaleString();
-    document.getElementById("summaryPaidUsers").textContent = paidCount.toLocaleString();
+    setText("summaryTotalUsers", totalElements.toLocaleString());
+    setText("summaryActiveUsers", activeCount.toLocaleString());
+    setText("summaryBlockedUsers", blockedCount.toLocaleString());
+    setText("summaryAdminUsers", adminCount.toLocaleString());
+    setText("summaryPaidUsers", paidCount.toLocaleString());
 }
 
 function formatJoinedDate(dateStr) {

@@ -1,3 +1,13 @@
+function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, ch => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#039;"
+    }[ch]));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Wait for the auth layout system to finish verifying the user
     if (window.authReady) {
