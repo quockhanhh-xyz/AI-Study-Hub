@@ -492,19 +492,42 @@ document.addEventListener("DOMContentLoaded", async function () {
     revokeBtn.style.padding = "4px 8px";
     revokeBtn.style.fontSize = "12px";
 
-    revokeBtn.addEventListener("click", async () => {
-      if (!confirm("Are you sure you want to revoke this invitation?")) return;
-      revokeBtn.disabled = true;
-      revokeBtn.textContent = "Revoking...";
-      try {
-        await del(`/api/group-invites/${invite.id}/revoke`);
-        showToast("Invitation revoked successfully", "success");
-        await loadPendingInvites();
-      } catch (error) {
-        showToast(error.message || "Failed to revoke invitation", "danger");
-        revokeBtn.disabled = false;
-        revokeBtn.textContent = "Revoke";
-      }
+    revokeBtn.addEventListener("click", () => {
+      const modal = document.getElementById("revokeInviteModal");
+      const confirmBtn = document.getElementById("confirmRevokeBtn");
+      const cancelBtn = document.getElementById("cancelRevokeBtn");
+
+      const onConfirm = async () => {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = "Revoking...";
+        try {
+          await del(`/api/group-invites/${invite.id}/revoke`);
+          showToast("Invitation revoked successfully", "success");
+          await loadPendingInvites();
+        } catch (error) {
+          showToast(error.message || "Failed to revoke invitation", "danger");
+        } finally {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = "Revoke Invitation";
+          closeModal(modal);
+          cleanup();
+        }
+      };
+
+      const onCancel = () => {
+        closeModal(modal);
+        cleanup();
+      };
+
+      const cleanup = () => {
+        confirmBtn.removeEventListener("click", onConfirm);
+        cancelBtn.removeEventListener("click", onCancel);
+      };
+
+      confirmBtn.addEventListener("click", onConfirm);
+      cancelBtn.addEventListener("click", onCancel);
+      
+      openModal(modal);
     });
 
     actions.appendChild(revokeBtn);

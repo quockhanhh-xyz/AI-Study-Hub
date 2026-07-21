@@ -590,6 +590,19 @@
             </form>
         </div>
     </div>
+    <!-- Revoke Invite Modal -->
+    <div class="modal-overlay" id="revokeInviteModal" role="dialog" aria-modal="true">
+        <div class="modal-box" style="max-width: 400px; text-align: center; padding: 32px 24px;">
+            <h3 style="margin: 0 0 16px 0; font-size: 20px;">Revoke this invitation?</h3>
+            <p style="margin: 0 0 24px 0; color: var(--muted); font-size: 15px; line-height: 1.5;">
+                This invitation will be canceled and the user will not be able to join the group.
+            </p>
+            <div class="modal-actions" style="justify-content: center; gap: 12px; margin-top: 0;">
+                <button type="button" class="btn btn-secondary" id="cancelRevokeBtn" style="padding: 10px 20px; font-weight: 500;">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmRevokeBtn" style="padding: 10px 20px; font-weight: 500;">Revoke Invitation</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
