@@ -2676,8 +2676,8 @@ function renderContextualTopBar(doc) {
     const urlParams = new URLSearchParams(window.location.search);
     const fromParam = urlParams.get("from");
     
-    let backLabel = "← Back to My Documents";
-    let backUrl = "documents.html";
+    let backLabel = "← Back to My Folders";
+    let backUrl = "my-library.html?view=folders";
     if (fromParam === "community" || currentIsCommunityView) {
         backLabel = "← Back to Community Library";
         backUrl = "community.html";
@@ -2687,6 +2687,16 @@ function renderContextualTopBar(doc) {
     } else if (fromParam === "folders") {
         backLabel = "← Back to My Folders";
         backUrl = "folders.html";
+    } else if (fromParam === "mylibrary") {
+        const folderId = urlParams.get("folderId");
+        const folderName = urlParams.get("folderName");
+        if (folderId && folderName) {
+            backLabel = `← Back to ${decodeURIComponent(folderName)}`;
+            backUrl = `my-library.html?view=folders&folderId=${folderId}`;
+        } else {
+            backLabel = "← Back to My Folders";
+            backUrl = "my-library.html?view=folders";
+        }
     }
 
     // Hide duplicate detailBackBtn from right inspector panel
