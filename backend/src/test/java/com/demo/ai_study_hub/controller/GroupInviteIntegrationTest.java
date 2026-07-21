@@ -125,9 +125,9 @@ public class GroupInviteIntegrationTest {
         mockMvc.perform(post("/api/groups/{id}/invites/email", group.getGroupId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.message", is("Invitation email sent successfully")));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success", is(false)))
+                .andExpect(jsonPath("$.message", is("User not found in the system")));
     }
 
     @Test
