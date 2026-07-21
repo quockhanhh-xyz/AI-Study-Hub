@@ -246,7 +246,7 @@ public class DocumentService {
         Document doc = documentRepository.findById(documentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
 
-        if ("DELETED".equals(doc.getStatus())) {
+        if (!"ACTIVE".equals(doc.getStatus())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
 
@@ -316,7 +316,7 @@ public class DocumentService {
     }
 
     private void validateDocumentAccess(Document doc, User user) {
-        if ("DELETED".equals(doc.getStatus())) {
+        if (!"ACTIVE".equals(doc.getStatus())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
         }
 

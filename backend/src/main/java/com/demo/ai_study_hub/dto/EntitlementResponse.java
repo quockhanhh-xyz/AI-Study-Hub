@@ -37,5 +37,7 @@ public class EntitlementResponse {
         private int maxFlashcardQuotaPerDay;
         private int maxQuizQuotaPerDay;
         private int maxItemsPerSet;
+        private int maxFlashcardsPerSet;
+        private int maxQuizQuestionsPerSet;
     }
 }

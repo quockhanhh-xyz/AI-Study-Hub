@@ -58,7 +58,7 @@ public class SubjectService {
     }
 
     public List<SubjectResponse> getPublicSubjects() {
-        return subjectRepository.findPublicSubjectsInUse()
+        return subjectRepository.findActiveSystemSubjects()
                 .stream()
                 .map(s -> SubjectResponse.builder()
                         .subjectId(s.getSubjectId())

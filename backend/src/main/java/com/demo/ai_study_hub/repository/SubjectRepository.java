@@ -46,4 +46,9 @@ public interface SubjectRepository extends JpaRepository<Subject, Integer>, JpaS
            "AND d.visibility = 'PUBLIC' " +
            "AND d.approvalStatus = 'APPROVED'")
     List<Subject> findPublicSubjectsInUse();
+
+    @Query("SELECT s FROM Subject s WHERE s.status = 'ACTIVE' " +
+           "AND (s.scope = 'SYSTEM' OR (s.scope IS NULL AND s.owner IS NULL)) " +
+           "ORDER BY s.subjectCode ASC, s.subjectName ASC")
+    List<Subject> findActiveSystemSubjects();
 }
