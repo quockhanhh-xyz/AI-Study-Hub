@@ -10,6 +10,10 @@ let targetUserIdToUpdate = null;
 let targetStatusToUpdate = null;
 
 document.addEventListener("DOMContentLoaded", () => {
+    if (window.initCustomDropdowns) {
+        window.initCustomDropdowns();
+    }
+
     if (window.authReady) {
         window.authReady.then((isAuthenticated) => {
             if (isAuthenticated) {
@@ -20,6 +24,31 @@ document.addEventListener("DOMContentLoaded", () => {
         loadUsers(0);
     }
 });
+
+function syncDropdowns() {
+    ["filterRole", "filterTier", "filterStatus"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.dispatchEvent(new Event("syncCustom"));
+    });
+}
+
+function removeFilter(type) {
+    if (type === 'search') document.getElementById("filterSearch").value = "";
+    if (type === 'role') document.getElementById("filterRole").value = "";
+    if (type === 'tier') document.getElementById("filterTier").value = "";
+    if (type === 'status') document.getElementById("filterStatus").value = "";
+    syncDropdowns();
+    onFilterChange();
+}
+
+function clearFilters() {
+    document.getElementById("filterSearch").value = "";
+    document.getElementById("filterRole").value = "";
+    document.getElementById("filterTier").value = "";
+    document.getElementById("filterStatus").value = "";
+    syncDropdowns();
+    onFilterChange();
+}
 
 function handleSearch(event) {
     if (currentSearchTimeout) {
