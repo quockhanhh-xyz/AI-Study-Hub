@@ -447,6 +447,13 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
         String inviteeEmail = request.getEmail().trim().toLowerCase();
 
+        com.demo.ai_study_hub.dto.TierLimits ownerLimits = tierPolicyService.getLimitsForUser(group.getOwner());
+        long memberCount = studyGroupMemberRepository.countByGroupAndStatus(group, "ACTIVE");
+        if (memberCount >= ownerLimits.maxMembersPerGroup()) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Group members limit exceeded", "GROUP_MEMBER_LIMIT_EXCEEDED");
+        }
+
         User invitee = userRepository.findByEmail(inviteeEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found in the system"));
                 
@@ -629,10 +636,17 @@ public class StudyGroupServiceImpl implements StudyGroupService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invite is no longer pending");
         }
 
+        StudyGroup group = invite.getGroup();
+        com.demo.ai_study_hub.dto.TierLimits ownerLimits = tierPolicyService.getLimitsForUser(group.getOwner());
+        long memberCount = studyGroupMemberRepository.countByGroupAndStatus(group, "ACTIVE");
+        if (memberCount >= ownerLimits.maxMembersPerGroup()) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Group members limit exceeded", "GROUP_MEMBER_LIMIT_EXCEEDED");
+        }
+
         invite.setStatus("ACCEPTED");
         groupInvitationRepository.save(invite);
 
-        StudyGroup group = invite.getGroup();
         User inviter = invite.getInviter();
         if (inviter != null) {
             notificationService.createNotification(

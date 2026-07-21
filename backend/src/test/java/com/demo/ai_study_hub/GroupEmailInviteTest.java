@@ -80,6 +80,12 @@ class GroupEmailInviteTest {
         memberMembership.setStatus("ACTIVE");
 
         lenient().when(frontendProperties.getBaseUrl()).thenReturn("http://localhost:5500");
+        
+        com.demo.ai_study_hub.dto.TierLimits mockLimits = new com.demo.ai_study_hub.dto.TierLimits(
+                100L * 1024 * 1024, 30, 10L * 1024 * 1024, 20, 3, 3, 10, 30, 3, 500, 5, 500, 3, 500,
+                "gemini-2.5-flash-lite", 1, 1, 1, 5
+        );
+        lenient().when(tierPolicyService.getLimitsForUser(any())).thenReturn(mockLimits);
     }
 
     @Test
