@@ -40,7 +40,10 @@ public class FavoriteDocumentItemResponse {
     private String previewUrl;
     private String downloadUrl;
     private PreviewMode previewMode;
+    private Integer subjectId;
+    private String subjectCode;
     private String subjectName;
+    private Integer folderId;
     private String folderName;
     private Boolean canOpen;
     private Boolean canDownload;

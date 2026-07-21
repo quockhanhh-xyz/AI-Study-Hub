@@ -17,12 +17,15 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
+import com.demo.ai_study_hub.repository.SubjectRequestRepository;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +37,7 @@ public class AdminServiceImpl implements AdminService {
     private final PaymentOrderRepository paymentOrderRepository;
     private final AiUsageLogRepository aiUsageLogRepository;
     private final PlanConfigRepository planConfigRepository;
+    private final SubjectRequestRepository subjectRequestRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -45,12 +49,13 @@ public class AdminServiceImpl implements AdminService {
         long pendingDocs = documentRepository.countByVisibilityAndApprovalStatusAndStatus("PUBLIC", "PENDING", "ACTIVE");
         long approvedDocs = documentRepository.countByVisibilityAndApprovalStatusAndStatus("PUBLIC", "APPROVED", "ACTIVE");
 
-        long totalRevenue = paymentOrderRepository.sumSuccessfulRevenue();
+        Long sumRev = paymentOrderRepository.sumSuccessfulRevenue();
+        long totalRevenue = sumRev != null ? sumRev : 0L;
         long successfulPaymentsCount = paymentOrderRepository.countByStatus("SUCCESS");
 
-        LocalDateTime nowUtc = LocalDateTime.now(ZoneOffset.UTC);
-        LocalDateTime startOfToday = nowUtc.toLocalDate().atStartOfDay();
-        LocalDateTime startOfThisMonth = nowUtc.toLocalDate().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime nowVN = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        LocalDateTime startOfToday = nowVN.toLocalDate().atStartOfDay();
+        LocalDateTime startOfThisMonth = nowVN.toLocalDate().withDayOfMonth(1).atStartOfDay();
 
         long aiRequestsToday = aiUsageLogRepository.countSuccessfulLogsAfter(startOfToday);
         long aiRequestsThisMonth = aiUsageLogRepository.countSuccessfulLogsAfter(startOfThisMonth);
@@ -94,6 +99,15 @@ public class AdminServiceImpl implements AdminService {
                 })
                 .collect(Collectors.toList());
 
+        long pendingSubjectRequests = subjectRequestRepository.countByStatus("PENDING");
+        long failedPayments = paymentOrderRepository.countByStatus("FAILED");
+
+        AdminDashboardResponse.NeedsAttentionInfo needsAttentionInfo = AdminDashboardResponse.NeedsAttentionInfo.builder()
+                .pendingPublicDocuments(pendingDocs)
+                .pendingSubjectRequests(pendingSubjectRequests)
+                .failedPayments(failedPayments)
+                .build();
+
         return AdminDashboardResponse.builder()
                 .totalUsers(totalUsers)
                 .activeUsers(activeUsers)
@@ -101,11 +115,12 @@ public class AdminServiceImpl implements AdminService {
                 .totalDocuments(totalDocuments)
                 .pendingPublicDocuments(pendingDocs)
                 .approvedPublicDocuments(approvedDocs)
-                .totalRevenue(totalRevenue)
-                .successfulPayments(successfulPaymentsCount)
+                .lifetimeRevenue(totalRevenue)
+                .allTimeSuccessfulPayments(successfulPaymentsCount)
                 .aiRequestsToday(aiRequestsToday)
                 .aiRequestsThisMonth(aiRequestsThisMonth)
                 .aiRequestsTotal(aiRequestsTotal)
+                .needsAttention(needsAttentionInfo)
                 .usersByTier(usersByTier)
                 .documentsByApprovalStatus(docsByApproval)
                 .revenueByMonth(revenueByMonth)
@@ -113,19 +128,30 @@ public class AdminServiceImpl implements AdminService {
                 .build();
     }
 
-    @Transactional(readOnly = true)
     @Override
-    public AdminDashboardChartsResponse getDashboardCharts() {
-        List<AdminDashboardChartsResponse.TierCountItem> userTierDistribution = userRepository.countUsersByTier().stream()
-                .map(row -> new AdminDashboardChartsResponse.TierCountItem(row[0].toString(), (Long) row[1]))
+    @Transactional(readOnly = true)
+    public com.demo.ai_study_hub.dto.AdminDashboardChartsResponse getDashboardCharts(Integer days) {
+        LocalDateTime nowUtc = LocalDateTime.now(ZoneOffset.UTC);
+        LocalDateTime startDate = nowUtc.minusDays(days).toLocalDate().atStartOfDay();
+
+        List<com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.TierCountItem> usersByTier = userRepository.countUsersByTier().stream()
+                .map(row -> new com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.TierCountItem(row[0].toString(), (Long) row[1]))
                 .collect(Collectors.toList());
 
-        List<AdminDashboardChartsResponse.ApprovalStatusCountItem> documentApprovalStatus = documentRepository.countDocumentsByApprovalStatus().stream()
-                .map(row -> new AdminDashboardChartsResponse.ApprovalStatusCountItem(row[0].toString(), (Long) row[1]))
+        List<String> allDocStatuses = Arrays.asList("PENDING", "APPROVED", "REJECTED", "PRIVATE");
+        Map<String, Long> docStatusMap = documentRepository.countDocumentsByApprovalStatus().stream()
+                .collect(Collectors.toMap(row -> row[0].toString(), row -> (Long) row[1]));
+        
+        List<com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.ApprovalStatusCountItem> docsByApproval = allDocStatuses.stream()
+                .map(status -> new com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.ApprovalStatusCountItem(status, docStatusMap.getOrDefault(status, 0L)))
                 .collect(Collectors.toList());
 
         List<Object[]> payGroupingData = paymentOrderRepository.findSuccessPaymentDatesAndAmounts();
         Map<String, Long> dailyRev = payGroupingData.stream()
+                .filter(row -> {
+                    LocalDateTime dt = (LocalDateTime) row[0];
+                    return !dt.isBefore(startDate);
+                })
                 .collect(Collectors.groupingBy(
                         row -> {
                             LocalDateTime dt = (LocalDateTime) row[0];
@@ -133,25 +159,28 @@ public class AdminServiceImpl implements AdminService {
                         },
                         Collectors.summingLong(row -> (Long) row[1])
                 ));
-        List<AdminDashboardChartsResponse.RevenueByDayItem> revenueByDay = dailyRev.entrySet().stream()
-                .map(e -> new AdminDashboardChartsResponse.RevenueByDayItem(e.getKey(), e.getValue()))
-                .sorted(Comparator.comparing(AdminDashboardChartsResponse.RevenueByDayItem::getDate))
+
+        List<com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.RevenueByDayItem> revenueByDay = dailyRev.entrySet().stream()
+                .map(e -> new com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.RevenueByDayItem(e.getKey(), e.getValue()))
+                .sorted(Comparator.comparing(com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.RevenueByDayItem::getDate))
                 .collect(Collectors.toList());
 
         List<LocalDateTime> aiLogDates = aiUsageLogRepository.findSuccessLogDates();
         Map<String, Long> dailyAi = aiLogDates.stream()
+                .filter(dt -> !dt.isBefore(startDate))
                 .collect(Collectors.groupingBy(
                         dt -> dt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
                         Collectors.counting()
                 ));
-        List<AdminDashboardChartsResponse.AiUsageByDayItem> aiUsageByDay = dailyAi.entrySet().stream()
-                .map(e -> new AdminDashboardChartsResponse.AiUsageByDayItem(e.getKey(), e.getValue()))
-                .sorted(Comparator.comparing(AdminDashboardChartsResponse.AiUsageByDayItem::getDate))
+
+        List<com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.AiUsageByDayItem> aiUsageByDay = dailyAi.entrySet().stream()
+                .map(e -> new com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.AiUsageByDayItem(e.getKey(), e.getValue()))
+                .sorted(Comparator.comparing(com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.AiUsageByDayItem::getDate))
                 .collect(Collectors.toList());
 
         return AdminDashboardChartsResponse.builder()
-                .userTierDistribution(userTierDistribution)
-                .documentApprovalStatus(documentApprovalStatus)
+                .userTierDistribution(usersByTier)
+                .documentApprovalStatus(docsByApproval)
                 .revenueByDay(revenueByDay)
                 .aiUsageByDay(aiUsageByDay)
                 .build();

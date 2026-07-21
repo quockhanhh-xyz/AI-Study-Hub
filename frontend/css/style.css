@@ -1409,6 +1409,7 @@ textarea.success {
 
 .sidebar.collapsed .logo-text,
 .sidebar.collapsed .nav-text,
+.sidebar.collapsed .nav-section-title,
 .sidebar.collapsed .logout-text {
   opacity: 0;
   max-width: 0;
@@ -3795,8 +3796,7 @@ svg {
 }
 
 .custom-select-list-container {
-  max-height: 240px;
-  overflow-y: auto;
+  /* Let this container grow naturally inside the scrolling parent .custom-select-options */
 }
 
 /* ===== BREADCRUMB/TEXT BACK BUTTON ===== */
@@ -3843,6 +3843,51 @@ svg {
   align-items: center;
   text-align: center;
   height: 100%;
+}
+
+#pricingGrid .plan-pricing-card {
+  align-items: stretch;
+  min-height: 100%;
+  padding-bottom: 24px;
+}
+
+#pricingGrid .plan-pricing-card > h2,
+#pricingGrid .plan-pricing-card > p {
+  text-align: center;
+}
+
+#pricingGrid .plan-feature-list {
+  flex: 1 1 auto;
+  width: 100%;
+  margin-bottom: 20px !important;
+}
+
+#pricingGrid .plan-current-badge {
+  align-self: center;
+}
+
+#pricingGrid .plan-purchase-actions {
+  align-items: stretch;
+  margin-top: auto !important;
+  width: 100%;
+}
+
+#pricingGrid .plan-action-label {
+  min-height: 20px;
+}
+
+#pricingGrid .plan-vnpay-button {
+  justify-content: center;
+  min-height: 48px;
+  width: 100%;
+}
+
+#pricingGrid .plan-payment-note {
+  min-height: 32px;
+}
+
+#pricingGrid .plan-mock-link {
+  align-self: center;
 }
 
 .member-row-main {
@@ -5440,23 +5485,44 @@ svg {
 .notification-item {
   display: flex;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 12px 16px 12px 20px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: background-color 0.2s;
   background-color: var(--surface);
+  position: relative;
 }
 
 .notification-item:hover {
   background-color: var(--background);
 }
 
+.notification-item.no-action {
+  cursor: default;
+}
+
+.notification-item.no-action:hover {
+  background-color: var(--surface);
+}
+
 .notification-item.unread {
-  background-color: var(--primary-light, rgba(79, 70, 229, 0.05));
+  background-color: rgba(245, 158, 11, 0.05);
 }
 
 .notification-item.unread:hover {
-  background-color: var(--primary-light, rgba(79, 70, 229, 0.1));
+  background-color: rgba(245, 158, 11, 0.1);
+}
+
+.notification-item.unread::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: var(--warning, #f59e0b);
+  border-radius: 50%;
 }
 
 .notification-icon {
@@ -5471,10 +5537,10 @@ svg {
   justify-content: center;
 }
 
-.notification-item.unread .notification-icon {
-  background-color: var(--primary);
-  color: white;
-}
+.notification-icon.success { color: var(--success, #10b981); background-color: rgba(16, 185, 129, 0.1); }
+.notification-icon.danger { color: var(--danger, #dc2626); background-color: rgba(220, 38, 38, 0.1); }
+.notification-icon.warning { color: var(--warning, #f59e0b); background-color: rgba(245, 158, 11, 0.1); }
+.notification-icon.info { color: var(--primary, #4f46e5); background-color: rgba(79, 70, 229, 0.1); }
 
 .notification-content {
   flex-grow: 1;
@@ -5700,23 +5766,44 @@ svg {
 .notification-item {
   display: flex;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 12px 16px 12px 20px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: background-color 0.2s;
   background-color: var(--surface);
+  position: relative;
 }
 
 .notification-item:hover {
   background-color: var(--background);
 }
 
+.notification-item.no-action {
+  cursor: default;
+}
+
+.notification-item.no-action:hover {
+  background-color: var(--surface);
+}
+
 .notification-item.unread {
-  background-color: var(--primary-light, rgba(255, 88, 88, 0.05));
+  background-color: rgba(245, 158, 11, 0.05);
 }
 
 .notification-item.unread:hover {
-  background-color: var(--primary-light, rgba(255, 88, 88, 0.1));
+  background-color: rgba(245, 158, 11, 0.1);
+}
+
+.notification-item.unread::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: var(--warning, #f59e0b);
+  border-radius: 50%;
 }
 
 .notification-icon {
@@ -5731,10 +5818,10 @@ svg {
   justify-content: center;
 }
 
-.notification-item.unread .notification-icon {
-  background-color: var(--primary);
-  color: white;
-}
+.notification-icon.success { color: var(--success, #10b981); background-color: rgba(16, 185, 129, 0.1); }
+.notification-icon.danger { color: var(--danger, #dc2626); background-color: rgba(220, 38, 38, 0.1); }
+.notification-icon.warning { color: var(--warning, #f59e0b); background-color: rgba(245, 158, 11, 0.1); }
+.notification-icon.info { color: var(--primary, #4f46e5); background-color: rgba(79, 70, 229, 0.1); }
 
 .notification-content {
   flex-grow: 1;

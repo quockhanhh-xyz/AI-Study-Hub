@@ -134,4 +134,6 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
             @Param("fileType") String fileType,
             @Param("subjectId") Integer subjectId
     );
+
+    long countBySubject(com.demo.ai_study_hub.entity.Subject subject);
 }

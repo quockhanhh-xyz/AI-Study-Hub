@@ -19,7 +19,10 @@
             <div class="admin-layout">
                 <div class="admin-content-wrapper">
             <header class="admin-page-header">
-                <h1 class="admin-page-title">Public Document Moderation</h1>
+                <div class="admin-page-header-text">
+                    <h1 class="admin-page-title">Public Documents</h1>
+                    <p class="admin-page-subtitle" style="color: var(--text-muted); font-size: 0.875rem; margin-top: 4px;">Manage documents submitted to Community Library.</p>
+                </div>
                 <div class="admin-header-actions">
                     <button id="exportBtn" class="btn btn-primary">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
@@ -51,6 +54,14 @@
 
             <div id="docsContent" style="display: none;">
 
+            <!-- Quick Tabs -->
+            <div class="admin-tabs" style="display: flex; gap: 24px; border-bottom: 1px solid var(--border-light); margin-bottom: 24px;">
+                <button class="admin-tab active" data-tab="PENDING" style="background: none; border: none; padding: 12px 0; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600; cursor: pointer;">Pending Review <span id="tabCountPending" style="background: var(--bg-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">0</span></button>
+                <button class="admin-tab" data-tab="APPROVED" style="background: none; border: none; padding: 12px 0; border-bottom: 2px solid transparent; color: var(--text-muted); font-weight: 500; cursor: pointer;">Approved <span id="tabCountApproved" style="background: var(--bg-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">0</span></button>
+                <button class="admin-tab" data-tab="REJECTED" style="background: none; border: none; padding: 12px 0; border-bottom: 2px solid transparent; color: var(--text-muted); font-weight: 500; cursor: pointer;">Rejected <span id="tabCountRejected" style="background: var(--bg-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">0</span></button>
+                <button class="admin-tab" data-tab="ALL" style="background: none; border: none; padding: 12px 0; border-bottom: 2px solid transparent; color: var(--text-muted); font-weight: 500; cursor: pointer;">All Public <span id="tabCountAll" style="background: var(--bg-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">0</span></button>
+            </div>
+
             <!-- Filters -->
             <div class="admin-actions-bar">
                 <div class="admin-filters">
@@ -58,7 +69,7 @@
                     <select id="subjectFilter" class="admin-filter-input">
                         <option value="">All Subjects</option>
                     </select>
-                    <select id="statusFilter" class="admin-filter-input">
+                    <select id="statusFilter" class="admin-filter-input" style="display: none;">
                         <option value="">All Statuses</option>
                         <option value="PENDING">PENDING</option>
                         <option value="APPROVED">APPROVED</option>
@@ -91,8 +102,8 @@
                             <th>Subject</th>
                             <th>Type</th>
                             <th>Visibility</th>
-                            <th>Approval Status</th>
-                            <th>Proc. Status</th>
+                            <th title="Shows whether this document is approved for Community Library.">Approval Status</th>
+                            <th title="Shows whether document content is ready for AI features.">AI Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -114,9 +125,9 @@
     <!-- Approve Confirm Modal -->
     <div class="admin-modal-overlay" id="approveModal">
         <div class="admin-modal">
-            <h3 class="admin-modal-title">Approve Document</h3>
+            <h3 class="admin-modal-title">Approve this document?</h3>
             <div class="admin-modal-body">
-                <p>Are you sure you want to approve this document? It will be visible in the Community Library.</p>
+                <p>This document will become visible in Community Library.</p>
                 <input type="hidden" id="approveDocId">
             </div>
             <div class="admin-modal-actions">
@@ -129,9 +140,9 @@
     <!-- Reject Confirm Modal -->
     <div class="admin-modal-overlay" id="rejectModal">
         <div class="admin-modal">
-            <h3 class="admin-modal-title">Reject Document</h3>
+            <h3 class="admin-modal-title">Reject this public submission?</h3>
             <div class="admin-modal-body">
-                <p>Are you sure you want to reject this document? It will be hidden from the Community Library.</p>
+                <p>The document will be removed from Community Library. The owner's original file will not be deleted.</p>
                 <input type="hidden" id="rejectDocId">
                 <div class="form-group" style="margin-top: 15px;">
                     <label>Reason (Optional):</label>
@@ -148,9 +159,9 @@
     <!-- Move to Pending Confirm Modal -->
     <div class="admin-modal-overlay" id="pendingModal">
         <div class="admin-modal">
-            <h3 class="admin-modal-title">Move document back to review?</h3>
+            <h3 class="admin-modal-title">Move this document back to Pending Review?</h3>
             <div class="admin-modal-body">
-                <p>This document will be hidden from Community Library until approved again.</p>
+                <p>It will be hidden from Community Library until approved again.</p>
                 <input type="hidden" id="pendingDocId">
             </div>
             <div class="admin-modal-actions">
@@ -163,9 +174,9 @@
     <!-- Unpublish Confirm Modal -->
     <div class="admin-modal-overlay" id="unpublishModal">
         <div class="admin-modal">
-            <h3 class="admin-modal-title">Unpublish document?</h3>
+            <h3 class="admin-modal-title">Unpublish this document?</h3>
             <div class="admin-modal-body">
-                <p>This document will be set to PRIVATE and hidden from public search.</p>
+                <p>Visibility will change to Private. It will no longer appear in Community Library.</p>
                 <input type="hidden" id="unpublishDocId">
             </div>
             <div class="admin-modal-actions">

@@ -98,6 +98,11 @@ async function loadPayments(page = currentPage) {
 function renderPayments(payments) {
     const tableBody = document.getElementById('paymentsTableBody');
     tableBody.innerHTML = '';
+    
+    let sumRevenue = 0;
+    let countSuccess = 0;
+    let countPending = 0;
+    let countFailed = 0;
 
     if (!payments || payments.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 24px; color: #666;">No payments found matching the criteria.</td></tr>';
@@ -127,7 +132,11 @@ function renderPayments(payments) {
 
         // Plan
         const tdPlan = document.createElement('td');
-        tdPlan.textContent = payment.planCode || 'N/A';
+        let planStr = payment.planCode || 'N/A';
+        if (planStr.includes('_1_MONTH')) {
+            planStr = planStr.replace('_1_MONTH', '').charAt(0).toUpperCase() + planStr.replace('_1_MONTH', '').slice(1).toLowerCase() + ' · 1 month';
+        }
+        tdPlan.textContent = planStr;
 
         // Amount (VND Format)
         const tdAmount = document.createElement('td');
@@ -140,24 +149,49 @@ function renderPayments(payments) {
 
         // Provider
         const tdProvider = document.createElement('td');
-        tdProvider.textContent = payment.paymentProvider || 'UNKNOWN';
+        let provStr = payment.paymentProvider || 'UNKNOWN';
+        if (provStr === 'VNPAY_SANDBOX') provStr = 'VNPay (Sandbox)';
+        else if (provStr === 'MOCK') provStr = 'Mock Provider';
+        tdProvider.textContent = provStr;
 
         // Status Badge
         const tdStatus = document.createElement('td');
         const badge = document.createElement('span');
         badge.className = `status-badge status-${(payment.status || 'PENDING').toLowerCase()}`;
-        badge.textContent = payment.status;
+        
+        let statusText = payment.status;
+        if (statusText === 'SUCCESS') statusText = 'Paid';
+        else if (statusText === 'PENDING') statusText = 'Pending';
+        else if (statusText === 'FAILED') statusText = 'Failed';
+        else if (statusText === 'CANCELLED') statusText = 'Cancelled';
+        else if (statusText === 'EXPIRED') statusText = 'Expired';
+        
+        if (payment.status === 'PENDING') {
+            const createdAtDate = new Date(payment.createdAt);
+            const expiresAtDate = new Date(createdAtDate.getTime() + 15 * 60000); // 15 mins
+            const now = new Date();
+            if (now < expiresAtDate) {
+                const diffMin = Math.ceil((expiresAtDate - now) / 60000);
+                statusText = `Pending · expires in ${diffMin} min`;
+            } else {
+                statusText = 'Expired';
+                badge.className = 'status-badge status-expired';
+            }
+        }
+        
+        badge.textContent = statusText;
         tdStatus.appendChild(badge);
 
         // Date (CreatedAt in local timezone)
         const tdDate = document.createElement('td');
-        const localDate = new Date(payment.createdAt).toLocaleString('vi-VN', {
-            year: 'numeric',
-            month: '2-digit',
+        const localDate = new Date(payment.createdAt).toLocaleString('en-US', {
+            month: 'short',
             day: '2-digit',
+            year: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
-        });
+            minute: '2-digit',
+            hour12: false
+        }).replace(',', ' ·');
         tdDate.textContent = localDate;
 
         // Actions
@@ -179,7 +213,24 @@ function renderPayments(payments) {
         row.appendChild(tdActions);
 
         tableBody.appendChild(row);
+        
+        // Accumulate stats
+        if (payment.status === 'SUCCESS') {
+            countSuccess++;
+            sumRevenue += (payment.amount || 0);
+        } else if (payment.status === 'PENDING') {
+            countPending++;
+        } else {
+            countFailed++;
+        }
     });
+    
+    // Update summary cards
+    const formatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+    document.getElementById('cardRevenue').textContent = formatter.format(sumRevenue);
+    document.getElementById('cardSuccess').textContent = countSuccess;
+    document.getElementById('cardPending').textContent = countPending;
+    document.getElementById('cardFailed').textContent = countFailed;
 }
 
 /**
@@ -259,17 +310,46 @@ async function viewPaymentDetails(paymentId) {
         if (response && response.success && response.data) {
             const p = response.data;
             const formatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+            
+            let displayStatus = p.status || 'PENDING';
+            if (displayStatus === 'PENDING') {
+                const createdDate = new Date(p.createdAt);
+                if (createdDate.getTime() + 15 * 60000 < Date.now()) {
+                    displayStatus = 'EXPIRED';
+                }
+            }
+
             body.innerHTML = `
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div><strong>Trxn ID:</strong> #${p.paymentId}</div>
-                    <div><strong>User:</strong> ${p.userEmail || p.userId}</div>
-                    <div><strong>Plan:</strong> ${p.planCode || p.planName || '-'}</div>
-                    <div><strong>Amount:</strong> <span style="font-weight:bold">${formatter.format(p.amount)}</span></div>
-                    <div><strong>Provider:</strong> ${p.paymentProvider}</div>
-                    <div><strong>Trans. No:</strong> ${p.transactionNo || '-'}</div>
-                    <div><strong>Status:</strong> <span class="badge status-${(p.status || 'PENDING').toLowerCase()}">${p.status}</span></div>
-                    <div><strong>Created At:</strong> ${p.createdAt ? new Date(p.createdAt).toLocaleString() : '-'}</div>
-                    <div><strong>Paid At:</strong> ${p.paidAt ? new Date(p.paidAt).toLocaleString() : '-'}</div>
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    <!-- Payment Section -->
+                    <div>
+                        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">Payment</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div><strong>Trxn ID:</strong> #${p.paymentId}</div>
+                            <div><strong>Plan:</strong> ${p.planCode || p.planName || '-'}</div>
+                            <div><strong>Amount:</strong> <span style="font-weight:bold">${formatter.format(p.amount)}</span></div>
+                            <div><strong>Status:</strong> <span class="badge status-${displayStatus.toLowerCase()}">${displayStatus}</span></div>
+                            <div><strong>Created At:</strong> ${p.createdAt ? new Date(p.createdAt).toLocaleString() : 'Not available'}</div>
+                            <div><strong>Paid At:</strong> ${p.paidAt ? new Date(p.paidAt).toLocaleString() : 'Not available'}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Customer Section -->
+                    <div>
+                        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">Customer</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div><strong>User Email:</strong> ${p.userEmail || p.userId}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- VNPay Section -->
+                    <div>
+                        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">VNPay Details</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div><strong>Provider:</strong> ${p.paymentProvider || 'Not available'}</div>
+                            <div><strong>Trans. No:</strong> ${p.transactionNo || 'Not available'}</div>
+                        </div>
+                    </div>
                 </div>
             `;
         } else {

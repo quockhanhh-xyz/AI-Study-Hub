@@ -78,7 +78,6 @@ class PublicCommunityTest {
 
         DocumentResponse res = documentService.publishDocument(10, "owner@test.com");
 
-        assertNotNull(res);
         assertEquals("PUBLIC", res.getVisibility());
         assertEquals("PENDING", res.getApprovalStatus());
         assertNull(res.getPublishedAt());

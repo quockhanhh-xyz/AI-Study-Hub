@@ -98,7 +98,7 @@ public class FolderServiceImpl implements FolderService {
                     .stream().map(this::mapToResponse).collect(Collectors.toList());
         }
 
-        return folderRepository.findByOwnerAndStatusAndParentFolderIsNull(owner, "ACTIVE")
+        return folderRepository.findRootFoldersByOwner(owner)
                 .stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
@@ -195,6 +195,7 @@ public class FolderServiceImpl implements FolderService {
                 .parentFolderId(folder.getParentFolder() != null
                         ? folder.getParentFolder().getFolderId() : null)
                 .fileCount((int) fileCount)
+                .documentCount((int) fileCount)
                 .subfolderCount((int) subfolderCount)
                 .status(folder.getStatus())
                 .createdAt(folder.getCreatedAt())

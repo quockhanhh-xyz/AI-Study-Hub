@@ -193,8 +193,16 @@ function renderDynamicSidebar(isAuthenticated) {
   });
 
 
+  // Check if we are rendering for ADMIN to add a section label
+  const isAdminView = visibleMenus.length > 0 && visibleMenus[0].requiresAdmin;
+
   // Re-render links safely inside the container with standardized icon and text wrappers
-  navContainer.innerHTML = visibleMenus
+  let navHtml = "";
+  if (isAdminView) {
+      navHtml += `<div class="nav-section-title" style="padding: 12px 24px 8px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; transition: opacity 0.3s ease; overflow: hidden; white-space: nowrap;">Admin Console</div>`;
+  }
+  
+  navHtml += visibleMenus
     .map(item => `
       <a href="${item.url}" class="nav-link" title="${item.name}">
         <span class="nav-icon">${item.icon || ICON_INFO}</span>
@@ -202,6 +210,8 @@ function renderDynamicSidebar(isAuthenticated) {
       </a>
     `)
     .join("");
+
+  navContainer.innerHTML = navHtml;
 
 
   // Append a dedicated Logout link if user is fully logged in

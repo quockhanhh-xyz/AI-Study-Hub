@@ -94,6 +94,7 @@ public class PlanConfig {
     private String featuresList; // comma-separated list of features
 
     @Column(name = "status", length = 20, nullable = false)
+    @Builder.Default
     private String status = "ACTIVE"; // "ACTIVE" | "INACTIVE"
 
     @Column(name = "target_tier", length = 20, nullable = false)

@@ -89,10 +89,13 @@ function initAdminDocuments() {
                 totalElements = data.totalElements;
 
                 renderTable(data.items);
-                renderPagination(data.totalPages);
+                renderPagination(data.totalPages, data.totalElements);
 
                 loadingState.style.display = "none";
                 contentState.style.display = "block";
+                
+                // Fetch counts for tabs
+                updateTabCounts();
             } else {
                 throw new Error(response?.message || "Failed to load documents");
             }
@@ -105,53 +108,90 @@ function initAdminDocuments() {
         }
     };
 
+    const getApprovalBadgeClass = (status) => {
+        if (!status) return 'badge-secondary';
+        switch(status.toUpperCase()) {
+            case 'PENDING': return 'badge-warning';
+            case 'APPROVED': return 'badge-success';
+            case 'REJECTED': return 'badge-danger';
+            default: return 'badge-secondary';
+        }
+    };
+    
+    const getApprovalLabel = (status) => {
+        if (!status) return 'Pending Review';
+        if (status.toUpperCase() === 'PENDING') return 'Pending Review';
+        if (status.toUpperCase() === 'APPROVED') return 'Approved';
+        if (status.toUpperCase() === 'REJECTED') return 'Rejected';
+        return status;
+    };
+
+    const getVisibilityBadgeClass = (visibility) => {
+        if (!visibility) return 'badge-secondary';
+        return visibility.toUpperCase() === 'PUBLIC' ? 'badge-primary' : 'badge-secondary';
+    };
+
+    const getAIBadgeInfo = (status) => {
+        if (!status) return { text: 'Not processed', cls: 'badge-secondary' };
+        switch(status.toUpperCase()) {
+            case 'PENDING': return { text: 'Not processed', cls: 'badge-secondary' };
+            case 'PROCESSING': return { text: 'Processing', cls: 'badge-warning' };
+            case 'COMPLETED': return { text: 'Ready for AI', cls: 'badge-success' };
+            case 'FAILED': return { text: 'Failed', cls: 'badge-danger' };
+            case 'UNSUPPORTED': return { text: 'Unsupported', cls: 'badge-secondary' };
+            case 'EMPTY_CONTENT': return { text: 'Empty content', cls: 'badge-warning' };
+            default: return { text: status, cls: 'badge-secondary' };
+        }
+    };
+
     const renderTable = (documents) => {
         if (!documents || documents.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No documents found.</td></tr>';
             return;
         }
 
-        tableBody.innerHTML = documents.map(doc => `
+        tableBody.innerHTML = documents.map(doc => {
+            const aiInfo = getAIBadgeInfo(doc.processingStatus);
+            return `
             <tr>
                 <td>${doc.title || '-'}</td>
-                <td>${doc.displayName || '-'}</td>
-                <td>${doc.subjectCode ? `${doc.subjectCode} - ${doc.subjectName}` : '-'}</td>
+                <td style="color: ${doc.displayName ? 'inherit' : 'var(--text-muted)'}">${doc.displayName || 'Unknown owner'}</td>
+                <td style="color: ${doc.subjectCode ? 'inherit' : 'var(--text-muted)'}">${doc.subjectCode ? `${doc.subjectCode} - ${doc.subjectName}` : 'No subject'}</td>
                 <td>${doc.fileType || '-'}</td>
-                <td><span class="badge active">${doc.visibility}</span></td>
-                <td><span class="badge ${doc.approvalStatus.toLowerCase()}">${doc.approvalStatus}</span></td>
-                <td>${doc.processingStatus}</td>
+                <td><span class="badge ${getVisibilityBadgeClass(doc.visibility)}">${doc.visibility ? doc.visibility.charAt(0).toUpperCase() + doc.visibility.slice(1).toLowerCase() : '-'}</span></td>
+                <td><span class="badge ${getApprovalBadgeClass(doc.approvalStatus)}">${getApprovalLabel(doc.approvalStatus)}</span></td>
+                <td><span class="badge ${aiInfo.cls}">${aiInfo.text}</span></td>
                 <td>
                     <button class="btn btn-sm btn-outline" onclick="window.location.href='admin-document-detail.html?id=${doc.documentId}'">View</button>
                     ${doc.approvalStatus === 'PENDING' ? `
                         <button class="btn btn-sm btn-primary" onclick="openApproveModal(${doc.documentId})">Approve</button>
                         <button class="btn btn-sm btn-danger" onclick="openRejectModal(${doc.documentId})">Reject</button>
                     ` : doc.approvalStatus === 'APPROVED' ? `
-                        <button class="btn btn-sm btn-warning" onclick="openPendingConfirmModal(${doc.documentId})">Re-review</button>
-                        <button class="btn btn-sm btn-danger" onclick="openRejectModal(${doc.documentId})">Reject</button>
+                        <button class="btn btn-sm btn-warning" onclick="openPendingConfirmModal(${doc.documentId})">Move to Pending</button>
                         <button class="btn btn-sm btn-secondary" onclick="openUnpublishConfirmModal(${doc.documentId})">Unpublish</button>
                     ` : doc.approvalStatus === 'REJECTED' ? `
-                        <button class="btn btn-sm btn-warning" onclick="openPendingConfirmModal(${doc.documentId})">Re-review</button>
-                        <button class="btn btn-sm btn-primary" onclick="openApproveModal(${doc.documentId})">Approve</button>
-                    ` : '-'}
+                        <button class="btn btn-sm btn-warning" onclick="openPendingConfirmModal(${doc.documentId})">Move to Pending</button>
+                    ` : ''}
                 </td>
             </tr>
-        `).join('');
+        `}).join('');
     };
 
-    const renderPagination = (totalPages) => {
-        pagination.innerHTML = '';
-        if (totalPages <= 1) return;
-
+    const renderPagination = (totalPages, totalItems) => {
+        let html = `<div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 8px;">
+            Showing ${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, totalItems)} of ${totalItems} documents
+        </div>
+        <div style="display: flex; gap: 4px;">`;
         for (let i = 1; i <= totalPages; i++) {
-            const btn = document.createElement('button');
-            btn.textContent = i;
-            if (i === currentPage) btn.classList.add('active');
-            btn.onclick = () => {
-                currentPage = i;
-                loadDocuments();
-            };
-            pagination.appendChild(btn);
+            html += `<button class="${i === currentPage ? 'active' : ''}" onclick="window.goToPage(${i})">${i}</button>`;
         }
+        html += `</div>`;
+        pagination.innerHTML = html;
+    };
+    
+    window.goToPage = (page) => {
+        currentPage = page;
+        loadDocuments();
     };
 
     // Modal helpers (global so inline onclick works)
@@ -253,15 +293,59 @@ function initAdminDocuments() {
         loadDocuments();
     };
 
+    // Quick Tabs Logic
+    const tabs = document.querySelectorAll('.admin-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => {
+                t.classList.remove('active');
+                t.style.borderBottomColor = 'transparent';
+                t.style.color = 'var(--text-muted)';
+            });
+            tab.classList.add('active');
+            tab.style.borderBottomColor = 'var(--primary)';
+            tab.style.color = 'var(--primary)';
+            
+            const status = tab.dataset.tab;
+            statusFilter.value = status === 'ALL' ? '' : status;
+            currentPage = 1;
+            loadDocuments();
+        });
+    });
+
+    window.updateTabCounts = async () => {
+        try {
+            const reqs = [
+                getAdminPublicDocuments({ page: 0, size: 1, approvalStatus: 'PENDING' }),
+                getAdminPublicDocuments({ page: 0, size: 1, approvalStatus: 'APPROVED' }),
+                getAdminPublicDocuments({ page: 0, size: 1, approvalStatus: 'REJECTED' }),
+                getAdminPublicDocuments({ page: 0, size: 1 })
+            ];
+            const [pendingRes, approvedRes, rejectedRes, allRes] = await Promise.all(reqs);
+            
+            if (pendingRes && pendingRes.success) document.getElementById('tabCountPending').textContent = pendingRes.data.totalElements;
+            if (approvedRes && approvedRes.success) document.getElementById('tabCountApproved').textContent = approvedRes.data.totalElements;
+            if (rejectedRes && rejectedRes.success) document.getElementById('tabCountRejected').textContent = rejectedRes.data.totalElements;
+            if (allRes && allRes.success) document.getElementById('tabCountAll').textContent = allRes.data.totalElements;
+        } catch (e) {
+            console.warn("Could not fetch tab counts", e);
+        }
+    };
+
     exportBtn.addEventListener('click', async () => {
         try {
-            exportBtn.disabled = true;
-            exportBtn.innerHTML = 'Exporting...';
             const params = {};
             if (searchInput.value) params.search = searchInput.value;
-            if (subjectFilter.value) params.subjectId = subjectFilter.value;
+            if (subjectFilter && subjectFilter.value) params.subjectId = subjectFilter.value;
             if (statusFilter.value) params.approvalStatus = statusFilter.value;
             if (fileTypeFilter.value) params.fileType = fileTypeFilter.value;
+            
+            const hasFilters = Object.keys(params).length > 0;
+            const confirmMsg = hasFilters ? "Export filtered documents?" : "Export all public documents?";
+            if (!confirm(confirmMsg)) return;
+
+            exportBtn.disabled = true;
+            exportBtn.innerHTML = 'Exporting...';
 
             await exportAdminPublicDocuments(params);
         } catch (error) {

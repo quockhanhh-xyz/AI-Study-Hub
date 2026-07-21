@@ -22,8 +22,8 @@ public interface PaymentOrderRepository extends JpaRepository<PaymentOrder, Long
 
     long countByStatus(String status);
 
-    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM PaymentOrder p WHERE p.status = 'SUCCESS'")
-    long sumSuccessfulRevenue();
+    @Query("SELECT SUM(p.amount) FROM PaymentOrder p WHERE p.status = 'SUCCESS'")
+    Long sumSuccessfulRevenue();
 
     @Query("SELECT COALESCE(p.paidAt, p.createdAt), p.amount FROM PaymentOrder p WHERE p.status = 'SUCCESS'")
     List<Object[]> findSuccessPaymentDatesAndAmounts();

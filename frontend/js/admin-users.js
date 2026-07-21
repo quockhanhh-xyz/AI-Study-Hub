@@ -139,16 +139,25 @@ function changePage(delta) {
 }
 
 function renderActionButtons(user) {
-    // Prevent blocking super admin (assuming ID 1 is super admin or cannot block self, but simple logic for now)
-    // We will just allow block/unblock for all for demo, maybe avoid blocking if ID == 1
-    if (user.userId === 1 || user.role === 'ADMIN') {
-        return `<span style="color: var(--text-muted); font-size: 12px;">No Actions</span>`;
+    let currentUserStr = localStorage.getItem("currentUser");
+    let currentUserId = -1;
+    if (currentUserStr) {
+        try {
+            currentUserId = JSON.parse(currentUserStr).id || JSON.parse(currentUserStr).userId;
+        } catch(e) {}
     }
 
+    if (user.userId === currentUserId) {
+        return `<span style="color: var(--text-muted); font-size: 12px;">(You)</span> <button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; margin-left: 4px;" onclick="viewUserDetails(${user.userId})">View</button>`;
+    }
+
+    const blockMessage = `This user will no longer be able to sign in or use AI Study Hub. Their documents, shares, groups, chat messages, and payment history will not be deleted. Are you sure you want to block this user?`;
+    const unblockMessage = `This user will regain access to their account and all previous features. Are you sure you want to unblock this user?`;
+
     if (user.status === 'BLOCKED') {
-        return `<button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; margin-right: 4px;" onclick="viewUserDetails(${user.userId})">View</button><button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;" onclick="promptUpdateStatus(${user.userId}, 'ACTIVE', 'Unblock this user?')">Unblock</button>`;
+        return `<button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; margin-right: 4px;" onclick="viewUserDetails(${user.userId})">View</button><button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;" onclick="promptUpdateStatus(${user.userId}, 'ACTIVE', \`${unblockMessage}\`)">Unblock</button>`;
     } else {
-        return `<button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; margin-right: 4px;" onclick="viewUserDetails(${user.userId})">View</button><button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; color: var(--danger); border-color: var(--danger);" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', 'Block this user?')">Block</button>`;
+        return `<button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; margin-right: 4px;" onclick="viewUserDetails(${user.userId})">View</button><button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; color: var(--danger); border-color: var(--danger);" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">Block</button>`;
     }
 }
 
@@ -248,7 +257,12 @@ async function executeUpdateStatus() {
         }
     } catch (error) {
         console.error("Error updating status:", error);
-        alert("An error occurred while updating the status.");
+        // Handle "last admin" constraint error
+        if (error.response && error.response.status === 400 && error.response.data && error.response.data.message) {
+            alert(error.response.data.message);
+        } else {
+            alert("An error occurred while updating user status.");
+        }
     }
 }
 
@@ -263,41 +277,78 @@ async function viewUserDetails(userId) {
             const expDate = u.tierExpiresAt ? new Date(u.tierExpiresAt).toLocaleString() : 'N/A';
             const joinedDate = u.createdAt ? new Date(u.createdAt).toLocaleString() : 'N/A';
 
-            let paymentsHtml = 'None';
+            const formatBytes = (bytes) => {
+                if (!bytes) return '0 MB';
+                return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            };
+
+            const formatAmount = (amt) => {
+                if (!amt) return '0 đ';
+                return amt.toLocaleString('vi-VN') + ' đ';
+            };
+
+            let paymentsHtml = '<p style="color: var(--text-muted); font-size: 0.9rem;">No recent payments.</p>';
             if (u.paymentHistory && u.paymentHistory.length > 0) {
-                paymentsHtml = '<ul style="margin:0; padding-left:20px;">' + u.paymentHistory.map(p => `<li>${escapeHtml(p.planCode || 'N/A')} (${p.amount || 0} via ${escapeHtml(p.paymentProvider || 'N/A')}) - ${p.status} on ${new Date(p.createdAt).toLocaleDateString()}</li>`).join('') + '</ul>';
+                paymentsHtml = '<ul style="margin: 0; padding-left: 20px; font-size: 0.9rem;">' + u.paymentHistory.map(p => `
+                    <li style="margin-bottom: 6px;">
+                        <strong>${escapeHtml(p.planCode || 'N/A')}</strong> &mdash; 
+                        <span style="color: var(--success); font-weight: 500;">${formatAmount(p.amount)}</span> via ${escapeHtml(p.paymentProvider || 'N/A')} 
+                        <br>
+                        <span style="color: var(--text-muted); font-size: 0.85rem;">Status: ${p.status} on ${new Date(p.createdAt).toLocaleDateString()}</span>
+                    </li>
+                `).join('') + '</ul>';
             }
 
             body.innerHTML = `
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div><strong>ID:</strong> #${u.userId}</div>
-                    <div><strong>Name:</strong> ${escapeHtml(u.fullName)}</div>
-                    <div><strong>Email:</strong> ${escapeHtml(u.email)}</div>
-                    <div><strong>Role:</strong> ${u.role}</div>
-                    <div><strong>Status:</strong> <span class="badge ${getStatusBadgeClass(u.status)}">${u.status}</span></div>
-                    <div><strong>Tier:</strong> <span class="badge ${getTierBadgeClass(u.tier)}">${u.tier}</span></div>
-                    <div><strong>Tier Expires:</strong> ${expDate}</div>
-                    <div><strong>Documents:</strong> ${u.documentCount || 0}</div>
-                    <div><strong>Joined:</strong> ${joinedDate}</div>
-                </div>
-                <hr style="margin: 15px 0; border: none; border-top: 1px solid var(--border);">
-                <div>
-                    <strong>Usage / Quota:</strong>
-                    <div style="font-size: 13px; margin-top:5px;">
-                        <div>AI Q&A: ${u.aiUsage ? u.aiUsage.aiQaUsed : 0} / ${u.aiDailyLimit || '?'}</div>
-                        <div>Summaries: ${u.aiUsage ? u.aiUsage.summaryUsed : 0}</div>
-                        <div>Flashcards: ${u.aiUsage ? u.aiUsage.flashcardUsed : 0}</div>
-                        <div>Quizzes: ${u.aiUsage ? u.aiUsage.quizUsed : 0}</div>
-                        <div>Total AI Requests: ${u.aiUsage ? u.aiUsage.totalAiRequests : 0}</div>
-                        <div>Storage Limit: ${u.storageLimit || '?'} bytes</div>
-                        <div>Max File Size: ${u.maxFileSize || '?'} bytes</div>
-                        <div>Max Docs: ${u.maxDocumentCount || '?'}</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div style="background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                        <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 0.95rem; color: var(--primary);">Account Info</h4>
+                        <div style="display: grid; gap: 8px; font-size: 0.9rem;">
+                            <div><span style="color: var(--text-muted);">ID:</span> #${u.userId}</div>
+                            <div><span style="color: var(--text-muted);">Name:</span> <strong>${escapeHtml(u.fullName)}</strong></div>
+                            <div><span style="color: var(--text-muted);">Email:</span> ${escapeHtml(u.email)}</div>
+                            <div><span style="color: var(--text-muted);">Joined:</span> ${joinedDate}</div>
+                            <div style="margin-top: 4px;">
+                                <span class="badge ${getRoleBadgeClass(u.role)}">${u.role}</span>
+                                <span class="badge ${getStatusBadgeClass(u.status)}">${u.status}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                        <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 0.95rem; color: var(--primary);">Subscription & Quotas</h4>
+                        <div style="display: grid; gap: 8px; font-size: 0.9rem;">
+                            <div><span style="color: var(--text-muted);">Tier:</span> <span class="badge ${getTierBadgeClass(u.tier)}">${u.tier}</span></div>
+                            <div><span style="color: var(--text-muted);">Expires:</span> ${expDate}</div>
+                            <div><span style="color: var(--text-muted);">Storage Limit:</span> ${formatBytes(u.storageLimit)}</div>
+                            <div><span style="color: var(--text-muted);">Max File Size:</span> ${formatBytes(u.maxFileSize)}</div>
+                            <div><span style="color: var(--text-muted);">Max Docs:</span> ${u.maxDocumentCount || 'Unlimited'}</div>
+                            <div><span style="color: var(--text-muted);">Docs Uploaded:</span> <strong>${u.documentCount || 0}</strong></div>
+                        </div>
                     </div>
                 </div>
-                <hr style="margin: 15px 0; border: none; border-top: 1px solid var(--border);">
-                <div>
-                    <strong>Recent Payments:</strong>
-                    <div style="font-size: 13px; margin-top:5px;">${paymentsHtml}</div>
+
+                <div style="background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 16px;">
+                    <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 0.95rem; color: var(--primary);">AI Usage Overview</h4>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; font-size: 0.9rem; text-align: center;">
+                        <div style="padding: 8px; background: rgba(0,0,0,0.03); border-radius: 6px;">
+                            <div style="font-size: 1.2rem; font-weight: 600;">${u.aiUsage ? u.aiUsage.aiQaUsed : 0} <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">/ ${u.aiDailyLimit || '?'}</span></div>
+                            <div style="color: var(--text-muted); font-size: 0.8rem;">Daily Q&A</div>
+                        </div>
+                        <div style="padding: 8px; background: rgba(0,0,0,0.03); border-radius: 6px;">
+                            <div style="font-size: 1.2rem; font-weight: 600;">${u.aiUsage ? u.aiUsage.summaryUsed + u.aiUsage.flashcardUsed + u.aiUsage.quizUsed : 0}</div>
+                            <div style="color: var(--text-muted); font-size: 0.8rem;">Other AI Gen</div>
+                        </div>
+                        <div style="padding: 8px; background: rgba(0,0,0,0.03); border-radius: 6px;">
+                            <div style="font-size: 1.2rem; font-weight: 600; color: var(--primary);">${u.aiUsage ? u.aiUsage.totalAiRequests : 0}</div>
+                            <div style="color: var(--text-muted); font-size: 0.8rem;">Total Lifetime</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                    <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 0.95rem; color: var(--primary);">Recent Payments</h4>
+                    ${paymentsHtml}
                 </div>
             `;
         } else {

@@ -57,44 +57,130 @@ document.addEventListener("DOMContentLoaded", async function () {
     ULTRA: 2
   };
 
-  const EXTRA_TIER_FEATURES = {
+  // Plan entitlements cache: { FREE: {...limits}, PREMIUM: {...limits}, ULTRA: {...limits} }
+  // Populated from backend on page load; falls back to hardcoded defaults if API unavailable.
+  let allPlanEntitlements = null;
+
+  // Fallback feature data if backend entitlements API is not available
+  const FALLBACK_TIER_FEATURES = {
     FREE: [
       "5 AI questions/day",
+      "3 AI flashcard sets/day",
+      "3 AI quiz sets/day",
+      "3 AI summary generations/day",
       "Upload files up to 10MB",
-      "View documents shared by the community",
       "100MB storage",
       "Up to 30 documents",
       "Up to 20 folders (3 levels deep)",
-      "Join up to 3 study groups",
-      "Up to 30 active document shares"
+      "Join up to 3 study groups (cannot create groups)",
+      "Up to 30 active document shares",
+      "View documents shared by the community"
     ],
     PREMIUM: [
       "50 AI questions/day",
+      "15 AI flashcard sets/day",
+      "15 AI quiz sets/day",
+      "20 AI summary generations/day",
       "Upload files up to 50MB",
-      "Create basic review Flashcards",
       "2GB storage",
       "Up to 500 documents",
       "Up to 200 folders (8 levels deep)",
-      "Create up to 30 study groups",
-      "Up to 1,000 active document shares",
-      "20 AI summary generations/day",
-      "15 AI flashcard sets/day",
-      "15 AI quiz sets/day"
+      "Create up to 5 study groups (up to 30 members per group)",
+      "Up to 1,000 active document shares"
     ],
     ULTRA: [
       "200 AI questions/day",
+      "40 AI flashcard sets/day",
+      "40 AI quiz sets/day",
+      "50 AI summary generations/day",
       "Upload files up to 100MB",
-      "Auto-generate Quiz sets",
       "10GB storage",
       "Up to 2,000 documents",
       "Up to 1,000 folders (12 levels deep)",
-      "Create up to 100 study groups",
+      "Create up to 30 study groups (up to 100 members per group)",
       "Up to 5,000 active document shares",
-      "50 AI summary generations/day",
-      "40 AI flashcard sets/day",
-      "40 AI quiz sets/day"
+      "Priority AI processing"
     ]
   };
+
+  /**
+   * Converts raw entitlement limits from backend into human-readable feature strings.
+   * @param {Object} limits - The limits object from backend entitlements response.
+   * @param {string} tier - The tier name (FREE/PREMIUM/ULTRA) for context.
+   * @returns {string[]} Array of feature strings.
+   */
+  function buildFeaturesFromLimits(limits, tier) {
+    if (!limits || typeof limits !== "object") return FALLBACK_TIER_FEATURES[tier] || [];
+    const features = [];
+
+    // AI quotas
+    if (limits.aiQuestionsPerDay != null)    features.push(`${limits.aiQuestionsPerDay.toLocaleString()} AI questions/day`);
+    if (limits.aiFlashcardsPerDay != null)   features.push(`${limits.aiFlashcardsPerDay.toLocaleString()} AI flashcard sets/day`);
+    if (limits.aiQuizPerDay != null)         features.push(`${limits.aiQuizPerDay.toLocaleString()} AI quiz sets/day`);
+    if (limits.aiSummaryPerDay != null)      features.push(`${limits.aiSummaryPerDay.toLocaleString()} AI summary generations/day`);
+
+    // File & storage limits
+    if (limits.maxFileSizeBytes != null) {
+      const mb = Math.round(limits.maxFileSizeBytes / (1024 * 1024));
+      features.push(`Upload files up to ${mb}MB`);
+    }
+    if (limits.maxStorageBytes != null) {
+      const gb = limits.maxStorageBytes / (1024 * 1024 * 1024);
+      const label = gb >= 1 ? `${gb % 1 === 0 ? gb : gb.toFixed(1)}GB` : `${Math.round(limits.maxStorageBytes / (1024 * 1024))}MB`;
+      features.push(`${label} storage`);
+    }
+
+    // Documents & folders
+    if (limits.maxDocuments != null)         features.push(`Up to ${limits.maxDocuments.toLocaleString()} documents`);
+    if (limits.maxFolders != null) {
+      const depthStr = limits.maxFolderDepth != null ? ` (${limits.maxFolderDepth} levels deep)` : "";
+      features.push(`Up to ${limits.maxFolders.toLocaleString()} folders${depthStr}`);
+    }
+
+    // Groups
+    if (limits.maxGroupsOwned != null) {
+      if (limits.maxGroupsOwned === 0) {
+        const joinLimit = limits.maxGroupsJoined != null ? ` up to ${limits.maxGroupsJoined}` : "";
+        features.push(`Join${joinLimit} study groups (cannot create groups)`);
+      } else {
+        const memberStr = limits.maxGroupMembers != null ? ` (up to ${limits.maxGroupMembers} members per group)` : "";
+        features.push(`Create up to ${limits.maxGroupsOwned.toLocaleString()} study groups${memberStr}`);
+      }
+    } else if (limits.maxGroupsJoined != null) {
+      features.push(`Join up to ${limits.maxGroupsJoined.toLocaleString()} study groups`);
+    }
+
+    // Document shares
+    if (limits.maxActiveShares != null)      features.push(`Up to ${limits.maxActiveShares.toLocaleString()} active document shares`);
+
+    // Extras by tier
+    if (tier === "FREE")  features.push("View documents shared by the community");
+    if (tier === "ULTRA") features.push("Priority AI processing");
+
+    return features.length > 0 ? features : (FALLBACK_TIER_FEATURES[tier] || []);
+  }
+
+  /**
+   * Fetches per-tier entitlement limits from the backend.
+   * Expects GET /api/payments/plans/entitlements → { data: { FREE: {limits}, PREMIUM: {limits}, ULTRA: {limits} } }
+   * Falls back silently to null if endpoint is unavailable.
+   */
+  async function fetchAllPlanEntitlements() {
+    try {
+      const res = await apiRequest("/api/payments/plans/entitlements", {
+        method: "GET",
+        skipUnauthorizedRedirect: true
+      });
+      const data = res.data || res;
+      if (data && (data.FREE || data.PREMIUM || data.ULTRA)) {
+        return data;
+      }
+      return null;
+    } catch {
+      // Endpoint may not be deployed yet — silently fall back to hardcoded
+      return null;
+    }
+  }
 
   // ─────────────────────────────────────────────
   // Utilities
@@ -275,7 +361,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const currentRank = TIER_RANK[currentTier];
 
     const card = document.createElement("div");
-    card.className = "card";
+    card.className = "card plan-pricing-card";
     card.style.maxWidth = "none";
 
     const CHECK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" style="flex-shrink:0;display:block;"><path d="m23.15 5.4 -2.8 -2.8a0.5 0.5 0 0 0 -0.7 0L7.85 14.4a0.5 0.5 0 0 1 -0.7 0l-2.8 -2.8a0.5 0.5 0 0 0 -0.7 0l-2.8 2.8a0.5 0.5 0 0 0 0 0.7l6.3 6.3a0.5 0.5 0 0 0 0.7 0l15.3 -15.3a0.5 0.5 0 0 0 0 -0.7Z" fill="#16a34a" stroke-width="1"></path></svg>';
@@ -318,15 +404,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
     card.appendChild(price);
 
-    // NOTE: plan.features from Backend is currently in Vietnamese while the
-    // rest of the UI is English — skipping it for now to avoid mixed-language
-    // display. Re-enable once Backend returns English feature strings.
-    // const backendFeatures = Array.isArray(plan.features) ? plan.features : [];
-    const extraFeatures = EXTRA_TIER_FEATURES[planTier] || [];
-    const allFeatures = EXTRA_TIER_FEATURES[planTier] || [];
+    // Build features: prefer live backend entitlement limits, fall back to hardcoded strings
+    const tierLimits = allPlanEntitlements && allPlanEntitlements[planTier];
+    const allFeatures = tierLimits
+      ? buildFeaturesFromLimits(tierLimits.limits || tierLimits, planTier)
+      : (FALLBACK_TIER_FEATURES[planTier] || []);
 
     if (allFeatures.length > 0) {
       const list = document.createElement("ul");
+      list.className = "plan-feature-list";
       list.style.padding = "0";
       list.style.margin = "0";
       list.style.color = "var(--text-muted)";
@@ -362,6 +448,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (isCurrentPlan) {
       const currentBadge = document.createElement("div");
+      currentBadge.className = "plan-current-badge";
       currentBadge.innerHTML = `${CHECK_ICON}<span>Current Plan</span>`;
       currentBadge.style.cssText = "margin-top:16px;display:flex;align-items:center;justify-content:center;gap:6px;background:#dcfce7;color:#16a34a;font-weight:600;font-size:13px;padding:6px 12px;border-radius:8px;";
       card.appendChild(currentBadge);
@@ -386,13 +473,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   function buildPurchaseButtons(plan, planTier, actionLabel) {
     const wrapper = document.createElement("div");
+    wrapper.className = "plan-purchase-actions";
     wrapper.style.marginTop = "16px";
     wrapper.style.display = "flex";
     wrapper.style.flexDirection = "column";
     wrapper.style.gap = "8px";
 
     const label = document.createElement("div");
-    label.className = "helper-text";
+    label.className = "helper-text plan-action-label";
     label.style.textAlign = "center";
     label.style.marginBottom = "4px";
     label.textContent = actionLabel;
@@ -400,14 +488,24 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const vnpayBtn = document.createElement("button");
     vnpayBtn.type = "button";
-    vnpayBtn.className = "btn btn-primary";
+    vnpayBtn.className = "btn btn-primary plan-vnpay-button";
     vnpayBtn.textContent = "Pay with VNPay";
     vnpayBtn.addEventListener("click", function (event) {
       handleVNPayClick(event, plan.planCode);
     });
     wrapper.appendChild(vnpayBtn);
+    
+    const manualNote = document.createElement("div");
+    manualNote.className = "plan-payment-note";
+    manualNote.style.textAlign = "center";
+    manualNote.style.fontSize = "11px";
+    manualNote.style.color = "var(--text-muted)";
+    manualNote.style.marginTop = "2px";
+    manualNote.textContent = "One-time payment. Takes effect immediately.";
+    wrapper.appendChild(manualNote);
 
     const mockLink = document.createElement("a");
+    mockLink.className = "plan-mock-link";
     mockLink.href = "#";
     mockLink.textContent = "Mock Checkout (Demo)";
     mockLink.style.textAlign = "center";
@@ -430,7 +528,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     pricingGrid.style.display = "none";
 
     try {
-      const result = await getPaymentPlans();
+      // Fetch plans and per-tier entitlements in parallel
+      const [result, entitlements] = await Promise.all([
+        getPaymentPlans(),
+        fetchAllPlanEntitlements()
+      ]);
+      allPlanEntitlements = entitlements; // may be null if endpoint unavailable
+
       const plans = Array.isArray(result.data) ? result.data : [];
 
       pricingGrid.innerHTML = "";
@@ -459,6 +563,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       const result = await createVNPayPayment(planCode);
       const payment = result.data;
+      if (!payment || !payment.paymentUrl) {
+        await loadHistory();
+        showToast("Payment order was created, but VNPay did not return a payment URL. Please check payment history or try again.", "error");
+        setButtonLoading(btn, false);
+        return;
+      }
       window.location.href = payment.paymentUrl;
       // No need to reset button state — navigating away.
     } catch (error) {
@@ -545,77 +655,68 @@ document.addEventListener("DOMContentLoaded", async function () {
   // ─────────────────────────────────────────────
 
   function createHistoryRow(payment) {
-    const row = document.createElement("div");
-    row.className = "member-row";
+    const tr = document.createElement("tr");
 
-    const main = document.createElement("div");
-    main.className = "member-row-main";
+    // Col 1: Plan Details
+    const planTd = document.createElement("td");
+    const planDiv = document.createElement("div");
+    planDiv.className = "payment-plan-cell";
+    
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "payment-plan-name";
+    nameSpan.textContent = payment.planName || payment.planCode;
+    
+    const amountSpan = document.createElement("span");
+    amountSpan.className = "payment-amount";
+    amountSpan.textContent = formatCurrency(payment.amount, payment.currency);
+    
+    planDiv.append(nameSpan, amountSpan);
+    planTd.appendChild(planDiv);
 
-    const name = document.createElement("span");
-    name.className = "member-row-name";
-    name.textContent = `${payment.planName || payment.planCode} — ${formatCurrency(payment.amount, payment.currency)}`;
+    // Col 2: Date
+    const dateTd = document.createElement("td");
+    const dateDiv = document.createElement("div");
+    dateDiv.className = "payment-date-cell";
+    dateDiv.textContent = payment.paidAt ? formatDate(payment.paidAt) : formatDate(payment.createdAt);
+    dateTd.appendChild(dateDiv);
 
+    // Col 3: Status
+    const statusTd = document.createElement("td");
     const statusInfo = formatPaymentStatus(payment.status);
     const statusBadge = document.createElement("span");
     statusBadge.className = `status-badge ${statusInfo.class}`;
     statusBadge.textContent = statusInfo.label;
+    statusTd.appendChild(statusBadge);
 
-    main.append(name, statusBadge);
+    // Col 4: Action
+    const actionTd = document.createElement("td");
+    actionTd.style.textAlign = "right";
 
-    const meta = document.createElement("div");
-    meta.style.display = "flex";
-    meta.style.flexDirection = "column";
-    meta.style.alignItems = "flex-end";
-    meta.style.gap = "4px";
-
-    const dateInfo = document.createElement("span");
-    dateInfo.style.fontSize = "12px";
-    dateInfo.style.color = "var(--text-muted)";
-    dateInfo.textContent = payment.paidAt
-        ? `Paid: ${formatDate(payment.paidAt)}`
-        : `Created: ${formatDate(payment.createdAt)}`;
-    meta.appendChild(dateInfo);
-
-    if (canContinueVNPay(payment)) {
+    if (canContinueVNPay(payment) || (typeof isMockPayment === "function" && isMockPayment(payment) && payment.status === "PENDING")) {
       const continueBtn = document.createElement("button");
-      continueBtn.type = "button";
-      continueBtn.className = "btn btn-secondary btn-sm";
-      continueBtn.textContent = "Continue payment";
+      continueBtn.className = "btn btn-primary btn-sm";
+      continueBtn.textContent = "Pay Now";
+      continueBtn.style.marginRight = "8px";
       continueBtn.addEventListener("click", function () {
-        window.location.href = payment.paymentUrl;
+        if (payment.paymentProvider === "MOCK") {
+          openMockCheckout(payment);
+        } else if (payment.paymentUrl) {
+          window.location.href = payment.paymentUrl;
+        }
       });
-      meta.appendChild(continueBtn);
+      actionTd.appendChild(continueBtn);
 
       const cancelBtn = document.createElement("button");
-      cancelBtn.type = "button";
-      cancelBtn.className = "btn btn-danger btn-sm";
-      cancelBtn.textContent = "Cancel payment";
+      cancelBtn.className = "btn btn-secondary btn-sm";
+      cancelBtn.textContent = "Cancel";
       cancelBtn.addEventListener("click", function () {
         cancelPaymentOrder(payment.paymentId, cancelBtn);
       });
-      meta.appendChild(cancelBtn);
-    } else if (isMockPayment(payment) && payment.status === "PENDING") {
-      const continueBtn = document.createElement("button");
-      continueBtn.type = "button";
-      continueBtn.className = "btn btn-secondary btn-sm";
-      continueBtn.textContent = "Continue Mock Checkout";
-      continueBtn.addEventListener("click", function () {
-        openMockCheckout(payment);
-      });
-      meta.appendChild(continueBtn);
-
-      const cancelBtn = document.createElement("button");
-      cancelBtn.type = "button";
-      cancelBtn.className = "btn btn-danger btn-sm";
-      cancelBtn.textContent = "Cancel payment";
-      cancelBtn.addEventListener("click", function () {
-        cancelPaymentOrder(payment.paymentId, cancelBtn);
-      });
-      meta.appendChild(cancelBtn);
+      actionTd.appendChild(cancelBtn);
     }
-
-    row.append(main, meta);
-    return row;
+    
+    tr.append(planTd, dateTd, statusTd, actionTd);
+    return tr;
   }
 
   async function loadHistory() {
@@ -630,17 +731,22 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       historyLoader.style.display = "none";
 
+      const historyListContainer = document.getElementById("historyListContainer");
+      
       if (payments.length === 0) {
-        historyEmpty.style.display = "flex";
-        return;
+        historyList.innerHTML = "";
+        historyList.style.display = "none";
+        historyListContainer.style.display = "none";
+        historyEmpty.style.display = "block";
+      } else {
+        historyList.innerHTML = "";
+        payments.forEach(function (payment) {
+          historyList.appendChild(createHistoryRow(payment));
+        });
+        historyList.style.display = "";
+        historyEmpty.style.display = "none";
+        historyListContainer.style.display = "block";
       }
-
-      historyList.innerHTML = "";
-      historyList.className = "member-list";
-      payments.forEach(function (payment) {
-        historyList.appendChild(createHistoryRow(payment));
-      });
-      historyList.style.display = "flex";
     } catch (error) {
       historyLoader.style.display = "none";
       historyError.textContent = mapPaymentError(error);

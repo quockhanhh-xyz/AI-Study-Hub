@@ -8,6 +8,7 @@ function handleBack() {
             if (refUrl.origin === window.location.origin && (
                 refUrl.pathname.includes("dashboard.html") ||
                 refUrl.pathname.includes("documents.html") ||
+                refUrl.pathname.includes("my-library.html") ||
                 refUrl.pathname.includes("shared-with-me.html") ||
                 refUrl.pathname.includes("group-detail.html") ||
                 refUrl.pathname.includes("shared-folder-detail.html") ||
@@ -560,13 +561,25 @@ function renderDocument(doc) {
 
     // Publish button
     if (publishBtn) {
-        if (doc.canPublish) {
+        const canRequestSystemSubject = Boolean(doc.canRequestSystemSubject || doc.requiresSystemSubjectRequest);
+        if (doc.canPublish || canRequestSystemSubject) {
             publishBtn.style.display = "inline-flex";
             const btnTextEl = publishBtn.querySelector(".btn-text");
-            const label = doc.approvalStatus === "REJECTED" ? "Resubmit for Review" : "Submit for Review";
-            if (btnTextEl) btnTextEl.textContent = label;
-            else publishBtn.textContent = label;
-            publishBtn.onclick = () => handlePublish();
+            const isPersonalSubject = (doc.subject && doc.subject.scope === "USER_CUSTOM")
+                || doc.subjectScope === "USER_CUSTOM"
+                || canRequestSystemSubject;
+
+            if (isPersonalSubject) {
+                const label = "Request System Subject";
+                if (btnTextEl) btnTextEl.textContent = label;
+                else publishBtn.textContent = label;
+                publishBtn.onclick = () => openSubjectRequestModalForDoc(doc);
+            } else {
+                const label = doc.approvalStatus === "REJECTED" ? "Resubmit for Review" : "Submit for Review";
+                if (btnTextEl) btnTextEl.textContent = label;
+                else publishBtn.textContent = label;
+                publishBtn.onclick = () => handlePublish();
+            }
         } else {
             publishBtn.style.display = "none";
         }
@@ -1084,6 +1097,71 @@ async function handlePublish() {
         publishBtn.disabled = false;
         if (btnText) btnText.textContent = oldText;
         else publishBtn.textContent = oldText;
+    }
+}
+
+function openSubjectRequestModalForDoc(doc) {
+    const modal = document.getElementById("subjectReqModal");
+    if (!modal) {
+        window.showToast("This document uses a personal subject. Please request a system subject before publishing.", "info");
+        return;
+    }
+
+    const codeInput = document.getElementById("reqSubjectCode");
+    const nameInput = document.getElementById("reqSubjectName");
+    const descInput = document.getElementById("reqSubjectDesc");
+    const msgEl = document.getElementById("reqSubjectMsg");
+
+    if (msgEl) msgEl.style.display = "none";
+    if (codeInput && doc) codeInput.value = doc.subjectCode || (doc.subject ? doc.subject.subjectCode : "") || "";
+    if (nameInput && doc) nameInput.value = doc.subjectName || (doc.subject ? doc.subject.subjectName : "") || "";
+    if (descInput && doc) descInput.value = `Request system subject for document: ${doc.title || doc.documentId}`;
+
+    modal.classList.add("open");
+
+    const cancelBtn = document.getElementById("cancelSubjectReqBtn");
+    if (cancelBtn) {
+        cancelBtn.onclick = () => modal.classList.remove("open");
+    }
+
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.classList.remove("open");
+    };
+
+    const submitBtn = document.getElementById("submitSubjectReqBtn");
+    if (submitBtn) {
+        submitBtn.onclick = async () => {
+            const subjectCode = codeInput ? codeInput.value.trim() : "";
+            const subjectName = nameInput ? nameInput.value.trim() : "";
+            const description = descInput ? descInput.value.trim() : "";
+
+            if (!subjectCode || !subjectName) {
+                if (msgEl) {
+                    msgEl.textContent = "Subject Code and Name are required.";
+                    msgEl.style.display = "block";
+                }
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Submitting...";
+
+            try {
+                if (typeof createSubjectRequest === "function") {
+                    await createSubjectRequest({ subjectCode, subjectName, description });
+                }
+                modal.classList.remove("open");
+                window.showToast("System subject request submitted for admin review.", "success");
+            } catch (err) {
+                if (msgEl) {
+                    msgEl.textContent = err.message || "Failed to submit request.";
+                    msgEl.style.display = "block";
+                }
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Submit Request";
+            }
+        };
     }
 }
 
@@ -1917,12 +1995,15 @@ function updateAskAvailability() {
     const aiQaMessages = document.getElementById("aiQaMessages");
     const sampleRow = document.getElementById("aiQaSampleQuestions");
 
+    const qaStickyFooter = document.querySelector(".ai-qa-sticky-footer");
+
     if (aiQaProcessingStatus !== "COMPLETED") {
         disabledReason = "Document not ready for AI.";
+        if (qaStickyFooter) qaStickyFooter.style.display = "none";
         
         // Handle Onboarding state visibility
         if (processingSection) {
-            processingSection.style.display = "block";
+            processingSection.style.display = "flex";
             processingSection.classList.toggle("is-unsupported", aiQaProcessingStatus === "UNSUPPORTED");
             const msgEl = document.getElementById("aiProcessingMessage");
             const headEl = processingSection.querySelector(".ai-processing-heading");
@@ -1959,6 +2040,7 @@ function updateAskAvailability() {
         if (aiQaMessages) aiQaMessages.style.display = "none";
         if (sampleRow) sampleRow.style.display = "none";
     } else {
+        if (qaStickyFooter) qaStickyFooter.style.display = "flex";
         if (processingSection) {
             processingSection.style.display = "none";
             processingSection.classList.remove("is-unsupported");
@@ -2158,6 +2240,20 @@ function updateFocusCharCount(inputId, countId) {
     countEl.textContent = `${input.value.length}/300`;
 }
 
+function setupFocusToggle(buttonId, panelId) {
+    const button = document.getElementById(buttonId);
+    const panel = document.getElementById(panelId);
+    if (!button || !panel) return;
+
+    button.addEventListener("click", () => {
+        const expanded = button.getAttribute("aria-expanded") === "true";
+        const nextExpanded = !expanded;
+        button.setAttribute("aria-expanded", String(nextExpanded));
+        panel.classList.toggle("open", nextExpanded);
+        button.textContent = nextExpanded ? "- Hide focus topic" : "+ Add focus topic";
+    });
+}
+
 // Resets the tab state and gates generate buttons based on processingStatus.
 // Called every time renderDocument() runs (initial load, after Save/Move/Publish).
 function renderAiToolsTab(doc) {
@@ -2178,7 +2274,7 @@ function updateAiToolsAvailability() {
             notReadyMsg.style.display = "none";
             notReadyMsg.classList.remove("is-unsupported");
         } else {
-            notReadyMsg.style.display = "block";
+            notReadyMsg.style.display = "flex";
             notReadyMsg.classList.toggle("is-unsupported", aiToolsProcessingStatus === "UNSUPPORTED");
             const msgEl = document.getElementById("aiToolsProcessingMessage");
             const headEl = notReadyMsg.querySelector(".ai-processing-heading");
@@ -2517,6 +2613,8 @@ function initAiToolsHandlers() {
             updateFocusCharCount("quizFocusInput", "quizFocusCount")
         );
     }
+    setupFocusToggle("flashcardFocusToggle", "flashcardFocusContainer");
+    setupFocusToggle("quizFocusToggle", "quizFocusContainer");
 
     const flashcardCountInput = document.getElementById("flashcardCountInput");
     if (flashcardCountInput) {
@@ -2587,7 +2685,17 @@ function renderContextualTopBar(doc) {
         detailBackBtn.style.display = "none";
     }
 
-    if (!globalHeader) return;
+    if (!globalHeader) {
+        globalHeader = document.createElement("header");
+        globalHeader.className = "global-top-bar-floating";
+        globalHeader.id = "globalTopBar";
+        const mainContent = document.querySelector(".main-content");
+        if (mainContent) {
+            mainContent.insertBefore(globalHeader, mainContent.firstChild);
+        } else {
+            return;
+        }
+    }
     
     const subjectText = topBarDoc ? (topBarDoc.subject ? topBarDoc.subject : (topBarDoc.subjectName ? `${topBarDoc.subjectCode} - ${topBarDoc.subjectName}` : "")) : "";
     const docTitleText = topBarDoc ? topBarDoc.title : "";

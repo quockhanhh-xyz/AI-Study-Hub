@@ -14,6 +14,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  let allSharedDocs = [];
+  let allSharedFolders = [];
+
   const sharedLoader = document.getElementById("sharedLoader");
   const sharedError = document.getElementById("sharedError");
   const sharedErrorMessage = document.getElementById("sharedErrorMessage");
@@ -108,66 +111,49 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  const searchInput = document.getElementById("sharedSearchInput");
+  if (searchInput) {
+      searchInput.addEventListener("input", (e) => {
+          const query = e.target.value.toLowerCase();
+          renderSharedDocs(query);
+          renderSharedFolders(query);
+      });
+  }
+
   function createDocCard(doc) {
-    const card = document.createElement("article");
-    card.className = "document-card";
+    const card = document.createElement("a");
+    card.className = "shared-row";
+    card.href = `document-detail.html?id=${doc.documentId}`;
+    
+    const isFav = isDocumentFavorited(doc);
+    const favTitle = isFav ? "Remove from favorites" : "Add to favorites";
+    const favClass = isFav ? "favorite-star-btn favorited" : "favorite-star-btn";
+    
+    let iconHtml = getFileTypeIcon(doc.fileType);
+    
+    card.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 16px; flex: 1; overflow: hidden;">
+        <div style="width: 24px; height: 24px; flex-shrink: 0;">${iconHtml}</div>
+        <div style="display: flex; flex-direction: column; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          <h3 style="font-size: 15px; margin: 0; color: var(--text); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${doc.title || doc.originalFileName || "Untitled Document"}</h3>
+          <span style="font-size: 13px; color: var(--muted); margin-top: 4px;">Shared by: ${doc.sharedByName || "Unknown"} · ${formatDate(doc.createdAt)}</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
+        <button type="button" class="${favClass}" title="${favTitle}" style="background: none; border: none; cursor: pointer;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+        </button>
+        <span style="color: var(--muted); margin-left: 8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </span>
+      </div>
+    `;
 
-    // Left Column: The Large File Type Icon
-    const iconContainer = document.createElement("div");
-    iconContainer.innerHTML = getFileTypeIcon(doc.fileType);
-    const iconWrapper = iconContainer.firstElementChild;
-    card.appendChild(iconWrapper);
-
-    // Right Column: The Details Column
-    const content = document.createElement("div");
-    content.className = "document-card-content";
-
-    const header = document.createElement("div");
-    header.className = "document-card-header";
-
-    const titleEl = document.createElement("h3");
-    const titleLink = document.createElement("a");
-    titleLink.href = `document-detail.html?id=${doc.documentId}`;
-    titleLink.style.color = "inherit";
-    titleLink.style.textDecoration = "none";
-    titleLink.textContent = doc.title || "Untitled Document";
-    titleEl.appendChild(titleLink);
-    header.appendChild(titleEl);
-
-    const favoriteBtn = document.createElement("button");
-    favoriteBtn.type = "button";
-    const favorited = isDocumentFavorited(doc);
-    favoriteBtn.className = "favorite-star-btn" + (favorited ? " favorited" : "");
-    favoriteBtn.title = favorited ? "Remove from favorites" : "Add to favorites";
-    favoriteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>';
-    favoriteBtn.addEventListener("click", async function (e) {
+    const favBtn = card.querySelector(".favorite-star-btn");
+    favBtn.addEventListener("click", async function (e) {
       e.stopPropagation();
       e.preventDefault();
-      await handleToggleFavorite(doc, favoriteBtn);
-    });
-    header.appendChild(favoriteBtn);
-
-    const meta = document.createElement("div");
-    meta.className = "document-meta";
-
-    const dateItem = document.createElement("span");
-    dateItem.className = "document-meta-item";
-    dateItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> ${formatDate(doc.createdAt)}`;
-    meta.append(dateItem);
-
-    const sharedByItem = document.createElement("span");
-    sharedByItem.className = "document-meta-item";
-    sharedByItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${doc.sharedByName || "Unknown User"}`;
-    meta.append(sharedByItem);
-
-    content.append(header, meta);
-    card.appendChild(content);
-
-    card.addEventListener("click", function (e) {
-      if (e.target.closest("button") || e.target.closest("a")) {
-        return;
-      }
-      window.location.href = `document-detail.html?id=${doc.documentId}`;
+      await handleToggleFavorite(doc, favBtn);
     });
 
     return card;
@@ -175,35 +161,67 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   function createFolderCard(share) {
     const card = document.createElement("a");
-    card.className = "folder-card";
+    card.className = "shared-row";
     card.href = `shared-folder-detail.html?folderId=${share.folderId}`;
-    card.style.textDecoration = "none";
-    card.style.color = "inherit";
-
-    const icon = document.createElement("div");
-    icon.className = "folder-icon";
-    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" aria-hidden="true" focusable="false"><path stroke="currentColor" d="M1.5 10V2.5h5l3 3h11v3m3 0.25V8.5H4.6l-0.15 0.25 -0.234 0.492A28 28 0 0 0 1.5 21.272v0.228h19v-0.128a28 28 0 0 1 2.757 -12.116l0.243 -0.506Z" stroke-width="1"></path></svg>';
-
-    const name = document.createElement("p");
-    name.className = "folder-name";
-    name.textContent = share.folderName || "Untitled Folder";
-
-    const desc = document.createElement("p");
-    desc.className = "folder-meta";
-    desc.style.fontSize = "12px";
-    desc.style.marginTop = "4px";
-    desc.textContent = `Owner: ${share.ownerName || "Unknown"}`;
-
-    const meta = document.createElement("p");
-    meta.className = "folder-meta";
-    meta.style.fontSize = "11px";
-    meta.style.marginTop = "4px";
-    meta.style.color = "var(--muted)";
-    meta.textContent = `Shared by: ${share.sharedByName || "System"} · Date: ${formatDate(share.createdAt)}`;
-
-    card.append(icon, name, desc, meta);
+    
+    card.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 16px; flex: 1; overflow: hidden;">
+        <div style="width: 24px; height: 24px; flex-shrink: 0; color: var(--primary);">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" aria-hidden="true" focusable="false"><path stroke="currentColor" d="M1.5 10V2.5h5l3 3h11v3m3 0.25V8.5H4.6l-0.15 0.25 -0.234 0.492A28 28 0 0 0 1.5 21.272v0.228h19v-0.128a28 28 0 0 1 2.757 -12.116l0.243 -0.506Z" stroke-width="1"></path></svg>
+        </div>
+        <div style="display: flex; flex-direction: column; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          <h3 style="font-size: 15px; margin: 0; color: var(--text); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${share.folderName || "Untitled Folder"}</h3>
+          <span style="font-size: 13px; color: var(--muted); margin-top: 4px;">Shared by: ${share.sharedByName || "Unknown"} · ${formatDate(share.createdAt)}</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
+        <span style="color: var(--muted); margin-left: 8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </span>
+      </div>
+    `;
 
     return card;
+  }
+
+  function renderSharedDocs(query = "") {
+      const filtered = allSharedDocs.filter(d => (d.title || d.originalFileName || "").toLowerCase().includes(query));
+      
+      const badge = document.getElementById("docsCountBadge");
+      if (badge) badge.textContent = `(${filtered.length})`;
+
+      if (filtered.length === 0) {
+          sharedEmpty.style.display = "flex";
+          sharedGrid.style.display = "none";
+          return;
+      }
+
+      sharedEmpty.style.display = "none";
+      sharedGrid.innerHTML = "";
+      filtered.forEach(doc => {
+          sharedGrid.appendChild(createDocCard(doc));
+      });
+      sharedGrid.style.display = "block"; 
+  }
+
+  function renderSharedFolders(query = "") {
+      const filtered = allSharedFolders.filter(f => (f.folderName || "").toLowerCase().includes(query));
+      
+      const badge = document.getElementById("foldersCountBadge");
+      if (badge) badge.textContent = `(${filtered.length})`;
+
+      if (filtered.length === 0) {
+          folderEmpty.style.display = "flex";
+          folderGrid.style.display = "none";
+          return;
+      }
+
+      folderEmpty.style.display = "none";
+      folderGrid.innerHTML = "";
+      filtered.forEach(share => {
+          folderGrid.appendChild(createFolderCard(share));
+      });
+      folderGrid.style.display = "block";
   }
 
   async function loadSharedDocuments() {
@@ -214,21 +232,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     try {
       const result = await getSharedWithMe();
-      const docs = Array.isArray(result.data) ? result.data : [];
-
+      allSharedDocs = Array.isArray(result.data) ? result.data : [];
+      
       sharedLoader.style.display = "none";
-
-      if (docs.length === 0) {
-        sharedEmpty.style.display = "flex";
-        return;
-      }
-
-      sharedGrid.innerHTML = "";
-      docs.forEach(function (doc) {
-        sharedGrid.appendChild(createDocCard(doc));
-      });
-      sharedGrid.style.display = "grid";
-
+      const q = (document.getElementById("sharedSearchInput")?.value || "").toLowerCase();
+      renderSharedDocs(q);
     } catch (error) {
       sharedLoader.style.display = "none";
       if (error && (error.status === 401 || error.statusCode === 401 || String(error.message || "").includes("401"))) {
@@ -248,21 +256,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     try {
       const result = await getFoldersSharedWithMe();
-      const shares = Array.isArray(result.data) ? result.data : [];
+      allSharedFolders = Array.isArray(result.data) ? result.data : [];
 
       folderLoader.style.display = "none";
-
-      if (shares.length === 0) {
-        folderEmpty.style.display = "flex";
-        return;
-      }
-
-      folderGrid.innerHTML = "";
-      shares.forEach(function (share) {
-        folderGrid.appendChild(createFolderCard(share));
-      });
-      folderGrid.style.display = "grid";
-
+      const q = (document.getElementById("sharedSearchInput")?.value || "").toLowerCase();
+      renderSharedFolders(q);
     } catch (error) {
       folderLoader.style.display = "none";
       if (error && (error.status === 401 || error.statusCode === 401 || String(error.message || "").includes("401"))) {

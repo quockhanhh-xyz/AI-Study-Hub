@@ -195,11 +195,39 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       if (type === "folder") {
         await restoreFolder(id);
+        // Aggressively remove folder and its child documents from DOM to reflect immediately
+        const rows = document.querySelectorAll('.trash-row');
+        rows.forEach(row => {
+            if ((row.dataset.type === "folder" && row.dataset.id === String(id)) || 
+                (row.dataset.parentId === String(id))) {
+                row.remove();
+            }
+        });
       } else {
         await restoreDocument(id);
+        const row = document.querySelector(`.trash-row[data-type="document"][data-id="${id}"]`);
+        if (row) row.remove();
       }
       window.showToast(`${type === "folder" ? "Folder" : "Document"} restored successfully.`, "success");
-      await loadTrash();
+      
+      // Update count or show empty state if no rows left
+      const remainingRows = document.querySelectorAll('.trash-row');
+      if (remainingRows.length === 0) {
+          trashContent.style.display = "none";
+          trashEmpty.style.display = "block";
+          if (emptyTrashBtn) emptyTrashBtn.style.display = "none";
+      } else {
+          if (emptyTrashBtn) {
+              emptyTrashBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2" style="margin-right: 4px; vertical-align: middle;">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Empty Trash (${remainingRows.length} item${remainingRows.length !== 1 ? 's' : ''})
+              `;
+          }
+      }
+      // Re-fetch to ensure sync with backend
+      loadTrash();
     } catch (error) {
       resetButton(button);
       showError(error.message || `Failed to restore ${type}.`);
@@ -341,6 +369,11 @@ document.addEventListener("DOMContentLoaded", async function () {
   function createTrashDocumentRow(documentItem) {
     const row = document.createElement("div");
     row.className = "trash-row";
+    row.dataset.id = documentItem.documentId;
+    row.dataset.type = "document";
+    if (documentItem.folderId) {
+        row.dataset.parentId = documentItem.folderId;
+    }
 
     // Left Section: Icon + Info
     const left = document.createElement("div");
@@ -419,6 +452,11 @@ document.addEventListener("DOMContentLoaded", async function () {
   function createTrashFolderRow(folderItem) {
     const row = document.createElement("div");
     row.className = "trash-row";
+    row.dataset.id = folderItem.folderId;
+    row.dataset.type = "folder";
+    if (folderItem.parentFolderId) {
+        row.dataset.parentId = folderItem.parentFolderId;
+    }
 
     // Left Section: Icon + Info
     const left = document.createElement("div");

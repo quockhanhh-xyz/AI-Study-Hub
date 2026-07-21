@@ -53,7 +53,7 @@ class AdminAiUsageServiceTest {
         // Wait, mapToItem uses aiUsageLogRepository.countSuccessfulLogsByTypeAfter, but the test might fail if it's not mocked?
         // Actually, they will just return 0 (default for primitive long/int mock).
 
-        AdminAiUsageListResponse res = adminAiUsageService.getAiUsages(null, null, "AI_QA", null, null, PageRequest.of(0, 10));
+        AdminAiUsageListResponse res = adminAiUsageService.getAiUsages(null, null, "AI_SUMMARY", null, null, null, PageRequest.of(0, 10));
 
         assertNotNull(res);
         assertNotNull(res.getUsages());
