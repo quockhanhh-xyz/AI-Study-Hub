@@ -734,6 +734,8 @@ document.addEventListener("DOMContentLoaded", async function () {
       const historyListContainer = document.getElementById("historyListContainer");
       
       if (payments.length === 0) {
+        historyList.innerHTML = "";
+        historyList.style.display = "none";
         historyListContainer.style.display = "none";
         historyEmpty.style.display = "block";
       } else {
@@ -741,6 +743,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         payments.forEach(function (payment) {
           historyList.appendChild(createHistoryRow(payment));
         });
+        historyList.style.display = "";
         historyEmpty.style.display = "none";
         historyListContainer.style.display = "block";
       }
