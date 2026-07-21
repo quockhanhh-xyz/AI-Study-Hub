@@ -384,11 +384,38 @@ function renderDocument(doc) {
 
     const visibilityStatusContent = document.getElementById("visibilityStatusContent");
     const privateVisibilityNote = document.getElementById("privateVisibilityNote");
+    const pendingVisibilityNote = document.getElementById("pendingVisibilityNote");
+    const rejectedVisibilityNote = document.getElementById("rejectedVisibilityNote");
+    const rejectedVisibilityCopy = document.getElementById("rejectedVisibilityCopy");
+
     if (visibilityStatusContent && privateVisibilityNote) {
         if (doc.visibility === "PUBLIC") {
-            visibilityStatusContent.style.display = "flex";
-            privateVisibilityNote.style.display = "none";
+            if (doc.approvalStatus === "PENDING") {
+                if (pendingVisibilityNote) pendingVisibilityNote.style.display = "flex";
+                if (rejectedVisibilityNote) rejectedVisibilityNote.style.display = "none";
+                visibilityStatusContent.style.display = "none";
+                privateVisibilityNote.style.display = "none";
+            } else if (doc.approvalStatus === "REJECTED") {
+                if (pendingVisibilityNote) pendingVisibilityNote.style.display = "none";
+                if (rejectedVisibilityNote) {
+                    rejectedVisibilityNote.style.display = "flex";
+                    if (rejectedVisibilityCopy) {
+                        rejectedVisibilityCopy.textContent = doc.rejectReason
+                            ? `Reason: ${doc.rejectReason}`
+                            : "This document submission was rejected by the admin. You can edit and resubmit for review.";
+                    }
+                }
+                visibilityStatusContent.style.display = "none";
+                privateVisibilityNote.style.display = "none";
+            } else {
+                if (pendingVisibilityNote) pendingVisibilityNote.style.display = "none";
+                if (rejectedVisibilityNote) rejectedVisibilityNote.style.display = "none";
+                visibilityStatusContent.style.display = "flex";
+                privateVisibilityNote.style.display = "none";
+            }
         } else {
+            if (pendingVisibilityNote) pendingVisibilityNote.style.display = "none";
+            if (rejectedVisibilityNote) rejectedVisibilityNote.style.display = "none";
             visibilityStatusContent.style.display = "none";
             privateVisibilityNote.style.display = "flex";
         }
@@ -535,6 +562,10 @@ function renderDocument(doc) {
     if (publishBtn) {
         if (doc.canPublish) {
             publishBtn.style.display = "inline-flex";
+            const btnTextEl = publishBtn.querySelector(".btn-text");
+            const label = doc.approvalStatus === "REJECTED" ? "Resubmit for Review" : "Submit for Review";
+            if (btnTextEl) btnTextEl.textContent = label;
+            else publishBtn.textContent = label;
             publishBtn.onclick = () => handlePublish();
         } else {
             publishBtn.style.display = "none";
@@ -545,6 +576,17 @@ function renderDocument(doc) {
     if (unpublishBtn) {
         if (doc.canUnpublish) {
             unpublishBtn.style.display = "inline-flex";
+            const btnTextEl = unpublishBtn.querySelector(".btn-text");
+            let label = "Unpublish from Community";
+            if (doc.approvalStatus === "PENDING") {
+                label = "Cancel Review Submission";
+            } else if (doc.approvalStatus === "APPROVED") {
+                label = "Unpublish from Community";
+            } else if (doc.approvalStatus === "REJECTED") {
+                label = "Withdraw Submission";
+            }
+            if (btnTextEl) btnTextEl.textContent = label;
+            else unpublishBtn.textContent = label;
             unpublishBtn.onclick = () => handleUnpublish();
         } else {
             unpublishBtn.style.display = "none";
@@ -1024,15 +1066,20 @@ async function handlePublish() {
     publishBtn.disabled = true;
     const btnText = publishBtn.querySelector(".btn-text");
     const oldText = btnText ? btnText.textContent : publishBtn.textContent;
-    if (btnText) btnText.textContent = "Publishing...";
-    else publishBtn.textContent = "Publishing...";
+    if (btnText) btnText.textContent = "Submitting...";
+    else publishBtn.textContent = "Submitting...";
 
     try {
         const res = await publishDocument(currentDocumentId);
         renderDocument(res.data);
-        window.showToast("Document published successfully.", "success");
+        const msg = (res && res.message) ? res.message : "Document submitted for admin review.";
+        window.showToast(msg, "success");
     } catch (err) {
-        window.showToast(err.message || "Failed to publish document.", "error");
+        if (err.message && (err.message.includes("personal subject") || err.message.includes("USER_CUSTOM"))) {
+            window.showToast("This document uses a personal subject. Request a system subject before publishing.", "error");
+        } else {
+            window.showToast(err.message || "Failed to submit document for review.", "error");
+        }
     } finally {
         publishBtn.disabled = false;
         if (btnText) btnText.textContent = oldText;

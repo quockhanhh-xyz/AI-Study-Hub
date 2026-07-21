@@ -2054,13 +2054,29 @@
                         <div class="visibility-status-copy">Only you and people you directly share with can access this document.</div>
                       </div>
                     </div>
+
+                    <div id="pendingVisibilityNote" class="visibility-status-card pending" style="display:none; background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      <div>
+                        <div class="visibility-status-title" style="color:#1e40af;">Pending Admin Review</div>
+                        <div class="visibility-status-copy" style="color:#1e3a8a;">This document has been submitted and is waiting for admin approval before appearing in the Community Library.</div>
+                      </div>
+                    </div>
+
+                    <div id="rejectedVisibilityNote" class="visibility-status-card rejected" style="display:none; background:#fef2f2; border:1px solid #fecaca; color:#991b1b;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                      <div>
+                        <div class="visibility-status-title" style="color:#991b1b;">Review Rejected</div>
+                        <div id="rejectedVisibilityCopy" class="visibility-status-copy" style="color:#7f1d1d;">This document submission was rejected by the admin. You can edit and resubmit for review.</div>
+                      </div>
+                    </div>
                     
                     <div class="visibility-actions">
                       <button id="sharingPublishBtn" class="btn btn-secondary" type="button" style="display:none; padding: 7px 14px; font-size: 12px; font-weight: 600;">
-                        Publish to Community Library
+                        Submit for Review
                       </button>
                       <button id="sharingUnpublishBtn" class="btn btn-outline" type="button" style="display:none; padding: 7px 14px; font-size: 12px; font-weight: 600; color: #b45309; border-color: #fde68a; background: #fffbeb;">
-                        Unpublish from Community
+                        Cancel Review Submission
                       </button>
                     </div>
                   </div>

@@ -222,7 +222,7 @@ public class DocumentController {
             Principal principal) {
         try {
             DocumentResponse data = documentService.publishDocument(id, principal.getName());
-            return ResponseEntity.ok(ApiResponse.success(data, "Document published successfully"));
+            return ResponseEntity.ok(ApiResponse.success(data, "Document submitted for admin review."));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
         } catch (Exception e) {

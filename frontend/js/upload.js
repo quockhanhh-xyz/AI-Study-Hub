@@ -798,6 +798,89 @@ document.addEventListener("DOMContentLoaded", function () {
       backLink.textContent = "← Back to My Documents";
     }
   }
+
+  // ── Subject Request Modal Bindings ──
+  const openReqLink = document.getElementById("openSubjectReqLink");
+  const reqModal = document.getElementById("subjectReqModal");
+  const cancelReqBtn = document.getElementById("cancelSubjectReqBtn");
+  const submitReqBtn = document.getElementById("submitSubjectReqBtn");
+  const reqCodeInput = document.getElementById("reqSubjectCode");
+  const reqNameInput = document.getElementById("reqSubjectName");
+  const reqDescInput = document.getElementById("reqSubjectDesc");
+  const reqMsg = document.getElementById("reqSubjectMsg");
+
+  function openReqModal() {
+    if (!reqModal) return;
+    if (reqCodeInput) reqCodeInput.value = "";
+    if (reqNameInput) reqNameInput.value = "";
+    if (reqDescInput) reqDescInput.value = "";
+    if (reqMsg) {
+      reqMsg.style.display = "none";
+      reqMsg.textContent = "";
+      reqMsg.className = "helper-text";
+    }
+    reqModal.classList.add("open");
+  }
+
+  function closeReqModal() {
+    if (reqModal) reqModal.classList.remove("open");
+  }
+
+  if (openReqLink) {
+    openReqLink.addEventListener("click", function (e) {
+      e.preventDefault();
+      openReqModal();
+    });
+  }
+
+  if (cancelReqBtn) cancelReqBtn.addEventListener("click", closeReqModal);
+  if (reqModal) {
+    reqModal.addEventListener("click", function (e) {
+      if (e.target === reqModal) closeReqModal();
+    });
+  }
+
+  if (submitReqBtn) {
+    submitReqBtn.addEventListener("click", async function () {
+      const code = reqCodeInput ? reqCodeInput.value.trim() : "";
+      const name = reqNameInput ? reqNameInput.value.trim() : "";
+      const desc = reqDescInput ? reqDescInput.value.trim() : "";
+
+      if (!code || !name) {
+        if (reqMsg) {
+          reqMsg.textContent = "Subject Code and Subject Name are required.";
+          reqMsg.className = "helper-text error";
+          reqMsg.style.display = "block";
+        }
+        return;
+      }
+
+      submitReqBtn.disabled = true;
+      submitReqBtn.textContent = "Submitting...";
+      if (reqMsg) reqMsg.style.display = "none";
+
+      try {
+        await createSubjectRequest({
+          requestedCode: code,
+          requestedName: name,
+          description: desc
+        });
+        if (window.showToast) {
+          window.showToast("Your subject request has been submitted for admin review.", "success");
+        }
+        closeReqModal();
+      } catch (err) {
+        if (reqMsg) {
+          reqMsg.textContent = err.message || "Failed to submit subject request.";
+          reqMsg.className = "helper-text error";
+          reqMsg.style.display = "block";
+        }
+      } finally {
+        submitReqBtn.disabled = false;
+        submitReqBtn.textContent = "Submit Request";
+      }
+    });
+  }
 });
 
 loadFolderOptions();
