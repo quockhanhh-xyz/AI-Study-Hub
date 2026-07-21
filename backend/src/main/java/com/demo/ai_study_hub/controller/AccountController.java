@@ -64,6 +64,8 @@ public class AccountController {
                             .maxFlashcardQuotaPerDay(limits.flashcardSetsPerDay())
                             .maxQuizQuotaPerDay(limits.quizSetsPerDay())
                             .maxItemsPerSet(limits.itemsPerSet())
+                            .maxFlashcardsPerSet(limits.maxFlashcardsPerSet())
+                            .maxQuizQuestionsPerSet(limits.maxQuizQuestionsPerSet())
                             .build())
                     .build();
 

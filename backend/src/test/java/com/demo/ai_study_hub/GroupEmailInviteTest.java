@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
@@ -79,29 +80,31 @@ class GroupEmailInviteTest {
         memberMembership.setStatus("ACTIVE");
 
         lenient().when(frontendProperties.getBaseUrl()).thenReturn("http://localhost:5500");
+        
+        com.demo.ai_study_hub.dto.TierLimits mockLimits = new com.demo.ai_study_hub.dto.TierLimits(
+                100L * 1024 * 1024, 30, 10L * 1024 * 1024, 20, 3, 3, 10, 30, 3, 500, 5, 500, 3, 500,
+                "gemini-2.5-flash-lite", 1, 1, 1, 5
+        );
+        lenient().when(tierPolicyService.getLimitsForUser(any())).thenReturn(mockLimits);
     }
 
     @Test
     void sendEmailInvite_OwnerInvitesNonMember_ShouldSucceed() {
         GroupEmailInviteRequest request = new GroupEmailInviteRequest();
-        request.setEmail("newuser@test.com");
+        request.setEmail("outsider@test.com");
 
         when(userRepository.findByEmail("owner@test.com")).thenReturn(Optional.of(owner));
         when(studyGroupRepository.findById(10)).thenReturn(Optional.of(group));
         when(studyGroupMemberRepository.findByGroupAndUserAndStatus(group, owner, "ACTIVE"))
                 .thenReturn(Optional.of(ownerMembership));
-        when(userRepository.findByEmail("newuser@test.com")).thenReturn(Optional.empty());
-        doNothing().when(emailService).sendGroupInviteEmail(any(), any(), any());
+        when(userRepository.findByEmail("outsider@test.com")).thenReturn(Optional.of(outsider));
 
         GroupEmailInviteResponse response = studyGroupService.sendEmailInvite(10, request, "owner@test.com");
 
         assertNotNull(response);
         assertEquals(10, response.getGroupId());
-        assertEquals("newuser@test.com", response.getEmail());
+        assertEquals("outsider@test.com", response.getEmail());
         assertEquals("CODE1234", response.getInviteCode());
-        assertTrue(response.getJoinUrl().contains("CODE1234"));
-        assertTrue(response.getJoinUrl().startsWith("http://localhost:5500"));
-        verify(emailService).sendGroupInviteEmail("newuser@test.com", "Study Group A", response.getJoinUrl());
     }
 
     @Test
@@ -173,7 +176,7 @@ class GroupEmailInviteTest {
     }
 
     @Test
-    void sendEmailInvite_JoinUrlContainsInviteCode() {
+    void sendEmailInvite_UserNotFound_ShouldThrow404() {
         GroupEmailInviteRequest request = new GroupEmailInviteRequest();
         request.setEmail("newuser@test.com");
 
@@ -182,10 +185,11 @@ class GroupEmailInviteTest {
         when(studyGroupMemberRepository.findByGroupAndUserAndStatus(group, owner, "ACTIVE"))
                 .thenReturn(Optional.of(ownerMembership));
         when(userRepository.findByEmail("newuser@test.com")).thenReturn(Optional.empty());
-        doNothing().when(emailService).sendGroupInviteEmail(any(), any(), any());
 
-        GroupEmailInviteResponse response = studyGroupService.sendEmailInvite(10, request, "owner@test.com");
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                studyGroupService.sendEmailInvite(10, request, "owner@test.com"));
 
-        assertEquals("http://localhost:5500/frontend/groups.html?inviteCode=CODE1234", response.getJoinUrl());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("User not found in the system", ex.getReason());
     }
 }

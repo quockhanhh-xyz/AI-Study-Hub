@@ -109,8 +109,8 @@ function renderCurrentCard() {
     const position = currentCardIndex + 1;
     const percent = Math.round((position / total) * 100);
     document.getElementById("flashcardProgress").textContent = `Card ${position} / ${total} · ${percent}%`;
-    const progressFill = document.getElementById("flashcardProgressFill");
-    if (progressFill) progressFill.style.width = `${percent}%`;
+    const progressBar = document.getElementById("flashcardProgressBar");
+    if (progressBar) progressBar.value = percent;
 
     const cardEl = document.getElementById("flashcardCard");
     cardEl.classList.toggle("flipped", isCardFlipped);

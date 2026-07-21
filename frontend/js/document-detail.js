@@ -2,6 +2,16 @@
 // Standardized UI styles and theme configurations.
 
 function handleBack() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const from = urlParams.get('from');
+    if (from === 'group') {
+        const groupId = urlParams.get('groupId');
+        if (groupId) {
+            window.location.href = `group-detail.html?id=${groupId}`;
+            return;
+        }
+    }
+
     if (document.referrer) {
         try {
             const refUrl = new URL(document.referrer);
@@ -2660,14 +2670,15 @@ function toggleDangerZone() {
 window.toggleDangerZone = toggleDangerZone;
 
 function renderContextualTopBar(doc) {
-    const globalHeader = document.getElementById("globalTopBar");
+    let globalHeader = document.getElementById("globalTopBar");
     const topBarDoc = doc || currentDocumentForTopBar || window.currentDocumentDetailForTopBar || null;
     
     const urlParams = new URLSearchParams(window.location.search);
     const fromParam = urlParams.get("from");
     
-    let backLabel = "← Back to My Documents";
-    let backUrl = "documents.html";
+    let backLabel = "← Back to My Folders";
+    let backUrl = "my-library.html?view=folders";
+    
     if (fromParam === "community" || currentIsCommunityView) {
         backLabel = "← Back to Community Library";
         backUrl = "community.html";
@@ -2677,6 +2688,22 @@ function renderContextualTopBar(doc) {
     } else if (fromParam === "folders") {
         backLabel = "← Back to My Folders";
         backUrl = "folders.html";
+    } else if (fromParam === "mylibrary_folders") {
+        const folderId = urlParams.get("folderId");
+        const folderName = urlParams.get("folderName");
+        if (folderId && folderName) {
+            backLabel = `← Back to ${decodeURIComponent(folderName)}`;
+            backUrl = `my-library.html?view=folders&folderId=${folderId}`;
+        } else {
+            backLabel = "← Back to My Folders";
+            backUrl = "my-library.html?view=folders";
+        }
+    } else if (fromParam === "mylibrary_documents") {
+        backLabel = "← Back to My Documents";
+        backUrl = "my-library.html?view=documents";
+    } else if (fromParam === "mylibrary_favorites") {
+        backLabel = "← Back to Favorites";
+        backUrl = "my-library.html?view=favorites";
     }
 
     // Hide duplicate detailBackBtn from right inspector panel

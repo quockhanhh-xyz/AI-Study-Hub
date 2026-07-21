@@ -21,22 +21,43 @@
         padding: 12px 16px;
         background: #f8fafc;
         color: var(--text-muted);
-        font-size: 13px;
-        font-weight: 600;
+        font-size: 16px;
+        font-weight: 700;
         border-bottom: 2px solid var(--border);
       }
+      .payment-history-table th:nth-child(1),
+      .payment-history-table td:nth-child(1) {
+        text-align: left;
+        width: 33.33%;
+      }
+      .payment-history-table th:nth-child(2),
+      .payment-history-table td:nth-child(2) {
+        text-align: center;
+        width: 33.33%;
+      }
+      .payment-history-table th:nth-child(3),
+      .payment-history-table td:nth-child(3) {
+        text-align: right;
+        width: 33.33%;
+      }
       .payment-history-table td {
-        padding: 14px 16px;
+        padding: 16px 16px;
         vertical-align: middle;
         border-bottom: 1px solid var(--border);
         color: var(--text-main);
-        font-size: 14px;
+        font-size: 17px;
       }
       .payment-history-table tr:last-child td {
         border-bottom: none;
       }
       .payment-history-table tr:hover td {
         background-color: #f8fafc;
+      }
+      .payment-history-table .status-badge {
+        height: 26px;
+        padding: 0 10px;
+        font-size: 13px;
+        border-radius: 6px;
       }
       
       .payment-plan-cell {
@@ -45,17 +66,17 @@
         gap: 4px;
       }
       .payment-plan-name {
-        font-weight: 600;
-        font-size: 15px;
+        font-weight: 700;
+        font-size: 18px;
         color: var(--text-main);
       }
       .payment-amount {
         color: var(--text-muted);
-        font-size: 13px;
+        font-size: 16px;
       }
       .payment-date-cell {
         color: var(--text-muted);
-        font-size: 13px;
+        font-size: 16px;
       }
     </style>
 </head>
@@ -118,6 +139,30 @@
                 <div id="checkoutResultMessage" class="status-box" style="display: none; margin-top: 20px;"></div>
             </section>
 
+            <section id="pendingPaymentSection" class="card dashboard-panel" style="display: none; margin-bottom: 32px; border-color: #5eead4; background: #f0fdfa;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <h3 style="margin: 0 0 16px; font-size: 18px; color: #0f766e; display: flex; align-items: center; gap: 8px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            Pending Payment
+                        </h3>
+                        <div style="display: flex; gap: 32px; flex-wrap: wrap;">
+                            <div>
+                                <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 4px;">Plan Details</div>
+                                <div id="pendingPaymentPlan" style="font-size: 17px; font-weight: 700; color: var(--text-main);"></div>
+                            </div>
+                            <div>
+                                <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 4px;">Date</div>
+                                <div id="pendingPaymentDate" style="font-size: 16px; color: var(--text-main);"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="pendingPaymentActions" style="display: flex; gap: 12px; align-items: center;">
+                        <!-- Buttons injected by JS -->
+                    </div>
+                </div>
+            </section>
+
             <section class="card document-panel dashboard-panel">
                 <div class="dashboard-panel-header">
                     <div>
@@ -140,7 +185,6 @@
                                 <th>Plan Details</th>
                                 <th>Date</th>
                                 <th>Status</th>
-                                <th style="text-align: right;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="historyList"></tbody>

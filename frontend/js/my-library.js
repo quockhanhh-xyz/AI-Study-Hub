@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   // State
   let userFolders = [];
   let currentParentFolderId = getParentFolderIdFromUrl();
-  let breadcrumbTrail = [{ folderId: null, name: "My Documents" }];
+  let breadcrumbTrail = [{ folderId: null, name: "My Folders" }];
 
   // Elements
   const tabs = document.querySelectorAll(".library-tab");
@@ -85,6 +85,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     tabs.forEach(tab => {
       tab.addEventListener("click", () => {
+        if (tab.dataset.tab === "folders") {
+          // Reset to root folder view when clicking Folders tab
+          currentParentFolderId = null;
+          const url = new URL(window.location);
+          url.searchParams.delete("folderId");
+          window.history.pushState({}, "", url);
+          const existingDyn = document.getElementById("dynamicFolderGrid");
+          if (existingDyn) existingDyn.remove();
+        }
         switchTab(tab.dataset.tab);
       });
     });
@@ -749,7 +758,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       const res = await getMyFolders(null, true);
       userFolders = Array.isArray(res.data) ? res.data : [];
       if (folderFilter) {
-        folderFilter.innerHTML = `<option value="">All Folders</option><option value="0">My Documents</option>`;
+        folderFilter.innerHTML = `<option value="">All Folders</option><option value="0">My Folders</option>`;
         userFolders.forEach(f => {
           const opt = document.createElement("option");
           opt.value = f.folderId;
@@ -814,7 +823,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (documentEmptyState) documentEmptyState.style.display = "none";
         documentGrid.style.display = "grid";
         docs.forEach(doc => {
-          documentGrid.appendChild(createDocumentCard(doc));
+          documentGrid.appendChild(createDocumentCard(doc, { sourceTab: "documents" }));
         });
       }
     } catch (e) {
@@ -823,7 +832,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
-  function createDocumentCard(doc) {
+  function createDocumentCard(doc, options = {}) {
+    // options: { sourceTab, folderId, folderName }
     const card = document.createElement("article");
     card.className = "document-card";
 
@@ -852,7 +862,18 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const title = document.createElement("h3");
     const link = document.createElement("a");
-    link.href = `document-detail.html?id=${doc.documentId}`;
+    
+    // Build link with context if available
+    let detailUrl = `document-detail.html?id=${doc.documentId}`;
+    if (options.sourceTab === "folders" && options.folderId) {
+      detailUrl += `&from=mylibrary_folders&folderId=${options.folderId}&folderName=${encodeURIComponent(options.folderName || "Folder")}`;
+    } else if (options.sourceTab === "documents") {
+      detailUrl += `&from=mylibrary_documents`;
+    } else if (options.sourceTab === "favorites") {
+      detailUrl += `&from=mylibrary_favorites`;
+    }
+    
+    link.href = detailUrl;
     link.textContent = doc.title || doc.originalFileName || "Untitled";
     link.style.color = "inherit";
     link.style.textDecoration = "none";
@@ -937,7 +958,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     card.style.cursor = "pointer";
     card.addEventListener("click", (e) => {
       if (e.target.closest("button") || e.target.closest("a")) return;
-      window.location.href = `document-detail.html?id=${doc.documentId}`;
+      let url = `document-detail.html?id=${doc.documentId}`;
+      if (options.sourceTab === "folders" && options.folderId) {
+        url += `&from=mylibrary_folders&folderId=${options.folderId}&folderName=${encodeURIComponent(options.folderName || "Folder")}`;
+      } else if (options.sourceTab === "documents") {
+        url += `&from=mylibrary_documents`;
+      } else if (options.sourceTab === "favorites") {
+        url += `&from=mylibrary_favorites`;
+      }
+      window.location.href = url;
     });
 
     return card;
@@ -945,7 +974,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // --- FOLDERS TAB ---
   async function buildBreadcrumb() {
-    breadcrumbTrail = [{ folderId: null, name: "My Documents" }];
+    breadcrumbTrail = [{ folderId: null, name: "My Folders" }];
     if (!currentParentFolderId) {
       renderBreadcrumb();
       return;
@@ -1022,7 +1051,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" aria-hidden="true">
             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
           </svg>
-          New Subfolder
+          <span style="white-space: nowrap;">New Subfolder</span>
         `;
       }
       if (folderEmptyTitle) folderEmptyTitle.textContent = "No subfolders yet";
@@ -1035,7 +1064,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" aria-hidden="true">
             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
           </svg>
-          New Folder
+          <span style="white-space: nowrap;">New Folder</span>
         `;
       }
       if (folderEmptyTitle) folderEmptyTitle.textContent = "No Folders Here";
@@ -1052,6 +1081,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     else newUrl.searchParams.delete("folderId");
     window.history.pushState({}, "", newUrl);
 
+    currentParentFolderId = id || null;
     loadFolders(currentParentFolderId);
   }
 
@@ -1083,9 +1113,11 @@ document.addEventListener("DOMContentLoaded", async function () {
       const kw = searchInput ? searchInput.value.trim().toLowerCase() : "";
 
       const [foldersRes, docsRes] = await Promise.all([
-        typeof getMyFolders === "function" ? getMyFolders(parentId, false).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-        typeof getMyDocuments === "function" ? getMyDocuments({ folderId: parentId || 0, includeSubfolders: false }).catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
+        typeof getMyFolders === "function" ? getMyFolders(parentId, false).catch((err) => { console.error("getMyFolders error", err); return { data: [] }; }) : Promise.resolve({ data: [] }),
+        (parentId !== null && typeof getMyDocuments === "function") ? getMyDocuments({ folderId: parentId, includeSubfolders: false }).catch((err) => { console.error("getMyDocuments error", err); return { data: [] }; }) : Promise.resolve({ data: [] })
       ]);
+
+      console.log("[loadFolders] parentId:", parentId, "foldersRes:", foldersRes, "docsRes:", docsRes);
 
       let subfolders = Array.isArray(foldersRes.data) ? foldersRes.data : [];
       let docs = Array.isArray(docsRes.data) ? docsRes.data : (docsRes.data?.content || []);
@@ -1102,23 +1134,86 @@ document.addEventListener("DOMContentLoaded", async function () {
       const hasSubfolders = subfolders.length > 0;
       const hasDocs = docs.length > 0;
 
-      if (!hasSubfolders && !hasDocs) {
-        if (folderEmptyState) folderEmptyState.style.display = "flex";
-      } else {
+      console.log("[loadFolders] subfolders:", subfolders.length, "docs:", docs.length);
+
+      // --- Render folders using innerHTML for guaranteed display ---
+      const foldersTab = document.getElementById("foldersTab");
+      if (!foldersTab) return;
+
+      // Remove previously injected dynamic grid
+      const existingDyn = foldersTab.querySelector("#dynamicFolderGrid");
+      if (existingDyn) existingDyn.remove();
+
+      if (hasSubfolders) {
         if (folderEmptyState) folderEmptyState.style.display = "none";
+        if (foldersSection) foldersSection.style.display = "none"; // hide old static section
 
-        if (hasSubfolders && foldersSection && folderGrid) {
-          folderGrid.innerHTML = "";
-          subfolders.forEach(f => folderGrid.appendChild(createFolderCard(f)));
-          foldersSection.style.display = "block";
+        // Build HTML string for all folder cards
+        const cardsHtml = subfolders.map(f => {
+          const subCount = Number(f.subfolderCount ?? 0);
+          const docCount = Number(f.documentCount ?? f.fileCount ?? 0);
+          const dateStr = f.createdAt ? formatDate(f.createdAt) : "";
+          return `
+            <div class="dyn-folder-card"
+              data-folder-id="${f.folderId}"
+              style="display:flex;flex-direction:row;align-items:center;gap:14px;padding:16px 18px;border:1.5px solid #e5e7eb;border-radius:14px;background:#ffffff;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.04);position:relative;min-height:80px;box-sizing:border-box;margin-bottom:0;">
+              <div style="flex-shrink:0;color:#ff5858;display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:rgba(255,88,88,0.08);border-radius:10px;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:15px;font-weight:600;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.folderName || "Untitled Folder"}</div>
+                <div style="font-size:12px;color:#9ca3af;margin-top:3px;">${subCount} subfolders &bull; ${docCount} documents${dateStr ? " &bull; " + dateStr : ""}</div>
+              </div>
+            </div>`;
+        }).join("");
+
+        const dynGrid = document.createElement("div");
+        dynGrid.id = "dynamicFolderGrid";
+        dynGrid.style.cssText = "display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:8px;";
+        dynGrid.innerHTML = `
+          ${cardsHtml}
+        `;
+
+        // Insert after breadcrumb
+        const breadcrumb = document.getElementById("folderBreadcrumb");
+        if (breadcrumb && breadcrumb.nextSibling) {
+          foldersTab.insertBefore(dynGrid, breadcrumb.nextSibling);
+        } else {
+          foldersTab.appendChild(dynGrid);
         }
 
-        if (hasDocs && folderDocsSection && folderDocsGrid) {
-          folderDocsGrid.innerHTML = "";
-          docs.forEach(doc => folderDocsGrid.appendChild(createDocumentCard(doc)));
-          folderDocsSection.style.display = "block";
-        }
+        // Add click handlers for each card
+        dynGrid.querySelectorAll(".dyn-folder-card").forEach(cardEl => {
+          const fid = parseInt(cardEl.dataset.folderId);
+          cardEl.addEventListener("mouseenter", () => { cardEl.style.borderColor = "#ff5858"; cardEl.style.transform = "translateY(-2px)"; cardEl.style.boxShadow = "0 8px 20px rgba(255,88,88,0.1)"; });
+          cardEl.addEventListener("mouseleave", () => { cardEl.style.borderColor = "#e5e7eb"; cardEl.style.transform = ""; cardEl.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)"; });
+          cardEl.addEventListener("click", () => navigateToFolder(fid));
+        });
+
+      } else {
+        // No subfolders - show empty state
+        if (foldersSection) foldersSection.style.display = "none";
+        if (folderEmptyState) folderEmptyState.style.display = "flex";
       }
+
+      // Show docs inside a folder
+      if (parentId !== null && folderDocsSection && folderDocsGrid) {
+        folderDocsGrid.innerHTML = "";
+        if (hasDocs) {
+          // Build options for back navigation from document-detail
+          const currentCrumbForDocs = breadcrumbTrail[breadcrumbTrail.length - 1];
+          const folderOpts = currentCrumbForDocs && currentCrumbForDocs.folderId
+            ? { sourceTab: "folders", folderId: currentCrumbForDocs.folderId, folderName: currentCrumbForDocs.name }
+            : { sourceTab: "folders" };
+          docs.forEach(doc => folderDocsGrid.appendChild(createDocumentCard(doc, folderOpts)));
+        } else {
+          folderDocsGrid.innerHTML = "<p style='color:#9ca3af;font-size:14px;'>No documents here.</p>";
+        }
+        folderDocsSection.style.display = "block";
+        if (hasDocs && !hasSubfolders && folderEmptyState) folderEmptyState.style.display = "none";
+      }
+
+
     } catch (e) {
       console.error("Failed to load folders & documents:", e);
       if (folderEmptyState) folderEmptyState.style.display = "flex";
@@ -1126,80 +1221,60 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   function createFolderCard(f) {
+    // Build card with 100% inline styles to bypass any CSS class conflicts
     const card = document.createElement("div");
-    card.className = "folder-card";
+    card.style.cssText = "display:flex; flex-direction:row; align-items:center; gap:14px; padding:16px 18px; border:1.5px solid #e5e7eb; border-radius:14px; background:#ffffff; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.04); position:relative; min-height:80px; box-sizing:border-box;";
+    card.addEventListener("mouseenter", () => { card.style.borderColor="#ff5858"; card.style.transform="translateY(-2px)"; card.style.boxShadow="0 8px 20px rgba(255,88,88,0.1)"; });
+    card.addEventListener("mouseleave", () => { card.style.borderColor="#e5e7eb"; card.style.transform=""; card.style.boxShadow="0 2px 8px rgba(0,0,0,0.04)"; });
 
-    const main = document.createElement("div");
-    main.className = "folder-card-main";
+    // Icon
+    const iconWrap = document.createElement("div");
+    iconWrap.style.cssText = "flex-shrink:0; color:#ff5858; display:flex; align-items:center; justify-content:center; width:44px; height:44px; background:rgba(255,88,88,0.08); border-radius:10px;";
+    iconWrap.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>';
+    card.appendChild(iconWrap);
 
-    const icon = document.createElement("div");
-    icon.className = "folder-icon";
-    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>';
-    main.appendChild(icon);
-
-    const text = document.createElement("div");
-    text.className = "folder-info-text";
-
-    const title = document.createElement("h3");
-    title.className = "folder-name";
-    title.textContent = f.folderName || "Untitled Folder";
-    text.appendChild(title);
-
-    const meta = document.createElement("p");
-    meta.className = "folder-meta";
-    let metaTxt = [];
-
-    // Always show subfolderCount and documentCount (even when 0)
+    // Info
+    const info = document.createElement("div");
+    info.style.cssText = "flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;";
+    const nameEl = document.createElement("div");
+    nameEl.style.cssText = "font-size:15px; font-weight:600; color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;";
+    nameEl.textContent = f.folderName || "Untitled Folder";
+    const metaEl = document.createElement("div");
+    metaEl.style.cssText = "font-size:12px; color:#9ca3af; display:flex; gap:10px;";
     const subCount = Number(f.subfolderCount ?? 0);
     const docCount = Number(f.documentCount ?? f.fileCount ?? 0);
-    metaTxt.push(`${subCount} subfolders`);
-    metaTxt.push(`${docCount} documents`);
-    if (f.createdAt) metaTxt.push(formatDate(f.createdAt));
-    meta.textContent = metaTxt.join(" • ");
-    text.appendChild(meta);
+    metaEl.innerHTML = `<span>${subCount} subfolders</span><span>${docCount} documents</span>${f.createdAt ? `<span>${formatDate(f.createdAt)}</span>` : ""}`;
+    info.appendChild(nameEl);
+    info.appendChild(metaEl);
+    card.appendChild(info);
 
-    main.appendChild(text);
-
-    // Actions kebab (positioned absolutely in top right by CSS)
+    // Kebab menu
     const actions = document.createElement("div");
-    actions.className = "folder-card-actions";
-
+    actions.style.cssText = "position:absolute; top:12px; right:12px;";
     const kebabBtn = document.createElement("button");
     kebabBtn.type = "button";
-    kebabBtn.className = "btn-kebab";
     kebabBtn.title = "More actions";
-    kebabBtn.style.cssText = "font-size: 22px; font-weight: bold; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;";
-    kebabBtn.innerHTML = `⋮`;
-
+    kebabBtn.style.cssText = "font-size:20px; font-weight:bold; width:30px; height:30px; display:flex; align-items:center; justify-content:center; background:none; border:none; cursor:pointer; color:#9ca3af; border-radius:6px;";
+    kebabBtn.textContent = "⋮";
     const dropdown = document.createElement("div");
-    dropdown.className = "kebab-dropdown";
-    dropdown.style.cssText = "display: none; position: absolute; right: 0; top: 100%; background: #ffffff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 20; min-width: 140px; padding: 4px 0;";
-
+    dropdown.style.cssText = "display:none; position:absolute; right:0; top:100%; background:#ffffff; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); z-index:20; min-width:140px; padding:4px 0;";
     const renameItem = document.createElement("button");
     renameItem.type = "button";
-    renameItem.className = "dropdown-item";
-    renameItem.style.cssText = "display: block; width: 100%; padding: 8px 14px; text-align: left; background: none; border: none; font-size: 13px; color: var(--text-main); cursor: pointer;";
+    renameItem.style.cssText = "display:block; width:100%; padding:8px 14px; text-align:left; background:none; border:none; font-size:13px; color:#111827; cursor:pointer;";
     renameItem.textContent = "Rename";
-
     const trashItem = document.createElement("button");
     trashItem.type = "button";
-    trashItem.className = "dropdown-item";
-    trashItem.style.cssText = "display: block; width: 100%; padding: 8px 14px; text-align: left; background: none; border: none; font-size: 13px; color: var(--danger, #dc3545); cursor: pointer;";
+    trashItem.style.cssText = "display:block; width:100%; padding:8px 14px; text-align:left; background:none; border:none; font-size:13px; color:#dc3545; cursor:pointer;";
     trashItem.textContent = "Move to Trash";
-
     dropdown.append(renameItem, trashItem);
     actions.append(kebabBtn, dropdown);
+    card.appendChild(actions);
 
-    // Kebab toggle
     kebabBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      document.querySelectorAll(".kebab-dropdown").forEach(d => {
-        if (d !== dropdown) d.style.display = "none";
-      });
+      document.querySelectorAll(".folder-kebab-dropdown").forEach(d => { if (d !== dropdown) d.style.display = "none"; });
       dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
     });
-
-    // Rename action
     renameItem.addEventListener("click", async (e) => {
       e.stopPropagation();
       dropdown.style.display = "none";
@@ -1211,26 +1286,15 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (typeof showToast === "function") showToast("Folder renamed successfully.", "success");
             loadFolders(currentParentFolderId);
           }
-        } catch (err) {
-          alert(err.message || "Failed to rename folder.");
-        }
+        } catch (err) { alert(err.message || "Failed to rename folder."); }
       }
     });
-
-    // Move to Trash action
     trashItem.addEventListener("click", async (e) => {
       e.stopPropagation();
       dropdown.style.display = "none";
-      
       const confirmed = typeof window.confirmAction === "function"
-        ? await window.confirmAction({
-            title: "Move this folder to Trash?",
-            message: "You can restore it later from Trash Can.",
-            confirmText: "Move to Trash",
-            danger: true
-          })
+        ? await window.confirmAction({ title: "Move this folder to Trash?", message: "You can restore it later from Trash Can.", confirmText: "Move to Trash", danger: true })
         : confirm(`Move "${f.folderName}" to Trash?\nYou can restore it later from Trash Can.`);
-
       if (confirmed) {
         try {
           if (typeof deleteFolder === "function") {
@@ -1238,18 +1302,15 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (typeof showToast === "function") showToast("Folder moved to Trash.", "success");
             loadFolders(currentParentFolderId);
           }
-        } catch (err) {
-          alert(err.message || "Failed to move folder to Trash.");
-        }
+        } catch (err) { alert(err.message || "Failed to move folder to Trash."); }
       }
     });
 
     card.addEventListener("click", (e) => {
-      if (e.target.closest('.folder-card-actions')) return;
+      if (e.target.closest("button")) return;
       navigateToFolder(f.folderId);
     });
 
-    card.append(main, actions);
     return card;
   }
 
@@ -1308,7 +1369,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       } else {
         if (favoritesEmptyState) favoritesEmptyState.style.display = "none";
         favoritesGrid.style.display = "grid";
-        docs.forEach(doc => favoritesGrid.appendChild(createDocumentCard(doc)));
+        docs.forEach(doc => favoritesGrid.appendChild(createDocumentCard(doc, { sourceTab: "favorites" })));
       }
     } catch (e) {
       console.error("Failed to load favorites:", e);

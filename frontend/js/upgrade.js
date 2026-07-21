@@ -65,14 +65,14 @@ document.addEventListener("DOMContentLoaded", async function () {
   const FALLBACK_TIER_FEATURES = {
     FREE: [
       "5 AI questions/day",
-      "3 AI flashcard sets/day",
-      "3 AI quiz sets/day",
+      "2 AI flashcard sets/day",
+      "2 AI quiz sets/day",
       "3 AI summary generations/day",
       "Upload files up to 10MB",
       "100MB storage",
       "Up to 30 documents",
       "Up to 20 folders (3 levels deep)",
-      "Join up to 3 study groups (cannot create groups)",
+      "Create up to 3 study groups (up to 3 members per group)",
       "Up to 30 active document shares",
       "View documents shared by the community"
     ],
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       "2GB storage",
       "Up to 500 documents",
       "Up to 200 folders (8 levels deep)",
-      "Create up to 5 study groups (up to 30 members per group)",
+      "Create up to 30 study groups (up to 100 members per group)",
       "Up to 1,000 active document shares"
     ],
     ULTRA: [
@@ -97,7 +97,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       "10GB storage",
       "Up to 2,000 documents",
       "Up to 1,000 folders (12 levels deep)",
-      "Create up to 30 study groups (up to 100 members per group)",
+      "Create up to 100 study groups (up to 300 members per group)",
       "Up to 5,000 active document shares",
       "Priority AI processing"
     ]
@@ -140,14 +140,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Groups
     if (limits.maxGroupsOwned != null) {
       if (limits.maxGroupsOwned === 0) {
-        const joinLimit = limits.maxGroupsJoined != null ? ` up to ${limits.maxGroupsJoined}` : "";
-        features.push(`Join${joinLimit} study groups (cannot create groups)`);
+        features.push(`Join study groups (cannot create groups)`);
       } else {
         const memberStr = limits.maxGroupMembers != null ? ` (up to ${limits.maxGroupMembers} members per group)` : "";
         features.push(`Create up to ${limits.maxGroupsOwned.toLocaleString()} study groups${memberStr}`);
       }
-    } else if (limits.maxGroupsJoined != null) {
-      features.push(`Join up to ${limits.maxGroupsJoined.toLocaleString()} study groups`);
     }
 
     // Document shares
@@ -664,8 +661,17 @@ document.addEventListener("DOMContentLoaded", async function () {
     
     const nameSpan = document.createElement("span");
     nameSpan.className = "payment-plan-name";
-    nameSpan.textContent = payment.planName || payment.planCode;
-    
+    const planNameRaw = payment.planName || payment.planCode || "";
+    nameSpan.textContent = planNameRaw;
+    const planNameUpper = planNameRaw.toUpperCase();
+    if (planNameUpper.includes("ULTRA")) {
+      nameSpan.style.color = "#7c3aed";
+    } else if (planNameUpper.includes("PREMIUM")) {
+      nameSpan.style.color = "#f59e0b";
+    } else if (planNameUpper.includes("FREE")) {
+      nameSpan.style.color = "var(--text-muted)";
+    }
+
     const amountSpan = document.createElement("span");
     amountSpan.className = "payment-amount";
     amountSpan.textContent = formatCurrency(payment.amount, payment.currency);
@@ -688,34 +694,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     statusBadge.textContent = statusInfo.label;
     statusTd.appendChild(statusBadge);
 
-    // Col 4: Action
-    const actionTd = document.createElement("td");
-    actionTd.style.textAlign = "right";
-
-    if (canContinueVNPay(payment) || (typeof isMockPayment === "function" && isMockPayment(payment) && payment.status === "PENDING")) {
-      const continueBtn = document.createElement("button");
-      continueBtn.className = "btn btn-primary btn-sm";
-      continueBtn.textContent = "Pay Now";
-      continueBtn.style.marginRight = "8px";
-      continueBtn.addEventListener("click", function () {
-        if (payment.paymentProvider === "MOCK") {
-          openMockCheckout(payment);
-        } else if (payment.paymentUrl) {
-          window.location.href = payment.paymentUrl;
-        }
-      });
-      actionTd.appendChild(continueBtn);
-
-      const cancelBtn = document.createElement("button");
-      cancelBtn.className = "btn btn-secondary btn-sm";
-      cancelBtn.textContent = "Cancel";
-      cancelBtn.addEventListener("click", function () {
-        cancelPaymentOrder(payment.paymentId, cancelBtn);
-      });
-      actionTd.appendChild(cancelBtn);
-    }
-    
-    tr.append(planTd, dateTd, statusTd, actionTd);
+    tr.append(planTd, dateTd, statusTd);
     return tr;
   }
 
@@ -733,6 +712,42 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       const historyListContainer = document.getElementById("historyListContainer");
       
+      // Check for pending payment to show in the highlighted card
+      const pendingPayment = payments.find(p => p.status === "PENDING" && (canContinueVNPay(p) || (typeof isMockPayment === "function" && isMockPayment(p))));
+      const pendingSection = document.getElementById("pendingPaymentSection");
+      if (pendingPayment && pendingSection) {
+        document.getElementById("pendingPaymentPlan").textContent = pendingPayment.planName || pendingPayment.planCode;
+        document.getElementById("pendingPaymentDate").textContent = formatDate(pendingPayment.createdAt);
+        
+        const actionsContainer = document.getElementById("pendingPaymentActions");
+        actionsContainer.innerHTML = "";
+        
+        const continueBtn = document.createElement("button");
+        continueBtn.className = "btn btn-primary";
+        continueBtn.textContent = "Pay Now";
+        continueBtn.addEventListener("click", function () {
+          if (pendingPayment.paymentProvider === "MOCK") {
+            openMockCheckout(pendingPayment);
+          } else if (pendingPayment.paymentUrl) {
+            window.location.href = pendingPayment.paymentUrl;
+          }
+        });
+        
+        const cancelBtn = document.createElement("button");
+        cancelBtn.className = "btn btn-secondary";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.addEventListener("click", function () {
+          cancelPaymentOrder(pendingPayment.paymentId, cancelBtn);
+        });
+        
+        actionsContainer.appendChild(cancelBtn);
+        actionsContainer.appendChild(continueBtn);
+        
+        pendingSection.style.display = "block";
+      } else if (pendingSection) {
+        pendingSection.style.display = "none";
+      }
+
       if (payments.length === 0) {
         historyList.innerHTML = "";
         historyList.style.display = "none";
