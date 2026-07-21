@@ -88,7 +88,7 @@ function initAdminDocuments() {
                 const data = response.data;
                 const rows = data.items || data.content || data.documents || data.list || [];
                 const totalItems = data.totalElements ?? data.totalItems ?? data.total ?? rows.length;
-                const totalPagesCount = data.totalPages ?? Math.ceil(totalItems / pageSize) || 1;
+                const totalPagesCount = data.totalPages ?? Math.max(1, Math.ceil(totalItems / pageSize));
 
                 totalElements = totalItems;
 
@@ -148,9 +148,26 @@ function initAdminDocuments() {
         }
     };
 
+    const formatBytes = (bytes) => {
+        if (!bytes || bytes === 0) return '';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    };
+
+    const formatDate = (dateStr) => {
+        if (!dateStr) return "N/A";
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        const date = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+        const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+        return `${date} · ${time}`;
+    };
+
     const renderTable = (documents) => {
         if (!documents || documents.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted);">No documents found matching your filter criteria.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 32px; color: var(--text-muted);">No documents found matching your filter criteria.</td></tr>';
             return;
         }
 
@@ -158,16 +175,23 @@ function initAdminDocuments() {
             const aiInfo = getAIBadgeInfo(doc.processingStatus);
             const ownerDisplay = doc.displayName || doc.ownerName || doc.ownerEmail || doc.fullName || doc.email || doc.uploaderName || 'Unknown owner';
             const subjectDisplay = doc.subjectCode ? `${doc.subjectCode}${doc.subjectName ? ` - ${doc.subjectName}` : ''}` : (doc.subject?.name || doc.subjectName || 'No subject');
+            const updatedDisplay = formatDate(doc.updatedAt || doc.createdAt);
+            const fileSizeDisplay = doc.fileSize ? formatBytes(doc.fileSize) : '';
+            const subtext = [doc.fileType, fileSizeDisplay].filter(Boolean).join(' · ');
 
             return `
             <tr>
-                <td><span style="font-weight: 600; color: var(--text-main, #0f172a);">${escapeHtml(doc.title || '-')}</span></td>
-                <td><span class="table-muted-text" title="${escapeHtml(ownerDisplay)}">${escapeHtml(ownerDisplay)}</span></td>
-                <td><span class="table-muted-text">${escapeHtml(subjectDisplay)}</span></td>
-                <td><span class="badge badge-secondary">${doc.fileType || '-'}</span></td>
+                <td>
+                    <div style="font-weight: 600; color: var(--text-main, #0f172a); max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(doc.title || '-')}">${escapeHtml(doc.title || '-')}</div>
+                    ${subtext ? `<div style="font-size: 0.75rem; color: var(--text-muted, #64748b); margin-top: 2px;">${escapeHtml(subtext)}</div>` : ''}
+                </td>
+                <td><span class="table-muted-text" style="max-width: 140px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(ownerDisplay)}">${escapeHtml(ownerDisplay)}</span></td>
+                <td><span class="table-muted-text" style="max-width: 130px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(subjectDisplay)}</span></td>
+                <td><span class="badge badge-tier-free">${doc.fileType || '-'}</span></td>
                 <td><span class="badge ${getVisibilityBadgeClass(doc.visibility)}">${doc.visibility ? doc.visibility.charAt(0).toUpperCase() + doc.visibility.slice(1).toLowerCase() : '-'}</span></td>
                 <td><span class="badge ${getApprovalBadgeClass(doc.approvalStatus)}">${getApprovalLabel(doc.approvalStatus)}</span></td>
                 <td><span class="badge ${aiInfo.cls}">${aiInfo.text}</span></td>
+                <td><span class="table-muted-text" style="font-size: 0.8rem; white-space: nowrap;">${updatedDisplay}</span></td>
                 <td style="text-align: right;">
                     <div class="admin-action-group">
                         <button class="btn btn-sm btn-outline" onclick="window.location.href='admin-document-detail.html?id=${doc.documentId}'">View</button>
