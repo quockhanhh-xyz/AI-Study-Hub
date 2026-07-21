@@ -183,8 +183,25 @@ function unfavoriteDocument(id) {
  * Retrieves the list of documents the current user has favorited.
  * @returns {Promise<Object>} List of favorited documents.
  */
-function getFavoriteDocuments() {
-  return get("/api/documents/favorites");
+async function getFavoriteDocuments(params = {}) {
+  try {
+    // We intentionally bypass /api/documents/favorites here and use the client-side fallback.
+    // Reason: The favorites endpoint returns a simplified DTO that lacks folderId and subjectCode,
+    // which causes the document cards to miss their subject and folder tags.
+    const fallbackParams = { ...params, includeSubfolders: true, size: 1000 };
+    const res = await getMyDocuments(fallbackParams);
+    
+    let allDocs = [];
+    if (Array.isArray(res)) allDocs = res;
+    else if (res && Array.isArray(res.data)) allDocs = res.data;
+    else if (res && res.data && Array.isArray(res.data.content)) allDocs = res.data.content;
+    else if (res && Array.isArray(res.content)) allDocs = res.content;
+    
+    return { data: allDocs.filter(isDocumentFavorited) };
+  } catch (e) {
+    console.error("Failed to fetch documents for favorites", e);
+    throw e;
+  }
 }
 
 /**
