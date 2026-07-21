@@ -79,6 +79,16 @@ function initAdminSubjects() {
         }
     };
 
+    const escapeHtml = (unsafe) => {
+        if (unsafe == null) return '';
+        return String(unsafe)
+             .replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+    };
+
     const renderTable = (items) => {
         if (!items || items.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No subjects found.</td></tr>';
@@ -87,16 +97,16 @@ function initAdminSubjects() {
 
         tableBody.innerHTML = items.map(item => `
             <tr>
-                <td>${item.subjectCode}</td>
-                <td>${item.subjectName}</td>
-                <td>${item.description || '-'}</td>
+                <td>${escapeHtml(item.subjectCode)}</td>
+                <td>${escapeHtml(item.subjectName)}</td>
+                <td>${escapeHtml(item.description) || '-'}</td>
                 <td><span class="badge ${item.status.toLowerCase()}">${item.status}</span></td>
                 <td>${item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}</td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick='openSubjectModal(${JSON.stringify(item)})'>Edit</button>
+                    <button class="btn btn-sm btn-secondary" onclick='openSubjectModal(${JSON.stringify(item).replace(/'/g, "\\'")})'>Edit</button>
                     ${item.status === 'ACTIVE'
-                        ? `<button class="btn btn-sm btn-danger" onclick="openToggleModal(${item.subjectId}, 'INACTIVE', '${item.subjectName}')">Disable</button>`
-                        : `<button class="btn btn-sm btn-primary" onclick="openToggleModal(${item.subjectId}, 'ACTIVE', '${item.subjectName}')">Enable</button>`
+                        ? `<button class="btn btn-sm btn-danger" onclick="openToggleModal(${item.subjectId}, 'INACTIVE', '${escapeHtml(item.subjectName).replace(/'/g, "\\'")}')">Disable</button>`
+                        : `<button class="btn btn-sm btn-primary" onclick="openToggleModal(${item.subjectId}, 'ACTIVE', '${escapeHtml(item.subjectName).replace(/'/g, "\\'")}')">Enable</button>`
                     }
                 </td>
             </tr>
