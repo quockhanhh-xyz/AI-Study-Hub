@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -28,6 +29,12 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<List<PlanResponse>>> getPlans() {
         return ResponseEntity.ok(ApiResponse.success(
                 planService.getAllPlans(), "Billing plans retrieved successfully"));
+    }
+
+    @GetMapping("/plans/entitlements")
+    public ResponseEntity<ApiResponse<Map<String, Map<String, Object>>>> getPlanEntitlements() {
+        return ResponseEntity.ok(ApiResponse.success(
+                planService.getPlanEntitlements(), "Billing plan entitlements retrieved successfully"));
     }
 
     @PostMapping("/mock/create")

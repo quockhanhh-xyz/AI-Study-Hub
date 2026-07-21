@@ -147,6 +147,45 @@ public class PlanService {
         }
     }
 
+    public Map<String, Map<String, Object>> getPlanEntitlements() {
+        Map<String, Map<String, Object>> entitlements = new LinkedHashMap<>();
+        plans().values().forEach(plan -> {
+            Map<String, Object> planData = new LinkedHashMap<>();
+            planData.put("planCode", plan.getPlanCode());
+            planData.put("planName", plan.getPlanName());
+            planData.put("targetTier", plan.getTargetTier().name());
+            planData.put("price", plan.getPrice());
+            planData.put("currency", CURRENCY);
+            planData.put("billingLabel", plan.getBillingLabel());
+            planData.put("durationMonths", plan.getDurationMonths());
+            planData.put("purchasable", plan.isPurchasable());
+            planData.put("features", plan.getFeatures());
+            planData.put("limits", buildEntitlementLimits(plan.getTargetTier()));
+            entitlements.put(plan.getTargetTier().name(), planData);
+        });
+        return entitlements;
+    }
+
+    private Map<String, Object> buildEntitlementLimits(UserTier tier) {
+        var limits = tierPolicyService.getLimits(tier);
+        Map<String, Object> values = new LinkedHashMap<>();
+        values.put("aiQuestionsPerDay", limits.aiQuestionsPerDay());
+        values.put("aiFlashcardsPerDay", limits.flashcardSetsPerDay());
+        values.put("aiQuizPerDay", limits.quizSetsPerDay());
+        values.put("aiSummaryPerDay", limits.summaryGenerationsPerDay());
+        values.put("maxFileSizeBytes", limits.maxFileBytes());
+        values.put("maxStorageBytes", limits.storageBytes());
+        values.put("maxDocuments", limits.maxDocuments());
+        values.put("maxFolders", limits.maxFolders());
+        values.put("maxFolderDepth", limits.maxFolderDepth());
+        values.put("maxGroupsOwned", limits.maxOwnedGroups());
+        values.put("maxGroupMembers", limits.maxMembersPerGroup());
+        values.put("maxActiveShares", limits.maxActiveShares());
+        values.put("maxQuizQuestionsPerSet", limits.maxQuizQuestionsPerSet());
+        values.put("maxFlashcardsPerSet", limits.maxFlashcardsPerSet());
+        return values;
+    }
+
     private PlanResponse toResponse(PaymentPlan plan) {
         var tierLimits = tierPolicyService.getLimits(plan.getTargetTier());
         var planLimits = PlanResponse.PlanLimitsDto.builder()
