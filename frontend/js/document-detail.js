@@ -8,6 +8,7 @@ function handleBack() {
             if (refUrl.origin === window.location.origin && (
                 refUrl.pathname.includes("dashboard.html") ||
                 refUrl.pathname.includes("documents.html") ||
+                refUrl.pathname.includes("my-library.html") ||
                 refUrl.pathname.includes("shared-with-me.html") ||
                 refUrl.pathname.includes("group-detail.html") ||
                 refUrl.pathname.includes("shared-folder-detail.html") ||
