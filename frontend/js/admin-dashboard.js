@@ -42,7 +42,7 @@ async function loadDashboardData(isManualRefresh = false) {
 
         if (summaryResponse && summaryResponse.success && chartsResponse && chartsResponse.success) {
             renderDashboardStats(summaryResponse.data);
-            renderDashboardCharts(chartsResponse.data);
+            renderDashboardCharts(chartsResponse.data, summaryResponse.data);
 
             if (!isManualRefresh) {
                 loadingState.style.display = "none";
@@ -137,18 +137,18 @@ function renderDashboardStats(data) {
     }
 }
 
-function renderDashboardCharts(data) {
+function renderDashboardCharts(data, summaryData = null) {
     // Clean up old instances if re-rendering
     Object.values(chartInstances).forEach(chart => chart.destroy());
     chartInstances = {};
 
-    // 1. Users by Tier (Bar Chart instead of Pie for readability)
+    // 1. Users by Tier (Doughnut Chart)
     const usersByTier = data.userTierDistribution || [];
-    renderChart("chartUsersByTier", "chartUsersByTierContainer", "bar", usersByTier, "tier", "count", ['#3b82f6', '#8b5cf6', '#ec4899'], "No users found.");
+    renderChart("chartUsersByTier", "chartUsersByTierContainer", "doughnut", usersByTier, "tier", "count", ['#3b82f6', '#8b5cf6', '#ec4899'], "No users found.");
 
-    // 2. Documents by Status (Bar Chart)
+    // 2. Documents by Status (Pie Chart)
     const docsByStatus = data.documentApprovalStatus || [];
-    renderChart("chartDocsByStatus", "chartDocsByStatusContainer", "bar", docsByStatus, "approvalStatus", "count", ['#f59e0b', '#16a34a', '#ff5858', '#9ca3af'], "No documents found.");
+    renderChart("chartDocsByStatus", "chartDocsByStatusContainer", "pie", docsByStatus, "approvalStatus", "count", ['#f59e0b', '#16a34a', '#ff5858', '#9ca3af'], "No documents found.");
 
     // Format date labels for daily charts
     const formatDate = (dateStr) => {
@@ -165,6 +165,12 @@ function renderDashboardCharts(data) {
     const aiUsageByDay = data.aiUsageByDay || [];
     const formattedAiUsage = aiUsageByDay.map(i => ({ ...i, date: formatDate(i.date) }));
     renderChart("chartAiUsage", "chartAiUsageContainer", "bar", formattedAiUsage, "date", "count", ['#8b5cf6'], "No AI usage for selected period.");
+
+    // 5. AI Feature Distribution (Doughnut Chart)
+    if (summaryData) {
+        const aiFeatures = summaryData.aiUsageByFeature || [];
+        renderChart("chartAiFeature", "chartAiFeatureContainer", "doughnut", aiFeatures, "feature", "count", ['#ec4899', '#f59e0b', '#3b82f6', '#10b981'], "No AI usage data.");
+    }
 }
 
 function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, colors, emptyMessage = "No data available") {
@@ -190,8 +196,16 @@ function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, 
     if (emptyState) emptyState.style.display = "none";
     canvas.style.display = "block";
 
-    const labels = dataArray.map(item => item[labelKey]);
+    const labels = dataArray.map(item => {
+        const lbl = item[labelKey];
+        const val = item[dataKey];
+        return (type === 'doughnut' || type === 'pie') ? `${lbl} (${val})` : lbl;
+    });
     const values = dataArray.map(item => item[dataKey]);
+
+    const isDoughnut = type === 'doughnut';
+    const isPie = type === 'pie';
+    const isBar = type === 'bar';
 
     const config = {
         type: type,
@@ -200,11 +214,30 @@ function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, 
             datasets: [{
                 label: labelKey.toUpperCase(),
                 data: values,
-                backgroundColor: type === 'line' ? colors[0] + '33' : colors,
-                borderColor: type === 'line' ? colors[0] : colors,
-                borderWidth: 2,
+                backgroundColor: (context) => {
+                    if (type === 'line') {
+                        const chart = context.chart;
+                        const {ctx, chartArea} = chart;
+                        if (!chartArea) return colors[0] + '22';
+                        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                        // Convert hex to rgb for gradient if possible, but hex with alpha works in modern browsers
+                        gradient.addColorStop(0, colors[0] + '80'); // 50% opacity at top
+                        gradient.addColorStop(1, colors[0] + '00'); // 0% opacity at bottom
+                        return gradient;
+                    }
+                    return colors;
+                },
+                borderColor: type === 'line' ? colors[0] : (isDoughnut || isPie ? '#ffffff' : colors),
+                borderWidth: isDoughnut || isPie ? 2 : (type === 'line' ? 3 : 0),
+                borderRadius: isBar ? 6 : 0,
                 fill: type === 'line',
-                tension: 0.3
+                tension: 0.4,
+                cutout: isDoughnut ? '70%' : undefined,
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: type === 'line' ? colors[0] : undefined,
+                pointBorderWidth: 2,
+                pointRadius: type === 'line' ? 4 : 0,
+                pointHoverRadius: type === 'line' ? 6 : 0,
             }]
         },
         options: {
@@ -212,10 +245,101 @@ function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, 
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: type === 'pie'
+                    display: isDoughnut || isPie,
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20,
+                        font: {
+                            family: "'Inter', sans-serif",
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                    titleFont: { family: "'Inter', sans-serif", size: 13 },
+                    bodyFont: { family: "'Inter', sans-serif", size: 13 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: true
+                }
+            },
+            scales: (isDoughnut || isPie) ? {} : {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { family: "'Inter', sans-serif" } }
+                },
+                y: {
+                    border: { display: false },
+                    grid: { color: 'rgba(0, 0, 0, 0.04)' },
+                    ticks: { 
+                        font: { family: "'Inter', sans-serif" },
+                        callback: function(value) {
+                            if (value >= 1000000) {
+                                return (value / 1000000).toFixed(value % 1000000 === 0 ? 0 : 1) + 'M';
+                            } else if (value >= 1000) {
+                                return (value / 1000).toFixed(value % 1000 === 0 ? 0 : 1) + 'K';
+                            }
+                            return value;
+                        }
+                    }
                 }
             }
-        }
+        },
+        plugins: [{
+            id: 'centerText',
+            beforeDraw: function(chart) {
+                if (chart.config.type !== 'doughnut') return;
+                const ctx = chart.ctx;
+                const width = chart.width;
+                const height = chart.height;
+
+                ctx.restore();
+                
+                const dataLabels = chart.config.data.labels || [];
+                const dataValues = chart.config.data.datasets[0].data || [];
+                let total = 0;
+                let targetValue = 0;
+                let targetLabel = "";
+
+                for (let i = 0; i < dataValues.length; i++) {
+                    total += dataValues[i];
+                    // Find a tier to highlight, normally "PRO" or "PREMIUM"
+                    if (dataLabels[i].toUpperCase().includes('PRO') || dataLabels[i].toUpperCase().includes('PREMIUM')) {
+                        targetValue = dataValues[i];
+                        targetLabel = dataLabels[i].split(' ')[0].toUpperCase();
+                    }
+                }
+                
+                // If not found, just use the largest
+                if (targetValue === 0 && dataValues.length > 0) {
+                    targetValue = Math.max(...dataValues);
+                    const index = dataValues.indexOf(targetValue);
+                    targetLabel = dataLabels[index] ? dataLabels[index].split(' ')[0].toUpperCase() : "TOTAL";
+                }
+
+                const percent = total > 0 ? Math.round((targetValue / total) * 100) : 0;
+                const text1 = targetLabel + (targetLabel === "TOTAL" ? "" : " TIER");
+                const text2 = percent + "%";
+
+                const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+                const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                
+                ctx.font = "600 11px Inter, sans-serif";
+                ctx.fillStyle = "rgba(100, 116, 139, 0.8)";
+                ctx.fillText(text1, centerX, centerY - 12);
+
+                ctx.font = "bold 26px Inter, sans-serif";
+                ctx.fillStyle = "#1e293b";
+                ctx.fillText(text2, centerX, centerY + 10);
+
+                ctx.save();
+            }
+        }]
     };
 
     chartInstances[canvasId] = new Chart(canvas, config);

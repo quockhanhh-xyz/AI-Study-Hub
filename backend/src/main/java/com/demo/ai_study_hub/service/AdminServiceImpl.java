@@ -48,7 +48,8 @@ public class AdminServiceImpl implements AdminService {
         long pendingDocs = documentRepository.countByVisibilityAndApprovalStatusAndStatus("PUBLIC", "PENDING", "ACTIVE");
         long approvedDocs = documentRepository.countByVisibilityAndApprovalStatusAndStatus("PUBLIC", "APPROVED", "ACTIVE");
 
-        long totalRevenue = paymentOrderRepository.sumSuccessfulRevenue();
+        Long sumRev = paymentOrderRepository.sumSuccessfulRevenue();
+        long totalRevenue = sumRev != null ? sumRev : 0L;
         long successfulPaymentsCount = paymentOrderRepository.countByStatus("SUCCESS");
 
         LocalDateTime nowUtc = LocalDateTime.now(ZoneOffset.UTC);
