@@ -1442,7 +1442,15 @@
       }
     }
     /* --- AI QA Layout Overhaul --- */
-    .ai-qa-panel {
+    .detail-right-inspector,
+    .inspector-tab-pane,
+    .ai-qa-panel,
+    .ai-tools-panel {
+      min-width: 0;
+      box-sizing: border-box;
+    }
+    .ai-qa-panel,
+    .ai-tools-panel {
       display: flex;
       flex-direction: column;
       height: 100%;
@@ -1468,12 +1476,17 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       background: var(--surface);
       border: 1px dashed var(--border);
       border-radius: 12px;
-      padding: 32px 24px;
+      padding: clamp(20px, 4vw, 32px) 16px;
       text-align: center;
       margin-bottom: 24px;
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      gap: 12px;
     }
     .ai-processing-section.onboarding-state[style*="display: none"] {
       display: none !important;
@@ -1493,21 +1506,29 @@
     .ai-processing-section.onboarding-state.is-unsupported .ai-processing-icon {
       color: var(--muted);
     }
-    .onboarding-state h3 {
+    .onboarding-state h3,
+    .ai-processing-section.onboarding-state .ai-processing-heading {
       font-size: 15px;
       font-weight: 600;
       color: var(--text);
       margin: 0 0 8px 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
-    .onboarding-state p {
-      max-width: 300px;
+    .onboarding-state p,
+    .ai-processing-section.onboarding-state .ai-processing-message {
+      max-width: 100%;
       font-size: 13px;
       color: var(--muted);
       margin: 0 0 16px 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .ai-processing-section.onboarding-state .ai-processing-actions {
       display: flex;
       justify-content: center;
+      flex-wrap: wrap;
       width: 100%;
     }
     .ai-processing-spinner {

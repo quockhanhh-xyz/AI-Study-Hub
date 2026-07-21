@@ -1917,12 +1917,15 @@ function updateAskAvailability() {
     const aiQaMessages = document.getElementById("aiQaMessages");
     const sampleRow = document.getElementById("aiQaSampleQuestions");
 
+    const qaStickyFooter = document.querySelector(".ai-qa-sticky-footer");
+
     if (aiQaProcessingStatus !== "COMPLETED") {
         disabledReason = "Document not ready for AI.";
+        if (qaStickyFooter) qaStickyFooter.style.display = "none";
         
         // Handle Onboarding state visibility
         if (processingSection) {
-            processingSection.style.display = "block";
+            processingSection.style.display = "flex";
             processingSection.classList.toggle("is-unsupported", aiQaProcessingStatus === "UNSUPPORTED");
             const msgEl = document.getElementById("aiProcessingMessage");
             const headEl = processingSection.querySelector(".ai-processing-heading");
@@ -1959,6 +1962,7 @@ function updateAskAvailability() {
         if (aiQaMessages) aiQaMessages.style.display = "none";
         if (sampleRow) sampleRow.style.display = "none";
     } else {
+        if (qaStickyFooter) qaStickyFooter.style.display = "flex";
         if (processingSection) {
             processingSection.style.display = "none";
             processingSection.classList.remove("is-unsupported");
@@ -2178,7 +2182,7 @@ function updateAiToolsAvailability() {
             notReadyMsg.style.display = "none";
             notReadyMsg.classList.remove("is-unsupported");
         } else {
-            notReadyMsg.style.display = "block";
+            notReadyMsg.style.display = "flex";
             notReadyMsg.classList.toggle("is-unsupported", aiToolsProcessingStatus === "UNSUPPORTED");
             const msgEl = document.getElementById("aiToolsProcessingMessage");
             const headEl = notReadyMsg.querySelector(".ai-processing-heading");
