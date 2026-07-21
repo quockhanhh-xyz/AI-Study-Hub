@@ -5,6 +5,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.demo.ai_study_hub.dto.AdminAiUsageItem;
 import com.demo.ai_study_hub.dto.AdminAiUsageListResponse;
+import com.demo.ai_study_hub.dto.AdminAiUsageSummaryResponse;
 import com.demo.ai_study_hub.entity.AiUsageLog;
 import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.repository.AiUsageLogRepository;
@@ -37,12 +38,12 @@ public class AdminAiUsageService {
     @Autowired
     private UserRepository userRepository;
 
-    public AdminAiUsageListResponse getAiUsages(String search, String tier, String feature, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-        Specification<User> spec = buildSpecification(search, tier, feature, startDate, endDate);
+    public AdminAiUsageListResponse getAiUsages(String search, String tier, String feature, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        Specification<User> spec = buildSpecification(search, tier, feature, status, startDate, endDate);
         Page<User> page = userRepository.findAll(spec, pageable);
 
         List<AdminAiUsageItem> items = page.getContent().stream()
-                .map(user -> mapToItem(user, startDate, endDate))
+                .map(user -> mapToItem(user, status, startDate, endDate))
                 .collect(Collectors.toList());
 
         AdminAiUsageListResponse response = new AdminAiUsageListResponse();
@@ -50,11 +51,14 @@ public class AdminAiUsageService {
         response.setTotalPages(page.getTotalPages());
         response.setTotalElements(page.getTotalElements());
         response.setCurrentPage(page.getNumber());
+        
+        response.setSummary(getAiUsageSummary(search, tier, feature, status, startDate, endDate));
+        
         return response;
     }
 
-    public byte[] exportAiUsage(String search, String tier, String feature, LocalDateTime startDate, LocalDateTime endDate) {
-        Specification<User> spec = buildSpecification(search, tier, feature, startDate, endDate);
+    public byte[] exportAiUsage(String search, String tier, String feature, String status, LocalDateTime startDate, LocalDateTime endDate) {
+        Specification<User> spec = buildSpecification(search, tier, feature, status, startDate, endDate);
         List<User> users = userRepository.findAll(spec);
 
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -71,7 +75,7 @@ public class AdminAiUsageService {
 
             int rowIdx = 1;
             for (User user : users) {
-                AdminAiUsageItem item = mapToItem(user, startDate, endDate);
+                AdminAiUsageItem item = mapToItem(user, status, startDate, endDate);
                 Row row = sheet.createRow(rowIdx++);
                 row.createCell(0).setCellValue(item.getUserEmail());
                 row.createCell(1).setCellValue(item.getTier());
@@ -90,7 +94,7 @@ public class AdminAiUsageService {
         }
     }
 
-    private Specification<User> buildSpecification(String search, String tier, String feature, LocalDateTime startDate, LocalDateTime endDate) {
+    private Specification<User> buildSpecification(String search, String tier, String feature, String status, LocalDateTime startDate, LocalDateTime endDate) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (search != null && !search.isEmpty()) {
@@ -123,6 +127,28 @@ public class AdminAiUsageService {
                 if (endDate != null) {
                     subPredicates.add(cb.lessThanOrEqualTo(subRoot.get("createdAt"), endDate));
                 }
+                if (status != null && !status.isEmpty()) {
+                    subPredicates.add(cb.equal(subRoot.get("status"), status));
+                }
+                subquery.where(cb.and(subPredicates.toArray(new Predicate[0])));
+
+                predicates.add(root.get("userId").in(subquery));
+            } else if (status != null && !status.isEmpty() || startDate != null || endDate != null) {
+                // If feature is not provided but status or date is, we still need a subquery to filter users who have logs in that range/status
+                jakarta.persistence.criteria.Subquery<Integer> subquery = query.subquery(Integer.class);
+                jakarta.persistence.criteria.Root<AiUsageLog> subRoot = subquery.from(AiUsageLog.class);
+                subquery.select(subRoot.get("user").get("userId"));
+
+                List<Predicate> subPredicates = new ArrayList<>();
+                if (startDate != null) {
+                    subPredicates.add(cb.greaterThanOrEqualTo(subRoot.get("createdAt"), startDate));
+                }
+                if (endDate != null) {
+                    subPredicates.add(cb.lessThanOrEqualTo(subRoot.get("createdAt"), endDate));
+                }
+                if (status != null && !status.isEmpty()) {
+                    subPredicates.add(cb.equal(subRoot.get("status"), status));
+                }
                 subquery.where(cb.and(subPredicates.toArray(new Predicate[0])));
 
                 predicates.add(root.get("userId").in(subquery));
@@ -132,10 +158,10 @@ public class AdminAiUsageService {
     }
 
     public AdminAiUsageItem mapUserToAiUsageItem(User user) {
-        return mapToItem(user, null, null);
+        return mapToItem(user, null, null, null);
     }
 
-    private AdminAiUsageItem mapToItem(User user, LocalDateTime startDate, LocalDateTime endDate) {
+    private AdminAiUsageItem mapToItem(User user, String status, LocalDateTime startDate, LocalDateTime endDate) {
         Specification<AiUsageLog> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("user"), user));
@@ -144,6 +170,9 @@ public class AdminAiUsageService {
             }
             if (endDate != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), endDate));
+            }
+            if (status != null && !status.isEmpty()) {
+                predicates.add(cb.equal(root.get("status"), status));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
@@ -185,5 +214,70 @@ public class AdminAiUsageService {
         if ("AI_FLASHCARD".equalsIgnoreCase(externalFeature)) return "FLASHCARD";
         if ("AI_QUIZ".equalsIgnoreCase(externalFeature)) return "QUIZ";
         return externalFeature;
+    }
+
+    private AdminAiUsageSummaryResponse getAiUsageSummary(String search, String tier, String feature, String status, LocalDateTime startDate, LocalDateTime endDate) {
+        Specification<AiUsageLog> logSpec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (startDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), startDate));
+            }
+            if (endDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), endDate));
+            }
+            if (status != null && !status.isEmpty()) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (feature != null && !feature.isEmpty()) {
+                String mappedFeature = mapFeatureToInternal(feature);
+                if ("QA".equals(mappedFeature)) {
+                    predicates.add(root.get("requestType").in("ASK", "QA", "AI_QA"));
+                } else {
+                    predicates.add(cb.equal(root.get("requestType"), mappedFeature));
+                }
+            }
+            if ((search != null && !search.isEmpty()) || (tier != null && !tier.isEmpty())) {
+                Join<AiUsageLog, User> userJoin = root.join("user");
+                if (search != null && !search.isEmpty()) {
+                    String searchLike = "%" + search.toLowerCase() + "%";
+                    predicates.add(cb.or(
+                            cb.like(cb.lower(userJoin.get("email")), searchLike),
+                            cb.like(cb.lower(userJoin.get("fullName")), searchLike)
+                    ));
+                }
+                if (tier != null && !tier.isEmpty()) {
+                    predicates.add(cb.equal(userJoin.get("tier").as(String.class), tier));
+                }
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        List<AiUsageLog> logs = aiUsageLogRepository.findAll(logSpec);
+        
+        long totalRequests = logs.size();
+        long successCount = 0;
+        long failedCount = 0;
+        long quotaBlockedCount = 0;
+        
+        java.util.Set<Integer> uniqueUsers = new java.util.HashSet<>();
+
+        for (AiUsageLog log : logs) {
+            String s = log.getStatus();
+            if ("SUCCESS".equalsIgnoreCase(s)) successCount++;
+            else if ("FAILED".equalsIgnoreCase(s) || "ERROR".equalsIgnoreCase(s) || "AI_PROVIDER_ERROR".equalsIgnoreCase(s)) failedCount++;
+            else if ("QUOTA_EXCEEDED".equalsIgnoreCase(s)) quotaBlockedCount++;
+            
+            if (log.getUser() != null) {
+                uniqueUsers.add(log.getUser().getUserId());
+            }
+        }
+
+        return AdminAiUsageSummaryResponse.builder()
+                .totalRequests(totalRequests)
+                .successCount(successCount)
+                .failedCount(failedCount)
+                .quotaBlockedCount(quotaBlockedCount)
+                .activeUsers(uniqueUsers.size())
+                .build();
     }
 }

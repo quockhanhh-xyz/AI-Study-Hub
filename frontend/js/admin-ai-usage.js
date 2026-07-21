@@ -12,19 +12,25 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initAdminAiUsage() {
-    // State
     let currentPage = 1;
-    const pageSize = 10;
+    let pageSize = 10;
 
     // Elements
     const tableBody = document.getElementById('usageTableBody');
-    const pagination = document.getElementById('pagination');
+    const paginationControls = document.getElementById('paginationControls');
+    const pageInfo = document.getElementById('pageInfo');
+    const pageSizeSelect = document.getElementById('pageSize');
     const searchInput = document.getElementById('searchInput');
     const tierFilter = document.getElementById('tierFilter');
     const featureFilter = document.getElementById('featureFilter');
+    const statusFilter = document.getElementById('statusFilter');
     const startDateFilter = document.getElementById('startDateFilter');
     const endDateFilter = document.getElementById('endDateFilter');
     const exportBtn = document.getElementById('exportBtn');
+    const exportBtnText = document.getElementById('exportBtnText');
+    const dynamicSubtitle = document.getElementById('dynamicSubtitle');
+    const emptyState = document.getElementById('emptyState');
+    const usageTable = document.querySelector('.admin-table');
 
     const loadUsage = async () => {
         const loadingState = document.getElementById("usageLoadingState");
@@ -43,16 +49,21 @@ function initAdminAiUsage() {
 
             if (searchInput.value) params.search = searchInput.value;
             if (tierFilter.value) params.tier = tierFilter.value;
-            if (featureFilter && featureFilter.value) params.feature = featureFilter.value;
+            if (featureFilter.value) params.feature = featureFilter.value;
+            if (statusFilter.value) params.status = statusFilter.value;
             if (startDateFilter.value) params.startDate = `${startDateFilter.value}T00:00:00`;
             if (endDateFilter.value) params.endDate = `${endDateFilter.value}T23:59:59`;
+
+            updateSubtitle();
+            updateExportBtn();
 
             const response = await getAdminAiUsage(params);
 
             if (response && response.success && response.data) {
                 const data = response.data;
                 renderTable(data.usages);
-                renderPagination(data.totalPages);
+                renderPagination(data.totalPages, data.totalElements);
+                renderSummary(data.summary);
 
                 loadingState.style.display = "none";
                 contentState.style.display = "block";
@@ -70,38 +81,118 @@ function initAdminAiUsage() {
 
     const renderTable = (items) => {
         if (!items || items.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No usage found.</td></tr>';
+            usageTable.style.display = 'none';
+            emptyState.style.display = 'block';
             return;
         }
 
-        tableBody.innerHTML = items.map(item => `
+        usageTable.style.display = 'table';
+        emptyState.style.display = 'none';
+
+        tableBody.innerHTML = items.map(item => {
+            // Determine tier badge color
+            let tierClass = 'badge-neutral';
+            if (item.tier === 'PREMIUM') tierClass = 'badge-warning';
+            else if (item.tier === 'ULTRA') tierClass = 'badge-primary';
+
+            return `
             <tr>
                 <td>${item.userEmail || item.user || '-'}</td>
-                <td><span class="badge ${item.tier ? item.tier.toLowerCase() : ''}">${item.tier || '-'}</span></td>
+                <td><span class="badge ${tierClass}">${item.tier || '-'}</span></td>
                 <td>${item.aiQaUsed || item.AI_QA || 0}</td>
                 <td>${item.summaryUsed || item.AI_SUMMARY || 0}</td>
                 <td>${item.flashcardUsed || item.AI_FLASHCARD || 0}</td>
                 <td>${item.quizUsed || item.AI_QUIZ || 0}</td>
                 <td><strong>${item.totalAiRequests || item.total || 0}</strong></td>
-                <td>${item.lastUsedAt ? new Date(item.lastUsedAt).toLocaleString() : '-'}</td>
+                <td>${formatDateTime(item.lastUsedAt)}</td>
             </tr>
-        `).join('');
+        `}).join('');
     };
 
-    const renderPagination = (totalPages) => {
-        pagination.innerHTML = '';
+    const renderSummary = (summary) => {
+        if (!summary) return;
+        document.getElementById('kpiTotal').textContent = summary.totalRequests || 0;
+        document.getElementById('kpiSuccess').textContent = summary.successCount || 0;
+        document.getElementById('kpiFailed').textContent = summary.failedCount || 0;
+        document.getElementById('kpiQuota').textContent = summary.quotaBlockedCount || 0;
+        document.getElementById('kpiUsers').textContent = summary.activeUsers || 0;
+    };
+
+    const formatDateTime = (dateStr) => {
+        if (!dateStr) return '-';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) + ' &middot; ' + 
+               date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    };
+
+    const updateSubtitle = () => {
+        let text = [];
+        if (featureFilter.value) {
+            text.push(`Users who used: ${featureFilter.options[featureFilter.selectedIndex].text}`);
+        }
+        
+        let dateText = "Showing all-time AI usage logs.";
+        if (startDateFilter.value && endDateFilter.value) {
+            const start = new Date(startDateFilter.value).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+            const end = new Date(endDateFilter.value).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+            dateText = `Showing usage from ${start} to ${end}.`;
+        } else if (startDateFilter.value) {
+            const start = new Date(startDateFilter.value).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+            dateText = `Showing usage since ${start}.`;
+        } else if (endDateFilter.value) {
+            const end = new Date(endDateFilter.value).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+            dateText = `Showing usage until ${end}.`;
+        }
+
+        if (text.length > 0) {
+            dynamicSubtitle.innerHTML = `<strong>${text.join(', ')}</strong>. Other feature counts still reflect the selected date range.<br>${dateText}`;
+        } else {
+            dynamicSubtitle.textContent = dateText;
+        }
+    };
+
+    const updateExportBtn = () => {
+        const hasFilters = searchInput.value || tierFilter.value || featureFilter.value || statusFilter.value || startDateFilter.value || endDateFilter.value;
+        exportBtnText.textContent = hasFilters ? "Export filtered AI usage" : "Export all AI usage logs";
+    };
+
+    const renderPagination = (totalPages, totalElements) => {
+        const startItem = totalElements === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+        const endItem = Math.min(currentPage * pageSize, totalElements);
+        pageInfo.textContent = `Showing ${startItem}-${endItem} of ${totalElements} users`;
+
+        paginationControls.innerHTML = '';
         if (totalPages <= 1) return;
 
+        // Previous button
+        const prevBtn = document.createElement('button');
+        prevBtn.textContent = 'Previous';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; loadUsage(); } };
+        paginationControls.appendChild(prevBtn);
+
+        // Page buttons (simplified for now)
         for (let i = 1; i <= totalPages; i++) {
-            const btn = document.createElement('button');
-            btn.textContent = i;
-            if (i === currentPage) btn.classList.add('active');
-            btn.onclick = () => {
-                currentPage = i;
-                loadUsage();
-            };
-            pagination.appendChild(btn);
+            if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                if (i === currentPage) btn.classList.add('active');
+                btn.onclick = () => { currentPage = i; loadUsage(); };
+                paginationControls.appendChild(btn);
+            } else if (i === currentPage - 2 || i === currentPage + 2) {
+                const ellipsis = document.createElement('span');
+                ellipsis.textContent = '...';
+                ellipsis.style.padding = '4px 8px';
+                paginationControls.appendChild(ellipsis);
+            }
         }
+
+        // Next button
+        const nextBtn = document.createElement('button');
+        nextBtn.textContent = 'Next';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; loadUsage(); } };
+        paginationControls.appendChild(nextBtn);
     };
 
     let currentSearchTimeout = null;
@@ -113,7 +204,13 @@ function initAdminAiUsage() {
         }, 500);
     });
 
-    [tierFilter, featureFilter, startDateFilter, endDateFilter].forEach(el => {
+    pageSizeSelect.addEventListener('change', () => {
+        pageSize = parseInt(pageSizeSelect.value, 10);
+        currentPage = 1;
+        loadUsage();
+    });
+
+    [tierFilter, featureFilter, statusFilter, startDateFilter, endDateFilter].forEach(el => {
         if (el) {
             el.addEventListener('change', () => {
                 currentPage = 1;
@@ -124,8 +221,9 @@ function initAdminAiUsage() {
 
     window.clearFilters = () => {
         searchInput.value = '';
-        if (tierFilter) tierFilter.value = '';
-        if (featureFilter) featureFilter.value = '';
+        tierFilter.value = '';
+        featureFilter.value = '';
+        statusFilter.value = '';
         startDateFilter.value = '';
         endDateFilter.value = '';
         currentPage = 1;
@@ -139,7 +237,8 @@ function initAdminAiUsage() {
             const params = {};
             if (searchInput.value) params.search = searchInput.value;
             if (tierFilter.value) params.tier = tierFilter.value;
-            if (featureFilter && featureFilter.value) params.feature = featureFilter.value;
+            if (featureFilter.value) params.feature = featureFilter.value;
+            if (statusFilter.value) params.status = statusFilter.value;
             if (startDateFilter.value) params.startDate = `${startDateFilter.value}T00:00:00`;
             if (endDateFilter.value) params.endDate = `${endDateFilter.value}T23:59:59`;
 
