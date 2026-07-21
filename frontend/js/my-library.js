@@ -1252,8 +1252,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     card.append(main, actions);
     return card;
   }
-    return card;
-  }
 
   // --- FAVORITES TAB ---
   async function loadFavorites() {
