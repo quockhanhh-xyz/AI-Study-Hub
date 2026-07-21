@@ -80,6 +80,9 @@ document.addEventListener("DOMContentLoaded", async function () {
   const cancelShareBtn = document.getElementById("cancelShareBtn");
   const confirmShareBtn = document.getElementById("confirmShareBtn");
   const shareItemSelect = document.getElementById("shareItemSelect");
+  if (window.UIHelper && typeof window.UIHelper.convertSelectToCustomDropdown === 'function') {
+    window.UIHelper.convertSelectToCustomDropdown(shareItemSelect);
+  }
   const shareModalError = document.getElementById("shareModalError");
   let isChatTabInitialized = false;
   const chatLoader = document.getElementById("chatLoader");
@@ -654,9 +657,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       if (docs.length === 0) {
         docEmpty.style.display = "flex";
+        if (shareDocBtn) shareDocBtn.style.display = "none";
         return;
       }
 
+      if (shareDocBtn) shareDocBtn.style.display = "flex";
       docGrid.innerHTML = "";
       docs.forEach(function (doc) {
         docGrid.appendChild(createDocCard(doc));
@@ -751,9 +756,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       if (folders.length === 0) {
         folderEmpty.style.display = "flex";
+        if (shareFolderBtn) shareFolderBtn.style.display = "none";
         return;
       }
 
+      if (shareFolderBtn) shareFolderBtn.style.display = "flex";
       folderGrid.innerHTML = "";
       folders.forEach(function (folder) {
         folderGrid.appendChild(createFolderCard(folder));
@@ -1228,6 +1235,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         opt.textContent = type === "document" ? (item.title || "Untitled Document") : (item.folderName || "Untitled Folder");
         shareItemSelect.appendChild(opt);
       });
+      shareItemSelect.dispatchEvent(new Event("syncCustom"));
     } catch (error) {
       showError(shareModalError, error.message);
     }
@@ -1247,11 +1255,21 @@ document.addEventListener("DOMContentLoaded", async function () {
     openModal(shareModal);
   }
 
-  shareDocBtn.addEventListener("click", () => openShareModalFor("document"));
-  
+  if (shareDocBtn) {
+    shareDocBtn.addEventListener("click", () => openShareModalFor("document"));
+  }
+  const shareDocBtnEmpty = document.getElementById("shareDocBtnEmpty");
+  if (shareDocBtnEmpty) {
+    shareDocBtnEmpty.addEventListener("click", () => openShareModalFor("document"));
+  }
+
   const shareFolderBtn = document.getElementById("shareFolderBtn");
   if (shareFolderBtn) {
     shareFolderBtn.addEventListener("click", () => openShareModalFor("folder"));
+  }
+  const shareFolderBtnEmpty = document.getElementById("shareFolderBtnEmpty");
+  if (shareFolderBtnEmpty) {
+    shareFolderBtnEmpty.addEventListener("click", () => openShareModalFor("folder"));
   }
 
   closeShareModalBtn.addEventListener("click", function () { closeModal(shareModal); });
