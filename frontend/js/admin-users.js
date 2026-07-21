@@ -25,10 +25,70 @@ function handleSearch(event) {
     if (currentSearchTimeout) {
         clearTimeout(currentSearchTimeout);
     }
-    // Debounce search
     currentSearchTimeout = setTimeout(() => {
-        loadUsers(0);
-    }, 500);
+        onFilterChange();
+    }, 400);
+}
+
+function onFilterChange() {
+    updateFilterUIState();
+    loadUsers(0);
+}
+
+function updateFilterUIState() {
+    const search = document.getElementById("filterSearch").value.trim();
+    const role = document.getElementById("filterRole").value;
+    const tier = document.getElementById("filterTier").value;
+    const status = document.getElementById("filterStatus").value;
+
+    const btnClear = document.getElementById("btnClearFilters");
+    const isFiltered = Boolean(search || role || tier || status);
+    if (btnClear) btnClear.disabled = !isFiltered;
+
+    renderFilterChips({ search, role, tier, status });
+}
+
+function renderFilterChips(filters) {
+    const container = document.getElementById("activeFilterChips");
+    if (!container) return;
+
+    let chipsHtml = "";
+    if (filters.search) {
+        chipsHtml += `<span class="filter-chip">Search: "${escapeHtml(filters.search)}" <span class="filter-chip-remove" onclick="removeFilter('search')">&times;</span></span>`;
+    }
+    if (filters.role) {
+        chipsHtml += `<span class="filter-chip">Role: ${escapeHtml(filters.role)} <span class="filter-chip-remove" onclick="removeFilter('role')">&times;</span></span>`;
+    }
+    if (filters.tier) {
+        chipsHtml += `<span class="filter-chip">Tier: ${escapeHtml(filters.tier)} <span class="filter-chip-remove" onclick="removeFilter('tier')">&times;</span></span>`;
+    }
+    if (filters.status) {
+        chipsHtml += `<span class="filter-chip">Status: ${escapeHtml(filters.status)} <span class="filter-chip-remove" onclick="removeFilter('status')">&times;</span></span>`;
+    }
+
+    if (chipsHtml) {
+        container.innerHTML = chipsHtml;
+        container.style.display = "flex";
+    } else {
+        container.innerHTML = "";
+        container.style.display = "none";
+    }
+}
+
+function removeFilter(type) {
+    if (type === 'search') document.getElementById("filterSearch").value = "";
+    if (type === 'role') document.getElementById("filterRole").value = "";
+    if (type === 'tier') document.getElementById("filterTier").value = "";
+    if (type === 'status') document.getElementById("filterStatus").value = "";
+    onFilterChange();
+}
+
+function clearFilters() {
+    document.getElementById("filterSearch").value = "";
+    document.getElementById("filterRole").value = "";
+    document.getElementById("filterTier").value = "";
+    document.getElementById("filterStatus").value = "";
+    onFilterChange();
 }
 
 async function loadUsers(page = 0) {
@@ -38,7 +98,6 @@ async function loadUsers(page = 0) {
     const errorState = document.getElementById("usersErrorState");
     const contentState = document.getElementById("usersContent");
 
-    // Only show full loading state on first load or error retry, otherwise keep table visible
     if (contentState.style.display === "none") {
         loadingState.style.display = "flex";
         errorState.style.display = "none";
@@ -65,6 +124,7 @@ async function loadUsers(page = 0) {
         const response = await fetchAdminUsers(params);
         if (response && response.success && response.data) {
             renderUsersTable(response.data);
+            renderSummaryCards(response.data);
 
             loadingState.style.display = "none";
             errorState.style.display = "none";
@@ -81,6 +141,37 @@ async function loadUsers(page = 0) {
     }
 }
 
+function renderSummaryCards(data) {
+    const totalElements = data.totalElements || 0;
+    const users = data.users || [];
+
+    let activeCount = 0;
+    let blockedCount = 0;
+    let adminCount = 0;
+    let paidCount = 0;
+
+    users.forEach(u => {
+        if (u.status === 'ACTIVE') activeCount++;
+        if (u.status === 'BLOCKED') blockedCount++;
+        if (u.role === 'ADMIN') adminCount++;
+        if (u.tier === 'PREMIUM' || u.tier === 'ULTRA') paidCount++;
+    });
+
+    document.getElementById("summaryTotalUsers").textContent = totalElements.toLocaleString();
+    document.getElementById("summaryActiveUsers").textContent = activeCount.toLocaleString();
+    document.getElementById("summaryBlockedUsers").textContent = blockedCount.toLocaleString();
+    document.getElementById("summaryAdminUsers").textContent = adminCount.toLocaleString();
+    document.getElementById("summaryPaidUsers").textContent = paidCount.toLocaleString();
+}
+
+function formatJoinedDate(dateStr) {
+    if (!dateStr) return "N/A";
+    const d = new Date(dateStr);
+    const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `${date} · ${time}`;
+}
+
 function renderUsersTable(data) {
     const tbody = document.getElementById("usersTableBody");
     tbody.innerHTML = "";
@@ -89,37 +180,41 @@ function renderUsersTable(data) {
     totalPages = data.totalPages || 0;
     const totalElements = data.totalElements || 0;
 
+    const activeAdminCount = users.filter(u => u.role === 'ADMIN' && u.status !== 'BLOCKED').length;
+
     if (users.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 24px; color: var(--text-muted);">No users found matching your filters.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 32px; color: var(--text-muted);">No users found matching your filter criteria.</td></tr>`;
     } else {
         users.forEach(user => {
             const tr = document.createElement("tr");
 
-            // Format date local
-            const createdDate = user.createdAt ? new Date(user.createdAt).toLocaleString() : "N/A";
-
             tr.innerHTML = `
-                <td>#${user.userId}</td>
-                <td style="font-weight: 500;">${escapeHtml(user.fullName)}</td>
-                <td>${escapeHtml(user.email)}</td>
+                <td><span class="table-muted-text">#${user.userId}</span></td>
+                <td><span style="font-weight: 600; color: var(--text-main, #0f172a);">${escapeHtml(user.fullName)}</span></td>
+                <td><span class="table-muted-text" title="${escapeHtml(user.email)}">${escapeHtml(user.email)}</span></td>
                 <td><span class="badge ${getRoleBadgeClass(user.role)}">${user.role}</span></td>
                 <td><span class="badge ${getTierBadgeClass(user.tier)}">${user.tier}</span></td>
-                <td style="font-weight: 600; color: var(--primary);">${user.documentCount || 0}</td>
+                <td><span style="font-weight: 500; color: var(--text-main, #0f172a);">${user.documentCount || 0}</span></td>
                 <td><span class="badge ${getStatusBadgeClass(user.status)}">${user.status}</span></td>
-                <td style="color: var(--text-muted); font-size: 13px;">${createdDate}</td>
+                <td><span class="table-muted-text">${formatJoinedDate(user.createdAt)}</span></td>
                 <td style="text-align: right;">
-                    ${renderActionButtons(user)}
+                    ${renderActionButtons(user, activeAdminCount)}
                 </td>
             `;
             tbody.appendChild(tr);
         });
     }
 
-    // Update Pagination
+    // Update Pagination & Export Button Text
     const paginationInfo = document.getElementById("paginationInfo");
     const startItem = totalElements === 0 ? 0 : (currentPage * pageSize) + 1;
     const endItem = Math.min((currentPage + 1) * pageSize, totalElements);
     paginationInfo.textContent = `Showing ${startItem} - ${endItem} of ${totalElements}`;
+
+    const btnExport = document.getElementById("btnExportUsers");
+    if (btnExport) {
+        btnExport.title = `Export ${totalElements.toLocaleString()} filtered users to Excel`;
+    }
 
     const paginationContainer = document.querySelector(".admin-pagination");
     if (totalPages <= 1) {
@@ -131,14 +226,7 @@ function renderUsersTable(data) {
     }
 }
 
-function changePage(delta) {
-    const newPage = currentPage + delta;
-    if (newPage >= 0 && newPage < totalPages) {
-        loadUsers(newPage);
-    }
-}
-
-function renderActionButtons(user) {
+function renderActionButtons(user, activeAdminCount) {
     let currentUserStr = localStorage.getItem("currentUser");
     let currentUserId = -1;
     if (currentUserStr) {
@@ -151,14 +239,14 @@ function renderActionButtons(user) {
     if (user.userId === currentUserId) {
         return `
             <div class="admin-action-group">
-                <span class="admin-self-badge">(You)</span>
+                <span class="admin-self-badge">You</span>
                 <button class="btn btn-sm btn-outline" onclick="viewUserDetails(${user.userId})">View</button>
             </div>
         `;
     }
 
-    const blockMessage = `This user will no longer be able to sign in or use AI Study Hub. Their documents, shares, groups, and payment history will not be deleted.<br><br>Are you sure you want to block <strong>${escapeHtml(user.fullName || user.email)}</strong>?`;
-    const unblockMessage = `This user will regain full access to their account and features.<br><br>Are you sure you want to unblock <strong>${escapeHtml(user.fullName || user.email)}</strong>?`;
+    const blockMessage = `This user will no longer be able to sign in or access AI Study Hub.<br><br>Are you sure you want to block <strong>${escapeHtml(user.fullName || user.email)}</strong>?`;
+    const unblockMessage = `This user will regain full access to their account.<br><br>Are you sure you want to unblock <strong>${escapeHtml(user.fullName || user.email)}</strong>?`;
 
     if (user.status === 'BLOCKED') {
         return `
@@ -168,10 +256,15 @@ function renderActionButtons(user) {
             </div>
         `;
     } else {
+        const isLastAdmin = user.role === 'ADMIN' && activeAdminCount <= 1;
+        const blockBtnHtml = isLastAdmin
+            ? `<button class="btn btn-sm btn-outline" disabled title="Cannot block the last active admin" style="opacity:0.5; cursor:not-allowed;">Block</button>`
+            : `<button class="btn btn-sm btn-outline-danger" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">Block</button>`;
+
         return `
             <div class="admin-action-group">
                 <button class="btn btn-sm btn-outline" onclick="viewUserDetails(${user.userId})">View</button>
-                <button class="btn btn-sm btn-outline-danger" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">Block</button>
+                ${blockBtnHtml}
             </div>
         `;
     }

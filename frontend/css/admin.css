@@ -10,7 +10,11 @@
 }
 
 .admin-content-wrapper {
-    padding: 24px;
+    padding: 32px 40px;
+    max-width: 1440px;
+    width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
     background-color: var(--background, #f4f5f7);
     flex-grow: 1;
 }
@@ -23,10 +27,87 @@
 }
 
 .admin-page-title {
-    font-size: 24px;
-    font-weight: 600;
+    font-size: 26px;
+    font-weight: 700;
     color: var(--text-main, #172033);
     margin: 0;
+    letter-spacing: -0.02em;
+}
+
+/* Mini KPI Summary Cards Grid for User Management */
+.admin-user-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.user-summary-card {
+    padding: 16px 20px;
+    border-radius: 12px;
+    background-color: var(--surface, #ffffff);
+    border: 1px solid var(--border, #eadfdd);
+    box-shadow: 0 2px 8px rgba(23, 32, 51, 0.04);
+}
+
+.user-summary-card .summary-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted, #64748b);
+    margin-bottom: 6px;
+}
+
+.user-summary-card .summary-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-main, #172033);
+    line-height: 1.2;
+}
+
+.text-success { color: var(--success, #16a34a) !important; }
+.text-danger { color: var(--danger, #dc2626) !important; }
+.text-warning { color: var(--warning, #d97706) !important; }
+.text-primary { color: var(--primary, #6366f1) !important; }
+
+/* Active Filter Chips */
+.admin-filter-chips {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background-color: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    color: var(--primary, #6366f1);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.filter-chip-remove {
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    color: var(--primary, #6366f1);
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.filter-chip-remove:hover {
+    opacity: 1;
+}
+
+.table-muted-text {
+    color: var(--text-muted, #64748b);
+    font-size: 13px;
 }
 
 .admin-header-actions {

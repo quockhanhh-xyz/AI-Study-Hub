@@ -21,8 +21,11 @@
         <main class="main-content">
             <div class="admin-layout">
                 <div class="admin-content-wrapper">
-                    <header class="admin-page-header">
-                        <h1 class="admin-page-title">User Management</h1>
+                    <header class="admin-page-header" style="margin-bottom: 24px;">
+                        <div>
+                            <h1 class="admin-page-title" style="margin-bottom: 4px;">User Management</h1>
+                            <p style="color: var(--text-muted, #64748b); margin: 0; font-size: 0.95rem;">Manage user access, account status, subscription tiers, and platform activity.</p>
+                        </div>
                     </header>
                     <div class="admin-state-container" id="usersLoadingState">
                         <div class="admin-state-icon">
@@ -44,6 +47,31 @@
                     </div>
 
                     <div id="usersContent" style="display: none;">
+                        <!-- Summary KPI Cards -->
+                        <div class="admin-user-summary-grid">
+                            <div class="admin-card user-summary-card">
+                                <div class="summary-label">Total Users</div>
+                                <div class="summary-value" id="summaryTotalUsers">0</div>
+                            </div>
+                            <div class="admin-card user-summary-card">
+                                <div class="summary-label">Active Accounts</div>
+                                <div class="summary-value text-success" id="summaryActiveUsers">0</div>
+                            </div>
+                            <div class="admin-card user-summary-card">
+                                <div class="summary-label">Blocked Accounts</div>
+                                <div class="summary-value text-danger" id="summaryBlockedUsers">0</div>
+                            </div>
+                            <div class="admin-card user-summary-card">
+                                <div class="summary-label">Admins</div>
+                                <div class="summary-value text-warning" id="summaryAdminUsers">0</div>
+                            </div>
+                            <div class="admin-card user-summary-card">
+                                <div class="summary-label">Paid Subscriptions</div>
+                                <div class="summary-value text-primary" id="summaryPaidUsers">0</div>
+                            </div>
+                        </div>
+
+                        <!-- Actions & Filters Bar -->
                         <div class="admin-actions-bar">
                             <div class="admin-filters-main">
                                 <div class="admin-search-wrapper">
@@ -52,18 +80,18 @@
                                     </svg>
                                     <input type="text" id="filterSearch" class="admin-filter-input admin-search-input" placeholder="Search by name or email..." onkeyup="handleSearch(event)">
                                 </div>
-                                <select id="filterRole" class="admin-filter-input admin-select" onchange="loadUsers(0)">
+                                <select id="filterRole" class="admin-filter-input admin-select" onchange="onFilterChange()">
                                     <option value="">All Roles</option>
                                     <option value="USER">User</option>
                                     <option value="ADMIN">Admin</option>
                                 </select>
-                                <select id="filterTier" class="admin-filter-input admin-select" onchange="loadUsers(0)">
+                                <select id="filterTier" class="admin-filter-input admin-select" onchange="onFilterChange()">
                                     <option value="">All Tiers</option>
                                     <option value="FREE">Free</option>
                                     <option value="PREMIUM">Premium</option>
                                     <option value="ULTRA">Ultra</option>
                                 </select>
-                                <select id="filterStatus" class="admin-filter-input admin-select" onchange="loadUsers(0)">
+                                <select id="filterStatus" class="admin-filter-input admin-select" onchange="onFilterChange()">
                                     <option value="">All Statuses</option>
                                     <option value="ACTIVE">Active</option>
                                     <option value="INACTIVE">Inactive</option>
@@ -71,20 +99,23 @@
                                 </select>
                             </div>
                             <div class="admin-actions-buttons">
-                                <button class="btn btn-outline" onclick="clearFilters()" title="Reset all filters">
+                                <button class="btn btn-outline" id="btnClearFilters" onclick="clearFilters()" title="Reset all filters" disabled>
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                                     </svg>
                                     Clear Filters
                                 </button>
-                                <button class="btn btn-primary" onclick="handleExport()" title="Export users list">
+                                <button class="btn btn-primary" id="btnExportUsers" onclick="handleExport()" title="Export filtered users list to Excel">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                                     </svg>
-                                    Export
+                                    Export Filtered Users
                                 </button>
                             </div>
                         </div>
+
+                        <!-- Active Filter Chips -->
+                        <div id="activeFilterChips" class="admin-filter-chips" style="display: none; margin-bottom: 18px;"></div>
 
                         <div class="admin-card" style="padding: 0; overflow-x: auto;">
                             <table class="table" id="usersTable">
