@@ -7,6 +7,11 @@
   <title>Flashcards - AI Study Hub</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    progress#flashcardProgressBar::-webkit-progress-bar { background-color: #e5e7eb; border-radius: 4px; }
+    progress#flashcardProgressBar::-webkit-progress-value { background-color: var(--primary); border-radius: 4px; }
+    progress#flashcardProgressBar::-moz-progress-bar { background-color: var(--primary); border-radius: 4px; }
+  </style>
 </head>
 
 <body>
@@ -17,10 +22,12 @@
     </aside>
 
     <main class="main-content">
+      <a href="#" class="back-link" id="flashcardBackLink" style="margin-bottom: 16px; display: inline-block;">← Back to document</a>
       <section class="page-header">
-        <a href="#" class="back-link" id="flashcardBackLink" style="margin-bottom: 16px; display: inline-block; color: #4b5563; font-size: 13px; text-decoration: none; font-weight: 500;">← Back to document</a>
-        <h1 id="flashcardSetTitle" style="font-size: 24px; font-weight: 800; color: var(--text);">Flashcards</h1>
-        <p class="dashboard-subtitle" id="flashcardSetMeta" style="font-size: 14px; color: var(--muted); margin-top: 8px;"></p>
+        <div>
+          <h1 id="flashcardSetTitle">Flashcards</h1>
+          <p class="dashboard-subtitle" id="flashcardSetMeta"></p>
+        </div>
       </section>
 
       <div id="flashcardLoader" class="empty-state dashboard-loader">
@@ -29,16 +36,16 @@
 
       <div id="flashcardErrorState" class="status-box status-error" style="display:none;"></div>
 
-      <section id="flashcardViewer" class="card flashcard-viewer" style="display:none; padding: 24px;">
-        <div class="flashcard-progress-row" style="margin-bottom: 16px;">
-          <div class="flashcard-progress" id="flashcardProgress" style="font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px;"></div>
-          <div class="flashcard-progress-track" style="height: 6px; background: var(--border); border-radius: 4px; overflow: hidden;">
-            <div class="flashcard-progress-fill" id="flashcardProgressFill" style="height: 100%; background: var(--primary); transition: width 0.3s ease;"></div>
+      <section id="flashcardViewer" class="card flashcard-viewer" style="display:none;">
+        <div class="flashcard-progress-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+          <div class="flashcard-progress-wrapper" style="flex:1;">
+            <div class="flashcard-progress" id="flashcardProgress" style="font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px;"></div>
+            <progress id="flashcardProgressBar" value="0" max="100" style="width: 100%; height: 6px; border-radius: 4px; overflow: hidden; appearance: none;"></progress>
           </div>
         </div>
 
         <div class="flashcard-stage" id="flashcardStage" role="button" tabindex="0"
-          aria-label="Flashcard, click or press Enter/Space to flip" style="cursor: pointer; perspective: 1000px; min-height: 240px; margin-bottom: 20px;">
+          aria-label="Flashcard, click or press Enter/Space to flip" style="cursor: pointer; perspective: 1000px; min-height: 240px; margin-bottom: 0;">
           <div class="flashcard-card" id="flashcardCard" style="position: relative; width: 100%; min-height: 240px; text-align: center; transition: transform 0.4s; transform-style: preserve-3d; border-radius: 12px; border: 1px solid var(--border); background: var(--surface);">
             <div class="flashcard-face flashcard-face-front" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; min-height: 240px;">
               <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -88,10 +95,10 @@
 
         <div class="flashcard-controls" style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 24px; gap: 12px;">
           <div style="flex: 1;">
-            <button type="button" class="btn btn-secondary" id="flashcardPrevBtn" style="width: 100%; font-size: 14px; padding: 10px 16px; font-weight: 600;">← Previous</button>
+            <button type="button" class="btn btn-secondary" id="flashcardPrevBtn" style="width: 100%;">← Previous</button>
           </div>
           <div style="flex: 1;">
-            <button type="button" class="btn btn-primary" id="flashcardNextBtn" style="width: 100%; font-size: 14px; padding: 10px 16px; font-weight: 600;">Next →</button>
+            <button type="button" class="btn btn-primary" id="flashcardNextBtn" style="width: 100%;">Next →</button>
           </div>
         </div>
 
