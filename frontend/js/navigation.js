@@ -21,6 +21,7 @@ const ICON_TRASH = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox=
 const ICON_UPGRADE = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3z"></path></svg>';
 const ICON_ADMIN = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></circle></svg>';
 const ICON_PAYMENT = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+const ICON_PROFILE = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"></path></svg>';
 
 
 const NAVIGATION_MENU = [
@@ -30,16 +31,19 @@ const NAVIGATION_MENU = [
   { name: "Study Groups", icon: ICON_GROUPS, url: "groups.html", requiresAuth: true },
   { name: "Community Library", icon: ICON_COMMUNITY, url: "community.html", requiresAuth: false },
   { name: "Trash Can", icon: ICON_TRASH, url: "trash.html", requiresAuth: true },
+  { name: "My Profile", icon: ICON_PROFILE, url: "profile.html", requiresAuth: true },
 
   // Admin section
   { name: "Admin Dashboard", icon: ICON_ADMIN, url: "admin-dashboard.html", requiresAuth: true, requiresAdmin: true },
   { name: "Admin Users", icon: ICON_GROUP, url: "admin-users.html", requiresAuth: true, requiresAdmin: true },
   { name: "Admin Documents", icon: ICON_DOCS, url: "admin-documents.html", requiresAuth: true, requiresAdmin: true },
+  { name: "Admin Document Detail", icon: ICON_DOCS, url: "admin-document-detail.html", requiresAuth: true, requiresAdmin: true, hidden: true },
   { name: "Admin Payments", icon: ICON_PAYMENT, url: "admin-payments.html", requiresAuth: true, requiresAdmin: true },
   { name: "Admin AI Usage", icon: ICON_UPGRADE, url: "admin-ai-usage.html", requiresAuth: true, requiresAdmin: true },
   { name: "Admin Subjects", icon: ICON_FOLDER, url: "admin-subjects.html", requiresAuth: true, requiresAdmin: true },
   { name: "Admin Subject Requests", icon: ICON_DOCS, url: "admin-subject-requests.html", requiresAuth: true, requiresAdmin: true },
   { name: "Admin Plans", icon: ICON_SHIELD, url: "admin-plans.html", requiresAuth: true, requiresAdmin: true },
+  { name: "Admin Profile", icon: ICON_PROFILE, url: "admin-profile.html", requiresAuth: true, requiresAdmin: true },
 
   // Step 11: Upgrade route — requires auth; guest redirected to login?redirect=upgrade.html
   { name: "Upgrade", icon: ICON_UPGRADE, url: "upgrade.html", requiresAuth: true },

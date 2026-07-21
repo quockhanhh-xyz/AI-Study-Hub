@@ -11,7 +11,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.demo.ai_study_hub.service.TierPolicyService;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -34,6 +36,11 @@ class PublicCommunityTest {
     private UserRepository userRepository;
     @Mock
     private DocumentFavoriteRepository documentFavoriteRepository;
+
+    @Mock
+    private TierPolicyService tierPolicyService;
+    @Spy
+    private com.demo.ai_study_hub.service.DocumentPreviewHelper previewHelper;
 
     @InjectMocks
     private DocumentService documentService;
@@ -64,7 +71,7 @@ class PublicCommunityTest {
     }
 
     @Test
-    void publishDocument_WhenSuccessful_ShouldSetPublicAndApproved() {
+    void publishDocument_WhenSuccessful_ShouldSetPublicAndPending() {
         when(userRepository.findByEmail("owner@test.com")).thenReturn(Optional.of(mockOwner));
         when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
         when(documentRepository.save(any(Document.class))).thenAnswer(i -> i.getArguments()[0]);
@@ -73,8 +80,8 @@ class PublicCommunityTest {
 
         assertNotNull(res);
         assertEquals("PUBLIC", res.getVisibility());
-        assertEquals("APPROVED", res.getApprovalStatus());
-        assertNotNull(res.getPublishedAt());
+        assertEquals("PENDING", res.getApprovalStatus());
+        assertNull(res.getPublishedAt());
         verify(documentRepository, times(1)).save(mockDoc);
     }
 

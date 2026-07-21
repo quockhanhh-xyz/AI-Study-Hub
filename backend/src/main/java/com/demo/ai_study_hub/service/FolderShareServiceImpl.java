@@ -32,6 +32,7 @@ public class FolderShareServiceImpl implements FolderShareService {
     private final DocumentContentRepository documentContentRepository;
     private final TierPolicyService tierPolicyService;
     private final UsageService usageService;
+    private final DocumentPreviewHelper previewHelper;
 
     @Override
     @Transactional
@@ -335,6 +336,9 @@ public class FolderShareServiceImpl implements FolderShareService {
     }
 
     private DocumentResponse mapToDocumentResponseSimple(com.demo.ai_study_hub.entity.Document doc) {
+        String normalizedFileType = previewHelper.normalizeFileType(doc.getFileType(), doc.getOriginalFileName());
+        com.demo.ai_study_hub.enums.PreviewMode previewMode = previewHelper.getPreviewMode(normalizedFileType);
+
         return DocumentResponse.builder()
                 .documentId(doc.getDocumentId())
                 .title(doc.getTitle())
@@ -351,6 +355,11 @@ public class FolderShareServiceImpl implements FolderShareService {
                 .status(doc.getStatus())
                 .createdAt(doc.getCreatedAt())
                 .updatedAt(doc.getUpdatedAt())
+                .mimeType(previewHelper.getMimeType(normalizedFileType))
+                .resourceType(previewHelper.getResourceType(normalizedFileType))
+                .previewUrl(previewHelper.getPreviewUrl(doc.getFileUrl(), previewMode))
+                .downloadUrl("/api/documents/" + doc.getDocumentId() + "/download")
+                .previewMode(previewMode)
                 .build();
     }
 

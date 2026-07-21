@@ -151,6 +151,11 @@ function downloadDocument(documentOrId) {
     return;
   }
 
+  if (typeof documentOrId === "object" && documentOrId.downloadUrl) {
+    window.location.href = API_BASE_URL + documentOrId.downloadUrl;
+    return;
+  }
+
   // Use absolute routing with API_BASE_URL to circumvent multi-port localhost origin divergence
   window.location.href = `${API_BASE_URL}/api/documents/${id}/download`;
 }

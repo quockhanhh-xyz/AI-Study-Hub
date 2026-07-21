@@ -89,8 +89,17 @@ function renderCurrentQuestion() {
     const reviewBanner = document.getElementById("quizReviewBanner");
     if (reviewBanner) reviewBanner.style.display = isReviewMode ? "flex" : "none";
 
-    document.getElementById("quizProgress").textContent =
-        `Question ${currentQuestionIndex + 1} / ${questions.length}`;
+    const progressText = document.getElementById("quizProgressText");
+    if (progressText) {
+        progressText.textContent = `Question ${currentQuestionIndex + 1} / ${questions.length}`;
+    }
+    
+    const progressBar = document.getElementById("quizProgressBar");
+    if (progressBar) {
+        progressBar.max = questions.length;
+        progressBar.value = currentQuestionIndex + 1;
+    }
+
     document.getElementById("quizQuestionText").textContent = question.questionText || "";
 
     const difficultyBadge = document.getElementById("quizDifficultyBadge");
@@ -109,13 +118,22 @@ function renderCurrentQuestion() {
     const nextBtn = document.getElementById("quizNextBtn");
     const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
+    const skipHint = document.getElementById("quizSkipHint");
+
     if (prevBtn) prevBtn.disabled = currentQuestionIndex === 0;
     if (nextBtn) {
         if (isReviewMode) {
             nextBtn.textContent = "Next →";
             nextBtn.disabled = isLastQuestion;
+            if (skipHint) skipHint.style.display = "none";
         } else {
-            nextBtn.textContent = isLastQuestion ? "Finish" : "Next →";
+            if (selectedOption) {
+                nextBtn.textContent = isLastQuestion ? "Finish" : "Next →";
+                if (skipHint) skipHint.style.display = "none";
+            } else {
+                nextBtn.textContent = isLastQuestion ? "Skip & Finish" : "Skip question →";
+                if (skipHint) skipHint.style.display = "block";
+            }
             nextBtn.disabled = false;
         }
     }
@@ -151,10 +169,15 @@ function renderOptions(question, selectedOption) {
 
         if (selectedOption) {
             btn.disabled = true;
+            if (opt.optionKey === selectedOption) {
+                btn.classList.add("selected");
+            }
             if (opt.optionKey === question.correctOption) {
                 btn.classList.add("correct");
             } else if (opt.optionKey === selectedOption) {
                 btn.classList.add("incorrect");
+            } else {
+                btn.classList.add("muted");
             }
         } else if (!isReviewMode) {
             btn.addEventListener("click", () => handleSelectOption(question, opt.optionKey));
@@ -178,9 +201,15 @@ function renderFeedback(question, selectedOption) {
 
     const isCorrect = selectedOption === question.correctOption;
     feedback.className = "quiz-feedback " + (isCorrect ? "correct" : "incorrect");
-    feedback.textContent = isCorrect
-        ? `Correct! ${question.explanation || ""}`
-        : `Not quite. The correct answer is ${question.correctOption}. ${question.explanation || ""}`;
+    
+    let html = `<strong>${isCorrect ? 'Correct!' : 'Not quite.'}</strong><br><br>`;
+    if (!isCorrect) {
+        html += `<strong>Your answer:</strong> ${selectedOption}<br>`;
+    }
+    html += `<strong>Correct answer:</strong> ${question.correctOption}<br><br>`;
+    html += `<strong>Explanation:</strong> ${question.explanation || ""}`;
+    
+    feedback.innerHTML = html;
     feedback.style.display = "block";
 }
 
@@ -189,6 +218,18 @@ function handleSelectOption(question, optionKey) {
     userAnswers[question.questionId] = optionKey;
     renderOptions(question, optionKey);
     renderFeedback(question, optionKey);
+    
+    // Update next button from "Skip" to normal since an answer was selected
+    const nextBtn = document.getElementById("quizNextBtn");
+    const skipHint = document.getElementById("quizSkipHint");
+    const isLastQuestion = currentQuestionIndex === currentQuizSet.questions.length - 1;
+    
+    if (nextBtn) {
+        nextBtn.textContent = isLastQuestion ? "Finish" : "Next →";
+    }
+    if (skipHint) {
+        skipHint.style.display = "none";
+    }
 }
 
 function goToPreviousQuestion() {
@@ -265,10 +306,21 @@ function renderQuizResult() {
     document.getElementById("quizSummaryResult").style.display = "block";
 
     const { correctCount, totalQuestions, percentage } = lastAttemptResult;
-    document.getElementById("quizSummaryScoreValue").textContent = `${percentage}%`;
-    document.getElementById("quizSummaryScoreLabel").textContent = `${correctCount} / ${totalQuestions} correct`;
-    document.getElementById("quizSummaryText").textContent =
-        `You answered ${Object.keys(userAnswers).length} of ${currentQuizSet.questions.length} questions.`;
+    const answeredCount = Object.keys(userAnswers).length;
+    const incorrectCount = answeredCount - correctCount;
+    const skippedCount = totalQuestions - answeredCount;
+
+    const scoreEl = document.getElementById("quizStatScore");
+    if (scoreEl) scoreEl.textContent = `${percentage}%`;
+
+    const correctEl = document.getElementById("quizStatCorrect");
+    if (correctEl) correctEl.textContent = correctCount;
+
+    const incorrectEl = document.getElementById("quizStatIncorrect");
+    if (incorrectEl) incorrectEl.textContent = incorrectCount;
+
+    const skippedEl = document.getElementById("quizStatSkipped");
+    if (skippedEl) skippedEl.textContent = skippedCount;
 }
 
 function startReview() {
@@ -317,13 +369,9 @@ async function loadAttemptHistory() {
 
             const scoreSpan = document.createElement("span");
             scoreSpan.className = "quiz-history-score";
-            scoreSpan.textContent = `${attempt.percentage}% (${attempt.correctCount}/${attempt.totalQuestions})`;
-
-            const dateSpan = document.createElement("span");
-            dateSpan.textContent = formatGeneratedAt(attempt.completedAt);
+            scoreSpan.textContent = `${attempt.percentage}% · ${attempt.correctCount}/${attempt.totalQuestions} correct · ${formatGeneratedAt(attempt.completedAt)}`;
 
             li.appendChild(scoreSpan);
-            li.appendChild(dateSpan);
             list.appendChild(li);
         });
 

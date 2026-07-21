@@ -85,7 +85,60 @@ function getQuotaErrorMessage(error) {
   return message || "An unexpected error occurred.";
 }
 
+/**
+ * Retrieves the full profile of the current user.
+ * @returns {Promise<Object>} The profile data
+ */
+async function getProfile() {
+  return await apiRequest("/api/account/profile", {
+    method: "GET"
+  });
+}
+
+/**
+ * Updates the profile fields of the current user.
+ * @param {Object} profileData - The fields to update
+ * @returns {Promise<Object>} The updated ProfileResponse
+ */
+async function updateProfile(profileData) {
+  return await apiRequest("/api/account/profile", {
+    method: "PUT",
+    body: JSON.stringify(profileData)
+  });
+}
+
+/**
+ * Uploads a profile avatar.
+ * @param {File} file - The image file to upload.
+ * @returns {Promise<Object>} The updated ProfileResponse
+ */
+async function uploadAvatar(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return await apiRequest("/api/account/avatar", {
+    method: "POST",
+    body: formData
+  });
+}
+
+/**
+ * Changes the current user's password.
+ * @param {string} currentPassword - The current password
+ * @param {string} newPassword - The new password
+ * @returns {Promise<Object>} Success response
+ */
+async function changePassword(currentPassword, newPassword) {
+  return await apiRequest("/api/account/password", {
+    method: "PUT",
+    body: JSON.stringify({ currentPassword, newPassword })
+  });
+}
+
 // Expose globally for page scripts
 window.getAccountEntitlements = getAccountEntitlements;
 window.getAccountUsage = getAccountUsage;
 window.getQuotaErrorMessage = getQuotaErrorMessage;
+window.getProfile = getProfile;
+window.updateProfile = updateProfile;
+window.uploadAvatar = uploadAvatar;
+window.changePassword = changePassword;

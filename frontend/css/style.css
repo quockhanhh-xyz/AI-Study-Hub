@@ -3324,8 +3324,8 @@ svg {
 }
 
 .quick-link-card-upload {
-  background: var(--primary-light) !important;
-  border-color: var(--primary-border) !important;
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
 }
 
 .quick-link-card-upload:hover {
@@ -3795,8 +3795,7 @@ svg {
 }
 
 .custom-select-list-container {
-  max-height: 240px;
-  overflow-y: auto;
+  /* Let this container grow naturally inside the scrolling parent .custom-select-options */
 }
 
 /* ===== BREADCRUMB/TEXT BACK BUTTON ===== */
@@ -4055,6 +4054,117 @@ svg {
   flex-direction: column;
   gap: 24px;
 }
+
+/* AI Tools Tool Block */
+.ai-tools-tool-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ai-tools-tool-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.ai-tools-tool-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--primary-light);
+  color: var(--primary);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.ai-tools-tool-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.ai-tools-tool-header p {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.ai-tools-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-tools-input-row-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ai-tools-input-row-flex label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.ai-tools-input-row-flex input[type="number"],
+.ai-tools-input-row-flex select {
+  width: 120px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  font-size: 14px;
+}
+
+.ai-tools-input-group > label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-tools-input-group > label span:not(.helper-text-inline) {
+  font-weight: normal;
+  color: var(--text-muted);
+}
+
+.ai-tools-input-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.ai-tools-char-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: right;
+  display: block;
+}
+
+.ai-tools-limit-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 
 .ai-tools-not-ready {
   background: var(--primary-light);
@@ -5329,23 +5439,44 @@ svg {
 .notification-item {
   display: flex;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 12px 16px 12px 20px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: background-color 0.2s;
   background-color: var(--surface);
+  position: relative;
 }
 
 .notification-item:hover {
   background-color: var(--background);
 }
 
+.notification-item.no-action {
+  cursor: default;
+}
+
+.notification-item.no-action:hover {
+  background-color: var(--surface);
+}
+
 .notification-item.unread {
-  background-color: var(--primary-light, rgba(79, 70, 229, 0.05));
+  background-color: rgba(245, 158, 11, 0.05);
 }
 
 .notification-item.unread:hover {
-  background-color: var(--primary-light, rgba(79, 70, 229, 0.1));
+  background-color: rgba(245, 158, 11, 0.1);
+}
+
+.notification-item.unread::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: var(--warning, #f59e0b);
+  border-radius: 50%;
 }
 
 .notification-icon {
@@ -5360,10 +5491,10 @@ svg {
   justify-content: center;
 }
 
-.notification-item.unread .notification-icon {
-  background-color: var(--primary);
-  color: white;
-}
+.notification-icon.success { color: var(--success, #10b981); background-color: rgba(16, 185, 129, 0.1); }
+.notification-icon.danger { color: var(--danger, #dc2626); background-color: rgba(220, 38, 38, 0.1); }
+.notification-icon.warning { color: var(--warning, #f59e0b); background-color: rgba(245, 158, 11, 0.1); }
+.notification-icon.info { color: var(--primary, #4f46e5); background-color: rgba(79, 70, 229, 0.1); }
 
 .notification-content {
   flex-grow: 1;
@@ -5589,23 +5720,44 @@ svg {
 .notification-item {
   display: flex;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 12px 16px 12px 20px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: background-color 0.2s;
   background-color: var(--surface);
+  position: relative;
 }
 
 .notification-item:hover {
   background-color: var(--background);
 }
 
+.notification-item.no-action {
+  cursor: default;
+}
+
+.notification-item.no-action:hover {
+  background-color: var(--surface);
+}
+
 .notification-item.unread {
-  background-color: var(--primary-light, rgba(255, 88, 88, 0.05));
+  background-color: rgba(245, 158, 11, 0.05);
 }
 
 .notification-item.unread:hover {
-  background-color: var(--primary-light, rgba(255, 88, 88, 0.1));
+  background-color: rgba(245, 158, 11, 0.1);
+}
+
+.notification-item.unread::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: var(--warning, #f59e0b);
+  border-radius: 50%;
 }
 
 .notification-icon {
@@ -5620,10 +5772,10 @@ svg {
   justify-content: center;
 }
 
-.notification-item.unread .notification-icon {
-  background-color: var(--primary);
-  color: white;
-}
+.notification-icon.success { color: var(--success, #10b981); background-color: rgba(16, 185, 129, 0.1); }
+.notification-icon.danger { color: var(--danger, #dc2626); background-color: rgba(220, 38, 38, 0.1); }
+.notification-icon.warning { color: var(--warning, #f59e0b); background-color: rgba(245, 158, 11, 0.1); }
+.notification-icon.info { color: var(--primary, #4f46e5); background-color: rgba(79, 70, 229, 0.1); }
 
 .notification-content {
   flex-grow: 1;

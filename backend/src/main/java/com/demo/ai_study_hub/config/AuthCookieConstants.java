@@ -8,4 +8,7 @@ public final class AuthCookieConstants {
     public static final boolean COOKIE_SECURE = Boolean.parseBoolean(
             System.getenv().getOrDefault("COOKIE_SECURE", "false")
     );
+    public static final String COOKIE_SAME_SITE = System.getenv().getOrDefault(
+            "COOKIE_SAME_SITE", "Lax"
+    );
 }

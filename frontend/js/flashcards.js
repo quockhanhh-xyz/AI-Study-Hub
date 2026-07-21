@@ -15,6 +15,7 @@ let deckOrder = [];
 let currentCardIndex = 0;
 let isCardFlipped = false;
 let cardMarks = {};
+let autoNextTimer = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
     const isAuthenticated = window.authReady ? await window.authReady : false;
@@ -49,9 +50,12 @@ async function loadFlashcardSet(setId) {
             `${currentFlashcardSet.itemCount || currentFlashcardSet.flashcards.length} cards · Generated ${formatGeneratedAt(currentFlashcardSet.createdAt)}`;
 
         const backLink = document.getElementById("flashcardBackLink");
-        if (backLink && currentFlashcardSet.documentId) {
-            backLink.href = `document-detail.html?id=${currentFlashcardSet.documentId}&tab=tools`;
-        }
+        const summaryBackLink = document.getElementById("flashcardSummaryBackLink");
+        const backUrl = currentFlashcardSet.documentId
+            ? `document-detail.html?id=${currentFlashcardSet.documentId}&tab=tools`
+            : "documents.html";
+        if (backLink) backLink.href = backUrl;
+        if (summaryBackLink) summaryBackLink.href = backUrl;
 
         cardMarks = {};
         startDeck(currentFlashcardSet.flashcards.map((_, i) => i));
@@ -86,6 +90,8 @@ function renderCurrentCard() {
     if (!currentFlashcardSet || deckOrder.length === 0) return;
     const card = getCurrentCard();
 
+    if (autoNextTimer) clearTimeout(autoNextTimer);
+
     document.getElementById("flashcardFrontText").textContent = card.frontText || "";
     document.getElementById("flashcardBackText").textContent = card.backText || "";
 
@@ -109,6 +115,15 @@ function renderCurrentCard() {
     const cardEl = document.getElementById("flashcardCard");
     cardEl.classList.toggle("flipped", isCardFlipped);
 
+    // Hide marking buttons until answer is revealed (card flipped)
+    const markRow = document.getElementById("flashcardMarkRow");
+    if (markRow) {
+        markRow.style.display = isCardFlipped ? "flex" : "none";
+    }
+
+    const toast = document.getElementById("flashcardFeedbackToast");
+    if (toast) toast.textContent = "";
+
     renderMarkButtons();
 
     const prevBtn = document.getElementById("flashcardPrevBtn");
@@ -123,27 +138,54 @@ function renderMarkButtons() {
 
     const knownBtn = document.getElementById("flashcardKnownBtn");
     const unknownBtn = document.getElementById("flashcardUnknownBtn");
-    if (knownBtn) knownBtn.classList.toggle("active", mark === "known");
-    if (unknownBtn) unknownBtn.classList.toggle("active", mark === "unknown");
-
-    // Clear any lingering browser focus ring so a mark button clicked on the
-    // PREVIOUS card doesn't visually look "selected" on the card we just
-    // navigated to (only the .active class above should indicate a mark).
-    if (knownBtn) knownBtn.blur();
-    if (unknownBtn) unknownBtn.blur();
+    if (knownBtn) {
+        knownBtn.classList.toggle("active", mark === "known");
+        knownBtn.style.boxShadow = mark === "known" ? "0 0 0 2px #047857" : "none";
+        knownBtn.blur();
+    }
+    if (unknownBtn) {
+        unknownBtn.classList.toggle("active", mark === "unknown");
+        unknownBtn.style.boxShadow = mark === "unknown" ? "0 0 0 2px #b45309" : "none";
+        unknownBtn.blur();
+    }
 }
 
 function markCurrentCard(mark) {
     const flashcardIndex = deckOrder[currentCardIndex];
-    // Toggle off if clicking the same mark again.
-    cardMarks[flashcardIndex] = cardMarks[flashcardIndex] === mark ? undefined : mark;
+    const prevMark = cardMarks[flashcardIndex];
+    cardMarks[flashcardIndex] = prevMark === mark ? undefined : mark;
     renderMarkButtons();
+
+    const toast = document.getElementById("flashcardFeedbackToast");
+    if (toast) {
+        if (cardMarks[flashcardIndex] === "known") {
+            toast.textContent = "✓ Marked as known";
+            toast.style.color = "#047857";
+        } else if (cardMarks[flashcardIndex] === "unknown") {
+            toast.textContent = "✕ Marked for review";
+            toast.style.color = "#b45309";
+        } else {
+            toast.textContent = "";
+        }
+    }
+
+    if (autoNextTimer) clearTimeout(autoNextTimer);
+    if (cardMarks[flashcardIndex]) {
+        autoNextTimer = setTimeout(() => {
+            goToNextCard();
+        }, 400);
+    }
 }
 
 function flipCurrentCard() {
     isCardFlipped = !isCardFlipped;
     const cardEl = document.getElementById("flashcardCard");
     if (cardEl) cardEl.classList.toggle("flipped", isCardFlipped);
+
+    const markRow = document.getElementById("flashcardMarkRow");
+    if (markRow) {
+        markRow.style.display = isCardFlipped ? "flex" : "none";
+    }
 }
 
 function goToPreviousCard() {
@@ -164,16 +206,24 @@ function goToNextCard() {
 }
 
 function showFlashcardSummary() {
+    if (autoNextTimer) clearTimeout(autoNextTimer);
+
     const knownCount = deckOrder.filter(i => cardMarks[i] === "known").length;
     const unknownCount = deckOrder.filter(i => cardMarks[i] === "unknown").length;
     const unmarkedCount = deckOrder.length - knownCount - unknownCount;
 
+    const totalEl = document.getElementById("flashcardTotalCount");
+    if (totalEl) totalEl.textContent = deckOrder.length;
+
     document.getElementById("flashcardKnownCount").textContent = knownCount;
     document.getElementById("flashcardUnknownCount").textContent = unknownCount;
 
+    const unmarkedEl = document.getElementById("flashcardUnmarkedCount");
+    if (unmarkedEl) unmarkedEl.textContent = unmarkedCount;
+
     document.getElementById("flashcardSummaryText").textContent = unmarkedCount > 0
         ? `You went through all ${deckOrder.length} cards. ${unmarkedCount} card${unmarkedCount === 1 ? "" : "s"} left unmarked.`
-        : `You went through all ${deckOrder.length} cards.`;
+        : `Great job! You reviewed all ${deckOrder.length} flashcards in this set.`;
 
     const reviewUnknownBtn = document.getElementById("flashcardReviewUnknownBtn");
     if (reviewUnknownBtn) {

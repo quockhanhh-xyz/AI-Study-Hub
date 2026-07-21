@@ -286,7 +286,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const deleteLink = document.createElement("button");
     deleteLink.type = "button";
     deleteLink.className = "dropdown-item";
-    deleteLink.textContent = "Delete";
+    deleteLink.textContent = "Move to Trash";
     deleteLink.style.display = "block";
     deleteLink.style.width = "100%";
     deleteLink.style.padding = "8px 12px";
@@ -329,7 +329,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       e.preventDefault();
       e.stopPropagation();
       dropdown.style.display = "none";
-      openDeleteModal(folder.folderId);
+      openDeleteModal(folder);
     });
 
     // Escape key closes dropdown and restores focus to kebabBtn
@@ -579,8 +579,28 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // Delete folder
 
-  function openDeleteModal(folderId) {
-    deletingFolderId = folderId;
+  function openDeleteModal(folder) {
+    if (typeof folder === "object" && folder !== null) {
+      deletingFolderId = folder.folderId;
+      const titleEl = document.getElementById("deleteModalTitle");
+      const messageEl = document.getElementById("deleteModalMessage");
+      if (titleEl) {
+        titleEl.textContent = `Move “${folder.folderName || "Folder"}” to Trash?`;
+      }
+      if (messageEl) {
+        const fileCount = folder.fileCount || 0;
+        const subfolderCount = folder.subfolderCount || 0;
+        let contentsText = "";
+        if (fileCount > 0 || subfolderCount > 0) {
+          const fileStr = `${fileCount} document${fileCount !== 1 ? "s" : ""}`;
+          const subStr = `${subfolderCount} subfolder${subfolderCount !== 1 ? "s" : ""}`;
+          contentsText = `This folder contains ${fileStr} and ${subStr}. Everything inside will also be moved to Trash.<br>`;
+        }
+        messageEl.innerHTML = `${contentsText}Items in Trash are permanently deleted after 30 days.`;
+      }
+    } else {
+      deletingFolderId = folder;
+    }
     hideError(deleteError);
     openModal(deleteModal);
   }

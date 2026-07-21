@@ -9,31 +9,84 @@ function renderDocumentPreview(doc) {
   const container = document.getElementById("previewArea");
   if (!container) return;
 
-  const fileType = (doc.fileType || "").toLowerCase();
+  const mode = resolvePreviewMode(doc);
+  const previewUrl = doc.previewUrl || doc.fileUrl;
+  const hasPreviewAccess =
+    doc.canPreview !== false || doc.canOpen === true || doc.canDownload === true;
 
-  if (!doc.canPreview) {
-    renderFallback(container, fileType);
+  if (!hasPreviewAccess || mode === "FALLBACK" || !previewUrl) {
+    renderFallback(container, doc);
     return;
   }
 
-  if (fileType === "pdf") {
-    renderPdfPreview(container, doc.fileUrl);
-  } else if (["png", "jpg", "jpeg", "gif", "webp"].includes(fileType)) {
-    renderImagePreview(container, doc.fileUrl, doc.title);
-  } else if (fileType === "txt") {
-    renderTxtPreview(container, doc.fileUrl);
-  } else {
-    renderFallback(container, fileType);
+  switch (mode) {
+    case "PDF":
+      renderPdfPreview(container, previewUrl);
+      break;
+    case "IMAGE":
+      renderImagePreview(container, previewUrl, doc.title);
+      break;
+    case "TEXT":
+      renderTxtPreview(container, previewUrl);
+      break;
+    case "OFFICE_VIEWER":
+      renderOfficePreview(container, previewUrl, doc);
+      break;
+    default:
+      renderFallback(container, doc);
   }
 }
 
+function resolvePreviewMode(doc) {
+  const mode = normalizePreviewMode(doc.previewMode);
+  if (mode !== "FALLBACK") return mode;
+
+  const fileType = normalizeFileType(doc.fileType || doc.originalFileName);
+  switch (fileType) {
+    case "PDF":
+      return "PDF";
+    case "PNG":
+    case "JPG":
+    case "JPEG":
+    case "WEBP":
+    case "GIF":
+      return "IMAGE";
+    case "TXT":
+      return "TEXT";
+    case "DOC":
+    case "DOCX":
+    case "PPT":
+    case "PPTX":
+    case "XLS":
+    case "XLSX":
+      return "OFFICE_VIEWER";
+    default:
+      return "FALLBACK";
+  }
+}
+
+function normalizePreviewMode(mode) {
+  const value = String(mode || "").trim().toUpperCase();
+  return ["PDF", "IMAGE", "TEXT", "OFFICE_VIEWER", "FALLBACK"].includes(value)
+    ? value
+    : "FALLBACK";
+}
+
+function normalizeFileType(value) {
+  const raw = String(value || "").trim();
+  const extension = raw.includes(".") ? raw.slice(raw.lastIndexOf(".") + 1) : raw;
+  return extension.replace(".", "").toUpperCase();
+}
+
 function renderPdfPreview(container, fileUrl) {
+  const pdfUrlWithZoom = fileUrl.includes("#") ? fileUrl : `${fileUrl}#view=FitH`;
   container.innerHTML = `
     <iframe
-      src="${fileUrl}"
+      src="${pdfUrlWithZoom}"
       class="preview-iframe"
       title="PDF Preview"
       frameborder="0"
+      style="width: 100%; height: 100%; border: 0;"
     ></iframe>
   `;
 }
@@ -63,8 +116,29 @@ function renderTxtPreview(container, fileUrl) {
   `;
 }
 
-function renderFallback(container, fileType) {
-  const label = fileType ? fileType.toUpperCase() : "This file type";
+function renderOfficePreview(container, previewUrl, doc) {
+  const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewUrl)}`;
+
+  container.innerHTML = `
+    <div class="preview-office-wrap">
+      <iframe
+        src="${viewerUrl}"
+        class="preview-iframe preview-office-frame"
+        title="Office Preview"
+        frameborder="0"
+        allowfullscreen
+      ></iframe>
+    </div>
+  `;
+}
+
+function renderFallback(container, doc) {
+  const label = normalizeFileType(doc.fileType || doc.originalFileName) || "This file type";
+  const openUrl = doc.fileUrl || "#";
+  const downloadUrl = doc.downloadUrl || `/api/documents/${doc.documentId}/download`;
+  const canOpen = doc.canOpen !== false;
+  const canDownload = doc.canDownload !== false;
+
   container.innerHTML = `
     <div class="preview-fallback">
       <div class="preview-fallback-icon">
@@ -74,8 +148,12 @@ function renderFallback(container, fileType) {
           <path stroke="currentColor" stroke-width="1.5" d="M14 2v6h6"/>
         </svg>
       </div>
-      <div class="preview-fallback-title">${label} files cannot be previewed</div>
-      <div class="preview-fallback-desc">Use the Open or Download buttons at the top of the preview panel to access this file.</div>
+      <div class="preview-fallback-title">Preview unavailable</div>
+      <div class="preview-fallback-desc">${label} preview is not available. Use Open File or Download to access this document.</div>
+      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+        <a href="${openUrl}" target="_blank" class="btn btn-outline" ${canOpen ? "" : 'disabled style="pointer-events:none; opacity:0.5;"'}>Open File</a>
+        <button onclick="window.location.href = API_BASE_URL + '${downloadUrl}'" class="btn btn-primary" ${canDownload ? "" : "disabled"}>Download</button>
+      </div>
     </div>
   `;
 }

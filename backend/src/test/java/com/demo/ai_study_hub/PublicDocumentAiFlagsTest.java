@@ -9,7 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.demo.ai_study_hub.service.TierPolicyService;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,6 +31,11 @@ class PublicDocumentAiFlagsTest {
     @Mock private DocumentRepository documentRepository;
     @Mock private UserRepository userRepository;
     @Mock private DocumentFavoriteRepository documentFavoriteRepository;
+
+    @Mock
+    private TierPolicyService tierPolicyService;
+    @Spy
+    private com.demo.ai_study_hub.service.DocumentPreviewHelper previewHelper;
 
     @InjectMocks
     private DocumentService documentService;

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.multipart.MultipartFile;
@@ -65,6 +66,8 @@ class DocumentServiceTest {
     private PlatformTransactionManager transactionManager;
     @Mock
     private DocumentFavoriteRepository documentFavoriteRepository;
+    @Spy
+    private com.demo.ai_study_hub.service.DocumentPreviewHelper previewHelper;
 
     @InjectMocks
     private DocumentService documentService;
@@ -768,8 +771,8 @@ class DocumentServiceTest {
 
     @Test
     void getDocumentDetail_WhenUnsupportedFileType_ShouldReturnCanPreviewFalse() {
-        mockDocument.setOriginalFileName("lecture.docx");
-        mockDocument.setFileType("DOCX");
+        mockDocument.setOriginalFileName("archive.zip");
+        mockDocument.setFileType("ZIP");
         when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
         when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
 
