@@ -22,6 +22,8 @@ function initAdminSubjects() {
     const searchInput = document.getElementById('searchInput');
     const statusFilter = document.getElementById('statusFilter');
     const exportBtn = document.getElementById('exportBtn');
+    const exportBtnText = document.getElementById('exportBtnText');
+    const clearFiltersBtn = document.querySelector('.admin-actions-buttons .btn-outline');
 
     // Modals
     const subjectModal = document.getElementById('subjectModal');
@@ -58,6 +60,8 @@ function initAdminSubjects() {
             if (searchInput.value) params.search = searchInput.value;
             if (statusFilter.value) params.status = statusFilter.value;
 
+            updateFilterUI();
+
             const response = await getAdminSubjects(params);
 
             if (response && response.success && response.data) {
@@ -81,26 +85,51 @@ function initAdminSubjects() {
 
     const renderTable = (items) => {
         if (!items || items.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No subjects found.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No subjects found.</td></tr>';
             return;
         }
 
-        tableBody.innerHTML = items.map(item => `
+        tableBody.innerHTML = items.map(item => {
+            const statusClass = item.status === 'ACTIVE' ? 'badge-success' : 'badge-neutral';
+            const statusText = item.status === 'ACTIVE' ? 'Active' : 'Inactive';
+            const docCount = item.documentsCount || 0;
+            const docText = docCount === 1 ? '1 document' : `${docCount} documents`;
+            
+            let descHtml = '<span style="color: var(--text-muted); font-style: italic;">No description</span>';
+            if (item.description) {
+                descHtml = `<div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-width: 250px;" title="${item.description.replace(/"/g, '&quot;')}">${item.description}</div>`;
+            }
+
+            return `
             <tr>
-                <td>${item.subjectCode}</td>
+                <td style="font-weight: 500;">${item.subjectCode}</td>
                 <td>${item.subjectName}</td>
-                <td>${item.description || '-'}</td>
-                <td><span class="badge ${item.status.toLowerCase()}">${item.status}</span></td>
-                <td>${item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}</td>
+                <td>${descHtml}</td>
+                <td style="color: var(--text-muted);">${docText}</td>
+                <td><span class="badge ${statusClass}">${statusText}</span></td>
+                <td>${formatDateTime(item.createdAt)}</td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick='openSubjectModal(${JSON.stringify(item)})'>Edit</button>
+                    <button class="btn btn-sm btn-secondary" onclick='openSubjectModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Edit</button>
                     ${item.status === 'ACTIVE'
-                        ? `<button class="btn btn-sm btn-danger" onclick="openToggleModal(${item.subjectId}, 'INACTIVE', '${item.subjectName}')">Disable</button>`
-                        : `<button class="btn btn-sm btn-primary" onclick="openToggleModal(${item.subjectId}, 'ACTIVE', '${item.subjectName}')">Enable</button>`
+                        ? `<button class="btn btn-sm btn-outline" style="color: var(--text-muted); border-color: var(--border-color);" onclick="openToggleModal(${item.subjectId}, 'INACTIVE', '${item.subjectCode}')">Disable</button>`
+                        : `<button class="btn btn-sm btn-primary" onclick="openToggleModal(${item.subjectId}, 'ACTIVE', '${item.subjectCode}')">Enable</button>`
                     }
                 </td>
             </tr>
-        `).join('');
+        `}).join('');
+    };
+
+    const formatDateTime = (dateStr) => {
+        if (!dateStr) return '-';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) + ' &middot; ' + 
+               date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    };
+
+    const updateFilterUI = () => {
+        const hasFilters = searchInput.value || statusFilter.value;
+        exportBtnText.textContent = hasFilters ? "Export filtered subjects" : "Export all subjects";
+        clearFiltersBtn.style.display = hasFilters ? "inline-flex" : "none";
     };
 
     const renderPagination = (totalPages) => {
@@ -122,23 +151,40 @@ function initAdminSubjects() {
     // Modal Helpers
     window.openSubjectModal = (subject = null) => {
         subjectForm.reset();
+        const helper = document.getElementById('subjectCodeHelper');
+        const warning = document.getElementById('subjectCodeWarning');
+
         if (subject) {
             modalTitle.textContent = 'Edit Subject';
             subjectIdField.value = subject.subjectId;
             subjectCodeField.value = subject.subjectCode;
+            subjectCodeField.disabled = true;
+            subjectCodeField.style.backgroundColor = 'var(--bg-secondary)';
             subjectNameField.value = subject.subjectName;
             subjectDescField.value = subject.description || '';
+            
+            helper.style.display = 'none';
+            warning.style.display = 'block';
         } else {
             modalTitle.textContent = 'Create Subject';
             subjectIdField.value = '';
+            subjectCodeField.disabled = false;
+            subjectCodeField.style.backgroundColor = '';
+            
+            helper.style.display = 'block';
+            warning.style.display = 'none';
         }
         subjectModal.classList.add('active');
     };
 
-    window.openToggleModal = (id, newStatus, name) => {
+    window.openToggleModal = (id, newStatus, code) => {
         toggleSubjectIdField.value = id;
         toggleSubjectStatusField.value = newStatus;
-        toggleStatusMessage.textContent = `Are you sure you want to ${newStatus === 'ACTIVE' ? 'enable' : 'disable'} subject "${name}"?`;
+        if (newStatus === 'ACTIVE') {
+            toggleStatusMessage.innerHTML = `<strong>Enable ${code}?</strong><br><br><span style="color: var(--text-muted); font-size: 0.875rem;">Users will be able to select this subject again for new uploads.</span>`;
+        } else {
+            toggleStatusMessage.innerHTML = `<strong>Disable ${code}?</strong><br><br><span style="color: var(--text-muted); font-size: 0.875rem;">Users will no longer be able to choose this subject for new uploads or filters. Existing documents using this subject will keep showing it.</span>`;
+        }
         toggleStatusModal.classList.add('active');
     };
 
@@ -154,9 +200,9 @@ function initAdminSubjects() {
         }
 
         const data = {
-            subjectCode: subjectCodeField.value,
-            subjectName: subjectNameField.value,
-            description: subjectDescField.value
+            subjectCode: subjectCodeField.value.trim().toUpperCase(),
+            subjectName: subjectNameField.value.trim(),
+            description: subjectDescField.value.trim()
         };
         const id = subjectIdField.value;
 

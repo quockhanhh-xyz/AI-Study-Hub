@@ -19,13 +19,16 @@
             <div class="admin-layout">
                 <div class="admin-content-wrapper">
             <header class="admin-page-header">
-                <h1 class="admin-page-title">System Subject Management</h1>
+                <div>
+                    <h1 class="admin-page-title">System Subject Management</h1>
+                    <p class="admin-page-subtitle" style="margin-top: 4px; color: var(--text-muted); font-size: 0.875rem;">Manage subjects used in document uploads, filters, Community Library, and study materials.</p>
+                </div>
                 <div class="admin-header-actions">
                     <button id="exportBtn" class="btn btn-secondary">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                         </svg>
-                        Export Excel
+                        <span id="exportBtnText">Export all subjects</span>
                     </button>
                     <button class="btn btn-primary" onclick="openSubjectModal()">+ New Subject</button>
                 </div>
@@ -80,13 +83,14 @@
                             <th>Code</th>
                             <th>Name</th>
                             <th>Description</th>
+                            <th>Documents</th>
                             <th>Status</th>
                             <th>Created At</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="subjectsTableBody">
-                        <tr><td colspan="6" style="text-align: center;">Loading...</td></tr>
+                        <tr><td colspan="7" style="text-align: center;">Loading...</td></tr>
                     </tbody>
                 </table>
                 <div id="pagination" class="pagination">
@@ -102,13 +106,18 @@
     <!-- Create/Edit Modal -->
     <div class="admin-modal-overlay" id="subjectModal">
         <div class="admin-modal">
-            <h3 class="admin-modal-title" id="subjectModalTitle">Create Subject</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h3 class="admin-modal-title" id="subjectModalTitle" style="margin-bottom: 0;">Create Subject</h3>
+                <button type="button" onclick="closeModal('subjectModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+            </div>
             <div class="admin-modal-body">
                 <form id="subjectForm">
                     <input type="hidden" id="subjectId">
                     <div class="form-group">
                         <label>Code (Unique)</label>
-                        <input type="text" id="subjectCode" required>
+                        <input type="text" id="subjectCode" required placeholder="e.g. SWP391">
+                        <p id="subjectCodeHelper" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Use a short unique subject code, e.g. SWP391 or DBI202.</p>
+                        <p id="subjectCodeWarning" style="display: none; font-size: 0.75rem; color: var(--warning); margin-top: 4px;">Subject code cannot be changed after creation. Create a new subject if the code is wrong.</p>
                     </div>
                     <div class="form-group">
                         <label>Name</label>
@@ -130,7 +139,10 @@
     <!-- Toggle Status Confirm Modal -->
     <div class="admin-modal-overlay" id="toggleStatusModal">
         <div class="admin-modal">
-            <h3 class="admin-modal-title">Change Status</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h3 class="admin-modal-title" id="toggleStatusModalTitle" style="margin-bottom: 0;">Change Status</h3>
+                <button type="button" onclick="closeModal('toggleStatusModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+            </div>
             <div class="admin-modal-body">
                 <p id="toggleStatusMessage">Are you sure you want to change the status of this subject?</p>
                 <input type="hidden" id="toggleSubjectId">
