@@ -127,10 +127,7 @@ function openEditPlanModal(planCode) {
     document.getElementById("editPlanMaxFlashcards").value = plan.maxFlashcardsPerSet ?? -1;
     document.getElementById("editPlanMaxQuizQuestions").value = plan.maxQuizQuestionsPerSet ?? -1;
 
-    const featureItems = Array.isArray(plan.features)
-        ? plan.features
-        : (plan.featuresList ? String(plan.featuresList).split(',') : []);
-    document.getElementById("editPlanFeatures").value = featureItems.map(item => item.trim()).filter(Boolean).join('\n');
+
 
     const modal = document.getElementById("editPlanModal");
     modal.classList.add("active");
@@ -140,6 +137,7 @@ function closeEditPlanModal() {
     const modal = document.getElementById("editPlanModal");
     modal.classList.remove("active");
 }
+
 
 async function savePlanChanges() {
     if (!confirm("Are you sure you want to save these changes?")) {
@@ -177,8 +175,6 @@ async function savePlanChanges() {
     const maxFlashcardsPerSet = parseInt(document.getElementById("editPlanMaxFlashcards").value, 10);
     const maxQuizQuestionsPerSet = parseInt(document.getElementById("editPlanMaxQuizQuestions").value, 10);
 
-    const featuresText = document.getElementById("editPlanFeatures").value;
-    const features = featuresText.split(/\n|,/).map(item => item.trim()).filter(Boolean);
 
     if (!planName || isNaN(price) || isNaN(durationMonths)) {
         alert("Please fill in all required fields correctly.");
@@ -210,8 +206,7 @@ async function savePlanChanges() {
         quizDailyLimit,
         itemsPerSet,
         maxFlashcardsPerSet,
-        maxQuizQuestionsPerSet,
-        features
+        maxQuizQuestionsPerSet
     };
 
     const btn = document.getElementById("btnSavePlan");

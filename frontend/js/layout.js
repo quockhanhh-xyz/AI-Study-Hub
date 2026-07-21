@@ -114,6 +114,10 @@ async function checkAuthenticationStatus() {
 
     const user = result && result.data ? result.data : null;
 
+    if (currentRoute.requiresAuth && !user) {
+      throw new Error("User session required but not found.");
+    }
+
     // Admin role check: if page requires admin, redirect if user is not admin
     if (currentRoute.requiresAdmin) {
       if (!user || user.role !== 'ADMIN') {
@@ -130,9 +134,8 @@ async function checkAuthenticationStatus() {
       }
     }
 
-
     // Guard clause: If page is only for guests (like login.html) and user session is active -> Kick to target destination
-    if (currentRoute.hideWhenAuth) {
+    if (currentRoute.hideWhenAuth && user) {
       const urlParams = new URLSearchParams(window.location.search);
       let redirectUrl = urlParams.get("redirect");
       let target = "dashboard.html";
