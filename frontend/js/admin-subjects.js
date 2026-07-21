@@ -83,6 +83,16 @@ function initAdminSubjects() {
         }
     };
 
+    const escapeHtml = (unsafe) => {
+        if (unsafe == null) return '';
+        return String(unsafe)
+             .replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+    };
+
     const renderTable = (items) => {
         if (!items || items.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No subjects found.</td></tr>';
@@ -102,17 +112,17 @@ function initAdminSubjects() {
 
             return `
             <tr>
-                <td style="font-weight: 500;">${item.subjectCode}</td>
-                <td>${item.subjectName}</td>
-                <td>${descHtml}</td>
+                <td style="font-weight: 500;">${escapeHtml(item.subjectCode)}</td>
+                <td>${escapeHtml(item.subjectName)}</td>
+                <td>${item.description ? `<div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-width: 250px;" title="${escapeHtml(item.description)}">${escapeHtml(item.description)}</div>` : '<span style="color: var(--text-muted); font-style: italic;">No description</span>'}</td>
                 <td style="color: var(--text-muted);">${docText}</td>
                 <td><span class="badge ${statusClass}">${statusText}</span></td>
                 <td>${formatDateTime(item.createdAt)}</td>
                 <td>
                     <button class="btn btn-sm btn-secondary" onclick='openSubjectModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Edit</button>
                     ${item.status === 'ACTIVE'
-                        ? `<button class="btn btn-sm btn-outline" style="color: var(--text-muted); border-color: var(--border-color);" onclick="openToggleModal(${item.subjectId}, 'INACTIVE', '${item.subjectCode}')">Disable</button>`
-                        : `<button class="btn btn-sm btn-primary" onclick="openToggleModal(${item.subjectId}, 'ACTIVE', '${item.subjectCode}')">Enable</button>`
+                        ? `<button class="btn btn-sm btn-outline" style="color: var(--text-muted); border-color: var(--border-color);" onclick="openToggleModal(${item.subjectId}, 'INACTIVE', '${escapeHtml(item.subjectCode)}')">Disable</button>`
+                        : `<button class="btn btn-sm btn-primary" onclick="openToggleModal(${item.subjectId}, 'ACTIVE', '${escapeHtml(item.subjectCode)}')">Enable</button>`
                     }
                 </td>
             </tr>
