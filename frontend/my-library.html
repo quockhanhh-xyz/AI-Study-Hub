@@ -170,19 +170,14 @@
                 <div class="library-tabs">
                     <div class="library-tab active" data-tab="documents">Documents</div>
                     <div class="library-tab" data-tab="folders">Folders</div>
-                    <div class="library-tab" data-tab="favorites" style="display: flex; align-items: center;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" aria-hidden="true" style="margin-right: 4px;">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                        </svg>
-                        Favorites
-                    </div>
+                    <div class="library-tab" data-tab="favorites">Favorites</div>
                 </div>
                 
                 <div class="dashboard-search" style="max-width: 480px; margin-bottom: 20px;">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" class="search-icon">
                         <path fill="currentColor" d="M11 2c4.9706 0 9 4.0294 9 9 0 2.125-0.7381 4.0766-1.9697 5.6162l4.1767 4.1768-1.414 1.414-4.1768-4.1767C15.0766 19.2619 13.125 20 11 20c-4.9706 0-9-4.0294-9-9 0-4.9706 4.0294-9 9-9m0 2c-3.866 0-7 3.134-7 7 0 3.866 3.134 7 7 7 3.866 0 7-3.134 7-7 0-3.866-3.134-7-7-7" />
                     </svg>
-                    <input type="text" id="searchInput" placeholder="Search your library..." style="padding-left: 40px; width: 100%;" />
+                    <input type="text" id="searchInput" placeholder="Search documents by title or keyword..." style="padding-left: 40px; width: 100%;" />
                 </div>
                 
                 <div id="documentsTab" class="tab-content active">
@@ -195,16 +190,22 @@
                               <select id="fileTypeFilter" style="width: 100%; min-width: unset; max-width: none;">
                                   <option value="">All File Types</option>
                                   <option value="PDF">PDF</option>
-                                  <option value="DOC">Word</option>
-                                  <option value="XLS">Excel</option>
-                                  <option value="PPT">PowerPoint</option>
-                                  <option value="IMAGE">Image</option>
+                                  <option value="DOC">DOC</option>
+                                  <option value="DOCX">DOCX</option>
+                                  <option value="XLS">XLS</option>
+                                  <option value="XLSX">XLSX</option>
+                                  <option value="PPT">PPT</option>
+                                  <option value="PPTX">PPTX</option>
+                                  <option value="TXT">TXT</option>
+                                  <option value="PNG">PNG</option>
+                                  <option value="JPG">JPG</option>
+                                  <option value="JPEG">JPEG</option>
                               </select>
                           </div>
                           <div class="filter-group" style="flex: 1; min-width: 0;">
                               <select id="folderFilter" style="width: 100%; min-width: unset; max-width: none;">
                                   <option value="">All Folders</option>
-                                  <option value="0">Root (My Library)</option>
+                                  <option value="0">My Documents (no folder)</option>
                               </select>
                           </div>
                           <button type="button" id="clearFiltersBtn" style="flex: 1; min-width: 0; padding: 11px 16px; border: 1.5px solid var(--border); border-radius: 12px; background-color: #ffffff; color: var(--text-main); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 2px 8px rgba(23, 32, 51, 0.02); height: 45.5px;">Clear Filters</button>
@@ -225,22 +226,54 @@
                 
                 <div id="foldersTab" class="tab-content">
                     <div id="folderBreadcrumb" style="margin-bottom: 20px; font-weight: 500; display: flex; align-items: center; gap: 8px;">
-                        <a href="#" class="breadcrumb-link" data-id="null">My Library</a>
+                        <a href="#" class="breadcrumb-link" data-id="null">My Documents</a>
                     </div>
-                    <div id="folderGrid" class="folder-grid">
-                        <div style="text-align: center; padding: 40px; color: var(--muted); width: 100%;">
-                            <p>Loading folders...</p>
-                        </div>
+                    <div id="foldersSection" style="margin-bottom: 24px; display: none;">
+                        <h4 style="font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Folders</h4>
+                        <div id="folderGrid" class="folder-grid"></div>
+                    </div>
+                    <div id="folderDocsSection" style="display: none;">
+                        <h4 style="font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Documents in this folder</h4>
+                        <div id="folderDocsGrid" class="document-grid"></div>
                     </div>
                     <div id="folderEmptyState" class="empty-state" style="display: none;">
                         <div class="empty-state-icon">📁</div>
-                        <h3>No Folders Here</h3>
-                        <p>Create a folder to organize your study materials.</p>
+                        <h3>No Folders or Documents Found</h3>
+                        <p>Create a folder or upload documents to organize your study materials.</p>
                         <button type="button" class="btn btn-primary" style="margin-top: 16px;" onclick="document.getElementById('createFolderBtn').click()">Create Folder</button>
+                    </div>
+                </div>
+
+                <div id="favoritesTab" class="tab-content">
+                    <div id="favoritesGrid" class="document-grid">
+                        <div style="text-align: center; padding: 40px; color: var(--muted); width: 100%;">
+                            <p>Loading favorites...</p>
+                        </div>
+                    </div>
+                    <div id="favoritesEmptyState" class="empty-state" style="display: none;">
+                        <div class="empty-state-icon">⭐</div>
+                        <h3>No Favorite Documents Found</h3>
+                        <p>Star your favorite documents to access them quickly here.</p>
                     </div>
                 </div>
             </section>
         </main>
+    </div>
+
+    <!-- Create Folder Modal -->
+    <div class="modal-overlay" id="createFolderModal">
+        <div class="modal-box" style="max-width: 400px;">
+            <h3 style="margin-top:0; font-size:18px; font-weight:700; color:var(--text); margin-bottom:12px;">New Folder</h3>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: 600;">Folder Name <span class="label-required">*</span></label>
+                <input type="text" id="newFolderNameInput" placeholder="E.g: Math Notes" autocomplete="off" style="width: 100%;" required />
+            </div>
+            <p id="createFolderModalError" class="helper-text error" role="alert" style="display:none;"></p>
+            <div class="modal-actions" style="margin-top: 18px;">
+                <button type="button" class="btn btn-secondary" id="cancelCreateFolderBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmCreateFolderBtn">Create Folder</button>
+            </div>
+        </div>
     </div>
     
     <script src="js/api.js"></script>
@@ -249,6 +282,7 @@
     <script src="js/navigation.js"></script>
     <script src="js/layout.js"></script>
     <script src="js/folder-api.js"></script>
+    <script src="js/subject-api.js"></script>
     <script src="js/document-api.js"></script>
     <script src="js/my-library.js"></script>
 </body>

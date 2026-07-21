@@ -195,6 +195,7 @@ public class FolderServiceImpl implements FolderService {
                 .parentFolderId(folder.getParentFolder() != null
                         ? folder.getParentFolder().getFolderId() : null)
                 .fileCount((int) fileCount)
+                .documentCount((int) fileCount)
                 .subfolderCount((int) subfolderCount)
                 .status(folder.getStatus())
                 .createdAt(folder.getCreatedAt())

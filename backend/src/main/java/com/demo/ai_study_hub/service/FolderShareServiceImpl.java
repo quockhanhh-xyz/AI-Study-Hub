@@ -324,11 +324,17 @@ public class FolderShareServiceImpl implements FolderShareService {
     }
 
     private FolderResponse mapToFolderResponseSimple(Folder folder) {
+        long fileCount = documentRepository.countByFolderAndStatus(folder, "ACTIVE");
+        long subfolderCount = folderRepository.countByParentFolderAndStatus(folder, "ACTIVE");
+
         return FolderResponse.builder()
                 .folderId(folder.getFolderId())
                 .folderName(folder.getName())
                 .description(folder.getDescription())
                 .parentFolderId(folder.getParentFolder() != null ? folder.getParentFolder().getFolderId() : null)
+                .fileCount((int) fileCount)
+                .documentCount((int) fileCount)
+                .subfolderCount((int) subfolderCount)
                 .status(folder.getStatus())
                 .createdAt(folder.getCreatedAt())
                 .updatedAt(folder.getUpdatedAt())
