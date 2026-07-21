@@ -93,7 +93,7 @@
             </div>
 
             <!-- Table -->
-            <div class="admin-table-container">
+            <div class="admin-table-container admin-card">
                 <table class="admin-table">
                     <thead>
                         <tr>
@@ -104,7 +104,7 @@
                             <th>Visibility</th>
                             <th title="Shows whether this document is approved for Community Library.">Approval Status</th>
                             <th title="Shows whether document content is ready for AI features.">AI Status</th>
-                            <th>Actions</th>
+                            <th style="text-align: right;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="documentsTableBody">
@@ -112,9 +112,10 @@
                         <tr><td colspan="8" style="text-align: center;">Loading...</td></tr>
                     </tbody>
                 </table>
-                <div id="pagination" class="pagination">
-                    <!-- Pagination buttons -->
-                </div>
+            </div>
+
+            <div id="pagination" class="admin-pagination">
+                <!-- Pagination buttons -->
             </div>
             </div>
                 </div>
@@ -188,6 +189,7 @@
 
     <!-- Scripts -->
     <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
     <script src="js/admin-core-api.js"></script>
     <script src="js/layout.js"></script>
     <script src="js/navigation.js"></script>

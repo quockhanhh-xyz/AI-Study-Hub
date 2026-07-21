@@ -86,10 +86,14 @@ function initAdminDocuments() {
 
             if (response && response.success && response.data) {
                 const data = response.data;
-                totalElements = data.totalElements;
+                const rows = data.items || data.content || data.documents || data.list || [];
+                const totalItems = data.totalElements ?? data.totalItems ?? data.total ?? rows.length;
+                const totalPagesCount = data.totalPages ?? Math.ceil(totalItems / pageSize) || 1;
 
-                renderTable(data.items);
-                renderPagination(data.totalPages, data.totalElements);
+                totalElements = totalItems;
+
+                renderTable(rows);
+                renderPagination(totalPagesCount, totalItems);
 
                 loadingState.style.display = "none";
                 contentState.style.display = "block";
@@ -146,44 +150,52 @@ function initAdminDocuments() {
 
     const renderTable = (documents) => {
         if (!documents || documents.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No documents found.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted);">No documents found matching your filter criteria.</td></tr>';
             return;
         }
 
         tableBody.innerHTML = documents.map(doc => {
             const aiInfo = getAIBadgeInfo(doc.processingStatus);
+            const ownerDisplay = doc.displayName || doc.ownerName || doc.ownerEmail || doc.fullName || doc.email || doc.uploaderName || 'Unknown owner';
+            const subjectDisplay = doc.subjectCode ? `${doc.subjectCode}${doc.subjectName ? ` - ${doc.subjectName}` : ''}` : (doc.subject?.name || doc.subjectName || 'No subject');
+
             return `
             <tr>
-                <td>${doc.title || '-'}</td>
-                <td style="color: ${doc.displayName ? 'inherit' : 'var(--text-muted)'}">${doc.displayName || 'Unknown owner'}</td>
-                <td style="color: ${doc.subjectCode ? 'inherit' : 'var(--text-muted)'}">${doc.subjectCode ? `${doc.subjectCode} - ${doc.subjectName}` : 'No subject'}</td>
-                <td>${doc.fileType || '-'}</td>
+                <td><span style="font-weight: 600; color: var(--text-main, #0f172a);">${escapeHtml(doc.title || '-')}</span></td>
+                <td><span class="table-muted-text" title="${escapeHtml(ownerDisplay)}">${escapeHtml(ownerDisplay)}</span></td>
+                <td><span class="table-muted-text">${escapeHtml(subjectDisplay)}</span></td>
+                <td><span class="badge badge-secondary">${doc.fileType || '-'}</span></td>
                 <td><span class="badge ${getVisibilityBadgeClass(doc.visibility)}">${doc.visibility ? doc.visibility.charAt(0).toUpperCase() + doc.visibility.slice(1).toLowerCase() : '-'}</span></td>
                 <td><span class="badge ${getApprovalBadgeClass(doc.approvalStatus)}">${getApprovalLabel(doc.approvalStatus)}</span></td>
                 <td><span class="badge ${aiInfo.cls}">${aiInfo.text}</span></td>
-                <td>
-                    <button class="btn btn-sm btn-outline" onclick="window.location.href='admin-document-detail.html?id=${doc.documentId}'">View</button>
-                    ${doc.approvalStatus === 'PENDING' ? `
-                        <button class="btn btn-sm btn-primary" onclick="openApproveModal(${doc.documentId})">Approve</button>
-                        <button class="btn btn-sm btn-danger" onclick="openRejectModal(${doc.documentId})">Reject</button>
-                    ` : doc.approvalStatus === 'APPROVED' ? `
-                        <button class="btn btn-sm btn-warning" onclick="openPendingConfirmModal(${doc.documentId})">Move to Pending</button>
-                        <button class="btn btn-sm btn-secondary" onclick="openUnpublishConfirmModal(${doc.documentId})">Unpublish</button>
-                    ` : doc.approvalStatus === 'REJECTED' ? `
-                        <button class="btn btn-sm btn-warning" onclick="openPendingConfirmModal(${doc.documentId})">Move to Pending</button>
-                    ` : ''}
+                <td style="text-align: right;">
+                    <div class="admin-action-group">
+                        <button class="btn btn-sm btn-outline" onclick="window.location.href='admin-document-detail.html?id=${doc.documentId}'">View</button>
+                        ${doc.approvalStatus === 'PENDING' ? `
+                            <button class="btn btn-sm btn-primary" onclick="openApproveModal(${doc.documentId})">Approve</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="openRejectModal(${doc.documentId})">Reject</button>
+                        ` : doc.approvalStatus === 'APPROVED' ? `
+                            <button class="btn btn-sm btn-outline" onclick="openPendingConfirmModal(${doc.documentId})">Move to Pending</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="openUnpublishConfirmModal(${doc.documentId})">Unpublish</button>
+                        ` : doc.approvalStatus === 'REJECTED' ? `
+                            <button class="btn btn-sm btn-outline" onclick="openPendingConfirmModal(${doc.documentId})">Move to Pending</button>
+                        ` : ''}
+                    </div>
                 </td>
             </tr>
         `}).join('');
     };
 
-    const renderPagination = (totalPages, totalItems) => {
-        let html = `<div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 8px;">
-            Showing ${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, totalItems)} of ${totalItems} documents
-        </div>
+    const renderPagination = (totalPagesCount, totalItems) => {
+        const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+        const endItem = Math.min(currentPage * pageSize, totalItems);
+
+        let html = `<span class="admin-pagination-info">
+            Showing ${startItem} - ${endItem} of ${totalItems} documents
+        </span>
         <div style="display: flex; gap: 4px;">`;
-        for (let i = 1; i <= totalPages; i++) {
-            html += `<button class="${i === currentPage ? 'active' : ''}" onclick="window.goToPage(${i})">${i}</button>`;
+        for (let i = 1; i <= totalPagesCount; i++) {
+            html += `<button class="admin-pagination-btn ${i === currentPage ? 'active' : ''}" onclick="window.goToPage(${i})">${i}</button>`;
         }
         html += `</div>`;
         pagination.innerHTML = html;
@@ -289,6 +301,9 @@ function initAdminDocuments() {
         if (subjectFilter) subjectFilter.value = '';
         statusFilter.value = '';
         fileTypeFilter.value = '';
+        [subjectFilter, statusFilter, fileTypeFilter].forEach(el => {
+            if (el) el.dispatchEvent(new Event('syncCustom'));
+        });
         currentPage = 1;
         loadDocuments();
     };

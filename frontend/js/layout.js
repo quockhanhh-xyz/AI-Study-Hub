@@ -14,12 +14,55 @@ async function initializeLayout() {
   // 2. REFINE SIDEBAR MENU BASED ON AUTH STATUS
   renderDynamicSidebar(isAuthenticated);
 
+  // 3. RENDER SHARED ADMIN TOPBAR IF ON ADMIN PAGE
+  const currentPage = getCurrentPageName();
+  const currentRoute = NAVIGATION_MENU.find(item => item.url === currentPage);
+  if (currentRoute && currentRoute.requiresAdmin) {
+    renderAdminTopbar();
+  }
 
-  // 3. ATTACH LOGOUT FLOW LISTENERS
+  // 4. ATTACH LOGOUT FLOW LISTENERS
   initializeLogoutFlow();
 
-
   return isAuthenticated;
+}
+
+function renderAdminTopbar() {
+  const adminWrapper = document.querySelector(".admin-content-wrapper");
+  if (!adminWrapper || document.querySelector(".admin-topbar")) return;
+
+  let adminName = "System Admin";
+  let adminEmail = "admin@test.com";
+  const userStr = localStorage.getItem("currentUser");
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      adminName = user.fullName || user.email || adminName;
+      adminEmail = user.email || adminEmail;
+    } catch(e) {}
+  }
+
+  const initialLetter = (adminName || "A").charAt(0).toUpperCase();
+
+  const topbar = document.createElement("header");
+  topbar.className = "admin-topbar";
+  topbar.innerHTML = `
+    <div class="admin-topbar-brand">
+      <span class="brand-title"><strong>AI Study Hub Admin</strong></span>
+      <span class="brand-badge">Console</span>
+    </div>
+    <div class="admin-topbar-user">
+      <div class="admin-profile-pill">
+        <span class="admin-avatar">${initialLetter}</span>
+        <div class="admin-profile-info">
+          <strong>${adminName}</strong>
+          <span>${adminEmail}</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  adminWrapper.parentNode.insertBefore(topbar, adminWrapper);
 }
 
 
