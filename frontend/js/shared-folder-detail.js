@@ -172,6 +172,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const dateItem = document.createElement("span");
     dateItem.className = "document-meta-item";
+    
+    const formatDate = (val) => {
+      if (!val) return "-";
+      const date = new Date(val);
+      if (Number.isNaN(date.getTime())) return "-";
+      return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" });
+    };
+
     dateItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> ${formatDate(doc.createdAt)}`;
     meta.append(dateItem);
 
