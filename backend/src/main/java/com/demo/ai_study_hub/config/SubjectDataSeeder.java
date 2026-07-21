@@ -23,14 +23,33 @@ public class SubjectDataSeeder implements CommandLineRunner {
         };
 
         for (String[] s : subjects) {
-            if (!subjectRepository.existsBySubjectCode(s[0])) {
-                Subject subject = new Subject();
+            Subject subject = subjectRepository.findBySubjectCode(s[0]).orElse(null);
+            if (subject == null) {
+                subject = new Subject();
                 subject.setSubjectCode(s[0]);
                 subject.setSubjectName(s[1]);
-                subject.setStatus("ACTIVE");
-                subjectRepository.save(subject);
-                subject.setScope("SYSTEM");
-                subject.setOwner(null);
+            }
+            subject.setStatus("ACTIVE");
+            subject.setScope("SYSTEM");
+            subject.setOwner(null);
+            subjectRepository.save(subject);
+        }
+
+        // Data cleanup/migration for all system subjects where owner is null
+        for (Subject subject : subjectRepository.findAll()) {
+            if (subject.getOwner() == null) {
+                boolean updated = false;
+                if (!"SYSTEM".equals(subject.getScope())) {
+                    subject.setScope("SYSTEM");
+                    updated = true;
+                }
+                if (!"ACTIVE".equals(subject.getStatus())) {
+                    subject.setStatus("ACTIVE");
+                    updated = true;
+                }
+                if (updated) {
+                    subjectRepository.save(subject);
+                }
             }
         }
     }

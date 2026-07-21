@@ -5,16 +5,24 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (!isAuthenticated) return;
   }
 
+  // Streamline SVG Meta Icons
+  const META_ICONS = {
+    calendar: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+    subject: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+    folder: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`
+  };
+
   // State
   let userFolders = [];
   let currentParentFolderId = getParentFolderIdFromUrl();
-  let breadcrumbTrail = [{ folderId: null, name: "My Library" }];
+  let breadcrumbTrail = [{ folderId: null, name: "My Documents" }];
 
   // Elements
   const tabs = document.querySelectorAll(".library-tab");
   const contents = document.querySelectorAll(".tab-content");
 
   const searchInput = document.getElementById("searchInput");
+  const libraryToolbar = document.getElementById("libraryToolbar");
   const subjectFilter = document.getElementById("subjectFilter");
   const subjectDatalist = document.getElementById("subjectDatalist");
   const fileTypeFilter = document.getElementById("fileTypeFilter");
@@ -23,13 +31,17 @@ document.addEventListener("DOMContentLoaded", async function () {
   const documentGrid = document.getElementById("documentGrid");
   const documentEmptyState = document.getElementById("documentEmptyState");
 
-  const folderGrid = document.getElementById("folderGrid");
   const folderEmptyState = document.getElementById("folderEmptyState");
   const folderBreadcrumb = document.getElementById("folderBreadcrumb");
   const createFolderBtn = document.getElementById("createFolderBtn");
   const uploadDocumentBtn = document.getElementById("uploadDocumentBtn");
 
-  let showFavoritesOnly = false;
+  const createFolderModal = document.getElementById("createFolderModal");
+  const newFolderNameInput = document.getElementById("newFolderNameInput");
+  const cancelCreateFolderBtn = document.getElementById("cancelCreateFolderBtn");
+  const confirmCreateFolderBtn = document.getElementById("confirmCreateFolderBtn");
+  const createFolderModalError = document.getElementById("createFolderModalError");
+
   let searchTimeout = null;
 
   // Initialize
@@ -42,8 +54,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     setupTabs();
     setupEventListeners();
+    setupCreateFolderModal();
 
-    // Load filters data
+    // Load filter options
     await Promise.all([
       loadSubjects(),
       loadAllFoldersForFilter()
@@ -51,14 +64,17 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Initial Load based on current tab
     const currentTab = new URLSearchParams(window.location.search).get("view") || "documents";
+    const searchParam = new URLSearchParams(window.location.search).get("search");
+    if (searchParam && searchInput) {
+      searchInput.value = searchParam;
+    }
+
     if (currentTab === "documents") {
-      const searchParam = new URLSearchParams(window.location.search).get("search");
-      if (searchParam && searchInput) {
-        searchInput.value = searchParam;
-      }
       loadDocuments();
-    } else {
+    } else if (currentTab === "folders") {
       loadFolders(currentParentFolderId);
+    } else if (currentTab === "favorites") {
+      loadFavorites();
     }
   }
 
@@ -95,11 +111,32 @@ document.addEventListener("DOMContentLoaded", async function () {
         createFolderBtn.style.display = tabId === "folders" ? "inline-flex" : "none";
       }
 
+      if (libraryToolbar) {
+        libraryToolbar.style.display = (tabId === "documents" || tabId === "favorites") ? "flex" : "none";
+      }
+
+      // Contextual search placeholders
+      if (searchInput) {
+        if (tabId === "documents") {
+          searchInput.placeholder = "Search documents by title or keyword...";
+        } else if (tabId === "folders") {
+          searchInput.placeholder = "Search folders by name...";
+        } else if (tabId === "favorites") {
+          searchInput.placeholder = "Search favorite documents...";
+        }
+      }
+
       if (loadData) {
         if (tabId === "documents") loadDocuments();
-        if (tabId === "folders") loadFolders(currentParentFolderId);
+        else if (tabId === "folders") loadFolders(currentParentFolderId);
+        else if (tabId === "favorites") loadFavorites();
       }
     }
+  }
+
+  function getActiveTab() {
+    const activeTab = document.querySelector(".library-tab.active");
+    return activeTab ? activeTab.dataset.tab : "documents";
   }
 
   // --- EVENT LISTENERS ---
@@ -108,21 +145,29 @@ document.addEventListener("DOMContentLoaded", async function () {
       searchInput.addEventListener("input", () => {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
-          const activeTab = document.querySelector(".library-tab.active").dataset.tab;
-          if (activeTab === "documents") loadDocuments();
-          else loadFolders(currentParentFolderId);
-        }, 500);
+          const tab = getActiveTab();
+          if (tab === "documents") loadDocuments();
+          else if (tab === "folders") loadFolders(currentParentFolderId);
+          else if (tab === "favorites") loadFavorites();
+        }, 400);
       });
     }
 
+    const triggerReload = () => {
+      const tab = getActiveTab();
+      if (tab === "documents") loadDocuments();
+      else if (tab === "folders") loadFolders(currentParentFolderId);
+      else if (tab === "favorites") loadFavorites();
+    };
+
     if (subjectFilter) {
-      subjectFilter.addEventListener("input", loadDocuments);
+      subjectFilter.addEventListener("input", triggerReload);
     }
     if (fileTypeFilter) {
-      fileTypeFilter.addEventListener("change", loadDocuments);
+      fileTypeFilter.addEventListener("change", triggerReload);
     }
     if (folderFilter) {
-      folderFilter.addEventListener("change", loadDocuments);
+      folderFilter.addEventListener("change", triggerReload);
     }
 
     if (uploadDocumentBtn) {
@@ -136,18 +181,6 @@ document.addEventListener("DOMContentLoaded", async function () {
       });
     }
 
-    if (createFolderBtn) {
-      createFolderBtn.addEventListener("click", () => {
-        // Mock prompt or use your folder modal
-        const folderName = prompt("Enter folder name:");
-        if (folderName) {
-          createFolder({ folderName, parentFolderId: currentParentFolderId }).then(() => {
-            loadFolders(currentParentFolderId);
-          });
-        }
-      });
-    }
-    
     const clearFiltersBtn = document.getElementById("clearFiltersBtn");
     if (clearFiltersBtn) {
       clearFiltersBtn.addEventListener("click", () => {
@@ -155,7 +188,65 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (subjectFilter) { subjectFilter.value = ""; subjectFilter.dispatchEvent(new Event("syncCustom")); }
         if (fileTypeFilter) { fileTypeFilter.value = ""; fileTypeFilter.dispatchEvent(new Event("syncCustom")); }
         if (folderFilter) { folderFilter.value = ""; folderFilter.dispatchEvent(new Event("syncCustom")); }
-        loadDocuments();
+
+        triggerReload();
+      });
+    }
+  }
+
+  function setupCreateFolderModal() {
+    function openFolderModal() {
+      if (!createFolderModal) return;
+      if (newFolderNameInput) newFolderNameInput.value = "";
+      if (createFolderModalError) createFolderModalError.style.display = "none";
+      createFolderModal.classList.add("open");
+    }
+
+    function closeFolderModal() {
+      if (createFolderModal) createFolderModal.classList.remove("open");
+    }
+
+    if (createFolderBtn) {
+      createFolderBtn.addEventListener("click", openFolderModal);
+    }
+    if (cancelCreateFolderBtn) {
+      cancelCreateFolderBtn.addEventListener("click", closeFolderModal);
+    }
+    if (createFolderModal) {
+      createFolderModal.addEventListener("click", (e) => {
+        if (e.target === createFolderModal) closeFolderModal();
+      });
+    }
+
+    if (confirmCreateFolderBtn) {
+      confirmCreateFolderBtn.addEventListener("click", async () => {
+        const folderName = newFolderNameInput ? newFolderNameInput.value.trim() : "";
+        if (!folderName) {
+          if (createFolderModalError) {
+            createFolderModalError.textContent = "Folder name is required.";
+            createFolderModalError.style.display = "block";
+          }
+          return;
+        }
+
+        confirmCreateFolderBtn.disabled = true;
+        confirmCreateFolderBtn.textContent = "Creating...";
+
+        try {
+          await createFolder({ folderName, parentFolderId: currentParentFolderId });
+          closeFolderModal();
+          await loadAllFoldersForFilter();
+          loadFolders(currentParentFolderId);
+          if (window.showToast) window.showToast("Folder created successfully.", "success");
+        } catch (err) {
+          if (createFolderModalError) {
+            createFolderModalError.textContent = err.message || "Failed to create folder.";
+            createFolderModalError.style.display = "block";
+          }
+        } finally {
+          confirmCreateFolderBtn.disabled = false;
+          confirmCreateFolderBtn.textContent = "Create Folder";
+        }
       });
     }
   }
@@ -172,6 +263,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   function formatDate(val) {
     if (!val) return "Unknown date";
     const d = new Date(val);
+    if (isNaN(d.getTime())) return "Unknown date";
     return d.toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
@@ -182,23 +274,67 @@ document.addEventListener("DOMContentLoaded", async function () {
     return `<span>📄</span>`;
   }
 
+  function matchesFileTypeFilter(docFileType, filterVal) {
+    if (!filterVal) return true;
+    if (!docFileType) return false;
+    const typeUpper = docFileType.toUpperCase();
+    const valUpper = filterVal.toUpperCase();
+
+    if (valUpper === "WORD") {
+      return typeUpper === "DOC" || typeUpper === "DOCX";
+    }
+    if (valUpper === "EXCEL") {
+      return typeUpper === "XLS" || typeUpper === "XLSX";
+    }
+    if (valUpper === "POWERPOINT") {
+      return typeUpper === "PPT" || typeUpper === "PPTX";
+    }
+    if (valUpper === "IMAGE") {
+      return typeUpper === "PNG" || typeUpper === "JPG" || typeUpper === "JPEG" || typeUpper === "IMAGE";
+    }
+    return typeUpper === valUpper;
+  }
+
   // --- API LOADERS ---
   let allSubjects = [];
   async function loadSubjects() {
     if (typeof getSubjects !== "function") return;
     try {
       const res = await getSubjects();
-      allSubjects = Array.isArray(res.data) ? res.data : [];
+      const payload = res?.data;
+      allSubjects = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.content)
+          ? payload.content
+          : Array.isArray(payload?.subjects)
+            ? payload.subjects
+            : Array.isArray(res)
+              ? res
+              : [];
+
+      // Sort subjects alphabetically by code then name
+      allSubjects.sort((a, b) => {
+        const codeA = (a.subjectCode || a.subjectName || "").toUpperCase();
+        const codeB = (b.subjectCode || b.subjectName || "").toUpperCase();
+        return codeA.localeCompare(codeB);
+      });
+
       if (subjectDatalist) {
         subjectDatalist.innerHTML = "";
         allSubjects.forEach(s => {
           const opt = document.createElement("option");
-          opt.value = s.subjectCode ? `${s.subjectCode} - ${s.subjectName}` : s.subjectName;
+          const label = s.subjectCode ? `${s.subjectCode} - ${s.subjectName}` : s.subjectName;
+          opt.value = label;
+          opt.dataset.id = s.subjectId;
+          opt.dataset.code = s.subjectCode || "";
+          opt.dataset.name = s.subjectName || "";
           subjectDatalist.appendChild(opt);
         });
         if (subjectFilter) subjectFilter.dispatchEvent(new Event("syncCustom"));
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error("Failed to load subjects:", e);
+    }
   }
 
   async function loadAllFoldersForFilter() {
@@ -207,7 +343,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       const res = await getMyFolders(null, true);
       userFolders = Array.isArray(res.data) ? res.data : [];
       if (folderFilter) {
-        folderFilter.innerHTML = `<option value="">All Folders</option><option value="0">Root (My Library)</option>`;
+        folderFilter.innerHTML = `<option value="">All Folders</option><option value="0">My Documents</option>`;
         userFolders.forEach(f => {
           const opt = document.createElement("option");
           opt.value = f.folderId;
@@ -216,57 +352,68 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
         folderFilter.dispatchEvent(new Event("syncCustom"));
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error("Failed to load folders for filter:", e);
+    }
   }
 
   function getSubjectIdFromInput() {
     if (!subjectFilter) return "";
-    const val = subjectFilter.value;
-    if (!val) return "";
-    const code = val.split(" - ")[0];
-    const subj = allSubjects.find(s => s.subjectCode === code || s.subjectName === val);
-    return subj ? subj.subjectId : "";
+    const rawVal = subjectFilter.value.trim();
+    if (!rawVal) return "";
+
+    const codePart = rawVal.split(" - ")[0].trim();
+    const found = allSubjects.find(s =>
+      String(s.subjectId) === rawVal ||
+      (s.subjectCode && s.subjectCode.toLowerCase() === codePart.toLowerCase()) ||
+      (s.subjectName && s.subjectName.toLowerCase() === rawVal.toLowerCase()) ||
+      (`${s.subjectCode} - ${s.subjectName}`.toLowerCase() === rawVal.toLowerCase())
+    );
+    return found ? found.subjectId : "";
   }
 
-  // --- DOCUMENTS LOGIC ---
+  // --- DOCUMENTS TAB ---
   async function loadDocuments() {
     if (!documentGrid || typeof getMyDocuments !== "function") return;
     documentGrid.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted); grid-column: 1/-1;">Loading documents...</div>`;
 
     try {
-      let docs = [];
-      if (showFavoritesOnly && typeof getFavoriteDocuments === "function") {
-        const res = await getFavoriteDocuments();
-        docs = Array.isArray(res.data) ? res.data : [];
-      } else {
-        const params = {
-          keyword: searchInput ? searchInput.value.trim() : "",
-          fileType: fileTypeFilter ? fileTypeFilter.value : "",
-          folderId: folderFilter ? folderFilter.value : ""
-        };
-        
-        const subjId = getSubjectIdFromInput();
-        if (subjId) params.subjectId = subjId;
+      const filterVal = fileTypeFilter ? fileTypeFilter.value : "";
+      const params = {
+        keyword: searchInput ? searchInput.value.trim() : "",
+        folderId: folderFilter ? folderFilter.value : ""
+      };
 
-        // Fetch filtered documents from API
-        const res = await getMyDocuments(params);
-        docs = Array.isArray(res.data) ? res.data : (res.data?.content || []);
+      // Pass single-extension filter directly to API if explicit (e.g. PDF/TXT)
+      if (filterVal && !["WORD", "EXCEL", "POWERPOINT", "IMAGE"].includes(filterVal.toUpperCase())) {
+        params.fileType = filterVal;
+      }
+
+      const subjId = getSubjectIdFromInput();
+      if (subjId) params.subjectId = subjId;
+
+      const res = await getMyDocuments(params);
+      let docs = Array.isArray(res.data) ? res.data : (res.data?.content || []);
+
+      // Client-side group filter fallback for group types like WORD/EXCEL/POWERPOINT/IMAGE
+      if (filterVal) {
+        docs = docs.filter(d => matchesFileTypeFilter(d.fileType, filterVal));
       }
 
       documentGrid.innerHTML = "";
       if (docs.length === 0) {
-        documentEmptyState.style.display = "flex";
+        if (documentEmptyState) documentEmptyState.style.display = "flex";
         documentGrid.style.display = "none";
       } else {
-        documentEmptyState.style.display = "none";
+        if (documentEmptyState) documentEmptyState.style.display = "none";
         documentGrid.style.display = "grid";
         docs.forEach(doc => {
           documentGrid.appendChild(createDocumentCard(doc));
         });
       }
     } catch (e) {
-      console.error(e);
-      documentGrid.innerHTML = `<div style="text-align:center; padding:40px; color:red; grid-column: 1/-1;">Failed to load documents.</div>`;
+      console.error("Failed to load documents:", e);
+      documentGrid.innerHTML = `<div style="text-align:center; padding:40px; color:var(--danger); grid-column: 1/-1;">Failed to load documents.</div>`;
     }
   }
 
@@ -279,16 +426,16 @@ document.addEventListener("DOMContentLoaded", async function () {
     tempDiv.innerHTML = getFileIcon(doc.fileType);
     const iconElement = tempDiv.firstElementChild;
 
-    // Style the icon directly to match dashboard size but without a double-box
-    iconElement.style.width = "40px";
-    iconElement.style.height = "40px";
-    iconElement.style.borderRadius = "10px";
-    iconElement.style.display = "flex";
-    iconElement.style.alignItems = "center";
-    iconElement.style.justifyContent = "center";
-    iconElement.style.flexShrink = "0";
-
-    card.appendChild(iconElement);
+    if (iconElement) {
+      iconElement.style.width = "40px";
+      iconElement.style.height = "40px";
+      iconElement.style.borderRadius = "10px";
+      iconElement.style.display = "flex";
+      iconElement.style.alignItems = "center";
+      iconElement.style.justifyContent = "center";
+      iconElement.style.flexShrink = "0";
+      card.appendChild(iconElement);
+    }
 
     // Content
     const content = document.createElement("div");
@@ -315,17 +462,27 @@ document.addEventListener("DOMContentLoaded", async function () {
       favBtn.style.top = "4px";
       favBtn.style.right = "6px";
       favBtn.style.margin = "0";
+      favBtn.title = isFav ? "Remove from favorites" : "Add to favorites";
       favBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>';
       favBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
-        if (favBtn.classList.contains("favorited")) {
-          await unfavoriteDocument(doc.documentId);
-          favBtn.classList.remove("favorited");
-          setDocumentFavorited(doc, false);
-        } else {
-          await favoriteDocument(doc.documentId);
-          favBtn.classList.add("favorited");
-          setDocumentFavorited(doc, true);
+        try {
+          if (favBtn.classList.contains("favorited")) {
+            await unfavoriteDocument(doc.documentId);
+            favBtn.classList.remove("favorited");
+            favBtn.title = "Add to favorites";
+            setDocumentFavorited(doc, false);
+          } else {
+            await favoriteDocument(doc.documentId);
+            favBtn.classList.add("favorited");
+            favBtn.title = "Remove from favorites";
+            setDocumentFavorited(doc, true);
+          }
+          if (getActiveTab() === "favorites") {
+            loadFavorites();
+          }
+        } catch (err) {
+          console.error("Favorite toggle failed:", err);
         }
       });
       header.appendChild(favBtn);
@@ -333,23 +490,43 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     content.appendChild(header);
 
-    // Meta details (Clean as requested)
+    // Meta details with Streamline SVG icons (No Emojis)
     const meta = document.createElement("div");
     meta.className = "document-meta";
 
-    meta.innerHTML += `<span class="document-meta-item">📅 ${formatDate(doc.createdAt)}</span>`;
-    if (doc.subjectCode) {
-      meta.innerHTML += `<span class="document-meta-item">📚 ${doc.subjectCode}</span>`;
+    meta.innerHTML += `<span class="document-meta-item">${META_ICONS.calendar}${formatDate(doc.createdAt)}</span>`;
+
+    // Robust Subject Fallback: subjectCode -> subjectName -> lookup via subjectId -> nested subject object
+    let subjectTag = doc.subjectCode || doc.subjectName || "";
+    if (!subjectTag && doc.subjectId) {
+      const foundSubj = allSubjects.find(s => String(s.subjectId) === String(doc.subjectId));
+      if (foundSubj) {
+        subjectTag = foundSubj.subjectCode || foundSubj.subjectName || "";
+      }
     }
-    if (doc.folderId && doc.folderId !== 0) {
-      const folderName = userFolders.find(f => f.folderId === doc.folderId)?.folderName || "Folder";
-      meta.innerHTML += `<span class="document-meta-item">📁 ${folderName}</span>`;
+    if (!subjectTag && doc.subject && typeof doc.subject === "object") {
+      subjectTag = doc.subject.subjectCode || doc.subject.subjectName || "";
+    }
+    if (subjectTag) {
+      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.subject}${subjectTag}</span>`;
+    }
+
+    // Robust Folder Fallback: folderName -> lookup via folderId -> nested folder object
+    let folderTag = doc.folderName || "";
+    if (!folderTag && doc.folderId && doc.folderId !== 0) {
+      const folderObj = userFolders.find(f => String(f.folderId) === String(doc.folderId));
+      if (folderObj) folderTag = folderObj.folderName;
+    }
+    if (!folderTag && doc.folder && typeof doc.folder === "object") {
+      folderTag = doc.folder.folderName || doc.folder.name || "";
+    }
+    if (folderTag) {
+      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.folder}${folderTag}</span>`;
     }
 
     content.appendChild(meta);
     card.appendChild(content);
 
-    // Make the entire card clickable and relative for absolute star
     card.style.position = "relative";
     card.style.cursor = "pointer";
     card.addEventListener("click", (e) => {
@@ -360,9 +537,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     return card;
   }
 
-  // --- FOLDERS LOGIC ---
+  // --- FOLDERS TAB ---
   async function buildBreadcrumb() {
-    breadcrumbTrail = [{ folderId: null, name: "My Library" }];
+    breadcrumbTrail = [{ folderId: null, name: "My Documents" }];
     if (!currentParentFolderId) {
       renderBreadcrumb();
       return;
@@ -390,7 +567,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       breadcrumbTrail = breadcrumbTrail.concat(trail);
       renderBreadcrumb();
     } catch (e) {
-      console.error(e);
+      console.error("Breadcrumb build error:", e);
       renderBreadcrumb();
     }
   }
@@ -398,6 +575,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   function renderBreadcrumb() {
     if (!folderBreadcrumb) return;
     folderBreadcrumb.innerHTML = "";
+
     breadcrumbTrail.forEach((crumb, idx) => {
       if (idx > 0) {
         const sep = document.createElement("span");
@@ -411,6 +589,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       link.textContent = crumb.name;
       if (idx === breadcrumbTrail.length - 1) {
         link.style.color = "var(--text-main)";
+        link.style.fontWeight = "600";
         link.style.pointerEvents = "none";
       } else {
         link.style.color = "var(--primary)";
@@ -436,35 +615,72 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   async function loadFolders(parentId) {
-    if (!folderGrid || typeof getMyFolders !== "function") return;
-
     buildBreadcrumb();
-    folderGrid.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted); grid-column: 1/-1;">Loading folders...</div>`;
+
+    const foldersSection = document.getElementById("foldersSection");
+    const folderDocsSection = document.getElementById("folderDocsSection");
+    const folderGrid = document.getElementById("folderGrid");
+    const folderDocsGrid = document.getElementById("folderDocsGrid");
+    const subfoldersHeading = document.getElementById("subfoldersHeading");
+    const folderDocsHeading = document.getElementById("folderDocsHeading");
+
+    if (foldersSection) foldersSection.style.display = "none";
+    if (folderDocsSection) folderDocsSection.style.display = "none";
+    if (folderEmptyState) folderEmptyState.style.display = "none";
+
+    // Dynamic section headings according to current folder name
+    const currentCrumb = breadcrumbTrail[breadcrumbTrail.length - 1];
+    const locationName = currentCrumb ? currentCrumb.name : "this folder";
+    if (subfoldersHeading) {
+      subfoldersHeading.textContent = parentId ? `Subfolders in ${locationName}` : "Subfolders";
+    }
+    if (folderDocsHeading) {
+      folderDocsHeading.textContent = `Documents in ${locationName}`;
+    }
 
     try {
       const kw = searchInput ? searchInput.value.trim().toLowerCase() : "";
 
-      const res = await getMyFolders(parentId, false);
-      let list = Array.isArray(res.data) ? res.data : [];
+      const [foldersRes, docsRes] = await Promise.all([
+        typeof getMyFolders === "function" ? getMyFolders(parentId, false).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
+        typeof getMyDocuments === "function" ? getMyDocuments({ folderId: parentId || 0, includeSubfolders: false }).catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
+      ]);
 
+      let subfolders = Array.isArray(foldersRes.data) ? foldersRes.data : [];
+      let docs = Array.isArray(docsRes.data) ? docsRes.data : (docsRes.data?.content || []);
+
+      // Keyword search filter for folders view
       if (kw) {
-        list = list.filter(f => f.folderName && f.folderName.toLowerCase().includes(kw));
+        subfolders = subfolders.filter(f => f.folderName && f.folderName.toLowerCase().includes(kw));
+        docs = docs.filter(d =>
+          (d.title && d.title.toLowerCase().includes(kw)) ||
+          (d.originalFileName && d.originalFileName.toLowerCase().includes(kw))
+        );
       }
 
-      folderGrid.innerHTML = "";
-      if (list.length === 0) {
-        folderEmptyState.style.display = "flex";
-        folderGrid.style.display = "none";
+      const hasSubfolders = subfolders.length > 0;
+      const hasDocs = docs.length > 0;
+
+      if (!hasSubfolders && !hasDocs) {
+        if (folderEmptyState) folderEmptyState.style.display = "flex";
       } else {
-        folderEmptyState.style.display = "none";
-        folderGrid.style.display = "grid";
-        list.forEach(f => {
-          folderGrid.appendChild(createFolderCard(f));
-        });
+        if (folderEmptyState) folderEmptyState.style.display = "none";
+
+        if (hasSubfolders && foldersSection && folderGrid) {
+          folderGrid.innerHTML = "";
+          subfolders.forEach(f => folderGrid.appendChild(createFolderCard(f)));
+          foldersSection.style.display = "block";
+        }
+
+        if (hasDocs && folderDocsSection && folderDocsGrid) {
+          folderDocsGrid.innerHTML = "";
+          docs.forEach(doc => folderDocsGrid.appendChild(createDocumentCard(doc)));
+          folderDocsSection.style.display = "block";
+        }
       }
     } catch (e) {
-      console.error(e);
-      folderGrid.innerHTML = `<div style="text-align:center; padding:40px; color:red; grid-column: 1/-1;">Failed to load folders.</div>`;
+      console.error("Failed to load folders & documents:", e);
+      if (folderEmptyState) folderEmptyState.style.display = "flex";
     }
   }
 
@@ -491,8 +707,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     const meta = document.createElement("p");
     meta.className = "folder-meta";
     let metaTxt = [];
-    if (f.subfolderCount !== undefined) metaTxt.push(`${f.subfolderCount} subfolders`);
-    if (f.documentCount !== undefined) metaTxt.push(`${f.documentCount} files`);
+
+    // Always show subfolderCount and documentCount (even when 0)
+    const subCount = Number(f.subfolderCount ?? 0);
+    const docCount = Number(f.documentCount ?? f.fileCount ?? 0);
+    metaTxt.push(`${subCount} subfolders`);
+    metaTxt.push(`${docCount} documents`);
     metaTxt.push(formatDate(f.createdAt));
     meta.textContent = metaTxt.join(" • ");
     text.appendChild(meta);
@@ -500,18 +720,74 @@ document.addEventListener("DOMContentLoaded", async function () {
     main.appendChild(text);
     card.appendChild(main);
 
-    // Actions kebab
-    const actions = document.createElement("div");
-    actions.className = "folder-card-actions";
-    actions.innerHTML = `<button class="btn-kebab" title="More actions"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg></button>`;
-
-    // Clicking the card body navigates to it
     card.addEventListener("click", (e) => {
       if (e.target.closest('.btn-kebab')) return;
       navigateToFolder(f.folderId);
     });
 
-    card.appendChild(actions);
     return card;
+  }
+
+  // --- FAVORITES TAB ---
+  async function loadFavorites() {
+    const favoritesGrid = document.getElementById("favoritesGrid");
+    const favoritesEmptyState = document.getElementById("favoritesEmptyState");
+    if (!favoritesGrid || typeof getFavoriteDocuments !== "function") return;
+
+    favoritesGrid.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted); grid-column: 1/-1;">Loading favorites...</div>`;
+    if (favoritesEmptyState) favoritesEmptyState.style.display = "none";
+
+    try {
+      const res = await getFavoriteDocuments();
+      let docs = [];
+      if (Array.isArray(res.data)) docs = res.data;
+      else if (Array.isArray(res)) docs = res;
+      else if (res && res.data && Array.isArray(res.data.content)) docs = res.data.content;
+
+      // Apply search & toolbar filters to favorite documents
+      const kw = searchInput ? searchInput.value.trim().toLowerCase() : "";
+      const subjId = getSubjectIdFromInput();
+      const fType = fileTypeFilter ? fileTypeFilter.value : "";
+      const fId = folderFilter ? folderFilter.value : "";
+
+      if (kw) {
+        docs = docs.filter(d =>
+          (d.title && d.title.toLowerCase().includes(kw)) ||
+          (d.originalFileName && d.originalFileName.toLowerCase().includes(kw))
+        );
+      }
+      if (subjId) {
+        docs = docs.filter(d =>
+          String(d.subjectId) === String(subjId) ||
+          (d.subject && String(d.subject.subjectId) === String(subjId))
+        );
+      }
+      if (fType) {
+        docs = docs.filter(d => matchesFileTypeFilter(d.fileType, fType));
+      }
+      if (fId) {
+        if (fId === "0") {
+          docs = docs.filter(d => !d.folderId || d.folderId === 0);
+        } else {
+          docs = docs.filter(d =>
+            String(d.folderId) === String(fId) ||
+            (d.folder && String(d.folder.folderId) === String(fId))
+          );
+        }
+      }
+
+      favoritesGrid.innerHTML = "";
+      if (docs.length === 0) {
+        if (favoritesEmptyState) favoritesEmptyState.style.display = "flex";
+        favoritesGrid.style.display = "none";
+      } else {
+        if (favoritesEmptyState) favoritesEmptyState.style.display = "none";
+        favoritesGrid.style.display = "grid";
+        docs.forEach(doc => favoritesGrid.appendChild(createDocumentCard(doc)));
+      }
+    } catch (e) {
+      console.error("Failed to load favorites:", e);
+      favoritesGrid.innerHTML = `<div style="text-align:center; padding:40px; color:var(--danger); grid-column: 1/-1;">Failed to load favorites.</div>`;
+    }
   }
 });

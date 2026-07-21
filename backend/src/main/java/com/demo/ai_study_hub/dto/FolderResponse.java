@@ -21,5 +21,6 @@ public class FolderResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Integer fileCount;
+    private Integer documentCount;
     private Integer subfolderCount;
 }

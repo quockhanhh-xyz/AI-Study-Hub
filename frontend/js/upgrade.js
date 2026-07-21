@@ -361,7 +361,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const currentRank = TIER_RANK[currentTier];
 
     const card = document.createElement("div");
-    card.className = "card";
+    card.className = "card plan-pricing-card";
     card.style.maxWidth = "none";
 
     const CHECK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" style="flex-shrink:0;display:block;"><path d="m23.15 5.4 -2.8 -2.8a0.5 0.5 0 0 0 -0.7 0L7.85 14.4a0.5 0.5 0 0 1 -0.7 0l-2.8 -2.8a0.5 0.5 0 0 0 -0.7 0l-2.8 2.8a0.5 0.5 0 0 0 0 0.7l6.3 6.3a0.5 0.5 0 0 0 0.7 0l15.3 -15.3a0.5 0.5 0 0 0 0 -0.7Z" fill="#16a34a" stroke-width="1"></path></svg>';
@@ -412,6 +412,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (allFeatures.length > 0) {
       const list = document.createElement("ul");
+      list.className = "plan-feature-list";
       list.style.padding = "0";
       list.style.margin = "0";
       list.style.color = "var(--text-muted)";
@@ -447,6 +448,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (isCurrentPlan) {
       const currentBadge = document.createElement("div");
+      currentBadge.className = "plan-current-badge";
       currentBadge.innerHTML = `${CHECK_ICON}<span>Current Plan</span>`;
       currentBadge.style.cssText = "margin-top:16px;display:flex;align-items:center;justify-content:center;gap:6px;background:#dcfce7;color:#16a34a;font-weight:600;font-size:13px;padding:6px 12px;border-radius:8px;";
       card.appendChild(currentBadge);
@@ -471,13 +473,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   function buildPurchaseButtons(plan, planTier, actionLabel) {
     const wrapper = document.createElement("div");
+    wrapper.className = "plan-purchase-actions";
     wrapper.style.marginTop = "16px";
     wrapper.style.display = "flex";
     wrapper.style.flexDirection = "column";
     wrapper.style.gap = "8px";
 
     const label = document.createElement("div");
-    label.className = "helper-text";
+    label.className = "helper-text plan-action-label";
     label.style.textAlign = "center";
     label.style.marginBottom = "4px";
     label.textContent = actionLabel;
@@ -485,7 +488,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const vnpayBtn = document.createElement("button");
     vnpayBtn.type = "button";
-    vnpayBtn.className = "btn btn-primary";
+    vnpayBtn.className = "btn btn-primary plan-vnpay-button";
     vnpayBtn.textContent = "Pay with VNPay";
     vnpayBtn.addEventListener("click", function (event) {
       handleVNPayClick(event, plan.planCode);
@@ -493,6 +496,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     wrapper.appendChild(vnpayBtn);
     
     const manualNote = document.createElement("div");
+    manualNote.className = "plan-payment-note";
     manualNote.style.textAlign = "center";
     manualNote.style.fontSize = "11px";
     manualNote.style.color = "var(--text-muted)";
@@ -501,6 +505,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     wrapper.appendChild(manualNote);
 
     const mockLink = document.createElement("a");
+    mockLink.className = "plan-mock-link";
     mockLink.href = "#";
     mockLink.textContent = "Mock Checkout (Demo)";
     mockLink.style.textAlign = "center";
@@ -558,6 +563,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       const result = await createVNPayPayment(planCode);
       const payment = result.data;
+      if (!payment || !payment.paymentUrl) {
+        await loadHistory();
+        showToast("Payment order was created, but VNPay did not return a payment URL. Please check payment history or try again.", "error");
+        setButtonLoading(btn, false);
+        return;
+      }
       window.location.href = payment.paymentUrl;
       // No need to reset button state — navigating away.
     } catch (error) {
@@ -723,6 +734,8 @@ document.addEventListener("DOMContentLoaded", async function () {
       const historyListContainer = document.getElementById("historyListContainer");
       
       if (payments.length === 0) {
+        historyList.innerHTML = "";
+        historyList.style.display = "none";
         historyListContainer.style.display = "none";
         historyEmpty.style.display = "block";
       } else {
@@ -730,6 +743,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         payments.forEach(function (payment) {
           historyList.appendChild(createHistoryRow(payment));
         });
+        historyList.style.display = "";
         historyEmpty.style.display = "none";
         historyListContainer.style.display = "block";
       }
