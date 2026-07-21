@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
@@ -48,9 +49,9 @@ public class AdminServiceImpl implements AdminService {
         long totalRevenue = paymentOrderRepository.sumSuccessfulRevenue();
         long successfulPaymentsCount = paymentOrderRepository.countByStatus("SUCCESS");
 
-        LocalDateTime nowUtc = LocalDateTime.now(ZoneOffset.UTC);
-        LocalDateTime startOfToday = nowUtc.toLocalDate().atStartOfDay();
-        LocalDateTime startOfThisMonth = nowUtc.toLocalDate().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime nowVN = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        LocalDateTime startOfToday = nowVN.toLocalDate().atStartOfDay();
+        LocalDateTime startOfThisMonth = nowVN.toLocalDate().withDayOfMonth(1).atStartOfDay();
 
         long aiRequestsToday = aiUsageLogRepository.countSuccessfulLogsAfter(startOfToday);
         long aiRequestsThisMonth = aiUsageLogRepository.countSuccessfulLogsAfter(startOfThisMonth);
