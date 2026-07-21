@@ -38,7 +38,6 @@ async function loadUsers(page = 0) {
     const errorState = document.getElementById("usersErrorState");
     const contentState = document.getElementById("usersContent");
 
-    // Only show full loading state on first load or error retry, otherwise keep table visible
     if (contentState.style.display === "none") {
         loadingState.style.display = "flex";
         errorState.style.display = "none";
@@ -48,6 +47,8 @@ async function loadUsers(page = 0) {
     const role = document.getElementById("filterRole").value;
     const tier = document.getElementById("filterTier").value;
     const status = document.getElementById("filterStatus").value;
+
+    updateClearFiltersVisibility(search, role, tier, status);
 
     const params = {
         page: currentPage,
@@ -64,6 +65,7 @@ async function loadUsers(page = 0) {
     try {
         const response = await fetchAdminUsers(params);
         if (response && response.success && response.data) {
+            renderSummaryStrip(response.data);
             renderUsersTable(response.data);
 
             loadingState.style.display = "none";
@@ -81,6 +83,57 @@ async function loadUsers(page = 0) {
     }
 }
 
+function updateClearFiltersVisibility(search, role, tier, status) {
+    const clearBtn = document.getElementById("clearFiltersBtn");
+    if (!clearBtn) return;
+    const hasFilter = Boolean(search || role || tier || status);
+    clearBtn.style.display = hasFilter ? "inline-flex" : "none";
+}
+
+function renderSummaryStrip(data) {
+    const strip = document.getElementById("usersSummaryStrip");
+    if (!strip) return;
+    const users = data.users || [];
+    const total = data.totalElements || users.length;
+
+    let activeCount = 0;
+    let blockedCount = 0;
+    let adminCount = 0;
+    let paidCount = 0;
+
+    users.forEach(u => {
+        if (u.status === 'ACTIVE') activeCount++;
+        if (u.status === 'BLOCKED') blockedCount++;
+        if (u.role === 'ADMIN') adminCount++;
+        if (u.tier === 'PREMIUM' || u.tier === 'ULTRA') paidCount++;
+    });
+
+    strip.innerHTML = `
+        <strong>${total} users</strong>
+        <span class="divider">•</span>
+        <span style="color: #16A34A; font-weight: 600;">${activeCount} active</span>
+        <span class="divider">•</span>
+        <span style="color: #DC2626; font-weight: 600;">${blockedCount} blocked</span>
+        <span class="divider">•</span>
+        <span style="color: #EA580C; font-weight: 600;">${adminCount} admins</span>
+        <span class="divider">•</span>
+        <span style="color: #7C3AED; font-weight: 600;">${paidCount} paid</span>
+    `;
+}
+
+function formatCompactDate(dateStr) {
+    if (!dateStr) return "N/A";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "N/A";
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = months[d.getMonth()];
+    const day = String(d.getDate()).padStart(2, "0");
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    return `${month} ${day}, ${year} · ${hours}:${minutes}`;
+}
+
 function renderUsersTable(data) {
     const tbody = document.getElementById("usersTableBody");
     tbody.innerHTML = "";
@@ -94,20 +147,18 @@ function renderUsersTable(data) {
     } else {
         users.forEach(user => {
             const tr = document.createElement("tr");
-
-            // Format date local
-            const createdDate = user.createdAt ? new Date(user.createdAt).toLocaleString() : "N/A";
+            const createdDate = formatCompactDate(user.createdAt);
 
             tr.innerHTML = `
-                <td>#${user.userId}</td>
-                <td style="font-weight: 500;">${escapeHtml(user.fullName)}</td>
-                <td>${escapeHtml(user.email)}</td>
-                <td><span class="badge ${getRoleBadgeClass(user.role)}">${user.role}</span></td>
-                <td><span class="badge ${getTierBadgeClass(user.tier)}">${user.tier}</span></td>
-                <td style="font-weight: 600; color: var(--primary);">${user.documentCount || 0}</td>
-                <td><span class="badge ${getStatusBadgeClass(user.status)}">${user.status}</span></td>
-                <td style="color: var(--text-muted); font-size: 13px;">${createdDate}</td>
-                <td style="text-align: right;">
+                <td><span style="font-weight: 600; color: #64748B; font-size: 13px;">#${user.userId}</span></td>
+                <td><div class="user-name-cell" title="${escapeHtml(user.fullName)}">${escapeHtml(user.fullName)}</div></td>
+                <td><div class="user-email-cell" title="${escapeHtml(user.email)}">${escapeHtml(user.email)}</div></td>
+                <td><span class="admin-badge ${getRoleBadgeClass(user.role)}">${user.role}</span></td>
+                <td><span class="admin-badge ${getTierBadgeClass(user.tier)}">${user.tier}</span></td>
+                <td style="font-weight: 600; color: #FF5A3D; text-align: center;">${user.documentCount || 0}</td>
+                <td><span class="admin-badge ${getStatusBadgeClass(user.status)}">${user.status}</span></td>
+                <td style="color: #64748B; font-size: 13px; white-space: nowrap;">${createdDate}</td>
+                <td style="text-align: right; white-space: nowrap;">
                     ${renderActionButtons(user)}
                 </td>
             `;
@@ -148,34 +199,34 @@ function renderActionButtons(user) {
     }
 
     if (user.userId === currentUserId) {
-        return `<span style="color: var(--text-muted); font-size: 12px;">(You)</span> <button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; margin-left: 4px;" onclick="viewUserDetails(${user.userId})">View</button>`;
+        return `<span style="color: var(--text-muted); font-size: 12px;">(You)</span> <button class="btn-action btn-action-ghost" style="margin-left: 4px;" onclick="viewUserDetails(${user.userId})">View</button>`;
     }
 
     const blockMessage = `This user will no longer be able to sign in or use AI Study Hub. Their documents, shares, groups, chat messages, and payment history will not be deleted. Are you sure you want to block this user?`;
     const unblockMessage = `This user will regain access to their account and all previous features. Are you sure you want to unblock this user?`;
 
     if (user.status === 'BLOCKED') {
-        return `<button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; margin-right: 4px;" onclick="viewUserDetails(${user.userId})">View</button><button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;" onclick="promptUpdateStatus(${user.userId}, 'ACTIVE', \`${unblockMessage}\`)">Unblock</button>`;
+        return `<button class="btn-action btn-action-ghost" style="margin-right: 6px;" onclick="viewUserDetails(${user.userId})">View</button><button class="btn-action btn-action-ghost" onclick="promptUpdateStatus(${user.userId}, 'ACTIVE', \`${unblockMessage}\`)">Unblock</button>`;
     } else {
-        return `<button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; margin-right: 4px;" onclick="viewUserDetails(${user.userId})">View</button><button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; color: var(--danger); border-color: var(--danger);" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">Block</button>`;
+        return `<button class="btn-action btn-action-ghost" style="margin-right: 6px;" onclick="viewUserDetails(${user.userId})">View</button><button class="btn-action btn-action-danger-outline" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">Block</button>`;
     }
 }
 
 function getRoleBadgeClass(role) {
-    if (role === 'ADMIN') return 'admin-badge-warning'; // e.g., orange for admin
-    return 'admin-badge-neutral';
+    if (role === 'ADMIN') return 'admin-badge-admin';
+    return 'admin-badge-user';
 }
 
 function getTierBadgeClass(tier) {
-    if (tier === 'PREMIUM') return 'admin-badge-success';
-    if (tier === 'ULTRA') return 'admin-badge-info';
-    return 'admin-badge-neutral';
+    if (tier === 'PREMIUM') return 'admin-badge-premium';
+    if (tier === 'ULTRA') return 'admin-badge-ultra';
+    return 'admin-badge-free';
 }
 
 function getStatusBadgeClass(status) {
-    if (status === 'ACTIVE') return 'admin-badge-success';
-    if (status === 'BLOCKED') return 'admin-badge-danger';
-    return 'admin-badge-warning'; // INACTIVE
+    if (status === 'ACTIVE') return 'admin-badge-active';
+    if (status === 'BLOCKED') return 'admin-badge-blocked';
+    return 'admin-badge-warning';
 }
 
 function escapeHtml(unsafe) {

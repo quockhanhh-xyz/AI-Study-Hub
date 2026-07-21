@@ -22,110 +22,121 @@
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18"></path></svg>
                     </button>
                     <span class="admin-topbar-brand">AI Study Hub Admin</span>
+                    <span class="admin-console-badge">CONSOLE</span>
                 </div>
                 <div class="admin-topbar-right" id="globalHeaderWidgets"></div>
             </header>
 
             <div class="admin-layout">
                 <div class="admin-content-wrapper">
-            <header class="admin-page-header">
-                <div class="admin-page-header-text">
-                    <h1 class="admin-page-title">Public Documents</h1>
-                    <p class="admin-page-subtitle" style="color: var(--text-muted); font-size: 0.875rem; margin-top: 4px;">Manage documents submitted to Community Library.</p>
-                </div>
-                <div class="admin-header-actions">
-                    <button id="exportBtn" class="btn btn-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                        </svg>
-                        Export Excel
-                    </button>
-                </div>
-            </header>
+                    <header class="admin-page-header">
+                        <div class="admin-page-header-text">
+                            <h1 class="admin-page-title">Public Documents</h1>
+                            <p class="admin-page-subtitle">Manage documents submitted to Community Library.</p>
+                        </div>
+                        <div class="admin-header-actions">
+                            <button id="exportBtn" class="btn-admin-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                </svg>
+                                Export Excel
+                            </button>
+                        </div>
+                    </header>
 
-            <div class="admin-state-container" id="docsLoadingState">
-                <div class="admin-state-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                    </svg>
-                </div>
-                <p>Loading documents...</p>
-            </div>
+                    <div class="admin-state-container" id="docsLoadingState">
+                        <div class="admin-state-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                        </div>
+                        <p>Loading documents...</p>
+                    </div>
 
-            <div class="admin-state-container" id="docsErrorState" style="display: none;">
-                <div class="admin-state-icon" style="color: var(--danger);">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                </div>
-                <p id="docsErrorMessage">Failed to load documents.</p>
-                <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 16px;">Retry</button>
-            </div>
+                    <div class="admin-state-container" id="docsErrorState" style="display: none;">
+                        <div class="admin-state-icon" style="color: var(--danger);">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <p id="docsErrorMessage">Failed to load documents.</p>
+                        <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 16px;">Retry</button>
+                    </div>
 
-            <div id="docsContent" style="display: none;">
+                    <div id="docsContent" style="display: none;">
 
-            <!-- Quick Tabs -->
-            <div class="admin-tabs" style="display: flex; gap: 24px; border-bottom: 1px solid var(--border-light); margin-bottom: 24px;">
-                <button class="admin-tab active" data-tab="PENDING" style="background: none; border: none; padding: 12px 0; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600; cursor: pointer;">Pending Review <span id="tabCountPending" style="background: var(--bg-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">0</span></button>
-                <button class="admin-tab" data-tab="APPROVED" style="background: none; border: none; padding: 12px 0; border-bottom: 2px solid transparent; color: var(--text-muted); font-weight: 500; cursor: pointer;">Approved <span id="tabCountApproved" style="background: var(--bg-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">0</span></button>
-                <button class="admin-tab" data-tab="REJECTED" style="background: none; border: none; padding: 12px 0; border-bottom: 2px solid transparent; color: var(--text-muted); font-weight: 500; cursor: pointer;">Rejected <span id="tabCountRejected" style="background: var(--bg-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">0</span></button>
-                <button class="admin-tab" data-tab="ALL" style="background: none; border: none; padding: 12px 0; border-bottom: 2px solid transparent; color: var(--text-muted); font-weight: 500; cursor: pointer;">All Public <span id="tabCountAll" style="background: var(--bg-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">0</span></button>
-            </div>
+                    <!-- Quick Tabs -->
+                    <div class="admin-tabs-nav">
+                        <button class="admin-tab-btn active" data-tab="PENDING">
+                            Pending Review <span class="tab-count" id="tabCountPending">0</span>
+                        </button>
+                        <button class="admin-tab-btn" data-tab="APPROVED">
+                            Approved <span class="tab-count" id="tabCountApproved">0</span>
+                        </button>
+                        <button class="admin-tab-btn" data-tab="REJECTED">
+                            Rejected <span class="tab-count" id="tabCountRejected">0</span>
+                        </button>
+                        <button class="admin-tab-btn" data-tab="ALL">
+                            All Public <span class="tab-count" id="tabCountAll">0</span>
+                        </button>
+                    </div>
 
-            <!-- Filters -->
-            <div class="admin-actions-bar">
-                <div class="admin-filters">
-                    <input type="text" id="searchInput" class="admin-filter-input" placeholder="Search by Title or Owner...">
-                    <select id="subjectFilter" class="admin-filter-input">
-                        <option value="">All Subjects</option>
-                    </select>
-                    <select id="statusFilter" class="admin-filter-input" style="display: none;">
-                        <option value="">All Statuses</option>
-                        <option value="PENDING">PENDING</option>
-                        <option value="APPROVED">APPROVED</option>
-                        <option value="REJECTED">REJECTED</option>
-                    </select>
-                    <select id="fileTypeFilter" class="admin-filter-input">
-                        <option value="">All File Types</option>
-                        <option value="PDF">PDF</option>
-                        <option value="DOCX">DOCX</option>
-                        <option value="TXT">TXT</option>
-                    </select>
-                </div>
-                <div class="admin-actions-buttons">
-                    <button class="btn btn-outline" onclick="clearFilters()">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                        </svg>
-                        Clear Filters
-                    </button>
-                </div>
-            </div>
+                    <!-- Filters -->
+                    <div class="admin-toolbar">
+                        <div class="admin-filter-grid">
+                            <div class="admin-search-wrapper">
+                                <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                </svg>
+                                <input type="text" id="searchInput" class="admin-filter-input admin-search-input" placeholder="Search by title or owner...">
+                            </div>
+                            <select id="subjectFilter" class="admin-filter-select">
+                                <option value="">All Subjects</option>
+                            </select>
+                            <select id="statusFilter" class="admin-filter-select" style="display: none;">
+                                <option value="">All Statuses</option>
+                                <option value="PENDING">PENDING</option>
+                                <option value="APPROVED">APPROVED</option>
+                                <option value="REJECTED">REJECTED</option>
+                            </select>
+                            <select id="fileTypeFilter" class="admin-filter-select">
+                                <option value="">All File Types</option>
+                                <option value="PDF">PDF</option>
+                                <option value="DOCX">DOCX</option>
+                                <option value="TXT">TXT</option>
+                            </select>
+                            <button id="clearFiltersBtn" class="btn-admin-secondary" onclick="clearFilters()" style="display: none;">
+                                Clear Filters
+                            </button>
+                        </div>
+                    </div>
 
-            <!-- Table -->
-            <div class="admin-table-container">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Owner</th>
-                            <th>Subject</th>
-                            <th>Type</th>
-                            <th>Visibility</th>
-                            <th title="Shows whether this document is approved for Community Library.">Approval Status</th>
-                            <th title="Shows whether document content is ready for AI features.">AI Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="documentsTableBody">
-                        <!-- Populated by JS -->
-                        <tr><td colspan="8" style="text-align: center;">Loading...</td></tr>
-                    </tbody>
-                </table>
-                <div id="pagination" class="pagination">
-                    <!-- Pagination buttons -->
-                </div>
-            </div>
+                    <!-- Table -->
+                    <div class="admin-card" style="padding: 0; overflow-x: auto;">
+                        <table class="table" id="documentsTable">
+                            <thead>
+                                <tr>
+                                    <th>Document Title</th>
+                                    <th>Owner</th>
+                                    <th>Subject</th>
+                                    <th>Type</th>
+                                    <th>Visibility</th>
+                                    <th>Approval</th>
+                                    <th>AI Status</th>
+                                    <th>Updated</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="documentsTableBody">
+                                <!-- Populated by JS -->
+                                <tr><td colspan="9" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="admin-pagination" id="pagination">
+                        <!-- Pagination buttons -->
+                    </div>
+                    </div>
             </div>
                 </div>
             </div>

@@ -133,8 +133,8 @@ function renderSafeProfileChipContent(profileChip, currentUser, initials, fullNa
         img.src = currentUser.avatarUrl;
         img.className = "user-avatar-img";
         img.alt = "Avatar";
-        img.style.width = "28px";
-        img.style.height = "28px";
+        img.style.width = "32px";
+        img.style.height = "32px";
         img.style.borderRadius = "50%";
         img.style.objectFit = "cover";
         profileChip.appendChild(img);
@@ -145,10 +145,22 @@ function renderSafeProfileChipContent(profileChip, currentUser, initials, fullNa
         profileChip.appendChild(initialsDiv);
     }
 
+    const infoContainer = document.createElement("div");
+    infoContainer.className = "user-profile-info";
+
     const nameSpan = document.createElement("span");
     nameSpan.className = "user-profile-name";
     nameSpan.textContent = fullName;
-    profileChip.appendChild(nameSpan);
+    infoContainer.appendChild(nameSpan);
+
+    if (currentUser.email) {
+        const emailSpan = document.createElement("span");
+        emailSpan.className = "user-profile-email";
+        emailSpan.textContent = currentUser.email;
+        infoContainer.appendChild(emailSpan);
+    }
+
+    profileChip.appendChild(infoContainer);
 }
 
 function refreshHeaderProfileChip() {

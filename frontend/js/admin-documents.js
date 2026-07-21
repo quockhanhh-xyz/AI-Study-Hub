@@ -62,14 +62,37 @@ function initAdminDocuments() {
 
     const rejectReason = document.getElementById('rejectReason');
 
+    const updateClearFiltersVisibility = () => {
+        const clearBtn = document.getElementById('clearFiltersBtn');
+        if (!clearBtn) return;
+        const hasFilter = Boolean(searchInput.value || (subjectFilter && subjectFilter.value) || statusFilter.value || fileTypeFilter.value);
+        clearBtn.style.display = hasFilter ? 'inline-flex' : 'none';
+    };
+
+    const formatCompactDate = (dateStr) => {
+        if (!dateStr) return "N/A";
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return "N/A";
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const month = months[d.getMonth()];
+        const day = String(d.getDate()).padStart(2, "0");
+        const year = d.getFullYear();
+        const hours = String(d.getHours()).padStart(2, "0");
+        const minutes = String(d.getMinutes()).padStart(2, "0");
+        return `${month} ${day}, ${year} · ${hours}:${minutes}`;
+    };
+
     const loadDocuments = async () => {
         const loadingState = document.getElementById("docsLoadingState");
         const errorState = document.getElementById("docsErrorState");
         const contentState = document.getElementById("docsContent");
 
-        loadingState.style.display = "flex";
-        errorState.style.display = "none";
-        contentState.style.display = "none";
+        if (contentState.style.display === "none") {
+            loadingState.style.display = "flex";
+            errorState.style.display = "none";
+        }
+
+        updateClearFiltersVisibility();
 
         try {
             const params = {
@@ -86,12 +109,27 @@ function initAdminDocuments() {
 
             if (response && response.success && response.data) {
                 const data = response.data;
-                totalElements = data.totalElements;
+                let items = [];
+                let totalItems = 0;
+                let totalPagesCount = 1;
 
-                renderTable(data.items);
-                renderPagination(data.totalPages, data.totalElements);
+                if (Array.isArray(data)) {
+                    items = data;
+                    totalItems = data.length;
+                    totalPagesCount = Math.max(1, Math.ceil(totalItems / pageSize));
+                } else if (data && typeof data === 'object') {
+                    items = data.items || data.content || data.documents || (Array.isArray(data) ? data : []);
+                    totalItems = typeof data.totalElements === 'number' ? data.totalElements : (typeof data.total === 'number' ? data.total : items.length);
+                    totalPagesCount = typeof data.totalPages === 'number' ? data.totalPages : Math.max(1, Math.ceil(totalItems / pageSize));
+                }
+
+                totalElements = totalItems;
+
+                renderTable(items);
+                renderPagination(totalPagesCount, totalItems);
 
                 loadingState.style.display = "none";
+                errorState.style.display = "none";
                 contentState.style.display = "block";
                 
                 // Fetch counts for tabs
@@ -103,18 +141,38 @@ function initAdminDocuments() {
         } catch (error) {
             console.error('Error loading documents:', error);
             loadingState.style.display = "none";
+            contentState.style.display = "none";
             errorState.style.display = "flex";
             document.getElementById("docsErrorMessage").textContent = error.message || "An unexpected error occurred.";
         }
     };
 
+    const getOwnerDisplayName = (doc) => {
+        if (!doc) return 'Unknown owner';
+        return doc.ownerName || doc.uploaderName || doc.userName || doc.ownerEmail || doc.uploaderEmail || doc.displayName || 'Unknown owner';
+    };
+
+    const getSubjectDisplayName = (doc) => {
+        if (!doc) return 'No subject';
+        if (doc.subjectName) {
+            return doc.subjectCode ? `${doc.subjectCode} - ${doc.subjectName}` : doc.subjectName;
+        }
+        if (doc.subject && typeof doc.subject === 'object') {
+            if (doc.subject.name) {
+                return doc.subject.code ? `${doc.subject.code} - ${doc.subject.name}` : doc.subject.name;
+            }
+        }
+        if (doc.subjectCode) return doc.subjectCode;
+        return 'No subject';
+    };
+
     const getApprovalBadgeClass = (status) => {
-        if (!status) return 'badge-secondary';
+        if (!status) return 'admin-badge-neutral';
         switch(status.toUpperCase()) {
-            case 'PENDING': return 'badge-warning';
-            case 'APPROVED': return 'badge-success';
-            case 'REJECTED': return 'badge-danger';
-            default: return 'badge-secondary';
+            case 'PENDING': return 'admin-badge-warning';
+            case 'APPROVED': return 'admin-badge-success';
+            case 'REJECTED': return 'admin-badge-danger';
+            default: return 'admin-badge-neutral';
         }
     };
     
@@ -127,63 +185,88 @@ function initAdminDocuments() {
     };
 
     const getVisibilityBadgeClass = (visibility) => {
-        if (!visibility) return 'badge-secondary';
-        return visibility.toUpperCase() === 'PUBLIC' ? 'badge-primary' : 'badge-secondary';
+        if (!visibility) return 'admin-badge-neutral';
+        return visibility.toUpperCase() === 'PUBLIC' ? 'admin-badge-public' : 'admin-badge-neutral';
+    };
+
+    const getFileTypeBadgeClass = (fileType) => {
+        if (!fileType) return 'admin-badge-neutral';
+        const type = fileType.toUpperCase();
+        if (type === 'PDF') return 'admin-badge-pdf';
+        if (type === 'DOCX' || type === 'DOC') return 'admin-badge-docx';
+        if (type === 'TXT') return 'admin-badge-txt';
+        return 'admin-badge-neutral';
     };
 
     const getAIBadgeInfo = (status) => {
-        if (!status) return { text: 'Not processed', cls: 'badge-secondary' };
+        if (!status) return { text: 'Not processed', cls: 'admin-badge-neutral' };
         switch(status.toUpperCase()) {
-            case 'PENDING': return { text: 'Not processed', cls: 'badge-secondary' };
-            case 'PROCESSING': return { text: 'Processing', cls: 'badge-warning' };
-            case 'COMPLETED': return { text: 'Ready for AI', cls: 'badge-success' };
-            case 'FAILED': return { text: 'Failed', cls: 'badge-danger' };
-            case 'UNSUPPORTED': return { text: 'Unsupported', cls: 'badge-secondary' };
-            case 'EMPTY_CONTENT': return { text: 'Empty content', cls: 'badge-warning' };
-            default: return { text: status, cls: 'badge-secondary' };
+            case 'PENDING': return { text: 'Not processed', cls: 'admin-badge-neutral' };
+            case 'PROCESSING': return { text: 'Processing', cls: 'admin-badge-warning' };
+            case 'COMPLETED': return { text: 'Ready for AI', cls: 'admin-badge-success' };
+            case 'FAILED': return { text: 'Failed', cls: 'admin-badge-danger' };
+            case 'UNSUPPORTED': return { text: 'Unsupported', cls: 'admin-badge-neutral' };
+            case 'EMPTY_CONTENT': return { text: 'Empty content', cls: 'admin-badge-warning' };
+            default: return { text: status, cls: 'admin-badge-neutral' };
         }
     };
 
     const renderTable = (documents) => {
         if (!documents || documents.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No documents found.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 32px; color: #64748B;">No documents found.</td></tr>';
             return;
         }
 
         tableBody.innerHTML = documents.map(doc => {
             const aiInfo = getAIBadgeInfo(doc.processingStatus);
+            const formattedDate = formatCompactDate(doc.updatedAt || doc.createdAt);
+            const ownerName = getOwnerDisplayName(doc);
+            const subjectName = getSubjectDisplayName(doc);
+
             return `
             <tr>
-                <td>${doc.title || '-'}</td>
-                <td style="color: ${doc.displayName ? 'inherit' : 'var(--text-muted)'}">${doc.displayName || 'Unknown owner'}</td>
-                <td style="color: ${doc.subjectCode ? 'inherit' : 'var(--text-muted)'}">${doc.subjectCode ? `${doc.subjectCode} - ${doc.subjectName}` : 'No subject'}</td>
-                <td>${doc.fileType || '-'}</td>
-                <td><span class="badge ${getVisibilityBadgeClass(doc.visibility)}">${doc.visibility ? doc.visibility.charAt(0).toUpperCase() + doc.visibility.slice(1).toLowerCase() : '-'}</span></td>
-                <td><span class="badge ${getApprovalBadgeClass(doc.approvalStatus)}">${getApprovalLabel(doc.approvalStatus)}</span></td>
-                <td><span class="badge ${aiInfo.cls}">${aiInfo.text}</span></td>
-                <td>
-                    <button class="btn btn-sm btn-outline" onclick="window.location.href='admin-document-detail.html?id=${doc.documentId}'">View</button>
-                    ${doc.approvalStatus === 'PENDING' ? `
-                        <button class="btn btn-sm btn-primary" onclick="openApproveModal(${doc.documentId})">Approve</button>
-                        <button class="btn btn-sm btn-danger" onclick="openRejectModal(${doc.documentId})">Reject</button>
-                    ` : doc.approvalStatus === 'APPROVED' ? `
-                        <button class="btn btn-sm btn-warning" onclick="openPendingConfirmModal(${doc.documentId})">Move to Pending</button>
-                        <button class="btn btn-sm btn-secondary" onclick="openUnpublishConfirmModal(${doc.documentId})">Unpublish</button>
-                    ` : doc.approvalStatus === 'REJECTED' ? `
-                        <button class="btn btn-sm btn-warning" onclick="openPendingConfirmModal(${doc.documentId})">Move to Pending</button>
-                    ` : ''}
+                <td><div class="user-name-cell" style="font-weight: 600;" title="${escapeHtml(doc.title || '-')}">${escapeHtml(doc.title || '-')}</div></td>
+                <td><div class="user-email-cell" title="${escapeHtml(ownerName)}">${escapeHtml(ownerName)}</div></td>
+                <td><div class="user-email-cell" style="font-size: 13px; color: #475569;" title="${escapeHtml(subjectName)}">${escapeHtml(subjectName)}</div></td>
+                <td><span class="admin-badge ${getFileTypeBadgeClass(doc.fileType)}">${doc.fileType ? doc.fileType.toUpperCase() : '-'}</span></td>
+                <td><span class="admin-badge ${getVisibilityBadgeClass(doc.visibility)}">${doc.visibility ? doc.visibility.charAt(0).toUpperCase() + doc.visibility.slice(1).toLowerCase() : '-'}</span></td>
+                <td><span class="admin-badge ${getApprovalBadgeClass(doc.approvalStatus)}">${getApprovalLabel(doc.approvalStatus)}</span></td>
+                <td><span class="admin-badge ${aiInfo.cls}">${aiInfo.text}</span></td>
+                <td><span style="color: #64748B; font-size: 13px; white-space: nowrap;">${formattedDate}</span></td>
+                <td style="text-align: right; white-space: nowrap;">
+                    <div class="admin-action-group" style="justify-content: flex-end;">
+                        <button class="btn-action btn-action-ghost" onclick="window.location.href='admin-document-detail.html?id=${doc.documentId}'">View</button>
+                        ${doc.approvalStatus === 'PENDING' ? `
+                            <button class="btn-action btn-action-primary" onclick="openApproveModal(${doc.documentId})">Approve</button>
+                            <button class="btn-action btn-action-danger-outline" onclick="openRejectModal(${doc.documentId})">Reject</button>
+                        ` : doc.approvalStatus === 'APPROVED' ? `
+                            <button class="btn-action btn-action-warning-outline" onclick="openPendingConfirmModal(${doc.documentId})">Pending</button>
+                            <button class="btn-action btn-action-danger-outline" onclick="openUnpublishConfirmModal(${doc.documentId})">Unpublish</button>
+                        ` : doc.approvalStatus === 'REJECTED' ? `
+                            <button class="btn-action btn-action-warning-outline" onclick="openPendingConfirmModal(${doc.documentId})">Pending</button>
+                        ` : ''}
+                    </div>
                 </td>
             </tr>
         `}).join('');
     };
 
-    const renderPagination = (totalPages, totalItems) => {
-        let html = `<div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 8px;">
-            Showing ${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, totalItems)} of ${totalItems} documents
+    const renderPagination = (totalPagesCount, totalItemsCount) => {
+        const safeTotal = typeof totalItemsCount === 'number' && !isNaN(totalItemsCount) ? totalItemsCount : 0;
+        const safePages = typeof totalPagesCount === 'number' && !isNaN(totalPagesCount) && totalPagesCount > 0 ? totalPagesCount : 1;
+
+        const startItem = safeTotal === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+        const endItem = Math.min(currentPage * pageSize, safeTotal);
+
+        let html = `<div style="font-size: 0.875rem; color: #64748B;">
+            Showing ${startItem}-${endItem} of ${safeTotal} documents
         </div>
         <div style="display: flex; gap: 4px;">`;
-        for (let i = 1; i <= totalPages; i++) {
-            html += `<button class="${i === currentPage ? 'active' : ''}" onclick="window.goToPage(${i})">${i}</button>`;
+
+        if (safePages > 1) {
+            for (let i = 1; i <= safePages; i++) {
+                html += `<button class="admin-pagination-btn ${i === currentPage ? 'active' : ''}" onclick="window.goToPage(${i})">${i}</button>`;
+            }
         }
         html += `</div>`;
         pagination.innerHTML = html;
@@ -194,6 +277,17 @@ function initAdminDocuments() {
         loadDocuments();
     };
 
+    function escapeHtml(unsafe) {
+        if (!unsafe) return "";
+        return unsafe
+             .toString()
+             .replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+    }
+
     // Modal helpers (global so inline onclick works)
     window.openApproveModal = (id) => {
         approveDocId.value = id;
@@ -202,7 +296,7 @@ function initAdminDocuments() {
 
     window.openRejectModal = (id) => {
         rejectDocId.value = id;
-        rejectReason.value = ''; // clear previous reason
+        rejectReason.value = '';
         rejectModal.classList.add('active');
     };
 
@@ -234,7 +328,7 @@ function initAdminDocuments() {
 
     document.getElementById('confirmRejectBtn').addEventListener('click', async () => {
         const id = rejectDocId.value;
-        const reason = rejectReason.value; // Step 15A: Optional reason
+        const reason = rejectReason.value;
         try {
             await rejectAdminDocument(id, reason);
             closeModal('rejectModal');
@@ -294,17 +388,11 @@ function initAdminDocuments() {
     };
 
     // Quick Tabs Logic
-    const tabs = document.querySelectorAll('.admin-tab');
+    const tabs = document.querySelectorAll('.admin-tab-btn');
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
-            tabs.forEach(t => {
-                t.classList.remove('active');
-                t.style.borderBottomColor = 'transparent';
-                t.style.color = 'var(--text-muted)';
-            });
+            tabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-            tab.style.borderBottomColor = 'var(--primary)';
-            tab.style.color = 'var(--primary)';
             
             const status = tab.dataset.tab;
             statusFilter.value = status === 'ALL' ? '' : status;
@@ -353,7 +441,7 @@ function initAdminDocuments() {
         } finally {
             exportBtn.disabled = false;
             exportBtn.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                 </svg>
                 Export Excel
