@@ -661,8 +661,17 @@ document.addEventListener("DOMContentLoaded", async function () {
     
     const nameSpan = document.createElement("span");
     nameSpan.className = "payment-plan-name";
-    nameSpan.textContent = payment.planName || payment.planCode;
-    
+    const planNameRaw = payment.planName || payment.planCode || "";
+    nameSpan.textContent = planNameRaw;
+    const planNameUpper = planNameRaw.toUpperCase();
+    if (planNameUpper.includes("ULTRA")) {
+      nameSpan.style.color = "#7c3aed";
+    } else if (planNameUpper.includes("PREMIUM")) {
+      nameSpan.style.color = "#f59e0b";
+    } else if (planNameUpper.includes("FREE")) {
+      nameSpan.style.color = "var(--text-muted)";
+    }
+
     const amountSpan = document.createElement("span");
     amountSpan.className = "payment-amount";
     amountSpan.textContent = formatCurrency(payment.amount, payment.currency);
