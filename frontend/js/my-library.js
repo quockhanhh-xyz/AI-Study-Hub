@@ -1135,51 +1135,55 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   function createFolderCard(f) {
-    const card = document.createElement("div");
-    card.className = "document-card folder-card-alt"; // Reusing document-card styling
+    const card = document.createElement("article");
+    card.className = "document-card folder-card-alt";
+    card.style.cursor = "pointer";
+    card.style.position = "relative"; // For absolute positioning kebab
 
-    // Preview area (Top half)
-    const preview = document.createElement("div");
-    preview.className = "document-preview";
-    preview.style.cssText = "display: flex; align-items: center; justify-content: center; background: #f8f9fa; height: 140px;";
-    
-    const icon = document.createElement("div");
-    icon.style.cssText = "color: var(--primary); transform: scale(1.5);";
-    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="48" height="48"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>';
-    preview.appendChild(icon);
+    // Left Column: Folder Icon
+    const iconContainer = document.createElement("div");
+    iconContainer.innerHTML = '<div class="document-icon" style="color: var(--primary);"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="32" height="32"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg></div>';
+    const iconWrapper = iconContainer.firstElementChild;
+    card.appendChild(iconWrapper);
 
-    // Info area (Bottom half)
-    const info = document.createElement("div");
-    info.className = "document-info";
+    // Right Column: Details
+    const content = document.createElement("div");
+    content.className = "document-card-content";
 
     const header = document.createElement("div");
-    header.className = "document-header";
-    header.style.cssText = "display: flex; justify-content: space-between; align-items: flex-start;";
+    header.className = "document-card-header";
+    header.style.display = "flex";
+    header.style.justifyContent = "space-between";
+    header.style.alignItems = "center";
 
     const title = document.createElement("h3");
-    title.className = "document-title";
     title.textContent = f.folderName || "Untitled Folder";
-    
+    title.style.margin = "0";
     header.appendChild(title);
 
     const meta = document.createElement("div");
     meta.className = "document-meta";
-    let metaTxt = [];
+    meta.style.marginTop = "8px";
+
     const subCount = Number(f.subfolderCount ?? 0);
     const docCount = Number(f.documentCount ?? f.fileCount ?? 0);
-    metaTxt.push(`${subCount} folders`);
-    metaTxt.push(`${docCount} docs`);
-    if (f.createdAt) metaTxt.push(formatDate(f.createdAt));
     
-    meta.innerHTML = `<span>${metaTxt.join(" &bull; ")}</span>`;
+    meta.innerHTML = `
+      <span class="document-meta-item">${subCount} folders</span>
+      <span class="document-meta-item">${docCount} documents</span>
+      ${f.createdAt ? `<span class="document-meta-item">${formatDate(f.createdAt)}</span>` : ""}
+    `;
 
-    info.appendChild(header);
-    info.appendChild(meta);
+    content.appendChild(header);
+    content.appendChild(meta);
+    card.appendChild(content);
 
-    // Actions kebab (positioned absolutely in top right)
+    // Actions kebab
     const actions = document.createElement("div");
     actions.className = "folder-card-actions";
-    actions.style.cssText = "position: absolute; top: 8px; right: 8px; z-index: 10;";
+    actions.style.position = "absolute";
+    actions.style.top = "16px";
+    actions.style.right = "16px";
 
     const kebabBtn = document.createElement("button");
     kebabBtn.type = "button";
@@ -1266,7 +1270,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       navigateToFolder(f.folderId);
     });
 
-    card.append(preview, info, actions);
+    card.appendChild(actions);
     return card;
   }
 
