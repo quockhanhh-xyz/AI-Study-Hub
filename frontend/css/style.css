@@ -1373,8 +1373,8 @@ textarea.success {
 }
 
 .nav-link:hover {
-  background: var(--item-hover);
-  color: var(--text);
+  background: var(--primary-light);
+  color: var(--primary);
 }
 
 /* Active state */
