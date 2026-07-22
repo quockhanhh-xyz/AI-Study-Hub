@@ -217,12 +217,12 @@ function renderUsersTable(data) {
                 <td><span class="table-muted-text" title="${escapeHtml(user.email)}">${escapeHtml(user.email)}</span></td>
                 <td style="text-align: center;"><span class="badge ${getRoleBadgeClass(user.role)}">${user.role}</span></td>
                 <td style="text-align: center;"><span class="badge ${getTierBadgeClass(user.tier)}">${user.tier || '-'}</span></td>
-                <td style="text-align: center;"><span style="color: var(--success); font-weight: 500; font-size: 13px;">Verified</span></td>
+                <td style="text-align: center;"><span style="color: var(--success); font-weight: 500; font-size: 14px;">Verified</span></td>
                 <td style="text-align: center;"><span class="badge ${getStatusBadgeClass(user.status)}">${user.status}</span></td>
                 <td style="text-align: center;"><span style="font-weight: 500; color: var(--text-main, #0f172a);">${user.documentCount || 0}</span></td>
                 <td style="text-align: center;"><span class="table-muted-text">${user.aiUsage ? user.aiUsage.aiQaUsed : 0} / ${user.aiDailyLimit || 'Unlimited'}</span></td>
                 <td style="text-align: center;"><span class="table-muted-text">${formatJoinedDate(user.createdAt)}</span></td>
-                <td style="text-align: center;">
+                <td style="text-align: left;">
                     ${renderActionButtons(user, activeAdminCount)}
                 </td>
             `;
@@ -261,17 +261,13 @@ function renderActionButtons(user, activeAdminCount) {
         } catch(e) {}
     }
 
-    const iconView = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 14px; height: 14px; margin-right: 4px; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>`;
-    const iconBan = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 14px; height: 14px; margin-right: 4px; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" /></svg>`;
-    const iconUnban = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 14px; height: 14px; margin-right: 4px; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>`;
-
-    const viewBtn = `<button class="btn btn-sm" style="color: var(--text-muted); background: transparent; border: none; font-weight: 500; padding: 0 4px; width: 65px; display: inline-flex; align-items: center; justify-content: flex-start;" onclick="viewUserDetails(${user.userId})">${iconView}View</button>`;
+    const viewBtn = `<span class="badge admin-badge-neutral" style="cursor: pointer;" onclick="viewUserDetails(${user.userId})">View</span>`;
 
     if (user.userId === currentUserId) {
         return `
-            <div class="admin-action-group" style="gap: 12px; display: flex; justify-content: center; align-items: center;">
+            <div class="admin-action-group" style="gap: 8px; display: flex; justify-content: flex-start; align-items: center;">
                 ${viewBtn}
-                <div style="width: 85px; display: flex; justify-content: flex-start;"><span class="admin-self-badge">You</span></div>
+                <span class="badge admin-badge-danger">You</span>
             </div>
         `;
     }
@@ -279,11 +275,11 @@ function renderActionButtons(user, activeAdminCount) {
     const blockMessage = `This user will no longer be able to sign in or access AI Study Hub.<br><br>Are you sure you want to block <strong>${escapeHtml(user.fullName || user.email)}</strong>?`;
     const unblockMessage = `This user will regain full access to their account.<br><br>Are you sure you want to unblock <strong>${escapeHtml(user.fullName || user.email)}</strong>?`;
 
-    const unblockBtnHtml = `<button class="btn btn-sm" style="color: var(--success); background: transparent; border: none; font-weight: 500; padding: 0 4px; width: 85px; display: inline-flex; align-items: center; justify-content: flex-start;" onclick="promptUpdateStatus(${user.userId}, 'ACTIVE', \`${unblockMessage}\`)">${iconUnban}Unblock</button>`;
+    const unblockBtnHtml = `<span class="badge admin-badge-success" style="cursor: pointer;" onclick="promptUpdateStatus(${user.userId}, 'ACTIVE', \`${unblockMessage}\`)">Unblock</span>`;
 
     if (user.status === 'BLOCKED') {
         return `
-            <div class="admin-action-group" style="gap: 12px; display: flex; justify-content: center; align-items: center;">
+            <div class="admin-action-group" style="gap: 8px; display: flex; justify-content: flex-start; align-items: center;">
                 ${viewBtn}
                 ${unblockBtnHtml}
             </div>
@@ -291,11 +287,11 @@ function renderActionButtons(user, activeAdminCount) {
     } else {
         const isLastAdmin = user.role === 'ADMIN' && activeAdminCount <= 1;
         const blockBtnHtml = isLastAdmin
-            ? `<button class="btn btn-sm" disabled title="Cannot block the last active admin" style="color: var(--danger); background: transparent; border: none; font-weight: 500; opacity:0.5; cursor:not-allowed; padding: 0 4px; width: 85px; display: inline-flex; align-items: center; justify-content: flex-start;">${iconBan}Ban</button>`
-            : `<button class="btn btn-sm" style="color: var(--danger); background: transparent; border: none; font-weight: 500; padding: 0 4px; width: 85px; display: inline-flex; align-items: center; justify-content: flex-start;" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">${iconBan}Ban</button>`;
+            ? `<span class="badge admin-badge-danger" style="opacity: 0.5; cursor: not-allowed;" title="Cannot block the last active admin">Ban</span>`
+            : `<span class="badge admin-badge-danger" style="cursor: pointer;" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">Ban</span>`;
 
         return `
-            <div class="admin-action-group" style="gap: 12px; display: flex; justify-content: center; align-items: center;">
+            <div class="admin-action-group" style="gap: 8px; display: flex; justify-content: flex-start; align-items: center;">
                 ${viewBtn}
                 ${blockBtnHtml}
             </div>

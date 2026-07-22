@@ -132,7 +132,7 @@
 
 .table-muted-text {
     color: var(--text-muted, #64748b);
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .admin-header-actions {
