@@ -197,7 +197,7 @@ function initAdminDocuments() {
                 </td>
                 <td><span class="table-muted-text" style="max-width: 140px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(ownerDisplay)}">${escapeHtml(ownerDisplay)}</span></td>
                 <td><span class="table-muted-text" style="max-width: 130px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(subjectDisplay)}</span></td>
-                <td><span class="badge badge-tier-free">${doc.fileType || '-'}</span></td>
+                <td><span class="document-type-badge">${doc.fileType || '-'}</span></td>
                 <td><span class="badge ${getVisibilityBadgeClass(doc.visibility)}">${doc.visibility ? doc.visibility.charAt(0).toUpperCase() + doc.visibility.slice(1).toLowerCase() : '-'}</span></td>
                 <td><span class="badge ${getApprovalBadgeClass(doc.approvalStatus)}">${getApprovalLabel(doc.approvalStatus)}</span></td>
                 <td><span class="badge ${aiInfo.cls}">${aiInfo.text}</span></td>
