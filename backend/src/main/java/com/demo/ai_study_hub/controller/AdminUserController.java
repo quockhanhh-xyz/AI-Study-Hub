@@ -28,6 +28,9 @@ public class AdminUserController {
     @Autowired
     private AdminUserService adminUserService;
 
+    @Autowired
+    private com.demo.ai_study_hub.repository.UserRepository userRepository;
+
     @GetMapping
     public ResponseEntity<ApiResponse<AdminUserListResponse>> getUsers(
             @RequestParam(required = false) String search,
@@ -61,12 +64,18 @@ public class AdminUserController {
     public ResponseEntity<ApiResponse<AdminUserItem>> updateUserStatus(
             @PathVariable Integer id,
             @RequestBody Map<String, String> body,
-            @AuthenticationPrincipal User currentUser) {
+            java.security.Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized"));
+        }
+        User currentAdmin = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Admin user not found"));
+
         String newStatus = body.get("status");
         if (newStatus == null || newStatus.isEmpty()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("Status is required"));
         }
-        AdminUserItem updated = adminUserService.updateUserStatus(id, newStatus, currentUser.getUserId());
+        AdminUserItem updated = adminUserService.updateUserStatus(id, newStatus, currentAdmin.getUserId());
         return ResponseEntity.ok(ApiResponse.success(updated, "User status updated successfully"));
     }
 

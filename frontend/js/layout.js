@@ -14,12 +14,60 @@ async function initializeLayout() {
   // 2. REFINE SIDEBAR MENU BASED ON AUTH STATUS
   renderDynamicSidebar(isAuthenticated);
 
+  // 3. RENDER SHARED ADMIN TOPBAR IF ON ADMIN PAGE
+  const currentPage = getCurrentPageName();
+  const currentRoute = NAVIGATION_MENU.find(item => item.url === currentPage);
+  if (currentRoute && currentRoute.requiresAdmin) {
+    renderAdminTopbar();
+  }
 
-  // 3. ATTACH LOGOUT FLOW LISTENERS
+  // 4. ATTACH LOGOUT FLOW LISTENERS
   initializeLogoutFlow();
 
-
   return isAuthenticated;
+}
+
+function renderAdminTopbar() {
+  const adminWrapper = document.querySelector(".admin-content-wrapper");
+  if (!adminWrapper || document.querySelector(".admin-topbar")) return;
+
+  let adminName = "System Admin";
+  let adminEmail = "admin@test.com";
+  const userStr = localStorage.getItem("currentUser");
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      adminName = user.fullName || user.email || adminName;
+      adminEmail = user.email || adminEmail;
+    } catch(e) {}
+  }
+
+  const initialLetter = (adminName || "A").charAt(0).toUpperCase();
+
+  const topbar = document.createElement("header");
+  topbar.className = "admin-topbar";
+  topbar.innerHTML = `
+    <div class="admin-topbar-left">
+      <button class="menu-toggle-btn" aria-label="Toggle Sidebar Navigation">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18"></path></svg>
+      </button>
+      <div class="admin-topbar-brand">
+        <span class="brand-title"><strong>AI Study Hub Admin</strong></span>
+        <span class="brand-badge">Console</span>
+      </div>
+    </div>
+    <div class="admin-topbar-right" id="globalHeaderWidgets">
+      <div class="admin-profile-pill">
+        <span class="admin-avatar">${initialLetter}</span>
+        <div class="admin-profile-info">
+          <strong>${adminName}</strong>
+          <span>${adminEmail}</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  adminWrapper.parentNode.insertBefore(topbar, adminWrapper);
 }
 
 
@@ -66,6 +114,10 @@ async function checkAuthenticationStatus() {
 
     const user = result && result.data ? result.data : null;
 
+    if (currentRoute.requiresAuth && !user) {
+      throw new Error("User session required but not found.");
+    }
+
     // Admin role check: if page requires admin, redirect if user is not admin
     if (currentRoute.requiresAdmin) {
       if (!user || user.role !== 'ADMIN') {
@@ -82,9 +134,8 @@ async function checkAuthenticationStatus() {
       }
     }
 
-
     // Guard clause: If page is only for guests (like login.html) and user session is active -> Kick to target destination
-    if (currentRoute.hideWhenAuth) {
+    if (currentRoute.hideWhenAuth && user) {
       const urlParams = new URLSearchParams(window.location.search);
       let redirectUrl = urlParams.get("redirect");
       let target = "dashboard.html";

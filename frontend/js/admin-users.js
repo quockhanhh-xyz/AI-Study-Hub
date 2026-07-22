@@ -10,6 +10,10 @@ let targetUserIdToUpdate = null;
 let targetStatusToUpdate = null;
 
 document.addEventListener("DOMContentLoaded", () => {
+    if (window.initCustomDropdowns) {
+        window.initCustomDropdowns();
+    }
+
     if (window.authReady) {
         window.authReady.then((isAuthenticated) => {
             if (isAuthenticated) {
@@ -21,14 +25,83 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+function syncDropdowns() {
+    ["filterRole", "filterTier", "filterStatus"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.dispatchEvent(new Event("syncCustom"));
+    });
+}
+
+function removeFilter(type) {
+    if (type === 'search') document.getElementById("filterSearch").value = "";
+    if (type === 'role') document.getElementById("filterRole").value = "";
+    if (type === 'tier') document.getElementById("filterTier").value = "";
+    if (type === 'status') document.getElementById("filterStatus").value = "";
+    syncDropdowns();
+    onFilterChange();
+}
+
+function clearFilters() {
+    document.getElementById("filterSearch").value = "";
+    document.getElementById("filterRole").value = "";
+    document.getElementById("filterTier").value = "";
+    document.getElementById("filterStatus").value = "";
+    syncDropdowns();
+    onFilterChange();
+}
+
 function handleSearch(event) {
     if (currentSearchTimeout) {
         clearTimeout(currentSearchTimeout);
     }
-    // Debounce search
     currentSearchTimeout = setTimeout(() => {
-        loadUsers(0);
-    }, 500);
+        onFilterChange();
+    }, 400);
+}
+
+function onFilterChange() {
+    updateFilterUIState();
+    loadUsers(0);
+}
+
+function updateFilterUIState() {
+    const search = document.getElementById("filterSearch").value.trim();
+    const role = document.getElementById("filterRole").value;
+    const tier = document.getElementById("filterTier").value;
+    const status = document.getElementById("filterStatus").value;
+
+    const btnClear = document.getElementById("btnClearFilters");
+    const isFiltered = Boolean(search || role || tier || status);
+    if (btnClear) btnClear.disabled = !isFiltered;
+
+    renderFilterChips({ search, role, tier, status });
+}
+
+function renderFilterChips(filters) {
+    const container = document.getElementById("activeFilterChips");
+    if (!container) return;
+
+    let chipsHtml = "";
+    if (filters.search) {
+        chipsHtml += `<span class="filter-chip">Search: "${escapeHtml(filters.search)}" <span class="filter-chip-remove" onclick="removeFilter('search')">&times;</span></span>`;
+    }
+    if (filters.role) {
+        chipsHtml += `<span class="filter-chip">Role: ${escapeHtml(filters.role)} <span class="filter-chip-remove" onclick="removeFilter('role')">&times;</span></span>`;
+    }
+    if (filters.tier) {
+        chipsHtml += `<span class="filter-chip">Tier: ${escapeHtml(filters.tier)} <span class="filter-chip-remove" onclick="removeFilter('tier')">&times;</span></span>`;
+    }
+    if (filters.status) {
+        chipsHtml += `<span class="filter-chip">Status: ${escapeHtml(filters.status)} <span class="filter-chip-remove" onclick="removeFilter('status')">&times;</span></span>`;
+    }
+
+    if (chipsHtml) {
+        container.innerHTML = chipsHtml;
+        container.style.display = "flex";
+    } else {
+        container.innerHTML = "";
+        container.style.display = "none";
+    }
 }
 
 async function loadUsers(page = 0) {
@@ -48,8 +121,6 @@ async function loadUsers(page = 0) {
     const tier = document.getElementById("filterTier").value;
     const status = document.getElementById("filterStatus").value;
 
-    updateClearFiltersVisibility(search, role, tier, status);
-
     const params = {
         page: currentPage,
         size: pageSize,
@@ -65,8 +136,12 @@ async function loadUsers(page = 0) {
     try {
         const response = await fetchAdminUsers(params);
         if (response && response.success && response.data) {
-            renderSummaryStrip(response.data);
             renderUsersTable(response.data);
+            try {
+                renderSummaryCards(response.data);
+            } catch (summaryErr) {
+                console.warn("Failed to render summary cards:", summaryErr);
+            }
 
             loadingState.style.display = "none";
             errorState.style.display = "none";
@@ -83,18 +158,16 @@ async function loadUsers(page = 0) {
     }
 }
 
-function updateClearFiltersVisibility(search, role, tier, status) {
-    const clearBtn = document.getElementById("clearFiltersBtn");
-    if (!clearBtn) return;
-    const hasFilter = Boolean(search || role || tier || status);
-    clearBtn.style.display = hasFilter ? "inline-flex" : "none";
+function setText(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = (value !== null && value !== undefined) ? value : "0";
 }
 
-function renderSummaryStrip(data) {
-    const strip = document.getElementById("usersSummaryStrip");
-    if (!strip) return;
+function renderSummaryCards(data) {
+    if (!data) return;
+    const totalElements = data.totalElements || 0;
     const users = data.users || [];
-    const total = data.totalElements || users.length;
 
     let activeCount = 0;
     let blockedCount = 0;
@@ -108,30 +181,19 @@ function renderSummaryStrip(data) {
         if (u.tier === 'PREMIUM' || u.tier === 'ULTRA') paidCount++;
     });
 
-    strip.innerHTML = `
-        <strong>${total} users</strong>
-        <span class="divider">•</span>
-        <span style="color: #16A34A; font-weight: 600;">${activeCount} active</span>
-        <span class="divider">•</span>
-        <span style="color: #DC2626; font-weight: 600;">${blockedCount} blocked</span>
-        <span class="divider">•</span>
-        <span style="color: #EA580C; font-weight: 600;">${adminCount} admins</span>
-        <span class="divider">•</span>
-        <span style="color: #7C3AED; font-weight: 600;">${paidCount} paid</span>
-    `;
+    setText("summaryTotalUsers", totalElements.toLocaleString());
+    setText("summaryActiveUsers", activeCount.toLocaleString());
+    setText("summaryBlockedUsers", blockedCount.toLocaleString());
+    setText("summaryAdminUsers", adminCount.toLocaleString());
+    setText("summaryPaidUsers", paidCount.toLocaleString());
 }
 
-function formatCompactDate(dateStr) {
+function formatJoinedDate(dateStr) {
     if (!dateStr) return "N/A";
     const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return "N/A";
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const month = months[d.getMonth()];
-    const day = String(d.getDate()).padStart(2, "0");
-    const year = d.getFullYear();
-    const hours = String(d.getHours()).padStart(2, "0");
-    const minutes = String(d.getMinutes()).padStart(2, "0");
-    return `${month} ${day}, ${year} · ${hours}:${minutes}`;
+    const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `${date} · ${time}`;
 }
 
 function renderUsersTable(data) {
@@ -142,35 +204,41 @@ function renderUsersTable(data) {
     totalPages = data.totalPages || 0;
     const totalElements = data.totalElements || 0;
 
+    const activeAdminCount = users.filter(u => u.role === 'ADMIN' && u.status !== 'BLOCKED').length;
+
     if (users.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 24px; color: var(--text-muted);">No users found matching your filters.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 32px; color: var(--text-muted);">No users found matching your filter criteria.</td></tr>`;
     } else {
         users.forEach(user => {
             const tr = document.createElement("tr");
-            const createdDate = formatCompactDate(user.createdAt);
 
             tr.innerHTML = `
-                <td><span style="font-weight: 600; color: #64748B; font-size: 13px;">#${user.userId}</span></td>
-                <td><div class="user-name-cell" title="${escapeHtml(user.fullName)}">${escapeHtml(user.fullName)}</div></td>
-                <td><div class="user-email-cell" title="${escapeHtml(user.email)}">${escapeHtml(user.email)}</div></td>
-                <td><span class="admin-badge ${getRoleBadgeClass(user.role)}">${user.role}</span></td>
-                <td><span class="admin-badge ${getTierBadgeClass(user.tier)}">${user.tier}</span></td>
-                <td style="font-weight: 600; color: #FF5A3D; text-align: center;">${user.documentCount || 0}</td>
-                <td><span class="admin-badge ${getStatusBadgeClass(user.status)}">${user.status}</span></td>
-                <td style="color: #64748B; font-size: 13px; white-space: nowrap;">${createdDate}</td>
-                <td style="text-align: right; white-space: nowrap;">
-                    ${renderActionButtons(user)}
+                <td><span class="table-muted-text">#${user.userId}</span></td>
+                <td><span style="font-weight: 600; color: var(--text-main, #0f172a);">${escapeHtml(user.fullName)}</span></td>
+                <td><span class="table-muted-text" title="${escapeHtml(user.email)}">${escapeHtml(user.email)}</span></td>
+                <td><span class="badge ${getRoleBadgeClass(user.role)}">${user.role}</span></td>
+                <td><span class="badge ${getTierBadgeClass(user.tier)}">${user.tier}</span></td>
+                <td><span style="font-weight: 500; color: var(--text-main, #0f172a);">${user.documentCount || 0}</span></td>
+                <td><span class="badge ${getStatusBadgeClass(user.status)}">${user.status}</span></td>
+                <td><span class="table-muted-text">${formatJoinedDate(user.createdAt)}</span></td>
+                <td style="text-align: right;">
+                    ${renderActionButtons(user, activeAdminCount)}
                 </td>
             `;
             tbody.appendChild(tr);
         });
     }
 
-    // Update Pagination
+    // Update Pagination & Export Button Text
     const paginationInfo = document.getElementById("paginationInfo");
     const startItem = totalElements === 0 ? 0 : (currentPage * pageSize) + 1;
     const endItem = Math.min((currentPage + 1) * pageSize, totalElements);
     paginationInfo.textContent = `Showing ${startItem} - ${endItem} of ${totalElements}`;
+
+    const btnExport = document.getElementById("btnExportUsers");
+    if (btnExport) {
+        btnExport.title = `Export ${totalElements.toLocaleString()} filtered users to Excel`;
+    }
 
     const paginationContainer = document.querySelector(".admin-pagination");
     if (totalPages <= 1) {
@@ -182,51 +250,65 @@ function renderUsersTable(data) {
     }
 }
 
-function changePage(delta) {
-    const newPage = currentPage + delta;
-    if (newPage >= 0 && newPage < totalPages) {
-        loadUsers(newPage);
-    }
-}
-
-function renderActionButtons(user) {
+function renderActionButtons(user, activeAdminCount) {
     let currentUserStr = localStorage.getItem("currentUser");
     let currentUserId = -1;
     if (currentUserStr) {
         try {
-            currentUserId = JSON.parse(currentUserStr).id || JSON.parse(currentUserStr).userId;
+            const parsed = JSON.parse(currentUserStr);
+            currentUserId = parsed.id || parsed.userId;
         } catch(e) {}
     }
 
     if (user.userId === currentUserId) {
-        return `<span style="color: var(--text-muted); font-size: 12px;">(You)</span> <button class="btn-action btn-action-ghost" style="margin-left: 4px;" onclick="viewUserDetails(${user.userId})">View</button>`;
+        return `
+            <div class="admin-action-group">
+                <span class="admin-self-badge">You</span>
+                <button class="btn btn-sm btn-outline" onclick="viewUserDetails(${user.userId})">View</button>
+            </div>
+        `;
     }
 
-    const blockMessage = `This user will no longer be able to sign in or use AI Study Hub. Their documents, shares, groups, chat messages, and payment history will not be deleted. Are you sure you want to block this user?`;
-    const unblockMessage = `This user will regain access to their account and all previous features. Are you sure you want to unblock this user?`;
+    const blockMessage = `This user will no longer be able to sign in or access AI Study Hub.<br><br>Are you sure you want to block <strong>${escapeHtml(user.fullName || user.email)}</strong>?`;
+    const unblockMessage = `This user will regain full access to their account.<br><br>Are you sure you want to unblock <strong>${escapeHtml(user.fullName || user.email)}</strong>?`;
 
     if (user.status === 'BLOCKED') {
-        return `<button class="btn-action btn-action-ghost" style="margin-right: 6px;" onclick="viewUserDetails(${user.userId})">View</button><button class="btn-action btn-action-ghost" onclick="promptUpdateStatus(${user.userId}, 'ACTIVE', \`${unblockMessage}\`)">Unblock</button>`;
+        return `
+            <div class="admin-action-group">
+                <button class="btn btn-sm btn-outline" onclick="viewUserDetails(${user.userId})">View</button>
+                <button class="btn btn-sm btn-outline-success" onclick="promptUpdateStatus(${user.userId}, 'ACTIVE', \`${unblockMessage}\`)">Unblock</button>
+            </div>
+        `;
     } else {
-        return `<button class="btn-action btn-action-ghost" style="margin-right: 6px;" onclick="viewUserDetails(${user.userId})">View</button><button class="btn-action btn-action-danger-outline" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">Block</button>`;
+        const isLastAdmin = user.role === 'ADMIN' && activeAdminCount <= 1;
+        const blockBtnHtml = isLastAdmin
+            ? `<button class="btn btn-sm btn-outline" disabled title="Cannot block the last active admin" style="opacity:0.5; cursor:not-allowed;">Block</button>`
+            : `<button class="btn btn-sm btn-outline-danger" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">Block</button>`;
+
+        return `
+            <div class="admin-action-group">
+                <button class="btn btn-sm btn-outline" onclick="viewUserDetails(${user.userId})">View</button>
+                ${blockBtnHtml}
+            </div>
+        `;
     }
 }
 
 function getRoleBadgeClass(role) {
-    if (role === 'ADMIN') return 'admin-badge-admin';
-    return 'admin-badge-user';
+    if (role === 'ADMIN') return 'admin-badge-warning'; // e.g., orange for admin
+    return 'admin-badge-neutral';
 }
 
 function getTierBadgeClass(tier) {
-    if (tier === 'PREMIUM') return 'admin-badge-premium';
-    if (tier === 'ULTRA') return 'admin-badge-ultra';
-    return 'admin-badge-free';
+    if (tier === 'PREMIUM') return 'admin-badge-success';
+    if (tier === 'ULTRA') return 'admin-badge-info';
+    return 'admin-badge-neutral';
 }
 
 function getStatusBadgeClass(status) {
-    if (status === 'ACTIVE') return 'admin-badge-active';
-    if (status === 'BLOCKED') return 'admin-badge-blocked';
-    return 'admin-badge-warning';
+    if (status === 'ACTIVE') return 'admin-badge-success';
+    if (status === 'BLOCKED') return 'admin-badge-danger';
+    return 'admin-badge-warning'; // INACTIVE
 }
 
 function escapeHtml(unsafe) {
@@ -268,24 +350,30 @@ function promptUpdateStatus(userId, newStatus, message) {
     targetUserIdToUpdate = userId;
     targetStatusToUpdate = newStatus;
 
+    const modalAlert = document.getElementById("modalAlert");
+    if (modalAlert) {
+        modalAlert.style.display = "none";
+        modalAlert.textContent = "";
+    }
+
     document.getElementById("modalTitle").textContent = newStatus === 'BLOCKED' ? "Block User" : "Unblock User";
-    document.getElementById("modalBody").textContent = message;
+    document.getElementById("modalBody").innerHTML = message;
 
     const confirmBtn = document.getElementById("modalConfirmBtn");
-    // Remove old listeners
     const newConfirmBtn = confirmBtn.cloneNode(true);
     confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
 
     if (newStatus === 'BLOCKED') {
         newConfirmBtn.style.backgroundColor = 'var(--danger)';
         newConfirmBtn.style.borderColor = 'var(--danger)';
+        newConfirmBtn.textContent = 'Block User';
     } else {
-        newConfirmBtn.style.backgroundColor = 'var(--primary)';
-        newConfirmBtn.style.borderColor = 'var(--primary)';
+        newConfirmBtn.style.backgroundColor = 'var(--success, #16a34a)';
+        newConfirmBtn.style.borderColor = 'var(--success, #16a34a)';
+        newConfirmBtn.textContent = 'Unblock User';
     }
 
     newConfirmBtn.addEventListener("click", executeUpdateStatus);
-
     document.getElementById("confirmModal").classList.add("active");
 }
 
@@ -293,10 +381,16 @@ function closeModal() {
     document.getElementById("confirmModal").classList.remove("active");
     targetUserIdToUpdate = null;
     targetStatusToUpdate = null;
+    const modalAlert = document.getElementById("modalAlert");
+    if (modalAlert) modalAlert.style.display = "none";
 }
 
 async function executeUpdateStatus() {
     if (!targetUserIdToUpdate || !targetStatusToUpdate) return;
+
+    const modalAlert = document.getElementById("modalAlert");
+    const confirmBtn = document.getElementById("modalConfirmBtn");
+    if (confirmBtn) confirmBtn.disabled = true;
 
     try {
         const response = await updateAdminUserStatus(targetUserIdToUpdate, targetStatusToUpdate);
@@ -304,16 +398,34 @@ async function executeUpdateStatus() {
             closeModal();
             loadUsers(currentPage); // Reload current page
         } else {
-            alert(response.message || "Failed to update user status");
+            showModalError(response?.message || "Failed to update user status");
         }
     } catch (error) {
         console.error("Error updating status:", error);
-        // Handle "last admin" constraint error
-        if (error.response && error.response.status === 400 && error.response.data && error.response.data.message) {
-            alert(error.response.data.message);
-        } else {
-            alert("An error occurred while updating user status.");
+        
+        let errorMsg = "An error occurred while updating user status.";
+        if (error.status === 401) {
+            errorMsg = "Your session has expired. Redirecting to login...";
+            setTimeout(() => {
+                window.location.href = "login.html";
+            }, 1500);
+        } else if (error.status === 403) {
+            errorMsg = "You do not have permission to block/unblock users.";
+        } else if (error.message) {
+            errorMsg = error.message;
         }
+
+        showModalError(errorMsg);
+    } finally {
+        if (confirmBtn) confirmBtn.disabled = false;
+    }
+}
+
+function showModalError(msg) {
+    const modalAlert = document.getElementById("modalAlert");
+    if (modalAlert) {
+        modalAlert.textContent = msg;
+        modalAlert.style.display = "block";
     }
 }
 

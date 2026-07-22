@@ -65,47 +65,62 @@
 
                     <div id="dashboardContent" style="display: none;">
                         
-                        <div class="admin-card" id="needsAttentionSection" style="margin-bottom: 24px; display: none; border-left: 4px solid var(--danger);">
-                            <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: var(--danger);">Needs Attention</h3>
-                            <div id="needsAttentionList" style="display: flex; gap: 16px; flex-wrap: wrap;">
+                        <div class="admin-card" id="needsAttentionSection" style="margin-bottom: 28px; display: none;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20" stroke="var(--danger, #dc2626)" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                                </svg>
+                                <h3 id="needsAttentionTitle" style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--danger, #dc2626);">Needs Attention</h3>
+                            </div>
+                            <div id="needsAttentionList" class="needs-attention-grid">
                                 <!-- Rendered dynamically -->
                             </div>
                         </div>
 
                         <div class="admin-stats-grid">
-                            <div class="admin-card admin-stat-card" style="cursor: pointer;" onclick="window.location.href='admin-users.html'">
-                                <div class="stat-title">Admin Users</div>
+                            <div class="admin-card admin-stat-card" onclick="window.location.href='admin-users.html'" title="View Users">
+                                <div class="stat-title">Users</div>
                                 <div class="stat-value" id="statTotalUsers">0</div>
                                 <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Registered accounts</div>
                             </div>
-                            <div class="admin-card admin-stat-card" style="cursor: pointer;" onclick="window.location.href='admin-documents.html'">
-                                <div class="stat-title">Admin Documents</div>
+                            <div class="admin-card admin-stat-card" onclick="window.location.href='admin-documents.html'" title="View Documents">
+                                <div class="stat-title">Documents</div>
                                 <div class="stat-value" id="statTotalDocs">0</div>
                                 <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Total active docs</div>
                             </div>
-                            <div class="admin-card admin-stat-card" style="cursor: pointer;" onclick="window.location.href='admin-documents.html?filter=pending'">
-                                <div class="stat-title">Pending Public Docs</div>
-                                <div class="stat-value" id="statPendingDocs">0</div>
-                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Waiting for review</div>
+                            <div class="admin-card admin-stat-card admin-stat-card-highlight" onclick="window.location.href='admin-documents.html?filter=pending'" title="Review Pending Public Documents">
+                                <div class="stat-title" style="color: var(--warning, #d97706); display: flex; align-items: center; justify-content: space-between;">
+                                    <span>Pending Public Docs</span>
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--warning, #f59e0b);"></span>
+                                </div>
+                                <div class="stat-value" id="statPendingDocs" style="color: var(--warning, #d97706);">0</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Waiting for review &rarr;</div>
                             </div>
-                            <div class="admin-card admin-stat-card" style="cursor: pointer;" onclick="window.location.href='admin-payments.html'">
+                            <div class="admin-card admin-stat-card" onclick="window.location.href='admin-payments.html'" title="View Payments">
                                 <div class="stat-title">Lifetime Revenue</div>
-                                <div class="stat-value" id="statTotalRevenue">0 đ</div>
+                                <div class="stat-value" id="statTotalRevenue">0 ₫</div>
                                 <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;" id="statTotalSuccessPayments">0 successful payments</div>
                             </div>
-                            <div class="admin-card admin-stat-card" style="cursor: pointer;" onclick="window.location.href='admin-ai-usage.html'" title="Today is calculated in UTC.">
-                                <div class="stat-title">Successful AI requests today</div>
+                            <div class="admin-card admin-stat-card" onclick="window.location.href='admin-ai-usage.html'" title="View AI Usage Logs">
+                                <div class="stat-title">Successful AI Requests Today</div>
                                 <div class="stat-value" id="statAiRequests">0</div>
-                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Q&A, summary, quiz, flashcard</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Successful executions today</div>
                             </div>
                         </div>
 
-                        <div style="display: flex; justify-content: flex-end; margin-bottom: 16px; margin-top: 24px;">
-                            <select id="chartDateRange" class="form-input" style="width: auto; padding: 6px 12px; font-size: 0.9rem;" onchange="loadDashboardChartsData()">
-                                <option value="7">Last 7 days</option>
-                                <option value="30" selected>Last 30 days</option>
-                                <option value="31">This month</option>
-                            </select>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 32px; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                            <div>
+                                <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main, #172033); margin: 0;">Analytics Overview</h2>
+                                <p style="font-size: 0.85rem; color: var(--text-muted, #64748b); margin: 2px 0 0 0;">System breakdown and daily metrics</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label for="chartDateRange" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #64748b); white-space: nowrap;">Chart range:</label>
+                                <select id="chartDateRange" class="form-input" style="width: auto; padding: 6px 14px; font-size: 0.85rem; border-radius: 8px; font-weight: 500; background-color: var(--surface, #ffffff);" onchange="loadDashboardChartsData()">
+                                    <option value="7">Last 7 days</option>
+                                    <option value="30" selected>Last 30 days</option>
+                                    <option value="31">This month</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="admin-charts-grid">
@@ -120,7 +135,7 @@
                             </div>
                             <div class="admin-card">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
-                                    <div class="admin-chart-title" style="margin-bottom: 0; line-height: 1.3;">AI Document Status</div>
+                                    <div class="admin-chart-title" style="margin-bottom: 0; line-height: 1.3;">Document Approval Status</div>
                                     <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; padding-top: 2px;">Pie Chart</div>
                                 </div>
                                 <div class="admin-chart-container" id="chartDocsByStatusContainer">
@@ -145,7 +160,7 @@
                                     <canvas id="chartAiUsage"></canvas>
                                 </div>
                             </div>
-                            <div class="admin-card">
+                            <div class="admin-card admin-card-span-2">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
                                     <div class="admin-chart-title" style="margin-bottom: 0; line-height: 1.3;">AI Feature Distribution</div>
                                     <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; padding-top: 2px;">Doughnut Chart</div>

@@ -517,7 +517,7 @@ const UIHelper = {
   },
 
   initCustomDropdowns() {
-    document.querySelectorAll(".toolbar select").forEach(select => {
+    document.querySelectorAll(".toolbar select, .admin-filters select, .admin-select").forEach(select => {
       UIHelper.convertSelectToCustomDropdown(select);
     });
     const subjectFilter = document.querySelector(".toolbar #subjectFilter");

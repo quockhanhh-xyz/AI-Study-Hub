@@ -89,47 +89,139 @@ async function loadDashboardChartsData() {
     }
 }
 
+const FEATURE_FRIENDLY_NAMES = {
+    "AI_ASK": "AI Q&A",
+    "AI_SUMMARY": "Summary",
+    "AI_FLASHCARD": "Flashcards",
+    "AI_QUIZ": "Quiz"
+};
+
+const CHART_COLOR_MAP = {
+    // Document Approval Status
+    "APPROVED": "#16a34a", // Green
+    "PENDING": "#f59e0b",  // Amber/Orange
+    "REJECTED": "#ef4444", // Red
+    "PRIVATE": "#64748b",  // Gray
+    
+    // Account Tiers
+    "FREE": "#64748b",     // Gray
+    "PREMIUM": "#3b82f6",  // Blue
+    "ULTRA": "#8b5cf6",    // Violet
+    
+    // AI Features
+    "AI Q&A": "#6366f1",   // Indigo
+    "Summary": "#3b82f6",  // Blue
+    "Flashcards": "#8b5cf6",// Violet
+    "Quiz": "#06b6d4"      // Cyan
+};
+
+function formatAdminRevenue(amount) {
+    if (!amount || amount === 0) return "0 ₫";
+    if (amount >= 1000000000) {
+        return (amount / 1000000000).toFixed(2) + "B ₫";
+    }
+    if (amount >= 10000000) {
+        return (amount / 1000000).toFixed(2) + "M ₫";
+    }
+    return amount.toLocaleString('vi-VN') + " ₫";
+}
+
 function renderDashboardStats(data) {
-    document.getElementById("statTotalUsers").textContent = data.totalUsers || 0;
-    document.getElementById("statTotalDocs").textContent = data.totalDocuments || 0;
-    document.getElementById("statPendingDocs").textContent = data.pendingPublicDocuments || 0;
-    document.getElementById("statAiRequests").textContent = data.aiRequestsToday || 0;
+    document.getElementById("statTotalUsers").textContent = (data.totalUsers || 0).toLocaleString();
+    document.getElementById("statTotalDocs").textContent = (data.totalDocuments || 0).toLocaleString();
+    document.getElementById("statPendingDocs").textContent = (data.pendingPublicDocuments || 0).toLocaleString();
+    document.getElementById("statAiRequests").textContent = (data.aiRequestsToday || 0).toLocaleString();
 
     const revenue = data.lifetimeRevenue || 0;
-    document.getElementById("statTotalRevenue").textContent = revenue.toLocaleString('vi-VN') + " đ";
+    document.getElementById("statTotalRevenue").textContent = formatAdminRevenue(revenue);
     
     const successPayments = data.allTimeSuccessfulPayments || 0;
     const successPaymentsEl = document.getElementById("statTotalSuccessPayments");
-    if (successPaymentsEl) successPaymentsEl.textContent = `${successPayments} successful payments`;
+    if (successPaymentsEl) successPaymentsEl.textContent = `${successPayments.toLocaleString()} successful payments`;
 
-    // Render Needs Attention
+    // Render Needs Attention Action Cards
     const needsAttSection = document.getElementById("needsAttentionSection");
     const needsAttList = document.getElementById("needsAttentionList");
+    const needsAttTitle = document.getElementById("needsAttentionTitle");
     needsAttList.innerHTML = "";
     
     const needsInfo = data.needsAttention;
     if (needsInfo) {
-        let hasItems = false;
+        let cardsHtml = "";
+        let count = 0;
+
         if (needsInfo.pendingPublicDocuments > 0) {
-            hasItems = true;
-            needsAttList.innerHTML += `<div style="font-size: 0.95rem;">• Pending public documents: <strong>${needsInfo.pendingPublicDocuments}</strong> <a href="admin-documents.html?filter=pending" style="margin-left: 8px; color: var(--primary);">Review now</a></div>`;
+            count++;
+            cardsHtml += `
+                <div class="attention-card attention-card-danger">
+                    <div class="attention-card-header">
+                        <span class="attention-card-icon">📄</span>
+                        <span class="attention-card-title">Pending public documents</span>
+                    </div>
+                    <div class="attention-card-body">
+                        <span class="attention-card-count">${needsInfo.pendingPublicDocuments}</span>
+                        <span class="attention-card-label">waiting for review</span>
+                    </div>
+                    <a href="admin-documents.html?filter=pending" class="attention-card-btn btn-outline-danger">Review now &rarr;</a>
+                </div>
+            `;
         }
+
         if (needsInfo.pendingSubjectRequests > 0) {
-            hasItems = true;
-            needsAttList.innerHTML += `<div style="font-size: 0.95rem;">• Subject requests: <strong>${needsInfo.pendingSubjectRequests}</strong> <a href="admin-subject-requests.html" style="margin-left: 8px; color: var(--primary);">View</a></div>`;
+            count++;
+            cardsHtml += `
+                <div class="attention-card attention-card-warning">
+                    <div class="attention-card-header">
+                        <span class="attention-card-icon">🏷️</span>
+                        <span class="attention-card-title">Subject requests</span>
+                    </div>
+                    <div class="attention-card-body">
+                        <span class="attention-card-count">${needsInfo.pendingSubjectRequests}</span>
+                        <span class="attention-card-label">pending requests</span>
+                    </div>
+                    <a href="admin-subject-requests.html" class="attention-card-btn btn-outline-warning">View requests &rarr;</a>
+                </div>
+            `;
         }
+
         if (needsInfo.failedPayments > 0) {
-            hasItems = true;
-            needsAttList.innerHTML += `<div style="font-size: 0.95rem;">• Failed payments: <strong>${needsInfo.failedPayments}</strong> <a href="admin-payments.html?filter=failed" style="margin-left: 8px; color: var(--primary);">View</a></div>`;
+            count++;
+            cardsHtml += `
+                <div class="attention-card attention-card-danger">
+                    <div class="attention-card-header">
+                        <span class="attention-card-icon">💳</span>
+                        <span class="attention-card-title">Failed payments</span>
+                    </div>
+                    <div class="attention-card-body">
+                        <span class="attention-card-count">${needsInfo.failedPayments}</span>
+                        <span class="attention-card-label">need checking</span>
+                    </div>
+                    <a href="admin-payments.html?filter=failed" class="attention-card-btn btn-outline-danger">View payments &rarr;</a>
+                </div>
+            `;
         }
-        
-        if (!hasItems) {
-            needsAttList.innerHTML = `<div style="color: var(--success); font-weight: 500;">All clear! Nothing urgently requires your attention.</div>`;
-            needsAttSection.style.borderLeftColor = "var(--success)";
-            needsAttSection.querySelector("h3").style.color = "var(--success)";
+
+        if (count === 0) {
+            if (needsAttTitle) {
+                needsAttTitle.style.color = "var(--success, #16a34a)";
+                needsAttTitle.textContent = "All Systems Clear";
+            }
+            needsAttList.innerHTML = `
+                <div class="attention-card attention-card-success" style="grid-column: 1 / -1;">
+                    <div style="display: flex; align-items: center; gap: 10px; color: var(--success, #16a34a); font-weight: 600;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>All clear! No pending items require your attention right now.</span>
+                    </div>
+                </div>
+            `;
         } else {
-            needsAttSection.style.borderLeftColor = "var(--danger)";
-            needsAttSection.querySelector("h3").style.color = "var(--danger)";
+            if (needsAttTitle) {
+                needsAttTitle.style.color = "var(--danger, #dc2626)";
+                needsAttTitle.textContent = "Needs Attention";
+            }
+            needsAttList.innerHTML = cardsHtml;
         }
         needsAttSection.style.display = "block";
     } else {
@@ -144,11 +236,11 @@ function renderDashboardCharts(data, summaryData = null) {
 
     // 1. Users by Tier (Doughnut Chart)
     const usersByTier = data.userTierDistribution || [];
-    renderChart("chartUsersByTier", "chartUsersByTierContainer", "doughnut", usersByTier, "tier", "count", ['#3b82f6', '#8b5cf6', '#ec4899'], "No users found.");
+    renderChart("chartUsersByTier", "chartUsersByTierContainer", "doughnut", usersByTier, "tier", "count", ['#64748b', '#3b82f6', '#8b5cf6'], "No users found.");
 
-    // 2. Documents by Status (Pie Chart)
+    // 2. Document Approval Status (Pie Chart)
     const docsByStatus = data.documentApprovalStatus || [];
-    renderChart("chartDocsByStatus", "chartDocsByStatusContainer", "pie", docsByStatus, "approvalStatus", "count", ['#f59e0b', '#16a34a', '#ff5858', '#9ca3af'], "No documents found.");
+    renderChart("chartDocsByStatus", "chartDocsByStatusContainer", "pie", docsByStatus, "approvalStatus", "count", ['#f59e0b', '#16a34a', '#ef4444', '#64748b'], "No documents found.");
 
     // Format date labels for daily charts
     const formatDate = (dateStr) => {
@@ -164,12 +256,16 @@ function renderDashboardCharts(data, summaryData = null) {
     // 4. AI Usage by Day (Bar Chart)
     const aiUsageByDay = data.aiUsageByDay || [];
     const formattedAiUsage = aiUsageByDay.map(i => ({ ...i, date: formatDate(i.date) }));
-    renderChart("chartAiUsage", "chartAiUsageContainer", "bar", formattedAiUsage, "date", "count", ['#8b5cf6'], "No AI usage for selected period.");
+    renderChart("chartAiUsage", "chartAiUsageContainer", "bar", formattedAiUsage, "date", "count", ['#6366f1'], "No AI usage for selected period.");
 
-    // 5. AI Feature Distribution (Doughnut Chart)
+    // 5. AI Feature Distribution (Doughnut Chart) - Friendly Labels
     if (summaryData) {
-        const aiFeatures = summaryData.aiUsageByFeature || [];
-        renderChart("chartAiFeature", "chartAiFeatureContainer", "doughnut", aiFeatures, "feature", "count", ['#ec4899', '#f59e0b', '#3b82f6', '#10b981'], "No AI usage data.");
+        const rawFeatures = summaryData.aiUsageByFeature || [];
+        const aiFeatures = rawFeatures.map(item => ({
+            ...item,
+            feature: FEATURE_FRIENDLY_NAMES[item.feature] || item.feature
+        }));
+        renderChart("chartAiFeature", "chartAiFeatureContainer", "doughnut", aiFeatures, "feature", "count", ['#6366f1', '#3b82f6', '#8b5cf6', '#06b6d4'], "No AI usage data.");
     }
 }
 
@@ -207,6 +303,13 @@ function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, 
     const isPie = type === 'pie';
     const isBar = type === 'bar';
 
+    // Map exact colors from CHART_COLOR_MAP if defined, else fallback to passed colors array
+    const computedColors = dataArray.map((item, idx) => {
+        const rawLabel = String(item[labelKey] || "").trim();
+        if (CHART_COLOR_MAP[rawLabel]) return CHART_COLOR_MAP[rawLabel];
+        return colors[idx % colors.length];
+    });
+
     const config = {
         type: type,
         data: {
@@ -220,14 +323,13 @@ function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, 
                         const {ctx, chartArea} = chart;
                         if (!chartArea) return colors[0] + '22';
                         const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                        // Convert hex to rgb for gradient if possible, but hex with alpha works in modern browsers
-                        gradient.addColorStop(0, colors[0] + '80'); // 50% opacity at top
-                        gradient.addColorStop(1, colors[0] + '00'); // 0% opacity at bottom
+                        gradient.addColorStop(0, colors[0] + '80');
+                        gradient.addColorStop(1, colors[0] + '00');
                         return gradient;
                     }
-                    return colors;
+                    return computedColors;
                 },
-                borderColor: type === 'line' ? colors[0] : (isDoughnut || isPie ? '#ffffff' : colors),
+                borderColor: type === 'line' ? colors[0] : (isDoughnut || isPie ? '#ffffff' : computedColors),
                 borderWidth: isDoughnut || isPie ? 2 : (type === 'line' ? 3 : 0),
                 borderRadius: isBar ? 6 : 0,
                 fill: type === 'line',
