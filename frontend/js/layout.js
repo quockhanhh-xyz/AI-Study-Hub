@@ -352,60 +352,50 @@ function initializeSidebarCollapse() {
   const logoContainer = document.querySelector(".logo, .sidebar-brand");
 
 
-  // Guard clause: Avoid duplicating the toggle button if it already exists
-  let toggleBtn = document.querySelector(".admin-topbar .menu-toggle-btn");
-  const isAdminView = document.querySelector(".admin-topbar") !== null;
+  if (sidebar.querySelector(".sidebar-toggle-btn")) return;
 
-  if (isAdminView) {
-    if (logoContainer) {
-      logoContainer.style.display = "none";
-    }
-  } else {
-    if (sidebar.querySelector(".sidebar-toggle-btn")) return;
-
-    // Standardize Logo text wrapper for FE3 collapsed layout visibility state rules
-    if (logoContainer && !logoContainer.querySelector(".logo-text")) {
-      const rawText = logoContainer.textContent.trim();
-      if (rawText) {
-        logoContainer.innerHTML = `<span class="logo-text">${rawText}</span>`;
-      }
-    }
-
-    // 2. Inject a responsive toggle button into the brand layout zone
-    toggleBtn = document.createElement("button");
-    toggleBtn.className = "sidebar-toggle-btn";
-    toggleBtn.style.cssText = `
-      background: transparent;
-      border: none;
-      color: inherit;
-      font-size: 20px;
-      cursor: pointer;
-      padding: 4px 8px;
-      border-radius: 6px;
-      transition: background 0.2s;
-    `;
-    toggleBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18"></path></svg>';
-    toggleBtn.setAttribute("aria-label", "Toggle Sidebar Navigation");
-
-    if (logoContainer) {
-      logoContainer.appendChild(toggleBtn);
-    } else {
-      sidebar.insertBefore(toggleBtn, sidebar.firstChild);
-    }
-
-    // Hover feedback state effect for the injected action utility
-    toggleBtn.addEventListener("mouseenter", () => toggleBtn.style.background = "var(--primary-light)");
-    toggleBtn.addEventListener("mouseleave", () => toggleBtn.style.background = "transparent");
+  if (logoContainer) {
+    logoContainer.style.display = "";
   }
 
-  if (!toggleBtn) return;
+  // Standardize Logo text wrapper for FE3 collapsed layout visibility state rules
+  if (logoContainer && !logoContainer.querySelector(".logo-text")) {
+    const rawText = logoContainer.textContent.trim();
+    if (rawText) {
+      logoContainer.innerHTML = `<span class="logo-text">${rawText}</span>`;
+    }
+  }
 
+  // 2. Inject a responsive toggle button into the brand layout zone
+  const toggleBtn = document.createElement("button");
+  toggleBtn.className = "sidebar-toggle-btn";
+  toggleBtn.style.cssText = `
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+  `;
+  toggleBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18"></path></svg>';
+  toggleBtn.setAttribute("aria-label", "Toggle Sidebar Navigation");
+
+  if (logoContainer) {
+    logoContainer.appendChild(toggleBtn);
+  } else {
+    sidebar.insertBefore(toggleBtn, sidebar.firstChild);
+  }
+
+  // Hover feedback state effect for the injected action utility
+  toggleBtn.addEventListener("mouseenter", () => toggleBtn.style.background = "var(--primary-light)");
+  toggleBtn.addEventListener("mouseleave", () => toggleBtn.style.background = "transparent");
 
   // 3. Attach click event listener to toggle classes and persist in storage
   toggleBtn.addEventListener("click", (e) => {
     e.preventDefault();
     sidebar.classList.toggle("collapsed");
-
 
     // Sync back real-time changes directly into the client cache storage
     const currentCollapsedState = sidebar.classList.contains("collapsed");
