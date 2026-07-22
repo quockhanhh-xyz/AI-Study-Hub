@@ -46,7 +46,15 @@ function initGlobalHeader() {
         }
     }
 
-    if (globalHeader.querySelector(".notification-container")) return; // Prevent duplicates
+    // If a full notification dropdown already exists (from a previous call), skip
+    if (globalHeader.querySelector("#notificationDropdown")) return;
+
+    // If layout.js created a dummy notification-container (admin pages), remove it so we can
+    // replace it with the full notification system (bell + dropdown + badge + handlers).
+    const existingDummyContainer = globalHeader.querySelector(".notification-container");
+    if (existingDummyContainer) {
+        existingDummyContainer.remove();
+    }
 
     // Create notification container
     const notifContainer = document.createElement("div");
@@ -90,25 +98,33 @@ function initGlobalHeader() {
     const fullName = getHeaderDisplayName(currentUser);
     const initials = getHeaderInitials(fullName);
 
-    const profileChip = document.createElement("div");
-    profileChip.className = "user-profile-chip";
-    // Wrap click action on profileChip to navigate to correct profile page based on role
-    profileChip.addEventListener("click", () => {
-        if (currentUser.role === "ADMIN") {
-            window.location.href = "admin-profile.html";
-        } else {
-            window.location.href = "profile.html";
-        }
-    });
+    // On admin pages, layout.js already renders the profile chip - find and keep it
+    const existingProfileChip = globalHeader.querySelector(".user-profile-chip");
 
-    renderSafeProfileChipContent(profileChip, currentUser, initials, fullName);
+    if (existingProfileChip) {
+        // Admin page: insert notification container BEFORE the existing profile chip
+        globalHeader.insertBefore(notifContainer, existingProfileChip);
+    } else {
+        // Non-admin page: create the full header content with both notification + profile chip
+        const profileChip = document.createElement("div");
+        profileChip.className = "user-profile-chip";
+        profileChip.addEventListener("click", () => {
+            if (currentUser.role === "ADMIN") {
+                window.location.href = "admin-profile.html";
+            } else {
+                window.location.href = "profile.html";
+            }
+        });
 
-    const headerContent = document.createElement("div");
-    headerContent.className = "global-top-bar-right";
-    headerContent.appendChild(notifContainer);
-    headerContent.appendChild(profileChip);
+        renderSafeProfileChipContent(profileChip, currentUser, initials, fullName);
 
-    globalHeader.appendChild(headerContent);
+        const headerContent = document.createElement("div");
+        headerContent.className = "global-top-bar-right";
+        headerContent.appendChild(notifContainer);
+        headerContent.appendChild(profileChip);
+
+        globalHeader.appendChild(headerContent);
+    }
 
     if (isFloating) {
         mainContent.insertBefore(globalHeader, mainContent.firstChild);
