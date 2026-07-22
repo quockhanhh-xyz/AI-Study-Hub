@@ -16,6 +16,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
+    private final NotificationService notificationService;
 
     @Transactional
     public User register(RegisterRequest request) {
@@ -35,6 +36,15 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         userRepository.save(user);
         otpService.createAndSendOtp(user);
+
+        notificationService.notifyAllAdmins(
+            "USER_REGISTER",
+            "New User Registered",
+            "User " + user.getFullName() + " (" + user.getEmail() + ") has registered a new account.",
+            "USER",
+            (long) user.getUserId()
+        );
+
         return user;
     }
 

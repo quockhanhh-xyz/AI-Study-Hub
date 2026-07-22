@@ -628,6 +628,11 @@ function renderDocument(doc) {
         renderDocumentPreview(doc);
     }
 
+    // ── Initialize Ratings & Reports widget (Step 17A) ──
+    if (typeof initRatingReportingWidget === "function") {
+        initRatingReportingWidget(doc);
+    }
+
     // Configure Inspector panel visibility and defaults
     const tabsContainer = document.querySelector(".inspector-tabs-container");
     const tabPanes = document.querySelector(".inspector-panes");
@@ -1958,9 +1963,9 @@ function appendAiQaMessage(role, content, meta = {}) {
     }
 
     messagesEl.appendChild(bubble);
-    // Smooth scroll the new bubble into view within the scrollable container
+    // Scroll the message container down without shifting the main page layout
     setTimeout(() => {
-        bubble.scrollIntoView({ behavior: "smooth", block: "end" });
+        messagesEl.scrollTop = messagesEl.scrollHeight;
     }, 50);
     return bubble;
 }
@@ -2752,3 +2757,193 @@ function initTopBarSearch() {
 }
 
 window.renderContextualTopBar = renderContextualTopBar;
+
+// ── Ratings & Reports System (Step 17A) ──
+async function initRatingReportingWidget(doc) {
+    const isPublicApproved = doc.visibility === "PUBLIC" && doc.approvalStatus === "APPROVED" && (doc.status === undefined || doc.status === "ACTIVE");
+    const section = document.getElementById("ratingReportingSection");
+    if (!section) return;
+
+    if (!isPublicApproved) {
+        section.style.display = "none";
+        return;
+    }
+
+    section.style.display = "flex";
+
+    const starContainer = document.getElementById("interactiveStars");
+    const avgText = document.getElementById("averageRatingText");
+    const countText = document.getElementById("ratingCountText");
+    const reportBlock = document.getElementById("documentReportBlock");
+    const alreadyReportedBadge = document.getElementById("alreadyReportedBadge");
+    const openReportModalBtn = document.getElementById("openReportModalBtn");
+
+    let averageRating = doc.averageRating || 0.0;
+    let ratingCount = doc.ratingCount || 0;
+    let myRating = doc.myRating || null;
+    let canRate = doc.canRate || false;
+    let canReport = doc.canReport || false;
+    let reportedByMe = doc.reportedByMe || false;
+
+    function updateRatingUI() {
+        const avgNum = Number(averageRating);
+        avgText.textContent = avgNum === 0 ? "0" : (avgNum % 1 === 0 ? avgNum.toFixed(0) : avgNum.toFixed(1)) + "/5";
+        countText.textContent = `(${ratingCount} rating${ratingCount === 1 ? '' : 's'})`;
+
+        starContainer.innerHTML = "";
+        for (let i = 1; i <= 5; i++) {
+            const star = document.createElement("span");
+            star.className = "star";
+            star.innerHTML = "★";
+            star.dataset.value = i;
+
+            if (myRating && i <= myRating) {
+                star.classList.add("filled");
+            } else if (!myRating && i <= Math.round(averageRating)) {
+                star.classList.add("filled");
+                star.style.opacity = "0.5";
+            }
+
+            if (canRate) {
+                star.addEventListener("mouseenter", () => {
+                    highlightStars(i);
+                });
+                star.addEventListener("mouseleave", () => {
+                    resetStars();
+                });
+                star.addEventListener("click", () => {
+                    handleRate(i);
+                });
+            } else {
+                star.classList.add("disabled");
+            }
+            starContainer.appendChild(star);
+        }
+    }
+
+    function highlightStars(val) {
+        const stars = starContainer.querySelectorAll(".star");
+        stars.forEach(s => {
+            const v = parseInt(s.dataset.value);
+            if (v <= val) {
+                s.classList.add("hover");
+            } else {
+                s.classList.remove("hover");
+            }
+        });
+    }
+
+    function resetStars() {
+        const stars = starContainer.querySelectorAll(".star");
+        stars.forEach(s => {
+            s.classList.remove("hover");
+        });
+    }
+
+    async function handleRate(ratingValue) {
+        if (!currentIsAuthenticated) {
+            showToast("Please log in to rate this document.", "warning");
+            setTimeout(() => {
+                window.location.href = `login.html?returnUrl=${encodeURIComponent(window.location.href)}`;
+            }, 1500);
+            return;
+        }
+
+        try {
+            const oldRating = myRating;
+            myRating = ratingValue;
+            updateRatingUI();
+
+            const res = await rateDocument(doc.documentId, ratingValue);
+            if (res && res.success) {
+                showToast("Thank you for your rating!", "success");
+                const sumRes = await getRatingsSummary(doc.documentId);
+                if (sumRes && sumRes.success) {
+                    averageRating = sumRes.data.averageRating;
+                    ratingCount = sumRes.data.ratingCount;
+                    myRating = sumRes.data.myRating;
+                    canRate = sumRes.data.canRate;
+                    updateRatingUI();
+                }
+            } else {
+                myRating = oldRating;
+                updateRatingUI();
+                showToast(res.message || "Failed to submit rating.", "danger");
+            }
+        } catch (err) {
+            showToast(err.message || "Failed to submit rating.", "danger");
+        }
+    }
+
+    if (reportedByMe) {
+        reportBlock.style.display = "none";
+        alreadyReportedBadge.style.display = "block";
+    } else {
+        reportBlock.style.display = "flex";
+        alreadyReportedBadge.style.display = "none";
+    }
+
+    if (openReportModalBtn) {
+        openReportModalBtn.onclick = () => {
+            if (!currentIsAuthenticated) {
+                showToast("Please log in to report a violation.", "warning");
+                setTimeout(() => {
+                    window.location.href = `login.html?returnUrl=${encodeURIComponent(window.location.href)}`;
+                }, 1500);
+                return;
+            }
+            const modal = document.getElementById("documentReportModal");
+            const reasonSelect = document.getElementById("reportReasonSelect");
+            const descInput = document.getElementById("reportDescriptionInput");
+            const charCount = document.getElementById("reportCharCount");
+            const modalError = document.getElementById("reportModalError");
+
+            reasonSelect.value = "";
+            descInput.value = "";
+            charCount.textContent = "0/500";
+            modalError.style.display = "none";
+
+            modal.classList.add("show");
+
+            descInput.oninput = () => {
+                charCount.textContent = `${descInput.value.length}/500`;
+            };
+
+            document.getElementById("cancelReportBtn").onclick = () => {
+                modal.classList.remove("show");
+            };
+
+            document.getElementById("confirmReportBtn").onclick = async () => {
+                const reason = reasonSelect.value;
+                const desc = descInput.value.trim();
+
+                if (!reason) {
+                    modalError.textContent = "Please select a reason.";
+                    modalError.style.display = "block";
+                    return;
+                }
+
+                try {
+                    const res = await reportDocument(doc.documentId, { reason, description: desc });
+                    if (res && res.success) {
+                        modal.classList.remove("show");
+                        showToast("Violation report submitted. Thank you!", "success");
+                        reportBlock.style.display = "none";
+                        alreadyReportedBadge.style.display = "block";
+                    } else {
+                        modalError.textContent = res.message || "Failed to submit report.";
+                        modalError.style.display = "block";
+                    }
+                } catch (err) {
+                    modalError.textContent = err.message || "Failed to submit report.";
+                    modalError.style.display = "block";
+                }
+            };
+        };
+    }
+
+    updateRatingUI();
+}
+
+window.initRatingReportingWidget = initRatingReportingWidget;
+

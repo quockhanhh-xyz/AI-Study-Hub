@@ -119,3 +119,61 @@ async function getPublicSubjects() {
     throw error;
   }
 }
+
+/**
+ * Submits a violation report for a public document.
+ */
+async function reportDocument(documentId, data) {
+  return post(`/api/public/documents/${documentId}/reports`, data);
+}
+
+/**
+ * Checks if the current user has already reported this document.
+ */
+async function getReportStatus(documentId) {
+  return get(`/api/public/documents/${documentId}/report-status`);
+}
+
+/**
+ * Retrieves the rating summary (average rating, count, my rating) for a public document.
+ */
+async function getRatingsSummary(documentId) {
+  return get(`/api/public/documents/${documentId}/ratings/summary`, { skipUnauthorizedRedirect: true });
+}
+
+/**
+ * Rates a public document (1 to 5 stars).
+ */
+async function rateDocument(documentId, rating) {
+  return put(`/api/public/documents/${documentId}/ratings/me`, { rating });
+}
+
+/**
+ * Deletes the user's rating for a public document.
+ */
+async function deleteRating(documentId) {
+  return del(`/api/public/documents/${documentId}/ratings/me`);
+}
+
+/**
+ * Admin: Retrieves the list of document reports.
+ */
+async function getAdminReports(status = "", page = 0, size = 10) {
+  const statusParam = status ? `status=${status}&` : "";
+  return get(`/api/admin/document-reports?${statusParam}page=${page}&size=${size}`);
+}
+
+/**
+ * Admin: Resolves a document report (unpublishes document).
+ */
+async function resolveReport(reportId, resolutionNote = "") {
+  return patch(`/api/admin/document-reports/${reportId}/resolve`, { resolutionNote });
+}
+
+/**
+ * Admin: Dismisses a document report.
+ */
+async function dismissReport(reportId, resolutionNote = "") {
+  return patch(`/api/admin/document-reports/${reportId}/dismiss`, { resolutionNote });
+}
+

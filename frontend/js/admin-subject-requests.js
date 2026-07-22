@@ -30,9 +30,12 @@ function init() {
         const errorState = document.getElementById("reqErrorState");
         const contentState = document.getElementById("reqContent");
 
-        loadingState.style.display = "flex";
-        errorState.style.display = "none";
-        contentState.style.display = "none";
+        if (contentState.style.display === "none" || contentState.style.display === "") {
+            loadingState.style.display = "flex";
+            errorState.style.display = "none";
+        } else {
+            errorState.style.display = "none";
+        }
 
         try {
             const params = {
@@ -74,7 +77,7 @@ function init() {
                 <td>${escapeHtml(req.requestedCode || req.subjectCode || '-')}</td>
                 <td>${escapeHtml(req.requestedName || req.subjectName || '-')}</td>
                 <td>${escapeHtml(req.requestedByEmail || req.requestedBy || '-')}</td>
-                <td><span class="badge ${req.status.toLowerCase()}">${req.status}</span></td>
+                <td><span class="admin-badge ${req.status === 'APPROVED' ? 'admin-badge-success' : req.status === 'REJECTED' ? 'admin-badge-danger' : 'admin-badge-warning'}">${req.status}</span></td>
                 <td>${req.createdAt ? new Date(req.createdAt).toLocaleString() : '-'}</td>
                 <td style="text-align:right">
                     ${req.status === 'PENDING' ? `

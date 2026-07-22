@@ -26,9 +26,12 @@ async function loadDashboardData(isManualRefresh = false) {
     const refreshBtn = document.getElementById("btnRefreshDashboard");
 
     if (!isManualRefresh) {
-        loadingState.style.display = "flex";
-        errorState.style.display = "none";
-        contentState.style.display = "none";
+        if (contentState.style.display === "none" || contentState.style.display === "") {
+            loadingState.style.display = "flex";
+            errorState.style.display = "none";
+        } else {
+            errorState.style.display = "none";
+        }
     } else {
         if (refreshBtn) refreshBtn.disabled = true;
     }
@@ -197,6 +200,23 @@ function renderDashboardStats(data) {
                         <span class="attention-card-label">need checking</span>
                     </div>
                     <a href="admin-payments.html?filter=failed" class="attention-card-btn btn-outline-danger">View payments &rarr;</a>
+                </div>
+            `;
+        }
+
+        if (needsInfo.pendingReports > 0) {
+            count++;
+            cardsHtml += `
+                <div class="attention-card attention-card-danger">
+                    <div class="attention-card-header">
+                        <span class="attention-card-icon">⚠️</span>
+                        <span class="attention-card-title">Reported documents</span>
+                    </div>
+                    <div class="attention-card-body">
+                        <span class="attention-card-count">${needsInfo.pendingReports}</span>
+                        <span class="attention-card-label">pending reports</span>
+                    </div>
+                    <a href="admin-reports.html" class="attention-card-btn btn-outline-danger">Review reports &rarr;</a>
                 </div>
             `;
         }

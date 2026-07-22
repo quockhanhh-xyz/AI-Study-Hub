@@ -75,5 +75,6 @@ public class AdminDashboardResponse {
         private long pendingPublicDocuments;
         private long pendingSubjectRequests;
         private long failedPayments;
+        private long pendingReports;
     }
 }

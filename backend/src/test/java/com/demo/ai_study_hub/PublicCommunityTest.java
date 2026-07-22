@@ -6,14 +6,11 @@ import com.demo.ai_study_hub.dto.PublicDocumentResponse;
 import com.demo.ai_study_hub.entity.*;
 import com.demo.ai_study_hub.repository.*;
 import com.demo.ai_study_hub.service.DocumentService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
-import org.mockito.junit.jupiter.MockitoExtension;
 import com.demo.ai_study_hub.service.TierPolicyService;
+import com.demo.ai_study_hub.service.CloudinaryStorageService;
+import com.demo.ai_study_hub.service.FolderShareService;
+import com.demo.ai_study_hub.service.UsageService;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -41,6 +38,32 @@ class PublicCommunityTest {
     private TierPolicyService tierPolicyService;
     @Spy
     private com.demo.ai_study_hub.service.DocumentPreviewHelper previewHelper;
+    @Mock
+    private com.demo.ai_study_hub.repository.DocumentRatingRepository documentRatingRepository;
+    @Mock
+    private com.demo.ai_study_hub.repository.DocumentReportRepository documentReportRepository;
+    @Mock
+    private SubjectRepository subjectRepository;
+    @Mock
+    private FolderRepository folderRepository;
+    @Mock
+    private DocumentShareRepository documentShareRepository;
+    @Mock
+    private GroupDocumentShareRepository groupDocumentShareRepository;
+    @Mock
+    private StudyGroupMemberRepository studyGroupMemberRepository;
+    @Mock
+    private DocumentContentRepository documentContentRepository;
+    @Mock
+    private DocumentChunkRepository documentChunkRepository;
+    @Mock
+    private CloudinaryStorageService cloudinaryStorageService;
+    @Mock
+    private FolderShareService folderShareService;
+    @Mock
+    private UsageService usageService;
+    @Mock
+    private org.springframework.transaction.PlatformTransactionManager transactionManager;
 
     @InjectMocks
     private DocumentService documentService;

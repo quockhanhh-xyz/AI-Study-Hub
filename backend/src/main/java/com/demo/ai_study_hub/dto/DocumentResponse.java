@@ -58,4 +58,12 @@ public class DocumentResponse {
     private Boolean requiresSystemSubjectRequest;
     private Boolean canRequestSystemSubject;
     private Boolean favoritedByMe;
+
+    // Rating & Reporting
+    private Double averageRating;
+    private Long ratingCount;
+    private Integer myRating;
+    private Boolean canRate;
+    private Boolean canReport;
+    private Boolean reportedByMe;
 }

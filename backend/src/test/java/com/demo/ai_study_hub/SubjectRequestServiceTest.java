@@ -42,6 +42,9 @@ class SubjectRequestServiceTest {
     @Mock
     private AdminSubjectService adminSubjectService;
 
+    @Mock
+    private com.demo.ai_study_hub.service.NotificationService notificationService;
+
     @InjectMocks
     private SubjectRequestService subjectRequestService;
 
@@ -66,7 +69,11 @@ class SubjectRequestServiceTest {
         when(subjectRepository.existsBySubjectCodeAndStatus("CS101", "ACTIVE")).thenReturn(false);
         when(subjectRepository.findSystemSubjectByNameIgnoreCase("Computer Science")).thenReturn(Optional.empty());
         when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(testUser));
-        when(subjectRequestRepository.save(any(SubjectRequest.class))).thenAnswer(i -> i.getArgument(0));
+        when(subjectRequestRepository.save(any(SubjectRequest.class))).thenAnswer(i -> {
+            SubjectRequest req = i.getArgument(0);
+            req.setRequestId(100);
+            return req;
+        });
 
         SubjectRequestResponse request = subjectRequestService.createSubjectRequest("CS101", "Computer Science", "Intro", "user@test.com");
 

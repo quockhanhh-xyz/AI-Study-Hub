@@ -27,7 +27,8 @@ async function isCurrentSessionStillValid() {
   try {
     const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
       method: "GET",
-      credentials: "include"
+      credentials: "include",
+      cache: "no-store"
     });
     return response.ok;
   } catch (error) {
@@ -55,6 +56,7 @@ async function apiRequest(endpoint, options = {}) {
 
   // Execute fetch request with Cookie authentication enabled
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    cache: "no-store",
     ...options,
     headers,
     credentials: "include"
@@ -73,37 +75,27 @@ async function apiRequest(endpoint, options = {}) {
 
   // Handle explicit HTTP 401 Unauthorized or AUTH_ACCOUNT_BLOCKED
   if (response.status === 401 || (data && data.code === "AUTH_ACCOUNT_BLOCKED")) {
+    const isUiLoggedIn = !!localStorage.getItem("currentUser");
+    const forceRedirect = isUiLoggedIn;
+
     // Check whether the caller wants to handle redirect logic manually
-    if (options.skipUnauthorizedRedirect === true) {
+    if (options.skipUnauthorizedRedirect === true && !forceRedirect) {
       console.log(
         `Unauthorized (HTTP 401) or Blocked for ${endpoint} - Handled locally by calling component.`
       );
     } else {
-      if (endpoint !== "/api/auth/me" && data?.code !== "AUTH_ACCOUNT_BLOCKED") {
-        const sessionStillValid = await isCurrentSessionStillValid();
-        if (sessionStillValid) {
-          const errorMessage =
-            data.message ||
-            data.error ||
-            rawText ||
-            "This request was rejected even though your login session is still active.";
-
-          const error = new Error(errorMessage);
-          error.status = response.status;
-          error.code = data?.code;
-          error.data = data?.data;
-          throw error;
+      if (!window.isRedirectingToLogin) {
+        window.isRedirectingToLogin = true;
+        console.warn(
+          "Session expired, invalid, or account blocked. Executing global redirect to login..."
+        );
+        if (data && data.code === "AUTH_ACCOUNT_BLOCKED") {
+          alert("Your account has been blocked by an administrator.");
         }
+        localStorage.removeItem("currentUser");
+        fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+        redirectToLoginWithCurrentIntent();
       }
-
-      console.warn(
-        "Session expired, invalid, or account blocked. Executing global redirect to login..."
-      );
-      if (data && data.code === "AUTH_ACCOUNT_BLOCKED") {
-        alert("Your account has been blocked by an administrator.");
-      }
-      localStorage.removeItem("currentUser");
-      redirectToLoginWithCurrentIntent();
     }
 
     // Preserve backend error message whenever possible
