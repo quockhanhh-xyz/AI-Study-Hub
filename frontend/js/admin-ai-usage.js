@@ -37,10 +37,12 @@ function initAdminAiUsage() {
         const errorState = document.getElementById("usageErrorState");
         const contentState = document.getElementById("usageContent");
 
-        loadingState.style.display = "flex";
-        errorState.style.display = "none";
-        contentState.style.display = "none";
-
+        if (contentState.style.display === "none" || contentState.style.display === "") {
+            loadingState.style.display = "flex";
+            errorState.style.display = "none";
+        } else {
+            errorState.style.display = "none";
+        }
         try {
             const params = {
                 page: currentPage - 1,
@@ -226,6 +228,9 @@ function initAdminAiUsage() {
         statusFilter.value = '';
         startDateFilter.value = '';
         endDateFilter.value = '';
+        [tierFilter, featureFilter, statusFilter].forEach(el => {
+            if (el) el.dispatchEvent(new Event("syncCustom"));
+        });
         currentPage = 1;
         loadUsage();
     };

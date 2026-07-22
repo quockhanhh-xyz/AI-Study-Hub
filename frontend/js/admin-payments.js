@@ -46,9 +46,13 @@ function handleSearch(event) {
 async function loadPayments(page = currentPage) {
     try {
         // Show loading state
-        document.getElementById('paymentsLoadingState').style.display = 'flex';
-        document.getElementById('paymentsErrorState').style.display = 'none';
-        document.getElementById('paymentsContent').style.display = 'none';
+        const contentState = document.getElementById('paymentsContent');
+        if (contentState.style.display === "none" || contentState.style.display === "") {
+            document.getElementById('paymentsLoadingState').style.display = 'flex';
+            document.getElementById('paymentsErrorState').style.display = 'none';
+        } else {
+            document.getElementById('paymentsErrorState').style.display = 'none';
+        }
 
         const startDateVal = document.getElementById('filterStartDate').value;
         const endDateVal = document.getElementById('filterEndDate').value;
@@ -383,6 +387,11 @@ function clearFilters() {
     document.getElementById('startDateDisplay').style.fontWeight = '600';
     document.getElementById('endDateDisplay').textContent = 'End Date';
     document.getElementById('endDateDisplay').style.fontWeight = '600';
+
+    ['filterPlan', 'filterStatus', 'filterProvider'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.dispatchEvent(new Event("syncCustom"));
+    });
 
     loadPayments(0);
 }
