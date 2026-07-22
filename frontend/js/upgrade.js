@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Plan entitlements cache: { FREE: {...limits}, PREMIUM: {...limits}, ULTRA: {...limits} }
   // Populated from backend on page load; falls back to hardcoded defaults if API unavailable.
   let allPlanEntitlements = null;
-  let mockPaymentEnabled = true;
+  let mockPaymentEnabled = false;
 
   // Fallback feature data if backend entitlements API is not available
   const FALLBACK_TIER_FEATURES = {
