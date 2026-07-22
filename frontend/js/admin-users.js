@@ -125,7 +125,7 @@ async function loadUsers(page = 0) {
         page: currentPage,
         size: pageSize,
         sortBy: "createdAt",
-        direction: "desc"
+        direction: "asc"
     };
 
     if (search) params.search = search;
@@ -215,13 +215,13 @@ function renderUsersTable(data) {
                 <td><span class="table-muted-text">${(currentPage * pageSize) + index + 1}</span></td>
                 <td><span style="font-weight: 600; color: var(--text-main, #0f172a);">${escapeHtml(user.fullName || user.username)}</span></td>
                 <td><span class="table-muted-text" title="${escapeHtml(user.email)}">${escapeHtml(user.email)}</span></td>
-                <td><span class="badge ${getRoleBadgeClass(user.role)}">${user.role}</span></td>
-                <td><span class="badge ${getTierBadgeClass(user.tier)}">${user.tier || '-'}</span></td>
-                <td><span style="color: var(--success); font-weight: 500; font-size: 13px;">Verified</span></td>
-                <td><span class="badge ${getStatusBadgeClass(user.status)}">${user.status}</span></td>
+                <td style="text-align: center;"><span class="badge ${getRoleBadgeClass(user.role)}">${user.role}</span></td>
+                <td style="text-align: center;"><span class="badge ${getTierBadgeClass(user.tier)}">${user.tier || '-'}</span></td>
+                <td style="text-align: center;"><span style="color: var(--success); font-weight: 500; font-size: 13px;">Verified</span></td>
+                <td style="text-align: center;"><span class="badge ${getStatusBadgeClass(user.status)}">${user.status}</span></td>
                 <td style="text-align: center;"><span style="font-weight: 500; color: var(--text-main, #0f172a);">${user.documentCount || 0}</span></td>
-                <td><span class="table-muted-text">${user.aiUsage ? user.aiUsage.aiQaUsed : 0} / ${user.aiDailyLimit || 'Unlimited'}</span></td>
-                <td><span class="table-muted-text">${formatJoinedDate(user.createdAt)}</span></td>
+                <td style="text-align: center;"><span class="table-muted-text">${user.aiUsage ? user.aiUsage.aiQaUsed : 0} / ${user.aiDailyLimit || 'Unlimited'}</span></td>
+                <td style="text-align: center;"><span class="table-muted-text">${formatJoinedDate(user.createdAt)}</span></td>
                 <td style="text-align: right;">
                     ${renderActionButtons(user, activeAdminCount)}
                 </td>
@@ -270,9 +270,8 @@ function renderActionButtons(user, activeAdminCount) {
     if (user.userId === currentUserId) {
         return `
             <div class="admin-action-group" style="gap: 12px; display: flex; justify-content: flex-end; align-items: center;">
-                <span class="admin-self-badge">You</span>
                 ${viewBtn}
-                <div style="width: 85px;"></div>
+                <div style="width: 85px; display: flex; justify-content: flex-start;"><span class="admin-self-badge">You</span></div>
             </div>
         `;
     }
