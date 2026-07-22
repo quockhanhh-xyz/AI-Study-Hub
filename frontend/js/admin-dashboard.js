@@ -26,9 +26,12 @@ async function loadDashboardData(isManualRefresh = false) {
     const refreshBtn = document.getElementById("btnRefreshDashboard");
 
     if (!isManualRefresh) {
-        loadingState.style.display = "flex";
-        errorState.style.display = "none";
-        contentState.style.display = "none";
+        if (contentState.style.display === "none" || contentState.style.display === "") {
+            loadingState.style.display = "flex";
+            errorState.style.display = "none";
+        } else {
+            errorState.style.display = "none";
+        }
     } else {
         if (refreshBtn) refreshBtn.disabled = true;
     }

@@ -77,9 +77,12 @@ function initAdminDocuments() {
         const errorState = document.getElementById("docsErrorState");
         const contentState = document.getElementById("docsContent");
 
-        loadingState.style.display = "flex";
-        errorState.style.display = "none";
-        contentState.style.display = "none";
+        if (contentState.style.display === "none" || contentState.style.display === "") {
+            loadingState.style.display = "flex";
+            errorState.style.display = "none";
+        } else {
+            errorState.style.display = "none";
+        }
 
         try {
             const params = {
@@ -123,12 +126,12 @@ function initAdminDocuments() {
     };
 
     const getApprovalBadgeClass = (status) => {
-        if (!status) return 'badge-secondary';
+        if (!status) return 'admin-badge-neutral';
         switch(status.toUpperCase()) {
-            case 'PENDING': return 'badge-warning';
-            case 'APPROVED': return 'badge-success';
-            case 'REJECTED': return 'badge-danger';
-            default: return 'badge-secondary';
+            case 'PENDING': return 'admin-badge-warning';
+            case 'APPROVED': return 'admin-badge-success';
+            case 'REJECTED': return 'admin-badge-danger';
+            default: return 'admin-badge-neutral';
         }
     };
     
@@ -140,21 +143,27 @@ function initAdminDocuments() {
         return status;
     };
 
-    const getVisibilityBadgeClass = (visibility) => {
-        if (!visibility) return 'badge-secondary';
-        return visibility.toUpperCase() === 'PUBLIC' ? 'badge-primary' : 'badge-secondary';
+    const getTypeBadgeClass = (fileType) => {
+        if (!fileType) return 'file-icon-other';
+        const t = fileType.toUpperCase();
+        if (t === 'PDF') return 'file-icon-pdf';
+        if (['DOC', 'DOCX'].includes(t)) return 'file-icon-word';
+        if (['XLS', 'XLSX', 'CSV'].includes(t)) return 'file-icon-excel';
+        if (['PPT', 'PPTX'].includes(t)) return 'file-icon-powerpoint';
+        if (['PNG', 'JPG', 'JPEG', 'GIF'].includes(t)) return 'file-icon-image';
+        return 'file-icon-other';
     };
 
     const getAIBadgeInfo = (status) => {
-        if (!status) return { text: 'Not processed', cls: 'badge-secondary' };
+        if (!status) return { text: 'Not processed', cls: 'admin-badge-danger' };
         switch(status.toUpperCase()) {
-            case 'PENDING': return { text: 'Not processed', cls: 'badge-secondary' };
-            case 'PROCESSING': return { text: 'Processing', cls: 'badge-warning' };
-            case 'COMPLETED': return { text: 'Ready for AI', cls: 'badge-success' };
-            case 'FAILED': return { text: 'Failed', cls: 'badge-danger' };
-            case 'UNSUPPORTED': return { text: 'Unsupported', cls: 'badge-secondary' };
-            case 'EMPTY_CONTENT': return { text: 'Empty content', cls: 'badge-warning' };
-            default: return { text: status, cls: 'badge-secondary' };
+            case 'PENDING': return { text: 'Not processed', cls: 'admin-badge-danger' };
+            case 'PROCESSING': return { text: 'Processing', cls: 'admin-badge-warning' };
+            case 'COMPLETED': return { text: 'Ready for AI', cls: 'admin-badge-success' };
+            case 'FAILED': return { text: 'Failed', cls: 'admin-badge-danger' };
+            case 'UNSUPPORTED': return { text: 'Unsupported', cls: 'admin-badge-neutral' };
+            case 'EMPTY_CONTENT': return { text: 'Empty content', cls: 'admin-badge-warning' };
+            default: return { text: status, cls: 'admin-badge-neutral' };
         }
     };
 
@@ -177,7 +186,7 @@ function initAdminDocuments() {
 
     const renderTable = (documents) => {
         if (!documents || documents.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 32px; color: var(--text-muted);">No documents found matching your filter criteria.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted);">No documents found matching your filter criteria.</td></tr>';
             return;
         }
 
@@ -197,10 +206,9 @@ function initAdminDocuments() {
                 </td>
                 <td><span class="table-muted-text" style="max-width: 140px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(ownerDisplay)}">${escapeHtml(ownerDisplay)}</span></td>
                 <td><span class="table-muted-text" style="max-width: 130px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(subjectDisplay)}</span></td>
-                <td><span class="document-type-badge">${doc.fileType || '-'}</span></td>
-                <td><span class="badge ${getVisibilityBadgeClass(doc.visibility)}">${doc.visibility ? doc.visibility.charAt(0).toUpperCase() + doc.visibility.slice(1).toLowerCase() : '-'}</span></td>
-                <td><span class="badge ${getApprovalBadgeClass(doc.approvalStatus)}">${getApprovalLabel(doc.approvalStatus)}</span></td>
-                <td><span class="badge ${aiInfo.cls}">${aiInfo.text}</span></td>
+                <td><span class="admin-badge ${getTypeBadgeClass(doc.fileType)}">${doc.fileType || '-'}</span></td>
+                <td><span class="admin-badge ${getApprovalBadgeClass(doc.approvalStatus)}">${getApprovalLabel(doc.approvalStatus)}</span></td>
+                <td><span class="admin-badge ${aiInfo.cls}">${aiInfo.text}</span></td>
                 <td><span class="table-muted-text" style="font-size: 0.8rem; white-space: nowrap;">${updatedDisplay}</span></td>
                 <td style="text-align: right;">
                     <div class="admin-action-group">

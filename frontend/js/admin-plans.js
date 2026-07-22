@@ -21,9 +21,12 @@ async function loadPlansData() {
     const errorState = document.getElementById("plansErrorState");
     const contentState = document.getElementById("plansContent");
 
-    loadingState.style.display = "flex";
-    errorState.style.display = "none";
-    contentState.style.display = "none";
+    if (contentState.style.display === "none" || contentState.style.display === "") {
+        loadingState.style.display = "flex";
+        errorState.style.display = "none";
+    } else {
+        errorState.style.display = "none";
+    }
 
     try {
         const response = await fetchAdminPlans();

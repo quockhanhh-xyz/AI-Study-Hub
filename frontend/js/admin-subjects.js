@@ -47,9 +47,12 @@ function initAdminSubjects() {
         const errorState = document.getElementById("subjErrorState");
         const contentState = document.getElementById("subjContent");
 
-        loadingState.style.display = "flex";
-        errorState.style.display = "none";
-        contentState.style.display = "none";
+        if (contentState.style.display === "none" || contentState.style.display === "") {
+            loadingState.style.display = "flex";
+            errorState.style.display = "none";
+        } else {
+            errorState.style.display = "none";
+        }
 
         try {
             const params = {
@@ -100,7 +103,7 @@ function initAdminSubjects() {
         }
 
         tableBody.innerHTML = items.map(item => {
-            const statusClass = item.status === 'ACTIVE' ? 'badge-success' : 'badge-neutral';
+            const statusClass = item.status === 'ACTIVE' ? 'admin-badge-success' : 'admin-badge-danger';
             const statusText = item.status === 'ACTIVE' ? 'Active' : 'Inactive';
             const docCount = item.documentsCount || 0;
             const docText = docCount === 1 ? '1 document' : `${docCount} documents`;
@@ -116,7 +119,7 @@ function initAdminSubjects() {
                 <td>${escapeHtml(item.subjectName)}</td>
                 <td>${item.description ? `<div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-width: 250px;" title="${escapeHtml(item.description)}">${escapeHtml(item.description)}</div>` : '<span style="color: var(--text-muted); font-style: italic;">No description</span>'}</td>
                 <td style="color: var(--text-muted);">${docText}</td>
-                <td><span class="badge ${statusClass}">${statusText}</span></td>
+                <td><span class="admin-badge ${statusClass}">${statusText}</span></td>
                 <td>${formatDateTime(item.createdAt)}</td>
                 <td>
                     <button class="btn btn-sm btn-secondary" onclick='openSubjectModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Edit</button>
