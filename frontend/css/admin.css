@@ -206,9 +206,9 @@
 
 /* Badge Component System */
 .badge, .admin-badge {
-    padding: 4px 10px;
+    padding: 6px 12px;
     border-radius: 6px;
-    font-size: 0.75rem;
+    font-size: 13px;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
@@ -242,6 +242,11 @@
     background-color: #f8fafc; 
     color: #64748b; 
     border-color: #e2e8f0; 
+}
+.admin-badge-primary {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
 }
 
 /* Role & Tier Badges */

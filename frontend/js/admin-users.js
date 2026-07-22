@@ -222,7 +222,7 @@ function renderUsersTable(data) {
                 <td style="text-align: center;"><span style="font-weight: 500; color: var(--text-main, #0f172a);">${user.documentCount || 0}</span></td>
                 <td style="text-align: center;"><span class="table-muted-text">${user.aiUsage ? user.aiUsage.aiQaUsed : 0} / ${user.aiDailyLimit || 'Unlimited'}</span></td>
                 <td style="text-align: center;"><span class="table-muted-text">${formatJoinedDate(user.createdAt)}</span></td>
-                <td style="text-align: left;">
+                <td style="text-align: center;">
                     ${renderActionButtons(user, activeAdminCount)}
                 </td>
             `;
@@ -265,9 +265,9 @@ function renderActionButtons(user, activeAdminCount) {
 
     if (user.userId === currentUserId) {
         return `
-            <div class="admin-action-group" style="gap: 8px; display: flex; justify-content: flex-start; align-items: center;">
+            <div class="admin-action-group" style="gap: 8px; display: flex; justify-content: center; align-items: center;">
                 ${viewBtn}
-                <span class="badge admin-badge-danger">You</span>
+                <span class="badge admin-badge-primary">You</span>
             </div>
         `;
     }
@@ -279,7 +279,7 @@ function renderActionButtons(user, activeAdminCount) {
 
     if (user.status === 'BLOCKED') {
         return `
-            <div class="admin-action-group" style="gap: 8px; display: flex; justify-content: flex-start; align-items: center;">
+            <div class="admin-action-group" style="gap: 8px; display: flex; justify-content: center; align-items: center;">
                 ${viewBtn}
                 ${unblockBtnHtml}
             </div>
@@ -291,7 +291,7 @@ function renderActionButtons(user, activeAdminCount) {
             : `<span class="badge admin-badge-danger" style="cursor: pointer;" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">Ban</span>`;
 
         return `
-            <div class="admin-action-group" style="gap: 8px; display: flex; justify-content: flex-start; align-items: center;">
+            <div class="admin-action-group" style="gap: 8px; display: flex; justify-content: center; align-items: center;">
                 ${viewBtn}
                 ${blockBtnHtml}
             </div>
