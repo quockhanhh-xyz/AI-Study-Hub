@@ -106,7 +106,6 @@ function initAdminSubjects() {
             const statusClass = item.status === 'ACTIVE' ? 'admin-badge-success' : 'admin-badge-danger';
             const statusText = item.status === 'ACTIVE' ? 'Active' : 'Inactive';
             const docCount = item.documentsCount || 0;
-            const docText = docCount === 1 ? '1 document' : `${docCount} documents`;
             
             let descHtml = '<span style="color: var(--text-muted); font-style: italic;">No description</span>';
             if (item.description) {
@@ -118,10 +117,10 @@ function initAdminSubjects() {
                 <td style="font-weight: 500;">${escapeHtml(item.subjectCode)}</td>
                 <td>${escapeHtml(item.subjectName)}</td>
                 <td>${item.description ? `<div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-width: 250px;" title="${escapeHtml(item.description)}">${escapeHtml(item.description)}</div>` : '<span style="color: var(--text-muted); font-style: italic;">No description</span>'}</td>
-                <td style="color: var(--text-muted);">${docText}</td>
+                <td style="color: var(--text-muted);">${docCount}</td>
                 <td><span class="admin-badge ${statusClass}">${statusText}</span></td>
                 <td>${formatDateTime(item.createdAt)}</td>
-                <td>
+                <td style="text-align: center; white-space: nowrap;">
                     <button class="btn btn-sm btn-secondary" onclick='openSubjectModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Edit</button>
                     ${item.status === 'ACTIVE'
                         ? `<button class="btn btn-sm btn-outline" style="color: var(--text-muted); border-color: var(--border-color);" onclick="openToggleModal(${item.subjectId}, 'INACTIVE', '${escapeHtml(item.subjectCode)}')">Disable</button>`
@@ -135,8 +134,7 @@ function initAdminSubjects() {
     const formatDateTime = (dateStr) => {
         if (!dateStr) return '-';
         const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) + ' &middot; ' + 
-               date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
     };
 
     const updateFilterUI = () => {
@@ -265,6 +263,7 @@ function initAdminSubjects() {
     window.clearFilters = () => {
         searchInput.value = '';
         statusFilter.value = '';
+        statusFilter.dispatchEvent(new Event('syncCustom'));
         currentPage = 1;
         loadSubjects();
     };

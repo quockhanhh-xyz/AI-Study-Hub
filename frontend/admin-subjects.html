@@ -33,15 +33,6 @@
                     <h1 class="admin-page-title">System Subject Management</h1>
                     <p class="admin-page-subtitle" style="margin-top: 4px; color: var(--text-muted); font-size: 0.875rem;">Manage subjects used in document uploads, filters, Community Library, and study materials.</p>
                 </div>
-                <div class="admin-header-actions">
-                    <button id="exportBtn" class="btn btn-secondary">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                        </svg>
-                        <span id="exportBtnText">Export all subjects</span>
-                    </button>
-                    <button class="btn btn-primary" onclick="openSubjectModal()">+ New Subject</button>
-                </div>
             </header>
 
             <div class="admin-state-container" id="subjLoadingState">
@@ -65,23 +56,36 @@
 
             <div id="subjContent" style="display: none;">
 
-            <!-- Filters -->
-            <div class="admin-actions-bar" style="flex-direction: column; align-items: stretch; gap: 16px; margin-top: 24px;">
-                <div style="display: flex; gap: 16px; width: 100%; align-items: center;">
-                    <input type="text" id="searchInput" class="admin-filter-input" placeholder="Search by Code or Name..." style="flex: 1;">
-                    <button class="btn btn-outline" onclick="clearFilters()" style="white-space: nowrap;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
+            <!-- Filters & Actions -->
+            <!-- Filters & Actions -->
+            <div class="admin-actions-bar" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-top: 24px;">
+                <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; flex: 1;">
+                    <div class="admin-search-wrapper" style="position: relative; max-width: 240px; width: 100%;">
+                        <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                        </svg>
+                        <input type="text" id="searchInput" class="admin-filter-input" placeholder="Search by Code or Name..." style="width: 100%; border: none !important; background-color: #f4f5f7 !important; border-radius: 24px !important; padding-left: 44px !important; height: 42px !important; font-size: 14px; margin-bottom: 0;">
+                    </div>
+                    <select id="statusFilter" class="admin-filter-input admin-select" style="border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 160px !important; width: auto !important; margin-bottom: 0;">
+                        <option value="">All Statuses</option>
+                        <option value="ACTIVE">ACTIVE</option>
+                        <option value="INACTIVE">INACTIVE</option>
+                    </select>
+                    <button class="btn btn-outline" onclick="clearFilters()" style="white-space: nowrap; height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                         </svg>
                         Clear Filters
                     </button>
                 </div>
-                <div class="admin-filters" style="width: 100%;">
-                    <select id="statusFilter" class="admin-filter-input">
-                        <option value="">All Statuses</option>
-                        <option value="ACTIVE">ACTIVE</option>
-                        <option value="INACTIVE">INACTIVE</option>
-                    </select>
+                <div class="admin-header-actions" style="display: flex; gap: 12px; align-items: center;">
+                    <button id="exportBtn" class="btn btn-secondary" style="height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        </svg>
+                        <span id="exportBtnText">Export all subjects</span>
+                    </button>
+                    <button class="btn btn-primary" onclick="openSubjectModal()" style="height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center;">+ New Subject</button>
                 </div>
             </div>
 
@@ -96,7 +100,7 @@
                             <th>Documents</th>
                             <th>Status</th>
                             <th>Created At</th>
-                            <th>Actions</th>
+                            <th style="text-align: center;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="subjectsTableBody">
@@ -139,9 +143,9 @@
                     </div>
                 </form>
             </div>
-            <div class="admin-modal-actions">
-                <button class="btn btn-outline" onclick="closeModal('subjectModal')">Cancel</button>
-                <button class="btn btn-primary" id="saveSubjectBtn">Save</button>
+            <div class="admin-modal-actions" style="display: flex; gap: 12px; width: 100%;">
+                <button class="btn btn-outline" onclick="closeModal('subjectModal')" style="flex: 1;">Cancel</button>
+                <button class="btn btn-primary" id="saveSubjectBtn" style="flex: 1; margin: 0;">Save</button>
             </div>
         </div>
     </div>
@@ -158,9 +162,9 @@
                 <input type="hidden" id="toggleSubjectId">
                 <input type="hidden" id="toggleSubjectStatus">
             </div>
-            <div class="admin-modal-actions">
-                <button class="btn btn-outline" onclick="closeModal('toggleStatusModal')">Cancel</button>
-                <button class="btn btn-primary" id="confirmToggleBtn">Confirm</button>
+            <div class="admin-modal-actions" style="display: flex; gap: 12px; width: 100%;">
+                <button class="btn btn-outline" onclick="closeModal('toggleStatusModal')" style="flex: 1;">Cancel</button>
+                <button class="btn btn-primary" id="confirmToggleBtn" style="flex: 1; margin: 0;">Confirm</button>
             </div>
         </div>
     </div>
