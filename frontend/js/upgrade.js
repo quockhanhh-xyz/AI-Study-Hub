@@ -502,23 +502,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     manualNote.textContent = "One-time payment. Takes effect immediately.";
     wrapper.appendChild(manualNote);
 
-    if (mockPaymentEnabled) {
-      const mockLink = document.createElement("a");
-      mockLink.className = "plan-mock-link";
-      mockLink.href = "#";
-      mockLink.textContent = "Mock Checkout (Demo)";
-      mockLink.style.textAlign = "center";
-      mockLink.style.fontSize = "12px";
-      mockLink.style.textDecoration = "underline";
-      mockLink.style.color = "var(--text-muted)";
-      mockLink.style.marginTop = "4px";
-      mockLink.addEventListener("click", function (event) {
-        event.preventDefault();
-        handleMockClick(event, plan.planCode);
-      });
-      wrapper.appendChild(mockLink);
-    }
-
+    // Mock payment link removed to enforce VNPay only
     return wrapper;
   }
 
