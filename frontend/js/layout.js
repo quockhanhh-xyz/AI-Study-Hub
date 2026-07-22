@@ -34,55 +34,43 @@ function renderAdminTopbar() {
   }
 
   const pageHeader = document.querySelector(".admin-page-header");
-  if (!pageHeader || pageHeader.querySelector(".admin-profile-pill")) return;
+  if (!pageHeader || pageHeader.querySelector("#globalHeaderWidgets")) return;
 
   let adminName = "System Admin";
-  let adminEmail = "admin@aistudyhub.com";
   const userStr = localStorage.getItem("currentUser");
   if (userStr) {
     try {
       const user = JSON.parse(userStr);
       adminName = user.fullName || user.email || adminName;
-      adminEmail = user.email || adminEmail;
     } catch (e) { }
   }
 
   const initialLetter = (adminName || "A").charAt(0).toUpperCase();
 
-  const topbar = document.createElement("header");
-  topbar.className = "admin-topbar";
-  topbar.innerHTML = `
-    <div class="admin-topbar-left">
-      <button class="menu-toggle-btn" aria-label="Toggle Sidebar Navigation">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18"></path></svg>
-      </button>
-      <div class="admin-topbar-brand">
-        <span class="brand-title"><strong>AI Study Hub Admin</strong></span>
-        <span class="brand-badge">Console</span>
-      </div>
-    </div>
-    <div class="admin-topbar-right" id="globalHeaderWidgets">
-      <div class="admin-notification-wrapper" style="position: relative; margin-right: 12px; display: flex; align-items: center;">
-        <button class="notification-bell-btn" id="adminNotifBellBtn" aria-label="Notifications" title="Notifications" style="background: transparent; border: none; cursor: pointer; color: var(--text-muted);">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20" stroke="currentColor" stroke-width="1.8">
+  const widgets = document.createElement("div");
+  widgets.id = "globalHeaderWidgets";
+  widgets.style.cssText = "display: flex; align-items: center; gap: 16px;";
+  widgets.innerHTML = `
+      <div class="notification-container">
+        <button class="notification-bell-btn" id="adminNotifBellBtn" aria-label="Notifications" title="Notifications">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true" stroke="currentColor" stroke-width="1.8">
             <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
           </svg>
-          <span class="notification-badge" id="adminNotifBadge" style="display: none; position: absolute; top: -4px; right: -4px; background: var(--danger, #dc2626); color: white; border-radius: 50%; font-size: 10px; width: 16px; height: 16px; align-items: center; justify-content: center;">0</span>
+          <span class="notification-badge" id="adminNotifBadge" style="display: none;">0</span>
         </button>
       </div>
-      <div class="admin-profile-pill">
-        <span class="admin-avatar">${initialLetter}</span>
-        <div class="admin-profile-info">
-          <strong>${adminName}</strong>
-          <span>${adminEmail}</span>
+      <div class="user-profile-chip" onclick="window.location.href='admin-profile.html'" style="cursor: pointer;">
+        <div class="user-avatar-initials">${initialLetter}</div>
+        <div class="user-profile-info">
+          <span class="user-profile-name">${adminName}</span>
         </div>
       </div>
-    </div>
   `;
 
-  // Use parent of pageHeader if available
-  if (pageHeader.parentNode) {
-      pageHeader.parentNode.insertBefore(topbar, pageHeader);
+  if (pageHeader.children.length === 1) {
+    pageHeader.appendChild(widgets);
+  } else if (pageHeader.children.length > 1) {
+    pageHeader.children[1].appendChild(widgets);
   }
 }
 
