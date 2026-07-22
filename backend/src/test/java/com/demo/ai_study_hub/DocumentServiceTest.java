@@ -68,6 +68,10 @@ class DocumentServiceTest {
     private DocumentFavoriteRepository documentFavoriteRepository;
     @Spy
     private com.demo.ai_study_hub.service.DocumentPreviewHelper previewHelper;
+    @Mock
+    private com.demo.ai_study_hub.repository.DocumentRatingRepository documentRatingRepository;
+    @Mock
+    private com.demo.ai_study_hub.repository.DocumentReportRepository documentReportRepository;
 
     @InjectMocks
     private DocumentService documentService;

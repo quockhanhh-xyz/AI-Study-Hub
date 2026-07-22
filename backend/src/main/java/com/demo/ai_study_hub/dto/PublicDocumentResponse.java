@@ -56,4 +56,12 @@ public class PublicDocumentResponse {
 
 
     private Boolean canReprocess;
+
+    // Rating & Reporting
+    private Double averageRating;
+    private Long ratingCount;
+    private Integer myRating;
+    private Boolean canRate;
+    private Boolean canReport;
+    private Boolean reportedByMe;
 }

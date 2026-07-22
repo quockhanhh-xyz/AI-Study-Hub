@@ -42,6 +42,7 @@ const NAVIGATION_MENU = [
   { name: "AI Usage", icon: ICON_UPGRADE, url: "admin-ai-usage.html", requiresAuth: true, requiresAdmin: true },
   { name: "Subjects", icon: ICON_FOLDER, url: "admin-subjects.html", requiresAuth: true, requiresAdmin: true },
   { name: "Subject Requests", icon: ICON_DOCS, url: "admin-subject-requests.html", requiresAuth: true, requiresAdmin: true },
+  { name: "Reports", icon: ICON_INFO, url: "admin-reports.html", requiresAuth: true, requiresAdmin: true },
   { name: "Plans", icon: ICON_SHIELD, url: "admin-plans.html", requiresAuth: true, requiresAdmin: true },
   { name: "Profile", icon: ICON_PROFILE, url: "admin-profile.html", requiresAuth: true, requiresAdmin: true },
 

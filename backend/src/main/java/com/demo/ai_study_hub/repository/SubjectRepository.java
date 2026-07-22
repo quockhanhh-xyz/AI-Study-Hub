@@ -51,4 +51,14 @@ public interface SubjectRepository extends JpaRepository<Subject, Integer>, JpaS
            "AND (s.scope = 'SYSTEM' OR (s.scope IS NULL AND s.owner IS NULL)) " +
            "ORDER BY s.subjectCode ASC, s.subjectName ASC")
     List<Subject> findActiveSystemSubjects();
+
+    @Query("SELECT COUNT(s) > 0 FROM Subject s WHERE s.status = 'ACTIVE' " +
+           "AND (LOWER(s.subjectCode) = LOWER(:code)) " +
+           "AND (s.scope = 'SYSTEM' OR (s.scope = 'USER_CUSTOM' AND s.owner = :owner)) " +
+           "AND s.subjectId <> :subjectId")
+    boolean existsDuplicateCodeForUpdate(
+            @Param("code") String code,
+            @Param("owner") User owner,
+            @Param("subjectId") Integer subjectId
+    );
 }

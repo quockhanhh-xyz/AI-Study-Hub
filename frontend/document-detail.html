@@ -9,6 +9,20 @@
   <link rel="stylesheet" href="css/style.css" />
 
   <style>
+    /* ===== INTERACTIVE RATING STARS ===== */
+    .star {
+      font-size: 24px;
+      cursor: pointer;
+      color: #d1d5db;
+      transition: color 0.15s ease-in-out;
+    }
+    .star.hover, .star.filled {
+      color: #fbbf24;
+    }
+    .star.disabled {
+      cursor: default;
+    }
+
     .btn-back-link {
       display: inline-flex;
       align-items: center;
@@ -2140,6 +2154,32 @@
               <p class="detail-description" id="docDescription" style="display:none;">No description provided.</p>
             </section>
 
+            <!-- Rating & Reporting Section (Step 17A) -->
+            <section id="ratingReportingSection" class="detail-rating-reporting" style="margin-top: 16.5px; padding: 16.5px; background: #f9fafb; border: 1px solid var(--border); border-radius: 12px; display: none; flex-direction: column; gap: 12.5px;">
+              <!-- Rating -->
+              <div id="documentRatingBlock" style="display: flex; flex-direction: column; gap: 6.5px;">
+                <label style="font-size: 13.5px; font-weight: 700; color: var(--text-main);">Community Rating</label>
+                <div style="display: flex; align-items: center; gap: 8.5px;">
+                  <div class="interactive-stars" id="interactiveStars" style="display: flex; gap: 4.5px;">
+                    <!-- Stars will be injected by JS -->
+                  </div>
+                  <span id="averageRatingText" style="font-size: 14.5px; font-weight: 600; color: var(--text-main);">0.0</span>
+                  <span id="ratingCountText" style="font-size: 12.5px; color: var(--muted);">(0 ratings)</span>
+                </div>
+              </div>
+              
+              <!-- Report -->
+              <div id="documentReportBlock" style="border-top: 1px solid var(--border); padding-top: 12.5px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 12px; color: var(--muted);">Found a violation?</span>
+                <button type="button" id="openReportModalBtn" class="btn btn-outline btn-sm" style="padding: 6px 12.5px; font-size: 12px; border-color: var(--danger); color: var(--danger); background: transparent;">
+                  Report Document
+                </button>
+              </div>
+              <div id="alreadyReportedBadge" style="display: none; border-top: 1px solid var(--border); padding-top: 12.5px; font-size: 12px; color: var(--danger); font-weight: 500; text-align: center;">
+                ⚠️ You have reported this document.
+              </div>
+            </section>
+
             <div class="inspector-tabs-container" id="inspectorTabs" role="tablist">
               <button type="button" id="inspectorTabDetails" class="inspector-tab-btn active">Details</button>
               <button type="button" id="inspectorTabSharing" class="inspector-tab-btn">Sharing</button>
@@ -2594,6 +2634,41 @@
               <button type="button" class="btn btn-primary" id="submitSubjectReqBtn">Submit Request</button>
           </div>
       </div>
+  </div>
+
+  <!-- Document Report Modal (Step 17A) -->
+  <div class="modal-overlay" id="documentReportModal">
+    <div class="modal-box" style="max-width: 450px;">
+      <h3 style="margin-top:0; font-size:18px; font-weight:700; color:var(--text); margin-bottom:12px;">Report Violation</h3>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 16.5px;">
+        Please provide details about the violation in this document. The admin will review it.
+      </p>
+      <div class="form-group" style="margin-bottom: 16.5px;">
+        <label style="font-size: 12px; font-weight: 600;">Reason <span class="label-required">*</span></label>
+        <select id="reportReasonSelect" style="width: 100%;" required>
+          <option value="">-- Choose a Reason --</option>
+          <option value="SPAM">Spam / Advertising</option>
+          <option value="COPYRIGHT">Copyright Infringement</option>
+          <option value="INAPPROPRIATE_CONTENT">Inappropriate Content</option>
+          <option value="MISLEADING_INFORMATION">Incorrect / Misleading Content</option>
+          <option value="DUPLICATE_CONTENT">Duplicate Content</option>
+          <option value="MALWARE_OR_UNSAFE_FILE">Malware / Unsafe File</option>
+          <option value="OTHER">Other</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom: 16.5px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6.5px;">
+          <label style="font-size: 12px; font-weight: 600; margin-bottom: 0;">Description (Optional)</label>
+          <span id="reportCharCount" style="font-size: 11px; color: var(--muted);">0/500</span>
+        </div>
+        <textarea id="reportDescriptionInput" placeholder="Describe the violation in detail..." style="width: 100%; height: 100px; resize: vertical; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; box-sizing: border-box;" maxlength="500"></textarea>
+      </div>
+      <p id="reportModalError" class="helper-text error" role="alert" style="display:none; color: var(--danger); font-size: 12px; margin-bottom: 8.5px;"></p>
+      <div class="modal-actions" style="margin-top: 18px;">
+        <button type="button" class="btn btn-secondary" id="cancelReportBtn">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmReportBtn" style="background-color: var(--danger); border-color: var(--danger);">Submit Report</button>
+      </div>
+    </div>
   </div>
 
   <script src="js/api.js"></script>
