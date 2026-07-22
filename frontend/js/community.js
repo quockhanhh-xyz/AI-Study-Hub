@@ -213,7 +213,17 @@ document.addEventListener("DOMContentLoaded", async function () {
       ${doc.downloadCount ?? 0}
     `;
 
-    metricsDiv.append(viewsSpan, downloadsSpan);
+    const ratingSpan = document.createElement("span");
+    ratingSpan.className = "comm-card-metric-item";
+    const avgVal = doc.averageRating ? Number(doc.averageRating).toFixed(1) : "0.0";
+    ratingSpan.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" height="12" width="12" style="color: #fbbf24; vertical-align: -1px; margin-right: 2px;">
+        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+      </svg>
+      ${avgVal} (${doc.ratingCount ?? 0})
+    `;
+
+    metricsDiv.append(ratingSpan, viewsSpan, downloadsSpan);
     footer.append(dateSpan, metricsDiv);
 
     card.append(header, body, footer);

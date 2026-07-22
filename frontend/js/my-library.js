@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   let userFolders = [];
   let currentParentFolderId = getParentFolderIdFromUrl();
   let breadcrumbTrail = [{ folderId: null, name: "My Folders" }];
+  let mySubjectsList = [];
 
   // Elements
   const tabs = document.querySelectorAll(".library-tab");
@@ -75,6 +76,8 @@ document.addEventListener("DOMContentLoaded", async function () {
       loadFolders(currentParentFolderId);
     } else if (currentTab === "favorites") {
       loadFavorites();
+    } else if (currentTab === "my-subjects") {
+      loadMySubjects();
     }
   }
 
@@ -137,6 +140,8 @@ document.addEventListener("DOMContentLoaded", async function () {
           searchInput.placeholder = "Search folders by name...";
         } else if (tabId === "favorites") {
           searchInput.placeholder = "Search favorite documents...";
+        } else if (tabId === "my-subjects") {
+          searchInput.placeholder = "Search subjects by code or name...";
         }
       }
 
@@ -144,6 +149,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (tabId === "documents") loadDocuments();
         else if (tabId === "folders") loadFolders(currentParentFolderId);
         else if (tabId === "favorites") loadFavorites();
+        else if (tabId === "my-subjects") loadMySubjects();
       }
     }
   }
@@ -163,6 +169,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           if (tab === "documents") loadDocuments();
           else if (tab === "folders") loadFolders(currentParentFolderId);
           else if (tab === "favorites") loadFavorites();
+          else if (tab === "my-subjects") filterSubjectsList();
         }, 400);
       });
     }
@@ -1374,6 +1381,305 @@ document.addEventListener("DOMContentLoaded", async function () {
     } catch (e) {
       console.error("Failed to load favorites:", e);
       favoritesGrid.innerHTML = `<div style="text-align:center; padding:40px; color:var(--danger); grid-column: 1/-1;">Failed to load favorites.</div>`;
+    }
+  }
+
+  // --- MY SUBJECTS SYSTEM (Step 17A) ---
+  const createSubjectBtn = document.getElementById("createSubjectBtn");
+  const createSubjectModal = document.getElementById("createSubjectModal");
+  const cancelCreateSubjectBtn = document.getElementById("cancelCreateSubjectBtn");
+  const confirmCreateSubjectBtn = document.getElementById("confirmCreateSubjectBtn");
+  const newSubjectCodeInput = document.getElementById("newSubjectCodeInput");
+  const newSubjectNameInput = document.getElementById("newSubjectNameInput");
+  const newSubjectDescInput = document.getElementById("newSubjectDescInput");
+  const createSubjectModalError = document.getElementById("createSubjectModalError");
+
+  const editSubjectModal = document.getElementById("editSubjectModal");
+  const cancelEditSubjectBtn = document.getElementById("cancelEditSubjectBtn");
+  const confirmEditSubjectBtn = document.getElementById("confirmEditSubjectBtn");
+  const editSubjectIdInput = document.getElementById("editSubjectIdInput");
+  const editSubjectCodeInput = document.getElementById("editSubjectCodeInput");
+  const editSubjectNameInput = document.getElementById("editSubjectNameInput");
+  const editSubjectDescInput = document.getElementById("editSubjectDescInput");
+  const editSubjectModalError = document.getElementById("editSubjectModalError");
+
+  const subjectBreadcrumbBack = document.getElementById("subjectBreadcrumbBack");
+
+  // Init Modals
+  if (createSubjectBtn) {
+    createSubjectBtn.addEventListener("click", () => {
+      createSubjectModalError.style.display = "none";
+      newSubjectCodeInput.value = "";
+      newSubjectNameInput.value = "";
+      newSubjectDescInput.value = "";
+      createSubjectModal.classList.add("active");
+    });
+  }
+
+  if (cancelCreateSubjectBtn) {
+    cancelCreateSubjectBtn.addEventListener("click", () => {
+      createSubjectModal.classList.remove("active");
+    });
+  }
+
+  if (confirmCreateSubjectBtn) {
+    confirmCreateSubjectBtn.addEventListener("click", async () => {
+      const code = newSubjectCodeInput.value.trim();
+      const name = newSubjectNameInput.value.trim();
+      const desc = newSubjectDescInput.value.trim();
+
+      if (!code || !name) {
+        createSubjectModalError.textContent = "Subject Code and Name are required.";
+        createSubjectModalError.style.display = "block";
+        return;
+      }
+
+      try {
+        const res = await createSubject({ subjectCode: code, subjectName: name, description: desc });
+        if (res && res.success) {
+          createSubjectModal.classList.remove("active");
+          if (typeof showToast === "function") showToast("Custom subject created successfully.", "success");
+          loadMySubjects();
+        } else {
+          createSubjectModalError.textContent = res.message || "Failed to create subject.";
+          createSubjectModalError.style.display = "block";
+        }
+      } catch (err) {
+        createSubjectModalError.textContent = err.message || "Failed to create subject.";
+        createSubjectModalError.style.display = "block";
+      }
+    });
+  }
+
+  if (cancelEditSubjectBtn) {
+    cancelEditSubjectBtn.addEventListener("click", () => {
+      editSubjectModal.classList.remove("active");
+    });
+  }
+
+  if (confirmEditSubjectBtn) {
+    confirmEditSubjectBtn.addEventListener("click", async () => {
+      const id = editSubjectIdInput.value;
+      const code = editSubjectCodeInput.value.trim();
+      const name = editSubjectNameInput.value.trim();
+      const desc = editSubjectDescInput.value.trim();
+
+      if (!code || !name) {
+        editSubjectModalError.textContent = "Subject Code and Name are required.";
+        editSubjectModalError.style.display = "block";
+        return;
+      }
+
+      try {
+        const res = await updateCustomSubject(id, { subjectCode: code, subjectName: name, description: desc });
+        if (res && res.success) {
+          editSubjectModal.classList.remove("active");
+          if (typeof showToast === "function") showToast("Subject updated successfully.", "success");
+          loadMySubjects();
+        } else {
+          editSubjectModalError.textContent = res.message || "Failed to update subject.";
+          editSubjectModalError.style.display = "block";
+        }
+      } catch (err) {
+        editSubjectModalError.textContent = err.message || "Failed to update subject.";
+        editSubjectModalError.style.display = "block";
+      }
+    });
+  }
+
+  if (subjectBreadcrumbBack) {
+    subjectBreadcrumbBack.addEventListener("click", (e) => {
+      e.preventDefault();
+      document.getElementById("subjectDocsView").style.display = "none";
+      document.getElementById("subjectsListView").style.display = "block";
+    });
+  }
+
+  async function loadMySubjects() {
+    try {
+      document.getElementById("subjectsListView").style.display = "block";
+      document.getElementById("subjectDocsView").style.display = "none";
+      
+      const grid = document.getElementById("subjectGrid");
+      grid.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--muted); width: 100%;"><p>Loading subjects...</p></div>`;
+      
+      const res = await getMyLibrarySubjects();
+      if (res && res.success) {
+        mySubjectsList = res.data || [];
+        renderSubjects(mySubjectsList);
+      } else {
+        grid.innerHTML = `<div style="text-align:center; padding:40px; color:var(--danger);">Failed to load subjects.</div>`;
+      }
+    } catch (e) {
+      console.error(e);
+      document.getElementById("subjectGrid").innerHTML = `<div style="text-align:center; padding:40px; color:var(--danger);">Failed to load subjects.</div>`;
+    }
+  }
+
+  function renderSubjects(subjects) {
+    const grid = document.getElementById("subjectGrid");
+    const emptyState = document.getElementById("subjectEmptyState");
+    grid.innerHTML = "";
+
+    if (subjects.length === 0) {
+      emptyState.style.display = "flex";
+      grid.style.display = "none";
+      return;
+    }
+
+    emptyState.style.display = "none";
+    grid.style.display = "grid";
+
+    subjects.forEach(s => {
+      const card = document.createElement("div");
+      card.className = "subject-card";
+      
+      card.innerHTML = `
+        <div class="subject-card-code">${s.code}</div>
+        <div class="subject-card-name">${s.name}</div>
+        <div class="subject-card-desc">${s.description || "No description provided."}</div>
+        <div class="subject-card-footer">
+          <span class="subject-card-badge ${s.sourceType === 'PERSONAL' ? 'badge-personal' : 'badge-system'}">${s.sourceType}</span>
+          <span style="color: var(--muted); font-weight: 500;">${s.documentCount} docs</span>
+        </div>
+      `;
+
+      card.addEventListener("click", () => {
+        openSubjectDocuments(s.subjectId, s.code, s.name);
+      });
+
+      // Actions if personal subject
+      if (s.canEdit || s.canDelete) {
+        const actions = document.createElement("div");
+        actions.className = "subject-card-actions";
+        
+        const kebabBtn = document.createElement("button");
+        kebabBtn.type = "button";
+        kebabBtn.className = "btn-kebab";
+        kebabBtn.textContent = "⋮";
+        kebabBtn.title = "More actions";
+        
+        const dropdown = document.createElement("div");
+        dropdown.style.cssText = "display:none; position:absolute; right:0; top:100%; background:#ffffff; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); z-index:20; min-width:140px; padding:4px 0;";
+        
+        if (s.canEdit) {
+          const editItem = document.createElement("button");
+          editItem.type = "button";
+          editItem.style.cssText = "display:block; width:100%; padding:8px 14px; text-align:left; background:none; border:none; font-size:13px; color:#111827; cursor:pointer;";
+          editItem.textContent = "Edit Subject";
+          editItem.addEventListener("click", (e) => {
+            e.stopPropagation();
+            dropdown.style.display = "none";
+            editSubjectModalError.style.display = "none";
+            editSubjectIdInput.value = s.subjectId;
+            editSubjectCodeInput.value = s.code;
+            editSubjectNameInput.value = s.name;
+            editSubjectDescInput.value = s.description || "";
+            editSubjectModal.classList.add("active");
+          });
+          dropdown.appendChild(editItem);
+        }
+
+        if (s.canDelete) {
+          const deleteItem = document.createElement("button");
+          deleteItem.type = "button";
+          deleteItem.style.cssText = "display:block; width:100%; padding:8px 14px; text-align:left; background:none; border:none; font-size:13px; color:#dc3545; cursor:pointer;";
+          deleteItem.textContent = "Delete Subject";
+          deleteItem.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            dropdown.style.display = "none";
+            
+            const confirmed = typeof window.confirmAction === "function"
+              ? await window.confirmAction({ title: "Delete Custom Subject?", message: "Are you sure you want to delete this custom subject?", confirmText: "Delete", danger: true })
+              : confirm(`Delete custom subject "${s.code}"?`);
+              
+            if (confirmed) {
+              try {
+                const deleteRes = await deleteCustomSubject(s.subjectId);
+                if (deleteRes && deleteRes.success) {
+                  if (typeof showToast === "function") showToast("Custom subject deleted.", "success");
+                  loadMySubjects();
+                } else {
+                  alert(deleteRes.message || "Failed to delete subject.");
+                }
+              } catch (err) {
+                if (err.message === "SUBJECT_IN_USE") {
+                  alert("This subject is currently linked to documents and cannot be deleted.");
+                } else {
+                  alert(err.message || "Failed to delete subject.");
+                }
+              }
+            }
+          });
+          dropdown.appendChild(deleteItem);
+        }
+
+        kebabBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          document.querySelectorAll(".subject-card-actions div").forEach(d => { if (d !== dropdown) d.style.display = "none"; });
+          dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener("click", () => {
+          dropdown.style.display = "none";
+        });
+
+        actions.appendChild(kebabBtn);
+        actions.appendChild(dropdown);
+        card.appendChild(actions);
+      }
+
+      grid.appendChild(card);
+    });
+  }
+
+  function filterSubjectsList() {
+    const query = searchInput.value.trim().toLowerCase();
+    if (!query) {
+      renderSubjects(mySubjectsList);
+      return;
+    }
+    const filtered = mySubjectsList.filter(s => 
+      s.code.toLowerCase().includes(query) || 
+      s.name.toLowerCase().includes(query) || 
+      (s.description && s.description.toLowerCase().includes(query))
+    );
+    renderSubjects(filtered);
+  }
+
+  async function openSubjectDocuments(subjectId, subjectCode, subjectName) {
+    document.getElementById("subjectsListView").style.display = "none";
+    document.getElementById("subjectDocsView").style.display = "block";
+    document.getElementById("subjectBreadcrumbCurrent").textContent = `${subjectCode} - ${subjectName}`;
+
+    const docsGrid = document.getElementById("subjectDocsGrid");
+    const docsEmptyState = document.getElementById("subjectDocsEmptyState");
+    docsGrid.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--muted); width: 100%;"><p>Loading documents...</p></div>`;
+    docsEmptyState.style.display = "none";
+
+    try {
+      const res = await getSubjectDocuments(subjectId, 0, 50);
+      if (res && res.success) {
+        const docs = (res.data && res.data.content) ? res.data.content : [];
+        docsGrid.innerHTML = "";
+        
+        if (docs.length === 0) {
+          docsEmptyState.style.display = "flex";
+          docsGrid.style.display = "none";
+        } else {
+          docsEmptyState.style.display = "none";
+          docsGrid.style.display = "grid";
+          docs.forEach(d => {
+            docsGrid.appendChild(createDocumentCard(d, { sourceTab: "documents" }));
+          });
+        }
+      } else {
+        docsGrid.innerHTML = `<div style="text-align:center; padding:40px; color:var(--danger);">Failed to load documents.</div>`;
+      }
+    } catch (e) {
+      console.error(e);
+      docsGrid.innerHTML = `<div style="text-align:center; padding:40px; color:var(--danger);">Failed to load documents.</div>`;
     }
   }
 });

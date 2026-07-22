@@ -43,6 +43,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/payments/vnpay/ipn").permitAll()
                         .requestMatchers("/api/payments/vnpay/confirm-return").permitAll()
                         .requestMatchers("/api/health").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/public/documents/*/ratings/summary").permitAll()
+                        .requestMatchers("/api/public/documents/*/ratings/**").authenticated()
+                        .requestMatchers("/api/public/documents/*/reports/**").authenticated()
                         // User Workspace restrictions
                         .requestMatchers("/api/documents", "/api/documents/**").hasRole("USER")
                         .requestMatchers("/api/folders", "/api/folders/**").hasRole("USER")

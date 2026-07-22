@@ -1,12 +1,18 @@
 package com.demo.ai_study_hub.service;
 
 import com.demo.ai_study_hub.dto.CreateCustomSubjectRequest;
+import com.demo.ai_study_hub.dto.DocumentResponse;
+import com.demo.ai_study_hub.dto.SubjectMyLibraryResponse;
 import com.demo.ai_study_hub.dto.SubjectResponse;
+import com.demo.ai_study_hub.entity.Document;
 import com.demo.ai_study_hub.entity.Subject;
 import com.demo.ai_study_hub.entity.User;
+import com.demo.ai_study_hub.repository.DocumentRepository;
 import com.demo.ai_study_hub.repository.SubjectRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +27,8 @@ public class SubjectService {
 
     private final SubjectRepository subjectRepository;
     private final UserRepository userRepository;
+    private final DocumentRepository documentRepository;
+    private final DocumentService documentService;
 
     public List<SubjectResponse> getActiveSubjects(String email) {
         User user = getUser(email);
@@ -29,6 +37,117 @@ public class SubjectService {
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    public List<SubjectMyLibraryResponse> getMyLibrarySubjects(String email) {
+        User user = getUser(email);
+        List<Subject> visibleSubjects = subjectRepository.findVisibleSubjects(user);
+
+        return visibleSubjects.stream()
+                .map(s -> {
+                    long docCount = documentRepository.countBySubjectAndOwnerAndStatus(s, user, "ACTIVE");
+                    boolean canEdit = "USER_CUSTOM".equalsIgnoreCase(s.getScope()) 
+                            && s.getOwner() != null 
+                            && s.getOwner().getUserId().equals(user.getUserId());
+                    
+                    // canDelete is true if it's personal and has no active documents on the system
+                    boolean canDelete = canEdit && (documentRepository.countBySubjectAndStatus(s, "ACTIVE") == 0);
+
+                    String sourceType = "SYSTEM";
+                    if ("USER_CUSTOM".equalsIgnoreCase(s.getScope())) {
+                        sourceType = "PERSONAL";
+                    }
+
+                    return SubjectMyLibraryResponse.builder()
+                            .subjectId(s.getSubjectId())
+                            .code(s.getSubjectCode())
+                            .name(s.getSubjectName())
+                            .description(s.getDescription())
+                            .sourceType(sourceType)
+                            .status(s.getStatus())
+                            .documentCount(docCount)
+                            .canEdit(canEdit)
+                            .canDelete(canDelete)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    public Page<DocumentResponse> getSubjectDocuments(Integer subjectId, String email, Pageable pageable) {
+        User user = getUser(email);
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
+
+        // Security check: must be active and visible to user
+        if (!"ACTIVE".equals(subject.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Subject is inactive");
+        }
+        boolean isVisible = "SYSTEM".equalsIgnoreCase(subject.getScope()) 
+                || (subject.getScope() == null && subject.getOwner() == null)
+                || ("USER_CUSTOM".equalsIgnoreCase(subject.getScope()) 
+                    && subject.getOwner() != null 
+                    && subject.getOwner().getUserId().equals(user.getUserId()));
+
+        if (!isVisible) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this subject");
+        }
+
+        Page<Document> docs = documentRepository.findBySubjectAndOwnerAndStatus(subject, user, "ACTIVE", pageable);
+        return docs.map(d -> documentService.mapToResponse(d, user));
+    }
+
+    @Transactional
+    public SubjectMyLibraryResponse updateCustomSubject(Integer subjectId, CreateCustomSubjectRequest request, String email) {
+        User user = getUser(email);
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
+
+        // Validation: must be USER_CUSTOM and owned by user
+        if (!"USER_CUSTOM".equalsIgnoreCase(subject.getScope()) 
+                || subject.getOwner() == null 
+                || !subject.getOwner().getUserId().equals(user.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to edit this subject");
+        }
+
+        String code = request.getSubjectCode().trim().toUpperCase();
+        String name = request.getSubjectName().trim();
+        String desc = request.getDescription() != null ? request.getDescription().trim() : null;
+
+        // Code uniqueness check
+        boolean duplicate = subjectRepository.existsDuplicateCodeForUpdate(code, user, subjectId);
+        if (duplicate) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "A subject with this code already exists");
+        }
+
+        subject.setSubjectCode(code);
+        subject.setSubjectName(name);
+        subject.setDescription(desc);
+
+        Subject saved = subjectRepository.save(subject);
+        return mapToLibraryResponse(saved, user);
+    }
+
+    @Transactional
+    public void deleteCustomSubject(Integer subjectId, String email) {
+        User user = getUser(email);
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
+
+        // Validation: must be USER_CUSTOM and owned by user
+        if (!"USER_CUSTOM".equalsIgnoreCase(subject.getScope()) 
+                || subject.getOwner() == null 
+                || !subject.getOwner().getUserId().equals(user.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to delete this subject");
+        }
+
+        // Check if in use by ANY active document
+        long count = documentRepository.countBySubjectAndStatus(subject, "ACTIVE");
+        if (count > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "SUBJECT_IN_USE");
+        }
+
+        subject.setStatus("DISABLED");
+        subjectRepository.save(subject);
     }
 
     @Transactional
@@ -61,13 +180,13 @@ public class SubjectService {
         return subjectRepository.findActiveSystemSubjects()
                 .stream()
                 .map(s -> SubjectResponse.builder()
-                        .subjectId(s.getSubjectId())
-                        .subjectCode(s.getSubjectCode())
-                        .subjectName(s.getSubjectName())
-                        .description(s.getDescription())
-                        .scope(s.getScope())
-                        .ownerId(null)
-                        .build())
+                         .subjectId(s.getSubjectId())
+                         .subjectCode(s.getSubjectCode())
+                         .subjectName(s.getSubjectName())
+                         .description(s.getDescription())
+                         .scope(s.getScope())
+                         .ownerId(null)
+                         .build())
                 .collect(Collectors.toList());
     }
 
@@ -84,6 +203,25 @@ public class SubjectService {
                 .description(s.getDescription())
                 .scope(s.getScope())
                 .ownerId(s.getOwner() != null ? s.getOwner().getUserId() : null)
+                .build();
+    }
+
+    private SubjectMyLibraryResponse mapToLibraryResponse(Subject s, User user) {
+        long docCount = documentRepository.countBySubjectAndOwnerAndStatus(s, user, "ACTIVE");
+        String sourceType = "SYSTEM";
+        if ("USER_CUSTOM".equalsIgnoreCase(s.getScope())) {
+            sourceType = "PERSONAL";
+        }
+        return SubjectMyLibraryResponse.builder()
+                .subjectId(s.getSubjectId())
+                .code(s.getSubjectCode())
+                .name(s.getSubjectName())
+                .description(s.getDescription())
+                .sourceType(sourceType)
+                .status(s.getStatus())
+                .documentCount(docCount)
+                .canEdit(true)
+                .canDelete(documentRepository.countBySubjectAndStatus(s, "ACTIVE") == 0)
                 .build();
     }
 }

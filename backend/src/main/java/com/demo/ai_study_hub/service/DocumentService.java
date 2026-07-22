@@ -44,6 +44,8 @@ public class DocumentService {
     private final PlatformTransactionManager transactionManager;
     private final com.demo.ai_study_hub.repository.DocumentFavoriteRepository documentFavoriteRepository;
     private final DocumentPreviewHelper previewHelper;
+    private final com.demo.ai_study_hub.repository.DocumentRatingRepository documentRatingRepository;
+    private final com.demo.ai_study_hub.repository.DocumentReportRepository documentReportRepository;
 
     public DocumentResponse uploadDocument(MultipartFile file, String title, String description, Integer subjectId, Integer folderId, String email) {
         if (title == null || title.trim().isEmpty()) {
@@ -466,7 +468,7 @@ public class DocumentService {
         return mapToResponse(doc, doc.getOwner());
     }
 
-    private DocumentResponse mapToResponse(Document doc, User requester) {
+    public DocumentResponse mapToResponse(Document doc, User requester) {
         boolean canPreview = false;
         boolean canOpen = false;
         boolean canDownload = false;
@@ -556,6 +558,38 @@ public class DocumentService {
         boolean favoritedByMe = requester != null
                 && documentFavoriteRepository.existsByUserAndDocument(requester, doc);
 
+        Double avgRating = documentRatingRepository.getAverageRatingByDocument(doc);
+        if (avgRating != null) {
+            avgRating = Math.round(avgRating * 100.0) / 100.0;
+        } else {
+            avgRating = 0.0;
+        }
+        Long ratingCount = documentRatingRepository.countRatingsByDocument(doc);
+
+        Integer myRating = null;
+        boolean canRateVal = false;
+        boolean canReportVal = false;
+        boolean reportedByMe = false;
+
+        if (requester != null) {
+            myRating = documentRatingRepository.findByDocumentAndUser(doc, requester)
+                    .map(com.demo.ai_study_hub.entity.DocumentRating::getRating)
+                    .orElse(null);
+
+            boolean isOwner = doc.getOwner() != null
+                    && doc.getOwner().getUserId().equals(requester.getUserId());
+
+            boolean isActivePublicApproved = "PUBLIC".equals(doc.getVisibility())
+                    && "APPROVED".equals(doc.getApprovalStatus())
+                    && "ACTIVE".equals(doc.getStatus());
+
+            canRateVal = isActivePublicApproved && !isOwner;
+
+            reportedByMe = documentReportRepository.findByDocumentAndReporter(doc, requester).isPresent();
+            boolean hasPendingReport = documentReportRepository.findPendingReport(doc, requester).isPresent();
+            canReportVal = isActivePublicApproved && !isOwner && !hasPendingReport;
+        }
+
         return DocumentResponse.builder()
                 .documentId(doc.getDocumentId())
                 .title(doc.getTitle())
@@ -599,6 +633,12 @@ public class DocumentService {
                 .requiresSystemSubjectRequest(requiresSystemSubjectRequest)
                 .canRequestSystemSubject(canRequestSystemSubject)
                 .favoritedByMe(favoritedByMe)
+                .averageRating(avgRating)
+                .ratingCount(ratingCount)
+                .myRating(myRating)
+                .canRate(canRateVal)
+                .canReport(canReportVal)
+                .reportedByMe(reportedByMe)
                 .build();
     }
 
@@ -616,6 +656,19 @@ public class DocumentService {
         boolean canOpen = isPublicAndApproved;
         boolean canDownload = isPublicAndApproved;
 
+        Double avgRating = documentRatingRepository.getAverageRatingByDocument(doc);
+        if (avgRating != null) {
+            avgRating = Math.round(avgRating * 100.0) / 100.0;
+        } else {
+            avgRating = 0.0;
+        }
+        Long ratingCount = documentRatingRepository.countRatingsByDocument(doc);
+
+        Integer myRating = null;
+        boolean canRate = false;
+        boolean canReport = false;
+        boolean reportedByMe = false;
+
         // Public endpoints don't require login — requesterEmail is null for
         // anonymous visitors, in which case favoritedByMe is always false
         // (favoriting requires an account, see DocumentFavoriteService).
@@ -632,10 +685,24 @@ public class DocumentService {
             if (requester != null) {
                 favoritedByMe = documentFavoriteRepository.existsByUserAndDocument(requester, doc);
 
-                boolean isCompleted = "COMPLETED".equals(processingStatusVal);
+                myRating = documentRatingRepository.findByDocumentAndUser(doc, requester)
+                        .map(com.demo.ai_study_hub.entity.DocumentRating::getRating)
+                        .orElse(null);
+
                 boolean isOwner = doc.getOwner() != null
                         && doc.getOwner().getUserId().equals(requester.getUserId());
 
+                boolean isActivePublicApproved = "PUBLIC".equals(doc.getVisibility())
+                        && "APPROVED".equals(doc.getApprovalStatus())
+                        && "ACTIVE".equals(doc.getStatus());
+
+                canRate = isActivePublicApproved && !isOwner;
+
+                reportedByMe = documentReportRepository.findByDocumentAndReporter(doc, requester).isPresent();
+                boolean hasPendingReport = documentReportRepository.findPendingReport(doc, requester).isPresent();
+                canReport = isActivePublicApproved && !isOwner && !hasPendingReport;
+
+                boolean isCompleted = "COMPLETED".equals(processingStatusVal);
                 canUseAiTools = isCompleted;
 
                 if (isOwner) {
@@ -681,6 +748,12 @@ public class DocumentService {
                 .canUseAiTools(canUseAiTools)
                 .canProcess(canProcess)
                 .canReprocess(canReprocess)
+                .averageRating(avgRating)
+                .ratingCount(ratingCount)
+                .myRating(myRating)
+                .canRate(canRate)
+                .canReport(canReport)
+                .reportedByMe(reportedByMe)
                 .build();
     }
 

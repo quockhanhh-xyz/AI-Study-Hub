@@ -136,4 +136,7 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     );
 
     long countBySubject(com.demo.ai_study_hub.entity.Subject subject);
+    long countBySubjectAndStatus(com.demo.ai_study_hub.entity.Subject subject, String status);
+    long countBySubjectAndOwnerAndStatus(com.demo.ai_study_hub.entity.Subject subject, User owner, String status);
+    org.springframework.data.domain.Page<Document> findBySubjectAndOwnerAndStatus(com.demo.ai_study_hub.entity.Subject subject, User owner, String status, org.springframework.data.domain.Pageable pageable);
 }
