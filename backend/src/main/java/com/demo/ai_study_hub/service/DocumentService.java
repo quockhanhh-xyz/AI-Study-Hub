@@ -46,6 +46,7 @@ public class DocumentService {
     private final DocumentPreviewHelper previewHelper;
     private final com.demo.ai_study_hub.repository.DocumentRatingRepository documentRatingRepository;
     private final com.demo.ai_study_hub.repository.DocumentReportRepository documentReportRepository;
+    private final NotificationService notificationService;
 
     public DocumentResponse uploadDocument(MultipartFile file, String title, String description, Integer subjectId, Integer folderId, String email) {
         if (title == null || title.trim().isEmpty()) {
@@ -886,9 +887,18 @@ public class DocumentService {
         doc.setApprovalStatus("PENDING");
         doc.setPublishedAt(null);
         doc.setRejectReason(null);
-        documentRepository.save(doc);
+        Document savedDoc = documentRepository.save(doc);
 
-        return mapToResponse(doc, owner);
+        // Notify all admins about new community publish request
+        notificationService.notifyAllAdmins(
+            "DOCUMENT_PUBLISH_REQUEST",
+            "New Community Publish Request",
+            "User " + owner.getFullName() + " has submitted document '" + savedDoc.getTitle() + "' for community library review.",
+            "DOCUMENT",
+            (long) savedDoc.getDocumentId()
+        );
+
+        return mapToResponse(savedDoc, owner);
     }
 
     public DocumentResponse unpublishDocument(Integer documentId, String email) {

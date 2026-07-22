@@ -66,14 +66,6 @@ public class AuthService {
             }
         }
 
-        notificationService.notifyAllAdmins(
-            "USER_LOGIN",
-            "User Logged In",
-            "User " + user.getFullName() + " (" + user.getEmail() + ") has logged in.",
-            "USER",
-            (long) user.getUserId()
-        );
-
         return user;
     }
 
