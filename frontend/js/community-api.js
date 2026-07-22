@@ -160,20 +160,20 @@ async function deleteRating(documentId) {
  */
 async function getAdminReports(status = "", page = 0, size = 10) {
   const statusParam = status ? `status=${status}&` : "";
-  return get(`/api/admin/document-reports?${statusParam}page=${page}&size=${size}`);
+  return get(`/api/admin/document-reports?${statusParam}page=${page}&size=${size}`, { skipUnauthorizedRedirect: true });
 }
 
 /**
  * Admin: Resolves a document report (unpublishes document).
  */
 async function resolveReport(reportId, resolutionNote = "") {
-  return patch(`/api/admin/document-reports/${reportId}/resolve`, { resolutionNote });
+  return patch(`/api/admin/document-reports/${reportId}/resolve`, { resolutionNote }, { skipUnauthorizedRedirect: true });
 }
 
 /**
  * Admin: Dismisses a document report.
  */
 async function dismissReport(reportId, resolutionNote = "") {
-  return patch(`/api/admin/document-reports/${reportId}/dismiss`, { resolutionNote });
+  return patch(`/api/admin/document-reports/${reportId}/dismiss`, { resolutionNote }, { skipUnauthorizedRedirect: true });
 }
 

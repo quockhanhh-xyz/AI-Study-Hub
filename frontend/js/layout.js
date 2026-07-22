@@ -97,7 +97,6 @@ async function checkAuthenticationStatus() {
   const currentPage = getCurrentPageName();
   const currentRoute = NAVIGATION_MENU.find(item => item.url === currentPage);
 
-
   // Optimistic skip: If the page doesn't care about auth configuration, return current state directly
   if (!currentRoute) return false;
 
@@ -169,7 +168,10 @@ async function checkAuthenticationStatus() {
     localStorage.removeItem("currentUser");
 
     // ALWAYS try to clear any invalid session cookie on the backend
-    try { await fetch("/api/auth/logout", { method: "POST" }); } catch (e) {}
+    try { 
+      const logoutUrl = typeof API_BASE_URL !== 'undefined' ? `${API_BASE_URL}/api/auth/logout` : '/api/auth/logout';
+      await fetch(logoutUrl, { method: "POST", credentials: "include" }); 
+    } catch (e) {}
 
     if (wasLoggedIn) {
       const currentQuery = window.location.search ? window.location.search : "";
