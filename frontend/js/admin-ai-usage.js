@@ -121,8 +121,8 @@ function initAdminAiUsage() {
     const formatDateTime = (dateStr) => {
         if (!dateStr) return '-';
         const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) + ' &middot; ' + 
-               date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) + ' &middot; ' +
+            date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
     };
 
     const updateSubtitle = () => {
@@ -130,7 +130,7 @@ function initAdminAiUsage() {
         if (featureFilter.value) {
             text.push(`Users who used: ${featureFilter.options[featureFilter.selectedIndex].text}`);
         }
-        
+
         let dateText = "Showing all-time AI usage logs.";
         if (startDateFilter.value && endDateFilter.value) {
             const start = new Date(startDateFilter.value).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
