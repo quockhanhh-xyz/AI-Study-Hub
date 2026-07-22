@@ -356,7 +356,11 @@ function renderNotificationList() {
                     await handleMarkRead(notif.notificationId);
                     window.location.href = `group-detail.html?id=${response.data}`;
                 } catch (err) {
-                    if (typeof window.showToast === "function") window.showToast("Failed to accept invitation.", "error");
+                    if (err.message === "Group members limit exceeded") {
+                        if (typeof window.showToast === "function") window.showToast("The group is already full.", "error");
+                    } else {
+                        if (typeof window.showToast === "function") window.showToast(err.message || "Failed to accept invitation.", "error");
+                    }
                     acceptBtn.disabled = false;
                     declineBtn.disabled = false;
                     acceptBtn.textContent = "Accept";
