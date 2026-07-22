@@ -54,63 +54,143 @@
                 <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 16px;">Retry</button>
             </div>
 
+            <div class="admin-tabs" style="display: flex; gap: 24px; border-bottom: 1px solid var(--border-light); margin-bottom: 24px; margin-top: 16px;">
+                <button class="admin-tab active" id="tabSubjectsBtn" style="background: none; border: none; padding: 12px 0; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 15px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                    </svg>
+                    Subjects List
+                </button>
+                <button class="admin-tab" id="tabRequestsBtn" style="background: none; border: none; padding: 12px 0; border-bottom: 2px solid transparent; color: var(--text-muted); font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 15px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Subject Requests
+                    <span id="tabCountPendingRequests" style="background: var(--primary-light, #fff0f0); color: var(--primary, #ff5858); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; display: none;">0</span>
+                </button>
+            </div>
+
             <div id="subjContent" style="display: none;">
 
-            <!-- Filters & Actions -->
-            <!-- Filters & Actions -->
-            <div class="admin-actions-bar" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-top: 24px;">
-                <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; flex: 1;">
-                    <div class="admin-search-wrapper" style="position: relative; max-width: 240px; width: 100%;">
-                        <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                        </svg>
-                        <input type="text" id="searchInput" class="admin-filter-input" placeholder="Search by Code or Name..." style="width: 100%; border: none !important; background-color: #f4f5f7 !important; border-radius: 24px !important; padding-left: 44px !important; height: 42px !important; font-size: 14px; margin-bottom: 0;">
-                    </div>
-                    <select id="statusFilter" class="admin-filter-input admin-select" style="border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 160px !important; width: auto !important; margin-bottom: 0;">
-                        <option value="">All Statuses</option>
-                        <option value="ACTIVE">ACTIVE</option>
-                        <option value="INACTIVE">INACTIVE</option>
-                    </select>
-                    <button class="btn btn-outline" onclick="clearFilters()" style="white-space: nowrap; height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                        </svg>
-                        Clear Filters
-                    </button>
-                </div>
-                <div class="admin-header-actions" style="display: flex; gap: 12px; align-items: center;">
-                    <button id="exportBtn" class="btn btn-secondary" style="height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                        </svg>
-                        <span id="exportBtnText">Export all subjects</span>
-                    </button>
-                    <button class="btn btn-primary" onclick="openSubjectModal()" style="height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center;">+ New Subject</button>
-                </div>
-            </div>
+                <!-- Panel 1: Subjects List -->
+                <div id="panelSubjects" class="tab-panel">
+                    <div class="admin-card" style="padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: none; background: #ffffff; border-radius: 12px;">
+                        <!-- Filters & Actions -->
+                        <div class="admin-actions-bar" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; flex: 1;">
+                                <div class="admin-search-wrapper" style="position: relative; max-width: 240px; width: 100%;">
+                                    <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                    </svg>
+                                    <input type="text" id="searchInput" class="admin-filter-input" placeholder="Search by Code or Name..." style="width: 100%; border: none !important; background-color: #f4f5f7 !important; border-radius: 24px !important; padding-left: 44px !important; height: 42px !important; font-size: 14px; margin-bottom: 0;">
+                                </div>
+                                <select id="statusFilter" class="admin-filter-input admin-select" style="border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 160px !important; width: auto !important; margin-bottom: 0;">
+                                    <option value="">All Statuses</option>
+                                    <option value="ACTIVE">ACTIVE</option>
+                                    <option value="INACTIVE">INACTIVE</option>
+                                </select>
+                                <button class="btn btn-outline" id="clearFiltersBtn" onclick="clearFilters()" style="white-space: nowrap; height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                    </svg>
+                                    Clear Filters
+                                </button>
+                            </div>
+                            <div class="admin-header-actions" style="display: flex; gap: 12px; align-items: center;">
+                                <button id="exportBtn" class="btn btn-secondary" style="height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                    </svg>
+                                    <span id="exportBtnText">Export all subjects</span>
+                                </button>
+                                <button class="btn btn-primary" onclick="openSubjectModal()" style="height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center;">+ New Subject</button>
+                            </div>
+                        </div>
 
-            <!-- Table -->
-            <div class="admin-table-container admin-card" style="padding: 0; overflow-x: auto;">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Code</th>
-                            <th>Name</th>
-                            <th>Description</th>
-                            <th>Documents</th>
-                            <th>Status</th>
-                            <th>Created At</th>
-                            <th style="text-align: center;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="subjectsTableBody">
-                        <tr><td colspan="7" style="text-align: center;">Loading...</td></tr>
-                    </tbody>
-                </table>
-                <div id="pagination" class="pagination">
-                    <!-- Pagination buttons -->
+                        <!-- Table -->
+                        <div class="admin-table-container" style="padding: 0; overflow-x: auto; border: none; box-shadow: none;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Documents</th>
+                                        <th>Status</th>
+                                        <th>Created At</th>
+                                        <th style="text-align: center;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="subjectsTableBody">
+                                    <tr><td colspan="7" style="text-align: center;">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                            <div id="pagination" class="pagination">
+                                <!-- Pagination buttons -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+
+                <!-- Panel 2: Subject Requests -->
+                <div id="panelRequests" class="tab-panel" style="display: none;">
+                    <div class="admin-card" style="padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: none; background: #ffffff; border-radius: 12px;">
+                        <!-- Filters & Actions -->
+                        <div class="admin-actions-bar" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; flex: 1;">
+                                <div class="admin-search-wrapper" style="position: relative; max-width: 240px; width: 100%;">
+                                    <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                    </svg>
+                                    <input type="text" id="reqSearchInput" class="admin-filter-input" placeholder="Search by Code or Name..." style="width: 100%; border: none !important; background-color: #f4f5f7 !important; border-radius: 24px !important; padding-left: 44px !important; height: 42px !important; font-size: 14px; margin-bottom: 0;">
+                                </div>
+                                <select id="reqStatusFilter" class="admin-filter-input admin-select" style="border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 160px !important; width: auto !important; margin-bottom: 0;">
+                                    <option value="">All Statuses</option>
+                                    <option value="PENDING">PENDING</option>
+                                    <option value="APPROVED">APPROVED</option>
+                                    <option value="REJECTED">REJECTED</option>
+                                </select>
+                                <button class="btn btn-outline" id="clearReqFiltersBtn" onclick="clearReqFilters()" style="white-space: nowrap; height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                    </svg>
+                                    Clear Filters
+                                </button>
+                            </div>
+                            <div class="admin-header-actions" style="display: flex; gap: 12px; align-items: center;">
+                                <button id="reqExportBtn" class="btn btn-secondary" style="height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                    </svg>
+                                    <span id="reqExportBtnText">Export all requests</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="admin-table-container" style="padding: 0; overflow-x: auto; border: none; box-shadow: none;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Name</th>
+                                        <th>Requested By</th>
+                                        <th>Status</th>
+                                        <th>Requested At</th>
+                                        <th style="text-align: right;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reqTableBody">
+                                    <tr><td colspan="6" style="text-align: center;">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                            <div id="reqPagination" class="pagination">
+                                <!-- Pagination buttons -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
                 </div>
             </div>
@@ -169,6 +249,47 @@
         </div>
     </div>
 
+    <!-- Approve Confirm Modal -->
+    <div class="admin-modal-overlay" id="approveModal">
+        <div class="admin-modal">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h3 class="admin-modal-title" style="margin-bottom: 0;">Approve Subject Request</h3>
+                <button type="button" onclick="closeModal('approveModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <p>Are you sure you want to approve this request? This will create and activate the system subject.</p>
+                <div id="duplicateWarning" style="color:var(--danger); display:none; margin-top:10px; font-weight:bold;"></div>
+                <input type="hidden" id="approveReqId">
+            </div>
+            <div class="admin-modal-actions" style="display: flex; gap: 12px; width: 100%;">
+                <button class="btn btn-outline" onclick="closeModal('approveModal')" style="flex: 1;">Cancel</button>
+                <button class="btn btn-primary" id="confirmApproveBtn" style="flex: 1; margin: 0;">Approve</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Confirm Modal -->
+    <div class="admin-modal-overlay" id="rejectModal">
+        <div class="admin-modal">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h3 class="admin-modal-title" style="margin-bottom: 0;">Reject Subject Request</h3>
+                <button type="button" onclick="closeModal('rejectModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <p>Are you sure you want to reject this request?</p>
+                <input type="hidden" id="rejectReqId">
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Reason (Optional):</label>
+                    <textarea id="rejectReason" rows="3" placeholder="Explain why..."></textarea>
+                </div>
+            </div>
+            <div class="admin-modal-actions" style="display: flex; gap: 12px; width: 100%;">
+                <button class="btn btn-outline" onclick="closeModal('rejectModal')" style="flex: 1;">Cancel</button>
+                <button class="btn btn-danger" id="confirmRejectBtn" style="flex: 1; margin: 0;">Reject</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="js/api.js"></script>
     <script src="js/ui.js"></script>
@@ -179,6 +300,7 @@
     <script src="js/notification-api.js"></script>
     <script src="js/notification.js"></script>
     <script src="js/admin-subject-api.js"></script>
+    <script src="js/admin-subject-request-api.js"></script>
     <script src="js/admin-subjects.js"></script>
 </body>
 </html>
