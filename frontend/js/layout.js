@@ -77,6 +77,7 @@ function renderAdminTopbar() {
 
 // Immediately restore sidebar state synchronously (script is at end of body)
 bootstrapSidebarCollapseState();
+initializeSidebarCollapse();
 
 window.authReady =
   document.readyState === "loading"
@@ -264,9 +265,6 @@ function renderDynamicSidebar(isAuthenticated) {
 
   // Re-render links safely inside the container with standardized icon and text wrappers
   let navHtml = "";
-  if (isAdminView) {
-    navHtml += `<div class="nav-section-title" style="padding: 12px 24px 8px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; transition: opacity 0.3s ease; overflow: hidden; white-space: nowrap;">Admin Console</div>`;
-  }
 
   navHtml += visibleMenus
     .map(item => `
@@ -304,10 +302,6 @@ function renderDynamicSidebar(isAuthenticated) {
 
   // Delegate calculation back to navigation helper to append .active class
   initializeActiveMenu();
-
-
-  // Initialize FE3 Collapse/Expand functionality
-  initializeSidebarCollapse();
 }
 
 
@@ -355,11 +349,6 @@ function initializeSidebarCollapse() {
   if (!sidebar) return;
 
 
-  // 1. Force the collapsed state from storage immediately to avoid interface lag.
-  //    Apply no-transition FIRST to suppress the expand→collapse flash on page load.
-  bootstrapSidebarCollapseState();
-
-
   const logoContainer = document.querySelector(".logo, .sidebar-brand");
 
 
@@ -367,14 +356,14 @@ function initializeSidebarCollapse() {
 
   if (logoContainer) {
     logoContainer.style.display = "";
+    logoContainer.classList.add("brand-flex");
   }
 
   // Standardize Logo text wrapper for FE3 collapsed layout visibility state rules
   if (logoContainer && !logoContainer.querySelector(".logo-text")) {
-    const rawText = logoContainer.textContent.trim();
-    if (rawText) {
-      logoContainer.innerHTML = `<span class="logo-text">${rawText}</span>`;
-    }
+    const rawText = logoContainer.textContent.trim() || "AI Study Hub";
+    const bookLogo = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="book-logo" style="width: 24px; height: 24px; color: #f97316; flex-shrink: 0;"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>`;
+    logoContainer.innerHTML = `${bookLogo}<span class="logo-text">${rawText}</span>`;
   }
 
   // 2. Inject a responsive toggle button into the brand layout zone
@@ -389,12 +378,15 @@ function initializeSidebarCollapse() {
     padding: 4px 8px;
     border-radius: 6px;
     transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   `;
   toggleBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18"></path></svg>';
   toggleBtn.setAttribute("aria-label", "Toggle Sidebar Navigation");
 
   if (logoContainer) {
-    logoContainer.appendChild(toggleBtn);
+    logoContainer.insertBefore(toggleBtn, logoContainer.firstChild);
   } else {
     sidebar.insertBefore(toggleBtn, sidebar.firstChild);
   }
