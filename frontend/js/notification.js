@@ -87,14 +87,8 @@ function initGlobalHeader() {
         currentUser = JSON.parse(currentUserRaw || "{}");
     } catch (e) {}
 
-    const fullName = currentUser.fullName || "User";
-    const names = fullName.trim().split(/\s+/);
-    let initials = "U";
-    if (names.length > 1) {
-        initials = (names[0][0] + names[names.length - 1][0]).toUpperCase();
-    } else if (names.length > 0 && names[0]) {
-        initials = names[0][0].toUpperCase();
-    }
+    const fullName = getHeaderDisplayName(currentUser);
+    const initials = getHeaderInitials(fullName);
 
     const profileChip = document.createElement("div");
     profileChip.className = "user-profile-chip";
@@ -125,6 +119,38 @@ function initGlobalHeader() {
     }
 }
 
+function getHeaderDisplayName(currentUser = {}) {
+    const email = String(currentUser.email || "").trim();
+    const rawName = String(currentUser.fullName || currentUser.name || currentUser.displayName || "").trim();
+    let displayName = rawName;
+
+    if (email && displayName.includes(email)) {
+        displayName = displayName.replace(email, "").trim();
+    }
+
+    displayName = displayName.replace(/\s+/g, " ").trim();
+
+    if (!displayName && email) {
+        displayName = email.split("@")[0];
+    }
+
+    return displayName || "User";
+}
+
+function getHeaderInitials(displayName = "User") {
+    const names = String(displayName).trim().split(/\s+/).filter(Boolean);
+
+    if (names.length > 1) {
+        return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+
+    if (names.length === 1) {
+        return names[0].slice(0, 2).toUpperCase();
+    }
+
+    return "U";
+}
+
 function renderSafeProfileChipContent(profileChip, currentUser, initials, fullName) {
     profileChip.innerHTML = ""; // Clear existing
 
@@ -132,7 +158,7 @@ function renderSafeProfileChipContent(profileChip, currentUser, initials, fullNa
         const img = document.createElement("img");
         img.src = currentUser.avatarUrl;
         img.className = "user-avatar-img";
-        img.alt = "Avatar";
+        img.alt = `${fullName} avatar`;
         img.style.width = "32px";
         img.style.height = "32px";
         img.style.borderRadius = "50%";
@@ -153,13 +179,6 @@ function renderSafeProfileChipContent(profileChip, currentUser, initials, fullNa
     nameSpan.textContent = fullName;
     infoContainer.appendChild(nameSpan);
 
-    if (currentUser.email) {
-        const emailSpan = document.createElement("span");
-        emailSpan.className = "user-profile-email";
-        emailSpan.textContent = currentUser.email;
-        infoContainer.appendChild(emailSpan);
-    }
-
     profileChip.appendChild(infoContainer);
 }
 
@@ -173,14 +192,8 @@ function refreshHeaderProfileChip() {
         currentUser = JSON.parse(currentUserRaw || "{}");
     } catch (e) {}
 
-    const fullName = currentUser.fullName || "User";
-    const names = fullName.trim().split(/\s+/);
-    let initials = "U";
-    if (names.length > 1) {
-        initials = (names[0][0] + names[names.length - 1][0]).toUpperCase();
-    } else if (names.length > 0 && names[0]) {
-        initials = names[0][0].toUpperCase();
-    }
+    const fullName = getHeaderDisplayName(currentUser);
+    const initials = getHeaderInitials(fullName);
 
     renderSafeProfileChipContent(profileChip, currentUser, initials, fullName);
 }
