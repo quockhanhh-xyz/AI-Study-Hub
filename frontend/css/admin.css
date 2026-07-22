@@ -250,10 +250,11 @@
 }
 
 .admin-badge-action {
-    padding: 6px 16px;
+    padding: 6px 0;
     font-size: 14px;
-    min-width: 85px;
+    width: 96px;
     justify-content: center;
+    text-align: center;
 }
 
 .badge-you-special {

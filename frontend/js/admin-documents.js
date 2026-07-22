@@ -206,10 +206,10 @@ function initAdminDocuments() {
                 </td>
                 <td><span class="table-muted-text" style="max-width: 140px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(ownerDisplay)}">${escapeHtml(ownerDisplay)}</span></td>
                 <td><span class="table-muted-text" style="max-width: 130px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(subjectDisplay)}</span></td>
-                <td style="text-align: center;"><span class="admin-badge ${getTypeBadgeClass(doc.fileType)}">${doc.fileType || '-'}</span></td>
-                <td style="text-align: center;"><span class="admin-badge ${getApprovalBadgeClass(doc.approvalStatus)}">${getApprovalLabel(doc.approvalStatus)}</span></td>
-                <td style="text-align: center;"><span class="admin-badge ${aiInfo.cls}">${aiInfo.text}</span></td>
-                <td style="text-align: center;"><span class="table-muted-text" style="font-size: 0.8rem; white-space: nowrap;">${updatedDisplay}</span></td>
+                <td><span class="admin-badge ${getTypeBadgeClass(doc.fileType)}">${doc.fileType || '-'}</span></td>
+                <td><span class="admin-badge ${getApprovalBadgeClass(doc.approvalStatus)}">${getApprovalLabel(doc.approvalStatus)}</span></td>
+                <td><span class="admin-badge ${aiInfo.cls}">${aiInfo.text}</span></td>
+                <td><span class="table-muted-text" style="font-size: 0.8rem; white-space: nowrap;">${updatedDisplay}</span></td>
                 <td style="text-align: center;">
                     <div class="admin-action-group" style="gap: 12px; display: flex; justify-content: center; align-items: center;">
                         <span class="badge admin-badge-action admin-badge-neutral" style="cursor: pointer;" onclick="window.location.href='admin-document-detail.html?id=${doc.documentId}'">View</span>
