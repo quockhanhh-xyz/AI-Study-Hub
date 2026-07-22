@@ -164,9 +164,18 @@ async function checkAuthenticationStatus() {
 
     return true;
   } catch (error) {
+    const wasLoggedIn = !!localStorage.getItem("currentUser");
     // If endpoint fails, user session is unauthenticated or expired
     localStorage.removeItem("currentUser");
 
+    // ALWAYS try to clear any invalid session cookie on the backend
+    try { await fetch("/api/auth/logout", { method: "POST" }); } catch (e) {}
+
+    if (wasLoggedIn) {
+      const currentQuery = window.location.search ? window.location.search : "";
+      window.location.href = `login.html?redirect=${encodeURIComponent(currentPage + currentQuery)}`;
+      return false;
+    }
 
     // Step 8 Security Rule: Only redirect to login screen if the route explicitly demands authentication
     if (currentRoute.requiresAuth) {
