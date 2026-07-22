@@ -169,7 +169,7 @@ async function checkAuthenticationStatus() {
     localStorage.removeItem("currentUser");
 
     // ALWAYS try to clear any invalid session cookie on the backend
-    try { await fetch("/api/auth/logout", { method: "POST" }); } catch (e) {}
+    try { await fetch(`${API_BASE_URL}/api/auth/logout`, { method: "POST", credentials: "include" }); } catch (e) {}
 
     if (wasLoggedIn) {
       const currentQuery = window.location.search ? window.location.search : "";
