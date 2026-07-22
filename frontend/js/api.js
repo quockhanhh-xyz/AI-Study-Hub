@@ -75,13 +75,13 @@ async function apiRequest(endpoint, options = {}) {
 
   // Handle explicit HTTP 401 Unauthorized or AUTH_ACCOUNT_BLOCKED
   if (response.status === 401 || (data && data.code === "AUTH_ACCOUNT_BLOCKED")) {
-    const isUiLoggedIn = !!localStorage.getItem("currentUser");
-    const forceRedirect = isUiLoggedIn;
+    const isAccountBlocked = data && data.code === "AUTH_ACCOUNT_BLOCKED";
 
-    // Check whether the caller wants to handle redirect logic manually
-    if (options.skipUnauthorizedRedirect === true && !forceRedirect) {
+    // If caller explicitly wants to handle 401 themselves (e.g. layout.js /api/auth/me),
+    // always respect that flag — UNLESS the account is actively blocked (needs global alert).
+    if (options.skipUnauthorizedRedirect === true && !isAccountBlocked) {
       console.log(
-        `Unauthorized (HTTP 401) or Blocked for ${endpoint} - Handled locally by calling component.`
+        `Unauthorized (HTTP 401) for ${endpoint} - Skipped redirect as requested by caller.`
       );
     } else {
       if (!window.isRedirectingToLogin) {
@@ -89,7 +89,7 @@ async function apiRequest(endpoint, options = {}) {
         console.warn(
           "Session expired, invalid, or account blocked. Executing global redirect to login..."
         );
-        if (data && data.code === "AUTH_ACCOUNT_BLOCKED") {
+        if (isAccountBlocked) {
           alert("Your account has been blocked by an administrator.");
         }
         localStorage.removeItem("currentUser");
