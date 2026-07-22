@@ -684,7 +684,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       const result = await getMyGroups();
       const groups = Array.isArray(result.data) ? result.data : (Array.isArray(result) ? result : []);
-      shareGroupSelect.innerHTML = '<option value="">-- Choose a Group --</option>';
+      shareGroupSelect.innerHTML = '<option value="">Choose a Group</option>';
       groups.forEach(g => {
         const opt = document.createElement("option");
         opt.value = g.groupId || g.id;

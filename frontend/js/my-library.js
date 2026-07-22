@@ -459,7 +459,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       try {
         const res = await getMyGroups();
         const groups = Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
-        shareGroupSelect.innerHTML = `<option value="">-- Choose a Group --</option>`;
+        shareGroupSelect.innerHTML = `<option value="">Choose a Group</option>`;
         groups.forEach(g => {
           const opt = document.createElement("option");
           opt.value = g.groupId || g.id;

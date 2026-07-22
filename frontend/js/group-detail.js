@@ -1278,7 +1278,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     shareItemSelectLabel.textContent = `Select ${type.charAt(0).toUpperCase() + type.slice(1)}`;
     try {
       const response = await get(`/api/${type}s/my`);
-      shareItemSelect.innerHTML = `<option value="">-- Select a ${type} to share --</option>`;
+      shareItemSelect.innerHTML = `<option value="">Select a ${type} to share</option>`;
       (response.data || []).forEach(item => {
         const opt = document.createElement("option");
         opt.value = type === "document" ? item.documentId : item.folderId;

@@ -185,7 +185,7 @@ async function loadSubjectOptions() {
     createOption.textContent = "+ Create new subject…";
     subjectDatalist.appendChild(createOption);
 
-    subjectSelect.placeholder = "-- Select a subject --";
+    subjectSelect.placeholder = "Select a subject";
   } catch (err) {
     console.warn("Could not load subjects:", err);
     subjectSelect.placeholder = "Failed to load subjects — please refresh";
