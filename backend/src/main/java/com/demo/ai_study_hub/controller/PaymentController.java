@@ -25,6 +25,16 @@ public class PaymentController {
     private final PlanService planService;
     private final UserRepository userRepository;
 
+    @org.springframework.beans.factory.annotation.Value("${payment.mock-enabled:false}")
+    private boolean mockEnabled;
+
+    private void checkMockEnabled() {
+        if (!mockEnabled) {
+            throw new PaymentException(org.springframework.http.HttpStatus.BAD_REQUEST, 
+                "MOCK_PAYMENT_DISABLED", "Mock payment is disabled in this environment.");
+        }
+    }
+
     @GetMapping("/plans")
     public ResponseEntity<ApiResponse<List<PlanResponse>>> getPlans() {
         return ResponseEntity.ok(ApiResponse.success(
@@ -37,10 +47,17 @@ public class PaymentController {
                 planService.getPlanEntitlements(), "Billing plan entitlements retrieved successfully"));
     }
 
+    @GetMapping("/config")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPaymentConfig() {
+        return ResponseEntity.ok(ApiResponse.success(
+                Map.of("mockPaymentEnabled", mockEnabled), "Payment config retrieved"));
+    }
+
     @PostMapping("/mock/create")
     public ResponseEntity<ApiResponse<PaymentResponse>> createPayment(
             @Valid @RequestBody CreatePaymentRequest request,
             Principal principal) {
+        checkMockEnabled();
         User user = getUser(principal);
         PaymentResponse response = paymentService.createMockPayment(user, request.getPlanCode());
         return ResponseEntity.ok(ApiResponse.success(response, "Payment order created successfully"));
@@ -50,6 +67,7 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<PaymentResponse>> confirmSuccess(
             @PathVariable Long paymentId,
             Principal principal) {
+        checkMockEnabled();
         User user = getUser(principal);
         PaymentResponse response = paymentService.markPaymentSuccess(user, paymentId);
         return ResponseEntity.ok(ApiResponse.success(response, "Payment confirmed successfully"));
@@ -59,6 +77,7 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<PaymentResponse>> confirmFail(
             @PathVariable Long paymentId,
             Principal principal) {
+        checkMockEnabled();
         User user = getUser(principal);
         PaymentResponse response = paymentService.markPaymentFailed(user, paymentId);
         return ResponseEntity.ok(ApiResponse.success(response, "Payment marked as failed"));
@@ -68,6 +87,7 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<PaymentResponse>> cancelPayment(
             @PathVariable Long paymentId,
             Principal principal) {
+        checkMockEnabled();
         User user = getUser(principal);
         PaymentResponse response = paymentService.cancelPayment(user, paymentId);
         return ResponseEntity.ok(ApiResponse.success(response, "Payment cancelled successfully"));

@@ -60,6 +60,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Plan entitlements cache: { FREE: {...limits}, PREMIUM: {...limits}, ULTRA: {...limits} }
   // Populated from backend on page load; falls back to hardcoded defaults if API unavailable.
   let allPlanEntitlements = null;
+  let mockPaymentEnabled = true;
 
   // Fallback feature data if backend entitlements API is not available
   const FALLBACK_TIER_FEATURES = {
@@ -315,7 +316,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           e.preventDefault();
           window.location.href = data.paymentUrl;
         };
-      } else if (data.paymentProvider === "MOCK") {
+      } else if (data.paymentProvider === "MOCK" && mockPaymentEnabled) {
         paymentStatusBannerAction.textContent = "Continue Mock Checkout";
         paymentStatusBannerAction.style.display = "inline-flex";
         paymentStatusBannerAction.onclick = async function (e) {
@@ -501,20 +502,22 @@ document.addEventListener("DOMContentLoaded", async function () {
     manualNote.textContent = "One-time payment. Takes effect immediately.";
     wrapper.appendChild(manualNote);
 
-    const mockLink = document.createElement("a");
-    mockLink.className = "plan-mock-link";
-    mockLink.href = "#";
-    mockLink.textContent = "Mock Checkout (Demo)";
-    mockLink.style.textAlign = "center";
-    mockLink.style.fontSize = "12px";
-    mockLink.style.textDecoration = "underline";
-    mockLink.style.color = "var(--text-muted)";
-    mockLink.style.marginTop = "4px";
-    mockLink.addEventListener("click", function (event) {
-      event.preventDefault();
-      handleMockClick(event, plan.planCode);
-    });
-    wrapper.appendChild(mockLink);
+    if (mockPaymentEnabled) {
+      const mockLink = document.createElement("a");
+      mockLink.className = "plan-mock-link";
+      mockLink.href = "#";
+      mockLink.textContent = "Mock Checkout (Demo)";
+      mockLink.style.textAlign = "center";
+      mockLink.style.fontSize = "12px";
+      mockLink.style.textDecoration = "underline";
+      mockLink.style.color = "var(--text-muted)";
+      mockLink.style.marginTop = "4px";
+      mockLink.addEventListener("click", function (event) {
+        event.preventDefault();
+        handleMockClick(event, plan.planCode);
+      });
+      wrapper.appendChild(mockLink);
+    }
 
     return wrapper;
   }
@@ -525,12 +528,16 @@ document.addEventListener("DOMContentLoaded", async function () {
     pricingGrid.style.display = "none";
 
     try {
-      // Fetch plans and per-tier entitlements in parallel
-      const [result, entitlements] = await Promise.all([
+      // Fetch plans, entitlements, and config in parallel
+      const [result, entitlements, configResult] = await Promise.all([
         getPaymentPlans(),
-        fetchAllPlanEntitlements()
+        fetchAllPlanEntitlements(),
+        apiRequest("/api/payments/config", { method: "GET" }).catch(() => null)
       ]);
       allPlanEntitlements = entitlements; // may be null if endpoint unavailable
+      if (configResult && configResult.data && typeof configResult.data.mockPaymentEnabled !== "undefined") {
+        mockPaymentEnabled = configResult.data.mockPaymentEnabled;
+      }
 
       const plans = Array.isArray(result.data) ? result.data : [];
 
@@ -713,7 +720,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       const historyListContainer = document.getElementById("historyListContainer");
       
       // Check for pending payment to show in the highlighted card
-      const pendingPayment = payments.find(p => p.status === "PENDING" && (canContinueVNPay(p) || (typeof isMockPayment === "function" && isMockPayment(p))));
+      const pendingPayment = payments.find(p => p.status === "PENDING" && (canContinueVNPay(p) || (mockPaymentEnabled && typeof isMockPayment === "function" && isMockPayment(p))));
       const pendingSection = document.getElementById("pendingPaymentSection");
       if (pendingPayment && pendingSection) {
         document.getElementById("pendingPaymentPlan").textContent = pendingPayment.planName || pendingPayment.planCode;
