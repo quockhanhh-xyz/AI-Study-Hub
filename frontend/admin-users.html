@@ -70,7 +70,7 @@
                                     <input type="text" id="filterSearch" class="admin-filter-input admin-search-input" placeholder="Search by name or email..." onkeyup="handleSearch(event)" style="width: 100%;">
                                 </div>
                                 <div class="admin-actions-buttons" style="display: flex; gap: 8px;">
-                                    <button class="btn btn-outline" id="btnClearFilters" onclick="clearFilters()" title="Reset all filters" disabled style="white-space: nowrap;">
+                                    <button class="btn btn-outline" id="btnClearFilters" onclick="clearFilters()" title="Reset all filters" style="white-space: nowrap;">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                                         </svg>
@@ -112,14 +112,16 @@
                             <table class="admin-table" id="usersTable">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
-                                        <th>Name</th>
+                                        <th>No.</th>
+                                        <th>Username</th>
                                         <th>Email</th>
                                         <th>Role</th>
                                         <th>Tier</th>
-                                        <th>Documents</th>
+                                        <th>Verified</th>
                                         <th>Status</th>
-                                        <th>Joined Date</th>
+                                        <th style="text-align: center;">Docs</th>
+                                        <th>AI Today</th>
+                                        <th>Created</th>
                                         <th style="text-align: right;">Actions</th>
                                     </tr>
                                 </thead>

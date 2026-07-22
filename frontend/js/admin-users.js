@@ -191,9 +191,8 @@ function renderSummaryCards(data) {
 function formatJoinedDate(dateStr) {
     if (!dateStr) return "N/A";
     const d = new Date(dateStr);
-    const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return `${date} · ${time}`;
+    const date = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return date;
 }
 
 function renderUsersTable(data) {
@@ -207,19 +206,21 @@ function renderUsersTable(data) {
     const activeAdminCount = users.filter(u => u.role === 'ADMIN' && u.status !== 'BLOCKED').length;
 
     if (users.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 32px; color: var(--text-muted);">No users found matching your filter criteria.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; padding: 32px; color: var(--text-muted);">No users found matching your filter criteria.</td></tr>`;
     } else {
-        users.forEach(user => {
+        users.forEach((user, index) => {
             const tr = document.createElement("tr");
 
             tr.innerHTML = `
-                <td><span class="table-muted-text">#${user.userId}</span></td>
-                <td><span style="font-weight: 600; color: var(--text-main, #0f172a);">${escapeHtml(user.fullName)}</span></td>
+                <td><span class="table-muted-text">${(currentPage * pageSize) + index + 1}</span></td>
+                <td><span style="font-weight: 600; color: var(--text-main, #0f172a);">${escapeHtml(user.fullName || user.username)}</span></td>
                 <td><span class="table-muted-text" title="${escapeHtml(user.email)}">${escapeHtml(user.email)}</span></td>
                 <td><span class="badge ${getRoleBadgeClass(user.role)}">${user.role}</span></td>
-                <td><span class="badge ${getTierBadgeClass(user.tier)}">${user.tier}</span></td>
-                <td><span style="font-weight: 500; color: var(--text-main, #0f172a);">${user.documentCount || 0}</span></td>
+                <td><span class="badge ${getTierBadgeClass(user.tier)}">${user.tier || '-'}</span></td>
+                <td><span style="color: var(--success); font-weight: 500; font-size: 13px;">Verified</span></td>
                 <td><span class="badge ${getStatusBadgeClass(user.status)}">${user.status}</span></td>
+                <td style="text-align: center;"><span style="font-weight: 500; color: var(--text-main, #0f172a);">${user.documentCount || 0}</span></td>
+                <td><span class="table-muted-text">${user.aiUsage ? user.aiUsage.aiQaUsed : 0} / ${user.aiDailyLimit || 'Unlimited'}</span></td>
                 <td><span class="table-muted-text">${formatJoinedDate(user.createdAt)}</span></td>
                 <td style="text-align: right;">
                     ${renderActionButtons(user, activeAdminCount)}
@@ -260,11 +261,20 @@ function renderActionButtons(user, activeAdminCount) {
         } catch(e) {}
     }
 
+    const iconView = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 14px; height: 14px; margin-right: 4px; vertical-align: middle;"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>`;
+    const iconDetails = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 14px; height: 14px; margin-right: 4px; vertical-align: middle;"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" /></svg>`;
+    const iconBan = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 14px; height: 14px; margin-right: 4px; vertical-align: middle;"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" /></svg>`;
+    const iconUnban = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 14px; height: 14px; margin-right: 4px; vertical-align: middle;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>`;
+
+    const viewBtn = `<button class="btn btn-sm" style="color: var(--text-muted); background: transparent; border: none; font-weight: 500; padding: 0 4px;" onclick="viewUserDetails(${user.userId})">${iconView}View</button>`;
+    const detailsBtn = `<button class="btn btn-sm" style="color: var(--text-muted); background: transparent; border: none; font-weight: 500; padding: 0 4px;" onclick="viewUserDetails(${user.userId})">${iconDetails}Details</button>`;
+
     if (user.userId === currentUserId) {
         return `
-            <div class="admin-action-group">
+            <div class="admin-action-group" style="gap: 12px;">
                 <span class="admin-self-badge">You</span>
-                <button class="btn btn-sm btn-outline" onclick="viewUserDetails(${user.userId})">View</button>
+                ${viewBtn}
+                ${detailsBtn}
             </div>
         `;
     }
@@ -274,20 +284,22 @@ function renderActionButtons(user, activeAdminCount) {
 
     if (user.status === 'BLOCKED') {
         return `
-            <div class="admin-action-group">
-                <button class="btn btn-sm btn-outline" onclick="viewUserDetails(${user.userId})">View</button>
-                <button class="btn btn-sm btn-outline-success" onclick="promptUpdateStatus(${user.userId}, 'ACTIVE', \`${unblockMessage}\`)">Unblock</button>
+            <div class="admin-action-group" style="gap: 12px;">
+                ${viewBtn}
+                ${detailsBtn}
+                <button class="btn btn-sm" style="color: var(--success); background: transparent; border: none; font-weight: 500; padding: 0 4px;" onclick="promptUpdateStatus(${user.userId}, 'ACTIVE', \`${unblockMessage}\`)">${iconUnban}Unblock</button>
             </div>
         `;
     } else {
         const isLastAdmin = user.role === 'ADMIN' && activeAdminCount <= 1;
         const blockBtnHtml = isLastAdmin
-            ? `<button class="btn btn-sm btn-outline" disabled title="Cannot block the last active admin" style="opacity:0.5; cursor:not-allowed;">Block</button>`
-            : `<button class="btn btn-sm btn-outline-danger" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">Block</button>`;
+            ? `<button class="btn btn-sm" disabled title="Cannot block the last active admin" style="color: var(--danger); background: transparent; border: none; font-weight: 500; opacity:0.5; cursor:not-allowed; padding: 0 4px;">${iconBan}Ban</button>`
+            : `<button class="btn btn-sm" style="color: var(--danger); background: transparent; border: none; font-weight: 500; padding: 0 4px;" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">${iconBan}Ban</button>`;
 
         return `
-            <div class="admin-action-group">
-                <button class="btn btn-sm btn-outline" onclick="viewUserDetails(${user.userId})">View</button>
+            <div class="admin-action-group" style="gap: 12px;">
+                ${viewBtn}
+                ${detailsBtn}
                 ${blockBtnHtml}
             </div>
         `;
