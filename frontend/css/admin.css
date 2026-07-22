@@ -3,40 +3,6 @@
  * Kept separate to prevent polluting the main application style.css
  */
 
-/* ─── Admin Top Navigation Bar ──────────────────────────────────────────── */
-.admin-topbar {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 24px;
-    height: 56px;
-    background-color: var(--surface, #ffffff);
-    border-bottom: 1px solid var(--border, #eadfdd);
-    box-shadow: 0 1px 4px rgba(23, 32, 51, 0.06);
-}
-
-.admin-topbar-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.admin-topbar-brand {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text-main, #172033);
-    letter-spacing: -0.01em;
-}
-
-.admin-topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
 .admin-layout {
     display: flex;
     flex-direction: column;
@@ -45,7 +11,7 @@
 
 .main-content:has(.admin-layout),
 .main-content:has(.admin-content-wrapper) {
-    padding-top: 0 !important;
+    padding-top: 35px !important;
     padding-bottom: 16px !important;
 }
 

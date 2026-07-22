@@ -28,13 +28,13 @@ async function initializeLayout() {
 }
 
 function renderAdminTopbar() {
-  // Admin pages already have a static .admin-topbar with id="globalHeaderWidgets" in HTML.
-  // We populate that container directly rather than destroying and recreating the topbar.
-  const widgetsContainer = document.getElementById("globalHeaderWidgets");
-  if (!widgetsContainer) return;
+  const oldTopbar = document.querySelector(".admin-topbar");
+  if (oldTopbar) {
+    oldTopbar.remove();
+  }
 
-  // Prevent double-render
-  if (widgetsContainer.querySelector(".notification-bell-btn")) return;
+  const pageHeader = document.querySelector(".admin-page-header");
+  if (!pageHeader || pageHeader.querySelector("#globalHeaderWidgets")) return;
 
   let adminName = "System Admin";
   const userStr = localStorage.getItem("currentUser");
@@ -47,7 +47,10 @@ function renderAdminTopbar() {
 
   const initialLetter = (adminName || "A").charAt(0).toUpperCase();
 
-  widgetsContainer.innerHTML = `
+  const widgets = document.createElement("div");
+  widgets.id = "globalHeaderWidgets";
+  widgets.style.cssText = "display: flex; align-items: center; gap: 16px;";
+  widgets.innerHTML = `
       <div class="notification-container">
         <button class="notification-bell-btn" id="adminNotifBellBtn" aria-label="Notifications" title="Notifications">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true" stroke="currentColor" stroke-width="1.8">
@@ -63,6 +66,12 @@ function renderAdminTopbar() {
         </div>
       </div>
   `;
+
+  if (pageHeader.children.length === 1) {
+    pageHeader.appendChild(widgets);
+  } else if (pageHeader.children.length > 1) {
+    pageHeader.children[1].appendChild(widgets);
+  }
 }
 
 
