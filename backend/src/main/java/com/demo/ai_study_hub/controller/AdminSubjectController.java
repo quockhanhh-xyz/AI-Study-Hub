@@ -74,6 +74,14 @@ public class AdminSubjectController {
         return ResponseEntity.ok(ApiResponse.success(updated, "Subject status updated successfully"));
     }
 
+    @GetMapping("/stats")
+    public ResponseEntity<ApiResponse<Map<String, Long>>> getSubjectStats(
+            @RequestParam(required = false) String search
+    ) {
+        Map<String, Long> stats = adminSubjectService.getSubjectStats(search);
+        return ResponseEntity.ok(ApiResponse.success(stats, "Subject stats retrieved successfully"));
+    }
+
     @GetMapping("/export")
     public ResponseEntity<byte[]> exportSubjects(
             @RequestParam(required = false) String search,

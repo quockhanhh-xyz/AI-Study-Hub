@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 import java.util.List;
 
@@ -24,4 +26,11 @@ public interface SubjectRequestRepository extends JpaRepository<SubjectRequest, 
     boolean existsByRequestedNameAndStatus(String requestedName, String status);
 
     long countByStatus(String status);
+
+    @Query("SELECT COUNT(sr) FROM SubjectRequest sr WHERE " +
+           "sr.status = :status AND " +
+           "(:search IS NULL OR :search = '' OR " +
+           "LOWER(sr.requestedCode) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(sr.requestedName) LIKE LOWER(CONCAT('%', :search, '%')))")
+    long countFilteredRequestsByStatus(@Param("status") String status, @Param("search") String search);
 }

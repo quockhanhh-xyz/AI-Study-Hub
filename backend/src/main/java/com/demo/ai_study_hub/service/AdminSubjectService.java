@@ -9,6 +9,7 @@ import com.demo.ai_study_hub.dto.AdminSubjectRequest;
 import com.demo.ai_study_hub.entity.Subject;
 import com.demo.ai_study_hub.repository.DocumentRepository;
 import com.demo.ai_study_hub.repository.SubjectRepository;
+import com.demo.ai_study_hub.repository.SubjectRequestRepository;
 import jakarta.persistence.criteria.Predicate;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -34,6 +35,9 @@ public class AdminSubjectService {
 
     @Autowired
     private DocumentRepository documentRepository;
+
+    @Autowired
+    private SubjectRequestRepository subjectRequestRepository;
 
     public AdminSubjectListResponse getSystemSubjects(String search, String status, Pageable pageable) {
         Specification<Subject> spec = buildSpecification(search, status);
@@ -172,5 +176,20 @@ public class AdminSubjectService {
         item.setUpdatedAt(subject.getUpdatedAt());
         item.setDocumentsCount(documentRepository.countBySubject(subject));
         return item;
+    }
+
+    public java.util.Map<String, Long> getSubjectStats(String search) {
+        String cleanSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+        long total = subjectRepository.countSystemSubjectsFiltered(cleanSearch);
+        long active = subjectRepository.countSystemSubjectsFilteredByStatus("ACTIVE", cleanSearch);
+        long inactive = subjectRepository.countSystemSubjectsFilteredByStatus("INACTIVE", cleanSearch);
+        long pendingRequests = subjectRequestRepository.countFilteredRequestsByStatus("PENDING", cleanSearch);
+
+        java.util.Map<String, Long> stats = new java.util.HashMap<>();
+        stats.put("total", total);
+        stats.put("active", active);
+        stats.put("inactive", inactive);
+        stats.put("pendingRequests", pendingRequests);
+        return stats;
     }
 }

@@ -12,6 +12,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // Elements
   const statusFilter = document.getElementById("statusFilter");
+  const reasonFilter = document.getElementById("reasonFilter");
+  const searchInput = document.getElementById("searchInput");
+  const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+  const exportBtn = document.getElementById("exportBtn");
+  const exportBtnText = document.getElementById("exportBtnText");
+
   const reportsTableBody = document.getElementById("reportsTableBody");
   const reportsLoadingState = document.getElementById("reportsLoadingState");
   const reportsErrorState = document.getElementById("reportsErrorState");
@@ -44,8 +50,36 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (statusFilter) {
       statusFilter.addEventListener("change", () => {
         currentPage = 0;
+        updateFiltersUI();
         loadReports();
       });
+    }
+
+    // Reason Filter listener
+    if (reasonFilter) {
+      reasonFilter.addEventListener("change", () => {
+        currentPage = 0;
+        updateFiltersUI();
+        loadReports();
+      });
+    }
+
+    // Search Input listener
+    if (searchInput) {
+      let timeout = null;
+      searchInput.addEventListener("input", () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          currentPage = 0;
+          updateFiltersUI();
+          loadReports();
+        }, 300);
+      });
+    }
+
+    // Export Excel listener
+    if (exportBtn) {
+      exportBtn.addEventListener("click", handleExportExcel);
     }
 
     // Pagination Listeners
@@ -81,15 +115,93 @@ document.addEventListener("DOMContentLoaded", async function () {
     loadReports();
   }
 
+  // Clear filters function
+  window.clearFilters = function () {
+    if (statusFilter) statusFilter.value = "";
+    if (reasonFilter) reasonFilter.value = "";
+    if (searchInput) searchInput.value = "";
+    currentPage = 0;
+    updateFiltersUI();
+    loadReports();
+  };
+
+  function updateFiltersUI() {
+    const hasFilters = (statusFilter && statusFilter.value) ||
+                       (reasonFilter && reasonFilter.value) ||
+                       (searchInput && searchInput.value.trim());
+    if (clearFiltersBtn) {
+      clearFiltersBtn.style.display = hasFilters ? "inline-flex" : "none";
+    }
+    if (exportBtnText) {
+      exportBtnText.textContent = hasFilters ? "Export filtered reports" : "Export all reports";
+    }
+  }
+
+  async function handleExportExcel() {
+    if (!exportBtn) return;
+    const statusVal = statusFilter ? statusFilter.value : "";
+    const reasonVal = reasonFilter ? reasonFilter.value : "";
+    const searchVal = searchInput ? searchInput.value.trim() : "";
+
+    try {
+      exportBtn.disabled = true;
+      const originalText = exportBtnText.textContent;
+      exportBtnText.textContent = "Exporting...";
+
+      await exportAdminReports({
+        status: statusVal,
+        reason: reasonVal,
+        search: searchVal
+      });
+
+      exportBtnText.textContent = originalText;
+      exportBtn.disabled = false;
+    } catch (err) {
+      console.error("Export failed", err);
+      if (typeof showToast === "function") showToast("Failed to export Excel file.", "error");
+      exportBtn.disabled = false;
+      updateFiltersUI();
+    }
+  }
+
+  async function loadReportStats() {
+    try {
+      const searchVal = searchInput ? searchInput.value.trim() : "";
+      const reasonVal = reasonFilter ? reasonFilter.value : "";
+      const statusVal = statusFilter ? statusFilter.value : "";
+      const params = new URLSearchParams();
+      if (searchVal) params.append("search", searchVal);
+      if (reasonVal) params.append("reason", reasonVal);
+      // Don't pass status to stats so totals remain globally accurate per reason/search
+      const queryString = params.toString() ? `?${params.toString()}` : "";
+
+      const res = await get(`/api/admin/document-reports/stats${queryString}`, { skipUnauthorizedRedirect: true });
+      if (res && res.success) {
+        const stats = res.data;
+        document.getElementById("cardTotalReports").textContent = stats.total || 0;
+        document.getElementById("cardPendingReports").textContent = stats.pending || 0;
+        document.getElementById("cardResolvedReports").textContent = stats.resolved || 0;
+        document.getElementById("cardDismissedReports").textContent = stats.dismissed || 0;
+      }
+    } catch (err) {
+      console.error("Failed to load report stats", err);
+    }
+  }
+
   async function loadReports() {
     reportsLoadingState.style.display = "flex";
     reportsErrorState.style.display = "none";
     reportsContent.style.display = "none";
 
     const statusVal = statusFilter ? statusFilter.value : "";
+    const reasonVal = reasonFilter ? reasonFilter.value : "";
+    const searchVal = searchInput ? searchInput.value.trim() : "";
+
+    // Load stats in parallel
+    loadReportStats();
 
     try {
-      const res = await getAdminReports(statusVal, currentPage, pageSize);
+      const res = await getAdminReports(statusVal, reasonVal, searchVal, currentPage, pageSize);
       if (res && res.success) {
         reportsLoadingState.style.display = "none";
         reportsContent.style.display = "block";
@@ -118,7 +230,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       reportsTableBody.innerHTML = `
         <tr>
           <td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted);">
-            No violation reports found matching current status filter.
+            No violation reports found matching current status/search filters.
           </td>
         </tr>
       `;
@@ -128,38 +240,58 @@ document.addEventListener("DOMContentLoaded", async function () {
     reports.forEach(r => {
       const tr = document.createElement("tr");
 
-      // ID column
+      // ID column (centered)
       const idTd = document.createElement("td");
       idTd.textContent = `#${r.reportId}`;
       idTd.style.fontWeight = "600";
+      idTd.style.textAlign = "center";
 
-      // Document Title column
+      // Document Title column (centered)
       const docTd = document.createElement("td");
+      docTd.style.textAlign = "center";
       if (r.documentId) {
         const a = document.createElement("a");
         a.href = `admin-document-detail.html?id=${r.documentId}`;
-        a.style.color = "var(--primary)";
-        a.style.fontWeight = "600";
+        a.style.color = "#f97316"; // Beautiful soft orange
+        a.style.fontSize = "13px"; // Slightly smaller for better balance
+        a.style.fontWeight = "500";
+        a.style.textDecoration = "none";
         a.textContent = r.documentTitle || `Doc ID: ${r.documentId}`;
+        a.addEventListener("mouseenter", () => { a.style.textDecoration = "underline"; });
+        a.addEventListener("mouseleave", () => { a.style.textDecoration = "none"; });
         docTd.appendChild(a);
       } else {
         docTd.textContent = "Deleted Document";
         docTd.style.color = "var(--text-muted)";
       }
 
-      // Reporter info column
+      // Reporter info column (centered)
       const reporterTd = document.createElement("td");
+      reporterTd.style.textAlign = "center";
       reporterTd.innerHTML = `
-        <div style="font-weight:600;">${r.reporterName || "Unknown"}</div>
-        <div style="font-size:0.75rem; color:var(--text-muted);">${r.reporterEmail || ""}</div>
+        <div style="font-weight:600;">${escapeHtml(r.reporterName || "Unknown")}</div>
+        <div style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(r.reporterEmail || "")}</div>
       `;
 
-      // Reason column
+      // Reason column (centered with badges)
       const reasonTd = document.createElement("td");
-      reasonTd.textContent = r.reason || "OTHER";
+      reasonTd.style.textAlign = "center";
+      const reasonBadge = document.createElement("span");
+      const reasonUpper = (r.reason || "OTHER").toUpperCase();
+      reasonBadge.textContent = reasonUpper;
+      
+      let reasonClass = "reason-other";
+      if (reasonUpper === "SPAM") reasonClass = "reason-spam";
+      else if (reasonUpper === "COPYRIGHT") reasonClass = "reason-copyright";
+      else if (reasonUpper === "INAPPROPRIATE_CONTENT" || reasonUpper === "INAPPROPRIATE") reasonClass = "reason-inappropriate";
+      else if (reasonUpper === "DUPLICATE_CONTENT" || reasonUpper === "DUPLICATE") reasonClass = "reason-duplicate";
+      
+      reasonBadge.className = `reason-badge ${reasonClass}`;
+      reasonTd.appendChild(reasonBadge);
 
-      // Description column
+      // Description column (centered)
       const descTd = document.createElement("td");
+      descTd.style.textAlign = "center";
       descTd.textContent = r.description || "–";
       descTd.style.maxWidth = "200px";
       descTd.style.overflow = "hidden";
@@ -169,42 +301,51 @@ document.addEventListener("DOMContentLoaded", async function () {
         descTd.title = r.description;
       }
 
-      // Status column
+      // Status column (centered)
       const statusTd = document.createElement("td");
+      statusTd.style.textAlign = "center";
       const badge = document.createElement("span");
       const statusLower = (r.status || "PENDING").toLowerCase();
       badge.className = `status-badge badge-${statusLower}`;
       badge.textContent = r.status || "PENDING";
       statusTd.appendChild(badge);
 
-      // Date column
+      // Date column (centered)
       const dateTd = document.createElement("td");
+      dateTd.style.textAlign = "center";
       dateTd.textContent = r.createdAt ? formatDate(r.createdAt) : "–";
 
-      // Actions column
+      // Actions column (centered & aligned cleanly)
       const actionsTd = document.createElement("td");
+      actionsTd.style.textAlign = "center";
+      actionsTd.style.whiteSpace = "nowrap";
+      
       if (r.status === "PENDING") {
         const resolveBtn = document.createElement("button");
         resolveBtn.className = "btn btn-primary btn-sm";
         resolveBtn.textContent = "Resolve";
         resolveBtn.style.marginRight = "6px";
-        resolveBtn.style.padding = "4px 8px";
+        resolveBtn.style.padding = "6px 12px";
         resolveBtn.style.fontSize = "11px";
+        resolveBtn.style.borderRadius = "20px";
         resolveBtn.addEventListener("click", () => openActionModal(r.reportId, "resolve"));
 
         const dismissBtn = document.createElement("button");
         dismissBtn.className = "btn btn-outline btn-sm";
         dismissBtn.textContent = "Dismiss";
-        dismissBtn.style.padding = "4px 8px";
+        dismissBtn.style.padding = "6px 12px";
         dismissBtn.style.fontSize = "11px";
+        dismissBtn.style.borderRadius = "20px";
         dismissBtn.addEventListener("click", () => openActionModal(r.reportId, "dismiss"));
 
         actionsTd.append(resolveBtn, dismissBtn);
       } else {
         actionsTd.innerHTML = `
-          <div style="font-size: 0.8rem;">Resolved by: <span style="font-weight:600;">${r.resolvedByName || "Admin"}</span></div>
-          <div style="font-size: 0.75rem; color: var(--text-muted); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${r.resolutionNote || ''}">
-            Note: ${r.resolutionNote || 'N/A'}
+          <div style="font-size: 11px; line-height: 1.35; color: var(--text-muted); display: inline-block; text-align: center;">
+            <div style="font-weight: 500; color: #475569;">Resolved by: <span style="font-weight: 600; color: #0f172a;">${escapeHtml(r.resolvedByName || "Admin")}</span></div>
+            <div style="color: #64748b; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px;" title="${escapeHtml(r.resolutionNote || '')}">
+              Note: ${escapeHtml(r.resolutionNote || 'N/A')}
+            </div>
           </div>
         `;
       }
@@ -293,12 +434,21 @@ document.addEventListener("DOMContentLoaded", async function () {
       return d.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
+        day: "numeric"
       });
     } catch (e) {
       return dateStr;
     }
+  }
+
+  // Simple escaping function to prevent XSS
+  function escapeHtml(str) {
+    if (!str) return "";
+    return str.toString()
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 });

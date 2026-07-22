@@ -61,4 +61,19 @@ public interface SubjectRepository extends JpaRepository<Subject, Integer>, JpaS
             @Param("owner") User owner,
             @Param("subjectId") Integer subjectId
     );
+
+    @Query("SELECT COUNT(s) FROM Subject s WHERE " +
+           "(s.scope = 'SYSTEM' OR s.owner IS NULL) AND " +
+           "(:search IS NULL OR :search = '' OR " +
+           "LOWER(s.subjectCode) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(s.subjectName) LIKE LOWER(CONCAT('%', :search, '%')))")
+    long countSystemSubjectsFiltered(@Param("search") String search);
+
+    @Query("SELECT COUNT(s) FROM Subject s WHERE " +
+           "(s.scope = 'SYSTEM' OR s.owner IS NULL) AND " +
+           "s.status = :status AND " +
+           "(:search IS NULL OR :search = '' OR " +
+           "LOWER(s.subjectCode) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(s.subjectName) LIKE LOWER(CONCAT('%', :search, '%')))")
+    long countSystemSubjectsFilteredByStatus(@Param("status") String status, @Param("search") String search);
 }

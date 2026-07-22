@@ -158,9 +158,14 @@ async function deleteRating(documentId) {
 /**
  * Admin: Retrieves the list of document reports.
  */
-async function getAdminReports(status = "", page = 0, size = 10) {
-  const statusParam = status ? `status=${status}&` : "";
-  return get(`/api/admin/document-reports?${statusParam}page=${page}&size=${size}`, { skipUnauthorizedRedirect: true });
+async function getAdminReports(status = "", reason = "", search = "", page = 0, size = 10) {
+  const params = new URLSearchParams();
+  if (status) params.append("status", status);
+  if (reason) params.append("reason", reason);
+  if (search) params.append("search", search);
+  params.append("page", page);
+  params.append("size", size);
+  return get(`/api/admin/document-reports?${params.toString()}`, { skipUnauthorizedRedirect: true });
 }
 
 /**
@@ -175,5 +180,14 @@ async function resolveReport(reportId, resolutionNote = "") {
  */
 async function dismissReport(reportId, resolutionNote = "") {
   return patch(`/api/admin/document-reports/${reportId}/dismiss`, { resolutionNote }, { skipUnauthorizedRedirect: true });
+}
+
+/**
+ * Admin: Exports reports to Excel.
+ */
+function exportAdminReports(params = {}) {
+  const query = new URLSearchParams(params).toString();
+  const endpoint = query ? `/api/admin/document-reports/export?${query}` : '/api/admin/document-reports/export';
+  return exportAdminData(endpoint, `Violation_Reports_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 

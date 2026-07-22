@@ -119,10 +119,31 @@ function initAdminSubjects() {
     tabRequestsBtn.addEventListener('click', () => switchTab('requests'));
 
     // --- Subjects Management Logic ---
+    const loadSubjectStats = async () => {
+        try {
+            const isSubjectsTab = tabSubjectsBtn && tabSubjectsBtn.classList.contains('active');
+            const searchVal = isSubjectsTab ? (searchInput ? searchInput.value.trim() : '') : (reqSearchInput ? reqSearchInput.value.trim() : '');
+            const query = searchVal ? `?search=${encodeURIComponent(searchVal)}` : '';
+            const response = await get(`/api/admin/subjects/stats${query}`, { skipUnauthorizedRedirect: true });
+            if (response && response.success && response.data) {
+                const stats = response.data;
+                document.getElementById("cardTotalSubjects").textContent = stats.total || 0;
+                document.getElementById("cardActiveSubjects").textContent = stats.active || 0;
+                document.getElementById("cardInactiveSubjects").textContent = stats.inactive || 0;
+                document.getElementById("cardPendingRequests").textContent = stats.pendingRequests || 0;
+            }
+        } catch (err) {
+            console.error("Failed to load subjects stats", err);
+        }
+    };
+
     const loadSubjects = async () => {
         const loadingState = document.getElementById("subjLoadingState");
         const errorState = document.getElementById("subjErrorState");
         const contentState = document.getElementById("subjContent");
+
+        // Load stats in parallel
+        loadSubjectStats();
 
         if (contentState.style.display === "none" || contentState.style.display === "") {
             loadingState.style.display = "flex";
@@ -177,7 +198,7 @@ function initAdminSubjects() {
             return `
             <tr>
                 <td style="font-weight: 500; text-align: center;">${escapeHtml(item.subjectCode)}</td>
-                <td>${escapeHtml(item.subjectName)}</td>
+                <td style="text-align: center;">${escapeHtml(item.subjectName)}</td>
                 <td>${item.description ? `<div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-width: 250px;" title="${escapeHtml(item.description)}">${escapeHtml(item.description)}</div>` : '<span style="color: var(--text-muted); font-style: italic;">No description</span>'}</td>
                 <td style="color: var(--text-muted); text-align: center;">${docCount}</td>
                 <td style="text-align: center;"><span class="admin-badge ${statusClass}">${statusText}</span></td>
@@ -220,6 +241,9 @@ function initAdminSubjects() {
         const loadingState = document.getElementById("subjLoadingState");
         const errorState = document.getElementById("subjErrorState");
         const contentState = document.getElementById("subjContent");
+
+        // Load stats in parallel
+        loadSubjectStats();
 
         if (contentState.style.display === "none" || contentState.style.display === "") {
             loadingState.style.display = "flex";

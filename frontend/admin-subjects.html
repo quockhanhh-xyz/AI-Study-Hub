@@ -71,6 +71,33 @@
             </div>
 
             <div id="subjContent" style="display: none;">
+                <!-- Summary KPI Cards -->
+                <div class="admin-payment-summary-grid" id="subjectSummaryCards" style="margin-bottom: 24px;">
+                    <div class="payment-summary-card admin-card">
+                        <div class="payment-summary-info">
+                            <div class="summary-label">Total Subjects</div>
+                            <div class="summary-value text-primary" id="cardTotalSubjects">0</div>
+                        </div>
+                    </div>
+                    <div class="payment-summary-card admin-card">
+                        <div class="payment-summary-info">
+                            <div class="summary-label">Active Subjects</div>
+                            <div class="summary-value text-success" id="cardActiveSubjects">0</div>
+                        </div>
+                    </div>
+                    <div class="payment-summary-card admin-card">
+                        <div class="payment-summary-info">
+                            <div class="summary-label">Inactive Subjects</div>
+                            <div class="summary-value text-danger" id="cardInactiveSubjects">0</div>
+                        </div>
+                    </div>
+                    <div class="payment-summary-card admin-card">
+                        <div class="payment-summary-info">
+                            <div class="summary-label">Pending Requests</div>
+                            <div class="summary-value text-warning" id="cardPendingRequests">0</div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Panel 1: Subjects List -->
                 <div id="panelSubjects" class="tab-panel">

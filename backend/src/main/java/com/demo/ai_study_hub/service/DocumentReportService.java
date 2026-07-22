@@ -17,6 +17,10 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
@@ -100,10 +104,14 @@ public class DocumentReportService {
     }
 
     public Page<DocumentReport> getAdminReports(String status, Pageable pageable) {
-        if (status != null && !status.trim().isEmpty()) {
-            return documentReportRepository.findByStatus(status.trim().toUpperCase(), pageable);
-        }
-        return documentReportRepository.findAll(pageable);
+        return getAdminReports(status, null, null, pageable);
+    }
+
+    public Page<DocumentReport> getAdminReports(String status, String reason, String search, Pageable pageable) {
+        String cleanStatus = (status != null && !status.trim().isEmpty()) ? status.trim().toUpperCase() : null;
+        String cleanReason = (reason != null && !reason.trim().isEmpty()) ? reason.trim().toUpperCase() : null;
+        String cleanSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+        return documentReportRepository.searchReports(cleanStatus, cleanReason, cleanSearch, pageable);
     }
 
     public DocumentReport getAdminReportDetail(Long reportId) {
@@ -175,6 +183,65 @@ public class DocumentReportService {
         );
 
         return savedReport;
+    }
+
+    public java.util.Map<String, Long> getReportStats(String status, String reason, String search) {
+        String cleanStatus = (status != null && !status.trim().isEmpty()) ? status.trim().toUpperCase() : null;
+        String cleanReason = (reason != null && !reason.trim().isEmpty()) ? reason.trim().toUpperCase() : null;
+        String cleanSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+
+        java.util.Map<String, Long> stats = new java.util.HashMap<>();
+        // Total = all matching filter (no status restriction)
+        stats.put("total", documentReportRepository.countReportsFiltered(null, cleanReason, cleanSearch));
+        stats.put("pending", documentReportRepository.countReportsFiltered("PENDING", cleanReason, cleanSearch));
+        stats.put("resolved", documentReportRepository.countReportsFiltered("RESOLVED", cleanReason, cleanSearch));
+        stats.put("dismissed", documentReportRepository.countReportsFiltered("DISMISSED", cleanReason, cleanSearch));
+        return stats;
+    }
+
+    public byte[] exportReports(String status, String reason, String search) {
+        String cleanStatus = (status != null && !status.trim().isEmpty()) ? status.trim().toUpperCase() : null;
+        String cleanReason = (reason != null && !reason.trim().isEmpty()) ? reason.trim().toUpperCase() : null;
+        String cleanSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+
+        List<DocumentReport> reports = documentReportRepository.searchReportsList(cleanStatus, cleanReason, cleanSearch);
+
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Violation Reports");
+            Row headerRow = sheet.createRow(0);
+            headerRow.createCell(0).setCellValue("Report ID");
+            headerRow.createCell(1).setCellValue("Document Title");
+            headerRow.createCell(2).setCellValue("Reporter Name");
+            headerRow.createCell(3).setCellValue("Reporter Email");
+            headerRow.createCell(4).setCellValue("Reason");
+            headerRow.createCell(5).setCellValue("Description");
+            headerRow.createCell(6).setCellValue("Status");
+            headerRow.createCell(7).setCellValue("Resolved By");
+            headerRow.createCell(8).setCellValue("Resolution Note");
+            headerRow.createCell(9).setCellValue("Created At");
+            headerRow.createCell(10).setCellValue("Resolved At");
+
+            int rowIdx = 1;
+            for (DocumentReport report : reports) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(report.getReportId());
+                row.createCell(1).setCellValue(report.getDocument() != null ? report.getDocument().getTitle() : "Deleted Document");
+                row.createCell(2).setCellValue(report.getReporter() != null ? report.getReporter().getFullName() : "Unknown");
+                row.createCell(3).setCellValue(report.getReporter() != null ? report.getReporter().getEmail() : "");
+                row.createCell(4).setCellValue(report.getReason());
+                row.createCell(5).setCellValue(report.getDescription());
+                row.createCell(6).setCellValue(report.getStatus());
+                row.createCell(7).setCellValue(report.getResolvedBy() != null ? report.getResolvedBy().getFullName() : "");
+                row.createCell(8).setCellValue(report.getResolutionNote());
+                row.createCell(9).setCellValue(report.getCreatedAt() != null ? report.getCreatedAt().toString() : "");
+                row.createCell(10).setCellValue(report.getResolvedAt() != null ? report.getResolvedAt().toString() : "");
+            }
+
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error exporting violation reports to Excel", e);
+        }
     }
 
     private User getUser(String email) {

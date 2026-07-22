@@ -29,4 +29,47 @@ public interface DocumentReportRepository extends JpaRepository<DocumentReport, 
 
     Page<DocumentReport> findByStatus(String status, Pageable pageable);
     long countByStatus(String status);
+
+    @Query("SELECT r FROM DocumentReport r WHERE " +
+           "(:status IS NULL OR :status = '' OR r.status = :status) AND " +
+           "(:reason IS NULL OR :reason = '' OR r.reason = :reason) AND " +
+           "(:search IS NULL OR :search = '' OR " +
+           "LOWER(r.document.title) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(r.reporter.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(r.reporter.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(r.description) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<DocumentReport> searchReports(
+            @Param("status") String status,
+            @Param("reason") String reason,
+            @Param("search") String search,
+            Pageable pageable
+    );
+
+    @Query("SELECT r FROM DocumentReport r WHERE " +
+           "(:status IS NULL OR :status = '' OR r.status = :status) AND " +
+           "(:reason IS NULL OR :reason = '' OR r.reason = :reason) AND " +
+           "(:search IS NULL OR :search = '' OR " +
+           "LOWER(r.document.title) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(r.reporter.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(r.reporter.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(r.description) LIKE LOWER(CONCAT('%', :search, '%')))")
+    java.util.List<DocumentReport> searchReportsList(
+            @Param("status") String status,
+            @Param("reason") String reason,
+            @Param("search") String search
+    );
+
+    @Query("SELECT COUNT(r) FROM DocumentReport r WHERE " +
+           "(:status IS NULL OR :status = '' OR r.status = :status) AND " +
+           "(:reason IS NULL OR :reason = '' OR r.reason = :reason) AND " +
+           "(:search IS NULL OR :search = '' OR " +
+           "LOWER(r.document.title) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(r.reporter.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(r.reporter.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(r.description) LIKE LOWER(CONCAT('%', :search, '%')))")
+    long countReportsFiltered(
+            @Param("status") String status,
+            @Param("reason") String reason,
+            @Param("search") String search
+    );
 }

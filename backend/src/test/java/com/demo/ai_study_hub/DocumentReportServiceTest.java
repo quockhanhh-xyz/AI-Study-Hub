@@ -165,4 +165,19 @@ class DocumentReportServiceTest {
         assertEquals("Report is invalid", result.getResolutionNote());
         assertNotNull(result.getResolvedAt());
     }
+
+    @Test
+    void getReportStats_Success() {
+        when(documentReportRepository.countReportsFiltered(null, null, null)).thenReturn(10L);
+        when(documentReportRepository.countReportsFiltered("PENDING", null, null)).thenReturn(5L);
+        when(documentReportRepository.countReportsFiltered("RESOLVED", null, null)).thenReturn(3L);
+        when(documentReportRepository.countReportsFiltered("DISMISSED", null, null)).thenReturn(2L);
+
+        java.util.Map<String, Long> stats = documentReportService.getReportStats(null, null, null);
+
+        assertEquals(10L, stats.get("total"));
+        assertEquals(5L, stats.get("pending"));
+        assertEquals(3L, stats.get("resolved"));
+        assertEquals(2L, stats.get("dismissed"));
+    }
 }

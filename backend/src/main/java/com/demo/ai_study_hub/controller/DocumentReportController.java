@@ -11,6 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -51,9 +53,21 @@ public class DocumentReportController {
     @GetMapping("/api/admin/document-reports")
     public ResponseEntity<ApiResponse<Page<DocumentReportResponse>>> getAdminReports(
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String reason,
+            @RequestParam(required = false) String search,
             Pageable pageable) {
-        Page<DocumentReport> reports = documentReportService.getAdminReports(status, pageable);
+        Page<DocumentReport> reports = documentReportService.getAdminReports(status, reason, search, pageable);
         return ResponseEntity.ok(ApiResponse.success(reports.map(this::mapToResponse), "Admin reports retrieved successfully"));
+    }
+
+    @GetMapping("/api/admin/document-reports/stats")
+    public ResponseEntity<ApiResponse<Map<String, Long>>> getReportStats(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String reason,
+            @RequestParam(required = false) String search
+    ) {
+        Map<String, Long> stats = documentReportService.getReportStats(status, reason, search);
+        return ResponseEntity.ok(ApiResponse.success(stats, "Report stats retrieved successfully"));
     }
 
     @GetMapping("/api/admin/document-reports/{reportId}")
@@ -97,6 +111,19 @@ public class DocumentReportController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
         }
+    }
+
+    @GetMapping("/api/admin/document-reports/export")
+    public ResponseEntity<byte[]> exportReports(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String reason,
+            @RequestParam(required = false) String search
+    ) {
+        byte[] data = documentReportService.exportReports(status, reason, search);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.setContentDispositionFormData("attachment", "violation_reports.xlsx");
+        return ResponseEntity.ok().headers(headers).body(data);
     }
 
     private DocumentReportResponse mapToResponse(DocumentReport r) {
