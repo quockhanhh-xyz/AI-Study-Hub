@@ -252,6 +252,8 @@
 .admin-badge-action {
     padding: 6px 16px;
     font-size: 14px;
+    min-width: 85px;
+    justify-content: center;
 }
 
 .badge-you-special {
