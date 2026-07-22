@@ -261,13 +261,13 @@ function renderActionButtons(user, activeAdminCount) {
         } catch(e) {}
     }
 
-    const viewBtn = `<span class="badge admin-badge-neutral" style="cursor: pointer;" onclick="viewUserDetails(${user.userId})">View</span>`;
+    const viewBtn = `<span class="badge admin-badge-action admin-badge-neutral" style="cursor: pointer;" onclick="viewUserDetails(${user.userId})">View</span>`;
 
     if (user.userId === currentUserId) {
         return `
-            <div class="admin-action-group" style="gap: 8px; display: flex; justify-content: center; align-items: center;">
+            <div class="admin-action-group" style="gap: 12px; display: flex; justify-content: center; align-items: center;">
                 ${viewBtn}
-                <span class="badge admin-badge-primary">You</span>
+                <span class="badge admin-badge-action badge-you-special">You</span>
             </div>
         `;
     }
@@ -275,11 +275,11 @@ function renderActionButtons(user, activeAdminCount) {
     const blockMessage = `This user will no longer be able to sign in or access AI Study Hub.<br><br>Are you sure you want to block <strong>${escapeHtml(user.fullName || user.email)}</strong>?`;
     const unblockMessage = `This user will regain full access to their account.<br><br>Are you sure you want to unblock <strong>${escapeHtml(user.fullName || user.email)}</strong>?`;
 
-    const unblockBtnHtml = `<span class="badge admin-badge-success" style="cursor: pointer;" onclick="promptUpdateStatus(${user.userId}, 'ACTIVE', \`${unblockMessage}\`)">Unblock</span>`;
+    const unblockBtnHtml = `<span class="badge admin-badge-action admin-badge-success" style="cursor: pointer;" onclick="promptUpdateStatus(${user.userId}, 'ACTIVE', \`${unblockMessage}\`)">Unblock</span>`;
 
     if (user.status === 'BLOCKED') {
         return `
-            <div class="admin-action-group" style="gap: 8px; display: flex; justify-content: center; align-items: center;">
+            <div class="admin-action-group" style="gap: 12px; display: flex; justify-content: center; align-items: center;">
                 ${viewBtn}
                 ${unblockBtnHtml}
             </div>
@@ -287,11 +287,11 @@ function renderActionButtons(user, activeAdminCount) {
     } else {
         const isLastAdmin = user.role === 'ADMIN' && activeAdminCount <= 1;
         const blockBtnHtml = isLastAdmin
-            ? `<span class="badge admin-badge-danger" style="opacity: 0.5; cursor: not-allowed;" title="Cannot block the last active admin">Ban</span>`
-            : `<span class="badge admin-badge-danger" style="cursor: pointer;" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">Ban</span>`;
+            ? `<span class="badge admin-badge-action admin-badge-danger" style="opacity: 0.5; cursor: not-allowed;" title="Cannot block the last active admin">Ban</span>`
+            : `<span class="badge admin-badge-action admin-badge-danger" style="cursor: pointer;" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">Ban</span>`;
 
         return `
-            <div class="admin-action-group" style="gap: 8px; display: flex; justify-content: center; align-items: center;">
+            <div class="admin-action-group" style="gap: 12px; display: flex; justify-content: center; align-items: center;">
                 ${viewBtn}
                 ${blockBtnHtml}
             </div>

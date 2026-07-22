@@ -249,6 +249,25 @@
     border-color: #bfdbfe;
 }
 
+.admin-badge-action {
+    padding: 6px 16px;
+    font-size: 14px;
+}
+
+.badge-you-special {
+    background: linear-gradient(135deg, var(--primary, #FF5A3D) 0%, #ff8a65 100%);
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 4px 12px rgba(255, 90, 61, 0.3);
+    animation: pulse-you 2s infinite;
+}
+
+@keyframes pulse-you {
+    0% { box-shadow: 0 0 0 0 rgba(255, 90, 61, 0.5); }
+    70% { box-shadow: 0 0 0 8px rgba(255, 90, 61, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 90, 61, 0); }
+}
+
 /* Role & Tier Badges */
 .badge-role-admin { 
     background-color: #fff7ed; 
