@@ -176,12 +176,12 @@ function initAdminSubjects() {
 
             return `
             <tr>
-                <td style="font-weight: 500;">${escapeHtml(item.subjectCode)}</td>
+                <td style="font-weight: 500; text-align: center;">${escapeHtml(item.subjectCode)}</td>
                 <td>${escapeHtml(item.subjectName)}</td>
                 <td>${item.description ? `<div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-width: 250px;" title="${escapeHtml(item.description)}">${escapeHtml(item.description)}</div>` : '<span style="color: var(--text-muted); font-style: italic;">No description</span>'}</td>
-                <td style="color: var(--text-muted);">${docCount}</td>
-                <td><span class="admin-badge ${statusClass}">${statusText}</span></td>
-                <td>${formatDateTime(item.createdAt)}</td>
+                <td style="color: var(--text-muted); text-align: center;">${docCount}</td>
+                <td style="text-align: center;"><span class="admin-badge ${statusClass}">${statusText}</span></td>
+                <td style="text-align: center;">${formatDateTime(item.createdAt)}</td>
                 <td style="text-align: center; white-space: nowrap;">
                     <button class="btn btn-sm btn-secondary" onclick='openSubjectModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Edit</button>
                     ${item.status === 'ACTIVE'
@@ -267,12 +267,12 @@ function initAdminSubjects() {
 
         reqTableBody.innerHTML = items.map(req => `
             <tr>
-                <td>${escapeHtml(req.requestedCode || req.subjectCode || '-')}</td>
+                <td style="text-align: center;">${escapeHtml(req.requestedCode || req.subjectCode || '-')}</td>
                 <td>${escapeHtml(req.requestedName || req.subjectName || '-')}</td>
                 <td>${escapeHtml(req.requestedByEmail || req.requestedBy || '-')}</td>
-                <td><span class="admin-badge ${req.status === 'APPROVED' ? 'admin-badge-success' : req.status === 'REJECTED' ? 'admin-badge-danger' : 'admin-badge-warning'}">${req.status}</span></td>
-                <td>${formatDateTime(req.createdAt)}</td>
-                <td style="text-align:right; white-space: nowrap;">
+                <td style="text-align: center;"><span class="admin-badge ${req.status === 'APPROVED' ? 'admin-badge-success' : req.status === 'REJECTED' ? 'admin-badge-danger' : 'admin-badge-warning'}">${req.status}</span></td>
+                <td style="text-align: center;">${formatDateTime(req.createdAt)}</td>
+                <td style="text-align: center; white-space: nowrap;">
                     ${req.status === 'PENDING' ? `
                         <button class="btn btn-sm btn-primary" onclick="window.openApproveModal(${req.requestId})">Approve</button>
                         <button class="btn btn-sm btn-danger" onclick="window.openRejectModal(${req.requestId})">Reject</button>
