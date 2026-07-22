@@ -337,14 +337,6 @@ function handleExport() {
     exportAdminUsers(params);
 }
 
-function clearFilters() {
-    document.getElementById("filterSearch").value = "";
-    document.getElementById("filterRole").value = "";
-    document.getElementById("filterTier").value = "";
-    document.getElementById("filterStatus").value = "";
-    loadUsers(0);
-}
-
 // Modal Logic
 function promptUpdateStatus(userId, newStatus, message) {
     targetUserIdToUpdate = userId;
