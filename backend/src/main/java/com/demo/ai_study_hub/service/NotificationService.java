@@ -92,7 +92,16 @@ public class NotificationService {
 
     @Transactional
     public void notifyAllAdmins(String type, String title, String message, String targetType, Long targetId) {
-        List<User> admins = userRepository.findByRole("ADMIN");
+        java.util.Set<User> admins = new java.util.HashSet<>();
+        
+        java.util.List<String> adminRoles = java.util.Arrays.asList("ADMIN", "ROLE_ADMIN", "admin", "role_admin");
+        for (String role : adminRoles) {
+            List<User> found = userRepository.findByRole(role);
+            if (found != null) {
+                admins.addAll(found);
+            }
+        }
+        
         for (User admin : admins) {
             createNotification(admin, type, title, message, targetType, targetId);
         }

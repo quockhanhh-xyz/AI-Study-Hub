@@ -43,6 +43,9 @@ public class SubjectRequestService {
     @Autowired
     private AdminSubjectService adminSubjectService;
 
+    @Autowired
+    private NotificationService notificationService;
+
     public SubjectRequestResponse mapToResponse(SubjectRequest request) {
         SubjectRequestResponse res = new SubjectRequestResponse();
         res.setRequestId(request.getRequestId());
@@ -86,7 +89,18 @@ public class SubjectRequestService {
         request.setRequestedName(requestedName);
         request.setDescription(description);
         request.setRequestedByUser(user);
-        return mapToResponse(subjectRequestRepository.save(request));
+        
+        SubjectRequest savedRequest = subjectRequestRepository.save(request);
+
+        notificationService.notifyAllAdmins(
+            "SUBJECT_REQUEST_PENDING",
+            "New Subject Request",
+            "User " + user.getFullName() + " has requested system subject: " + requestedCode + " - " + requestedName,
+            "SUBJECT_REQUEST",
+            (long) savedRequest.getRequestId()
+        );
+
+        return mapToResponse(savedRequest);
     }
 
     public List<SubjectRequestResponse> getMySubjectRequests(String email) {
@@ -135,7 +149,18 @@ public class SubjectRequestService {
         request.setStatus("APPROVED");
         request.setReviewedBy(admin);
         request.setReviewedAt(LocalDateTime.now());
-        return mapToResponse(subjectRequestRepository.save(request));
+        SubjectRequest saved = subjectRequestRepository.save(request);
+
+        notificationService.createNotification(
+            request.getRequestedByUser(),
+            "SUBJECT_REQUEST_APPROVED",
+            "Subject Request Approved",
+            "Your request for subject '" + request.getRequestedName() + "' has been approved by Admin.",
+            "SUBJECT_REQUEST",
+            (long) saved.getRequestId()
+        );
+
+        return mapToResponse(saved);
     }
 
     public SubjectRequestResponse rejectRequest(Integer requestId, String rejectReason, String adminEmail) {
@@ -153,7 +178,18 @@ public class SubjectRequestService {
         request.setRejectReason(rejectReason);
         request.setReviewedBy(admin);
         request.setReviewedAt(LocalDateTime.now());
-        return mapToResponse(subjectRequestRepository.save(request));
+        SubjectRequest saved = subjectRequestRepository.save(request);
+
+        notificationService.createNotification(
+            request.getRequestedByUser(),
+            "SUBJECT_REQUEST_REJECTED",
+            "Subject Request Rejected",
+            "Your request for subject '" + request.getRequestedName() + "' has been rejected. Reason: " + rejectReason,
+            "SUBJECT_REQUEST",
+            (long) saved.getRequestId()
+        );
+
+        return mapToResponse(saved);
     }
 
     public byte[] exportSubjectRequests(String search, String status) {

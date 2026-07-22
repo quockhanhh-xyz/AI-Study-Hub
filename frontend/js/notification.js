@@ -357,6 +357,15 @@ function renderNotificationList() {
         } else if (notif.type === "REPORT_DISMISSED") {
             iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
             iconColorClass = "warning";
+        } else if (notif.type === "SUBJECT_REQUEST_PENDING") {
+            iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>`;
+            iconColorClass = "warning";
+        } else if (notif.type === "SUBJECT_REQUEST_APPROVED") {
+            iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+            iconColorClass = "success";
+        } else if (notif.type === "SUBJECT_REQUEST_REJECTED") {
+            iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+            iconColorClass = "danger";
         }
 
         const iconContainer = document.createElement("div");
@@ -489,7 +498,19 @@ function renderNotificationList() {
                 return;
             }
             if (notif.type === "DOCUMENT_PUBLISH_REQUEST") {
-                window.location.href = "admin-documents.html";
+                if (notif.targetId) {
+                    window.location.href = `admin-document-detail.html?id=${notif.targetId}`;
+                } else {
+                    window.location.href = "admin-documents.html";
+                }
+                return;
+            }
+            if (notif.type === "SUBJECT_REQUEST_PENDING") {
+                window.location.href = "admin-subject-requests.html";
+                return;
+            }
+            if (notif.type === "SUBJECT_REQUEST_APPROVED" || notif.type === "SUBJECT_REQUEST_REJECTED") {
+                window.location.href = "my-library.html";
                 return;
             }
 

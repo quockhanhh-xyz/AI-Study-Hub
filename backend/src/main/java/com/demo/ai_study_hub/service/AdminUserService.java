@@ -100,9 +100,13 @@ public class AdminUserService {
 
         User user = userRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        if ("BLOCKED".equals(newStatus) && "ADMIN".equals(user.getRole())) {
+        String userRole = user.getRole() != null ? user.getRole().toUpperCase() : "";
+        if ("BLOCKED".equals(newStatus) && (userRole.equals("ADMIN") || userRole.equals("ROLE_ADMIN"))) {
             // Optional: prevent blocking last admin
-            long adminCount = userRepository.findAll().stream().filter(u -> "ADMIN".equals(u.getRole()) && !"BLOCKED".equals(u.getStatus())).count();
+            long adminCount = userRepository.findAll().stream().filter(u -> {
+                String r = u.getRole() != null ? u.getRole().toUpperCase() : "";
+                return (r.equals("ADMIN") || r.equals("ROLE_ADMIN")) && !"BLOCKED".equals(u.getStatus());
+            }).count();
             if (adminCount <= 1) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot block the last active admin");
             }
