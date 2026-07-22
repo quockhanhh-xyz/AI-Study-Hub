@@ -11,6 +11,12 @@ import com.demo.ai_study_hub.service.CloudinaryStorageService;
 import com.demo.ai_study_hub.service.FolderShareService;
 import com.demo.ai_study_hub.service.UsageService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -64,6 +70,8 @@ class PublicCommunityTest {
     private UsageService usageService;
     @Mock
     private org.springframework.transaction.PlatformTransactionManager transactionManager;
+    @Mock
+    private com.demo.ai_study_hub.service.NotificationService notificationService;
 
     @InjectMocks
     private DocumentService documentService;

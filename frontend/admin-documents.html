@@ -62,60 +62,66 @@
                 <button class="admin-tab" data-tab="ALL" style="display: inline-flex; gap: 8px; align-items: center; justify-content: center; background: none; border: none; padding: 12px 0; border-bottom: 2px solid transparent; color: var(--text-muted); font-weight: 500; cursor: pointer;">All Public<span id="tabCountAll" style="background: var(--bg-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">0</span></button>
             </div>
 
-            <!-- Filters -->
-            <div class="admin-actions-bar" style="flex-direction: column; align-items: stretch; gap: 16px;">
-                <div style="display: flex; gap: 16px; width: 100%; align-items: center;">
-                    <input type="text" id="searchInput" class="admin-filter-input" placeholder="Search by Title or Owner..." style="flex: 1;">
-                    <button class="btn btn-outline" onclick="clearFilters()" style="white-space: nowrap;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+            <!-- White Card Container for Filters and Table -->
+            <div class="admin-card" style="padding: 24px; margin-top: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: none;">
+                <!-- Filters -->
+                <div class="admin-actions-bar" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 24px;">
+                    <div class="admin-search-wrapper" style="flex: 1; min-width: 250px; position: relative;">
+                        <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                         </svg>
-                        Clear Filters
-                    </button>
+                        <input type="text" id="searchInput" class="admin-filter-input" placeholder="Search by Title or Owner..." style="width: 100%; border: none !important; background-color: #f4f5f7 !important; border-radius: 24px !important; padding-left: 44px !important; height: 42px !important; font-size: 14px;">
+                    </div>
+                    <div class="admin-filters" style="display: flex; gap: 12px; align-items: center; flex-wrap: nowrap; justify-content: flex-end; flex: 0 0 auto !important;">
+                        <select id="subjectFilter" class="admin-filter-input" style="border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 130px !important; width: auto !important;">
+                            <option value="">All Subjects</option>
+                        </select>
+                        <select id="statusFilter" class="admin-filter-input" style="display: none; border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 130px !important; width: auto !important;">
+                            <option value="">All Statuses</option>
+                            <option value="PENDING">PENDING</option>
+                            <option value="APPROVED">APPROVED</option>
+                            <option value="REJECTED">REJECTED</option>
+                        </select>
+                        <select id="fileTypeFilter" class="admin-filter-input" style="border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 130px !important; width: auto !important;">
+                            <option value="">All File Types</option>
+                            <option value="PDF">PDF</option>
+                            <option value="DOCX">DOCX</option>
+                            <option value="TXT">TXT</option>
+                        </select>
+                        <button class="btn btn-outline" onclick="clearFilters()" style="white-space: nowrap; height: 42px; border-radius: 24px; padding: 0 16px; display: inline-flex; align-items: center; font-weight: 600; width: auto;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                            Clear Filters
+                        </button>
+                    </div>
                 </div>
-                <div class="admin-filters" style="width: 100%;">
-                    <select id="subjectFilter" class="admin-filter-input">
-                        <option value="">All Subjects</option>
-                    </select>
-                    <select id="statusFilter" class="admin-filter-input" style="display: none;">
-                        <option value="">All Statuses</option>
-                        <option value="PENDING">PENDING</option>
-                        <option value="APPROVED">APPROVED</option>
-                        <option value="REJECTED">REJECTED</option>
-                    </select>
-                    <select id="fileTypeFilter" class="admin-filter-input">
-                        <option value="">All File Types</option>
-                        <option value="PDF">PDF</option>
-                        <option value="DOCX">DOCX</option>
-                        <option value="TXT">TXT</option>
-                    </select>
+
+                <!-- Table -->
+                <div class="admin-table-container">
+                    <table class="admin-table" style="margin-top: 8px; table-layout: fixed; width: 100%;">
+                        <thead>
+                            <tr>
+                                <th style="width: 14%;">Document</th>
+                                <th style="width: 15%;">Owner</th>
+                                <th style="width: 10%;">Subject</th>
+                                <th style="width: 6%;">Type</th>
+                                <th style="width: 9%;" title="Shows whether this document is approved for Community Library.">Approval</th>
+                                <th style="width: 9%;" title="Shows whether document content is ready for AI features.">AI Status</th>
+                                <th style="width: 13%;">Updated</th>
+                                <th style="text-align: center; width: 24%;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="documentsTableBody">
+                            <!-- Populated by JS -->
+                            <tr><td colspan="8" style="text-align: center;">Loading...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-            </div>
 
-            <!-- Table -->
-            <div class="admin-table-container admin-card">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Document</th>
-                            <th>Owner</th>
-                            <th>Subject</th>
-                            <th>Type</th>
-                            <th title="Shows whether this document is approved for Community Library.">Approval</th>
-                            <th title="Shows whether document content is ready for AI features.">AI Status</th>
-                            <th>Updated</th>
-                            <th style="text-align: center;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="documentsTableBody">
-                        <!-- Populated by JS -->
-                        <tr><td colspan="8" style="text-align: center;">Loading...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div id="pagination" class="admin-pagination">
-                <!-- Pagination buttons -->
+                <div id="pagination" class="admin-pagination" style="margin-top: 16px; justify-content: space-between;">
+                    <!-- Pagination buttons -->
+                </div>
             </div>
             </div>
                 </div>
