@@ -93,7 +93,7 @@ async function apiRequest(endpoint, options = {}) {
           alert("Your account has been blocked by an administrator.");
         }
         localStorage.removeItem("currentUser");
-        fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+        fetch(`${API_BASE_URL}/api/auth/logout`, { method: "POST", credentials: "include" }).catch(() => {});
         redirectToLoginWithCurrentIntent();
       }
     }
