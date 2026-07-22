@@ -28,4 +28,5 @@ public interface DocumentReportRepository extends JpaRepository<DocumentReport, 
     );
 
     Page<DocumentReport> findByStatus(String status, Pageable pageable);
+    long countByStatus(String status);
 }

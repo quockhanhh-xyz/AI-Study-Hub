@@ -204,6 +204,23 @@ function renderDashboardStats(data) {
             `;
         }
 
+        if (needsInfo.pendingReports > 0) {
+            count++;
+            cardsHtml += `
+                <div class="attention-card attention-card-danger">
+                    <div class="attention-card-header">
+                        <span class="attention-card-icon">⚠️</span>
+                        <span class="attention-card-title">Reported documents</span>
+                    </div>
+                    <div class="attention-card-body">
+                        <span class="attention-card-count">${needsInfo.pendingReports}</span>
+                        <span class="attention-card-label">pending reports</span>
+                    </div>
+                    <a href="admin-reports.html" class="attention-card-btn btn-outline-danger">Review reports &rarr;</a>
+                </div>
+            `;
+        }
+
         if (count === 0) {
             if (needsAttTitle) {
                 needsAttTitle.style.color = "var(--success, #16a34a)";

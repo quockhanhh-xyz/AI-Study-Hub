@@ -14,6 +14,7 @@ import com.demo.ai_study_hub.repository.UserRepository;
 import com.demo.ai_study_hub.service.PaymentService;
 import com.demo.ai_study_hub.service.PlanService;
 import com.demo.ai_study_hub.service.TierPolicyService;
+import com.demo.ai_study_hub.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +41,7 @@ class PaymentServiceTest {
     @Mock private PlanService planService;
     @Mock private TierPolicyService tierPolicyService;
     @Mock private com.demo.ai_study_hub.config.PaymentProperties paymentProperties;
+    @Mock private NotificationService notificationService;
 
     @InjectMocks
     private PaymentService paymentService;

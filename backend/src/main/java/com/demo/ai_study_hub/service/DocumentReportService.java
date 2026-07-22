@@ -25,6 +25,7 @@ public class DocumentReportService {
     private final DocumentReportRepository documentReportRepository;
     private final DocumentRepository documentRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     private static final List<String> VALID_REASONS = Arrays.asList(
             "SPAM", "INAPPROPRIATE_CONTENT", "COPYRIGHT", 
@@ -77,7 +78,17 @@ public class DocumentReportService {
         report.setDescription(description != null ? description.trim() : null);
         report.setStatus("PENDING");
 
-        return documentReportRepository.save(report);
+        DocumentReport savedReport = documentReportRepository.save(report);
+
+        notificationService.notifyAllAdmins(
+            "REPORT_SUBMITTED",
+            "Document Reported",
+            "Document '" + document.getTitle() + "' has been reported by " + reporter.getFullName() + " for: " + reason,
+            "DOCUMENT_REPORT",
+            savedReport.getReportId()
+        );
+
+        return savedReport;
     }
 
     public DocumentReport getReportStatus(Integer documentId, String email) {
@@ -115,7 +126,25 @@ public class DocumentReportService {
         report.setResolvedAt(LocalDateTime.now());
         report.setResolutionNote(resolutionNote != null ? resolutionNote.trim() : null);
 
-        return documentReportRepository.save(report);
+        // Make the document PRIVATE
+        if (report.getDocument() != null) {
+            report.getDocument().setVisibility("PRIVATE");
+            documentRepository.save(report.getDocument());
+        }
+
+        DocumentReport savedReport = documentReportRepository.save(report);
+
+        // Notify reporter
+        notificationService.createNotification(
+            report.getReporter(),
+            "REPORT_RESOLVED",
+            "Your Report is Resolved",
+            "Your report on document '" + report.getDocument().getTitle() + "' has been resolved. Action: Document Unpublished. Resolution: " + report.getResolutionNote(),
+            "DOCUMENT_REPORT",
+            report.getReportId()
+        );
+
+        return savedReport;
     }
 
     @Transactional
@@ -133,7 +162,19 @@ public class DocumentReportService {
         report.setResolvedAt(LocalDateTime.now());
         report.setResolutionNote(resolutionNote != null ? resolutionNote.trim() : null);
 
-        return documentReportRepository.save(report);
+        DocumentReport savedReport = documentReportRepository.save(report);
+
+        // Notify reporter
+        notificationService.createNotification(
+            report.getReporter(),
+            "REPORT_DISMISSED",
+            "Your Report is Dismissed",
+            "Your report on document '" + report.getDocument().getTitle() + "' has been dismissed. Resolution: " + report.getResolutionNote(),
+            "DOCUMENT_REPORT",
+            report.getReportId()
+        );
+
+        return savedReport;
     }
 
     private User getUser(String email) {

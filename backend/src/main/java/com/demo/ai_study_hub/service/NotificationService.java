@@ -90,6 +90,14 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
+    @Transactional
+    public void notifyAllAdmins(String type, String title, String message, String targetType, Long targetId) {
+        List<User> admins = userRepository.findByRole("ADMIN");
+        for (User admin : admins) {
+            createNotification(admin, type, title, message, targetType, targetId);
+        }
+    }
+
     private User getUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));

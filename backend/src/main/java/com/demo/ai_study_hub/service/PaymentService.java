@@ -32,6 +32,7 @@ public class PaymentService {
     private final PlanService planService;
     private final TierPolicyService tierPolicyService;
     private final PaymentProperties paymentProperties;
+    private final NotificationService notificationService;
 
     // =========================================================================
     // Mock provider
@@ -299,7 +300,17 @@ public class PaymentService {
 
         freshUser.setTier(targetTier);
         freshUser.setTierExpiresAt(newExpiry);
-        return userRepository.save(freshUser);
+        User savedUser = userRepository.save(freshUser);
+
+        notificationService.notifyAllAdmins(
+            "PAYMENT_SUCCESS",
+            "New Payment Completed",
+            "User " + freshUser.getFullName() + " has purchased plan " + order.getPlanName() + " (" + order.getAmount() + " " + order.getCurrency() + ").",
+            "PAYMENT",
+            order.getPaymentId()
+        );
+
+        return savedUser;
     }
 
     private UserTier resolveTargetTier(PaymentOrder order) {

@@ -2786,7 +2786,8 @@ async function initRatingReportingWidget(doc) {
     let reportedByMe = doc.reportedByMe || false;
 
     function updateRatingUI() {
-        avgText.textContent = Number(averageRating).toFixed(1);
+        const avgNum = Number(averageRating);
+        avgText.textContent = avgNum === 0 ? "0" : (avgNum % 1 === 0 ? avgNum.toFixed(0) : avgNum.toFixed(1)) + "/5";
         countText.textContent = `(${ratingCount} rating${ratingCount === 1 ? '' : 's'})`;
 
         starContainer.innerHTML = "";

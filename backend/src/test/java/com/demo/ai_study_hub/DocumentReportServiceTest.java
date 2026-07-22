@@ -7,6 +7,7 @@ import com.demo.ai_study_hub.repository.DocumentRepository;
 import com.demo.ai_study_hub.repository.DocumentReportRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
 import com.demo.ai_study_hub.service.DocumentReportService;
+import com.demo.ai_study_hub.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +31,8 @@ class DocumentReportServiceTest {
     private DocumentRepository documentRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private DocumentReportService documentReportService;
@@ -126,6 +129,8 @@ class DocumentReportServiceTest {
         DocumentReport report = new DocumentReport();
         report.setReportId(500L);
         report.setStatus("PENDING");
+        report.setDocument(doc);
+        report.setReporter(reporter);
 
         when(userRepository.findByEmail(admin.getEmail())).thenReturn(Optional.of(admin));
         when(documentReportRepository.findById(500L)).thenReturn(Optional.of(report));
@@ -145,6 +150,8 @@ class DocumentReportServiceTest {
         DocumentReport report = new DocumentReport();
         report.setReportId(500L);
         report.setStatus("PENDING");
+        report.setDocument(doc);
+        report.setReporter(reporter);
 
         when(userRepository.findByEmail(admin.getEmail())).thenReturn(Optional.of(admin));
         when(documentReportRepository.findById(500L)).thenReturn(Optional.of(report));

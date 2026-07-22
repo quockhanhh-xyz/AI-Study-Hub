@@ -38,6 +38,7 @@ public class AdminServiceImpl implements AdminService {
     private final AiUsageLogRepository aiUsageLogRepository;
     private final PlanConfigRepository planConfigRepository;
     private final SubjectRequestRepository subjectRequestRepository;
+    private final DocumentReportRepository documentReportRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -101,11 +102,13 @@ public class AdminServiceImpl implements AdminService {
 
         long pendingSubjectRequests = subjectRequestRepository.countByStatus("PENDING");
         long failedPayments = paymentOrderRepository.countByStatus("FAILED");
+        long pendingReports = documentReportRepository.countByStatus("PENDING");
 
         AdminDashboardResponse.NeedsAttentionInfo needsAttentionInfo = AdminDashboardResponse.NeedsAttentionInfo.builder()
                 .pendingPublicDocuments(pendingDocs)
                 .pendingSubjectRequests(pendingSubjectRequests)
                 .failedPayments(failedPayments)
+                .pendingReports(pendingReports)
                 .build();
 
         return AdminDashboardResponse.builder()

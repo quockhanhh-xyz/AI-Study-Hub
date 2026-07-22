@@ -3,6 +3,7 @@ package com.demo.ai_study_hub;
 import com.demo.ai_study_hub.service.AdminServiceImpl;
 import com.demo.ai_study_hub.entity.Document;
 import com.demo.ai_study_hub.repository.DocumentRepository;
+import com.demo.ai_study_hub.repository.DocumentReportRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +23,8 @@ class AdminServiceTest {
 
     @Mock
     private DocumentRepository documentRepository;
+    @Mock
+    private DocumentReportRepository documentReportRepository;
 
     @InjectMocks
     private AdminServiceImpl adminService;
