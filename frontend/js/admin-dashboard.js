@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function loadDashboardData(isManualRefresh = false) {
+    debugger;
     const loadingState = document.getElementById("dashboardLoadingState");
     const errorState = document.getElementById("dashboardErrorState");
     const contentState = document.getElementById("dashboardContent");
