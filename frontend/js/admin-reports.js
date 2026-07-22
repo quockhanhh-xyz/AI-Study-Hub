@@ -1,14 +1,8 @@
 document.addEventListener("DOMContentLoaded", async function () {
-  // Check Authentication & Admin status
+  // Wait for layout.js auth guard to finish verifying user
   if (window.authReady) {
     const isAuthenticated = await window.authReady;
     if (!isAuthenticated) return;
-  }
-
-  const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-  if (currentUser.role !== "ADMIN") {
-    window.location.href = "dashboard.html";
-    return;
   }
 
   // State

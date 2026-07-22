@@ -70,6 +70,8 @@ class PublicCommunityTest {
     private UsageService usageService;
     @Mock
     private org.springframework.transaction.PlatformTransactionManager transactionManager;
+    @Mock
+    private com.demo.ai_study_hub.service.NotificationService notificationService;
 
     @InjectMocks
     private DocumentService documentService;
