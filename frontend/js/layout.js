@@ -80,9 +80,10 @@ function renderAdminTopbar() {
     </div>
   `;
 
-  // Use parent of pageHeader if available
-  if (pageHeader.parentNode) {
-      pageHeader.parentNode.insertBefore(topbar, pageHeader);
+  // Insert at the very top of main-content to avoid padding issues
+  const mainContent = document.querySelector(".main-content");
+  if (mainContent) {
+      mainContent.insertBefore(topbar, mainContent.firstChild);
   }
 }
 
