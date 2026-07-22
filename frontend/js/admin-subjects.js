@@ -23,7 +23,7 @@ function initAdminSubjects() {
     const statusFilter = document.getElementById('statusFilter');
     const exportBtn = document.getElementById('exportBtn');
     const exportBtnText = document.getElementById('exportBtnText');
-    const clearFiltersBtn = document.querySelector('.admin-actions-buttons .btn-outline');
+    const clearFiltersBtn = document.querySelector('button[onclick="clearFilters()"]');
 
     // Modals
     const subjectModal = document.getElementById('subjectModal');
