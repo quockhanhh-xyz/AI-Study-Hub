@@ -1963,9 +1963,9 @@ function appendAiQaMessage(role, content, meta = {}) {
     }
 
     messagesEl.appendChild(bubble);
-    // Smooth scroll the new bubble into view within the scrollable container
+    // Scroll the message container down without shifting the main page layout
     setTimeout(() => {
-        bubble.scrollIntoView({ behavior: "smooth", block: "end" });
+        messagesEl.scrollTop = messagesEl.scrollHeight;
     }, 50);
     return bubble;
 }
@@ -2760,7 +2760,7 @@ window.renderContextualTopBar = renderContextualTopBar;
 
 // ── Ratings & Reports System (Step 17A) ──
 async function initRatingReportingWidget(doc) {
-    const isPublicApproved = doc.visibility === "PUBLIC" && doc.approvalStatus === "APPROVED" && doc.status === "ACTIVE";
+    const isPublicApproved = doc.visibility === "PUBLIC" && doc.approvalStatus === "APPROVED" && (doc.status === undefined || doc.status === "ACTIVE");
     const section = document.getElementById("ratingReportingSection");
     if (!section) return;
 
@@ -2902,14 +2902,14 @@ async function initRatingReportingWidget(doc) {
             charCount.textContent = "0/500";
             modalError.style.display = "none";
 
-            modal.classList.add("active");
+            modal.classList.add("show");
 
             descInput.oninput = () => {
                 charCount.textContent = `${descInput.value.length}/500`;
             };
 
             document.getElementById("cancelReportBtn").onclick = () => {
-                modal.classList.remove("active");
+                modal.classList.remove("show");
             };
 
             document.getElementById("confirmReportBtn").onclick = async () => {
@@ -2925,7 +2925,7 @@ async function initRatingReportingWidget(doc) {
                 try {
                     const res = await reportDocument(doc.documentId, { reason, description: desc });
                     if (res && res.success) {
-                        modal.classList.remove("active");
+                        modal.classList.remove("show");
                         showToast("Violation report submitted. Thank you!", "success");
                         reportBlock.style.display = "none";
                         alreadyReportedBadge.style.display = "block";
