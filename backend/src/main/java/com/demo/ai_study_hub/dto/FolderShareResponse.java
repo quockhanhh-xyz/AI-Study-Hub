@@ -22,6 +22,7 @@ public class FolderShareResponse {
     private String sharedWithName;
     private String sharedByEmail;
     private String sharedWithEmail;
+    private Integer sharedByUserId;
     private Integer groupId;
     private String groupName;
     private String permission;

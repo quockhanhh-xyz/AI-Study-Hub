@@ -263,3 +263,51 @@
 .profile-status-bar {
   margin-bottom: 20px;
 }
+
+/* Settings Navigation Menu */
+.profile-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.profile-nav-item svg {
+  color: currentColor;
+  transition: transform 0.2s ease;
+}
+
+.profile-nav-item:hover {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.profile-nav-item.active {
+  background: #fff5f2;
+  color: var(--primary, #ff5a3d);
+  font-weight: 600;
+  border-left: 3px solid var(--primary, #ff5a3d);
+  border-radius: 0 8px 8px 0;
+  padding-left: 13px;
+}
+
+.profile-nav-item.active svg {
+  transform: scale(1.1);
+}

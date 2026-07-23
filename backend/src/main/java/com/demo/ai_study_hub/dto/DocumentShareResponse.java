@@ -30,6 +30,7 @@ public class DocumentShareResponse {
     private String sharedWithName;
     private String sharedByEmail;
     private String sharedWithEmail;
+    private Integer sharedByUserId;
     private String permission;
     private String status;
     private LocalDateTime createdAt;

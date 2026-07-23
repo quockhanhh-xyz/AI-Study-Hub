@@ -24,6 +24,9 @@ async function initializeLayout() {
   // 4. ATTACH LOGOUT FLOW LISTENERS
   initializeLogoutFlow();
 
+  // 5. ATTACH QUICK PROFILE POPUP LISTENERS
+  initializeQuickProfilePopup();
+
   return isAuthenticated;
 }
 
@@ -202,6 +205,78 @@ function renderDynamicSidebar(isAuthenticated) {
   const navContainer = document.querySelector(".sidebar-nav");
   const currentPage = getCurrentPageName();
   const currentRoute = NAVIGATION_MENU.find(item => item.url === currentPage);
+
+  // Remove existing sidebar stats block if it exists to avoid duplication
+  if (sidebar) {
+    const oldStats = sidebar.querySelector(".sidebar-user-stats");
+    if (oldStats) oldStats.remove();
+  }
+
+  // Render Premium User Statistics at the top of the sidebar for USER role
+  if (isAuthenticated && sidebar) {
+    const userStr = localStorage.getItem("currentUser");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.role === 'USER') {
+          const statsContainer = document.createElement("div");
+          statsContainer.className = "sidebar-user-stats";
+          statsContainer.style.cssText = "padding: 0 16px; margin: 12px 0 20px 0; text-align: center;";
+          statsContainer.innerHTML = `
+            <div style="display: flex; justify-content: space-around; gap: 4px;">
+              <div style="flex: 1;">
+                <span id="sidebarFollowers" style="display: block; font-size: 18px; font-weight: 700; color: #1e293b;">0</span>
+                <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-top: 4px; letter-spacing: 0.05em;">Followers</span>
+              </div>
+              <div style="flex: 1; border-left: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9;">
+                <span id="sidebarUploads" style="display: block; font-size: 18px; font-weight: 700; color: #1e293b;">0</span>
+                <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-top: 4px; letter-spacing: 0.05em;">Uploads</span>
+              </div>
+              <div style="flex: 1;">
+                <span id="sidebarUpvotes" style="display: block; font-size: 18px; font-weight: 700; color: #1e293b;">0</span>
+                <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-top: 4px; letter-spacing: 0.05em;">Upvotes</span>
+              </div>
+            </div>
+            <a href="upload.html" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 16px; font-size: 13px; font-weight: 600; padding: 10px 16px; border-radius: 9999px; text-decoration: none; background: #f05a28; border: none; color: #fff; box-shadow: 0 4px 10px rgba(240, 90, 40, 0.2); box-sizing: border-box; cursor: pointer;">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" width="14" height="14">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              <span>New Create</span>
+            </a>
+          `;
+          
+          const logo = sidebar.querySelector(".logo");
+          if (logo) {
+            logo.after(statsContainer);
+          } else {
+            sidebar.prepend(statsContainer);
+          }
+
+          // Fetch stats dynamically and populate
+          (async () => {
+            try {
+              const myUserId = user.userId;
+              if (myUserId) {
+                const res = await get(`/api/users/${myUserId}/public-profile`, { skipUnauthorizedRedirect: true });
+                if (res && res.data) {
+                  const sf = document.getElementById("sidebarFollowers");
+                  const su = document.getElementById("sidebarUploads");
+                  const sv = document.getElementById("sidebarUpvotes");
+                  if (sf) sf.textContent = res.data.followersCount;
+                  if (su) su.textContent = res.data.publicDocumentCount;
+                  if (sv) sv.textContent = res.data.upvotesCount || 0;
+                }
+              }
+            } catch (err) {
+              console.warn("Could not fetch sidebar stats:", err);
+            }
+          })();
+        }
+      } catch (e) {
+        console.error("Failed to render sidebar user stats:", e);
+      }
+    }
+  }
 
 
   // Step 8A Guest Auth Pages Navigation Constraint Rule
@@ -460,4 +535,227 @@ function bootstrapSidebarCollapseState() {
     });
   });
 }
+
+const quickProfileModalHtml = `
+  <div id="quickProfileModal" class="modal-overlay" style="display: flex; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center; padding: 16px;">
+      <div class="modal-content card" style="width: 100%; max-width: 420px; background: #ffffff; border-radius: 16px; padding: 28px; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); position: relative; animation: modalFadeIn 0.3s ease-out; color: #1e293b;">
+          <button type="button" id="closeQuickProfileBtn" style="position: absolute; right: 20px; top: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: #94a3b8; transition: color 0.2s; line-height: 1;">&times;</button>
+          
+          <div id="quickProfileLoading" style="text-align: center; padding: 20px;">
+              <p style="color: #64748b;">Loading contributor details...</p>
+          </div>
+
+          <div id="quickProfileError" style="display: none; text-align: center; padding: 20px;">
+              <p style="color: #ef4444; font-weight: 500;">This profile is private or not accessible.</p>
+          </div>
+
+          <div id="quickProfileContent" style="display: none;">
+              <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 20px;">
+                  <div id="qpAvatar" style="width: 64px; height: 64px; border-radius: 50%; background: #fff5f3; color: #ff5a3d; font-size: 24px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); flex-shrink: 0;">-</div>
+                  <div style="flex-grow: 1;">
+                      <h3 id="qpFullName" style="font-size: 18px; font-weight: 700; color: #172033; margin: 0 0 4px 0;">-</h3>
+                      <p id="qpSchool" style="color: #64748b; font-size: 13px; margin: 0; display: none;"></p>
+                      <p id="qpMajor" style="color: #64748b; font-size: 13px; margin: 2px 0 0 0; display: none;"></p>
+                  </div>
+              </div>
+
+              <p id="qpBio" style="color: #334155; font-size: 14px; line-height: 1.5; margin: 0 0 20px 0; max-height: 100px; overflow-y: auto;"></p>
+
+              <div style="display: flex; gap: 16px; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 12px 0; margin-bottom: 24px; justify-content: space-around; text-align: center;">
+                  <div>
+                      <div id="qpStatDocs" style="font-size: 16px; font-weight: 700; color: #1e293b;">-</div>
+                      <div style="font-size: 11px; color: #64748b;">Public Docs</div>
+                  </div>
+                  <div>
+                      <div id="qpStatFollowers" style="font-size: 16px; font-weight: 700; color: #1e293b;">-</div>
+                      <div style="font-size: 11px; color: #64748b;">Followers</div>
+                  </div>
+                  <div>
+                      <div id="qpStatFollowing" style="font-size: 16px; font-weight: 700; color: #1e293b;">-</div>
+                      <div style="font-size: 11px; color: #64748b;">Following</div>
+                  </div>
+              </div>
+
+              <div style="display: flex; gap: 12px;">
+                  <button type="button" id="qpFollowBtn" class="btn btn-primary" style="flex: 1; margin: 0;">Follow</button>
+                  <a href="#" id="qpViewFullProfileLink" class="btn btn-secondary" style="flex: 1; margin: 0; text-align: center; display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">View Profile</a>
+              </div>
+          </div>
+      </div>
+  </div>
+`;
+
+function getInitialsFallback(fullName) {
+  const names = (fullName || "User").trim().split(/\s+/);
+  if (names.length > 1) {
+    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+  }
+  return names.length > 0 && names[0] ? names[0][0].toUpperCase() : "U";
+}
+
+async function showQuickProfileModal(userId) {
+  let modal = document.getElementById("quickProfileModal");
+  if (!modal) {
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = quickProfileModalHtml.trim();
+    modal = tempDiv.firstChild;
+    document.body.appendChild(modal);
+
+    document.getElementById("closeQuickProfileBtn").addEventListener("click", () => {
+      modal.remove();
+    });
+
+    modal.addEventListener("click", (evt) => {
+      if (evt.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
+  const loading = document.getElementById("quickProfileLoading");
+  const errorDiv = document.getElementById("quickProfileError");
+  const content = document.getElementById("quickProfileContent");
+
+  loading.style.display = "block";
+  errorDiv.style.display = "none";
+  content.style.display = "none";
+
+  try {
+    const profileUrl = typeof API_BASE_URL !== "undefined" ? `${API_BASE_URL}/api/users/${userId}/public-profile` : `/api/users/${userId}/public-profile`;
+    const res = await fetch(profileUrl, { credentials: "include" });
+    const json = await res.json();
+
+    if (!res.ok || !json.success || !json.data) {
+      throw new Error("Private or inactive user");
+    }
+
+    const data = json.data;
+    loading.style.display = "none";
+    content.style.display = "block";
+
+    // Set values
+    document.getElementById("qpFullName").textContent = data.fullName;
+    
+    // Avatar
+    const avatarEl = document.getElementById("qpAvatar");
+    if (data.avatarUrl) {
+      avatarEl.innerHTML = `<img src="${data.avatarUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="Avatar" />`;
+    } else {
+      avatarEl.textContent = getInitialsFallback(data.fullName);
+    }
+
+    // Bio
+    document.getElementById("qpBio").textContent = data.bio || "No biography provided.";
+
+    // School & Major
+    const schoolEl = document.getElementById("qpSchool");
+    if (data.schoolName) {
+      schoolEl.textContent = data.schoolName;
+      schoolEl.style.display = "block";
+    } else {
+      schoolEl.style.display = "none";
+    }
+
+    const majorEl = document.getElementById("qpMajor");
+    if (data.major) {
+      majorEl.textContent = data.major;
+      majorEl.style.display = "block";
+    } else {
+      majorEl.style.display = "none";
+    }
+
+    // Stats
+    document.getElementById("qpStatDocs").textContent = data.publicDocumentCount;
+    document.getElementById("qpStatFollowers").textContent = data.followersCount;
+    document.getElementById("qpStatFollowing").textContent = data.followingCount;
+
+    // View Profile Link
+    document.getElementById("qpViewFullProfileLink").href = `public-profile.html?userId=${userId}`;
+
+    // Follow Action Button logic
+    const followBtn = document.getElementById("qpFollowBtn");
+    const currentUserStr = localStorage.getItem("currentUser");
+
+    if (data.isMyProfile) {
+      followBtn.style.display = "none";
+    } else if (!currentUserStr) {
+      followBtn.style.display = "block";
+      followBtn.textContent = "Log in to Follow";
+      followBtn.className = "btn btn-primary";
+      followBtn.onclick = () => {
+        modal.remove();
+        window.location.href = `login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+      };
+    } else {
+      followBtn.style.display = "block";
+      const updateButtonState = (followed) => {
+        if (followed) {
+          followBtn.className = "btn btn-secondary";
+          followBtn.style.background = "#fee2e2";
+          followBtn.style.borderColor = "#fecaca";
+          followBtn.style.color = "#ef4444";
+          followBtn.textContent = "Unfollow";
+        } else {
+          followBtn.className = "btn btn-primary";
+          followBtn.style.background = "";
+          followBtn.style.borderColor = "";
+          followBtn.style.color = "";
+          followBtn.textContent = "Follow";
+        }
+      };
+
+      updateButtonState(data.followedByMe);
+
+      followBtn.onclick = async () => {
+        followBtn.disabled = true;
+        try {
+          const followUrl = typeof API_BASE_URL !== "undefined" ? `${API_BASE_URL}/api/users/${userId}/follow` : `/api/users/${userId}/follow`;
+          const method = data.followedByMe ? "DELETE" : "POST";
+          const followRes = await fetch(followUrl, { method, credentials: "include" });
+          const followJson = await followRes.json();
+
+          if (followRes.ok && followJson.success && followJson.data) {
+            data.followedByMe = followJson.data.followedByMe;
+            data.followersCount = followJson.data.followersCount;
+            document.getElementById("qpStatFollowers").textContent = data.followersCount;
+            updateButtonState(data.followedByMe);
+          }
+        } catch (err) {
+          console.error("Follow action failed:", err);
+        } finally {
+          followBtn.disabled = false;
+        }
+      };
+    }
+
+  } catch (err) {
+    loading.style.display = "none";
+    errorDiv.style.display = "block";
+  }
+}
+
+function initializeQuickProfilePopup() {
+  document.body.addEventListener("click", async (e) => {
+    const trigger = e.target.closest(".uploader-link, .user-profile-trigger");
+    if (!trigger) return;
+    
+    const userId = trigger.dataset.userId;
+    if (!userId) return;
+
+    // If target user is the logged-in user themselves, do not trigger the Quick Profile popup modal
+    const userStr = localStorage.getItem("currentUser");
+    if (userStr) {
+      try {
+        const currentUser = JSON.parse(userStr);
+        if (currentUser && currentUser.userId === parseInt(userId, 10)) {
+          return;
+        }
+      } catch (err) {}
+    }
+    
+    e.preventDefault();
+    showQuickProfileModal(userId);
+  });
+}
+// End of layout component manager file.
 // End of layout component manager file.

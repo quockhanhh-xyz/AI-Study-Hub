@@ -136,7 +136,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         <div style="width: 24px; height: 24px; flex-shrink: 0;">${iconHtml}</div>
         <div style="display: flex; flex-direction: column; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
           <h3 style="font-size: 15px; margin: 0; color: var(--text); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${doc.title || doc.originalFileName || "Untitled Document"}</h3>
-          <span style="font-size: 13px; color: var(--muted); margin-top: 4px;">Shared by: ${doc.sharedByName || "Unknown"} · ${formatDate(doc.createdAt)}</span>
+          <span style="font-size: 13px; color: var(--muted); margin-top: 4px;">
+            Shared by: <strong class="shared-by-link" style="color: var(--primary); text-decoration: underline; cursor: pointer;">${doc.sharedByName || "Unknown"}</strong> · ${formatDate(doc.createdAt)}
+          </span>
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
@@ -148,6 +150,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         </span>
       </div>
     `;
+
+    const sharedByLink = card.querySelector(".shared-by-link");
+    if (sharedByLink && doc.sharedByUserId) {
+      sharedByLink.classList.add("uploader-link");
+      sharedByLink.dataset.userId = doc.sharedByUserId;
+      sharedByLink.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    }
 
     const favBtn = card.querySelector(".favorite-star-btn");
     favBtn.addEventListener("click", async function (e) {
@@ -171,7 +183,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         </div>
         <div style="display: flex; flex-direction: column; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
           <h3 style="font-size: 15px; margin: 0; color: var(--text); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${share.folderName || "Untitled Folder"}</h3>
-          <span style="font-size: 13px; color: var(--muted); margin-top: 4px;">Shared by: ${share.sharedByName || "Unknown"} · ${formatDate(share.createdAt)}</span>
+          <span style="font-size: 13px; color: var(--muted); margin-top: 4px;">
+            Shared by: <strong class="shared-by-link" style="color: var(--primary); text-decoration: underline; cursor: pointer;">${share.sharedByName || "Unknown"}</strong> · ${formatDate(share.createdAt)}
+          </span>
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
@@ -180,6 +194,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         </span>
       </div>
     `;
+
+    const sharedByLink = card.querySelector(".shared-by-link");
+    if (sharedByLink && share.sharedByUserId) {
+      sharedByLink.classList.add("uploader-link");
+      sharedByLink.dataset.userId = share.sharedByUserId;
+      sharedByLink.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    }
 
     return card;
   }

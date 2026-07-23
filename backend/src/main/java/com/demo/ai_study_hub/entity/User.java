@@ -69,6 +69,21 @@ public class User {
     @Column(name = "bio", length = 500)
     private String bio;
 
+    @Column(name = "profile_public", nullable = false)
+    private boolean profilePublic = true;
+
+    @Column(name = "show_school", nullable = false)
+    private boolean showSchool = true;
+
+    @Column(name = "show_major", nullable = false)
+    private boolean showMajor = true;
+
+    @Column(name = "show_bio", nullable = false)
+    private boolean showBio = true;
+
+    @Column(name = "show_public_documents", nullable = false)
+    private boolean showPublicDocuments = true;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

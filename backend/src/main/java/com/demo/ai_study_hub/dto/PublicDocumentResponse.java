@@ -42,6 +42,7 @@ public class PublicDocumentResponse {
     @Deprecated
     private String ownerName;
     private String displayName;
+    private Integer ownerId;
 
     private Boolean canPreview;
     private Boolean canOpen;

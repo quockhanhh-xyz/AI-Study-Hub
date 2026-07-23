@@ -29,6 +29,7 @@ public class GroupDocumentShareResponse {
     private Integer groupId;
     private String sharedByName;
     private String sharedByEmail;
+    private Integer sharedByUserId;
     private String permission;
     private String status;
     private LocalDateTime createdAt;

@@ -610,6 +610,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     const contributorName = doc.sharedByName || doc.uploadedByName || doc.ownerName || doc.displayName || doc.uploadedBy || "Unknown User";
     avatarWrapper.textContent = contributorName.trim().charAt(0).toUpperCase();
     avatarWrapper.title = `Uploaded by: ${contributorName}`;
+    if (doc.sharedByUserId) {
+      avatarWrapper.classList.add("uploader-link");
+      avatarWrapper.dataset.userId = doc.sharedByUserId;
+      avatarWrapper.style.cursor = "pointer";
+    }
     card.appendChild(avatarWrapper);
 
     // Right Column: The Details Column
@@ -645,7 +650,18 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const uploaderItem = document.createElement("span");
     uploaderItem.className = "document-meta-item";
-    uploaderItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Uploaded by: <strong>${contributorName}</strong>`;
+    uploaderItem.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Uploaded by: `;
+
+    const strongEl = document.createElement("strong");
+    strongEl.textContent = contributorName;
+    if (doc.sharedByUserId) {
+      strongEl.className = "uploader-link";
+      strongEl.dataset.userId = doc.sharedByUserId;
+      strongEl.style.cursor = "pointer";
+      strongEl.style.textDecoration = "underline";
+      strongEl.style.color = "var(--primary)";
+    }
+    uploaderItem.appendChild(strongEl);
     meta.append(uploaderItem);
 
     content.append(header, meta);

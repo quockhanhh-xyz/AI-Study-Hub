@@ -342,16 +342,27 @@ function renderDocument(doc) {
     // Hide email in community view to prevent exposure
     const docUploadedBy = document.getElementById("docUploadedBy");
     if (docUploadedBy) {
-        if (currentIsCommunityView) {
-            if (doc.ownerName) {
-                docUploadedBy.style.display = "inline";
-                docUploadedBy.textContent = "Uploaded by " + doc.ownerName;
-            } else {
-                docUploadedBy.style.display = "none";
-            }
-        } else {
+        docUploadedBy.innerHTML = "";
+        const uploaderId = doc.ownerId || doc.uploadedByUserId;
+        const uploaderName = currentIsCommunityView ? doc.ownerName : (doc.uploadedByName || doc.ownerName);
+
+        if (uploaderName) {
             docUploadedBy.style.display = "inline";
-            docUploadedBy.textContent = "Uploaded by " + (doc.uploadedByName || doc.ownerName || "–");
+            docUploadedBy.appendChild(document.createTextNode("Uploaded by "));
+            
+            const linkSpan = document.createElement("span");
+            linkSpan.textContent = uploaderName;
+            if (uploaderId) {
+                linkSpan.className = "uploader-link";
+                linkSpan.dataset.userId = uploaderId;
+                linkSpan.style.cursor = "pointer";
+                linkSpan.style.textDecoration = "underline";
+                linkSpan.style.fontWeight = "600";
+                linkSpan.style.color = "var(--primary)";
+            }
+            docUploadedBy.appendChild(linkSpan);
+        } else {
+            docUploadedBy.style.display = "none";
         }
     }
 

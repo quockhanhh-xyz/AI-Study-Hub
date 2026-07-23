@@ -65,6 +65,26 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
     long countByFolderAndStatus(Folder folder, String status);
 
+    @Query("SELECT d FROM Document d LEFT JOIN d.subject s " +
+            "WHERE d.owner.userId = :userId " +
+            "AND d.status = 'ACTIVE' " +
+            "AND d.visibility = 'PUBLIC' " +
+            "AND d.approvalStatus = 'APPROVED' " +
+            "AND (:keyword IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(d.originalFileName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:subjectId IS NULL OR s.subjectId = :subjectId) " +
+            "AND (:fileType IS NULL OR d.fileType = :fileType)")
+    Page<Document> findPublicDocumentsByUserWithFilters(
+            @Param("userId") Integer userId,
+            @Param("keyword") String keyword,
+            @Param("subjectId") Integer subjectId,
+            @Param("fileType") String fileType,
+            Pageable pageable
+    );
+
+    long countByOwnerAndVisibilityAndApprovalStatusAndStatus(
+            User owner, String visibility, String approvalStatus, String status
+    );
+
     List<Document> findByFolder(Folder folder);
     List<Document> findByOwner_UserIdAndStatus(Integer userId, String status);
     

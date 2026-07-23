@@ -22,6 +22,7 @@ const ICON_UPGRADE = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBo
 const ICON_ADMIN = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="14" rx="1"></rect><rect width="7" height="7" x="3" y="14" rx="1"></rect></svg>';
 const ICON_PAYMENT = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg>';
 const ICON_PROFILE = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"></path></svg>';
+const ICON_SETTINGS = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
 
 
 const NAVIGATION_MENU = [
@@ -48,6 +49,7 @@ const NAVIGATION_MENU = [
 
   // Step 11: Upgrade route — requires auth; guest redirected to login?redirect=upgrade.html
   { name: "Upgrade", icon: ICON_UPGRADE, url: "upgrade.html", requiresAuth: true },
+  { name: "Settings", icon: ICON_SETTINGS, url: "settings.html", requiresAuth: true },
 
   // Step 13B: Payment Result route — requires auth, hidden from sidebar (reached only via payment redirect)
   { name: "Payment Result", icon: ICON_UPGRADE, url: "payment-result.html", requiresAuth: true, hidden: true },
@@ -60,6 +62,7 @@ const NAVIGATION_MENU = [
   // Hidden Structural Layout Parameter Child Routes
   { name: "Upload", icon: ICON_UPLOAD, url: "upload.html", requiresAuth: true, hidden: true },
   { name: "Document Detail", icon: ICON_DOCS, url: "document-detail.html", requiresAuth: false, hidden: true },
+  { name: "Public Profile", icon: ICON_PROFILE, url: "public-profile.html", requiresAuth: false, hidden: true },
   { name: "Group Detail", icon: ICON_GROUPS, url: "group-detail.html", requiresAuth: true, hidden: true },
   { name: "Shared Folder Detail", icon: ICON_FOLDER, url: "shared-folder-detail.html", requiresAuth: true, hidden: true },
 

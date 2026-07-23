@@ -20,4 +20,7 @@ public interface DocumentRatingRepository extends JpaRepository<DocumentRating, 
 
     @Query("SELECT AVG(r.rating) FROM DocumentRating r WHERE r.document = :document")
     Double getAverageRatingByDocument(@Param("document") Document document);
+
+    @Query("SELECT COUNT(r) FROM DocumentRating r JOIN r.document d WHERE d.owner = :user")
+    long countTotalRatingsByOwner(@Param("user") User user);
 }

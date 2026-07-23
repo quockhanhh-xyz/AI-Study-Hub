@@ -13,4 +13,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     long countByRecipient_UserIdAndReadFalse(Integer recipientUserId);
 
     List<Notification> findByRecipient_UserIdAndReadFalse(Integer recipientUserId);
+
+    boolean existsByRecipientAndTypeAndActorUserIdAndReadFalse(
+            com.demo.ai_study_hub.entity.User recipient, String type, Integer actorUserId
+    );
 }

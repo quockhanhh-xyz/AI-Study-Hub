@@ -148,6 +148,17 @@ document.addEventListener("DOMContentLoaded", async function () {
     const authorDiv = document.createElement("div");
     authorDiv.className = "comm-card-author";
 
+    if (doc.ownerId) {
+      authorDiv.classList.add("uploader-link");
+      authorDiv.dataset.userId = doc.ownerId;
+      authorDiv.style.cursor = "pointer";
+      authorDiv.title = "View profile";
+      authorDiv.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    }
+
     const avatarDiv = document.createElement("div");
     avatarDiv.className = "comm-card-avatar";
     const authorName = doc.displayName || doc.ownerName || doc.uploadedByName || doc.uploadedBy || "Unknown User";
