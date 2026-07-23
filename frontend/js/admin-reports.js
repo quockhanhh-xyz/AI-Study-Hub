@@ -318,27 +318,24 @@ document.addEventListener("DOMContentLoaded", async function () {
       // Actions column (centered & aligned cleanly)
       const actionsTd = document.createElement("td");
       actionsTd.style.textAlign = "center";
-      actionsTd.style.whiteSpace = "nowrap";
+      actionsTd.style.verticalAlign = "middle";
       
       if (r.status === "PENDING") {
+        const actionGroup = document.createElement("div");
+        actionGroup.className = "admin-action-group";
+
         const resolveBtn = document.createElement("button");
-        resolveBtn.className = "btn btn-primary btn-sm";
+        resolveBtn.className = "btn btn-sm btn-primary";
         resolveBtn.textContent = "Resolve";
-        resolveBtn.style.marginRight = "6px";
-        resolveBtn.style.padding = "6px 12px";
-        resolveBtn.style.fontSize = "11px";
-        resolveBtn.style.borderRadius = "20px";
         resolveBtn.addEventListener("click", () => openActionModal(r.reportId, "resolve"));
 
         const dismissBtn = document.createElement("button");
-        dismissBtn.className = "btn btn-outline btn-sm";
+        dismissBtn.className = "btn btn-sm btn-outline";
         dismissBtn.textContent = "Dismiss";
-        dismissBtn.style.padding = "6px 12px";
-        dismissBtn.style.fontSize = "11px";
-        dismissBtn.style.borderRadius = "20px";
         dismissBtn.addEventListener("click", () => openActionModal(r.reportId, "dismiss"));
 
-        actionsTd.append(resolveBtn, dismissBtn);
+        actionGroup.append(resolveBtn, dismissBtn);
+        actionsTd.appendChild(actionGroup);
       } else {
         actionsTd.innerHTML = `
           <div style="font-size: 11px; line-height: 1.35; color: var(--text-muted); display: inline-block; text-align: center;">

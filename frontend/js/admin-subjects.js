@@ -89,12 +89,6 @@ function initAdminSubjects() {
         if (tabName === 'subjects') {
             tabSubjectsBtn.classList.add('active');
             tabRequestsBtn.classList.remove('active');
-            tabSubjectsBtn.style.borderBottom = '2px solid var(--primary)';
-            tabSubjectsBtn.style.color = 'var(--primary)';
-            tabSubjectsBtn.style.fontWeight = '600';
-            tabRequestsBtn.style.borderBottom = '2px solid transparent';
-            tabRequestsBtn.style.color = 'var(--text-muted)';
-            tabRequestsBtn.style.fontWeight = '500';
             panelSubjects.style.display = 'block';
             panelRequests.style.display = 'none';
             currentPage = 1;
@@ -102,12 +96,6 @@ function initAdminSubjects() {
         } else if (tabName === 'requests') {
             tabRequestsBtn.classList.add('active');
             tabSubjectsBtn.classList.remove('active');
-            tabRequestsBtn.style.borderBottom = '2px solid var(--primary)';
-            tabRequestsBtn.style.color = 'var(--primary)';
-            tabRequestsBtn.style.fontWeight = '600';
-            tabSubjectsBtn.style.borderBottom = '2px solid transparent';
-            tabSubjectsBtn.style.color = 'var(--text-muted)';
-            tabSubjectsBtn.style.fontWeight = '500';
             panelRequests.style.display = 'block';
             panelSubjects.style.display = 'none';
             reqCurrentPage = 1;
@@ -203,12 +191,14 @@ function initAdminSubjects() {
                 <td style="color: var(--text-muted); text-align: center;">${docCount}</td>
                 <td style="text-align: center;"><span class="admin-badge ${statusClass}">${statusText}</span></td>
                 <td style="text-align: center;">${formatDateTime(item.createdAt)}</td>
-                <td style="text-align: center; white-space: nowrap;">
-                    <button class="btn btn-sm btn-secondary" onclick='openSubjectModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Edit</button>
-                    ${item.status === 'ACTIVE'
-                        ? `<button class="btn btn-sm btn-outline" style="color: var(--text-muted); border-color: var(--border-color);" onclick="openToggleModal(${item.subjectId}, 'INACTIVE', '${escapeHtml(item.subjectCode)}')">Disable</button>`
-                        : `<button class="btn btn-sm btn-primary" onclick="openToggleModal(${item.subjectId}, 'ACTIVE', '${escapeHtml(item.subjectCode)}')">Enable</button>`
-                    }
+                <td style="text-align: center; vertical-align: middle;">
+                    <div class="admin-action-group">
+                        <button class="btn btn-sm btn-secondary" onclick='openSubjectModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Edit</button>
+                        ${item.status === 'ACTIVE'
+                            ? `<button class="btn btn-sm btn-outline" onclick="openToggleModal(${item.subjectId}, 'INACTIVE', '${escapeHtml(item.subjectCode)}')">Disable</button>`
+                            : `<button class="btn btn-sm btn-primary" onclick="openToggleModal(${item.subjectId}, 'ACTIVE', '${escapeHtml(item.subjectCode)}')">Enable</button>`
+                        }
+                    </div>
                 </td>
             </tr>
         `}).join('');
@@ -300,15 +290,17 @@ function initAdminSubjects() {
                 <td>${escapeHtml(req.requestedByEmail || req.requestedBy || '-')}</td>
                 <td style="text-align: center;"><span class="admin-badge ${req.status === 'APPROVED' ? 'admin-badge-success' : req.status === 'REJECTED' ? 'admin-badge-danger' : 'admin-badge-warning'}">${req.status}</span></td>
                 <td style="text-align: center;">${formatDateTime(req.createdAt)}</td>
-                <td style="text-align: center; white-space: nowrap;">
-                    ${req.status === 'PENDING' ? `
-                        <button class="btn btn-sm btn-primary" onclick="window.openApproveModal(${req.requestId})">Approve</button>
-                        <button class="btn btn-sm btn-danger" onclick="window.openRejectModal(${req.requestId})">Reject</button>
-                    ` : req.status === 'APPROVED' ? `
-                        <button class="btn btn-sm btn-outline" disabled>Approved</button>
-                    ` : `
-                        <button class="btn btn-sm btn-outline" disabled>Rejected</button>
-                    `}
+                <td style="text-align: center; vertical-align: middle;">
+                    <div class="admin-action-group">
+                        ${req.status === 'PENDING' ? `
+                            <button class="btn btn-sm btn-primary" onclick="window.openApproveModal(${req.requestId})">Approve</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="window.openRejectModal(${req.requestId})">Reject</button>
+                        ` : req.status === 'APPROVED' ? `
+                            <button class="btn btn-sm btn-outline" disabled>Approved</button>
+                        ` : `
+                            <button class="btn btn-sm btn-outline" disabled>Rejected</button>
+                        `}
+                    </div>
                 </td>
             </tr>
         `).join('');

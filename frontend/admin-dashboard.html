@@ -114,8 +114,8 @@
                                 <p style="font-size: 0.85rem; color: var(--text-muted, #64748b); margin: 2px 0 0 0;">System breakdown and daily metrics</p>
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <label for="chartDateRange" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #64748b); white-space: nowrap;">Chart range:</label>
-                                <select id="chartDateRange" class="form-input" style="width: auto; padding: 6px 14px; font-size: 0.85rem; border-radius: 8px; font-weight: 500; background-color: var(--surface, #ffffff);" onchange="loadDashboardChartsData()">
+                                <label for="chartDateRange" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #64748b); white-space: nowrap; margin: 0;">Chart range:</label>
+                                <select id="chartDateRange" class="admin-filter-input admin-select" onchange="loadDashboardChartsData()">
                                     <option value="7">Last 7 days</option>
                                     <option value="30" selected>Last 30 days</option>
                                     <option value="31">This month</option>

@@ -89,9 +89,9 @@ function initAdminAiUsage() {
 
         tableBody.innerHTML = items.map(item => {
             // Determine tier badge color
-            let tierClass = 'badge-neutral';
-            if (item.tier === 'PREMIUM') tierClass = 'badge-warning';
-            else if (item.tier === 'ULTRA') tierClass = 'badge-primary';
+            let tierClass = 'badge-tier-free';
+            if (item.tier === 'PREMIUM') tierClass = 'badge-tier-premium';
+            else if (item.tier === 'ULTRA') tierClass = 'badge-tier-ultra';
 
             return `
             <tr>
@@ -133,16 +133,26 @@ function initAdminAiUsage() {
     const renderPagination = (totalPages, totalElements) => {
         const startItem = totalElements === 0 ? 0 : (currentPage - 1) * pageSize + 1;
         const endItem = Math.min(currentPage * pageSize, totalElements);
-        pageInfo.textContent = `Showing ${startItem}-${endItem} of ${totalElements} users`;
 
-        const prevBtn = document.getElementById('prevPageBtn');
-        const nextBtn = document.getElementById('nextPageBtn');
-        if (prevBtn) prevBtn.disabled = currentPage <= 1;
-        if (nextBtn) nextBtn.disabled = currentPage >= totalPages || totalPages === 0;
+        const paginationContainer = document.getElementById('paginationControls');
+        if (!paginationContainer) return;
+
+        if (totalElements === 0) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
+
+        let html = `<span class="admin-pagination-info">Showing ${startItem} - ${endItem} of ${totalElements} logs</span>
+        <div style="display: flex; gap: 4px;">`;
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="admin-pagination-btn ${i === currentPage ? 'active' : ''}" onclick="window.goToPage(${i})">${i}</button>`;
+        }
+        html += `</div>`;
+        paginationContainer.innerHTML = html;
     };
 
-    window.changePage = (delta) => {
-        currentPage += delta;
+    window.goToPage = (page) => {
+        currentPage = page;
         loadUsage();
     };
 

@@ -223,12 +223,16 @@ function renderPayments(payments) {
 
         // Actions
         const tdActions = document.createElement('td');
-        tdActions.style.textAlign = 'right';
+        tdActions.style.textAlign = 'center';
+        tdActions.style.verticalAlign = 'middle';
+        const actionGroup = document.createElement('div');
+        actionGroup.className = 'admin-action-group';
         const viewBtn = document.createElement('button');
         viewBtn.className = 'btn btn-sm btn-outline';
         viewBtn.textContent = 'View';
         viewBtn.onclick = () => viewPaymentDetails(payment.paymentId);
-        tdActions.appendChild(viewBtn);
+        actionGroup.appendChild(viewBtn);
+        tdActions.appendChild(actionGroup);
 
         row.appendChild(tdId);
         row.appendChild(tdCustomer);

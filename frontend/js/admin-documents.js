@@ -229,17 +229,18 @@ function initAdminDocuments() {
                 <td><span class="admin-badge ${getApprovalBadgeClass(doc.approvalStatus)}">${getApprovalLabel(doc.approvalStatus)}</span></td>
                 <td><span class="admin-badge ${aiInfo.cls}">${aiInfo.text}</span></td>
                 <td><span class="table-muted-text" style="font-size: 0.8rem; white-space: nowrap;">${updatedDisplay}</span></td>
-                <td style="text-align: right;">
+                <td style="text-align: center; vertical-align: middle;">
                     <div class="admin-action-group">
-                        <button class="btn btn-sm btn-outline" onclick="window.location.href='admin-document-detail.html?id=${doc.documentId}'" style="border-radius: 20px; height: 30px; font-size: 13px; font-weight: 500;">View</button>
+                        <button class="btn btn-sm btn-outline" onclick="window.location.href='admin-document-detail.html?id=${doc.documentId}'">View</button>
                         ${doc.approvalStatus === 'PENDING' ? `
-                            <button class="btn btn-sm btn-primary" onclick="openApproveModal(${doc.documentId})" style="border-radius: 20px; height: 30px; font-size: 13px; font-weight: 500;">Approve</button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="openRejectModal(${doc.documentId})" style="border-radius: 20px; height: 30px; font-size: 13px; font-weight: 500;">Reject</button>
+                            <button class="btn btn-sm btn-primary" onclick="openApproveModal(${doc.documentId})">Approve</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="openRejectModal(${doc.documentId})">Reject</button>
                         ` : doc.approvalStatus === 'APPROVED' ? `
-                            <button class="btn btn-sm btn-outline" onclick="openPendingConfirmModal(${doc.documentId})" style="border-radius: 20px; height: 30px; font-size: 13px; font-weight: 500;">Move to Pending</button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="openUnpublishConfirmModal(${doc.documentId})" style="border-radius: 20px; height: 30px; font-size: 13px; font-weight: 500;">Unpublish</button>
+                            <button class="btn btn-sm btn-outline" onclick="openPendingConfirmModal(${doc.documentId})">Reopen</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="openUnpublishConfirmModal(${doc.documentId})">Unpublish</button>
                         ` : doc.approvalStatus === 'REJECTED' ? `
-                            <button class="btn btn-sm btn-outline" onclick="openPendingConfirmModal(${doc.documentId})" style="border-radius: 20px; height: 30px; font-size: 13px; font-weight: 500;">Move to Pending</button>
+                            <button class="btn btn-sm btn-primary" onclick="openApproveModal(${doc.documentId})">Approve</button>
+                            <button class="btn btn-sm btn-outline" onclick="openPendingConfirmModal(${doc.documentId})">Reopen</button>
                         ` : ''}
                     </div>
                 </td>
@@ -373,14 +374,8 @@ function initAdminDocuments() {
     const tabs = document.querySelectorAll('.admin-tab');
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
-            tabs.forEach(t => {
-                t.classList.remove('active');
-                t.style.borderBottomColor = 'transparent';
-                t.style.color = 'var(--text-muted)';
-            });
+            tabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-            tab.style.borderBottomColor = 'var(--primary)';
-            tab.style.color = 'var(--primary)';
 
             const status = tab.dataset.tab;
             statusFilter.value = status === 'ALL' ? '' : status;
