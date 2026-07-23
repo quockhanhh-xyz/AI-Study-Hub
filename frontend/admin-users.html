@@ -47,17 +47,32 @@
                     </div>
 
                     <div id="usersContent" style="display: none;">
-                        <!-- Summary Strip -->
-                        <div class="admin-users-summary-strip" id="usersSummaryStrip">
-                            <span><strong id="summaryTotalUsers">0</strong> users</span>
-                            <span class="divider">•</span>
-                            <span><strong id="summaryActiveUsers">0</strong> active</span>
-                            <span class="divider">•</span>
-                            <span><strong id="summaryBlockedUsers">0</strong> blocked</span>
-                            <span class="divider">•</span>
-                            <span><strong id="summaryAdminUsers">0</strong> admins</span>
-                            <span class="divider">•</span>
-                            <span><strong id="summaryPaidUsers">0</strong> paid</span>
+                        <!-- Summary KPI Cards -->
+                        <div class="admin-payment-summary-grid" id="usersSummaryStrip">
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Total Users</div>
+                                    <div class="summary-value text-primary" id="summaryTotalUsers">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Active Users</div>
+                                    <div class="summary-value text-success" id="summaryActiveUsers" style="color: var(--success, #10b981);">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Blocked / Inactive</div>
+                                    <div class="summary-value text-danger" id="summaryBlockedUsers">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Paid Users</div>
+                                    <div class="summary-value" id="summaryPaidUsers" style="color: #f59e0b;">0</div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Actions & Filters Bar -->
