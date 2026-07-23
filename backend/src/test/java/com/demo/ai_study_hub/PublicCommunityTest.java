@@ -72,8 +72,6 @@ class PublicCommunityTest {
     private com.demo.ai_study_hub.service.NotificationService notificationService;
     @Mock
     private org.springframework.transaction.PlatformTransactionManager transactionManager;
-    @Mock
-    private com.demo.ai_study_hub.service.NotificationService notificationService;
 
     @InjectMocks
     private DocumentService documentService;

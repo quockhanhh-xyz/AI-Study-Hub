@@ -47,17 +47,32 @@
                     </div>
 
                     <div id="usersContent" style="display: none;">
-                        <!-- Summary Strip -->
-                        <div class="admin-users-summary-strip" id="usersSummaryStrip">
-                            <span><strong id="summaryTotalUsers">0</strong> users</span>
-                            <span class="divider">•</span>
-                            <span><strong id="summaryActiveUsers">0</strong> active</span>
-                            <span class="divider">•</span>
-                            <span><strong id="summaryBlockedUsers">0</strong> blocked</span>
-                            <span class="divider">•</span>
-                            <span><strong id="summaryAdminUsers">0</strong> admins</span>
-                            <span class="divider">•</span>
-                            <span><strong id="summaryPaidUsers">0</strong> paid</span>
+                        <!-- Summary KPI Cards -->
+                        <div class="admin-payment-summary-grid" id="usersSummaryStrip">
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Total Users</div>
+                                    <div class="summary-value text-primary" id="summaryTotalUsers">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Active Users</div>
+                                    <div class="summary-value text-success" id="summaryActiveUsers" style="color: var(--success, #10b981);">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Blocked / Inactive</div>
+                                    <div class="summary-value text-danger" id="summaryBlockedUsers">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Paid Users</div>
+                                    <div class="summary-value" id="summaryPaidUsers" style="color: #f59e0b;">0</div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Actions & Filters Bar -->
@@ -70,17 +85,17 @@
                                     <input type="text" id="filterSearch" class="admin-filter-input admin-search-input" placeholder="Search by name or email..." onkeyup="handleSearch(event)" style="width: 100%;">
                                 </div>
                                 <div class="admin-actions-buttons" style="display: flex; gap: 8px;">
-                                    <button class="btn btn-outline" id="btnClearFilters" onclick="clearFilters()" title="Reset all filters" disabled style="white-space: nowrap;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                                    <button class="btn btn-outline" id="btnClearFilters" onclick="clearFilters()" title="Reset all filters" style="white-space: nowrap; border-radius: 9999px; font-weight: 600; color: #0f172a;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                                         </svg>
                                         Clear Filters
                                     </button>
-                                    <button class="btn btn-primary" id="btnExportUsers" onclick="handleExport()" title="Export filtered users list to Excel" style="white-space: nowrap;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                                    <button class="btn btn-secondary" id="btnExportUsers" onclick="handleExport()" title="Export filtered users list to Excel" style="white-space: nowrap; border-radius: 9999px; font-weight: 600; color: #0f172a;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                                         </svg>
-                                        Export Filtered Users
+                                        Export all users
                                     </button>
                                 </div>
                             </div>
@@ -108,19 +123,20 @@
                         <!-- Active Filter Chips -->
                         <div id="activeFilterChips" class="admin-filter-chips" style="display: none; margin-bottom: 18px;"></div>
 
-                        <div class="admin-table-container admin-card">
+                        <div class="admin-table-container admin-card" style="padding: 0; overflow-x: auto;">
                             <table class="admin-table" id="usersTable">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
-                                        <th>Tier</th>
-                                        <th>Documents</th>
-                                        <th>Status</th>
-                                        <th>Joined Date</th>
-                                        <th style="text-align: right;">Actions</th>
+                                        <th>No.</th>
+                                        <th>User</th>
+                                        <th style="text-align: center;">Role</th>
+                                        <th style="text-align: center;">Tier</th>
+                                        <th style="text-align: center;">Verified</th>
+                                        <th style="text-align: center;">Status</th>
+                                        <th style="text-align: center;">Docs</th>
+                                        <th style="text-align: center;">AI Today</th>
+                                        <th style="text-align: center;">Created</th>
+                                        <th style="text-align: center;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="usersTableBody">

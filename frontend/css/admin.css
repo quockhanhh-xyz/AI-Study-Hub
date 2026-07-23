@@ -132,7 +132,7 @@
 
 .table-muted-text {
     color: var(--text-muted, #64748b);
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .admin-header-actions {
@@ -213,9 +213,9 @@
 
 /* Badge Component System */
 .badge, .admin-badge {
-    padding: 4px 10px;
+    padding: 6px 12px;
     border-radius: 6px;
-    font-size: 0.75rem;
+    font-size: 13px;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
@@ -249,6 +249,33 @@
     background-color: #f8fafc; 
     color: #64748b; 
     border-color: #e2e8f0; 
+}
+.admin-badge-primary {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+
+.admin-badge-action {
+    padding: 6px 0;
+    font-size: 14px;
+    width: 96px;
+    justify-content: center;
+    text-align: center;
+}
+
+.badge-you-special {
+    background: linear-gradient(135deg, var(--primary, #FF5A3D) 0%, #ff8a65 100%);
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 4px 12px rgba(255, 90, 61, 0.3);
+    animation: pulse-you 2s infinite;
+}
+
+@keyframes pulse-you {
+    0% { box-shadow: 0 0 0 0 rgba(255, 90, 61, 0.5); }
+    70% { box-shadow: 0 0 0 8px rgba(255, 90, 61, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 90, 61, 0); }
 }
 
 /* Role & Tier Badges */
@@ -653,14 +680,17 @@
 .admin-search-input {
     padding-left: 42px !important;
     width: 100%;
+    border-radius: 9999px !important;
+    background-color: #ffffff !important;
 }
 
 .admin-filter-input:focus,
-.admin-filters input:focus {
+.admin-filters input:focus,
+.admin-search-input:focus {
     outline: none;
-    border-color: var(--primary, #f97316);
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
-    background-color: #ffffff;
+    border-color: var(--primary, #f97316) !important;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15) !important;
+    background-color: #ffffff !important;
 }
 
 /* Custom Dropdown Styling across all Admin pages */
@@ -1158,9 +1188,6 @@ select.admin-select:focus,
     border: 1px solid rgba(147, 51, 234, 0.25);
 }
 
-.admin-users-summary-strip {
-    margin-bottom: 24px;
-}
 
 .admin-self-badge {
     display: inline-flex;

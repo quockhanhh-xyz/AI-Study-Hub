@@ -125,7 +125,7 @@ async function loadUsers(page = 0) {
         page: currentPage,
         size: pageSize,
         sortBy: "createdAt",
-        direction: "desc"
+        direction: "asc"
     };
 
     if (search) params.search = search;
@@ -192,8 +192,7 @@ function formatJoinedDate(dateStr) {
     if (!dateStr) return "N/A";
     const d = new Date(dateStr);
     const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return `${date} · ${time}`;
+    return date;
 }
 
 function renderUsersTable(data) {
@@ -207,21 +206,53 @@ function renderUsersTable(data) {
     const activeAdminCount = users.filter(u => u.role === 'ADMIN' && u.status !== 'BLOCKED').length;
 
     if (users.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 32px; color: var(--text-muted);">No users found matching your filter criteria.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; padding: 32px; color: var(--text-muted);">No users found matching your filter criteria.</td></tr>`;
     } else {
-        users.forEach(user => {
+        users.forEach((user, index) => {
             const tr = document.createElement("tr");
 
+            const rawEmail = escapeHtml(user.email || 'N/A');
+            const namePart = escapeHtml(user.fullName || user.username || 'User');
+            const initial = namePart.charAt(0).toUpperCase() || 'U';
+
+            let tierDisplay = `<span class="badge ${getTierBadgeClass(user.tier)}">${user.tier || '-'}</span>`;
+            let aiLimitDisplay = "";
+            
+            if (user.role === 'ADMIN') {
+                tierDisplay = '<span style="color: var(--text-muted, #64748b); font-weight: 500;">-</span>';
+                aiLimitDisplay = '<span style="color: var(--text-muted, #64748b); font-weight: 500;">-</span>';
+            } else {
+                let limit = '10';
+                if (user.tier === 'PREMIUM') limit = '50';
+                else if (user.tier === 'ULTRA') limit = '200';
+                
+                const used = user.aiUsage ? user.aiUsage.aiQaUsed : 0;
+                aiLimitDisplay = `
+                    <div style="display: flex; flex-direction: column; line-height: 1.25;">
+                        <span style="font-size: 13px; color: var(--text-muted, #64748b);">${used} /</span>
+                        <span style="font-size: 13px; color: var(--text-muted, #64748b);">${limit}</span>
+                    </div>
+                `;
+            }
+
             tr.innerHTML = `
-                <td><span class="table-muted-text">#${user.userId}</span></td>
-                <td><span style="font-weight: 600; color: var(--text-main, #0f172a);">${escapeHtml(user.fullName)}</span></td>
-                <td><span class="table-muted-text" title="${escapeHtml(user.email)}">${escapeHtml(user.email)}</span></td>
-                <td><span class="badge ${getRoleBadgeClass(user.role)}">${user.role}</span></td>
-                <td><span class="badge ${getTierBadgeClass(user.tier)}">${user.tier}</span></td>
-                <td><span style="font-weight: 500; color: var(--text-main, #0f172a);">${user.documentCount || 0}</span></td>
-                <td><span class="badge ${getStatusBadgeClass(user.status)}">${user.status}</span></td>
-                <td><span class="table-muted-text">${formatJoinedDate(user.createdAt)}</span></td>
-                <td style="text-align: right;">
+                <td><span class="table-muted-text">${(currentPage * pageSize) + index + 1}</span></td>
+                <td>
+                    <div class="customer-cell">
+                        <div class="customer-info">
+                            <span class="customer-name" style="font-weight: 600; color: var(--text-main, #0f172a);">${namePart}</span>
+                            <span class="customer-email" title="${rawEmail}" style="font-size: 12px; color: var(--text-muted, #64748b);">${rawEmail}</span>
+                        </div>
+                    </div>
+                </td>
+                <td style="text-align: center;"><span class="badge ${getRoleBadgeClass(user.role)}">${user.role}</span></td>
+                <td style="text-align: center;">${tierDisplay}</td>
+                <td style="text-align: center;"><span style="color: var(--success); font-weight: 500; font-size: 14px;">Verified</span></td>
+                <td style="text-align: center;"><span class="badge ${getStatusBadgeClass(user.status)}">${user.status}</span></td>
+                <td style="text-align: center;"><span style="font-weight: 500; color: var(--text-main, #0f172a);">${user.documentCount || 0}</span></td>
+                <td style="text-align: center;">${aiLimitDisplay}</td>
+                <td style="text-align: center;"><span class="table-muted-text">${formatJoinedDate(user.createdAt)}</span></td>
+                <td style="text-align: center;">
                     ${renderActionButtons(user, activeAdminCount)}
                 </td>
             `;
@@ -269,11 +300,13 @@ function renderActionButtons(user, activeAdminCount) {
         } catch(e) {}
     }
 
+    const viewBtn = `<span class="badge admin-badge-action admin-badge-neutral" style="cursor: pointer;" onclick="viewUserDetails(${user.userId})">View</span>`;
+
     if (user.userId === currentUserId) {
         return `
-            <div class="admin-action-group">
-                <span class="admin-self-badge">You</span>
-                <button class="btn btn-sm btn-outline" onclick="viewUserDetails(${user.userId})">View</button>
+            <div class="admin-action-group" style="gap: 12px; display: flex; justify-content: center; align-items: center;">
+                ${viewBtn}
+                <span class="badge admin-badge-action badge-you-special">You</span>
             </div>
         `;
     }
@@ -281,22 +314,24 @@ function renderActionButtons(user, activeAdminCount) {
     const blockMessage = `This user will no longer be able to sign in or access AI Study Hub.<br><br>Are you sure you want to block <strong>${escapeHtml(user.fullName || user.email)}</strong>?`;
     const unblockMessage = `This user will regain full access to their account.<br><br>Are you sure you want to unblock <strong>${escapeHtml(user.fullName || user.email)}</strong>?`;
 
+    const unblockBtnHtml = `<span class="badge admin-badge-action admin-badge-success" style="cursor: pointer;" onclick="promptUpdateStatus(${user.userId}, 'ACTIVE', \`${unblockMessage}\`)">Unblock</span>`;
+
     if (user.status === 'BLOCKED') {
         return `
-            <div class="admin-action-group">
-                <button class="btn btn-sm btn-outline" onclick="viewUserDetails(${user.userId})">View</button>
-                <button class="btn btn-sm btn-outline-success" onclick="promptUpdateStatus(${user.userId}, 'ACTIVE', \`${unblockMessage}\`)">Unblock</button>
+            <div class="admin-action-group" style="gap: 12px; display: flex; justify-content: center; align-items: center;">
+                ${viewBtn}
+                ${unblockBtnHtml}
             </div>
         `;
     } else {
         const isLastAdmin = user.role === 'ADMIN' && activeAdminCount <= 1;
         const blockBtnHtml = isLastAdmin
-            ? `<button class="btn btn-sm btn-outline" disabled title="Cannot block the last active admin" style="opacity:0.5; cursor:not-allowed;">Block</button>`
-            : `<button class="btn btn-sm btn-outline-danger" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">Block</button>`;
+            ? `<span class="badge admin-badge-action admin-badge-danger" style="opacity: 0.5; cursor: not-allowed;" title="Cannot block the last active admin">Ban</span>`
+            : `<span class="badge admin-badge-action admin-badge-danger" style="cursor: pointer;" onclick="promptUpdateStatus(${user.userId}, 'BLOCKED', \`${blockMessage}\`)">Ban</span>`;
 
         return `
-            <div class="admin-action-group">
-                <button class="btn btn-sm btn-outline" onclick="viewUserDetails(${user.userId})">View</button>
+            <div class="admin-action-group" style="gap: 12px; display: flex; justify-content: center; align-items: center;">
+                ${viewBtn}
                 ${blockBtnHtml}
             </div>
         `;

@@ -139,25 +139,21 @@
                 <div id="checkoutResultMessage" class="status-box" style="display: none; margin-top: 20px;"></div>
             </section>
 
-            <section id="pendingPaymentSection" class="card dashboard-panel" style="display: none; margin-bottom: 32px; border-color: #5eead4; background: #f0fdfa;">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-                    <div>
-                        <h3 style="margin: 0 0 16px; font-size: 18px; color: #0f766e; display: flex; align-items: center; gap: 8px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                            Pending Payment
-                        </h3>
-                        <div style="display: flex; gap: 32px; flex-wrap: wrap;">
-                            <div>
-                                <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 4px;">Plan Details</div>
-                                <div id="pendingPaymentPlan" style="font-size: 17px; font-weight: 700; color: var(--text-main);"></div>
-                            </div>
-                            <div>
-                                <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 4px;">Date</div>
-                                <div id="pendingPaymentDate" style="font-size: 16px; color: var(--text-main);"></div>
-                            </div>
+            <section id="pendingPaymentSection" class="card" style="display: none; margin-bottom: 32px; border: 1px solid #99f6e4; background: #f0fdfa; padding: 20px 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 24px;">
+                    <div style="display: flex; align-items: flex-start; gap: 16px; flex: 1; min-width: 300px;">
+                        <div style="background: #ccfbf1; color: #0d9488; padding: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </div>
+                        <div>
+                            <h3 style="margin: 0 0 6px; font-size: 18px; color: #0f766e; font-weight: 700;">Pending Payment</h3>
+                            <p style="margin: 0; font-size: 15px; color: #115e59; line-height: 1.5;">
+                                You have an uncompleted payment for the <strong id="pendingPaymentPlan" style="color: #0f766e;"></strong> plan initiated on <strong id="pendingPaymentDate" style="color: #0f766e;"></strong>.<br>
+                                Please complete the payment to upgrade your account.
+                            </p>
                         </div>
                     </div>
-                    <div id="pendingPaymentActions" style="display: flex; gap: 12px; align-items: center;">
+                    <div id="pendingPaymentActions" style="display: flex; gap: 12px; align-items: center; flex-shrink: 0;">
                         <!-- Buttons injected by JS -->
                     </div>
                 </div>
