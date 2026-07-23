@@ -103,7 +103,7 @@ async function loadPayments(page = currentPage) {
 function renderPayments(payments) {
     const tableBody = document.getElementById('paymentsTableBody');
     tableBody.innerHTML = '';
-    
+
     let sumRevenue = 0;
     let countSuccess = 0;
     let countPending = 0;
@@ -128,7 +128,7 @@ function renderPayments(payments) {
         const tdCustomer = document.createElement('td');
         const customerCell = document.createElement('div');
         customerCell.className = 'customer-cell';
-        
+
         const rawEmail = payment.userEmail || 'N/A';
         const namePart = rawEmail.includes('@') ? rawEmail.split('@')[0] : rawEmail;
         const initial = namePart.charAt(0).toUpperCase() || 'U';
@@ -166,13 +166,13 @@ function renderPayments(payments) {
         // Status Badge
         const tdStatus = document.createElement('td');
         const badge = document.createElement('span');
-        
+
         let statusKey = (payment.status || 'PENDING').toLowerCase();
         let statusText = payment.status;
-        
+
         if (payment.status === 'SUCCESS') {
-            statusText = 'Paid';
-            statusKey = 'paid';
+            statusText = 'Success';
+            statusKey = 'success';
         } else if (payment.status === 'PENDING') {
             const createdAtDate = new Date(payment.createdAt);
             const expiresAtDate = new Date(createdAtDate.getTime() + 15 * 60000); // 15 mins
@@ -195,23 +195,24 @@ function renderPayments(payments) {
             statusText = 'Expired';
             statusKey = 'expired';
         }
-        
+
         badge.className = `status-badge status-${statusKey}`;
         badge.textContent = statusText;
         tdStatus.appendChild(badge);
 
-        // Date (Windows taskbar clock format: HH:mm on top, M/D/YY on bottom)
+        // Date
         const tdDate = document.createElement('td');
         const createdDate = new Date(payment.createdAt);
         const timeStr = createdDate.toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
-            hour12: false
+            hour12: true
         });
-        const month = createdDate.getMonth() + 1;
-        const day = createdDate.getDate();
-        const yearShort = String(createdDate.getFullYear()).slice(-2);
-        const dateStr = `${month}/${day}/${yearShort}`;
+        const dateStr = createdDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
 
         tdDate.innerHTML = `
             <div style="display: flex; flex-direction: column; line-height: 1.25;">
@@ -238,18 +239,18 @@ function renderPayments(payments) {
         row.appendChild(tdActions);
 
         tableBody.appendChild(row);
-        
+
         // Accumulate stats
-        if (payment.status === 'SUCCESS') {
+        if (statusKey === 'success') {
             countSuccess++;
             sumRevenue += (payment.amount || 0);
-        } else if (payment.status === 'PENDING') {
+        } else if (statusKey === 'pending') {
             countPending++;
         } else {
             countFailed++;
         }
     });
-    
+
     // Update summary cards
     const formatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
     document.getElementById('cardRevenue').textContent = formatter.format(sumRevenue);
@@ -290,15 +291,15 @@ function renderActiveFilterChips() {
         chips.push({ label: `Provider: ${provider}`, reset: () => { document.getElementById('filterProvider').value = ''; } });
     }
     if (startDate) {
-        chips.push({ label: `From: ${startDate}`, reset: () => { 
-            document.getElementById('filterStartDate').value = ''; 
+        chips.push({ label: `From: ${startDate}`, reset: () => {
+            document.getElementById('filterStartDate').value = '';
             document.getElementById('startDateDisplay').textContent = 'Start Date';
             document.getElementById('startDateDisplay').style.fontWeight = '500';
         } });
     }
     if (endDate) {
-        chips.push({ label: `To: ${endDate}`, reset: () => { 
-            document.getElementById('filterEndDate').value = ''; 
+        chips.push({ label: `To: ${endDate}`, reset: () => {
+            document.getElementById('filterEndDate').value = '';
             document.getElementById('endDateDisplay').textContent = 'End Date';
             document.getElementById('endDateDisplay').style.fontWeight = '500';
         } });
@@ -336,7 +337,7 @@ function updatePagination(pageNumber, totalPages, totalElements) {
 
     let html = `<span class="admin-pagination-info">Showing ${startItem} - ${endItem} of ${totalElements} payments</span>
     <div style="display: flex; gap: 4px;">`;
-    
+
     for (let i = 0; i < totalPages; i++) {
         html += `<button class="admin-pagination-btn ${i === pageNumber ? 'active' : ''}" onclick="window.goToPage(${i})">${i + 1}</button>`;
     }
@@ -400,7 +401,7 @@ async function viewPaymentDetails(paymentId) {
         if (response && response.success && response.data) {
             const p = response.data;
             const formatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
-            
+
             let displayStatus = p.status || 'PENDING';
             if (displayStatus === 'PENDING') {
                 const createdDate = new Date(p.createdAt);
@@ -408,6 +409,14 @@ async function viewPaymentDetails(paymentId) {
                     displayStatus = 'EXPIRED';
                 }
             }
+
+            const formatDateTime = (dateString) => {
+                if (!dateString) return 'Not available';
+                const d = new Date(dateString);
+                const datePart = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const timePart = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                return `${datePart} &middot; ${timePart}`;
+            };
 
             body.innerHTML = `
                 <div style="display: flex; flex-direction: column; gap: 24px;">
@@ -418,12 +427,12 @@ async function viewPaymentDetails(paymentId) {
                             <div><strong>Trxn ID:</strong> #${p.paymentId}</div>
                             <div><strong>Plan:</strong> ${p.planCode || p.planName || '-'}</div>
                             <div><strong>Amount:</strong> <span style="font-weight:bold">${formatter.format(p.amount)}</span></div>
-                            <div><strong>Status:</strong> <span class="badge status-${displayStatus.toLowerCase()}">${displayStatus}</span></div>
-                            <div><strong>Created At:</strong> ${p.createdAt ? new Date(p.createdAt).toLocaleString() : 'Not available'}</div>
-                            <div><strong>Paid At:</strong> ${p.paidAt ? new Date(p.paidAt).toLocaleString() : 'Not available'}</div>
+                            <div><strong>Status:</strong> <span class="status-badge status-${displayStatus.toLowerCase()}">${displayStatus === 'SUCCESS' ? 'Success' : displayStatus}</span></div>
+                            <div><strong>Created At:</strong> ${formatDateTime(p.createdAt)}</div>
+                            <div><strong>Paid At:</strong> ${formatDateTime(p.paidAt)}</div>
                         </div>
                     </div>
-                    
+
                     <!-- Customer Section -->
                     <div>
                         <h4 style="margin: 0 0 12px 0; font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">Customer</h4>
@@ -431,7 +440,7 @@ async function viewPaymentDetails(paymentId) {
                             <div><strong>User Email:</strong> ${p.userEmail || p.userId}</div>
                         </div>
                     </div>
-                    
+
                     <!-- VNPay Section -->
                     <div>
                         <h4 style="margin: 0 0 12px 0; font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">VNPay Details</h4>

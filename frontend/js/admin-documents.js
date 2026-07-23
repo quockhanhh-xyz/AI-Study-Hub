@@ -50,10 +50,10 @@ function initAdminDocuments() {
         const subjectFilter = document.getElementById('subjectFilter');
         const subjectDatalist = document.getElementById('subjectDatalist');
         if (!subjectFilter || !subjectDatalist) return '';
-        
+
         const typedText = subjectFilter.value.trim();
         if (!typedText) return '';
-        
+
         const options = subjectDatalist.options;
         for (let i = 0; i < options.length; i++) {
             if (options[i].value === typedText) {
@@ -131,7 +131,7 @@ function initAdminDocuments() {
 
                 loadingState.style.display = "none";
                 contentState.style.display = "block";
-                
+
                 // Fetch counts for tabs
                 updateTabCounts();
             } else {
@@ -155,7 +155,7 @@ function initAdminDocuments() {
             default: return 'admin-badge-neutral';
         }
     };
-    
+
     const getApprovalLabel = (status) => {
         if (!status) return 'Pending';
         if (status.toUpperCase() === 'PENDING') return 'Pending';
@@ -261,7 +261,7 @@ function initAdminDocuments() {
         html += `</div>`;
         pagination.innerHTML = html;
     };
-    
+
     window.goToPage = (page) => {
         currentPage = page;
         loadDocuments();
@@ -381,7 +381,7 @@ function initAdminDocuments() {
             tab.classList.add('active');
             tab.style.borderBottomColor = 'var(--primary)';
             tab.style.color = 'var(--primary)';
-            
+
             const status = tab.dataset.tab;
             statusFilter.value = status === 'ALL' ? '' : status;
             currentPage = 1;
@@ -398,7 +398,7 @@ function initAdminDocuments() {
                 getAdminPublicDocuments({ page: 0, size: 1 })
             ];
             const [pendingRes, approvedRes, rejectedRes, allRes] = await Promise.all(reqs);
-            
+
             if (pendingRes && pendingRes.success) document.getElementById('tabCountPending').textContent = pendingRes.data.totalElements;
             if (approvedRes && approvedRes.success) document.getElementById('tabCountApproved').textContent = approvedRes.data.totalElements;
             if (rejectedRes && rejectedRes.success) document.getElementById('tabCountRejected').textContent = rejectedRes.data.totalElements;
@@ -416,7 +416,7 @@ function initAdminDocuments() {
             if (subjId) params.subjectId = subjId;
             if (statusFilter.value) params.approvalStatus = statusFilter.value;
             if (fileTypeFilter.value) params.fileType = fileTypeFilter.value;
-            
+
             const hasFilters = Object.keys(params).length > 0;
             const confirmMsg = hasFilters ? "Export filtered documents?" : "Export all public documents?";
             if (!confirm(confirmMsg)) return;

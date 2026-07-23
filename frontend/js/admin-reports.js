@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (typeof renderNavigation === "function") {
       renderNavigation();
     }
-    
+
     // Status Filter listener
     if (statusFilter) {
       statusFilter.addEventListener("change", () => {
@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       if (res && res.success) {
         reportsLoadingState.style.display = "none";
         reportsContent.style.display = "block";
-        
+
         const data = res.data;
         const reports = data ? data.content || [] : [];
         totalPages = data ? data.totalPages || 0 : 0;
@@ -225,7 +225,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const start = totalElements === 0 ? 0 : currentPage * pageSize + 1;
     const end = Math.min((currentPage + 1) * pageSize, totalElements);
-    
+
     let html = `<span class="admin-pagination-info">Showing ${start} - ${end} of ${totalElements} entries</span><div style="display: flex; gap: 4px;">`;
     for (let i = 0; i < totalPages; i++) {
         html += `<button class="admin-pagination-btn ${i === currentPage ? 'active' : ''}" onclick="window.goToPage(${i})">${i + 1}</button>`;

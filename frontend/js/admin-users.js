@@ -217,7 +217,7 @@ function renderUsersTable(data) {
 
             let tierDisplay = `<span class="badge ${getTierBadgeClass(user.tier)}">${user.tier || '-'}</span>`;
             let aiLimitDisplay = "";
-            
+
             if (user.role === 'ADMIN') {
                 tierDisplay = '<span style="color: var(--text-muted, #64748b); font-weight: 500;">-</span>';
                 aiLimitDisplay = '<span style="color: var(--text-muted, #64748b); font-weight: 500;">-</span>';
@@ -225,7 +225,7 @@ function renderUsersTable(data) {
                 let limit = '10';
                 if (user.tier === 'PREMIUM') limit = '50';
                 else if (user.tier === 'ULTRA') limit = '200';
-                
+
                 const used = user.aiUsage ? user.aiUsage.aiQaUsed : 0;
                 aiLimitDisplay = `
                     <div style="display: flex; flex-direction: column; line-height: 1.25;">
@@ -274,7 +274,7 @@ function renderUsersTable(data) {
         } else {
             const startItem = (currentPage * pageSize) + 1;
             const endItem = Math.min((currentPage + 1) * pageSize, totalElements);
-            
+
             let html = `<span class="admin-pagination-info">Showing ${startItem} - ${endItem} of ${totalElements} users</span><div style="display: flex; gap: 4px;">`;
             for (let i = 0; i < totalPages; i++) {
                 html += `<button class="admin-pagination-btn ${i === currentPage ? 'active' : ''}" onclick="window.goToPage(${i})">${i + 1}</button>`;
@@ -438,7 +438,7 @@ async function executeUpdateStatus() {
         }
     } catch (error) {
         console.error("Error updating status:", error);
-        
+
         let errorMsg = "An error occurred while updating user status.";
         if (error.status === 401) {
             errorMsg = "Your session has expired. Redirecting to login...";
@@ -490,8 +490,8 @@ async function viewUserDetails(userId) {
             if (u.paymentHistory && u.paymentHistory.length > 0) {
                 paymentsHtml = '<ul style="margin: 0; padding-left: 20px; font-size: 0.9rem;">' + u.paymentHistory.map(p => `
                     <li style="margin-bottom: 6px;">
-                        <strong>${escapeHtml(p.planCode || 'N/A')}</strong> &mdash; 
-                        <span style="color: var(--success); font-weight: 500;">${formatAmount(p.amount)}</span> via ${escapeHtml(p.paymentProvider || 'N/A')} 
+                        <strong>${escapeHtml(p.planCode || 'N/A')}</strong> &mdash;
+                        <span style="color: var(--success); font-weight: 500;">${formatAmount(p.amount)}</span> via ${escapeHtml(p.paymentProvider || 'N/A')}
                         <br>
                         <span style="color: var(--text-muted); font-size: 0.85rem;">Status: ${p.status} on ${new Date(p.createdAt).toLocaleDateString()}</span>
                     </li>
@@ -513,7 +513,7 @@ async function viewUserDetails(userId) {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div style="background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
                         <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 0.95rem; color: var(--primary);">Subscription & Quotas</h4>
                         <div style="display: grid; gap: 8px; font-size: 0.9rem;">
