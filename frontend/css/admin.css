@@ -132,7 +132,7 @@
 
 .table-muted-text {
     color: var(--text-muted, #64748b);
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .admin-header-actions {
@@ -212,10 +212,11 @@
 }
 
 /* Badge Component System */
-.badge, .admin-badge {
-    padding: 4px 10px;
+.badge,
+.admin-badge {
+    padding: 6px 12px;
     border-radius: 6px;
-    font-size: 0.75rem;
+    font-size: 13px;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
@@ -225,52 +226,102 @@
 }
 
 /* Status Badges */
-.admin-badge-success, .badge-status-active { 
-    background-color: #ecfdf5; 
-    color: #047857; 
-    border-color: #a7f3d0; 
+.admin-badge-success,
+.badge-status-active {
+    background-color: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
 }
-.admin-badge-warning, .badge-status-pending { 
-    background-color: #fffbe6; 
-    color: #b45309; 
-    border-color: #fde68a; 
+
+.admin-badge-warning,
+.badge-status-pending {
+    background-color: #fffbe6;
+    color: #b45309;
+    border-color: #fde68a;
 }
-.admin-badge-danger, .badge-status-blocked, .badge-status-rejected { 
-    background-color: #fef2f2; 
-    color: #b91c1c; 
-    border-color: #fecaca; 
+
+.admin-badge-danger,
+.badge-status-blocked,
+.badge-status-rejected {
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
 }
-.admin-badge-info, .badge-tier-ultra { 
-    background-color: #f3e8ff; 
-    color: #6b21a8; 
-    border-color: #e9d5ff; 
+
+.admin-badge-info,
+.badge-tier-ultra {
+    background-color: #f3e8ff;
+    color: #6b21a8;
+    border-color: #e9d5ff;
 }
-.admin-badge-neutral, .badge-status-inactive, .badge-status-unpublished { 
-    background-color: #f8fafc; 
-    color: #64748b; 
-    border-color: #e2e8f0; 
+
+.admin-badge-neutral,
+.badge-status-inactive,
+.badge-status-unpublished {
+    background-color: #f8fafc;
+    color: #64748b;
+    border-color: #e2e8f0;
+}
+
+.admin-badge-primary {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+
+.admin-badge-action {
+    padding: 6px 0;
+    font-size: 14px;
+    width: 96px;
+    justify-content: center;
+    text-align: center;
+}
+
+.badge-you-special {
+    background: linear-gradient(135deg, var(--primary, #FF5A3D) 0%, #ff8a65 100%);
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 4px 12px rgba(255, 90, 61, 0.3);
+    animation: pulse-you 2s infinite;
+}
+
+@keyframes pulse-you {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 90, 61, 0.5);
+    }
+
+    70% {
+        box-shadow: 0 0 0 8px rgba(255, 90, 61, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 90, 61, 0);
+    }
 }
 
 /* Role & Tier Badges */
-.badge-role-admin { 
-    background-color: #fff7ed; 
-    color: #c2410c; 
-    border-color: #ffedd5; 
+.badge-role-admin {
+    background-color: #fff7ed;
+    color: #c2410c;
+    border-color: #ffedd5;
 }
-.badge-role-user { 
-    background-color: #f1f5f9; 
-    color: #475569; 
-    border-color: #cbd5e1; 
+
+.badge-role-user {
+    background-color: #f1f5f9;
+    color: #475569;
+    border-color: #cbd5e1;
 }
-.badge-tier-free { 
-    background-color: #f3f4f6; 
-    color: #4b5563; 
-    border-color: #e5e7eb; 
+
+.badge-tier-free {
+    background-color: #f3f4f6;
+    color: #4b5563;
+    border-color: #e5e7eb;
 }
-.badge-tier-premium { 
-    background-color: #eff6ff; 
-    color: #1d4ed8; 
-    border-color: #bfdbfe; 
+
+.badge-tier-premium {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
 }
 
 /* Admin Dashboard Specific Grids & Cards */
@@ -653,14 +704,17 @@
 .admin-search-input {
     padding-left: 42px !important;
     width: 100%;
+    border-radius: 9999px !important;
+    background-color: #ffffff !important;
 }
 
 .admin-filter-input:focus,
-.admin-filters input:focus {
+.admin-filters input:focus,
+.admin-search-input:focus {
     outline: none;
-    border-color: var(--primary, #f97316);
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
-    background-color: #ffffff;
+    border-color: var(--primary, #f97316) !important;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15) !important;
+    background-color: #ffffff !important;
 }
 
 /* Custom Dropdown Styling across all Admin pages */
@@ -945,17 +999,12 @@ select.admin-select:focus,
     font-size: 13.5px;
 }
 
-.admin-payment-filters-row1 {
+.admin-payment-filters-row1,
+.admin-payment-filters-row2,
+.admin-payment-filters-row3 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    align-items: center;
-}
-
-.admin-payment-filters-row2 {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    gap: 30px;
     align-items: center;
 }
 
@@ -968,7 +1017,8 @@ select.admin-select:focus,
 @media (max-width: 1024px) {
 
     .admin-payment-filters-row1,
-    .admin-payment-filters-row2 {
+    .admin-payment-filters-row2,
+    .admin-payment-filters-row3 {
         grid-template-columns: 1fr 1fr;
     }
 }
@@ -1013,11 +1063,11 @@ select.admin-select:focus,
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 12px;
+    padding: 0 16px;
     pointer-events: none;
     background: #fff;
-    border: 1px solid var(--border, #eadfdd);
-    border-radius: 8px;
+    border: 1px solid #e76f51;
+    border-radius: 24px;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -1027,14 +1077,14 @@ select.admin-select:focus,
 
 .date-text {
     font-weight: 500;
-    color: var(--text-main, #172033);
+    color: #e76f51;
     font-size: 13.5px;
 }
 
 .date-icon {
     width: 16px;
     height: 16px;
-    color: var(--text-muted, #64748b);
+    color: #e76f51;
 }
 
 .date-invisible-input {
@@ -1132,7 +1182,12 @@ select.admin-select:focus,
     border: 1px solid rgba(217, 119, 6, 0.25);
 }
 
-.status-badge.status-cancelled,
+.status-badge.status-cancelled {
+    background-color: rgba(107, 114, 128, 0.12);
+    color: #4b5563;
+    border: 1px solid rgba(107, 114, 128, 0.25);
+}
+
 .status-badge.status-failed {
     background-color: rgba(220, 38, 38, 0.12);
     color: #b91c1c;
@@ -1151,9 +1206,6 @@ select.admin-select:focus,
     border: 1px solid rgba(147, 51, 234, 0.25);
 }
 
-.admin-users-summary-strip {
-    margin-bottom: 24px;
-}
 
 .admin-self-badge {
     display: inline-flex;
@@ -1168,4 +1220,15 @@ select.admin-select:focus,
     border-radius: 6px;
     border: 1px solid transparent;
     cursor: default;
+}
+
+#filterPlan,
+#filterStatus {
+    border: none !important;
+    background-color: #f4f5f7 !important;
+    border-radius: 24px !important;
+    height: 42px !important;
+    padding-left: 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }

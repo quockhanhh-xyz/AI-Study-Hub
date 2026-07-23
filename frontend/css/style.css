@@ -1346,12 +1346,35 @@ textarea.success {
   margin-left: 0;
 }
 
+.sidebar .logo.brand-flex {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.sidebar.collapsed .logo.brand-flex {
+  justify-content: center;
+  gap: 0;
+}
+
+.sidebar.collapsed .book-logo {
+  display: none;
+}
+
 /* ── Nav container ── */
 .sidebar-nav {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  overflow-y: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-link {
