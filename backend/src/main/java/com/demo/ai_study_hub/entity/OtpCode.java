@@ -31,6 +31,9 @@ public class OtpCode {
     @Column(nullable = false)
     private boolean used = false;
 
+    @Column(name = "failed_attempts", nullable = false)
+    private int failedAttempts = 0;
+
     @org.hibernate.annotations.CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

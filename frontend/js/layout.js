@@ -305,36 +305,76 @@ function renderDynamicSidebar(isAuthenticated) {
 }
 
 
+const confirmLogoutModalHtml = `
+  <div id="logoutConfirmModal" class="modal-overlay" style="display: flex; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 16px;">
+      <div class="modal-content card" style="width: 100%; max-width: 400px; background: #ffffff; border-radius: 16px; padding: 24px; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); text-align: center; color: #1e293b;">
+          <div style="width: 48px; height: 48px; background: #fee2e2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="24" height="24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+              </svg>
+          </div>
+          <h3 style="font-size: 20px; font-weight: 700; color: #172033; margin: 0 0 8px 0;">Sign out?</h3>
+          <p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">You will need to sign in again to access your documents and AI tools.</p>
+          <div style="display: flex; gap: 12px; justify-content: center;">
+              <button type="button" id="confirmLogoutCancel" class="btn btn-secondary" style="flex: 1; margin: 0;">Cancel</button>
+              <button type="button" id="confirmLogoutProceed" class="btn btn-primary" style="flex: 1; margin: 0; background: #ef4444; border-color: #ef4444; color: #ffffff;">Sign out</button>
+          </div>
+      </div>
+  </div>
+`;
+
+async function executeLogout() {
+  try {
+    if (typeof post === "function") {
+      await post("/api/auth/logout");
+    } else {
+      const logoutUrl = typeof API_BASE_URL !== "undefined" ? `${API_BASE_URL}/api/auth/logout` : "/api/auth/logout";
+      await fetch(logoutUrl, { method: "POST", credentials: "include" });
+    }
+  } catch (error) {
+    console.warn("Backend logout session cleanup failed, performing client fallback...", error);
+  } finally {
+    if (typeof window.clearAllPollingSessions === "function") {
+      window.clearAllPollingSessions();
+    }
+    localStorage.removeItem("currentUser");
+    window.location.href = "login.html";
+  }
+}
+
 /**
  * Coordinates backend session removal, storage reset, and graceful redirection on logout action.
  */
 function initializeLogoutFlow() {
-  // Use event delegation on body since layout links are appended dynamically
-  document.body.addEventListener("click", async (e) => {
+  document.body.addEventListener("click", (e) => {
     const logoutBtn = e.target.closest("#sidebarLogoutBtn");
     if (!logoutBtn) return;
-
-
     e.preventDefault();
 
+    let modal = document.getElementById("logoutConfirmModal");
+    if (!modal) {
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = confirmLogoutModalHtml.trim();
+      modal = tempDiv.firstChild;
+      document.body.appendChild(modal);
 
-    try {
-      // Trigger API sign-out to instruct backend to clear HttpOnly auth session cookies
-      await post("/api/auth/logout");
-    } catch (error) {
-      console.warn("Backend logout session cleanup failed, performing client fallback...", error);
-    } finally {
-      // Flush any active document processing polling sessions before tearing down the session
-      if (typeof window.clearAllPollingSessions === "function") {
-        window.clearAllPollingSessions();
-      }
+      document.getElementById("confirmLogoutCancel").addEventListener("click", () => {
+        modal.style.display = "none";
+        modal.remove();
+      });
 
-      // Clear remaining metadata objects from storage catalog safely
-      localStorage.removeItem("currentUser");
+      document.getElementById("confirmLogoutProceed").addEventListener("click", async () => {
+        modal.style.display = "none";
+        modal.remove();
+        await executeLogout();
+      });
 
-
-      // Gracefully kick the user back to the entry gateway login screen
-      window.location.href = "login.html";
+      modal.addEventListener("click", (evt) => {
+        if (evt.target === modal) {
+          modal.style.display = "none";
+          modal.remove();
+        }
+      });
     }
   });
 }

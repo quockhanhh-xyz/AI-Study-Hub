@@ -36,6 +36,22 @@ public class EmailService {
         mailSender.send(message);
     }
 
+    public void sendResetPasswordEmail(String toEmail, String otpCode) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject("AI Study Hub - Reset Password OTP");
+        message.setText(
+                "Hello!\n\n" +
+                        "You requested to reset your password. Your OTP code is: " + otpCode + "\n\n" +
+                        "This code is valid for 5 minutes.\n" +
+                        "If you did not request this, you can safely ignore this email.\n\n" +
+                        "Best regards,\n" +
+                        "AI Study Hub Team"
+        );
+        mailSender.send(message);
+    }
+
     /**
      * Sends an HTML group invite email with a styled "Join Group" button.
      *

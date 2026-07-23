@@ -31,6 +31,21 @@ public class OtpService {
         emailService.sendOtpEmail(user.getEmail(), code);
     }
 
+    public void createAndSendResetPasswordOtp(User user) {
+        String code = String.format("%06d", secureRandom.nextInt(1000000));
+
+        OtpCode otp = new OtpCode();
+        otp.setUser(user);
+        otp.setCode(code);
+        otp.setExpiredAt(LocalDateTime.now().plusMinutes(5));
+        otp.setPurpose("RESET_PASSWORD");
+        otp.setUsed(false);
+        otp.setFailedAttempts(0);
+        otpCodeRepository.save(otp);
+
+        emailService.sendResetPasswordEmail(user.getEmail(), code);
+    }
+
     // Verify OTP
     public boolean verifyOtp(User user, String inputCode) {
         OtpCode otp = otpCodeRepository

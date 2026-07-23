@@ -52,14 +52,16 @@ public class AuthController {
             HttpServletResponse response) {
         try {
             User user = authService.loginAndGetUser(request);
-            String token = jwtUtil.generateToken(user.getEmail());
+            boolean rememberMe = request.getRememberMe() != null && request.getRememberMe();
+            String token = jwtUtil.generateToken(user.getEmail(), rememberMe);
+            long cookieMaxAge = rememberMe ? 604800L : 7200L; // 7 days vs 2 hours in seconds
 
             ResponseCookie cookie = ResponseCookie.from(AuthCookieConstants.COOKIE_NAME, token)
                     .httpOnly(true)
                     .secure(AuthCookieConstants.COOKIE_SECURE)
                     .sameSite(AuthCookieConstants.COOKIE_SAME_SITE)
                     .path("/")
-                    .maxAge(jwtUtil.getExpirationMs() / 1000)
+                    .maxAge(cookieMaxAge)
                     .build();
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
@@ -136,6 +138,26 @@ public class AuthController {
             return ResponseEntity.ok(new ApiResponse<>(true, "Current user retrieved successfully", data));
         } catch (RuntimeException e) {
             return ResponseEntity.status(401).body(new ApiResponse<>(false, e.getMessage(), null));
+        }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Object>> forgotPassword(@RequestBody com.demo.ai_study_hub.dto.ForgotPasswordRequest request) {
+        try {
+            authService.processForgotPassword(request.getEmail());
+            return ResponseEntity.ok(new ApiResponse<>(true, "If this email exists, a reset code has been sent.", null));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, e.getMessage(), null));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Object>> resetPassword(@RequestBody com.demo.ai_study_hub.dto.ResetPasswordRequest request) {
+        try {
+            authService.processResetPassword(request.getEmail(), request.getOtp(), request.getNewPassword(), request.getConfirmPassword());
+            return ResponseEntity.ok(new ApiResponse<>(true, "Password reset successfully.", null));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, e.getMessage(), null));
         }
     }
 }

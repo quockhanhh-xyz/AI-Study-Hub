@@ -23,10 +23,15 @@ public class JwtUtil {
     }
 
     public String generateToken(String email) {
+        return generateToken(email, false);
+    }
+
+    public String generateToken(String email, boolean rememberMe) {
+        long lifespanMs = rememberMe ? 604800000L : 7200000L; // 7 days vs 2 hours
         return Jwts.builder()
                 .subject(email)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expirationMs))
+                .expiration(new Date(System.currentTimeMillis() + lifespanMs))
                 .signWith(getKey())
                 .compact();
     }

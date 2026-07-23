@@ -219,6 +219,7 @@
 
     const email = getInputValue("loginEmail");
     const password = getInputValue("loginPassword");
+    const rememberMe = document.getElementById("loginRememberMe")?.checked ?? false;
 
     if (!email || !password) {
       setMessage("loginMessage", "Please enter your email and password.", "error");
@@ -229,7 +230,7 @@
     toggleButtonState(submitBtn, true, "Logging in...");
 
     try {
-      await post("/api/auth/login", { email, password });
+      await post("/api/auth/login", { email, password, rememberMe });
       const sessionCheck = await get("/api/auth/me", { skipUnauthorizedRedirect: true });
       const user = sessionCheck?.data;
 
@@ -327,11 +328,159 @@
     });
   }
 
+  function initializeForgotPasswordFlow() {
+    const forgotLink = document.getElementById("forgotPasswordLink");
+    const modal = document.getElementById("forgotPasswordModal");
+    const closeBtn = document.getElementById("closeForgotModalBtn");
+    
+    const step1 = document.getElementById("forgotStep1");
+    const step2 = document.getElementById("forgotStep2");
+    
+    const form1 = document.getElementById("forgotForm1");
+    const form2 = document.getElementById("forgotForm2");
+    
+    const msg1 = document.getElementById("forgotMessage1");
+    const msg2 = document.getElementById("forgotMessage2");
+    
+    const forgotEmailInput = document.getElementById("forgotEmail");
+    
+    if (!forgotLink || !modal || !closeBtn) return;
+    
+    forgotLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      modal.style.display = "flex";
+      step1.style.display = "block";
+      step2.style.display = "none";
+      if (msg1) msg1.style.display = "none";
+      if (msg2) msg2.style.display = "none";
+      form1.reset();
+      form2.reset();
+    });
+    
+    closeBtn.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+    
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.style.display = "none";
+      }
+    });
+    
+    form1.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = forgotEmailInput.value.trim();
+      if (!email) return;
+      
+      const submitBtn = document.getElementById("sendOtpBtn");
+      toggleButtonState(submitBtn, true, "Sending...");
+      
+      if (msg1) {
+        msg1.textContent = "Processing...";
+        msg1.className = "helper-text info";
+        msg1.style.display = "block";
+      }
+      
+      try {
+        await post("/api/auth/forgot-password", { email });
+        toggleButtonState(submitBtn, false);
+        
+        step1.style.display = "none";
+        step2.style.display = "block";
+        if (msg2) {
+          msg2.textContent = "If this email exists, a reset code has been sent.";
+          msg2.className = "helper-text success";
+          msg2.style.display = "block";
+        }
+      } catch (error) {
+        toggleButtonState(submitBtn, false);
+        if (msg1) {
+          msg1.textContent = error.message || "Failed to process forgot password. Please try again.";
+          msg1.className = "helper-text error";
+          msg1.style.display = "block";
+        }
+      }
+    });
+    
+    form2.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = forgotEmailInput.value.trim();
+      const otp = document.getElementById("resetOtp").value.trim();
+      const newPassword = document.getElementById("resetNewPassword").value;
+      const confirmPassword = document.getElementById("resetConfirmPassword").value;
+      
+      const submitBtn = document.getElementById("resetSubmitBtn");
+      
+      if (!otp || !newPassword || !confirmPassword) {
+        if (msg2) {
+          msg2.textContent = "All fields are required.";
+          msg2.className = "helper-text error";
+          msg2.style.display = "block";
+        }
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        if (msg2) {
+          msg2.textContent = "Passwords do not match.";
+          msg2.className = "helper-text error";
+          msg2.style.display = "block";
+        }
+        return;
+      }
+      
+      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+      if (!passwordRegex.test(newPassword)) {
+        if (msg2) {
+          msg2.textContent = "Password must be at least 8 characters, including at least 1 letter and 1 number.";
+          msg2.className = "helper-text error";
+          msg2.style.display = "block";
+        }
+        return;
+      }
+      
+      toggleButtonState(submitBtn, true, "Resetting...");
+      if (msg2) {
+        msg2.textContent = "Resetting password...";
+        msg2.className = "helper-text info";
+        msg2.style.display = "block";
+      }
+      
+      try {
+        await post("/api/auth/reset-password", { email, otp, newPassword, confirmPassword });
+        toggleButtonState(submitBtn, false);
+        
+        if (msg2) {
+          msg2.textContent = "Password reset successfully! Redirecting to login...";
+          msg2.className = "helper-text success";
+          msg2.style.display = "block";
+        }
+        
+        setTimeout(() => {
+          modal.style.display = "none";
+          const loginEmail = document.getElementById("loginEmail");
+          if (loginEmail) {
+            loginEmail.value = email;
+            loginEmail.dispatchEvent(new Event("input", { bubbles: true }));
+          }
+        }, 1500);
+      } catch (error) {
+        toggleButtonState(submitBtn, false);
+        if (msg2) {
+          msg2.textContent = error.message || "Reset failed. Please check OTP and try again.";
+          msg2.className = "helper-text error";
+          msg2.style.display = "block";
+        }
+      }
+    });
+  }
+
   // ─────────────────────────────────────────────────────────────
   // EVENT LISTENERS
   // ─────────────────────────────────────────────────────────────
 
   document.addEventListener("DOMContentLoaded", function () {
+    initializeForgotPasswordFlow();
     const displayEmail = document.getElementById("displayEmail");
     if (displayEmail) {
       displayEmail.textContent = getEmailFromQuery() || "your email";

@@ -250,7 +250,8 @@ Logs in a user account. Only users with status `ACTIVE` can log in. Sets a secur
 ```json
 {
   "email": "user@gmail.com",
-  "password": "12345678"
+  "password": "12345678",
+  "rememberMe": true
 }
 ```
 
@@ -372,6 +373,61 @@ Set-Cookie: accessToken=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict; Secure
 {
   "success": true,
   "message": "Logout successfully",
+  "data": null
+}
+```
+
+---
+
+## 2.7. Forgot Password API
+
+## POST `/api/auth/forgot-password`
+
+Sends a 6-digit verification code to the user's email if the account exists.
+
+### Request Body
+
+```json
+{
+  "email": "user@gmail.com"
+}
+```
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "If this email exists, a reset code has been sent.",
+  "data": null
+}
+```
+
+---
+
+## 2.8. Reset Password API
+
+## POST `/api/auth/reset-password`
+
+Resets the password if the OTP code is correct and not expired.
+
+### Request Body
+
+```json
+{
+  "email": "user@gmail.com",
+  "otp": "123456",
+  "newPassword": "NewPassword123",
+  "confirmPassword": "NewPassword123"
+}
+```
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "Password reset successfully.",
   "data": null
 }
 ```
