@@ -1045,6 +1045,17 @@ select.admin-select:focus,
     gap: 12px;
 }
 
+.admin-modal-actions .btn {
+    width: auto !important;
+    min-width: 110px;
+    padding: 8px 16px;
+    height: 38px;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* ==========================================================================
    Admin Payment Monitoring Custom Styles
    ========================================================================== */

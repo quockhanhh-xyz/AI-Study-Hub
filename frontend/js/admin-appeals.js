@@ -57,6 +57,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   function renderAppeals(appeals) {
+    const total = appeals ? appeals.length : 0;
+    const pending = appeals ? appeals.filter(a => a.status === 'PENDING').length : 0;
+    const resolved = appeals ? appeals.filter(a => a.status === 'RESOLVED').length : 0;
+    const rate = total > 0 ? Math.round((resolved / total) * 100) + '%' : '0%';
+
+    document.getElementById("summaryTotalAppeals").textContent = total;
+    document.getElementById("summaryPendingAppeals").textContent = pending;
+    document.getElementById("summaryResolvedAppeals").textContent = resolved;
+    document.getElementById("summaryResolveRate").textContent = rate;
+
     tableBody.innerHTML = "";
     if (!appeals || appeals.length === 0) {
       emptyState.style.display = "block";

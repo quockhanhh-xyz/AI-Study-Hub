@@ -1393,6 +1393,11 @@ textarea.success {
   overflow-y: auto;
   -ms-overflow-style: none;
   scrollbar-width: none;
+  margin-top: 20px;
+}
+
+.sidebar-user-stats + .sidebar-nav {
+  margin-top: 0;
 }
 
 .sidebar-nav::-webkit-scrollbar {

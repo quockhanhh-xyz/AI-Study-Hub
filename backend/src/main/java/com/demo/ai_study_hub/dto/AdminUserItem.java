@@ -14,4 +14,5 @@ public class AdminUserItem {
     private String status;
     private LocalDateTime createdAt;
     private Long documentCount;
+    private Integer aiTodayCount;
 }

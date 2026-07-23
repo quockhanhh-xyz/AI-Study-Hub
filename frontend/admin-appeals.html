@@ -48,6 +48,34 @@
                     </div>
 
                     <div id="appealsContent" style="display: none;">
+                        <!-- Summary KPI Cards -->
+                        <div class="admin-payment-summary-grid" id="appealsSummaryStrip" style="margin-bottom: 24px;">
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Total Appeals</div>
+                                    <div class="summary-value text-primary" id="summaryTotalAppeals" style="color: var(--primary, #ff5a3d);">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Pending Review</div>
+                                    <div class="summary-value" id="summaryPendingAppeals" style="color: #f59e0b;">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Resolved Appeals</div>
+                                    <div class="summary-value text-success" id="summaryResolvedAppeals" style="color: var(--success, #10b981);">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Resolution Rate</div>
+                                    <div class="summary-value" id="summaryResolveRate" style="color: #3b82f6;">0%</div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Appeals Table -->
                         <div class="admin-card table-card" style="overflow-x: auto;">
                             <table class="admin-table">

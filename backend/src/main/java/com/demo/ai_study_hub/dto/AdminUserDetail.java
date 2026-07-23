@@ -22,6 +22,7 @@ public class AdminUserDetail {
     // Usage / Quota
     private AdminAiUsageItem aiUsage;
     private Integer aiDailyLimit;
+    private Integer aiTodayCount;
     private Long storageLimit;
     private Long maxFileSize;
     private Integer maxDocumentCount;

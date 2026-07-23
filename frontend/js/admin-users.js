@@ -226,10 +226,11 @@ function renderUsersTable(data) {
                 if (user.tier === 'PREMIUM') limit = '50';
                 else if (user.tier === 'ULTRA') limit = '200';
 
-                const used = user.aiUsage ? user.aiUsage.aiQaUsed : 0;
+                const todayCount = user.aiTodayCount !== undefined && user.aiTodayCount !== null ? user.aiTodayCount : 0;
                 aiLimitDisplay = `
-                    <div style="display: flex; flex-direction: column; line-height: 1.25;">
-                        <span style="font-size: 13px; color: var(--text-muted, #64748b);">${used} /</span>
+                    <div style="text-align: center;">
+                        <span style="font-size: 13px; font-weight: 600; color: var(--text-main, #1e293b);">${todayCount}</span>
+                        <span style="font-size: 13px; color: var(--text-muted, #64748b);">/</span>
                         <span style="font-size: 13px; color: var(--text-muted, #64748b);">${limit}</span>
                     </div>
                 `;
@@ -529,18 +530,22 @@ async function viewUserDetails(userId) {
 
                 <div style="background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 16px;">
                     <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 0.95rem; color: var(--primary);">AI Usage Overview</h4>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; font-size: 0.9rem; text-align: center;">
-                        <div style="padding: 8px; background: rgba(0,0,0,0.03); border-radius: 6px;">
-                            <div style="font-size: 1.2rem; font-weight: 600;">${u.aiUsage ? u.aiUsage.aiQaUsed : 0} <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">/ ${u.aiDailyLimit || '?'}</span></div>
-                            <div style="color: var(--text-muted); font-size: 0.8rem;">Daily Q&A</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 0.85rem; text-align: center;">
+                        <div style="padding: 8px 4px; background: rgba(0,0,0,0.03); border-radius: 6px;">
+                            <div style="font-size: 1.1rem; font-weight: 600;">${u.aiTodayCount !== undefined && u.aiTodayCount !== null ? u.aiTodayCount : 0} <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">/ ${u.aiDailyLimit || '?'}</span></div>
+                            <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px;">Daily Q&A</div>
                         </div>
-                        <div style="padding: 8px; background: rgba(0,0,0,0.03); border-radius: 6px;">
-                            <div style="font-size: 1.2rem; font-weight: 600;">${u.aiUsage ? u.aiUsage.summaryUsed + u.aiUsage.flashcardUsed + u.aiUsage.quizUsed : 0}</div>
-                            <div style="color: var(--text-muted); font-size: 0.8rem;">Other AI Gen</div>
+                        <div style="padding: 8px 4px; background: rgba(0,0,0,0.03); border-radius: 6px;">
+                            <div style="font-size: 1.1rem; font-weight: 600;">${u.aiUsage ? u.aiUsage.aiQaUsed : 0}</div>
+                            <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px;">Lifetime Q&A</div>
                         </div>
-                        <div style="padding: 8px; background: rgba(0,0,0,0.03); border-radius: 6px;">
-                            <div style="font-size: 1.2rem; font-weight: 600; color: var(--primary);">${u.aiUsage ? u.aiUsage.totalAiRequests : 0}</div>
-                            <div style="color: var(--text-muted); font-size: 0.8rem;">Total Lifetime</div>
+                        <div style="padding: 8px 4px; background: rgba(0,0,0,0.03); border-radius: 6px;">
+                            <div style="font-size: 1.1rem; font-weight: 600;">${u.aiUsage ? u.aiUsage.summaryUsed + u.aiUsage.flashcardUsed + u.aiUsage.quizUsed : 0}</div>
+                            <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px;">Other AI Gen</div>
+                        </div>
+                        <div style="padding: 8px 4px; background: rgba(0,0,0,0.03); border-radius: 6px;">
+                            <div style="font-size: 1.1rem; font-weight: 600; color: var(--primary);">${u.aiUsage ? u.aiUsage.totalAiRequests : 0}</div>
+                            <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px;">Total Lifetime</div>
                         </div>
                     </div>
                 </div>

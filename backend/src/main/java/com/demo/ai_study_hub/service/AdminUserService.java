@@ -48,6 +48,9 @@ public class AdminUserService {
     @Autowired
     private AdminAiUsageService adminAiUsageService;
 
+    @Autowired
+    private UsageService usageService;
+
     public AdminUserListResponse getUsers(String search, String role, String tier, String status, Pageable pageable) {
         Specification<User> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -184,6 +187,7 @@ public class AdminUserService {
         item.setStatus(user.getStatus());
         item.setCreatedAt(user.getCreatedAt());
         item.setDocumentCount(documentRepository.countByOwner(user));
+        item.setAiTodayCount((int) usageService.countAiQuestionsToday(user));
         return item;
     }
 
@@ -201,6 +205,7 @@ public class AdminUserService {
 
         com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(user);
         detail.setAiDailyLimit(limits.aiQuestionsPerDay());
+        detail.setAiTodayCount((int) usageService.countAiQuestionsToday(user));
         detail.setStorageLimit(limits.storageBytes());
         detail.setMaxFileSize(limits.maxFileBytes());
         detail.setMaxDocumentCount(limits.maxDocuments());
