@@ -210,17 +210,17 @@ function initAdminDocuments() {
                 <td><span class="admin-badge ${getApprovalBadgeClass(doc.approvalStatus)}">${getApprovalLabel(doc.approvalStatus)}</span></td>
                 <td><span class="admin-badge ${aiInfo.cls}">${aiInfo.text}</span></td>
                 <td><span class="table-muted-text" style="font-size: 0.8rem; white-space: nowrap;">${updatedDisplay}</span></td>
-                <td style="text-align: right;">
-                    <div class="admin-action-group">
-                        <button class="btn btn-sm btn-outline" onclick="window.location.href='admin-document-detail.html?id=${doc.documentId}'">View</button>
+                <td style="text-align: center;">
+                    <div class="admin-action-group" style="gap: 12px; display: flex; justify-content: center; align-items: center;">
+                        <span class="badge admin-badge-action admin-badge-neutral" style="cursor: pointer;" onclick="window.location.href='admin-document-detail.html?id=${doc.documentId}'">View</span>
                         ${doc.approvalStatus === 'PENDING' ? `
-                            <button class="btn btn-sm btn-primary" onclick="openApproveModal(${doc.documentId})">Approve</button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="openRejectModal(${doc.documentId})">Reject</button>
+                            <span class="badge admin-badge-action admin-badge-success" style="cursor: pointer;" onclick="openApproveModal(${doc.documentId})">Approve</span>
+                            <span class="badge admin-badge-action admin-badge-danger" style="cursor: pointer;" onclick="openRejectModal(${doc.documentId})">Reject</span>
                         ` : doc.approvalStatus === 'APPROVED' ? `
-                            <button class="btn btn-sm btn-outline" onclick="openPendingConfirmModal(${doc.documentId})">Move to Pending</button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="openUnpublishConfirmModal(${doc.documentId})">Unpublish</button>
+                            <span class="badge admin-badge-action admin-badge-warning" style="cursor: pointer;" onclick="openPendingConfirmModal(${doc.documentId})">Pending</span>
+                            <span class="badge admin-badge-action admin-badge-danger" style="cursor: pointer;" onclick="openUnpublishConfirmModal(${doc.documentId})">Unpublish</span>
                         ` : doc.approvalStatus === 'REJECTED' ? `
-                            <button class="btn btn-sm btn-outline" onclick="openPendingConfirmModal(${doc.documentId})">Move to Pending</button>
+                            <span class="badge admin-badge-action admin-badge-warning" style="cursor: pointer;" onclick="openPendingConfirmModal(${doc.documentId})">Pending</span>
                         ` : ''}
                     </div>
                 </td>

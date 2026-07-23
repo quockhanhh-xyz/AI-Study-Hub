@@ -56,10 +56,10 @@
 
             <!-- Quick Tabs -->
             <div class="admin-tabs" style="display: flex; gap: 24px; border-bottom: 1px solid var(--border-light); margin-bottom: 24px;">
-                <button class="admin-tab active" data-tab="PENDING" style="background: none; border: none; padding: 12px 0; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600; cursor: pointer;">Pending Review <span id="tabCountPending" style="background: var(--bg-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">0</span></button>
-                <button class="admin-tab" data-tab="APPROVED" style="background: none; border: none; padding: 12px 0; border-bottom: 2px solid transparent; color: var(--text-muted); font-weight: 500; cursor: pointer;">Approved <span id="tabCountApproved" style="background: var(--bg-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">0</span></button>
-                <button class="admin-tab" data-tab="REJECTED" style="background: none; border: none; padding: 12px 0; border-bottom: 2px solid transparent; color: var(--text-muted); font-weight: 500; cursor: pointer;">Rejected <span id="tabCountRejected" style="background: var(--bg-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">0</span></button>
-                <button class="admin-tab" data-tab="ALL" style="background: none; border: none; padding: 12px 0; border-bottom: 2px solid transparent; color: var(--text-muted); font-weight: 500; cursor: pointer;">All Public <span id="tabCountAll" style="background: var(--bg-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">0</span></button>
+                <button class="admin-tab active" data-tab="PENDING" style="display: inline-flex; gap: 8px; align-items: center; justify-content: center; background: none; border: none; padding: 12px 0; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600; cursor: pointer;">Pending Review<span id="tabCountPending" style="background: var(--bg-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">0</span></button>
+                <button class="admin-tab" data-tab="APPROVED" style="display: inline-flex; gap: 8px; align-items: center; justify-content: center; background: none; border: none; padding: 12px 0; border-bottom: 2px solid transparent; color: var(--text-muted); font-weight: 500; cursor: pointer;">Approved<span id="tabCountApproved" style="background: var(--bg-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">0</span></button>
+                <button class="admin-tab" data-tab="REJECTED" style="display: inline-flex; gap: 8px; align-items: center; justify-content: center; background: none; border: none; padding: 12px 0; border-bottom: 2px solid transparent; color: var(--text-muted); font-weight: 500; cursor: pointer;">Rejected<span id="tabCountRejected" style="background: var(--bg-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">0</span></button>
+                <button class="admin-tab" data-tab="ALL" style="display: inline-flex; gap: 8px; align-items: center; justify-content: center; background: none; border: none; padding: 12px 0; border-bottom: 2px solid transparent; color: var(--text-muted); font-weight: 500; cursor: pointer;">All Public<span id="tabCountAll" style="background: var(--bg-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">0</span></button>
             </div>
 
             <!-- White Card Container for Filters and Table -->
@@ -109,7 +109,7 @@
                                 <th style="width: 9%;" title="Shows whether this document is approved for Community Library.">Approval</th>
                                 <th style="width: 9%;" title="Shows whether document content is ready for AI features.">AI Status</th>
                                 <th style="width: 13%;">Updated</th>
-                                <th style="text-align: right; width: 24%;">Actions</th>
+                                <th style="text-align: center; width: 24%;">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="documentsTableBody">
