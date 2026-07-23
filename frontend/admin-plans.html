@@ -31,8 +31,11 @@
 
             <div class="admin-layout">
                 <div class="admin-content-wrapper">
-                    <header class="admin-page-header">
-                        <h1 class="admin-page-title">Admin Plans</h1>
+                    <header class="admin-page-header" style="margin-bottom: 24px;">
+                        <div>
+                            <h1 class="admin-page-title" style="margin-bottom: 4px;">Admin Plans</h1>
+                            <p style="color: var(--text-muted, #64748b); margin: 0; font-size: 0.95rem;">Manage subscription plans, configure pricing tiers, system limits, and review update history.</p>
+                        </div>
                     </header>
 
                     <div class="admin-state-container" id="plansLoadingState">
@@ -55,9 +58,18 @@
                     </div>
 
                     <div id="plansContent" style="display: none;">
-                        <div style="display: flex; justify-content: flex-end; margin-top: 24px; margin-bottom: 24px;">
-                            <button class="btn btn-primary" onclick="exportAdminPlansData()" style="width: auto; padding: 8px 16px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" style="margin-right: 6px; vertical-align: middle;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; margin-bottom: 16px;">
+                            <!-- Left: Summary strip -->
+                            <div style="display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--text-muted, #64748b);">
+                                <span>Total Plans: <strong id="totalPlansCount" style="color: var(--text-main, #0f172a); font-weight: 600;">0</strong></span>
+                                <span style="color: var(--border, #cbd5e1);">|</span>
+                                <span>Active: <strong id="activePlansCount" style="color: var(--success, #16a34a); font-weight: 600;">0</strong></span>
+                                <span style="color: var(--border, #cbd5e1);">|</span>
+                                <span>Inactive: <strong id="inactivePlansCount" style="color: var(--danger, #dc2626); font-weight: 600;">0</strong></span>
+                            </div>
+                            <!-- Right: Export button -->
+                            <button class="btn btn-primary" onclick="exportAdminPlansData()" style="width: auto; padding: 8px 16px; display: flex; align-items: center; gap: 6px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true">
                                     <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                                 </svg>
                                 Export
@@ -68,17 +80,43 @@
                                 <table class="admin-table table">
                                     <thead>
                                         <tr>
-                                            <th>Plan Code</th>
-                                            <th>Name</th>
-                                            <th>Price (đ)</th>
-                                            <th>Duration (Months)</th>
-                                            <th>AI Requests</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
+                                            <th style="text-align: center;">Plan Code</th>
+                                            <th style="text-align: center;">Name</th>
+                                            <th style="text-align: center;">Price (đ)</th>
+                                            <th style="text-align: center;">Duration (Months)</th>
+                                            <th style="text-align: center;">AI Requests</th>
+                                            <th style="text-align: center;">Status</th>
+                                            <th style="text-align: center;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="plansTableBody">
                                         <!-- Plans will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Change History Section -->
+                        <div class="admin-card" style="margin-top: 24px;">
+                            <div style="padding: 20px 24px; border-bottom: 1px solid var(--border-light, #f1f5f9);">
+                                <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-main, #1e293b);">Plan Configuration Change History</h3>
+                                <p style="margin: 4px 0 0; font-size: 13px; color: var(--text-muted, #64748b);">View logs of edits and status updates for plan configurations.</p>
+                            </div>
+                            <div class="admin-table-container">
+                                <table class="admin-table table">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align: center; width: 150px;">Plan Code</th>
+                                            <th style="text-align: center; width: 120px;">Action</th>
+                                            <th style="text-align: center;">Details</th>
+                                            <th style="text-align: center; width: 180px;">Changed By</th>
+                                            <th style="text-align: center; width: 180px;">Changed At</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="historyTableBody">
+                                        <tr>
+                                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading history...</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -225,9 +263,28 @@
             </div>
         </div>
     </div>
+    <!-- Confirm Modal -->
+    <div class="admin-modal-overlay" id="confirmModal" style="z-index: 1100;">
+        <div class="admin-modal" style="max-width: 450px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; width: 100%;">
+                <h3 class="admin-modal-title" id="modalTitle" style="margin: 0; white-space: nowrap;">Confirm Action</h3>
+                <button type="button" style="background: transparent; color: var(--text-muted); padding: 0; margin: 0; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="closeConfirmModal()" aria-label="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+            <div class="admin-modal-body" id="modalBody" style="font-size: 14px; margin-bottom: 24px; color: var(--text-main, #0f172a);">
+                Are you sure you want to perform this action?
+            </div>
+            <div class="admin-modal-actions" style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px;">
+                <button class="btn admin-pagination-btn" onclick="closeConfirmModal()" style="margin: 0; width: auto;">Cancel</button>
+                <button class="btn btn-primary" id="modalConfirmBtn" style="margin: 0; width: auto;">Confirm</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Core Scripts -->
     <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
     <script src="js/admin-core-api.js"></script>
     <script src="js/navigation.js"></script>
     <script src="js/layout.js"></script>

@@ -21,4 +21,5 @@ public interface AdminService {
     com.demo.ai_study_hub.entity.PlanConfig updatePlanConfig(String planCode, com.demo.ai_study_hub.dto.PlanUpdateRequest request);
     com.demo.ai_study_hub.entity.PlanConfig patchPlanStatus(String planCode, String status);
     byte[] exportPlanConfigs();
+    List<com.demo.ai_study_hub.entity.PlanChangeHistory> getPlanChangeHistory();
 }

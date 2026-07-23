@@ -222,4 +222,16 @@ public class AdminController {
                     .body(null);
         }
     }
+
+    @GetMapping("/plans/history")
+    public ResponseEntity<ApiResponse<List<com.demo.ai_study_hub.entity.PlanChangeHistory>>> getPlanChangeHistory() {
+        try {
+            List<com.demo.ai_study_hub.entity.PlanChangeHistory> data = adminService.getPlanChangeHistory();
+            return ResponseEntity.ok(new ApiResponse<>(true, "Plan change history retrieved successfully", data));
+        } catch (Exception e) {
+            log.error("Error retrieving plan change history", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "An unexpected error occurred while retrieving plan change history.", null));
+        }
+    }
 }

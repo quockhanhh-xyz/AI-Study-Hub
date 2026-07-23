@@ -39,6 +39,7 @@ public class AdminServiceImpl implements AdminService {
     private final PlanConfigRepository planConfigRepository;
     private final SubjectRequestRepository subjectRequestRepository;
     private final DocumentReportRepository documentReportRepository;
+    private final PlanChangeHistoryRepository planChangeHistoryRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -458,6 +459,89 @@ public class AdminServiceImpl implements AdminService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quiz daily limit must be positive");
         }
 
+        // Build details string of what changed
+        StringBuilder details = new StringBuilder();
+        if (request.getPlanName() != null && !request.getPlanName().trim().equals(pc.getPlanName())) {
+            details.append("Plan Name: ").append(pc.getPlanName()).append(" -> ").append(request.getPlanName().trim()).append("; ");
+        }
+        if (request.getPrice() != null && !request.getPrice().equals(pc.getPrice())) {
+            details.append("Price: ").append(pc.getPrice()).append(" -> ").append(request.getPrice()).append("; ");
+        }
+        if (request.getBillingLabel() != null && !request.getBillingLabel().trim().equals(pc.getBillingLabel())) {
+            details.append("Billing Label: ").append(pc.getBillingLabel()).append(" -> ").append(request.getBillingLabel().trim()).append("; ");
+        }
+        if (request.getPurchasable() != null && !request.getPurchasable().equals(pc.getPurchasable())) {
+            details.append("Purchasable: ").append(pc.getPurchasable()).append(" -> ").append(request.getPurchasable()).append("; ");
+        }
+        if (request.getAiDailyQuestionLimit() != null && !request.getAiDailyQuestionLimit().equals(pc.getAiDailyQuestionLimit())) {
+            details.append("AI Limit: ").append(pc.getAiDailyQuestionLimit()).append(" -> ").append(request.getAiDailyQuestionLimit()).append("; ");
+        }
+        if (request.getStorageLimit() != null && !request.getStorageLimit().equals(pc.getStorageLimit())) {
+            details.append("Storage Limit: ").append(pc.getStorageLimit()).append(" -> ").append(request.getStorageLimit()).append("; ");
+        }
+        if (request.getMaxFileSize() != null && !request.getMaxFileSize().equals(pc.getMaxFileSize())) {
+            details.append("Max File Size: ").append(pc.getMaxFileSize()).append(" -> ").append(request.getMaxFileSize()).append("; ");
+        }
+        if (request.getMaxDocumentCount() != null && !request.getMaxDocumentCount().equals(pc.getMaxDocumentCount())) {
+            details.append("Max Document Count: ").append(pc.getMaxDocumentCount()).append(" -> ").append(request.getMaxDocumentCount()).append("; ");
+        }
+        if (request.getMaxFolderCount() != null && !request.getMaxFolderCount().equals(pc.getMaxFolderCount())) {
+            details.append("Max Folder Count: ").append(pc.getMaxFolderCount()).append(" -> ").append(request.getMaxFolderCount()).append("; ");
+        }
+        if (request.getMaxGroupCount() != null && !request.getMaxGroupCount().equals(pc.getMaxGroupCount())) {
+            details.append("Max Group Count: ").append(pc.getMaxGroupCount()).append(" -> ").append(request.getMaxGroupCount()).append("; ");
+        }
+        if (request.getMaxFolderDepth() != null && !request.getMaxFolderDepth().equals(pc.getMaxFolderDepth())) {
+            details.append("Max Folder Depth: ").append(pc.getMaxFolderDepth()).append(" -> ").append(request.getMaxFolderDepth()).append("; ");
+        }
+        if (request.getMaxMembersPerGroup() != null && !request.getMaxMembersPerGroup().equals(pc.getMaxMembersPerGroup())) {
+            details.append("Max Members Per Group: ").append(pc.getMaxMembersPerGroup()).append(" -> ").append(request.getMaxMembersPerGroup()).append("; ");
+        }
+        if (request.getMaxActiveShares() != null && !request.getMaxActiveShares().equals(pc.getMaxActiveShares())) {
+            details.append("Max Active Shares: ").append(pc.getMaxActiveShares()).append(" -> ").append(request.getMaxActiveShares()).append("; ");
+        }
+        if (request.getMaxAiSessionsPerDocument() != null && !request.getMaxAiSessionsPerDocument().equals(pc.getMaxAiSessionsPerDocument())) {
+            details.append("Max AI Sessions: ").append(pc.getMaxAiSessionsPerDocument()).append(" -> ").append(request.getMaxAiSessionsPerDocument()).append("; ");
+        }
+        if (request.getMaxMessagesPerSession() != null && !request.getMaxMessagesPerSession().equals(pc.getMaxMessagesPerSession())) {
+            details.append("Max Messages Per Session: ").append(pc.getMaxMessagesPerSession()).append(" -> ").append(request.getMaxMessagesPerSession()).append("; ");
+        }
+        if (request.getMaxQuestionChars() != null && !request.getMaxQuestionChars().equals(pc.getMaxQuestionChars())) {
+            details.append("Max Question Chars: ").append(pc.getMaxQuestionChars()).append(" -> ").append(request.getMaxQuestionChars()).append("; ");
+        }
+        if (request.getMaxContextChunks() != null && !request.getMaxContextChunks().equals(pc.getMaxContextChunks())) {
+            details.append("Max Context Chunks: ").append(pc.getMaxContextChunks()).append(" -> ").append(request.getMaxContextChunks()).append("; ");
+        }
+        if (request.getMaxOutputTokens() != null && !request.getMaxOutputTokens().equals(pc.getMaxOutputTokens())) {
+            details.append("Max Output Tokens: ").append(pc.getMaxOutputTokens()).append(" -> ").append(request.getMaxOutputTokens()).append("; ");
+        }
+        if (request.getItemsPerSet() != null && !request.getItemsPerSet().equals(pc.getItemsPerSet())) {
+            details.append("Items Per Set: ").append(pc.getItemsPerSet()).append(" -> ").append(request.getItemsPerSet()).append("; ");
+        }
+        if (request.getMaxFlashcardsPerSet() != null && !request.getMaxFlashcardsPerSet().equals(pc.getMaxFlashcardsPerSet())) {
+            details.append("Max Flashcards: ").append(pc.getMaxFlashcardsPerSet()).append(" -> ").append(request.getMaxFlashcardsPerSet()).append("; ");
+        }
+        if (request.getMaxQuizQuestionsPerSet() != null && !request.getMaxQuizQuestionsPerSet().equals(pc.getMaxQuizQuestionsPerSet())) {
+            details.append("Max Quiz Questions: ").append(pc.getMaxQuizQuestionsPerSet()).append(" -> ").append(request.getMaxQuizQuestionsPerSet()).append("; ");
+        }
+        if (request.getSummaryDailyLimit() != null && !request.getSummaryDailyLimit().equals(pc.getSummaryDailyLimit())) {
+            details.append("Summary Daily Limit: ").append(pc.getSummaryDailyLimit()).append(" -> ").append(request.getSummaryDailyLimit()).append("; ");
+        }
+        if (request.getFlashcardDailyLimit() != null && !request.getFlashcardDailyLimit().equals(pc.getFlashcardDailyLimit())) {
+            details.append("Flashcard Daily Limit: ").append(pc.getFlashcardDailyLimit()).append(" -> ").append(request.getFlashcardDailyLimit()).append("; ");
+        }
+        if (request.getQuizDailyLimit() != null && !request.getQuizDailyLimit().equals(pc.getQuizDailyLimit())) {
+            details.append("Quiz Daily Limit: ").append(pc.getQuizDailyLimit()).append(" -> ").append(request.getQuizDailyLimit()).append("; ");
+        }
+
+        String detailsStr = details.toString();
+        if (detailsStr.isEmpty()) {
+            detailsStr = "Updated configuration values";
+        } else if (detailsStr.endsWith("; ")) {
+            detailsStr = detailsStr.substring(0, detailsStr.length() - 2);
+        }
+
+        // Apply property updates
         if (request.getPlanName() != null) pc.setPlanName(request.getPlanName().trim());
         if (request.getPrice() != null) pc.setPrice(request.getPrice());
         if (request.getBillingLabel() != null) pc.setBillingLabel(request.getBillingLabel().trim());
@@ -487,6 +571,16 @@ public class AdminServiceImpl implements AdminService {
             pc.setFeaturesList(String.join(",", request.getFeatures()));
         }
 
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = (auth != null) ? auth.getName() : "System Admin";
+
+        planChangeHistoryRepository.save(PlanChangeHistory.builder()
+                .planCode(planCode.toUpperCase())
+                .actionType("UPDATE")
+                .details(detailsStr)
+                .changer(currentUsername)
+                .build());
+
         return planConfigRepository.save(pc);
     }
 
@@ -504,8 +598,21 @@ public class AdminServiceImpl implements AdminService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status: " + status);
         }
 
+        String detailsStr = "Status: " + pc.getStatus() + " -> " + status.toUpperCase();
         pc.setStatus(status.toUpperCase());
-        return planConfigRepository.save(pc);
+        PlanConfig saved = planConfigRepository.save(pc);
+
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = (auth != null) ? auth.getName() : "System Admin";
+
+        planChangeHistoryRepository.save(PlanChangeHistory.builder()
+                .planCode(planCode.toUpperCase())
+                .actionType("ACTIVE".equalsIgnoreCase(status) ? "ACTIVATE" : "DEACTIVATE")
+                .details(detailsStr)
+                .changer(currentUsername)
+                .build());
+
+        return saved;
     }
 
     @Override
@@ -583,5 +690,11 @@ public class AdminServiceImpl implements AdminService {
         } catch (IOException e) {
             throw new RuntimeException("Failed to generate Excel file", e);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PlanChangeHistory> getPlanChangeHistory() {
+        return planChangeHistoryRepository.findAllByOrderByChangedAtDesc();
     }
 }

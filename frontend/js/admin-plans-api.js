@@ -44,3 +44,11 @@ async function patchAdminPlanStatus(planCode, status) {
 async function exportAdminPlans() {
     await exportAdminData('/api/admin/plans/export', 'plans_configuration.xlsx');
 }
+
+/**
+ * Fetch plan change history
+ * Endpoint: GET /api/admin/plans/history
+ */
+async function fetchAdminPlanHistory() {
+    return await fetchAdmin('/api/admin/plans/history', { method: 'GET' });
+}
