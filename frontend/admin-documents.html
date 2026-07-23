@@ -243,6 +243,20 @@
         </div>
     </div>
 
+    <!-- Document Detail Modal -->
+    <div class="admin-modal-overlay" id="documentDetailModal">
+        <div class="admin-modal" style="max-width: 700px; width: 90%;">
+            <h3 class="admin-modal-title">Document Details (Moderation)</h3>
+            <div id="detailAlert" style="display: none; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; background: rgba(220, 38, 38, 0.1); color: var(--danger, #dc2626); border: 1px solid rgba(220, 38, 38, 0.2);"></div>
+            <div class="admin-modal-body" id="documentDetailBody" style="font-size: 14px; max-height: 70vh; overflow-y: auto; padding-right: 8px;">
+                <p>Loading details...</p>
+            </div>
+            <div class="admin-modal-actions" style="margin-top: 20px;">
+                <button class="btn btn-outline" onclick="closeDocumentDetailModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="js/api.js"></script>
     <script src="js/ui.js"></script>

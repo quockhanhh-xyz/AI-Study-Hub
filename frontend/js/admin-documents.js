@@ -231,7 +231,7 @@ function initAdminDocuments() {
                 <td><span class="table-muted-text" style="font-size: 0.8rem; white-space: nowrap;">${updatedDisplay}</span></td>
                 <td style="text-align: center; vertical-align: middle;">
                     <div class="admin-action-group">
-                        <button class="btn btn-sm btn-outline" onclick="window.location.href='admin-document-detail.html?id=${doc.documentId}'">View</button>
+                        <button class="btn btn-sm btn-outline" onclick="viewDocumentDetails(${doc.documentId})">View</button>
                         ${doc.approvalStatus === 'PENDING' ? `
                             <button class="btn btn-sm btn-primary" onclick="openApproveModal(${doc.documentId})">Approve</button>
                             <button class="btn btn-sm btn-outline-danger" onclick="openRejectModal(${doc.documentId})">Reject</button>
@@ -448,6 +448,219 @@ function initAdminDocuments() {
             `;
         }
     });
+
+    window.viewDocumentDetails = async function(docId) {
+        const modal = document.getElementById("documentDetailModal");
+        const body = document.getElementById("documentDetailBody");
+        const alertBox = document.getElementById("detailAlert");
+        
+        if (alertBox) {
+            alertBox.style.display = "none";
+            alertBox.textContent = "";
+        }
+        
+        modal.classList.add("active");
+        body.innerHTML = `
+            <div style="display: flex; justify-content: center; align-items: center; padding: 40px 0;">
+                <svg style="animation: spin 1s linear infinite; height: 32px; width: 32px; color: var(--primary);" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle style="opacity: 0.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path style="opacity: 0.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+        `;
+        
+        try {
+            const response = await fetchAdmin(`/api/admin/documents/${docId}`, { method: 'GET' });
+            if (response && response.success && response.data) {
+                const doc = response.data;
+                const ownerDisplay = doc.displayName || doc.ownerName || doc.ownerEmail || doc.fullName || doc.email || doc.uploaderName || 'Unknown owner';
+                const subjectDisplay = doc.subjectCode ? `${doc.subjectCode}${doc.subjectName ? ` - ${doc.subjectName}` : ''}` : (doc.subject?.name || doc.subjectName || 'No subject');
+                const dateDisplay = doc.createdAt ? new Date(doc.createdAt).toLocaleString() : 'N/A';
+                
+                body.innerHTML = `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px; margin-bottom: 20px; background: var(--surface); padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
+                        <div><strong>ID:</strong> <span>#${doc.documentId}</span></div>
+                        <div><strong>Title:</strong> <span>${escapeHtml(doc.title || '-')}</span></div>
+                        <div><strong>Owner:</strong> <span>${escapeHtml(ownerDisplay)}</span></div>
+                        <div><strong>Subject:</strong> <span>${escapeHtml(subjectDisplay)}</span></div>
+                        <div><strong>File Type:</strong> <span class="admin-badge ${getTypeBadgeClass(doc.fileType)}">${doc.fileType || '-'}</span></div>
+                        <div><strong>Visibility:</strong> <span class="admin-badge ${doc.visibility === 'PUBLIC' ? 'admin-badge-success' : 'admin-badge-neutral'}">${doc.visibility}</span></div>
+                        <div><strong>Approval Status:</strong> <span class="admin-badge ${getApprovalBadgeClass(doc.approvalStatus)}">${getApprovalLabel(doc.approvalStatus)}</span></div>
+                        <div><strong>Processing Status:</strong> <span class="admin-badge ${getAIBadgeInfo(doc.processingStatus).cls}">${getAIBadgeInfo(doc.processingStatus).text}</span></div>
+                        <div><strong>Uploaded At:</strong> <span>${dateDisplay}</span></div>
+                    </div>
+                    
+                    <div class="admin-actions-bar" style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <button class="btn btn-outline" id="modalPreviewBtn" style="width: auto !important; padding: 8px 16px; height: 38px; font-size: 14px;">Preview Document</button>
+                        <button class="btn btn-outline" id="modalDownloadBtn" style="width: auto !important; padding: 8px 16px; height: 38px; font-size: 14px;">Download File</button>
+                        <span style="flex:1;"></span>
+                        ${doc.approvalStatus === 'PENDING' ? `
+                            <button class="btn btn-primary" id="modalApproveBtn" style="width: auto !important; padding: 8px 16px; height: 38px; font-size: 14px; background-color: var(--success, #10b981) !important; border-color: var(--success, #10b981) !important;">Approve</button>
+                            <button class="btn btn-danger" id="modalRejectBtn" style="width: auto !important; padding: 8px 16px; height: 38px; font-size: 14px; background-color: var(--danger, #ef4444) !important; border-color: var(--danger, #ef4444) !important;">Reject</button>
+                        ` : doc.approvalStatus === 'APPROVED' ? `
+                            <button class="btn btn-warning" id="modalPendingBtn" style="width: auto !important; padding: 8px 16px; height: 38px; font-size: 14px;">Reopen</button>
+                            <button class="btn btn-danger" id="modalUnpublishBtn" style="width: auto !important; padding: 8px 16px; height: 38px; font-size: 14px; background-color: var(--danger, #ef4444) !important; border-color: var(--danger, #ef4444) !important;">Unpublish</button>
+                        ` : doc.approvalStatus === 'REJECTED' ? `
+                            <button class="btn btn-primary" id="modalApproveBtn" style="width: auto !important; padding: 8px 16px; height: 38px; font-size: 14px; background-color: var(--success, #10b981) !important; border-color: var(--success, #10b981) !important;">Approve</button>
+                            <button class="btn btn-warning" id="modalPendingBtn" style="width: auto !important; padding: 8px 16px; height: 38px; font-size: 14px;">Reopen</button>
+                        ` : ''}
+                    </div>
+                    
+                    <div id="modalPreviewContainer" class="admin-card" style="display:none; height: 500px; padding: 0; margin-top: 15px; border: 1px solid var(--border);">
+                        <iframe id="modalPreviewFrame" style="width:100%; height:100%; border:none;"></iframe>
+                    </div>
+                `;
+                
+                // Wire up actions
+                document.getElementById("modalDownloadBtn").onclick = () => {
+                    downloadFile(`/api/admin/documents/${doc.documentId}/download`, doc.title || 'document');
+                };
+                
+                const approveBtn = document.getElementById("modalApproveBtn");
+                const rejectBtn = document.getElementById("modalRejectBtn");
+                const pendingBtn = document.getElementById("modalPendingBtn");
+                const unpublishBtn = document.getElementById("modalUnpublishBtn");
+                
+                if (approveBtn) {
+                    approveBtn.onclick = async () => {
+                        if (confirm("Approve this document for Community Library?")) {
+                            try {
+                                await approveAdminDocument(doc.documentId);
+                                viewDocumentDetails(doc.documentId);
+                                loadDocuments(); // Reload table
+                            } catch (err) {
+                                showDetailError(err.message);
+                            }
+                        }
+                    };
+                }
+                
+                if (rejectBtn) {
+                    rejectBtn.onclick = () => {
+                        const reason = prompt("Enter rejection reason (optional):");
+                        if (reason !== null) {
+                            rejectAdminDocument(doc.documentId, reason)
+                                .then(() => {
+                                    viewDocumentDetails(doc.documentId);
+                                    loadDocuments(); // Reload table
+                                })
+                                .catch(err => showDetailError(err.message));
+                        }
+                    };
+                }
+                
+                if (pendingBtn) {
+                    pendingBtn.onclick = async () => {
+                        if (confirm("Move this document back to Pending Review?")) {
+                            try {
+                                await fetchAdmin(`/api/admin/documents/${doc.documentId}/status`, {
+                                    method: 'PATCH',
+                                    body: JSON.stringify({ status: 'PENDING' })
+                                });
+                                viewDocumentDetails(doc.documentId);
+                                loadDocuments(); // Reload table
+                            } catch (err) {
+                                showDetailError(err.message);
+                            }
+                        }
+                    };
+                }
+                
+                if (unpublishBtn) {
+                    unpublishBtn.onclick = async () => {
+                        if (confirm("Unpublish this document? (Visibility will become private)")) {
+                            try {
+                                await fetchAdmin(`/api/admin/documents/${doc.documentId}/status`, {
+                                    method: 'PATCH',
+                                    body: JSON.stringify({ status: 'REJECTED' })
+                                });
+                                viewDocumentDetails(doc.documentId);
+                                loadDocuments(); // Reload table
+                            } catch (err) {
+                                showDetailError(err.message);
+                            }
+                        }
+                    };
+                }
+                
+                document.getElementById("modalPreviewBtn").onclick = async () => {
+                    const container = document.getElementById("modalPreviewContainer");
+                    container.style.display = 'block';
+                    container.innerHTML = `
+                        <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+                            <svg style="animation: spin 1s linear infinite; height: 24px; width: 24px; color: var(--primary);" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle style="opacity: 0.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path style="opacity: 0.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </div>
+                    `;
+                    
+                    try {
+                        const res = await fetchAdmin(`/api/admin/documents/${doc.documentId}/preview`, { method: 'GET' });
+                        if (res && res.success && res.data) {
+                            const previewInfo = res.data;
+                            const mode = previewInfo.previewMode || "FALLBACK";
+                            const previewUrl = previewInfo.previewUrl || previewInfo.fileUrl;
+                            
+                            if (mode === "FALLBACK" || !previewUrl) {
+                                container.innerHTML = `
+                                  <div style="padding: 40px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                                    <h4 style="margin-bottom: 10px; margin-top: 0;">Preview Unavailable</h4>
+                                    <p style="margin-bottom: 20px; color: #666; font-size: 0.9rem;">This file type cannot be previewed natively.</p>
+                                    <a href="${previewInfo.fileUrl}" target="_blank" class="btn btn-outline" style="width: auto !important; padding: 6px 12px; font-size: 13px;">Open File</a>
+                                  </div>
+                                `;
+                                return;
+                            }
+                            
+                            if (mode === "OFFICE_VIEWER") {
+                                const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewUrl)}`;
+                                container.innerHTML = `
+                                  <div style="height: 100%; display: flex; flex-direction: column;">
+                                    <div style="padding: 8px; background: #f8f9fa; border-bottom: 1px solid #ddd; text-align: center; font-size: 0.8rem; color: #555;">
+                                      If the preview does not load, <a href="${previewInfo.fileUrl}" target="_blank">open</a> the file.
+                                    </div>
+                                    <iframe src="${viewerUrl}" style="flex: 1; border: none; width: 100%; height: 100%;"></iframe>
+                                  </div>
+                                `;
+                            } else if (mode === "IMAGE") {
+                                container.innerHTML = `
+                                  <div style="display: flex; justify-content: center; align-items: center; padding: 10px; background: #f0f0f0; height: 100%; overflow-y: auto;">
+                                    <img src="${previewUrl}" alt="Preview" style="max-width: 100%; max-height: 100%; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" />
+                                  </div>
+                                `;
+                            } else {
+                                container.innerHTML = `
+                                  <iframe src="${previewUrl}" style="border: none; width: 100%; height: 100%;"></iframe>
+                                `;
+                            }
+                        } else {
+                            showDetailError("Failed to load preview info");
+                        }
+                    } catch (e) {
+                        showDetailError("Error loading preview: " + e.message);
+                    }
+                };
+                
+            } else {
+                throw new Error(response?.message || "Failed to load document");
+            }
+        } catch (e) {
+            showDetailError(e.message || "An error occurred.");
+        }
+    };
+
+    window.closeDocumentDetailModal = function() {
+        document.getElementById("documentDetailModal").classList.remove("active");
+    };
+
+    function showDetailError(msg) {
+        const alertBox = document.getElementById("detailAlert");
+        if (alertBox) {
+            alertBox.style.display = "block";
+            alertBox.textContent = msg;
+        }
+    }
 
     // Initial Load
     loadDocuments();
