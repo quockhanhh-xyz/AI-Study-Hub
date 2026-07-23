@@ -297,7 +297,14 @@
         window.location.href = target;
       }, 1500);
     } catch (error) {
-      setMessage("loginMessage", error.message, "error");
+      if (error.code === "AUTH_ACCOUNT_BLOCKED") {
+        setMessage("loginMessage", "Your account has been blocked.", "error");
+        if (typeof window.openBlockedAppealModal === "function") {
+          window.openBlockedAppealModal(email);
+        }
+      } else {
+        setMessage("loginMessage", error.message, "error");
+      }
     } finally {
       resetButtonState(submitBtn);
     }
@@ -562,6 +569,87 @@
           }
         });
       });
+    }
+
+    // Blocked Account Appeal Modal Handlers
+    const blockedModal = document.getElementById("blockedAppealModal");
+    const closeBlockedBtn = document.getElementById("closeBlockedModalBtn");
+    const appealForm = document.getElementById("appealForm");
+    const appealMsg = document.getElementById("appealMessage");
+
+    window.openBlockedAppealModal = function (email) {
+      if (!blockedModal) return;
+      blockedModal.style.display = "flex";
+      if (email) {
+        const emailInput = document.getElementById("appealEmail");
+        if (emailInput) emailInput.value = email;
+      }
+      if (appealMsg) {
+        appealMsg.style.display = "none";
+        appealMsg.textContent = "";
+      }
+    };
+
+    if (closeBlockedBtn && blockedModal) {
+      closeBlockedBtn.addEventListener("click", () => {
+        blockedModal.style.display = "none";
+      });
+    }
+
+    if (blockedModal) {
+      blockedModal.addEventListener("click", (e) => {
+        if (e.target === blockedModal) {
+          blockedModal.style.display = "none";
+        }
+      });
+    }
+
+    if (appealForm) {
+      appealForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fullName = document.getElementById("appealFullName").value.trim();
+        const email = document.getElementById("appealEmail").value.trim();
+        const message = document.getElementById("appealContent").value.trim();
+        const submitBtn = appealForm.querySelector('button[type="submit"]');
+
+        if (!fullName || !email || !message) {
+          showAppealMsg("Please fill in all fields.", "error");
+          return;
+        }
+
+        toggleButtonState(submitBtn, true, "Submitting...");
+        try {
+          const response = await post("/api/auth/appeal", { fullName, email, message });
+          showAppealMsg(response.message || "Appeal submitted successfully. Admin will contact you via email.", "success");
+          appealForm.reset();
+          setTimeout(() => {
+            blockedModal.style.display = "none";
+          }, 3000);
+        } catch (err) {
+          showAppealMsg(err.message || "Failed to submit appeal. Please try again.", "error");
+        } finally {
+          resetButtonState(submitBtn);
+        }
+      });
+    }
+
+    function showAppealMsg(text, type) {
+      if (!appealMsg) return;
+      appealMsg.textContent = text;
+      appealMsg.style.display = "block";
+      if (type === "success") {
+        appealMsg.style.background = "#ecfdf5";
+        appealMsg.style.color = "#065f46";
+      } else {
+        appealMsg.style.background = "#fef2f2";
+        appealMsg.style.color = "#991b1b";
+      }
+    }
+
+    // Auto-open if query param ?blocked=true is present
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("blocked") === "true") {
+      window.openBlockedAppealModal();
     }
   });
 

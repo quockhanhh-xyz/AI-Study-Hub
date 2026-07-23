@@ -210,6 +210,34 @@
         </div>
     </div>
 
+    <!-- Blocked Account Appeal Modal -->
+    <div id="blockedAppealModal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 16px;">
+        <div class="modal-content card" style="width: 100%; max-width: 480px; background: #ffffff; border-radius: 16px; padding: 28px; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); position: relative; animation: modalFadeIn 0.3s ease-out; color: #1e293b; text-align: left;">
+            <button type="button" id="closeBlockedModalBtn" style="position: absolute; right: 20px; top: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: #94a3b8; transition: color 0.2s; line-height: 1;">&times;</button>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="width: 56px; height: 56px; background: #fee2e2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 24px; font-weight: bold;">✕</div>
+                <h3 style="font-size: 20px; font-weight: 700; color: #1e293b; margin: 0;">Account Blocked</h3>
+                <p style="color: #64748b; font-size: 14px; margin-top: 6px; line-height: 1.5;">Your account has been blocked by an administrator. If you believe this is a mistake, you can submit an appeal below.</p>
+            </div>
+            <p id="appealMessage" style="display: none; text-align: center; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; margin-bottom: 16px;"></p>
+            <form id="appealForm">
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="appealFullName" style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px; text-align: left;">Full Name</label>
+                    <input id="appealFullName" type="text" placeholder="Enter your full name" required style="width:100%; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px;" />
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="appealEmail" style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px; text-align: left;">Email Address</label>
+                    <input id="appealEmail" type="email" placeholder="Enter your registered email" required style="width:100%; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px;" />
+                </div>
+                <div class="form-group" style="margin-bottom: 18px;">
+                    <label for="appealContent" style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px; text-align: left;">Appeal Message</label>
+                    <textarea id="appealContent" rows="4" placeholder="Explain why your account should be unblocked..." required style="width:100%; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; height: 42px; font-size: 15px; font-weight: 600;">Submit Appeal</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Canvas Confetti for celebrations -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="js/api.js"></script>

@@ -89,12 +89,13 @@ async function apiRequest(endpoint, options = {}) {
         console.warn(
           "Session expired, invalid, or account blocked. Executing global redirect to login..."
         );
-        if (isAccountBlocked) {
-          alert("Your account has been blocked by an administrator.");
-        }
         localStorage.removeItem("currentUser");
         fetch(`${API_BASE_URL}/api/auth/logout`, { method: "POST", credentials: "include" }).catch(() => {});
-        redirectToLoginWithCurrentIntent();
+        if (isAccountBlocked) {
+          window.location.href = "login.html?blocked=true";
+        } else {
+          redirectToLoginWithCurrentIntent();
+        }
       }
     }
 

@@ -20,3 +20,13 @@ CREATE TABLE IF NOT EXISTS user_follows (
     CONSTRAINT uq_follower_following UNIQUE (follower_id, following_id),
     CONSTRAINT chk_follower_not_following CHECK (follower_id <> following_id)
 );
+
+-- 3. Create appeals table
+CREATE TABLE IF NOT EXISTS appeals (
+    appeal_id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(20) DEFAULT 'PENDING' NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -91,6 +91,21 @@ public class EmailService {
         }
     }
 
+    public void sendAppealResponseEmail(String toEmail, String fullName, String adminReply) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject("AI Study Hub - Appeal Response Decision");
+        message.setText(
+                "Hello " + fullName + ",\n\n" +
+                        "An administrator has reviewed your appeal and responded with the following decision:\n\n" +
+                        "\"" + adminReply + "\"\n\n" +
+                        "Best regards,\n" +
+                        "AI Study Hub Team"
+        );
+        mailSender.send(message);
+    }
+
     private String escapeHtml(String text) {
         if (text == null) return "";
         return text.replace("&", "&amp;")

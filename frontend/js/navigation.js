@@ -45,6 +45,7 @@ const NAVIGATION_MENU = [
   { name: "Subject Requests", icon: ICON_DOCS, url: "admin-subject-requests.html", requiresAuth: true, requiresAdmin: true, hidden: true },
   { name: "Reports", icon: ICON_INFO, url: "admin-reports.html", requiresAuth: true, requiresAdmin: true },
   { name: "Plans", icon: ICON_SHIELD, url: "admin-plans.html", requiresAuth: true, requiresAdmin: true },
+  { name: "Appeals", icon: ICON_SHIELD, url: "admin-appeals.html", requiresAuth: true, requiresAdmin: true },
   { name: "Profile", icon: ICON_PROFILE, url: "admin-profile.html", requiresAuth: true, requiresAdmin: true },
 
   // Step 11: Upgrade route — requires auth; guest redirected to login?redirect=upgrade.html
