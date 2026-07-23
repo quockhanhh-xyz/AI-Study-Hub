@@ -211,10 +211,21 @@ function renderUsersTable(data) {
         users.forEach((user, index) => {
             const tr = document.createElement("tr");
 
+            const rawEmail = escapeHtml(user.email || 'N/A');
+            const namePart = escapeHtml(user.fullName || user.username || 'User');
+            const initial = namePart.charAt(0).toUpperCase() || 'U';
+
             tr.innerHTML = `
                 <td><span class="table-muted-text">${(currentPage * pageSize) + index + 1}</span></td>
-                <td><span style="font-weight: 600; color: var(--text-main, #0f172a);">${escapeHtml(user.fullName || user.username)}</span></td>
-                <td><span class="table-muted-text" title="${escapeHtml(user.email)}">${escapeHtml(user.email)}</span></td>
+                <td>
+                    <div class="customer-cell">
+                        <div class="customer-avatar-pill">${initial}</div>
+                        <div class="customer-info">
+                            <span class="customer-name" style="font-weight: 600; color: var(--text-main, #0f172a);">${namePart}</span>
+                            <span class="customer-email" title="${rawEmail}" style="font-size: 12px; color: var(--text-muted, #64748b);">${rawEmail}</span>
+                        </div>
+                    </div>
+                </td>
                 <td style="text-align: center;"><span class="badge ${getRoleBadgeClass(user.role)}">${user.role}</span></td>
                 <td style="text-align: center;"><span class="badge ${getTierBadgeClass(user.tier)}">${user.tier || '-'}</span></td>
                 <td style="text-align: center;"><span style="color: var(--success); font-weight: 500; font-size: 14px;">Verified</span></td>
