@@ -215,6 +215,26 @@ function renderUsersTable(data) {
             const namePart = escapeHtml(user.fullName || user.username || 'User');
             const initial = namePart.charAt(0).toUpperCase() || 'U';
 
+            let tierDisplay = `<span class="badge ${getTierBadgeClass(user.tier)}">${user.tier || '-'}</span>`;
+            let aiLimitDisplay = "";
+            
+            if (user.role === 'ADMIN') {
+                tierDisplay = '<span style="color: var(--text-muted, #64748b); font-weight: 500;">-</span>';
+                aiLimitDisplay = '<span style="color: var(--text-muted, #64748b); font-weight: 500;">-</span>';
+            } else {
+                let limit = '10';
+                if (user.tier === 'PREMIUM') limit = '100';
+                else if (user.tier === 'ULTRA') limit = 'Unlimited';
+                
+                const used = user.aiUsage ? user.aiUsage.aiQaUsed : 0;
+                aiLimitDisplay = `
+                    <div style="display: flex; flex-direction: column; line-height: 1.25;">
+                        <span style="font-size: 13px; color: var(--text-muted, #64748b);">${used} /</span>
+                        <span style="font-size: 13px; color: var(--text-muted, #64748b);">${limit}</span>
+                    </div>
+                `;
+            }
+
             tr.innerHTML = `
                 <td><span class="table-muted-text">${(currentPage * pageSize) + index + 1}</span></td>
                 <td>
@@ -226,11 +246,11 @@ function renderUsersTable(data) {
                     </div>
                 </td>
                 <td style="text-align: center;"><span class="badge ${getRoleBadgeClass(user.role)}">${user.role}</span></td>
-                <td style="text-align: center;"><span class="badge ${getTierBadgeClass(user.tier)}">${user.tier || '-'}</span></td>
+                <td style="text-align: center;">${tierDisplay}</td>
                 <td style="text-align: center;"><span style="color: var(--success); font-weight: 500; font-size: 14px;">Verified</span></td>
                 <td style="text-align: center;"><span class="badge ${getStatusBadgeClass(user.status)}">${user.status}</span></td>
                 <td style="text-align: center;"><span style="font-weight: 500; color: var(--text-main, #0f172a);">${user.documentCount || 0}</span></td>
-                <td style="text-align: center;"><span class="table-muted-text">${user.aiUsage ? user.aiUsage.aiQaUsed : 0} / ${user.aiDailyLimit || 'Unlimited'}</span></td>
+                <td style="text-align: center;">${aiLimitDisplay}</td>
                 <td style="text-align: center;"><span class="table-muted-text">${formatJoinedDate(user.createdAt)}</span></td>
                 <td style="text-align: center;">
                     ${renderActionButtons(user, activeAdminCount)}

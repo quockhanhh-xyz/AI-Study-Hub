@@ -680,14 +680,18 @@
 .admin-search-input {
     padding-left: 42px !important;
     width: 100%;
+    border-radius: 9999px !important;
+    background-color: var(--surface-light, #f1f5f9) !important;
+    border-color: transparent !important;
 }
 
 .admin-filter-input:focus,
-.admin-filters input:focus {
+.admin-filters input:focus,
+.admin-search-input:focus {
     outline: none;
-    border-color: var(--primary, #f97316);
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
-    background-color: #ffffff;
+    border-color: var(--primary, #f97316) !important;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15) !important;
+    background-color: #ffffff !important;
 }
 
 /* Custom Dropdown Styling across all Admin pages */
