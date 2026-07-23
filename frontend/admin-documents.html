@@ -73,10 +73,9 @@
                         <input type="text" id="searchInput" class="admin-filter-input admin-search-input" placeholder="Search by Title or Owner...">
                     </div>
                     <div class="admin-filters" style="display: flex; gap: 12px; align-items: center; flex-wrap: nowrap; justify-content: flex-end; flex: 0 0 auto !important;">
-                        <select id="subjectFilter" class="admin-filter-input" style="min-width: 130px !important; width: auto !important;">
-                            <option value="">All Subjects</option>
-                        </select>
-                        <select id="statusFilter" class="admin-filter-input" style="display: none; min-width: 130px !important; width: auto !important;">
+                        <input type="text" id="subjectFilter" list="subjectDatalist" class="admin-filter-input" placeholder="All Subjects" style="border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 170px !important; max-width: 250px !important; width: auto !important;" />
+                        <datalist id="subjectDatalist"></datalist>
+                        <select id="statusFilter" class="admin-filter-input" style="display: none; border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 130px !important; width: auto !important;">
                             <option value="">All Statuses</option>
                             <option value="PENDING">PENDING</option>
                             <option value="APPROVED">APPROVED</option>
@@ -85,8 +84,11 @@
                         <select id="fileTypeFilter" class="admin-filter-input" style="min-width: 130px !important; width: auto !important;">
                             <option value="">All File Types</option>
                             <option value="PDF">PDF</option>
-                            <option value="DOCX">DOCX</option>
-                            <option value="TXT">TXT</option>
+                            <option value="DOCX">Word (.doc, .docx)</option>
+                            <option value="XLSX">Excel (.xls, .xlsx)</option>
+                            <option value="PPTX">PowerPoint (.ppt, .pptx)</option>
+                            <option value="IMAGE">Images (.png, .jpg, .jpeg)</option>
+                            <option value="TXT">Text (.txt)</option>
                         </select>
                         <button class="btn btn-outline" onclick="clearFilters()" style="white-space: nowrap; height: 42px; border-radius: 24px; padding: 0 16px; display: inline-flex; align-items: center; font-weight: 600; width: auto;">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
