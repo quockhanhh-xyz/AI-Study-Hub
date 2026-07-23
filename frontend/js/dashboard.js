@@ -177,7 +177,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     infoCol.className = "row-info-col";
 
     const titleLink = document.createElement("a");
-    titleLink.href = `document-detail.html?id=${documentItem.documentId}`;
+    titleLink.href = `document-detail.html?id=${documentItem.documentId}&from=dashboard`;
     titleLink.className = "row-title-link";
     titleLink.textContent = documentItem.title || documentItem.originalFileName || "Untitled document";
     infoCol.appendChild(titleLink);
@@ -238,7 +238,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       if (e.target.closest("a") || e.target.closest("button")) {
         return;
       }
-      window.location.href = `document-detail.html?id=${documentItem.documentId}`;
+      window.location.href = `document-detail.html?id=${documentItem.documentId}&from=dashboard`;
     });
 
     return row;

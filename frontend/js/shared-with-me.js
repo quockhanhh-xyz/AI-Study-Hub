@@ -123,7 +123,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   function createDocCard(doc) {
     const card = document.createElement("a");
     card.className = "shared-row";
-    card.href = `document-detail.html?id=${doc.documentId}`;
+    card.href = `document-detail.html?id=${doc.documentId}&from=shared`;
     
     const isFav = isDocumentFavorited(doc);
     const favTitle = isFav ? "Remove from favorites" : "Add to favorites";

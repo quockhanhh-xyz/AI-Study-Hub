@@ -78,6 +78,42 @@
         color: var(--text-muted);
         font-size: 16px;
       }
+      
+      /* ===== PAYMENT HISTORY PAGINATION ===== */
+      .history-pagination {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 16px;
+          font-size: 14px;
+          color: var(--muted, #64748b);
+      }
+      .history-pagination-buttons {
+          display: flex;
+          gap: 4px;
+      }
+      .history-pagination-btn {
+          border: 1px solid #e5e7eb;
+          background: #ffffff;
+          padding: 6px 12px;
+          border-radius: 8px;
+          color: #4b5563;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+      }
+      .history-pagination-btn:hover {
+          background: #f3f4f6;
+          border-color: #d1d5db;
+          color: #1f2937;
+      }
+      .history-pagination-btn.active {
+          background: var(--primary, #ff5a3d);
+          border-color: var(--primary, #ff5a3d);
+          color: #ffffff;
+          cursor: default;
+      }
     </style>
 </head>
 
@@ -185,6 +221,7 @@
                         </thead>
                         <tbody id="historyList"></tbody>
                     </table>
+                    <div id="historyPagination" class="history-pagination" style="display: none;"></div>
                 </div>
 
                 <div id="historyEmpty" class="empty-state" style="display: none;">

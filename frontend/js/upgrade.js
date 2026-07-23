@@ -49,8 +49,12 @@ document.addEventListener("DOMContentLoaded", async function () {
   const historyError = document.getElementById("historyError");
   const historyList = document.getElementById("historyList");
   const historyEmpty = document.getElementById("historyEmpty");
+  const historyPagination = document.getElementById("historyPagination");
 
   let activePaymentId = null;
+  let allPayments = [];
+  let currentHistoryPage = 1;
+  const historyPageSize = 10;
   const TIER_RANK = {
     FREE: 0,
     PREMIUM: 1,
@@ -689,6 +693,95 @@ document.addEventListener("DOMContentLoaded", async function () {
     return tr;
   }
 
+  function renderHistoryPage() {
+    if (!historyList || !historyPagination) return;
+    
+    historyList.innerHTML = "";
+    
+    if (allPayments.length === 0) {
+      historyList.style.display = "none";
+      historyPagination.style.display = "none";
+      const historyListContainer = document.getElementById("historyListContainer");
+      if (historyListContainer) historyListContainer.style.display = "none";
+      historyEmpty.style.display = "block";
+      return;
+    }
+    
+    historyEmpty.style.display = "none";
+    const historyListContainer = document.getElementById("historyListContainer");
+    if (historyListContainer) historyListContainer.style.display = "block";
+    historyList.style.display = "";
+    
+    const totalPages = Math.ceil(allPayments.length / historyPageSize);
+    if (currentHistoryPage < 1) currentHistoryPage = 1;
+    if (currentHistoryPage > totalPages) currentHistoryPage = totalPages;
+    
+    const startIdx = (currentHistoryPage - 1) * historyPageSize;
+    const endIdx = Math.min(startIdx + historyPageSize, allPayments.length);
+    
+    const pagePayments = allPayments.slice(startIdx, endIdx);
+    pagePayments.forEach(function (payment) {
+      historyList.appendChild(createHistoryRow(payment));
+    });
+    
+    if (totalPages <= 1) {
+      historyPagination.style.display = "none";
+      return;
+    }
+    
+    historyPagination.style.display = "flex";
+    historyPagination.innerHTML = "";
+    
+    // Left side: Showing info
+    const infoSpan = document.createElement("span");
+    infoSpan.textContent = `Showing ${startIdx + 1} - ${endIdx} of ${allPayments.length} transactions`;
+    historyPagination.appendChild(infoSpan);
+    
+    // Right side: Pagination buttons
+    const buttonsContainer = document.createElement("div");
+    buttonsContainer.className = "history-pagination-buttons";
+    
+    // Prev Button
+    if (currentHistoryPage > 1) {
+      const prevBtn = document.createElement("button");
+      prevBtn.className = "history-pagination-btn";
+      prevBtn.textContent = "«";
+      prevBtn.addEventListener("click", function () {
+        currentHistoryPage--;
+        renderHistoryPage();
+      });
+      buttonsContainer.appendChild(prevBtn);
+    }
+    
+    // Page Numbers
+    for (let i = 1; i <= totalPages; i++) {
+      const pageBtn = document.createElement("button");
+      pageBtn.className = "history-pagination-btn" + (i === currentHistoryPage ? " active" : "");
+      pageBtn.textContent = i;
+      if (i !== currentHistoryPage) {
+        pageBtn.addEventListener("click", function () {
+          currentHistoryPage = i;
+          renderHistoryPage();
+        });
+      }
+      buttonsContainer.appendChild(pageBtn);
+    }
+    
+    // Next Button
+    if (currentHistoryPage < totalPages) {
+      const nextBtn = document.createElement("button");
+      nextBtn.className = "history-pagination-btn";
+      nextBtn.textContent = "»";
+      nextBtn.addEventListener("click", function () {
+        currentHistoryPage++;
+        renderHistoryPage();
+      });
+      buttonsContainer.appendChild(nextBtn);
+    }
+    
+    historyPagination.appendChild(buttonsContainer);
+  }
+
   async function loadHistory() {
     historyLoader.style.display = "flex";
     historyError.style.display = "none";
@@ -698,6 +791,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       const result = await getMyPayments();
       const payments = Array.isArray(result.data) ? result.data : [];
+      
+      allPayments = payments;
+      currentHistoryPage = 1;
 
       historyLoader.style.display = "none";
 
@@ -739,20 +835,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         pendingSection.style.display = "none";
       }
 
-      if (payments.length === 0) {
-        historyList.innerHTML = "";
-        historyList.style.display = "none";
-        historyListContainer.style.display = "none";
-        historyEmpty.style.display = "block";
-      } else {
-        historyList.innerHTML = "";
-        payments.forEach(function (payment) {
-          historyList.appendChild(createHistoryRow(payment));
-        });
-        historyList.style.display = "";
-        historyEmpty.style.display = "none";
-        historyListContainer.style.display = "block";
-      }
+      renderHistoryPage();
     } catch (error) {
       historyLoader.style.display = "none";
       historyError.textContent = mapPaymentError(error);

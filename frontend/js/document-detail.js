@@ -2690,6 +2690,9 @@ function renderContextualTopBar(doc) {
     } else if (fromParam === "shared") {
         backLabel = "← Back to Shared with Me";
         backUrl = "shared-with-me.html";
+    } else if (fromParam === "dashboard") {
+        backLabel = "← Back to Dashboard";
+        backUrl = "dashboard.html";
     } else if (fromParam === "folders") {
         backLabel = "← Back to My Folders";
         backUrl = "folders.html";
