@@ -395,26 +395,22 @@ function initAdminDocuments() {
             const [pendingRes, approvedRes, rejectedRes, allRes] = await Promise.all(reqs);
 
             if (pendingRes && pendingRes.success) {
-                const count = pendingRes.data.totalElements;
-                document.getElementById('tabCountPending').textContent = count;
+                const count = pendingRes.data?.totalElements ?? pendingRes.data?.totalItems ?? pendingRes.data?.total ?? 0;
                 const card = document.getElementById('cardPendingDocs');
                 if (card) card.textContent = count;
             }
             if (approvedRes && approvedRes.success) {
-                const count = approvedRes.data.totalElements;
-                document.getElementById('tabCountApproved').textContent = count;
+                const count = approvedRes.data?.totalElements ?? approvedRes.data?.totalItems ?? approvedRes.data?.total ?? 0;
                 const card = document.getElementById('cardApprovedDocs');
                 if (card) card.textContent = count;
             }
             if (rejectedRes && rejectedRes.success) {
-                const count = rejectedRes.data.totalElements;
-                document.getElementById('tabCountRejected').textContent = count;
+                const count = rejectedRes.data?.totalElements ?? rejectedRes.data?.totalItems ?? rejectedRes.data?.total ?? 0;
                 const card = document.getElementById('cardRejectedDocs');
                 if (card) card.textContent = count;
             }
             if (allRes && allRes.success) {
-                const count = allRes.data.totalElements;
-                document.getElementById('tabCountAll').textContent = count;
+                const count = allRes.data?.totalElements ?? allRes.data?.totalItems ?? allRes.data?.total ?? 0;
                 const card = document.getElementById('cardTotalDocs');
                 if (card) card.textContent = count;
             }
