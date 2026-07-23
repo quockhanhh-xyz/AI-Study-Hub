@@ -323,35 +323,30 @@ function renderActiveFilterChips() {
  * Updates the pagination UI state.
  */
 function updatePagination(pageNumber, totalPages, totalElements) {
-    const prevBtn = document.getElementById('prevPageBtn');
-    const nextBtn = document.getElementById('nextPageBtn');
-    const indicator = document.getElementById('pageIndicator');
     const paginationContainer = document.getElementById('paginationControls');
+    if (!paginationContainer) return;
 
     if (!totalElements || totalElements === 0) {
-        if (indicator) indicator.textContent = 'Showing 0 payments';
-        if (prevBtn) prevBtn.disabled = true;
-        if (nextBtn) nextBtn.disabled = true;
+        paginationContainer.innerHTML = '';
         return;
     }
 
     const startItem = pageNumber * PAGE_SIZE + 1;
     const endItem = Math.min((pageNumber + 1) * PAGE_SIZE, totalElements);
 
-    if (indicator) {
-        indicator.textContent = `Showing ${startItem}–${endItem} of ${totalElements} payments`;
+    let html = `<span class="admin-pagination-info">Showing ${startItem} - ${endItem} of ${totalElements} payments</span>
+    <div style="display: flex; gap: 4px;">`;
+    
+    for (let i = 0; i < totalPages; i++) {
+        html += `<button class="admin-pagination-btn ${i === pageNumber ? 'active' : ''}" onclick="window.goToPage(${i})">${i + 1}</button>`;
     }
-
-    if (prevBtn) prevBtn.disabled = (pageNumber <= 0);
-    if (nextBtn) nextBtn.disabled = (pageNumber >= totalPages - 1);
+    html += `</div>`;
+    paginationContainer.innerHTML = html;
 }
 
-/**
- * Navigation handler for pagination buttons.
- */
-function changePage(delta) {
-    loadPayments(currentPage + delta);
-}
+window.goToPage = (page) => {
+    loadPayments(page);
+};
 
 /**
  * Handles exporting filtered payments to Excel.

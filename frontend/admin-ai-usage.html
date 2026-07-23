@@ -202,21 +202,18 @@
                                     status filter.</p>
                             </div>
 
-                            <div id="pagination" class="pagination"
-                                style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 16px 0; border-top: 1px solid var(--border-color);">
-                                <div id="pageInfo" style="font-size: 0.875rem; color: var(--text-muted);">Showing 0-0 of
-                                    0 users</div>
+                            <div id="pagination" class="admin-pagination" style="margin-top: 16px; justify-content: space-between;">
+                                <div id="pageInfo" class="admin-pagination-info">Showing 0-0 of 0 users</div>
                                 <div style="display: flex; align-items: center; gap: 16px;">
                                     <div style="display: flex; align-items: center; gap: 8px;">
-                                        <label for="pageSize"
-                                            style="font-size: 0.875rem; color: var(--text-muted);">Page size:</label>
+                                        <label for="pageSize" style="font-size: 0.875rem; color: var(--text-muted);">Page size:</label>
                                         <select id="pageSize" class="admin-filter-input" style="padding: 4px 8px;">
                                             <option value="10">10</option>
                                             <option value="25">25</option>
                                             <option value="50">50</option>
                                         </select>
                                     </div>
-                                    <div id="paginationControls" style="display: flex; gap: 8px;">
+                                    <div id="paginationControls" style="display: flex; gap: 4px;">
                                         <!-- Pagination buttons -->
                                     </div>
                                 </div>

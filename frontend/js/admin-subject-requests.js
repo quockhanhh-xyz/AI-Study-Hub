@@ -51,7 +51,7 @@ function init() {
             if (response && response.success && response.data) {
                 const data = response.data;
                 renderTable(data.items || data.requests || data.content || []); // Depending on backend format
-                renderPagination(data.totalPages || 0);
+                renderPagination(data.totalPages || 0, data.totalElements || 0);
 
                 loadingState.style.display = "none";
                 contentState.style.display = "block";
@@ -93,20 +93,24 @@ function init() {
         `).join('');
     };
 
-    const renderPagination = (totalPages) => {
+    const renderPagination = (totalPages, totalElements) => {
         pagination.innerHTML = '';
-        if (totalPages <= 1) return;
+        if (totalPages <= 1 && totalElements === 0) return;
 
+        const startItem = totalElements === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+        const endItem = Math.min(currentPage * pageSize, totalElements);
+
+        let html = `<span class="admin-pagination-info">Showing ${startItem} - ${endItem} of ${totalElements} requests</span><div style="display: flex; gap: 4px;">`;
         for (let i = 1; i <= totalPages; i++) {
-            const btn = document.createElement('button');
-            btn.textContent = i;
-            if (i === currentPage) btn.classList.add('active');
-            btn.onclick = () => {
-                currentPage = i;
-                loadRequests();
-            };
-            pagination.appendChild(btn);
+            html += `<button class="admin-pagination-btn ${i === currentPage ? 'active' : ''}" onclick="window.goToPage(${i})">${i}</button>`;
         }
+        html += `</div>`;
+        pagination.innerHTML = html;
+    };
+
+    window.goToPage = (page) => {
+        currentPage = page;
+        loadRequests();
     };
 
     window.openApproveModal = (id) => {

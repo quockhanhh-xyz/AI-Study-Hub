@@ -229,26 +229,35 @@ function renderUsersTable(data) {
         });
     }
 
-    // Update Pagination & Export Button Text
-    const paginationInfo = document.getElementById("paginationInfo");
-    const startItem = totalElements === 0 ? 0 : (currentPage * pageSize) + 1;
-    const endItem = Math.min((currentPage + 1) * pageSize, totalElements);
-    paginationInfo.textContent = `Showing ${startItem} - ${endItem} of ${totalElements}`;
-
+    // Update Export Button Text
     const btnExport = document.getElementById("btnExportUsers");
     if (btnExport) {
         btnExport.title = `Export ${totalElements.toLocaleString()} filtered users to Excel`;
     }
 
-    const paginationContainer = document.querySelector(".admin-pagination");
-    if (totalPages <= 1) {
-        paginationContainer.style.display = 'none';
-    } else {
-        paginationContainer.style.display = 'flex';
-        document.getElementById("btnPrevPage").disabled = currentPage <= 0;
-        document.getElementById("btnNextPage").disabled = currentPage >= totalPages - 1;
+    // Render Pagination
+    const pagination = document.getElementById("pagination");
+    if (pagination) {
+        if (totalElements === 0) {
+            pagination.innerHTML = '';
+        } else {
+            const startItem = (currentPage * pageSize) + 1;
+            const endItem = Math.min((currentPage + 1) * pageSize, totalElements);
+            
+            let html = `<span class="admin-pagination-info">Showing ${startItem} - ${endItem} of ${totalElements} users</span><div style="display: flex; gap: 4px;">`;
+            for (let i = 0; i < totalPages; i++) {
+                html += `<button class="admin-pagination-btn ${i === currentPage ? 'active' : ''}" onclick="window.goToPage(${i})">${i + 1}</button>`;
+            }
+            html += `</div>`;
+            pagination.innerHTML = html;
+        }
     }
 }
+
+window.goToPage = (page) => {
+    currentPage = page;
+    loadUsers(page);
+};
 
 function renderActionButtons(user, activeAdminCount) {
     let currentUserStr = localStorage.getItem("currentUser");

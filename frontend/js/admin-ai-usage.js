@@ -166,35 +166,16 @@ function initAdminAiUsage() {
         paginationControls.innerHTML = '';
         if (totalPages <= 1) return;
 
-        // Previous button
-        const prevBtn = document.createElement('button');
-        prevBtn.textContent = 'Previous';
-        prevBtn.disabled = currentPage === 1;
-        prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; loadUsage(); } };
-        paginationControls.appendChild(prevBtn);
-
-        // Page buttons (simplified for now)
+        let html = '';
         for (let i = 1; i <= totalPages; i++) {
-            if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
-                const btn = document.createElement('button');
-                btn.textContent = i;
-                if (i === currentPage) btn.classList.add('active');
-                btn.onclick = () => { currentPage = i; loadUsage(); };
-                paginationControls.appendChild(btn);
-            } else if (i === currentPage - 2 || i === currentPage + 2) {
-                const ellipsis = document.createElement('span');
-                ellipsis.textContent = '...';
-                ellipsis.style.padding = '4px 8px';
-                paginationControls.appendChild(ellipsis);
-            }
+            html += `<button class="admin-pagination-btn ${i === currentPage ? 'active' : ''}" onclick="window.goToPage(${i})">${i}</button>`;
         }
+        paginationControls.innerHTML = html;
+    };
 
-        // Next button
-        const nextBtn = document.createElement('button');
-        nextBtn.textContent = 'Next';
-        nextBtn.disabled = currentPage === totalPages;
-        nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; loadUsage(); } };
-        paginationControls.appendChild(nextBtn);
+    window.goToPage = (page) => {
+        currentPage = page;
+        loadUsage();
     };
 
     let currentSearchTimeout = null;

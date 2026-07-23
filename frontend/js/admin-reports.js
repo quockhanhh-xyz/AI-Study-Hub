@@ -215,18 +215,29 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   function updatePagination(totalElements) {
-    if (totalPages <= 1) {
-      prevPageBtn.disabled = true;
-      nextPageBtn.disabled = true;
-    } else {
-      prevPageBtn.disabled = currentPage === 0;
-      nextPageBtn.disabled = currentPage === totalPages - 1;
+    const paginationContainer = document.getElementById("pagination");
+    if (!paginationContainer) return;
+
+    if (totalElements === 0) {
+      paginationContainer.innerHTML = '';
+      return;
     }
 
     const start = totalElements === 0 ? 0 : currentPage * pageSize + 1;
     const end = Math.min((currentPage + 1) * pageSize, totalElements);
-    paginationInfo.textContent = `Showing ${start}-${end} of ${totalElements} entries`;
+    
+    let html = `<span class="admin-pagination-info">Showing ${start} - ${end} of ${totalElements} entries</span><div style="display: flex; gap: 4px;">`;
+    for (let i = 0; i < totalPages; i++) {
+        html += `<button class="admin-pagination-btn ${i === currentPage ? 'active' : ''}" onclick="window.goToPage(${i})">${i + 1}</button>`;
+    }
+    html += `</div>`;
+    paginationContainer.innerHTML = html;
   }
+
+  window.goToPage = (page) => {
+    currentPage = page;
+    loadReports();
+  };
 
   function openActionModal(reportId, type) {
     actionReportId.value = reportId;
