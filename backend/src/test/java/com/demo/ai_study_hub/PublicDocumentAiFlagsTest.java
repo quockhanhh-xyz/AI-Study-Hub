@@ -64,6 +64,8 @@ class PublicDocumentAiFlagsTest {
     @Mock
     private UsageService usageService;
     @Mock
+    private com.demo.ai_study_hub.service.NotificationService notificationService;
+    @Mock
     private org.springframework.transaction.PlatformTransactionManager transactionManager;
 
     @InjectMocks
