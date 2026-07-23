@@ -1002,14 +1002,14 @@ select.admin-select:focus,
 .admin-payment-filters-row1 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    gap: 30px;
     align-items: center;
 }
 
 .admin-payment-filters-row2 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    gap: 30px;
     align-items: center;
 }
 
