@@ -115,6 +115,10 @@ async function exportAdminData(endpoint, filename) {
         a.remove();
     } catch (error) {
         console.error('Export Data Error:', error);
-        alert('Failed to export data. Please try again.');
+        if (typeof window.showToast === "function") {
+            window.showToast('Failed to export data. Please try again.', 'error');
+        } else {
+            alert('Failed to export data. Please try again.');
+        }
     }
 }

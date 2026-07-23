@@ -165,7 +165,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         loadAppeals();
       } catch (error) {
         console.error("Failed to respond to appeal:", error);
-        alert(error.message || "Failed to send email response.");
+        if (typeof window.showToast === "function") {
+          window.showToast(error.message || "Failed to send email response.", "error");
+        } else {
+          alert(error.message || "Failed to send email response.");
+        }
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;

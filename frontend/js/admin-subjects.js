@@ -427,7 +427,11 @@ function initAdminSubjects() {
             closeModal('subjectModal');
             loadSubjects();
         } catch (error) {
-            alert(`Failed to save subject: ${error.message}`);
+            if (typeof window.showToast === "function") {
+                window.showToast(`Failed to save subject: ${error.message}`, "error");
+            } else {
+                alert(`Failed to save subject: ${error.message}`);
+            }
         }
     });
 
@@ -439,7 +443,11 @@ function initAdminSubjects() {
             closeModal('toggleStatusModal');
             loadSubjects();
         } catch (error) {
-            alert(`Failed to update status: ${error.message}`);
+            if (typeof window.showToast === "function") {
+                window.showToast(`Failed to update status: ${error.message}`, "error");
+            } else {
+                alert(`Failed to update status: ${error.message}`);
+            }
         }
     });
 
@@ -471,7 +479,11 @@ function initAdminSubjects() {
             loadRequests();
             updatePendingBadgeCount();
         } catch (error) {
-            alert('Failed to reject: ' + error.message);
+            if (typeof window.showToast === "function") {
+                window.showToast('Failed to reject: ' + error.message, 'error');
+            } else {
+                alert('Failed to reject: ' + error.message);
+            }
         }
     });
 

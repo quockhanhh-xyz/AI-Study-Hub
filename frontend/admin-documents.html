@@ -180,7 +180,7 @@
     </div>
 
     <!-- Approve Confirm Modal -->
-    <div class="admin-modal-overlay" id="approveModal">
+    <div class="admin-modal-overlay" id="approveModal" style="z-index: 1050;">
         <div class="admin-modal">
             <h3 class="admin-modal-title">Approve this document?</h3>
             <div class="admin-modal-body">
@@ -195,7 +195,7 @@
     </div>
 
     <!-- Reject Confirm Modal -->
-    <div class="admin-modal-overlay" id="rejectModal">
+    <div class="admin-modal-overlay" id="rejectModal" style="z-index: 1050;">
         <div class="admin-modal">
             <h3 class="admin-modal-title">Reject this public submission?</h3>
             <div class="admin-modal-body">
@@ -214,7 +214,7 @@
     </div>
 
     <!-- Move to Pending Confirm Modal -->
-    <div class="admin-modal-overlay" id="pendingModal">
+    <div class="admin-modal-overlay" id="pendingModal" style="z-index: 1050;">
         <div class="admin-modal">
             <h3 class="admin-modal-title">Move this document back to Pending Review?</h3>
             <div class="admin-modal-body">
@@ -229,7 +229,7 @@
     </div>
 
     <!-- Unpublish Confirm Modal -->
-    <div class="admin-modal-overlay" id="unpublishModal">
+    <div class="admin-modal-overlay" id="unpublishModal" style="z-index: 1050;">
         <div class="admin-modal">
             <h3 class="admin-modal-title">Unpublish this document?</h3>
             <div class="admin-modal-body">
@@ -245,14 +245,35 @@
 
     <!-- Document Detail Modal -->
     <div class="admin-modal-overlay" id="documentDetailModal">
-        <div class="admin-modal" style="max-width: 700px; width: 90%;">
-            <h3 class="admin-modal-title">Document Details (Moderation)</h3>
+        <div class="admin-modal" style="max-width: 750px; width: 95%;">
+            <h3 class="admin-modal-title" style="margin-bottom: 12px;">Document Details (Moderation)</h3>
             <div id="detailAlert" style="display: none; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; background: rgba(220, 38, 38, 0.1); color: var(--danger, #dc2626); border: 1px solid rgba(220, 38, 38, 0.2);"></div>
-            <div class="admin-modal-body" id="documentDetailBody" style="font-size: 14px; max-height: 70vh; overflow-y: auto; padding-right: 8px;">
+            
+            <div class="admin-modal-body" id="documentDetailBody" style="font-size: 14px; max-height: 55vh; overflow-y: auto; padding-right: 8px; margin-bottom: 12px;">
                 <p>Loading details...</p>
             </div>
-            <div class="admin-modal-actions" style="margin-top: 20px;">
-                <button class="btn btn-outline" onclick="closeDocumentDetailModal()">Close</button>
+            
+            <div class="admin-modal-actions" id="documentDetailActions" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border, #e2e8f0); padding-top: 14px; margin-top: 0;">
+                <div class="left-actions" style="display: flex; gap: 8px;">
+                    <button class="btn btn-outline" id="modalPreviewBtn" style="width: auto !important; min-width: 140px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600;">Preview Document</button>
+                    <button class="btn btn-outline" id="modalDownloadBtn" style="width: auto !important; min-width: 110px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600;">Download File</button>
+                </div>
+                <div class="right-actions" id="modalModerationActions" style="display: flex; gap: 8px;">
+                    <!-- Dynamically populated moderation buttons + Close button -->
+                    <button class="btn btn-outline" onclick="closeDocumentDetailModal()" style="width: auto !important; min-width: 90px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- General Confirm Modal -->
+    <div class="admin-modal-overlay" id="confirmModal" style="z-index: 1050;">
+        <div class="admin-modal" style="max-width: 400px;">
+            <h3 class="admin-modal-title" id="modalTitle">Confirm Action</h3>
+            <p id="modalBody" style="margin-bottom: 20px; font-size: 14px; color: var(--text-muted, #64748b); line-height: 1.5;"></p>
+            <div class="admin-modal-actions" style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button class="btn btn-outline" onclick="closeConfirmModal()">Cancel</button>
+                <button class="btn btn-primary" id="modalConfirmBtn">Confirm</button>
             </div>
         </div>
     </div>

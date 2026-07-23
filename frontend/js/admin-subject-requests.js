@@ -155,7 +155,11 @@ function init() {
             closeModal('rejectModal');
             loadRequests();
         } catch (error) {
-            alert('Failed to reject: ' + error.message);
+            if (typeof window.showToast === "function") {
+                window.showToast('Failed to reject: ' + error.message, 'error');
+            } else {
+                alert('Failed to reject: ' + error.message);
+            }
         }
     });
 

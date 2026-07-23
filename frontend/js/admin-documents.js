@@ -301,20 +301,40 @@ function initAdminDocuments() {
             await approveAdminDocument(id);
             closeModal('approveModal');
             loadDocuments();
+            if (document.getElementById("documentDetailModal").classList.contains("active")) {
+                viewDocumentDetails(id);
+            }
+            if (typeof window.showToast === "function") {
+                window.showToast("Document approved successfully!", "success");
+            }
         } catch (error) {
-            alert('Failed to approve document: ' + error.message);
+            if (typeof window.showToast === "function") {
+                window.showToast('Failed to approve document: ' + error.message, 'error');
+            } else {
+                alert('Failed to approve document: ' + error.message);
+            }
         }
     });
 
     document.getElementById('confirmRejectBtn').addEventListener('click', async () => {
         const id = rejectDocId.value;
-        const reason = rejectReason.value; // Step 15A: Optional reason
+        const reason = rejectReason.value;
         try {
             await rejectAdminDocument(id, reason);
             closeModal('rejectModal');
             loadDocuments();
+            if (document.getElementById("documentDetailModal").classList.contains("active")) {
+                viewDocumentDetails(id);
+            }
+            if (typeof window.showToast === "function") {
+                window.showToast("Document rejected successfully.", "success");
+            }
         } catch (error) {
-            alert('Failed to reject document: ' + error.message);
+            if (typeof window.showToast === "function") {
+                window.showToast('Failed to reject document: ' + error.message, 'error');
+            } else {
+                alert('Failed to reject document: ' + error.message);
+            }
         }
     });
 
@@ -324,8 +344,18 @@ function initAdminDocuments() {
             await makeAdminDocumentPending(id);
             closeModal('pendingModal');
             loadDocuments();
+            if (document.getElementById("documentDetailModal").classList.contains("active")) {
+                viewDocumentDetails(id);
+            }
+            if (typeof window.showToast === "function") {
+                window.showToast("Document moved back to review.", "success");
+            }
         } catch (error) {
-            alert('Failed to move document back to review: ' + error.message);
+            if (typeof window.showToast === "function") {
+                window.showToast('Failed to move document back to review: ' + error.message, 'error');
+            } else {
+                alert('Failed to move document back to review: ' + error.message);
+            }
         }
     });
 
@@ -335,8 +365,18 @@ function initAdminDocuments() {
             await unpublishAdminDocument(id);
             closeModal('unpublishModal');
             loadDocuments();
+            if (document.getElementById("documentDetailModal").classList.contains("active")) {
+                viewDocumentDetails(id);
+            }
+            if (typeof window.showToast === "function") {
+                window.showToast("Document unpublished successfully.", "success");
+            }
         } catch (error) {
-            alert('Failed to unpublish document: ' + error.message);
+            if (typeof window.showToast === "function") {
+                window.showToast('Failed to unpublish document: ' + error.message, 'error');
+            } else {
+                alert('Failed to unpublish document: ' + error.message);
+            }
         }
     });
 
@@ -419,34 +459,68 @@ function initAdminDocuments() {
         }
     };
 
-    exportBtn.addEventListener('click', async () => {
-        try {
-            const params = {};
-            if (searchInput.value) params.search = searchInput.value;
-            const subjId = getSelectedSubjectId();
-            if (subjId) params.subjectId = subjId;
-            if (statusFilter.value) params.approvalStatus = statusFilter.value;
-            if (fileTypeFilter.value) params.fileType = fileTypeFilter.value;
+    let confirmCallback = null;
 
-            const hasFilters = Object.keys(params).length > 0;
-            const confirmMsg = hasFilters ? "Export filtered documents?" : "Export all public documents?";
-            if (!confirm(confirmMsg)) return;
+    window.showConfirmModal = function(title, bodyText, onConfirm) {
+        document.getElementById("modalTitle").textContent = title;
+        document.getElementById("modalBody").innerHTML = bodyText;
+        confirmCallback = onConfirm;
 
-            exportBtn.disabled = true;
-            exportBtn.innerHTML = 'Exporting...';
+        const confirmBtn = document.getElementById("modalConfirmBtn");
+        confirmBtn.onclick = async () => {
+            confirmBtn.disabled = true;
+            const originalText = confirmBtn.textContent;
+            confirmBtn.textContent = "Processing...";
+            try {
+                await confirmCallback();
+                closeConfirmModal();
+            } catch (e) {
+                console.error("Action error:", e);
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = originalText;
+            }
+        };
 
-            await exportAdminPublicDocuments(params);
-        } catch (error) {
-            console.error('Failed to export data', error);
-        } finally {
-            exportBtn.disabled = false;
-            exportBtn.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
-                Export Excel
-            `;
-        }
+        document.getElementById("confirmModal").classList.add("active");
+    };
+
+    window.closeConfirmModal = function() {
+        document.getElementById("confirmModal").classList.remove("active");
+        confirmCallback = null;
+    };
+
+    exportBtn.addEventListener('click', () => {
+        const params = {};
+        if (searchInput.value) params.search = searchInput.value;
+        const subjId = getSelectedSubjectId();
+        if (subjId) params.subjectId = subjId;
+        if (statusFilter.value) params.approvalStatus = statusFilter.value;
+        if (fileTypeFilter.value) params.fileType = fileTypeFilter.value;
+
+        const hasFilters = Object.keys(params).length > 0;
+        const confirmMsg = hasFilters ? "Export filtered documents?" : "Export all public documents?";
+        
+        showConfirmModal("Confirm Excel Export", confirmMsg, async () => {
+            try {
+                exportBtn.disabled = true;
+                exportBtn.innerHTML = 'Exporting...';
+                await exportAdminPublicDocuments(params);
+            } catch (error) {
+                console.error('Failed to export data', error);
+                if (typeof window.showToast === "function") {
+                    window.showToast("Failed to export Excel: " + error.message, "error");
+                }
+            } finally {
+                exportBtn.disabled = false;
+                exportBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-bottom;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    Export Excel
+                `;
+            }
+        });
     });
 
     window.viewDocumentDetails = async function(docId) {
@@ -478,7 +552,7 @@ function initAdminDocuments() {
                 const dateDisplay = doc.createdAt ? new Date(doc.createdAt).toLocaleString() : 'N/A';
                 
                 body.innerHTML = `
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px; margin-bottom: 20px; background: var(--surface); padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px; background: var(--surface); padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
                         <div><strong>ID:</strong> <span>#${doc.documentId}</span></div>
                         <div><strong>Title:</strong> <span>${escapeHtml(doc.title || '-')}</span></div>
                         <div><strong>Owner:</strong> <span>${escapeHtml(ownerDisplay)}</span></div>
@@ -487,158 +561,148 @@ function initAdminDocuments() {
                         <div><strong>Visibility:</strong> <span class="admin-badge ${doc.visibility === 'PUBLIC' ? 'admin-badge-success' : 'admin-badge-neutral'}">${doc.visibility}</span></div>
                         <div><strong>Approval Status:</strong> <span class="admin-badge ${getApprovalBadgeClass(doc.approvalStatus)}">${getApprovalLabel(doc.approvalStatus)}</span></div>
                         <div><strong>Processing Status:</strong> <span class="admin-badge ${getAIBadgeInfo(doc.processingStatus).cls}">${getAIBadgeInfo(doc.processingStatus).text}</span></div>
-                        <div><strong>Uploaded At:</strong> <span>${dateDisplay}</span></div>
+                        <div style="grid-column: span 2;"><strong>Uploaded At:</strong> <span>${dateDisplay}</span></div>
                     </div>
                     
-                    <div class="admin-actions-bar" style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
-                        <button class="btn btn-outline" id="modalPreviewBtn" style="width: auto !important; padding: 8px 16px; height: 38px; font-size: 14px;">Preview Document</button>
-                        <button class="btn btn-outline" id="modalDownloadBtn" style="width: auto !important; padding: 8px 16px; height: 38px; font-size: 14px;">Download File</button>
-                        <span style="flex:1;"></span>
-                        ${doc.approvalStatus === 'PENDING' ? `
-                            <button class="btn btn-primary" id="modalApproveBtn" style="width: auto !important; padding: 8px 16px; height: 38px; font-size: 14px; background-color: var(--success, #10b981) !important; border-color: var(--success, #10b981) !important;">Approve</button>
-                            <button class="btn btn-danger" id="modalRejectBtn" style="width: auto !important; padding: 8px 16px; height: 38px; font-size: 14px; background-color: var(--danger, #ef4444) !important; border-color: var(--danger, #ef4444) !important;">Reject</button>
-                        ` : doc.approvalStatus === 'APPROVED' ? `
-                            <button class="btn btn-warning" id="modalPendingBtn" style="width: auto !important; padding: 8px 16px; height: 38px; font-size: 14px;">Reopen</button>
-                            <button class="btn btn-danger" id="modalUnpublishBtn" style="width: auto !important; padding: 8px 16px; height: 38px; font-size: 14px; background-color: var(--danger, #ef4444) !important; border-color: var(--danger, #ef4444) !important;">Unpublish</button>
-                        ` : doc.approvalStatus === 'REJECTED' ? `
-                            <button class="btn btn-primary" id="modalApproveBtn" style="width: auto !important; padding: 8px 16px; height: 38px; font-size: 14px; background-color: var(--success, #10b981) !important; border-color: var(--success, #10b981) !important;">Approve</button>
-                            <button class="btn btn-warning" id="modalPendingBtn" style="width: auto !important; padding: 8px 16px; height: 38px; font-size: 14px;">Reopen</button>
-                        ` : ''}
-                    </div>
-                    
-                    <div id="modalPreviewContainer" class="admin-card" style="display:none; height: 500px; padding: 0; margin-top: 15px; border: 1px solid var(--border);">
-                        <iframe id="modalPreviewFrame" style="width:100%; height:100%; border:none;"></iframe>
-                    </div>
+                    <div id="modalPreviewContainer" class="admin-card" style="display:none; height: 400px; padding: 0; margin-top: 15px; border: 1px solid var(--border);"></div>
                 `;
                 
-                // Wire up actions
+                // Wire up download
                 document.getElementById("modalDownloadBtn").onclick = () => {
                     downloadFile(`/api/admin/documents/${doc.documentId}/download`, doc.title || 'document');
                 };
+
+                // Populate moderation buttons on right actions
+                const rightActions = document.getElementById("modalModerationActions");
+                rightActions.innerHTML = ""; // Clear
                 
+                let modButtonsHtml = "";
+                if (doc.approvalStatus === 'PENDING') {
+                    modButtonsHtml = `
+                        <button class="btn btn-primary" id="modalApproveBtn" style="width: auto !important; min-width: 100px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600; background-color: var(--success, #10b981) !important; border-color: var(--success, #10b981) !important; color: #ffffff !important;">Approve</button>
+                        <button class="btn btn-danger" id="modalRejectBtn" style="width: auto !important; min-width: 90px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600; background-color: var(--danger, #ef4444) !important; border-color: var(--danger, #ef4444) !important; color: #ffffff !important;">Reject</button>
+                    `;
+                } else if (doc.approvalStatus === 'APPROVED') {
+                    modButtonsHtml = `
+                        <button class="btn" id="modalPendingBtn" style="width: auto !important; min-width: 100px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600; background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; color: #334155 !important;">Reopen</button>
+                        <button class="btn btn-danger" id="modalUnpublishBtn" style="width: auto !important; min-width: 110px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600; background-color: var(--danger, #ef4444) !important; border-color: var(--danger, #ef4444) !important; color: #ffffff !important;">Unpublish</button>
+                    `;
+                } else if (doc.approvalStatus === 'REJECTED') {
+                    modButtonsHtml = `
+                        <button class="btn btn-primary" id="modalApproveBtn" style="width: auto !important; min-width: 100px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600; background-color: var(--success, #10b981) !important; border-color: var(--success, #10b981) !important; color: #ffffff !important;">Approve</button>
+                        <button class="btn" id="modalPendingBtn" style="width: auto !important; min-width: 100px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600; background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; color: #334155 !important;">Reopen</button>
+                    `;
+                }
+                
+                rightActions.innerHTML = `
+                    ${modButtonsHtml}
+                    <button class="btn btn-outline" onclick="closeDocumentDetailModal()" style="width: auto !important; min-width: 90px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600;">Close</button>
+                `;
+
+                // Wire up moderation triggers
                 const approveBtn = document.getElementById("modalApproveBtn");
                 const rejectBtn = document.getElementById("modalRejectBtn");
                 const pendingBtn = document.getElementById("modalPendingBtn");
                 const unpublishBtn = document.getElementById("modalUnpublishBtn");
                 
                 if (approveBtn) {
-                    approveBtn.onclick = async () => {
-                        if (confirm("Approve this document for Community Library?")) {
-                            try {
-                                await approveAdminDocument(doc.documentId);
-                                viewDocumentDetails(doc.documentId);
-                                loadDocuments(); // Reload table
-                            } catch (err) {
-                                showDetailError(err.message);
-                            }
-                        }
+                    approveBtn.onclick = () => {
+                        openApproveModal(doc.documentId);
                     };
                 }
                 
                 if (rejectBtn) {
                     rejectBtn.onclick = () => {
-                        const reason = prompt("Enter rejection reason (optional):");
-                        if (reason !== null) {
-                            rejectAdminDocument(doc.documentId, reason)
-                                .then(() => {
-                                    viewDocumentDetails(doc.documentId);
-                                    loadDocuments(); // Reload table
-                                })
-                                .catch(err => showDetailError(err.message));
-                        }
+                        openRejectModal(doc.documentId);
                     };
                 }
                 
                 if (pendingBtn) {
-                    pendingBtn.onclick = async () => {
-                        if (confirm("Move this document back to Pending Review?")) {
-                            try {
-                                await fetchAdmin(`/api/admin/documents/${doc.documentId}/status`, {
-                                    method: 'PATCH',
-                                    body: JSON.stringify({ status: 'PENDING' })
-                                });
-                                viewDocumentDetails(doc.documentId);
-                                loadDocuments(); // Reload table
-                            } catch (err) {
-                                showDetailError(err.message);
-                            }
-                        }
+                    pendingBtn.onclick = () => {
+                        openPendingConfirmModal(doc.documentId);
                     };
                 }
                 
                 if (unpublishBtn) {
-                    unpublishBtn.onclick = async () => {
-                        if (confirm("Unpublish this document? (Visibility will become private)")) {
-                            try {
-                                await fetchAdmin(`/api/admin/documents/${doc.documentId}/status`, {
-                                    method: 'PATCH',
-                                    body: JSON.stringify({ status: 'REJECTED' })
-                                });
-                                viewDocumentDetails(doc.documentId);
-                                loadDocuments(); // Reload table
-                            } catch (err) {
-                                showDetailError(err.message);
-                            }
-                        }
+                    unpublishBtn.onclick = () => {
+                        openUnpublishConfirmModal(doc.documentId);
                     };
                 }
+
+                // Wire up toggle preview logic
+                const previewBtn = document.getElementById("modalPreviewBtn");
+                const previewContainer = document.getElementById("modalPreviewContainer");
                 
-                document.getElementById("modalPreviewBtn").onclick = async () => {
-                    const container = document.getElementById("modalPreviewContainer");
-                    container.style.display = 'block';
-                    container.innerHTML = `
-                        <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
-                            <svg style="animation: spin 1s linear infinite; height: 24px; width: 24px; color: var(--primary);" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle style="opacity: 0.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path style="opacity: 0.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                        </div>
-                    `;
-                    
-                    try {
-                        const res = await fetchAdmin(`/api/admin/documents/${doc.documentId}/preview`, { method: 'GET' });
-                        if (res && res.success && res.data) {
-                            const previewInfo = res.data;
-                            const mode = previewInfo.previewMode || "FALLBACK";
-                            const previewUrl = previewInfo.previewUrl || previewInfo.fileUrl;
+                previewContainer.style.display = 'none';
+                previewBtn.textContent = "Preview Document";
+                let previewLoaded = false;
+                
+                previewBtn.onclick = async () => {
+                    if (previewContainer.style.display === 'block') {
+                        previewContainer.style.display = 'none';
+                        previewBtn.textContent = "Preview Document";
+                    } else {
+                        previewContainer.style.display = 'block';
+                        previewBtn.textContent = "Hide Preview";
+                        
+                        if (!previewLoaded) {
+                            previewContainer.innerHTML = `
+                                <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+                                    <svg style="animation: spin 1s linear infinite; height: 24px; width: 24px; color: var(--primary);" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle style="opacity: 0.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path style="opacity: 0.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </div>
+                            `;
                             
-                            if (mode === "FALLBACK" || !previewUrl) {
-                                container.innerHTML = `
-                                  <div style="padding: 40px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-                                    <h4 style="margin-bottom: 10px; margin-top: 0;">Preview Unavailable</h4>
-                                    <p style="margin-bottom: 20px; color: #666; font-size: 0.9rem;">This file type cannot be previewed natively.</p>
-                                    <a href="${previewInfo.fileUrl}" target="_blank" class="btn btn-outline" style="width: auto !important; padding: 6px 12px; font-size: 13px;">Open File</a>
-                                  </div>
-                                `;
-                                return;
+                            try {
+                                const res = await fetchAdmin(`/api/admin/documents/${doc.documentId}/preview`, { method: 'GET' });
+                                if (res && res.success && res.data) {
+                                    const previewInfo = res.data;
+                                    const mode = previewInfo.previewMode || "FALLBACK";
+                                    const previewUrl = previewInfo.previewUrl || previewInfo.fileUrl;
+                                    
+                                    if (mode === "FALLBACK" || !previewUrl) {
+                                        previewContainer.innerHTML = `
+                                          <div style="padding: 40px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                                            <h4 style="margin-bottom: 10px; margin-top: 0;">Preview Unavailable</h4>
+                                            <p style="margin-bottom: 20px; color: #666; font-size: 0.9rem;">This file type cannot be previewed natively.</p>
+                                            <a href="${previewInfo.fileUrl}" target="_blank" class="btn btn-outline" style="width: auto !important; padding: 6px 12px; font-size: 13px;">Open File</a>
+                                          </div>
+                                        `;
+                                        previewLoaded = true;
+                                        return;
+                                    }
+                                    
+                                    if (mode === "OFFICE_VIEWER") {
+                                        const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewUrl)}`;
+                                        previewContainer.innerHTML = `
+                                          <div style="height: 100%; display: flex; flex-direction: column;">
+                                            <div style="padding: 8px; background: #f8f9fa; border-bottom: 1px solid #ddd; text-align: center; font-size: 0.8rem; color: #555;">
+                                              If the preview does not load, <a href="${previewInfo.fileUrl}" target="_blank">open</a> the file.
+                                            </div>
+                                            <iframe src="${viewerUrl}" style="flex: 1; border: none; width: 100%; height: 100%;"></iframe>
+                                          </div>
+                                        `;
+                                    } else if (mode === "IMAGE") {
+                                        previewContainer.innerHTML = `
+                                          <div style="display: flex; justify-content: center; align-items: center; padding: 10px; background: #f0f0f0; height: 100%; overflow-y: auto;">
+                                            <img src="${previewUrl}" alt="Preview" style="max-width: 100%; max-height: 100%; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" />
+                                          </div>
+                                        `;
+                                    } else {
+                                        previewContainer.innerHTML = `
+                                          <iframe src="${previewUrl}" style="border: none; width: 100%; height: 100%;"></iframe>
+                                        `;
+                                    }
+                                    previewLoaded = true;
+                                } else {
+                                    showDetailError("Failed to load preview info");
+                                }
+                            } catch (e) {
+                                showDetailError("Error loading preview: " + e.message);
                             }
-                            
-                            if (mode === "OFFICE_VIEWER") {
-                                const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewUrl)}`;
-                                container.innerHTML = `
-                                  <div style="height: 100%; display: flex; flex-direction: column;">
-                                    <div style="padding: 8px; background: #f8f9fa; border-bottom: 1px solid #ddd; text-align: center; font-size: 0.8rem; color: #555;">
-                                      If the preview does not load, <a href="${previewInfo.fileUrl}" target="_blank">open</a> the file.
-                                    </div>
-                                    <iframe src="${viewerUrl}" style="flex: 1; border: none; width: 100%; height: 100%;"></iframe>
-                                  </div>
-                                `;
-                            } else if (mode === "IMAGE") {
-                                container.innerHTML = `
-                                  <div style="display: flex; justify-content: center; align-items: center; padding: 10px; background: #f0f0f0; height: 100%; overflow-y: auto;">
-                                    <img src="${previewUrl}" alt="Preview" style="max-width: 100%; max-height: 100%; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" />
-                                  </div>
-                                `;
-                            } else {
-                                container.innerHTML = `
-                                  <iframe src="${previewUrl}" style="border: none; width: 100%; height: 100%;"></iframe>
-                                `;
-                            }
-                        } else {
-                            showDetailError("Failed to load preview info");
                         }
-                    } catch (e) {
-                        showDetailError("Error loading preview: " + e.message);
                     }
                 };
                 
