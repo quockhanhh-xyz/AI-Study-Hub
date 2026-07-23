@@ -47,6 +47,8 @@ async function loadPlansData() {
 
             loadingState.style.display = "none";
             contentState.style.display = "block";
+            const headerActions = document.getElementById("plansHeaderActions");
+            if (headerActions) headerActions.style.display = "block";
         } else {
             throw new Error(response.message || "Failed to load plans");
         }

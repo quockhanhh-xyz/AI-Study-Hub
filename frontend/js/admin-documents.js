@@ -394,10 +394,30 @@ function initAdminDocuments() {
             ];
             const [pendingRes, approvedRes, rejectedRes, allRes] = await Promise.all(reqs);
 
-            if (pendingRes && pendingRes.success) document.getElementById('tabCountPending').textContent = pendingRes.data.totalElements;
-            if (approvedRes && approvedRes.success) document.getElementById('tabCountApproved').textContent = approvedRes.data.totalElements;
-            if (rejectedRes && rejectedRes.success) document.getElementById('tabCountRejected').textContent = rejectedRes.data.totalElements;
-            if (allRes && allRes.success) document.getElementById('tabCountAll').textContent = allRes.data.totalElements;
+            if (pendingRes && pendingRes.success) {
+                const count = pendingRes.data.totalElements;
+                document.getElementById('tabCountPending').textContent = count;
+                const card = document.getElementById('cardPendingDocs');
+                if (card) card.textContent = count;
+            }
+            if (approvedRes && approvedRes.success) {
+                const count = approvedRes.data.totalElements;
+                document.getElementById('tabCountApproved').textContent = count;
+                const card = document.getElementById('cardApprovedDocs');
+                if (card) card.textContent = count;
+            }
+            if (rejectedRes && rejectedRes.success) {
+                const count = rejectedRes.data.totalElements;
+                document.getElementById('tabCountRejected').textContent = count;
+                const card = document.getElementById('cardRejectedDocs');
+                if (card) card.textContent = count;
+            }
+            if (allRes && allRes.success) {
+                const count = allRes.data.totalElements;
+                document.getElementById('tabCountAll').textContent = count;
+                const card = document.getElementById('cardTotalDocs');
+                if (card) card.textContent = count;
+            }
         } catch (e) {
             console.warn("Could not fetch tab counts", e);
         }

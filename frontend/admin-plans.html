@@ -36,6 +36,14 @@
                             <h1 class="admin-page-title" style="margin-bottom: 4px;">Admin Plans</h1>
                             <p style="color: var(--text-muted, #64748b); margin: 0; font-size: 0.95rem;">Manage subscription plans, configure pricing tiers, system limits, and review update history.</p>
                         </div>
+                        <div class="admin-header-actions" id="plansHeaderActions" style="display: none;">
+                            <button class="btn btn-secondary" onclick="exportAdminPlansData()" style="height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; padding: 0 16px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                </svg>
+                                Export
+                            </button>
+                        </div>
                     </header>
 
                     <div class="admin-state-container" id="plansLoadingState">
@@ -58,22 +66,26 @@
                     </div>
 
                     <div id="plansContent" style="display: none;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; margin-bottom: 16px;">
-                            <!-- Left: Summary strip -->
-                            <div style="display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--text-muted, #64748b);">
-                                <span>Total Plans: <strong id="totalPlansCount" style="color: var(--text-main, #0f172a); font-weight: 600;">0</strong></span>
-                                <span style="color: var(--border, #cbd5e1);">|</span>
-                                <span>Active: <strong id="activePlansCount" style="color: var(--success, #16a34a); font-weight: 600;">0</strong></span>
-                                <span style="color: var(--border, #cbd5e1);">|</span>
-                                <span>Inactive: <strong id="inactivePlansCount" style="color: var(--danger, #dc2626); font-weight: 600;">0</strong></span>
+                        <!-- Summary KPI Cards -->
+                        <div class="admin-payment-summary-grid" id="plansSummaryCards" style="margin-bottom: 24px;">
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Total Plans</div>
+                                    <div class="summary-value text-primary" id="totalPlansCount">0</div>
+                                </div>
                             </div>
-                            <!-- Right: Export button -->
-                            <button class="btn btn-secondary" onclick="exportAdminPlansData()" style="height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; padding: 0 16px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                                </svg>
-                                Export
-                            </button>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Active Plans</div>
+                                    <div class="summary-value text-success" id="activePlansCount">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Inactive Plans</div>
+                                    <div class="summary-value text-danger" id="inactivePlansCount">0</div>
+                                </div>
+                            </div>
                         </div>
                         <div class="admin-card">
                             <div class="admin-table-container">
