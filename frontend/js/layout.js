@@ -221,7 +221,7 @@ function renderDynamicSidebar(isAuthenticated) {
         if (user.role === 'USER') {
           const statsContainer = document.createElement("div");
           statsContainer.className = "sidebar-user-stats";
-          statsContainer.style.cssText = "padding: 0 16px; margin: 8px 0 12px 0; text-align: center;";
+          statsContainer.style.cssText = "padding: 0 16px; margin: 0 0 10px 0; text-align: center;";
           statsContainer.innerHTML = `
             <div style="display: flex; justify-content: space-around; gap: 4px;">
               <div style="flex: 1;">

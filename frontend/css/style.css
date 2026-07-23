@@ -1327,8 +1327,12 @@ textarea.success {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-right: 1px solid var(--glass-border);
-  padding: 24px 16px;
+  padding: 14px 16px 24px 16px;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar .logo {
+  margin-bottom: 10px !important;
 }
 
 .sidebar.no-transition,
