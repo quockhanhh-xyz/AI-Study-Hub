@@ -144,14 +144,27 @@ function renderPayments(payments) {
 
         // Plan
         const tdPlan = document.createElement('td');
-        let planStr = payment.planCode || 'N/A';
-        if (planStr.includes('_1_MONTH')) {
-            planStr = planStr.replace('_1_MONTH', '').charAt(0).toUpperCase() + planStr.replace('_1_MONTH', '').slice(1).toLowerCase() + ' · 1 mo';
+        tdPlan.style.textAlign = 'center';
+        tdPlan.style.verticalAlign = 'middle';
+        let planStr = payment.planCode || 'FREE';
+        let cleanPlan = planStr;
+        if (cleanPlan.includes('_1_MONTH')) {
+            cleanPlan = cleanPlan.replace('_1_MONTH', '');
         }
-        tdPlan.textContent = planStr;
-        tdPlan.style.fontWeight = '500';
-        tdPlan.style.fontSize = '12.5px';
-        tdPlan.style.whiteSpace = 'nowrap';
+        cleanPlan = cleanPlan.toUpperCase().trim();
+        
+        let badgeClass = 'admin-badge-neutral';
+        if (cleanPlan === 'PREMIUM') {
+            badgeClass = 'admin-badge-success';
+        } else if (cleanPlan === 'ULTRA') {
+            badgeClass = 'admin-badge-info';
+        }
+        
+        let displayVal = cleanPlan;
+        if (planStr.includes('_1_MONTH')) {
+            displayVal += ' · 1 mo';
+        }
+        tdPlan.innerHTML = `<span class="badge ${badgeClass}" style="font-size: 11px; padding: 4px 8px; font-weight: 600; text-transform: uppercase;">${displayVal}</span>`;
 
         // Amount (VND Format)
         const tdAmount = document.createElement('td');

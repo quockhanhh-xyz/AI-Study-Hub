@@ -88,10 +88,9 @@ function initAdminAiUsage() {
         emptyState.style.display = 'none';
 
         tableBody.innerHTML = items.map(item => {
-            // Determine tier badge color
-            let tierClass = 'badge-tier-free';
-            if (item.tier === 'PREMIUM') tierClass = 'badge-tier-premium';
-            else if (item.tier === 'ULTRA') tierClass = 'badge-tier-ultra';
+            let tierClass = 'admin-badge-neutral';
+            if (item.tier === 'PREMIUM') tierClass = 'admin-badge-success';
+            else if (item.tier === 'ULTRA') tierClass = 'admin-badge-info';
 
             return `
             <tr>

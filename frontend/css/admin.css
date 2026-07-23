@@ -913,12 +913,19 @@ select.admin-select:focus,
     font-weight: 600 !important;
 }
 
-.admin-tab::after {
+.admin-tab .tab-text {
+    position: relative;
+    display: inline-block;
+    padding-bottom: 12px;
+    margin-bottom: -12px;
+}
+
+.admin-tab .tab-text::after {
     content: '';
     position: absolute;
-    bottom: -1px;
-    left: 4px;
-    right: 4px;
+    bottom: 0;
+    left: 0;
+    right: 0;
     height: 2.5px;
     background-color: transparent;
     transition: background-color 0.2s ease;
@@ -926,7 +933,7 @@ select.admin-select:focus,
     z-index: 1;
 }
 
-.admin-tab.active::after {
+.admin-tab.active .tab-text::after {
     background-color: var(--primary, #ff5a3d);
 }
 
@@ -937,8 +944,8 @@ select.admin-select:focus,
     align-items: center;
     margin-top: 0 !important;
     padding: 16px 24px !important;
-    border-top: 1px solid var(--primary-border, #ffd6d6) !important;
-    background-color: var(--primary-light, #fff0f0) !important;
+    border-top: 1px solid #f1f5f9 !important;
+    background-color: #fafbfc !important;
     border-radius: 0 0 12px 12px;
 }
 
@@ -951,7 +958,7 @@ select.admin-select:focus,
     padding: 6px 12px;
     border: 1px solid var(--border, #eadfdd);
     background-color: var(--surface, #ffffff);
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 14px;
     color: var(--text-main, #172033);
@@ -959,15 +966,16 @@ select.admin-select:focus,
 }
 
 .admin-pagination-btn:hover:not(:disabled) {
-    background-color: var(--primary-light, #fff0f0);
-    border-color: var(--primary-border, #ffd6d6);
-    color: var(--primary, #ff5858);
+    background-color: var(--primary-light, #fff3f0) !important;
+    border-color: var(--primary-border, #ffd7cf) !important;
+    color: var(--primary, #FF5A3D) !important;
 }
 
 .admin-pagination-btn.active {
-    background-color: var(--primary, #ff5858);
-    border-color: var(--primary, #ff5858);
-    color: #ffffff;
+    background-color: var(--primary, #FF5A3D) !important;
+    border-color: var(--primary, #FF5A3D) !important;
+    color: #ffffff !important;
+    border-radius: 8px;
 }
 
 .admin-pagination-btn:disabled {
