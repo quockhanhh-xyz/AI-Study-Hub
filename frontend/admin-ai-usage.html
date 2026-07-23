@@ -30,31 +30,10 @@
 
             <div class="admin-layout">
                 <div class="admin-content-wrapper">
-                    <header class="admin-page-header">
+                    <header class="admin-page-header" style="margin-bottom: 24px;">
                         <div>
-                            <h1 class="admin-page-title">AI Usage Monitoring</h1>
-                            <p class="admin-page-subtitle"
-                                style="margin-top: 4px; color: var(--text-muted); font-size: 0.875rem;">Monitor AI usage
-                                logs by user, tier, feature, status, and date range.</p>
-                            <p id="dynamicSubtitle"
-                                style="margin-top: 2px; color: var(--primary); font-size: 0.875rem; font-weight: 500;">
-                                Showing all-time AI usage logs.</p>
-                        </div>
-                        <div class="admin-header-actions">
-                            <button id="exportBtn" class="btn btn-primary">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18"
-                                    width="18" stroke="currentColor" stroke-width="2"
-                                    style="margin-right: 6px; vertical-align: text-bottom;">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18"
-                                        width="18" stroke="currentColor" stroke-width="2"
-                                        style="margin-right: 6px; vertical-align: text-bottom;">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                                    </svg>
-                                    <span id="exportBtnText">Export all AI usage logs</span>
-                            </button>
+                            <h1 class="admin-page-title" style="margin-bottom: 4px;">AI Usage Monitoring</h1>
+                            <p class="admin-page-subtitle">Monitor AI usage logs by user, tier, feature, status, and date range.</p>
                         </div>
                     </header>
 
@@ -122,36 +101,36 @@
                             </div>
                         </div>
 
-                        <!-- Filters -->
-                        <div class="admin-actions-bar" style="flex-direction: column; align-items: stretch; gap: 16px;">
-                            <div style="display: flex; gap: 16px; width: 100%; align-items: center;">
-                                <input type="text" id="searchInput" class="admin-filter-input"
-                                    placeholder="Search by User Email..." style="flex: 1;">
-                                <button class="btn btn-outline" onclick="clearFilters()" style="white-space: nowrap;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18"
-                                        width="18" stroke="currentColor" stroke-width="2"
-                                        style="margin-right: 6px; vertical-align: text-bottom;">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                                    </svg>
-                                    Clear Filters
-                                </button>
+                        <!-- Filter Bar -->
+                        <!-- Filter Bar -->
+                        <div class="admin-payment-filters-container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 30px; align-items: center;">
+                            
+                            <!-- Row 1: Search -->
+                            <div class="admin-search-wrapper" style="position: relative; display: flex; align-items: center; grid-column: 1;">
+                                <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="position: absolute; left: 16px; color: #94a3b8; pointer-events: none;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                </svg>
+                                <input type="text" id="searchInput" class="admin-filter-input" placeholder="Search by User Email..." style="width: 100%; border: none !important; background-color: #f4f5f7 !important; border-radius: 24px !important; padding-left: 44px !important; height: 42px !important; font-size: 14px;">
                             </div>
-                            <div class="admin-filters" style="width: 100%;">
-                                <select id="tierFilter" class="admin-filter-input">
+
+                            <!-- Row 1: Three Selects (span 2 columns) -->
+                            <div style="grid-column: 2 / 4; display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; align-items: center;">
+                                <select id="tierFilter" class="admin-filter-input admin-select">
                                     <option value="">All Tiers</option>
                                     <option value="FREE">FREE</option>
                                     <option value="PREMIUM">PREMIUM</option>
                                     <option value="ULTRA">ULTRA</option>
                                 </select>
-                                <select id="featureFilter" class="admin-filter-input">
+                                
+                                <select id="featureFilter" class="admin-filter-input admin-select">
                                     <option value="">All Features</option>
                                     <option value="AI_QA">AI Q&A</option>
                                     <option value="AI_SUMMARY">AI Summary</option>
                                     <option value="AI_FLASHCARD">AI Flashcard</option>
                                     <option value="AI_QUIZ">AI Quiz</option>
                                 </select>
-                                <select id="statusFilter" class="admin-filter-input">
+
+                                <select id="statusFilter" class="admin-filter-input admin-select">
                                     <option value="">All Statuses</option>
                                     <option value="SUCCESS">Success</option>
                                     <option value="FAILED">Failed</option>
@@ -160,16 +139,38 @@
                                     <option value="AI_PROVIDER_ERROR">AI Provider Error</option>
                                     <option value="AI_NOT_CONFIGURED">AI Not Configured</option>
                                 </select>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <label for="startDateFilter"
-                                        style="font-size: 0.875rem; color: var(--text-muted); white-space: nowrap;">Start date</label>
-                                    <input type="date" id="startDateFilter" class="admin-filter-input">
+                            </div>
+
+                            <!-- Row 2: Dates and Actions -->
+                            <div class="date-wrapper" style="grid-column: 1;">
+                                <div class="date-display">
+                                    <span id="startDateDisplay" class="date-text">Start Date</span>
+                                    <svg class="date-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                 </div>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <label for="endDateFilter"
-                                        style="font-size: 0.875rem; color: var(--text-muted); white-space: nowrap;">End date</label>
-                                    <input type="date" id="endDateFilter" class="admin-filter-input">
+                                <input type="date" id="startDateFilter" class="date-invisible-input" onclick="try{this.showPicker()}catch(e){}" onchange="document.getElementById('startDateDisplay').textContent = this.value || 'Start Date'; document.getElementById('startDateDisplay').style.fontWeight = this.value ? '600' : '500';">
+                            </div>
+
+                            <div class="date-wrapper" style="grid-column: 2;">
+                                <div class="date-display">
+                                    <span id="endDateDisplay" class="date-text">End Date</span>
+                                    <svg class="date-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                 </div>
+                                <input type="date" id="endDateFilter" class="date-invisible-input" onclick="try{this.showPicker()}catch(e){}" onchange="document.getElementById('endDateDisplay').textContent = this.value || 'End Date'; document.getElementById('endDateDisplay').style.fontWeight = this.value ? '600' : '500';">
+                            </div>
+
+                            <div class="admin-payment-actions-buttons" style="grid-column: 3; display: flex; gap: 12px; width: 100%;">
+                                <button class="btn btn-outline" style="border-radius: 24px !important; height: 42px !important; flex: 1;" onclick="clearFilters()" title="Reset all filters">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                    </svg>
+                                    Clear
+                                </button>
+                                <button class="btn btn-primary" id="exportBtn" style="border-radius: 24px !important; height: 42px !important; flex: 1;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                    </svg>
+                                    <span id="exportBtnText">Export</span>
+                                </button>
                             </div>
                         </div>
 
@@ -179,12 +180,12 @@
                                 <thead>
                                     <tr>
                                         <th>User Email</th>
-                                        <th>Tier</th>
-                                        <th>AI Q&A</th>
-                                        <th>Summary</th>
-                                        <th>Flashcard</th>
-                                        <th>Quiz</th>
-                                        <th>Total Requests</th>
+                                        <th style="text-align: center;">Tier</th>
+                                        <th style="text-align: center;">AI Q&A</th>
+                                        <th style="text-align: center;">Summary</th>
+                                        <th style="text-align: center;">Flashcard</th>
+                                        <th style="text-align: center;">Quiz</th>
+                                        <th style="text-align: center;">Total Requests</th>
                                         <th>Last Used At</th>
                                     </tr>
                                 </thead>
@@ -202,23 +203,13 @@
                                     status filter.</p>
                             </div>
 
-                            <div id="pagination" class="pagination"
-                                style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 16px 0; border-top: 1px solid var(--border-color);">
-                                <div id="pageInfo" style="font-size: 0.875rem; color: var(--text-muted);">Showing 0-0 of
-                                    0 users</div>
-                                <div style="display: flex; align-items: center; gap: 16px;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <label for="pageSize"
-                                            style="font-size: 0.875rem; color: var(--text-muted);">Page size:</label>
-                                        <select id="pageSize" class="admin-filter-input" style="padding: 4px 8px;">
-                                            <option value="10">10</option>
-                                            <option value="25">25</option>
-                                            <option value="50">50</option>
-                                        </select>
-                                    </div>
-                                    <div id="paginationControls" style="display: flex; gap: 8px;">
-                                        <!-- Pagination buttons -->
-                                    </div>
+                            <div class="admin-pagination" id="paginationControls" style="padding: 16px 24px; display: flex; align-items: center; justify-content: space-between;">
+                                <div class="admin-pagination-info" id="pageInfo" style="font-size: 14px; color: var(--text-muted, #64748b);">
+                                    Showing 0 users
+                                </div>
+                                <div class="admin-pagination-actions" style="display: flex; gap: 8px;">
+                                    <button class="admin-pagination-btn" id="prevPageBtn" onclick="changePage(-1)" disabled>Previous</button>
+                                    <button class="admin-pagination-btn" id="nextPageBtn" onclick="changePage(1)" disabled>Next</button>
                                 </div>
                             </div>
                         </div>
