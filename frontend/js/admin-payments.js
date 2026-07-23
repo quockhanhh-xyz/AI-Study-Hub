@@ -171,8 +171,8 @@ function renderPayments(payments) {
         let statusText = payment.status;
         
         if (payment.status === 'SUCCESS') {
-            statusText = 'Paid';
-            statusKey = 'paid';
+            statusText = 'Success';
+            statusKey = 'success';
         } else if (payment.status === 'PENDING') {
             const createdAtDate = new Date(payment.createdAt);
             const expiresAtDate = new Date(createdAtDate.getTime() + 15 * 60000); // 15 mins
@@ -200,18 +200,19 @@ function renderPayments(payments) {
         badge.textContent = statusText;
         tdStatus.appendChild(badge);
 
-        // Date (Windows taskbar clock format: HH:mm on top, M/D/YY on bottom)
+        // Date
         const tdDate = document.createElement('td');
         const createdDate = new Date(payment.createdAt);
         const timeStr = createdDate.toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
-            hour12: false
+            hour12: true
         });
-        const month = createdDate.getMonth() + 1;
-        const day = createdDate.getDate();
-        const yearShort = String(createdDate.getFullYear()).slice(-2);
-        const dateStr = `${month}/${day}/${yearShort}`;
+        const dateStr = createdDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
 
         tdDate.innerHTML = `
             <div style="display: flex; flex-direction: column; line-height: 1.25;">
@@ -240,10 +241,10 @@ function renderPayments(payments) {
         tableBody.appendChild(row);
         
         // Accumulate stats
-        if (payment.status === 'SUCCESS') {
+        if (statusKey === 'success') {
             countSuccess++;
             sumRevenue += (payment.amount || 0);
-        } else if (payment.status === 'PENDING') {
+        } else if (statusKey === 'pending') {
             countPending++;
         } else {
             countFailed++;
@@ -414,6 +415,14 @@ async function viewPaymentDetails(paymentId) {
                 }
             }
 
+            const formatDateTime = (dateString) => {
+                if (!dateString) return 'Not available';
+                const d = new Date(dateString);
+                const datePart = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const timePart = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                return `${datePart} &middot; ${timePart}`;
+            };
+
             body.innerHTML = `
                 <div style="display: flex; flex-direction: column; gap: 24px;">
                     <!-- Payment Section -->
@@ -423,9 +432,9 @@ async function viewPaymentDetails(paymentId) {
                             <div><strong>Trxn ID:</strong> #${p.paymentId}</div>
                             <div><strong>Plan:</strong> ${p.planCode || p.planName || '-'}</div>
                             <div><strong>Amount:</strong> <span style="font-weight:bold">${formatter.format(p.amount)}</span></div>
-                            <div><strong>Status:</strong> <span class="badge status-${displayStatus.toLowerCase()}">${displayStatus}</span></div>
-                            <div><strong>Created At:</strong> ${p.createdAt ? new Date(p.createdAt).toLocaleString() : 'Not available'}</div>
-                            <div><strong>Paid At:</strong> ${p.paidAt ? new Date(p.paidAt).toLocaleString() : 'Not available'}</div>
+                            <div><strong>Status:</strong> <span class="status-badge status-${displayStatus.toLowerCase()}">${displayStatus === 'SUCCESS' ? 'Success' : displayStatus}</span></div>
+                            <div><strong>Created At:</strong> ${formatDateTime(p.createdAt)}</div>
+                            <div><strong>Paid At:</strong> ${formatDateTime(p.paidAt)}</div>
                         </div>
                     </div>
                     
