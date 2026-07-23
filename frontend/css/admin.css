@@ -827,13 +827,14 @@ select.admin-select:focus,
 
 /* Admin Pagination */
 .admin-pagination {
-    display: flex;
-    justify-content: flex-end;
+    display: flex !important;
+    justify-content: space-between !important;
     align-items: center;
-    gap: 12px;
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border, #eadfdd);
+    margin-top: 0 !important;
+    padding: 16px 24px !important;
+    border-top: 1px solid var(--primary-border, #ffd6d6) !important;
+    background-color: var(--primary-light, #fff0f0) !important;
+    border-radius: 0 0 12px 12px;
 }
 
 .admin-pagination-info {
@@ -856,6 +857,12 @@ select.admin-select:focus,
     background-color: var(--primary-light, #fff0f0);
     border-color: var(--primary-border, #ffd6d6);
     color: var(--primary, #ff5858);
+}
+
+.admin-pagination-btn.active {
+    background-color: var(--primary, #ff5858);
+    border-color: var(--primary, #ff5858);
+    color: #ffffff;
 }
 
 .admin-pagination-btn:disabled {

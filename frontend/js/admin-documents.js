@@ -26,22 +26,42 @@ function initAdminDocuments() {
     const populateSubjectDropdown = async () => {
         try {
             const subjectFilter = document.getElementById('subjectFilter');
+            const subjectDatalist = document.getElementById('subjectDatalist');
             const response = await getAdminSubjects({ size: 1000 }); // From admin-subject-api.js
 
             if (response && response.success && response.data && response.data.subjects) {
-                // Keep the "All Subjects" option
-                subjectFilter.innerHTML = '<option value="">All Subjects</option>';
-                response.data.subjects.forEach(sub => {
-                    const option = document.createElement('option');
-                    option.value = sub.subjectId;
-                    option.textContent = `${sub.subjectCode} - ${sub.subjectName}`;
-                    subjectFilter.appendChild(option);
-                });
+                if (subjectDatalist) {
+                    subjectDatalist.innerHTML = '';
+                    response.data.subjects.forEach(sub => {
+                        const option = document.createElement('option');
+                        option.value = `${sub.subjectCode} - ${sub.subjectName}`;
+                        option.dataset.id = sub.subjectId;
+                        subjectDatalist.appendChild(option);
+                    });
+                    if (subjectFilter) subjectFilter.dispatchEvent(new Event('syncCustom'));
+                }
             }
         } catch (error) {
             console.warn('Failed to load subjects for filter:', error);
         }
     };
+
+    function getSelectedSubjectId() {
+        const subjectFilter = document.getElementById('subjectFilter');
+        const subjectDatalist = document.getElementById('subjectDatalist');
+        if (!subjectFilter || !subjectDatalist) return '';
+
+        const typedText = subjectFilter.value.trim();
+        if (!typedText) return '';
+
+        const options = subjectDatalist.options;
+        for (let i = 0; i < options.length; i++) {
+            if (options[i].value === typedText) {
+                return options[i].dataset.id || '';
+            }
+        }
+        return '';
+    }
 
     // Call it immediately
     populateSubjectDropdown();
@@ -91,7 +111,8 @@ function initAdminDocuments() {
             };
 
             if (searchInput.value) params.search = searchInput.value;
-            if (subjectFilter && subjectFilter.value) params.subjectId = subjectFilter.value;
+            const subjId = getSelectedSubjectId();
+            if (subjId) params.subjectId = subjId;
             if (statusFilter.value) params.approvalStatus = statusFilter.value;
             if (fileTypeFilter.value) params.fileType = fileTypeFilter.value;
 
@@ -110,7 +131,7 @@ function initAdminDocuments() {
 
                 loadingState.style.display = "none";
                 contentState.style.display = "block";
-                
+
                 // Fetch counts for tabs
                 updateTabCounts();
             } else {
@@ -134,10 +155,10 @@ function initAdminDocuments() {
             default: return 'admin-badge-neutral';
         }
     };
-    
+
     const getApprovalLabel = (status) => {
-        if (!status) return 'Pending Review';
-        if (status.toUpperCase() === 'PENDING') return 'Pending Review';
+        if (!status) return 'Pending';
+        if (status.toUpperCase() === 'PENDING') return 'Pending';
         if (status.toUpperCase() === 'APPROVED') return 'Approved';
         if (status.toUpperCase() === 'REJECTED') return 'Rejected';
         return status;
@@ -155,14 +176,14 @@ function initAdminDocuments() {
     };
 
     const getAIBadgeInfo = (status) => {
-        if (!status) return { text: 'Not processed', cls: 'admin-badge-danger' };
+        if (!status) return { text: 'Pending', cls: 'admin-badge-danger' };
         switch(status.toUpperCase()) {
-            case 'PENDING': return { text: 'Not processed', cls: 'admin-badge-danger' };
+            case 'PENDING': return { text: 'Pending', cls: 'admin-badge-danger' };
             case 'PROCESSING': return { text: 'Processing', cls: 'admin-badge-warning' };
-            case 'COMPLETED': return { text: 'Ready for AI', cls: 'admin-badge-success' };
+            case 'COMPLETED': return { text: 'Ready', cls: 'admin-badge-success' };
             case 'FAILED': return { text: 'Failed', cls: 'admin-badge-danger' };
             case 'UNSUPPORTED': return { text: 'Unsupported', cls: 'admin-badge-neutral' };
-            case 'EMPTY_CONTENT': return { text: 'Empty content', cls: 'admin-badge-warning' };
+            case 'EMPTY_CONTENT': return { text: 'Empty', cls: 'admin-badge-warning' };
             default: return { text: status, cls: 'admin-badge-neutral' };
         }
     };
@@ -179,9 +200,7 @@ function initAdminDocuments() {
         if (!dateStr) return "N/A";
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return dateStr;
-        const date = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-        const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
-        return `${date} · ${time}`;
+        return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     };
 
     const renderTable = (documents) => {
@@ -210,17 +229,17 @@ function initAdminDocuments() {
                 <td><span class="admin-badge ${getApprovalBadgeClass(doc.approvalStatus)}">${getApprovalLabel(doc.approvalStatus)}</span></td>
                 <td><span class="admin-badge ${aiInfo.cls}">${aiInfo.text}</span></td>
                 <td><span class="table-muted-text" style="font-size: 0.8rem; white-space: nowrap;">${updatedDisplay}</span></td>
-                <td style="text-align: center;">
-                    <div class="admin-action-group" style="gap: 12px; display: flex; justify-content: center; align-items: center;">
-                        <span class="badge admin-badge-action admin-badge-neutral" style="cursor: pointer;" onclick="window.location.href='admin-document-detail.html?id=${doc.documentId}'">View</span>
+                <td style="text-align: right;">
+                    <div class="admin-action-group">
+                        <button class="btn btn-sm btn-outline" onclick="window.location.href='admin-document-detail.html?id=${doc.documentId}'" style="border-radius: 20px; height: 30px; font-size: 13px; font-weight: 500;">View</button>
                         ${doc.approvalStatus === 'PENDING' ? `
-                            <span class="badge admin-badge-action admin-badge-success" style="cursor: pointer;" onclick="openApproveModal(${doc.documentId})">Approve</span>
-                            <span class="badge admin-badge-action admin-badge-danger" style="cursor: pointer;" onclick="openRejectModal(${doc.documentId})">Reject</span>
+                            <button class="btn btn-sm btn-primary" onclick="openApproveModal(${doc.documentId})" style="border-radius: 20px; height: 30px; font-size: 13px; font-weight: 500;">Approve</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="openRejectModal(${doc.documentId})" style="border-radius: 20px; height: 30px; font-size: 13px; font-weight: 500;">Reject</button>
                         ` : doc.approvalStatus === 'APPROVED' ? `
-                            <span class="badge admin-badge-action admin-badge-warning" style="cursor: pointer;" onclick="openPendingConfirmModal(${doc.documentId})">Pending</span>
-                            <span class="badge admin-badge-action admin-badge-danger" style="cursor: pointer;" onclick="openUnpublishConfirmModal(${doc.documentId})">Unpublish</span>
+                            <button class="btn btn-sm btn-outline" onclick="openPendingConfirmModal(${doc.documentId})" style="border-radius: 20px; height: 30px; font-size: 13px; font-weight: 500;">Move to Pending</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="openUnpublishConfirmModal(${doc.documentId})" style="border-radius: 20px; height: 30px; font-size: 13px; font-weight: 500;">Unpublish</button>
                         ` : doc.approvalStatus === 'REJECTED' ? `
-                            <span class="badge admin-badge-action admin-badge-warning" style="cursor: pointer;" onclick="openPendingConfirmModal(${doc.documentId})">Pending</span>
+                            <button class="btn btn-sm btn-outline" onclick="openPendingConfirmModal(${doc.documentId})" style="border-radius: 20px; height: 30px; font-size: 13px; font-weight: 500;">Move to Pending</button>
                         ` : ''}
                     </div>
                 </td>
@@ -242,7 +261,7 @@ function initAdminDocuments() {
         html += `</div>`;
         pagination.innerHTML = html;
     };
-    
+
     window.goToPage = (page) => {
         currentPage = page;
         loadDocuments();
@@ -362,7 +381,7 @@ function initAdminDocuments() {
             tab.classList.add('active');
             tab.style.borderBottomColor = 'var(--primary)';
             tab.style.color = 'var(--primary)';
-            
+
             const status = tab.dataset.tab;
             statusFilter.value = status === 'ALL' ? '' : status;
             currentPage = 1;
@@ -379,7 +398,7 @@ function initAdminDocuments() {
                 getAdminPublicDocuments({ page: 0, size: 1 })
             ];
             const [pendingRes, approvedRes, rejectedRes, allRes] = await Promise.all(reqs);
-            
+
             if (pendingRes && pendingRes.success) document.getElementById('tabCountPending').textContent = pendingRes.data.totalElements;
             if (approvedRes && approvedRes.success) document.getElementById('tabCountApproved').textContent = approvedRes.data.totalElements;
             if (rejectedRes && rejectedRes.success) document.getElementById('tabCountRejected').textContent = rejectedRes.data.totalElements;
@@ -393,10 +412,11 @@ function initAdminDocuments() {
         try {
             const params = {};
             if (searchInput.value) params.search = searchInput.value;
-            if (subjectFilter && subjectFilter.value) params.subjectId = subjectFilter.value;
+            const subjId = getSelectedSubjectId();
+            if (subjId) params.subjectId = subjId;
             if (statusFilter.value) params.approvalStatus = statusFilter.value;
             if (fileTypeFilter.value) params.fileType = fileTypeFilter.value;
-            
+
             const hasFilters = Object.keys(params).length > 0;
             const confirmMsg = hasFilters ? "Export filtered documents?" : "Export all public documents?";
             if (!confirm(confirmMsg)) return;

@@ -103,7 +103,7 @@ async function loadPayments(page = currentPage) {
 function renderPayments(payments) {
     const tableBody = document.getElementById('paymentsTableBody');
     tableBody.innerHTML = '';
-    
+
     let sumRevenue = 0;
     let countSuccess = 0;
     let countPending = 0;
@@ -128,7 +128,7 @@ function renderPayments(payments) {
         const tdCustomer = document.createElement('td');
         const customerCell = document.createElement('div');
         customerCell.className = 'customer-cell';
-        
+
         const rawEmail = payment.userEmail || 'N/A';
         const namePart = rawEmail.includes('@') ? rawEmail.split('@')[0] : rawEmail;
         const initial = namePart.charAt(0).toUpperCase() || 'U';
@@ -166,10 +166,10 @@ function renderPayments(payments) {
         // Status Badge
         const tdStatus = document.createElement('td');
         const badge = document.createElement('span');
-        
+
         let statusKey = (payment.status || 'PENDING').toLowerCase();
         let statusText = payment.status;
-        
+
         if (payment.status === 'SUCCESS') {
             statusText = 'Success';
             statusKey = 'success';
@@ -195,7 +195,7 @@ function renderPayments(payments) {
             statusText = 'Expired';
             statusKey = 'expired';
         }
-        
+
         badge.className = `status-badge status-${statusKey}`;
         badge.textContent = statusText;
         tdStatus.appendChild(badge);
@@ -239,7 +239,7 @@ function renderPayments(payments) {
         row.appendChild(tdActions);
 
         tableBody.appendChild(row);
-        
+
         // Accumulate stats
         if (statusKey === 'success') {
             countSuccess++;
@@ -250,7 +250,7 @@ function renderPayments(payments) {
             countFailed++;
         }
     });
-    
+
     // Update summary cards
     const formatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
     document.getElementById('cardRevenue').textContent = formatter.format(sumRevenue);
@@ -291,15 +291,15 @@ function renderActiveFilterChips() {
         chips.push({ label: `Provider: ${provider}`, reset: () => { document.getElementById('filterProvider').value = ''; } });
     }
     if (startDate) {
-        chips.push({ label: `From: ${startDate}`, reset: () => { 
-            document.getElementById('filterStartDate').value = ''; 
+        chips.push({ label: `From: ${startDate}`, reset: () => {
+            document.getElementById('filterStartDate').value = '';
             document.getElementById('startDateDisplay').textContent = 'Start Date';
             document.getElementById('startDateDisplay').style.fontWeight = '500';
         } });
     }
     if (endDate) {
-        chips.push({ label: `To: ${endDate}`, reset: () => { 
-            document.getElementById('filterEndDate').value = ''; 
+        chips.push({ label: `To: ${endDate}`, reset: () => {
+            document.getElementById('filterEndDate').value = '';
             document.getElementById('endDateDisplay').textContent = 'End Date';
             document.getElementById('endDateDisplay').style.fontWeight = '500';
         } });
@@ -324,35 +324,30 @@ function renderActiveFilterChips() {
  * Updates the pagination UI state.
  */
 function updatePagination(pageNumber, totalPages, totalElements) {
-    const prevBtn = document.getElementById('prevPageBtn');
-    const nextBtn = document.getElementById('nextPageBtn');
-    const indicator = document.getElementById('pageIndicator');
     const paginationContainer = document.getElementById('paginationControls');
+    if (!paginationContainer) return;
 
     if (!totalElements || totalElements === 0) {
-        if (indicator) indicator.textContent = 'Showing 0 payments';
-        if (prevBtn) prevBtn.disabled = true;
-        if (nextBtn) nextBtn.disabled = true;
+        paginationContainer.innerHTML = '';
         return;
     }
 
     const startItem = pageNumber * PAGE_SIZE + 1;
     const endItem = Math.min((pageNumber + 1) * PAGE_SIZE, totalElements);
 
-    if (indicator) {
-        indicator.textContent = `Showing ${startItem}–${endItem} of ${totalElements} payments`;
+    let html = `<span class="admin-pagination-info">Showing ${startItem} - ${endItem} of ${totalElements} payments</span>
+    <div style="display: flex; gap: 4px;">`;
+
+    for (let i = 0; i < totalPages; i++) {
+        html += `<button class="admin-pagination-btn ${i === pageNumber ? 'active' : ''}" onclick="window.goToPage(${i})">${i + 1}</button>`;
     }
-
-    if (prevBtn) prevBtn.disabled = (pageNumber <= 0);
-    if (nextBtn) nextBtn.disabled = (pageNumber >= totalPages - 1);
+    html += `</div>`;
+    paginationContainer.innerHTML = html;
 }
 
-/**
- * Navigation handler for pagination buttons.
- */
-function changePage(delta) {
-    loadPayments(currentPage + delta);
-}
+window.goToPage = (page) => {
+    loadPayments(page);
+};
 
 /**
  * Handles exporting filtered payments to Excel.
@@ -406,7 +401,7 @@ async function viewPaymentDetails(paymentId) {
         if (response && response.success && response.data) {
             const p = response.data;
             const formatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
-            
+
             let displayStatus = p.status || 'PENDING';
             if (displayStatus === 'PENDING') {
                 const createdDate = new Date(p.createdAt);
@@ -437,7 +432,7 @@ async function viewPaymentDetails(paymentId) {
                             <div><strong>Paid At:</strong> ${formatDateTime(p.paidAt)}</div>
                         </div>
                     </div>
-                    
+
                     <!-- Customer Section -->
                     <div>
                         <h4 style="margin: 0 0 12px 0; font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">Customer</h4>
@@ -445,7 +440,7 @@ async function viewPaymentDetails(paymentId) {
                             <div><strong>User Email:</strong> ${p.userEmail || p.userId}</div>
                         </div>
                     </div>
-                    
+
                     <!-- VNPay Section -->
                     <div>
                         <h4 style="margin: 0 0 12px 0; font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">VNPay Details</h4>

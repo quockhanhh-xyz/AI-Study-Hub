@@ -128,6 +128,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         shareFolderBtn.style.display = (tabId === "folders" && currentParentFolderId) ? "inline-flex" : "none";
       }
 
+      const createSubjectBtn = document.getElementById("createSubjectBtn");
+      if (createSubjectBtn) {
+        createSubjectBtn.style.display = tabId === "my-subjects" ? "inline-flex" : "none";
+      }
+
+      const uploadDocumentBtn = document.getElementById("uploadDocumentBtn");
+      if (uploadDocumentBtn) {
+        uploadDocumentBtn.style.display = tabId === "my-subjects" ? "none" : "inline-flex";
+      }
+
       if (libraryToolbar) {
         libraryToolbar.style.display = (tabId === "documents" || tabId === "favorites") ? "flex" : "none";
       }

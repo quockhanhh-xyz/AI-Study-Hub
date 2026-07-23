@@ -139,12 +139,7 @@ public class AdminSubjectService {
     private Specification<Subject> buildSpecification(String search, String status) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            
-            // Only system subjects
-            predicates.add(cb.or(
-                cb.equal(root.get("scope"), "SYSTEM"),
-                cb.isNull(root.get("owner"))
-            ));
+
 
             if (search != null && !search.isEmpty()) {
                 String searchLike = "%" + search.toLowerCase() + "%";
