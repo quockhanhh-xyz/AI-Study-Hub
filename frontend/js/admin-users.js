@@ -219,7 +219,6 @@ function renderUsersTable(data) {
                 <td><span class="table-muted-text">${(currentPage * pageSize) + index + 1}</span></td>
                 <td>
                     <div class="customer-cell">
-                        <div class="customer-avatar-pill">${initial}</div>
                         <div class="customer-info">
                             <span class="customer-name" style="font-weight: 600; color: var(--text-main, #0f172a);">${namePart}</span>
                             <span class="customer-email" title="${rawEmail}" style="font-size: 12px; color: var(--text-muted, #64748b);">${rawEmail}</span>
