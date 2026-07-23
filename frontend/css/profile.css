@@ -213,6 +213,11 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.profile-form-group select option {
+  background-color: #ffffff;
+  color: var(--text-main);
+}
+
 .profile-form-group input:focus,
 .profile-form-group select:focus,
 .profile-form-group textarea:focus {

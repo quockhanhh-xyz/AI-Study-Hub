@@ -70,6 +70,7 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
             "AND d.status = 'ACTIVE' " +
             "AND d.visibility = 'PUBLIC' " +
             "AND d.approvalStatus = 'APPROVED' " +
+            "AND d.owner.status = 'ACTIVE' " +
             "AND (:keyword IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(d.originalFileName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "AND (:subjectId IS NULL OR s.subjectId = :subjectId) " +
             "AND (:fileType IS NULL OR d.fileType = :fileType)")
@@ -94,6 +95,7 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
             "WHERE d.status = 'ACTIVE' " +
             "AND d.visibility = 'PUBLIC' " +
             "AND d.approvalStatus = 'APPROVED' " +
+            "AND d.owner.status = 'ACTIVE' " +
             "AND (:keyword IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(d.originalFileName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "AND (:subjectId IS NULL OR s.subjectId = :subjectId) " +
             "AND (:fileType IS NULL OR d.fileType = :fileType)")

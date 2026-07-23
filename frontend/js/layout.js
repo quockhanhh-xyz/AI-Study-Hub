@@ -221,7 +221,7 @@ function renderDynamicSidebar(isAuthenticated) {
         if (user.role === 'USER') {
           const statsContainer = document.createElement("div");
           statsContainer.className = "sidebar-user-stats";
-          statsContainer.style.cssText = "padding: 0 16px; margin: 12px 0 20px 0; text-align: center;";
+          statsContainer.style.cssText = "padding: 0 16px; margin: 8px 0 12px 0; text-align: center;";
           statsContainer.innerHTML = `
             <div style="display: flex; justify-content: space-around; gap: 4px;">
               <div style="flex: 1;">
@@ -237,7 +237,7 @@ function renderDynamicSidebar(isAuthenticated) {
                 <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-top: 4px; letter-spacing: 0.05em;">Upvotes</span>
               </div>
             </div>
-            <a href="upload.html" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 16px; font-size: 13px; font-weight: 600; padding: 10px 16px; border-radius: 9999px; text-decoration: none; background: #f05a28; border: none; color: #fff; box-shadow: 0 4px 10px rgba(240, 90, 40, 0.2); box-sizing: border-box; cursor: pointer;">
+            <a href="upload.html" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 10px; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 9999px; text-decoration: none; background: #f05a28; border: none; color: #fff; box-shadow: 0 4px 10px rgba(240, 90, 40, 0.2); box-sizing: border-box; cursor: pointer;">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" width="14" height="14">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>

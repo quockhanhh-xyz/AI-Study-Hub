@@ -243,6 +243,11 @@ select {
   padding-right: 40px;
 }
 
+select option {
+  background-color: #ffffff;
+  color: var(--text-main);
+}
+
 select:hover {
   border-color: var(--primary);
 }

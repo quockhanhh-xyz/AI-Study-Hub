@@ -19,11 +19,11 @@ public interface GroupDocumentShareRepository extends JpaRepository<GroupDocumen
 
     List<GroupDocumentShare> findByGroupAndSharedByAndStatus(StudyGroup group, User sharedBy, String status);
 
-    @Query("SELECT gds FROM GroupDocumentShare gds WHERE gds.group = :group AND gds.status = 'ACTIVE' AND gds.document.status = 'ACTIVE' AND gds.group.status = 'ACTIVE'")
+    @Query("SELECT gds FROM GroupDocumentShare gds WHERE gds.group = :group AND gds.status = 'ACTIVE' AND gds.document.status = 'ACTIVE' AND gds.group.status = 'ACTIVE' AND gds.document.owner.status = 'ACTIVE'")
     List<GroupDocumentShare> findActiveSharesForGroup(@Param("group") StudyGroup group);
 
     @Query("SELECT gds.group.groupId AS groupId, COUNT(gds) AS cnt FROM GroupDocumentShare gds " +
-           "WHERE gds.group.groupId IN :groupIds AND gds.status = 'ACTIVE' AND gds.document.status = 'ACTIVE' " +
+           "WHERE gds.group.groupId IN :groupIds AND gds.status = 'ACTIVE' AND gds.document.status = 'ACTIVE' AND gds.document.owner.status = 'ACTIVE' " +
            "GROUP BY gds.group.groupId")
     List<Object[]> countActiveSharesByGroupIds(@Param("groupIds") List<Integer> groupIds);
 
