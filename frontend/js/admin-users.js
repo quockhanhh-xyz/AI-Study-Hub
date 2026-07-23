@@ -191,7 +191,7 @@ function renderSummaryCards(data) {
 function formatJoinedDate(dateStr) {
     if (!dateStr) return "N/A";
     const d = new Date(dateStr);
-    const date = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     return date;
 }
 
@@ -223,8 +223,8 @@ function renderUsersTable(data) {
                 aiLimitDisplay = '<span style="color: var(--text-muted, #64748b); font-weight: 500;">-</span>';
             } else {
                 let limit = '10';
-                if (user.tier === 'PREMIUM') limit = '100';
-                else if (user.tier === 'ULTRA') limit = 'Unlimited';
+                if (user.tier === 'PREMIUM') limit = '50';
+                else if (user.tier === 'ULTRA') limit = '200';
                 
                 const used = user.aiUsage ? user.aiUsage.aiQaUsed : 0;
                 aiLimitDisplay = `

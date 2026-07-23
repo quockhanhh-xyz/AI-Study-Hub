@@ -681,7 +681,7 @@
     padding-left: 42px !important;
     width: 100%;
     border-radius: 9999px !important;
-    background-color: var(--surface-light, #f1f5f9) !important;
+    background-color: #ffffff !important;
 }
 
 .admin-filter-input:focus,
