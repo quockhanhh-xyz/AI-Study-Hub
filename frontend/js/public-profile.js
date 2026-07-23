@@ -85,7 +85,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderProfile(currentProfile);
         profileLoading.style.display = "none";
         profileContainer.style.display = "block";
-        loadSubjects();
+        await loadSubjects();
+        if (typeof docFileType !== "undefined" && docFileType) {
+          docFileType.dispatchEvent(new Event("syncCustom"));
+        }
         loadDocuments();
       } else {
         showPrivateProfileAlert();
@@ -220,13 +223,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function loadSubjects() {
     try {
       const response = await get("/api/subjects/public", { skipUnauthorizedRedirect: true });
-      if (response && response.data) {
         response.data.forEach(sub => {
           const opt = document.createElement("option");
           opt.value = sub.subjectId;
           opt.textContent = sub.subjectCode ? `${sub.subjectCode} - ${sub.subjectName}` : sub.subjectName;
           docSubject.appendChild(opt);
         });
+        if (typeof docSubject !== "undefined" && docSubject) {
+          docSubject.dispatchEvent(new Event("syncCustom"));
+        }
       }
     } catch (e) {
       console.warn("Failed to load subjects dropdown:", e);

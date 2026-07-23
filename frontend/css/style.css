@@ -241,11 +241,20 @@ select {
   background-repeat: no-repeat;
   background-position: right 14px center;
   padding-right: 40px;
+  color-scheme: light;
 }
 
 select option {
   background-color: #ffffff;
   color: var(--text-main);
+}
+
+select option:checked,
+select option:hover {
+  background-color: var(--primary) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px 100px var(--primary) inset !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
 select:hover {

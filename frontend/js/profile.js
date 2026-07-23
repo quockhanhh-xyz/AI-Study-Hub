@@ -119,6 +119,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     studentCodeInput.value = profile.studentCode || "";
     graduationYearInput.value = profile.graduationYear || "";
     educationLevelInput.value = profile.educationLevel || "";
+    if (educationLevelInput) {
+      educationLevelInput.dispatchEvent(new Event("syncCustom"));
+    }
     bioInput.value = profile.bio || "";
 
     // Populate read-only system params

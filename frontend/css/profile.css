@@ -213,9 +213,21 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.profile-form-group select {
+  color-scheme: light;
+}
+
 .profile-form-group select option {
   background-color: #ffffff;
   color: var(--text-main);
+}
+
+.profile-form-group select option:checked,
+.profile-form-group select option:hover {
+  background-color: var(--primary) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px 100px var(--primary) inset !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
 .profile-form-group input:focus,
