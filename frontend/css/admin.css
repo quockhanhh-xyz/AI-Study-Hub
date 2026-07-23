@@ -999,14 +999,9 @@ select.admin-select:focus,
     font-size: 13.5px;
 }
 
-.admin-payment-filters-row1 {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
-    align-items: center;
-}
-
-.admin-payment-filters-row2 {
+.admin-payment-filters-row1,
+.admin-payment-filters-row2,
+.admin-payment-filters-row3 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 30px;
@@ -1022,7 +1017,8 @@ select.admin-select:focus,
 @media (max-width: 1024px) {
 
     .admin-payment-filters-row1,
-    .admin-payment-filters-row2 {
+    .admin-payment-filters-row2,
+    .admin-payment-filters-row3 {
         grid-template-columns: 1fr 1fr;
     }
 }
@@ -1067,11 +1063,11 @@ select.admin-select:focus,
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 12px;
+    padding: 0 16px;
     pointer-events: none;
     background: #fff;
-    border: 1px solid var(--border, #eadfdd);
-    border-radius: 8px;
+    border: 1px solid #e76f51;
+    border-radius: 24px;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -1081,14 +1077,14 @@ select.admin-select:focus,
 
 .date-text {
     font-weight: 500;
-    color: var(--text-main, #172033);
+    color: #e76f51;
     font-size: 13.5px;
 }
 
 .date-icon {
     width: 16px;
     height: 16px;
-    color: var(--text-muted, #64748b);
+    color: #e76f51;
 }
 
 .date-invisible-input {
