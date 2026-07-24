@@ -310,8 +310,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     paymentStatusBannerCancel.onclick = null;
 
     if (code === "PAYMENT_ALREADY_PENDING") {
-      paymentStatusBanner.style.background = "#fffbeb";
-      paymentStatusBanner.style.borderColor = "#fde68a";
+      paymentStatusBanner.style.background = "rgba(245, 158, 11, 0.1)";
+      paymentStatusBanner.style.borderColor = "rgba(245, 158, 11, 0.3)";
+      paymentStatusBannerText.style.color = "var(--warning, #d97706)";
 
       if (data.paymentProvider === "VNPAY_SANDBOX" && data.paymentUrl) {
         paymentStatusBannerAction.textContent = "Continue payment";
@@ -341,11 +342,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         };
       }
     } else if (code === "PAYMENT_REQUIRES_MANUAL_REVIEW") {
-      paymentStatusBanner.style.background = "#fef2f2";
-      paymentStatusBanner.style.borderColor = "#fecaca";
+      paymentStatusBanner.style.background = "rgba(239, 68, 68, 0.1)";
+      paymentStatusBanner.style.borderColor = "rgba(239, 68, 68, 0.3)";
+      paymentStatusBannerText.style.color = "var(--danger, #dc2626)";
     } else {
-      paymentStatusBanner.style.background = "#fef2f2";
-      paymentStatusBanner.style.borderColor = "#fecaca";
+      paymentStatusBanner.style.background = "rgba(239, 68, 68, 0.1)";
+      paymentStatusBanner.style.borderColor = "rgba(239, 68, 68, 0.3)";
+      paymentStatusBannerText.style.color = "var(--danger, #dc2626)";
     }
 
     paymentStatusBanner.style.display = "flex";
