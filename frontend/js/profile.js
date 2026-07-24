@@ -368,5 +368,195 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // Load user data on startup
-  await loadUserProfile();
+  // --- TAB LOGIC ---
+  const tabBtns = document.querySelectorAll(".tab-btn");
+  const tabContents = document.querySelectorAll(".tab-content");
+
+  function switchTab(tabId) {
+    tabBtns.forEach(btn => {
+      if (btn.dataset.tab === tabId) {
+        btn.classList.add("active");
+        btn.style.color = "#f05a28";
+        btn.style.borderBottom = "2px solid #f05a28";
+      } else {
+        btn.classList.remove("active");
+        btn.style.color = "#64748b";
+        btn.style.borderBottom = "2px solid transparent";
+      }
+    });
+
+    tabContents.forEach(content => {
+      if (content.id === `tab-${tabId}`) {
+        content.style.display = "block";
+      } else {
+        content.style.display = "none";
+      }
+    });
+
+    if (tabId === "network") {
+      loadNetworkData();
+    } else if (tabId === "uploads") {
+      loadUploadsData();
+    }
+
+    // Update URL without reload
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set("tab", tabId);
+    window.history.replaceState({}, "", newUrl);
+  }
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      switchTab(btn.dataset.tab);
+    });
+  });
+
+  // Handle URL param on load
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialTab = urlParams.get("tab");
+  if (initialTab && ["details", "network", "uploads"].includes(initialTab)) {
+    switchTab(initialTab);
+  }
+
+  // --- NETWORK TAB LOGIC ---
+  const btnShowFollowers = document.getElementById("btnShowFollowers");
+  const btnShowFollowing = document.getElementById("btnShowFollowing");
+  const networkListContainer = document.getElementById("networkListContainer");
+  let currentNetworkView = "followers";
+
+  if (btnShowFollowers) {
+    btnShowFollowers.addEventListener("click", () => {
+      currentNetworkView = "followers";
+      btnShowFollowers.style.color = "#f05a28";
+      btnShowFollowers.style.borderBottom = "2px solid #f05a28";
+      btnShowFollowing.style.color = "#64748b";
+      btnShowFollowing.style.borderBottom = "none";
+      loadNetworkData();
+    });
+  }
+  
+  if (btnShowFollowing) {
+    btnShowFollowing.addEventListener("click", () => {
+      currentNetworkView = "following";
+      btnShowFollowing.style.color = "#f05a28";
+      btnShowFollowing.style.borderBottom = "2px solid #f05a28";
+      btnShowFollowers.style.color = "#64748b";
+      btnShowFollowers.style.borderBottom = "none";
+      loadNetworkData();
+    });
+  }
+
+  async function loadNetworkData() {
+    if (!networkListContainer) return;
+    networkListContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: #64748b;">Loading...</div>`;
+    
+    try {
+      const endpoint = currentNetworkView === "followers" ? "/api/users/me/followers" : "/api/users/me/following";
+      const res = await get(endpoint);
+      const list = res.data || [];
+      
+      if (list.length === 0) {
+        networkListContainer.innerHTML = `<div style="text-align: center; padding: 40px; color: #64748b;">You have no ${currentNetworkView} yet.</div>`;
+        return;
+      }
+      
+      let html = "";
+      list.forEach(user => {
+        const avatarUrl = user.avatarUrl || "favicon.ico";
+        const schoolStr = user.schoolName ? `<span style="font-size: 12px; color: #64748b; margin-right: 8px;">🎓 ${user.schoolName}</span>` : "";
+        const majorStr = user.major ? `<span style="font-size: 12px; color: #64748b;">📚 ${user.major}</span>` : "";
+        
+        html += `
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <img src="${avatarUrl}" onerror="this.src='favicon.ico'" alt="${user.fullName}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+              <div>
+                <a href="public-profile.html?userId=${user.userId}" style="font-weight: 600; color: #1e293b; text-decoration: none; font-size: 14px;">${user.fullName}</a>
+                <div style="margin-top: 4px;">${schoolStr}${majorStr}</div>
+              </div>
+            </div>
+            ${currentNetworkView === "following" ? 
+              `<button class="btn btn-secondary btn-sm" onclick="unfollowUser(${user.userId}, this)">Unfollow</button>` : 
+              `<a href="public-profile.html?userId=${user.userId}" class="btn btn-secondary btn-sm">View Profile</a>`
+            }
+          </div>
+        `;
+      });
+      networkListContainer.innerHTML = html;
+      
+    } catch (err) {
+      console.error("Failed to load network:", err);
+      networkListContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: #ef4444;">Failed to load data.</div>`;
+    }
+  }
+
+  window.unfollowUser = async function(userId, btnElement) {
+    if (!confirm("Are you sure you want to unfollow this user?")) return;
+    try {
+      btnElement.disabled = true;
+      btnElement.textContent = "Unfollowing...";
+      await del(`/api/users/${userId}/follow`);
+      loadNetworkData(); // reload
+    } catch(err) {
+      console.error(err);
+      alert("Failed to unfollow");
+      btnElement.disabled = false;
+      btnElement.textContent = "Unfollow";
+    }
+  };
+
+  // --- UPLOADS TAB LOGIC ---
+  const uploadsListContainer = document.getElementById("uploadsListContainer");
+  
+  async function loadUploadsData() {
+    if (!uploadsListContainer) return;
+    uploadsListContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #64748b;">Loading...</div>`;
+    
+    try {
+      const userStr = localStorage.getItem("currentUser");
+      const user = userStr ? JSON.parse(userStr) : null;
+      if (!user) return;
+      
+      const res = await get(`/api/users/${user.userId}/public-documents?size=100`, { skipUnauthorizedRedirect: true });
+      const docs = res.data && res.data.content ? res.data.content : [];
+      
+      if (docs.length === 0) {
+        uploadsListContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #64748b;">You have not uploaded any public documents.</div>`;
+        return;
+      }
+      
+      let html = "";
+      docs.forEach(doc => {
+        const upvotes = doc.upvotesCount || 0;
+        
+        html += `
+          <div class="document-card" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #fff; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="font-size: 11px; font-weight: 600; color: #f05a28; text-transform: uppercase; margin-bottom: 4px;">${doc.subjectCode || 'DOC'}</div>
+              <h3 style="font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">
+                <a href="document-detail.html?id=${doc.documentId}" style="text-decoration: none; color: inherit;">${doc.title}</a>
+              </h3>
+              <div style="font-size: 13px; color: #64748b; margin-bottom: 12px; display: flex; gap: 12px; align-items: center;">
+                <span style="display: flex; align-items: center; gap: 4px;">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21c-2.5 0-4.625-.875-6.375-2.625S3 14.5 3 12s.875-4.625 2.625-6.375S9.5 3 12 3c.133 0 .275.004.425.012.15.008.342.021.575.038-.6.533-1.067 1.192-1.4 1.975-.333.783-.5 1.608-.5 2.475 0 1.5.525 2.775 1.575 3.825 1.05 1.05 2.325 1.575 3.825 1.575.867 0 1.692-.154 2.475-.462S20.417 11.7 20.95 11.15c.017.2.029.362.037.487s.013.238.013.363c0 2.5-.875 4.625-2.625 6.375S14.5 21 12 21z"></path></svg>
+                  ${upvotes} Upvotes
+                </span>
+                <span style="display: flex; align-items: center; gap: 4px;">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                  ${doc.viewCount || 0}
+                </span>
+              </div>
+            </div>
+            <a href="document-detail.html?id=${doc.documentId}" class="btn btn-secondary btn-sm" style="text-align: center; width: 100%;">View Details</a>
+          </div>
+        `;
+      });
+      uploadsListContainer.innerHTML = html;
+      
+    } catch (err) {
+      console.error("Failed to load uploads:", err);
+      uploadsListContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #ef4444;">Failed to load documents.</div>`;
+    }
+  }
+
 });

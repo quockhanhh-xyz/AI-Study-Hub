@@ -237,15 +237,15 @@ function renderDynamicSidebar(isAuthenticated) {
           statsContainer.style.cssText = "padding: 0 16px; margin: 6px 0 12px 0; text-align: center;";
           statsContainer.innerHTML = `
             <div style="display: flex; justify-content: space-around; gap: 4px;">
-              <div style="flex: 1;">
+              <div style="flex: 1; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1" onclick="window.location.href='profile.html?tab=network'">
                 <span id="sidebarFollowers" style="display: block; font-size: 18px; font-weight: 700; color: #1e293b;">${cachedStats.followersCount}</span>
                 <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-top: 4px; letter-spacing: 0.05em;">Followers</span>
               </div>
-              <div style="flex: 1; border-left: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9;">
+              <div style="flex: 1; border-left: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1" onclick="window.location.href='profile.html?tab=uploads'">
                 <span id="sidebarUploads" style="display: block; font-size: 18px; font-weight: 700; color: #1e293b;">${cachedStats.publicDocumentCount}</span>
                 <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-top: 4px; letter-spacing: 0.05em;">Uploads</span>
               </div>
-              <div style="flex: 1;">
+              <div style="flex: 1; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1" onclick="window.location.href='profile.html?tab=uploads'">
                 <span id="sidebarUpvotes" style="display: block; font-size: 18px; font-weight: 700; color: #1e293b;">${cachedStats.upvotesCount}</span>
                 <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-top: 4px; letter-spacing: 0.05em;">Upvotes</span>
               </div>

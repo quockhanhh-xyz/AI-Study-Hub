@@ -15,16 +15,10 @@ function handleBack() {
     if (document.referrer) {
         try {
             const refUrl = new URL(document.referrer);
-            if (refUrl.origin === window.location.origin && (
-                refUrl.pathname.includes("dashboard.html") ||
-                refUrl.pathname.includes("documents.html") ||
-                refUrl.pathname.includes("my-library.html") ||
-                refUrl.pathname.includes("shared-with-me.html") ||
-                refUrl.pathname.includes("group-detail.html") ||
-                refUrl.pathname.includes("shared-folder-detail.html") ||
-                refUrl.pathname.includes("folders.html") ||
-                refUrl.pathname.includes("community.html")
-            )) {
+            if (refUrl.origin === window.location.origin && 
+                refUrl.pathname.endsWith(".html") &&
+                !refUrl.pathname.includes("login.html") &&
+                !refUrl.pathname.includes("register.html")) {
                 window.location.href = document.referrer;
                 return;
             }
@@ -2815,9 +2809,9 @@ function renderContextualTopBar(doc) {
     const urlParams = new URLSearchParams(window.location.search);
     const fromParam = urlParams.get("from");
     
-    let backLabel = "← Back to My Folders";
-    let backUrl = "my-library.html?view=folders";
-    
+    let backLabel = "← Back";
+    let backUrl = "javascript:handleBack()";
+
     if (fromParam === "community" || currentIsCommunityView) {
         backLabel = "← Back to Community Library";
         backUrl = "community.html";
@@ -2846,6 +2840,34 @@ function renderContextualTopBar(doc) {
     } else if (fromParam === "mylibrary_favorites") {
         backLabel = "← Back to Favorites";
         backUrl = "my-library.html?view=favorites";
+    } else if (document.referrer) {
+        try {
+            const refUrl = new URL(document.referrer);
+            if (refUrl.origin === window.location.origin && 
+                refUrl.pathname.endsWith(".html") &&
+                !refUrl.pathname.includes("login.html") &&
+                !refUrl.pathname.includes("register.html")) {
+                
+                if (refUrl.pathname.includes("profile.html")) {
+                    backLabel = "← Back to Profile";
+                } else if (refUrl.pathname.includes("public-profile.html")) {
+                    backLabel = "← Back to Public Profile";
+                } else if (refUrl.pathname.includes("dashboard.html")) {
+                    backLabel = "← Back to Dashboard";
+                } else if (refUrl.pathname.includes("community.html")) {
+                    backLabel = "← Back to Community";
+                } else if (refUrl.pathname.includes("shared-with-me.html")) {
+                    backLabel = "← Back to Shared with Me";
+                } else if (refUrl.pathname.includes("my-library.html")) {
+                    backLabel = "← Back to My Library";
+                } else {
+                    backLabel = "← Go Back";
+                }
+            }
+        } catch(e) {}
+    } else {
+        backLabel = "← Back to My Folders";
+        backUrl = "my-library.html?view=folders";
     }
 
     // Hide duplicate detailBackBtn from right inspector panel

@@ -33,8 +33,15 @@
 
             <div id="profileStatusBar" class="profile-status-bar"></div>
 
-            <div class="profile-layout-grid">
-                <!-- Left Column: Avatar & System Stats -->
+            <div class="profile-tabs" style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                <button class="tab-btn active" data-tab="details" style="padding: 8px 16px; border: none; background: transparent; font-weight: 600; font-size: 14px; cursor: pointer; color: #f05a28; border-bottom: 2px solid #f05a28; transition: all 0.2s;">Profile Details</button>
+                <button class="tab-btn" data-tab="network" style="padding: 8px 16px; border: none; background: transparent; font-weight: 600; font-size: 14px; cursor: pointer; color: #64748b; border-bottom: 2px solid transparent; transition: all 0.2s;">Network</button>
+                <button class="tab-btn" data-tab="uploads" style="padding: 8px 16px; border: none; background: transparent; font-weight: 600; font-size: 14px; cursor: pointer; color: #64748b; border-bottom: 2px solid transparent; transition: all 0.2s;">Uploads & Upvotes</button>
+            </div>
+
+            <div id="tab-details" class="tab-content active">
+                <div class="profile-layout-grid">
+                    <!-- Left Column: Avatar & System Stats -->
                 <div class="profile-left-col">
                     <!-- Avatar Upload Card -->
                     <div class="profile-card">
@@ -153,6 +160,36 @@
                         </form>
                     </div>
 
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Tab -->
+            <div id="tab-network" class="tab-content" style="display: none;">
+                <div class="profile-card">
+                    <div class="profile-card-header" style="margin-bottom: 16px;">
+                        <h2>My Network</h2>
+                        <p>Manage people you follow and people following you.</p>
+                    </div>
+                    <div style="display: flex; gap: 16px; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0;">
+                        <button id="btnShowFollowers" class="btn btn-secondary" style="border: none; background: transparent; color: #f05a28; border-bottom: 2px solid #f05a28; border-radius: 0; padding: 8px 16px;">Followers</button>
+                        <button id="btnShowFollowing" class="btn btn-secondary" style="border: none; background: transparent; color: #64748b; border-radius: 0; padding: 8px 16px;">Following</button>
+                    </div>
+                    <div id="networkListContainer" style="display: flex; flex-direction: column; gap: 12px; min-height: 200px;">
+                        <!-- JS injected list -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Uploads Tab -->
+            <div id="tab-uploads" class="tab-content" style="display: none;">
+                <div class="profile-card">
+                    <div class="profile-card-header" style="margin-bottom: 16px;">
+                        <h2>Uploads & Upvotes</h2>
+                        <p>Review the documents you have uploaded and the ratings they received.</p>
+                    </div>
+                    <div id="uploadsListContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
+                        <!-- JS injected documents -->
                     </div>
                 </div>
             </div>
