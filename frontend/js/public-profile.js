@@ -278,7 +278,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     docs.forEach(doc => {
       const card = document.createElement("a");
       card.className = "document-card";
-      card.href = `document-detail.html?id=${doc.documentId}&from=community`;
+      const userId = new URLSearchParams(window.location.search).get("userId") || "";
+      card.href = `document-detail.html?id=${doc.documentId}&from=public-profile&userId=${userId}`;
 
       // Header: File type icon + title
       const header = document.createElement("div");

@@ -11,6 +11,17 @@ function handleBack() {
             return;
         }
     }
+    
+    if (from === 'profile') {
+        window.location.href = 'profile.html';
+        return;
+    }
+    
+    if (from === 'public-profile') {
+        const userId = urlParams.get('userId') || '';
+        window.location.href = `public-profile.html${userId ? '?userId=' + userId : ''}`;
+        return;
+    }
 
     if (document.referrer) {
         try {

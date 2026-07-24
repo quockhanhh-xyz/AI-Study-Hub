@@ -413,15 +413,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // Handle URL param on load
-  const urlParams = new URLSearchParams(window.location.search);
-  const initialTab = urlParams.get("tab");
-  if (initialTab && ["details", "network", "uploads"].includes(initialTab)) {
-    switchTab(initialTab);
-  } else {
-    // Default to details if no tab param or invalid param
-    switchTab("details");
-  }
+  // Handle URL param on load - MOVED TO END OF FILE
 
   // --- NETWORK TAB LOGIC ---
   const btnShowFollowers = document.getElementById("btnShowFollowers");
@@ -614,6 +606,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error("Failed to load uploads:", err);
       uploadsListContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #ef4444;">Failed to load documents.</div>`;
     }
+  }
+
+  // Handle URL param on load
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialTab = urlParams.get("tab");
+  if (initialTab && ["details", "network", "uploads"].includes(initialTab)) {
+    switchTab(initialTab);
+  } else {
+    // Default to details if no tab param or invalid param
+    switchTab("details");
   }
 
 });
