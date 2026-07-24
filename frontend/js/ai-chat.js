@@ -115,7 +115,15 @@ document.addEventListener("DOMContentLoaded", () => {
      * Clear global chat conversation
      */
     async function clearConversation() {
-        if (!confirm("Are you sure you want to clear this conversation?")) return;
+        const confirmed = typeof window.confirmAction === "function"
+            ? await window.confirmAction({
+                title: "Clear Conversation",
+                message: "Are you sure you want to clear this conversation?",
+                confirmText: "Clear",
+                danger: true
+            })
+            : window.confirm("Are you sure you want to clear this conversation?");
+        if (!confirmed) return;
 
         try {
             const res = await del("/api/ai/global/chats");

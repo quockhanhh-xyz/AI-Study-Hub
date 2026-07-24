@@ -151,14 +151,18 @@ public class DefaultDocumentChunkRetrievalService implements DocumentChunkRetrie
         jpql.append("LEFT JOIN d.documentContent dcContent ");
         jpql.append("WHERE d.status = 'ACTIVE' ");
         jpql.append("AND dcContent IS NOT NULL ");
-        jpql.append("AND dcContent.processingStatus = 'COMPLETED' ");
+        jpql.append("AND dcContent.processingStatus = :completedStatus ");
         jpql.append("AND (");
         jpql.append("  o.userId = :userId ");
         jpql.append("  OR (d.visibility = 'PUBLIC' AND d.approvalStatus = 'APPROVED' AND o.status = 'ACTIVE') ");
         jpql.append("  OR EXISTS (SELECT ds FROM DocumentShare ds WHERE ds.document = d AND ds.sharedWith.userId = :userId AND ds.status = 'ACTIVE') ");
-        jpql.append("  OR EXISTS (SELECT gds FROM GroupDocumentShare gds JOIN StudyGroupMember sgm ON gds.group = sgm.group ");
-        jpql.append("             WHERE gds.document = d AND sgm.user.userId = :userId AND gds.status = 'ACTIVE' ");
-        jpql.append("             AND sgm.status = 'ACTIVE' AND gds.group.status = 'ACTIVE') ");
+        jpql.append("  OR EXISTS (SELECT gds FROM GroupDocumentShare gds, StudyGroupMember sgm ");
+        jpql.append("             WHERE gds.group = sgm.group ");
+        jpql.append("             AND gds.document = d ");
+        jpql.append("             AND sgm.user.userId = :userId ");
+        jpql.append("             AND gds.status = 'ACTIVE' ");
+        jpql.append("             AND sgm.status = 'ACTIVE' ");
+        jpql.append("             AND gds.group.status = 'ACTIVE') ");
         jpql.append(") ");
 
         jpql.append("AND (");
@@ -167,7 +171,7 @@ public class DefaultDocumentChunkRetrievalService implements DocumentChunkRetrie
             if (keywordIdx > 0) {
                 jpql.append(" OR ");
             }
-            jpql.append("LOWER(dc.chunkText) LIKE :keyword_" + keywordIdx);
+            jpql.append("LOWER(cast(dc.chunkText as string)) LIKE :keyword_" + keywordIdx);
             keywordIdx++;
         }
         jpql.append(")");
@@ -175,6 +179,7 @@ public class DefaultDocumentChunkRetrievalService implements DocumentChunkRetrie
         TypedQuery<com.demo.ai_study_hub.entity.DocumentChunk> query =
                 entityManager.createQuery(jpql.toString(), com.demo.ai_study_hub.entity.DocumentChunk.class);
         query.setParameter("userId", userId);
+        query.setParameter("completedStatus", com.demo.ai_study_hub.entity.ProcessingStatus.COMPLETED);
         
         keywordIdx = 0;
         for (String keyword : keywords) {
