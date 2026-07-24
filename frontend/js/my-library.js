@@ -142,6 +142,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         libraryToolbar.style.display = (tabId === "documents" || tabId === "favorites") ? "flex" : "none";
       }
 
+      const subjectToolbar = document.getElementById("subjectToolbar");
+      if (subjectToolbar) {
+        subjectToolbar.style.display = (tabId === "my-subjects") ? "flex" : "none";
+      }
+
       // Contextual search placeholders
       if (searchInput) {
         if (tabId === "documents") {
@@ -199,6 +204,24 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
     if (folderFilter) {
       folderFilter.addEventListener("change", triggerReload);
+    }
+
+    const subjectSourceFilter = document.getElementById("subjectSourceFilter");
+    if (subjectSourceFilter) {
+      subjectSourceFilter.addEventListener("change", () => {
+        filterSubjectsList();
+      });
+    }
+    const clearSubjectFiltersBtn = document.getElementById("clearSubjectFiltersBtn");
+    if (clearSubjectFiltersBtn) {
+      clearSubjectFiltersBtn.addEventListener("click", () => {
+        if (searchInput) searchInput.value = "";
+        if (subjectSourceFilter) {
+          subjectSourceFilter.value = "";
+          subjectSourceFilter.dispatchEvent(new Event("syncCustom"));
+        }
+        filterSubjectsList();
+      });
     }
 
     if (uploadDocumentBtn) {
@@ -1502,6 +1525,8 @@ document.addEventListener("DOMContentLoaded", async function () {
       e.preventDefault();
       document.getElementById("subjectDocsView").style.display = "none";
       document.getElementById("subjectsListView").style.display = "block";
+      const subjectToolbar = document.getElementById("subjectToolbar");
+      if (subjectToolbar) subjectToolbar.style.display = "flex";
     });
   }
 
@@ -1509,6 +1534,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       document.getElementById("subjectsListView").style.display = "block";
       document.getElementById("subjectDocsView").style.display = "none";
+      const subjectToolbar = document.getElementById("subjectToolbar");
+      if (subjectToolbar) subjectToolbar.style.display = "flex";
       
       const grid = document.getElementById("subjectGrid");
       grid.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--muted); width: 100%;"><p>Loading subjects...</p></div>`;
@@ -1660,21 +1687,31 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   function filterSubjectsList() {
     const query = searchInput.value.trim().toLowerCase();
-    if (!query) {
-      renderSubjects(mySubjectsList);
-      return;
+    const subjectSourceFilter = document.getElementById("subjectSourceFilter");
+    const sourceVal = subjectSourceFilter ? subjectSourceFilter.value : "";
+
+    let filtered = mySubjectsList;
+
+    if (sourceVal) {
+      filtered = filtered.filter(s => s.sourceType === sourceVal);
     }
-    const filtered = mySubjectsList.filter(s => 
-      s.code.toLowerCase().includes(query) || 
-      s.name.toLowerCase().includes(query) || 
-      (s.description && s.description.toLowerCase().includes(query))
-    );
+
+    if (query) {
+      filtered = filtered.filter(s => 
+        s.code.toLowerCase().includes(query) || 
+        s.name.toLowerCase().includes(query) || 
+        (s.description && s.description.toLowerCase().includes(query))
+      );
+    }
+
     renderSubjects(filtered);
   }
 
   async function openSubjectDocuments(subjectId, subjectCode, subjectName) {
     document.getElementById("subjectsListView").style.display = "none";
     document.getElementById("subjectDocsView").style.display = "block";
+    const subjectToolbar = document.getElementById("subjectToolbar");
+    if (subjectToolbar) subjectToolbar.style.display = "none";
     document.getElementById("subjectBreadcrumbCurrent").textContent = `${subjectCode} - ${subjectName}`;
 
     const docsGrid = document.getElementById("subjectDocsGrid");

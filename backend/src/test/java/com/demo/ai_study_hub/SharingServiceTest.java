@@ -210,15 +210,15 @@ class SharingServiceTest {
         share.setSharedWith(recipient);
         share.setStatus("ACTIVE");
 
-        when(userRepository.findByEmail("recipient@gmail.com")).thenReturn(Optional.of(recipient));
+        when(userRepository.findByEmail("external@gmail.com")).thenReturn(Optional.of(external));
         when(documentShareRepository.findById(1)).thenReturn(Optional.of(share));
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            sharingService.revokeDirectShare(1, "recipient@gmail.com");
+            sharingService.revokeDirectShare(1, "external@gmail.com");
         });
 
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
-        assertEquals("Only the document owner can revoke shares", exception.getReason());
+        assertEquals("Only the document owner or recipient can revoke shares", exception.getReason());
     }
 
     @Test

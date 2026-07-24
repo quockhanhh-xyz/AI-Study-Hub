@@ -49,6 +49,18 @@ public class SharingController {
         }
     }
 
+    @GetMapping("/api/shares/my-shares")
+    public ResponseEntity<ApiResponse<MySharesResponse>> getMyShares(Principal principal) {
+        try {
+            MySharesResponse data = sharingService.getMySharedAndContributedItems(principal.getName());
+            return ResponseEntity.ok(ApiResponse.success(data, "My shared and contributed items retrieved successfully"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
     @GetMapping("/api/documents/{id}/shares")
     public ResponseEntity<ApiResponse<DocumentSharingInfoResponse>> getDocumentShares(
             @PathVariable Integer id,

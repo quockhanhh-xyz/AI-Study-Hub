@@ -30,4 +30,6 @@ public interface GroupDocumentShareRepository extends JpaRepository<GroupDocumen
     void deleteByDocument(Document document);
 
     long countBySharedByAndStatus(User sharedBy, String status);
+
+    List<GroupDocumentShare> findBySharedByAndStatus(User sharedBy, String status);
 }

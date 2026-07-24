@@ -86,6 +86,9 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
             User owner, String visibility, String approvalStatus, String status
     );
 
+    @Query("SELECT d FROM Document d WHERE d.owner = :owner AND d.visibility = 'PUBLIC' AND d.status = 'ACTIVE'")
+    List<Document> findMyPublicDocuments(@Param("owner") User owner);
+
     List<Document> findByFolder(Folder folder);
     List<Document> findByOwner_UserIdAndStatus(Integer userId, String status);
     

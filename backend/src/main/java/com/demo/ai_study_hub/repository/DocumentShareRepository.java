@@ -22,4 +22,6 @@ public interface DocumentShareRepository extends JpaRepository<DocumentShare, In
     void deleteByDocument(Document document);
 
     long countBySharedByAndStatus(User sharedBy, String status);
+
+    List<DocumentShare> findBySharedByAndStatus(User sharedBy, String status);
 }

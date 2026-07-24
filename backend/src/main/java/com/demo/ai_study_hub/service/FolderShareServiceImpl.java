@@ -128,8 +128,9 @@ public class FolderShareServiceImpl implements FolderShareService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Share not found");
         }
 
-        if (!share.getFolder().getOwner().getUserId().equals(owner.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the folder owner can revoke this share");
+        if (!share.getFolder().getOwner().getUserId().equals(owner.getUserId()) &&
+            !share.getSharedWithUser().getUserId().equals(owner.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the folder owner or recipient can revoke this share");
         }
 
         share.setStatus("REVOKED");

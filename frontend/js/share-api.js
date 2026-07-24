@@ -58,3 +58,11 @@ function revokeDocumentShare(shareId) {
 function revokeGroupDocumentShare(shareId) {
   return del(`/api/group-document-shares/${shareId}`);
 }
+
+/**
+ * Retrieves all items shared or contributed by the current user.
+ * @returns {Promise<Object>} Shares response payload.
+ */
+function getMyShares() {
+  return get("/api/shares/my-shares");
+}
