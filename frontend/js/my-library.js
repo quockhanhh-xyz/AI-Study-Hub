@@ -1196,13 +1196,13 @@ document.addEventListener("DOMContentLoaded", async function () {
           return `
             <div class="dyn-folder-card"
               data-folder-id="${f.folderId}"
-              style="display:flex;flex-direction:row;align-items:center;gap:14px;padding:16px 18px;border:1.5px solid #e5e7eb;border-radius:14px;background:#ffffff;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.04);position:relative;min-height:80px;box-sizing:border-box;margin-bottom:0;">
+              style="display:flex;flex-direction:row;align-items:center;gap:14px;padding:16px 18px;border:1.5px solid var(--border);border-radius:14px;background: var(--surface);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.04);position:relative;min-height:80px;box-sizing:border-box;margin-bottom:0;">
               <div style="flex-shrink:0;color:#ff5858;display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:rgba(255,88,88,0.08);border-radius:10px;">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>
               </div>
               <div style="flex:1;min-width:0;">
-                <div style="font-size:15px;font-weight:600;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.folderName || "Untitled Folder"}</div>
-                <div style="font-size:12px;color:#9ca3af;margin-top:3px;">${subCount} subfolders &bull; ${docCount} documents${dateStr ? " &bull; " + dateStr : ""}</div>
+                <div style="font-size:15px;font-weight:600;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.folderName || "Untitled Folder"}</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:3px;">${subCount} subfolders &bull; ${docCount} documents${dateStr ? " &bull; " + dateStr : ""}</div>
               </div>
             </div>`;
         }).join("");
@@ -1226,7 +1226,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         dynGrid.querySelectorAll(".dyn-folder-card").forEach(cardEl => {
           const fid = parseInt(cardEl.dataset.folderId);
           cardEl.addEventListener("mouseenter", () => { cardEl.style.borderColor = "#ff5858"; cardEl.style.transform = "translateY(-2px)"; cardEl.style.boxShadow = "0 8px 20px rgba(255,88,88,0.1)"; });
-          cardEl.addEventListener("mouseleave", () => { cardEl.style.borderColor = "#e5e7eb"; cardEl.style.transform = ""; cardEl.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)"; });
+          cardEl.addEventListener("mouseleave", () => { cardEl.style.borderColor = "var(--border)"; cardEl.style.transform = ""; cardEl.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)"; });
           cardEl.addEventListener("click", () => navigateToFolder(fid));
         });
 
@@ -1263,9 +1263,9 @@ document.addEventListener("DOMContentLoaded", async function () {
   function createFolderCard(f) {
     // Build card with 100% inline styles to bypass any CSS class conflicts
     const card = document.createElement("div");
-    card.style.cssText = "display:flex; flex-direction:row; align-items:center; gap:14px; padding:16px 18px; border:1.5px solid #e5e7eb; border-radius:14px; background:#ffffff; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.04); position:relative; min-height:80px; box-sizing:border-box;";
+    card.style.cssText = "display:flex; flex-direction:row; align-items:center; gap:14px; padding:16px 18px; border:1.5px solid var(--border); border-radius:14px; background: var(--surface); cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.04); position:relative; min-height:80px; box-sizing:border-box;";
     card.addEventListener("mouseenter", () => { card.style.borderColor="#ff5858"; card.style.transform="translateY(-2px)"; card.style.boxShadow="0 8px 20px rgba(255,88,88,0.1)"; });
-    card.addEventListener("mouseleave", () => { card.style.borderColor="#e5e7eb"; card.style.transform=""; card.style.boxShadow="0 2px 8px rgba(0,0,0,0.04)"; });
+    card.addEventListener("mouseleave", () => { card.style.borderColor="var(--border)"; card.style.transform=""; card.style.boxShadow="0 2px 8px rgba(0,0,0,0.04)"; });
 
     // Icon
     const iconWrap = document.createElement("div");
@@ -1297,7 +1297,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     kebabBtn.style.cssText = "font-size:20px; font-weight:bold; width:30px; height:30px; display:flex; align-items:center; justify-content:center; background:none; border:none; cursor:pointer; color:#9ca3af; border-radius:6px;";
     kebabBtn.textContent = "⋮";
     const dropdown = document.createElement("div");
-    dropdown.style.cssText = "display:none; position:absolute; right:0; top:100%; background:#ffffff; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); z-index:20; min-width:140px; padding:4px 0;";
+    dropdown.style.cssText = "display:none; position:absolute; right:0; top:100%; background: var(--surface); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); z-index:20; min-width:140px; padding:4px 0;";
     const renameItem = document.createElement("button");
     renameItem.type = "button";
     renameItem.style.cssText = "display:block; width:100%; padding:8px 14px; text-align:left; background:none; border:none; font-size:13px; color:#111827; cursor:pointer;";
@@ -1597,19 +1597,19 @@ document.addEventListener("DOMContentLoaded", async function () {
         kebabBtn.title = "More actions";
         
         const dropdown = document.createElement("div");
-        dropdown.style.cssText = "display:none; position:absolute; right:0; top:36px; background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); z-index:30; min-width:160px; padding:6px; box-sizing:border-box;";
+        dropdown.style.cssText = "display:none; position:absolute; right:0; top:36px; background: var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); z-index:30; min-width:160px; padding:6px; box-sizing:border-box;";
         
         if (s.canEdit) {
           const editItem = document.createElement("button");
           editItem.type = "button";
-          editItem.style.cssText = "display:flex; align-items:center; gap:8px; width:100%; padding:8px 12px; text-align:left; background:none; border:none; font-size:13px; font-weight:500; color:#1e293b; cursor:pointer; border-radius:8px; transition:background 0.2s;";
+          editItem.style.cssText = "display:flex; align-items:center; gap:8px; width:100%; padding:8px 12px; text-align:left; background:none; border:none; font-size:13px; font-weight:500; color: var(--text-main); cursor:pointer; border-radius:8px; transition:background 0.2s;";
           editItem.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14">
               <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
             </svg>
             <span>Edit Subject</span>
           `;
-          editItem.addEventListener("mouseenter", () => editItem.style.background = "#f1f5f9");
+          editItem.addEventListener("mouseenter", () => editItem.style.background = "var(--surface-soft)");
           editItem.addEventListener("mouseleave", () => editItem.style.background = "none");
           editItem.addEventListener("click", (e) => {
             e.stopPropagation();

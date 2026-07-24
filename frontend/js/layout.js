@@ -238,16 +238,16 @@ function renderDynamicSidebar(isAuthenticated) {
           statsContainer.innerHTML = `
             <div style="display: flex; justify-content: space-around; gap: 4px;">
               <div style="flex: 1;">
-                <span id="sidebarFollowers" style="display: block; font-size: 18px; font-weight: 700; color: #1e293b;">${cachedStats.followersCount}</span>
-                <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-top: 4px; letter-spacing: 0.05em;">Followers</span>
+                <span id="sidebarFollowers" style="display: block; font-size: 18px; font-weight: 700; color: var(--text-main);">${cachedStats.followersCount}</span>
+                <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; letter-spacing: 0.05em;">Followers</span>
               </div>
-              <div style="flex: 1; border-left: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9;">
-                <span id="sidebarUploads" style="display: block; font-size: 18px; font-weight: 700; color: #1e293b;">${cachedStats.publicDocumentCount}</span>
-                <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-top: 4px; letter-spacing: 0.05em;">Uploads</span>
+              <div style="flex: 1; border-left: 1px solid var(--surface-soft); border-right: 1px solid var(--surface-soft);">
+                <span id="sidebarUploads" style="display: block; font-size: 18px; font-weight: 700; color: var(--text-main);">${cachedStats.publicDocumentCount}</span>
+                <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; letter-spacing: 0.05em;">Uploads</span>
               </div>
               <div style="flex: 1;">
-                <span id="sidebarUpvotes" style="display: block; font-size: 18px; font-weight: 700; color: #1e293b;">${cachedStats.upvotesCount}</span>
-                <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-top: 4px; letter-spacing: 0.05em;">Upvotes</span>
+                <span id="sidebarUpvotes" style="display: block; font-size: 18px; font-weight: 700; color: var(--text-main);">${cachedStats.upvotesCount}</span>
+                <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; letter-spacing: 0.05em;">Upvotes</span>
               </div>
             </div>
             <a href="upload.html" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 10px; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 9999px; text-decoration: none; background: #f05a28; border: none; color: #fff; box-shadow: 0 4px 10px rgba(240, 90, 40, 0.2); box-sizing: border-box; cursor: pointer;">
@@ -427,14 +427,14 @@ function renderDynamicSidebar(isAuthenticated) {
 
 const confirmLogoutModalHtml = `
   <div id="logoutConfirmModal" class="modal-overlay" style="display: flex; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 16px;">
-      <div class="modal-content card" style="width: 100%; max-width: 400px; background: #ffffff; border-radius: 16px; padding: 24px; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); text-align: center; color: #1e293b;">
+      <div class="modal-content card" style="width: 100%; max-width: 400px; background: var(--surface); border-radius: 16px; padding: 24px; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); text-align: center; color: var(--text-main);">
           <div style="width: 48px; height: 48px; background: #fee2e2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="24" height="24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
               </svg>
           </div>
-          <h3 style="font-size: 20px; font-weight: 700; color: #172033; margin: 0 0 8px 0;">Sign out?</h3>
-          <p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">You will need to sign in again to access your documents and AI tools.</p>
+          <h3 style="font-size: 20px; font-weight: 700; color: var(--text-main); margin: 0 0 8px 0;">Sign out?</h3>
+          <p style="color: var(--text-muted); font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">You will need to sign in again to access your documents and AI tools.</p>
           <div style="display: flex; gap: 12px; justify-content: center;">
               <button type="button" id="confirmLogoutCancel" class="btn btn-secondary" style="flex: 1; margin: 0;">Cancel</button>
               <button type="button" id="confirmLogoutProceed" class="btn btn-primary" style="flex: 1; margin: 0; background: #ef4444; border-color: #ef4444; color: #ffffff;">Sign out</button>
@@ -583,11 +583,11 @@ function bootstrapSidebarCollapseState() {
 
 const quickProfileModalHtml = `
   <div id="quickProfileModal" class="modal-overlay" style="display: flex; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center; padding: 16px;">
-      <div class="modal-content card" style="width: 100%; max-width: 420px; background: #ffffff; border-radius: 16px; padding: 28px; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); position: relative; animation: modalFadeIn 0.3s ease-out; color: #1e293b;">
-          <button type="button" id="closeQuickProfileBtn" style="position: absolute; right: 20px; top: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: #94a3b8; transition: color 0.2s; line-height: 1;">&times;</button>
+      <div class="modal-content card" style="width: 100%; max-width: 420px; background: var(--surface); border-radius: 16px; padding: 28px; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); position: relative; animation: modalFadeIn 0.3s ease-out; color: var(--text-main);">
+          <button type="button" id="closeQuickProfileBtn" style="position: absolute; right: 20px; top: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); transition: color 0.2s; line-height: 1;">&times;</button>
           
           <div id="quickProfileLoading" style="text-align: center; padding: 20px;">
-              <p style="color: #64748b;">Loading contributor details...</p>
+              <p style="color: var(--text-muted);">Loading contributor details...</p>
           </div>
 
           <div id="quickProfileError" style="display: none; text-align: center; padding: 20px;">
@@ -598,26 +598,26 @@ const quickProfileModalHtml = `
               <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 20px;">
                   <div id="qpAvatar" style="width: 64px; height: 64px; border-radius: 50%; background: #fff5f3; color: #ff5a3d; font-size: 24px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); flex-shrink: 0;">-</div>
                   <div style="flex-grow: 1;">
-                      <h3 id="qpFullName" style="font-size: 18px; font-weight: 700; color: #172033; margin: 0 0 4px 0;">-</h3>
-                      <p id="qpSchool" style="color: #64748b; font-size: 13px; margin: 0; display: none;"></p>
-                      <p id="qpMajor" style="color: #64748b; font-size: 13px; margin: 2px 0 0 0; display: none;"></p>
+                      <h3 id="qpFullName" style="font-size: 18px; font-weight: 700; color: var(--text-main); margin: 0 0 4px 0;">-</h3>
+                      <p id="qpSchool" style="color: var(--text-muted); font-size: 13px; margin: 0; display: none;"></p>
+                      <p id="qpMajor" style="color: var(--text-muted); font-size: 13px; margin: 2px 0 0 0; display: none;"></p>
                   </div>
               </div>
 
               <p id="qpBio" style="color: #334155; font-size: 14px; line-height: 1.5; margin: 0 0 20px 0; max-height: 100px; overflow-y: auto;"></p>
 
-              <div style="display: flex; gap: 16px; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 12px 0; margin-bottom: 24px; justify-content: space-around; text-align: center;">
+              <div style="display: flex; gap: 16px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 12px 0; margin-bottom: 24px; justify-content: space-around; text-align: center;">
                   <div>
-                      <div id="qpStatDocs" style="font-size: 16px; font-weight: 700; color: #1e293b;">-</div>
-                      <div style="font-size: 11px; color: #64748b;">Public Docs</div>
+                      <div id="qpStatDocs" style="font-size: 16px; font-weight: 700; color: var(--text-main);">-</div>
+                      <div style="font-size: 11px; color: var(--text-muted);">Public Docs</div>
                   </div>
                   <div>
-                      <div id="qpStatFollowers" style="font-size: 16px; font-weight: 700; color: #1e293b;">-</div>
-                      <div style="font-size: 11px; color: #64748b;">Followers</div>
+                      <div id="qpStatFollowers" style="font-size: 16px; font-weight: 700; color: var(--text-main);">-</div>
+                      <div style="font-size: 11px; color: var(--text-muted);">Followers</div>
                   </div>
                   <div>
-                      <div id="qpStatFollowing" style="font-size: 16px; font-weight: 700; color: #1e293b;">-</div>
-                      <div style="font-size: 11px; color: #64748b;">Following</div>
+                      <div id="qpStatFollowing" style="font-size: 16px; font-weight: 700; color: var(--text-main);">-</div>
+                      <div style="font-size: 11px; color: var(--text-muted);">Following</div>
                   </div>
               </div>
 
@@ -847,7 +847,7 @@ function injectFloatingChatbot() {
       right: 24px;
       width: 380px;
       height: 520px;
-      background: #ffffff;
+      background: var(--surface);
       border: 1px solid rgba(226, 232, 240, 0.8);
       border-radius: 16px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
@@ -865,8 +865,8 @@ function injectFloatingChatbot() {
       align-items: center;
       justify-content: space-between;
       padding: 16px 20px;
-      background: #ffffff;
-      border-bottom: 1px solid #e2e8f0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
     }
     .floating-chat-header-title {
       display: flex;
@@ -881,11 +881,11 @@ function injectFloatingChatbot() {
       margin: 0;
       font-size: 15px;
       font-weight: 700;
-      color: #1e293b;
+      color: var(--text-main);
     }
     .floating-chat-header-info span {
       font-size: 11px;
-      color: #94a3b8;
+      color: var(--text-muted);
     }
     .floating-chat-header-actions {
       display: flex;
@@ -895,7 +895,7 @@ function injectFloatingChatbot() {
     .floating-chat-clear-btn {
       background: transparent;
       border: none;
-      color: #94a3b8;
+      color: var(--text-muted);
       cursor: pointer;
       padding: 4px;
       border-radius: 4px;
@@ -912,7 +912,7 @@ function injectFloatingChatbot() {
       flex: 1;
       padding: 16px;
       overflow-y: auto;
-      background: #f8fafc;
+      background: var(--surface-soft);
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -941,15 +941,15 @@ function injectFloatingChatbot() {
       border-bottom-right-radius: 2px;
     }
     .floating-message-bubble.assistant .floating-message-content {
-      background: #ffffff;
-      color: #1e293b;
+      background: var(--surface);
+      color: var(--text-main);
       border-bottom-left-radius: 2px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border);
       box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
     .floating-message-time {
       font-size: 10px;
-      color: #94a3b8;
+      color: var(--text-muted);
       align-self: flex-end;
     }
     .floating-message-bubble.assistant .floating-message-time {
@@ -961,18 +961,18 @@ function injectFloatingChatbot() {
       gap: 4px;
       margin-top: 6px;
       padding-top: 6px;
-      border-top: 1px dashed #e2e8f0;
+      border-top: 1px dashed var(--border);
     }
     .floating-citation-badge {
       display: inline-flex;
       align-items: center;
       gap: 4px;
       font-size: 11px;
-      background: #f1f5f9;
-      color: #475569;
+      background: var(--surface-soft);
+      color: var(--text-muted);
       padding: 3px 6px;
       border-radius: 4px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border);
       width: fit-content;
     }
     .floating-citation-badge .floating-source-type {
@@ -996,8 +996,8 @@ function injectFloatingChatbot() {
     }
     .floating-chat-input-area {
       padding: 12px 16px;
-      background: #ffffff;
-      border-top: 1px solid #e2e8f0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
     }
     .floating-chat-suggestions {
       display: flex;
@@ -1008,9 +1008,9 @@ function injectFloatingChatbot() {
     }
     .floating-suggestion-chip {
       font-size: 11.5px;
-      background: #f1f5f9;
-      color: #475569;
-      border: 1px solid #e2e8f0;
+      background: var(--surface-soft);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
       padding: 4px 10px;
       border-radius: 9999px;
       cursor: pointer;
@@ -1018,8 +1018,8 @@ function injectFloatingChatbot() {
       transition: all 0.2s;
     }
     .floating-suggestion-chip:hover {
-      background: #e2e8f0;
-      color: #1e293b;
+      background: var(--border);
+      color: var(--text-main);
     }
     .floating-chat-input-wrapper {
       display: flex;
@@ -1028,7 +1028,7 @@ function injectFloatingChatbot() {
     }
     .floating-chat-textarea {
       flex: 1;
-      border: 1px solid #cbd5e1;
+      border: 1px solid var(--border);
       border-radius: 8px;
       padding: 8px 12px;
       font-size: 13.5px;
