@@ -165,3 +165,15 @@
 | TC-MODEL-004 | PREMIUM | mock | mock |
 | TC-MODEL-005 | FREE | gemini | Max 3 chunks in prompt |
 | TC-MODEL-006 | PREMIUM | gemini | Max 8 chunks in prompt |
+
+---
+
+## 7. Central Study Assistant Chatbot (Step 21 - Global Chat)
+
+| TC | Actor | Endpoint | Condition | Expected |
+|---|---|---|---|---|
+| TC-GLOB-001 | Guest | POST `/api/ai/global/ask` | No auth | 401 Unauthorized |
+| TC-GLOB-002 | Member | POST `/api/ai/global/ask` | Ask question with keywords | 200 OK with answer citing retrieved chunks |
+| TC-GLOB-003 | Member | POST `/api/ai/global/ask` | Ask question with NO matching chunks | 200 OK with default Vietnamese fallback response |
+| TC-GLOB-004 | Member | GET `/api/ai/global/chats` | Retrieve global chat history | 200 OK with messages and source metadata |
+| TC-GLOB-005 | Member | DELETE `/api/ai/global/chats` | Clear global chat session | 200 OK, session soft-deleted, UI resets |
