@@ -144,17 +144,18 @@
         </aside>
 
         <main class="main-content">
-            <section class="page-header trash-header" style="display: flex; justify-content: space-between; align-items: center; max-width: none; margin-top: 8px; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
-                <div class="dashboard-header-content">
-                    <div>
-                        <h1 style="margin: 0; font-size: 26px; font-weight: 800; color: var(--text);">Trash</h1>
-                        <p class="dashboard-subtitle" style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Items in Trash are permanently deleted after 30 days.</p>
-                    </div>
+            <section class="page-header dashboard-header" style="margin-top: 15px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <h1 style="margin: 0; font-size: 28px; font-weight: 800; color: var(--text);">Trash</h1>
+                    <div id="globalHeaderWidgets" class="global-header-widgets" style="display: flex; align-items: center; gap: 16px;"></div>
                 </div>
-                <div class="header-actions">
-                    <button type="button" id="emptyTrashBtn" class="btn" style="display: none; align-items: center; gap: 6px; padding: 10px 16px; width: auto !important; border: 1.5px solid var(--danger); background: transparent; color: var(--danger); font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-                        Empty Trash
-                    </button>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 12px;">
+                    <p class="dashboard-subtitle" style="margin: 0; color: var(--muted); font-size: 14px;">Items in Trash are permanently deleted after 30 days.</p>
+                    <div class="header-actions">
+                        <button type="button" id="emptyTrashBtn" class="btn" style="display: none; align-items: center; gap: 6px; padding: 10px 16px; width: auto !important; border: 1.5px solid var(--danger); background: transparent; color: var(--danger); font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                            Empty Trash
+                        </button>
+                    </div>
                 </div>
             </section>
 

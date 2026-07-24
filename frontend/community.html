@@ -162,52 +162,48 @@
         </aside>
 
         <main class="main-content">
-            <section class="page-header dashboard-header" style="display: flex; justify-content: space-between; align-items: center; max-width: none; margin-top: 8px; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
-                <div class="dashboard-header-content">
-                    <div>
-                        <h1 style="margin: 0; font-size: 28px; font-weight: 800; color: var(--text);">Community Library</h1>
-                        <p class="dashboard-subtitle" style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Discover documents shared publicly by the AI Study Hub community.</p>
-                    </div>
+            <section class="page-header dashboard-header" style="margin-top: 15px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <h1 style="margin: 0; font-size: 28px; font-weight: 800; color: var(--text);">Community Library</h1>
+                    <div id="globalHeaderWidgets" class="global-header-widgets" style="display: flex; align-items: center; gap: 16px;"></div>
                 </div>
-                <div id="communityHeaderActions" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                    <!-- If logged in: Upload a document -->
-                    <a href="upload.html?source=community" id="communityUploadBtn" class="btn btn-primary" style="display: none; align-items: center; gap: 6px; padding: 10px 16px; width: auto !important; text-decoration: none;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Add-1--Streamline-Core" height="14" width="14" aria-hidden="true" focusable="false">
-                          <desc>Add 1 Streamline Icon: https://streamlinehq.com</desc>
-                          <g id="add-1--expand-cross-buttons-button-more-remove-plus-add-+-mathematics-math">
-                            <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 0.5v13" stroke-width="1"></path>
-                            <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 6.95996h13" stroke-width="1"></path>
-                          </g>
-                        </svg>
-                        Contribute a document
-                    </a>
-                    <!-- If guest: compact login prompt -->
-                    <div id="communityGuestActions" style="display: none; align-items: center; gap: 12px; background: rgba(79, 70, 229, 0.05); padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(79, 70, 229, 0.1);">
-                        <span style="font-size: 13px; color: var(--text); font-weight: 500;">Sign in to upload, save favorites, and study with AI.</span>
-                        <a href="login.html?redirect=community.html" class="btn btn-primary btn-sm" style="width: auto !important; padding: 6px 12px; text-decoration: none; font-size: 13px;">Login</a>
-                    </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <p class="dashboard-subtitle" style="margin: 0; color: var(--muted); font-size: 14px;">Discover study documents shared publicly by the community.</p>
                 </div>
             </section>
 
             <div id="communityListView" class="dashboard-panel">
-                <div class="dashboard-panel-header">
-                    <div>
-                        <h2>Public Documents</h2>
-                        <p id="communityPanelSubtitle">Documents published by the community.</p>
-                    </div>
-                </div>
 
-                <div class="dashboard-search" style="max-width: 480px; margin-bottom: 20px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24"
-                        class="search-icon" aria-hidden="true" focusable="false">
-                        <g id="Search">
-                            <path id="Union" fill="currentColor"
-                                d="M11 2c4.9706 0 9 4.02944 9 9 0 2.125 -0.7381 4.0766 -1.9697 5.6162l4.1767 4.1768 -1.414 1.414 -4.1768 -4.1767C15.0766 19.2619 13.125 20 11 20c-4.97056 0 -9 -4.0294 -9 -9 0 -4.97056 4.02944 -9 9 -9m0 2c-3.86599 0 -7 3.13401 -7 7 0 3.866 3.13401 7 7 7 3.866 0 7 -3.134 7 -7 0 -3.86599 -3.134 -7 -7 -7"
-                                stroke-width="1"></path>
-                        </g>
-                    </svg>
-                    <input type="text" id="searchInput" placeholder="Search public documents by title or keyword..."
-                        style="padding-left: 40px; width: 100%;" />
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 16px; width: 100%;">
+                    <div class="dashboard-search" style="max-width: 480px; width: 100%; margin: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24"
+                            class="search-icon" aria-hidden="true" focusable="false">
+                            <g id="Search">
+                                <path id="Union" fill="currentColor"
+                                    d="M11 2c4.9706 0 9 4.02944 9 9 0 2.125 -0.7381 4.0766 -1.9697 5.6162l4.1767 4.1768 -1.414 1.414 -4.1768 -4.1767C15.0766 19.2619 13.125 20 11 20c-4.97056 0 -9 -4.0294 -9 -9 0 -4.97056 4.02944 -9 9 -9m0 2c-3.86599 0 -7 3.13401 -7 7 0 3.866 3.13401 7 7 7 3.866 0 7 -3.134 7 -7 0 -3.86599 -3.134 -7 -7 -7"
+                                    stroke-width="1"></path>
+                            </g>
+                        </svg>
+                        <input type="text" id="searchInput" placeholder="Search public documents by title or keyword..."
+                            style="padding-left: 40px; width: 100%;" />
+                    </div>
+                    <div id="communityHeaderActions" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 0;">
+                        <!-- If logged in: Upload a document -->
+                        <a href="upload.html?source=community" id="communityUploadBtn" class="btn btn-primary" style="display: none; align-items: center; gap: 6px; padding: 10px 16px; width: auto !important; text-decoration: none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Add-1--Streamline-Core" height="14" width="14" aria-hidden="true" focusable="false">
+                              <g id="add-1--expand-cross-buttons-button-more-remove-plus-add-+-mathematics-math">
+                                <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 0.5v13" stroke-width="1"></path>
+                                <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 6.95996h13" stroke-width="1"></path>
+                              </g>
+                            </svg>
+                            Contribute a document
+                        </a>
+                        <!-- If guest: compact login prompt -->
+                        <div id="communityGuestActions" style="display: none; align-items: center; gap: 12px; background: rgba(79, 70, 229, 0.05); padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(79, 70, 229, 0.1);">
+                            <span style="font-size: 13px; color: var(--text); font-weight: 500;">Sign in to upload, save favorites, and study with AI.</span>
+                            <a href="login.html?redirect=community.html" class="btn btn-primary btn-sm" style="width: auto !important; padding: 6px 12px; text-decoration: none; font-size: 13px;">Login</a>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="toolbar">
