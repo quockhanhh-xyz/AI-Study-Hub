@@ -116,8 +116,15 @@ public class TierPolicyService {
     }
 
     public TierLimits getLimits(UserTier tier) {
-        com.demo.ai_study_hub.entity.PlanConfig plan = (planConfigRepository != null) ?
-                planConfigRepository.findByTargetTier(tier.name()).orElse(null) : null;
+        com.demo.ai_study_hub.entity.PlanConfig plan = null;
+        if (planConfigRepository != null) {
+            java.util.List<com.demo.ai_study_hub.entity.PlanConfig> plans =
+                planConfigRepository.findByTargetTier(tier.name());
+            plan = plans.stream()
+                .filter(p -> "ACTIVE".equalsIgnoreCase(p.getStatus()))
+                .findFirst()
+                .orElse(plans.isEmpty() ? null : plans.get(0));
+        }
 
         TierLimits base = switch (tier) {
             case PREMIUM -> PREMIUM_LIMITS;

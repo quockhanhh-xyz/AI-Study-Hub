@@ -177,7 +177,13 @@ document.addEventListener("DOMContentLoaded", () => {
         msgContent.textContent = content;
 
         // Render Citations if available (only for Assistant)
-        if (!isUser && sourceChunks && sourceChunks.length > 0) {
+        const isFallback = content && (
+            content.includes("Tôi chưa tìm thấy tài liệu phù hợp") ||
+            content.includes("I could not find matching documents") ||
+            content.includes("Tôi không tìm thấy thông tin này") ||
+            content.includes("I could not find this information")
+        );
+        if (!isUser && !isFallback && sourceChunks && sourceChunks.length > 0) {
             const citationsContainer = document.createElement("div");
             citationsContainer.className = "citations-container";
             

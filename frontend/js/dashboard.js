@@ -307,7 +307,19 @@ document.addEventListener("DOMContentLoaded", async function () {
       const limitBytes = usageData.storage.limit ?? 0;
 
       if (usageRemainingElement && limitBytes > 0) {
-        const percent = Math.min((usedBytes / limitBytes) * 100, 100).toFixed(0);
+        const rawPercent = Math.min((usedBytes / limitBytes) * 100, 100);
+        let percent;
+        if (rawPercent === 0) {
+          percent = "0";
+        } else if (rawPercent < 0.1) {
+          percent = rawPercent.toFixed(3);
+        } else if (rawPercent < 1) {
+          percent = rawPercent.toFixed(2);
+        } else if (rawPercent < 10) {
+          percent = rawPercent.toFixed(1);
+        } else {
+          percent = rawPercent.toFixed(0);
+        }
         const formattedUsage = typeof formatUsageProgress === "function"
           ? formatUsageProgress(usedBytes, limitBytes, "storage")
           : formatFileSize(usedBytes);

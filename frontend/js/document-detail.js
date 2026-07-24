@@ -1930,7 +1930,13 @@ function appendAiQaMessage(role, content, meta = {}) {
         bubble.textContent = content;
     }
 
-    if (Array.isArray(meta.sourceChunks) && meta.sourceChunks.length > 0) {
+    const isFallback = content && (
+        content.includes("Tôi chưa tìm thấy tài liệu phù hợp") ||
+        content.includes("I could not find matching documents") ||
+        content.includes("Tôi không tìm thấy thông tin này") ||
+        content.includes("I could not find this information")
+    );
+    if (role === "assistant" && !isFallback && Array.isArray(meta.sourceChunks) && meta.sourceChunks.length > 0) {
         const formatSourceLabel = window.formatAiSourceLabel || ((_, index) => `Chunk ${index + 1}`);
         const seenSourceLabels = new Set();
         const sourceLabels = [];

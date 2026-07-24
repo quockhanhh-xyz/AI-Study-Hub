@@ -1102,19 +1102,19 @@ function injectFloatingChatbot() {
     <div class="floating-chat-messages" id="floatingChatMessages">
       <div class="floating-message-bubble assistant">
         <div class="floating-message-content">
-          Xin chào! Tôi là Trợ lý Học tập AI của bạn. Tôi có thể tìm kiếm và trả lời thông tin dựa trên các tài liệu trong thư viện của bạn hoặc Community Library. Bạn muốn hỏi điều gì hôm nay?
+          Hello! I am your AI Study Assistant. I can search and answer questions based on the AI-processed documents in your library or the Community Library. What would you like to ask today?
         </div>
         <span class="floating-message-time">System</span>
       </div>
     </div>
     <div class="floating-chat-input-area">
       <div class="floating-chat-suggestions">
-        <span class="floating-suggestion-chip" onclick="applyFloatingSuggestion('Tôi muốn học thêm về database normalization')">Normalization</span>
-        <span class="floating-suggestion-chip" onclick="applyFloatingSuggestion('Tóm tắt khái niệm OOP')">OOP Concept</span>
-        <span class="floating-suggestion-chip" onclick="applyFloatingSuggestion('Phân biệt SQL và NoSQL')">SQL vs NoSQL</span>
+        <span class="floating-suggestion-chip" onclick="applyFloatingSuggestion('Explain Database Normalization with examples')">Normalization</span>
+        <span class="floating-suggestion-chip" onclick="applyFloatingSuggestion('Summarize Object-Oriented Programming (OOP) concepts')">OOP Concept</span>
+        <span class="floating-suggestion-chip" onclick="applyFloatingSuggestion('Compare SQL vs NoSQL databases')">SQL vs NoSQL</span>
       </div>
       <div class="floating-chat-input-wrapper">
-        <textarea id="floatingChatInput" class="floating-chat-textarea" placeholder="Nhập câu hỏi..."></textarea>
+        <textarea id="floatingChatInput" class="floating-chat-textarea" placeholder="Ask a question..."></textarea>
         <button id="floatingSendBtn" class="floating-btn-send">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
@@ -1275,7 +1275,13 @@ function injectFloatingChatbot() {
     contentEl.className = "floating-message-content";
     contentEl.textContent = content;
 
-    if (!isUser && sourceChunks && sourceChunks.length > 0) {
+    const isFallback = content && (
+      content.includes("Tôi chưa tìm thấy tài liệu phù hợp") ||
+      content.includes("I could not find matching documents") ||
+      content.includes("Tôi không tìm thấy thông tin này") ||
+      content.includes("I could not find this information")
+    );
+    if (!isUser && !isFallback && sourceChunks && sourceChunks.length > 0) {
       const container = document.createElement("div");
       container.className = "floating-citations-container";
       
