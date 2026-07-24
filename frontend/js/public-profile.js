@@ -336,6 +336,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       const metricsDiv = document.createElement("div");
       metricsDiv.className = "comm-card-metrics";
 
+      const ratingSpan = document.createElement("span");
+      ratingSpan.className = "comm-card-metric-item";
+      ratingSpan.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fbbf24" width="12" height="12"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+        <span>${Number(doc.averageRating || 0).toFixed(1)}/5</span>
+      `;
+      metricsDiv.appendChild(ratingSpan);
+
       const viewsSpan = document.createElement("span");
       viewsSpan.className = "comm-card-metric-item";
       viewsSpan.innerHTML = `

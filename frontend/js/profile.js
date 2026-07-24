@@ -585,8 +585,8 @@ document.addEventListener("DOMContentLoaded", async () => {
               </span>
               <div class="comm-card-metrics">
                 <span class="comm-card-metric-item">
-                  <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21c-2.5 0-4.625-.875-6.375-2.625S3 14.5 3 12s.875-4.625 2.625-6.375S9.5 3 12 3c.133 0 .275.004.425.012.15.008.342.021.575.038-.6.533-1.067 1.192-1.4 1.975-.333.783-.5 1.608-.5 2.475 0 1.5.525 2.775 1.575 3.825 1.05 1.05 2.325 1.575 3.825 1.575.867 0 1.692-.154 2.475-.462S20.417 11.7 20.95 11.15c.017.2.029.362.037.487s.013.238.013.363c0 2.5-.875 4.625-2.625 6.375S14.5 21 12 21z"></path></svg>
-                  <span>${doc.upvotesCount || 0}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fbbf24" width="12" height="12"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                  <span>${Number(doc.averageRating || 0).toFixed(1)}/5</span>
                 </span>
                 <span class="comm-card-metric-item">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5">

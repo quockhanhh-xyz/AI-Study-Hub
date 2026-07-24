@@ -241,9 +241,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     initInspectorTabs();
     initEditFormListeners();
 
-    if (currentIsCommunityView) {
-        const backBtn = document.getElementById("detailBackBtn");
-        if (backBtn) {
+    const backBtn = document.getElementById("detailBackBtn");
+    if (backBtn) {
+        const fromParam = params.get("from");
+        if (fromParam === "profile") {
+            backBtn.innerHTML = `← Back to Uploads & Upvotes`;
+        } else if (fromParam === "public-profile") {
+            backBtn.innerHTML = `← Back to Network`;
+        } else if (currentIsCommunityView) {
             backBtn.innerHTML = `← Back to Community Library`;
         }
     }
@@ -2967,11 +2972,11 @@ async function initRatingReportingWidget(doc) {
             star.innerHTML = "★";
             star.dataset.value = i;
 
-            if (myRating && i <= myRating) {
+            if (i <= Math.round(averageRating)) {
                 star.classList.add("filled");
-            } else if (!myRating && i <= Math.round(averageRating)) {
-                star.classList.add("filled");
-                star.style.opacity = "0.5";
+                if (!myRating) {
+                    star.style.opacity = "0.7";
+                }
             }
 
             if (canRate) {
