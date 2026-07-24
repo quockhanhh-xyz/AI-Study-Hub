@@ -29,4 +29,9 @@ public interface PromptBuilderService {
      * @return The complete prompt string ready to send to the AI provider
      */
     String buildPrompt(String question, List<DocumentChunkDto> chunks, boolean isSummary);
+
+    /**
+     * Build the global chat prompt for the multi-document chatbot.
+     */
+    String buildGlobalChatPrompt(String question, List<DocumentChunkDto> chunks);
 }

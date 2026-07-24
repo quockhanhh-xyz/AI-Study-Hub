@@ -27,6 +27,10 @@ async function initializeLayout() {
   // 5. ATTACH QUICK PROFILE POPUP LISTENERS
   initializeQuickProfilePopup();
 
+  if (isAuthenticated) {
+    injectFloatingChatbot();
+  }
+
   return isAuthenticated;
 }
 
@@ -756,6 +760,522 @@ function initializeQuickProfilePopup() {
     e.preventDefault();
     showQuickProfileModal(userId);
   });
+}
+
+function injectFloatingChatbot() {
+  const currentPage = getCurrentPageName();
+  if (currentPage.startsWith("admin-") || ["login.html", "register.html", "verify-otp.html"].includes(currentPage)) {
+    return;
+  }
+
+  // Prevent multiple injections
+  if (document.getElementById("floatingChatToggleBtn")) return;
+
+  // 1. Inject Styles
+  const styleEl = document.createElement("style");
+  styleEl.textContent = `
+    .floating-chat-toggle-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #f05a28;
+      color: #ffffff;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      z-index: 99999;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+    .floating-chat-toggle-btn:hover {
+      background: #e04f1e;
+      transform: scale(1.05);
+    }
+    .floating-chat-toggle-btn svg {
+      width: 26px;
+      height: 26px;
+    }
+    .floating-chat-panel {
+      position: fixed;
+      bottom: 96px;
+      right: 24px;
+      width: 380px;
+      height: 520px;
+      background: #ffffff;
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 99999;
+      font-family: inherit;
+    }
+    .floating-chat-panel.active {
+      display: flex;
+    }
+    .floating-chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .floating-chat-header-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .floating-chat-header-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .floating-chat-header-info h3 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .floating-chat-header-info span {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    .floating-chat-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .floating-chat-clear-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s, background-color 0.2s;
+    }
+    .floating-chat-clear-btn:hover {
+      color: #ef4444;
+      background: #fee2e2;
+    }
+    .floating-chat-messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .floating-message-bubble {
+      max-width: 85%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .floating-message-bubble.user {
+      align-self: flex-end;
+    }
+    .floating-message-bubble.assistant {
+      align-self: flex-start;
+    }
+    .floating-message-content {
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    .floating-message-bubble.user .floating-message-content {
+      background: #f05a28;
+      color: #ffffff;
+      border-bottom-right-radius: 2px;
+    }
+    .floating-message-bubble.assistant .floating-message-content {
+      background: #ffffff;
+      color: #1e293b;
+      border-bottom-left-radius: 2px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .floating-message-time {
+      font-size: 10px;
+      color: #94a3b8;
+      align-self: flex-end;
+    }
+    .floating-message-bubble.assistant .floating-message-time {
+      align-self: flex-start;
+    }
+    .floating-citations-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed #e2e8f0;
+    }
+    .floating-citation-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      background: #f1f5f9;
+      color: #475569;
+      padding: 3px 6px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+      width: fit-content;
+    }
+    .floating-citation-badge .floating-source-type {
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 1px 3px;
+      border-radius: 3px;
+    }
+    .floating-citation-badge .floating-source-type.my-library {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+    .floating-citation-badge .floating-source-type.community-library {
+      background: #dcfce7;
+      color: #15803d;
+    }
+    .floating-citation-badge .floating-source-type.shared-library {
+      background: #fef9c3;
+      color: #a16207;
+    }
+    .floating-chat-input-area {
+      padding: 12px 16px;
+      background: #ffffff;
+      border-top: 1px solid #e2e8f0;
+    }
+    .floating-chat-suggestions {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      margin-bottom: 8px;
+      padding-bottom: 4px;
+    }
+    .floating-suggestion-chip {
+      font-size: 11.5px;
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .floating-suggestion-chip:hover {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+    .floating-chat-input-wrapper {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .floating-chat-textarea {
+      flex: 1;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13.5px;
+      resize: none;
+      height: 36px;
+      font-family: inherit;
+      line-height: 1.4;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .floating-chat-textarea:focus {
+      border-color: #f05a28;
+    }
+    .floating-btn-send {
+      background: #f05a28;
+      color: #ffffff;
+      border: none;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .floating-btn-send:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .floating-btn-send svg {
+      width: 16px;
+      height: 16px;
+    }
+  `;
+  document.head.appendChild(styleEl);
+
+  // 2. Inject HTML Structure
+  const chatToggleBtn = document.createElement("button");
+  chatToggleBtn.id = "floatingChatToggleBtn";
+  chatToggleBtn.className = "floating-chat-toggle-btn";
+  chatToggleBtn.title = "Chat with AI Study Assistant";
+  chatToggleBtn.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .771-.332c.983-.003 1.959-.063 2.924-.18 1.584-.19 2.707-1.583 2.707-3.186V6.302c0-1.6-1.123-2.994-2.707-3.227A48.372 48.372 0 0 0 12 3c-2.247 0-4.45.148-6.607.435C3.81 3.662 2.688 5.056 2.688 6.66l-.002 6.102Z" />
+    </svg>
+  `;
+
+  const chatPanel = document.createElement("div");
+  chatPanel.id = "floatingChatPanel";
+  chatPanel.className = "floating-chat-panel";
+  chatPanel.innerHTML = `
+    <div class="floating-chat-header">
+      <div class="floating-chat-header-title">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#f05a28" style="width: 20px; height: 20px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 21l3.086-6.83M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div class="floating-chat-header-info">
+          <h3>Homepage Chat</h3>
+          <span id="floatingQuotaDisplay">Authenticated StudyMate AI</span>
+        </div>
+      </div>
+      <div class="floating-chat-header-actions">
+        <button class="floating-chat-clear-btn" id="floatingClearBtn" title="Clear Conversation">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width: 18px; height: 18px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="floating-chat-messages" id="floatingChatMessages">
+      <div class="floating-message-bubble assistant">
+        <div class="floating-message-content">
+          Xin chào! Tôi là Trợ lý Học tập AI của bạn. Tôi có thể tìm kiếm và trả lời thông tin dựa trên các tài liệu trong thư viện của bạn hoặc Community Library. Bạn muốn hỏi điều gì hôm nay?
+        </div>
+        <span class="floating-message-time">System</span>
+      </div>
+    </div>
+    <div class="floating-chat-input-area">
+      <div class="floating-chat-suggestions">
+        <span class="floating-suggestion-chip" onclick="applyFloatingSuggestion('Tôi muốn học thêm về database normalization')">Normalization</span>
+        <span class="floating-suggestion-chip" onclick="applyFloatingSuggestion('Tóm tắt khái niệm OOP')">OOP Concept</span>
+        <span class="floating-suggestion-chip" onclick="applyFloatingSuggestion('Phân biệt SQL và NoSQL')">SQL vs NoSQL</span>
+      </div>
+      <div class="floating-chat-input-wrapper">
+        <textarea id="floatingChatInput" class="floating-chat-textarea" placeholder="Nhập câu hỏi..."></textarea>
+        <button id="floatingSendBtn" class="floating-btn-send">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(chatToggleBtn);
+  document.body.appendChild(chatPanel);
+
+  // 3. Logic & Event Bindings
+  const messagesContainer = document.getElementById("floatingChatMessages");
+  const textInput = document.getElementById("floatingChatInput");
+  const sendBtn = document.getElementById("floatingSendBtn");
+  const clearBtn = document.getElementById("floatingClearBtn");
+  const quotaDisplay = document.getElementById("floatingQuotaDisplay");
+
+  let isHistoryLoaded = false;
+
+  chatToggleBtn.addEventListener("click", () => {
+    const isActive = chatPanel.classList.toggle("active");
+    if (isActive) {
+      chatToggleBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      `;
+      textInput.focus();
+      if (!isHistoryLoaded) {
+        loadHistory();
+      }
+      loadQuota();
+    } else {
+      chatToggleBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .771-.332c.983-.003 1.959-.063 2.924-.18 1.584-.19 2.707-1.583 2.707-3.186V6.302c0-1.6-1.123-2.994-2.707-3.227A48.372 48.372 0 0 0 12 3c-2.247 0-4.45.148-6.607.435C3.81 3.662 2.688 5.056 2.688 6.66l-.002 6.102Z" />
+        </svg>
+      `;
+    }
+  });
+
+  sendBtn.addEventListener("click", sendMessage);
+  textInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  clearBtn.addEventListener("click", clearConversation);
+
+  window.applyFloatingSuggestion = (text) => {
+    textInput.value = text;
+    textInput.focus();
+  };
+
+  async function loadQuota() {
+    try {
+      const res = await get("/api/ai/usage/me");
+      if (res && res.success) {
+        quotaDisplay.textContent = `Remaining Quota: ${res.data.remainingQuestions} Q&A today`;
+      }
+    } catch (e) {
+      console.warn("Error loading quota", e);
+    }
+  }
+
+  async function loadHistory() {
+    try {
+      const res = await get("/api/ai/global/chats");
+      if (res && res.success && res.data.messages && res.data.messages.length > 0) {
+        messagesContainer.innerHTML = "";
+        res.data.messages.forEach(msg => {
+          appendBubble(msg.role, msg.content, msg.sourceChunks, msg.createdAt);
+        });
+        scrollToBottom();
+        isHistoryLoaded = true;
+      }
+    } catch (e) {
+      console.warn("Error loading global chat history", e);
+    }
+  }
+
+  async function sendMessage() {
+    const val = textInput.value.trim();
+    if (!val) return;
+    textInput.value = "";
+
+    appendBubble("USER", val, null, new Date().toISOString());
+    scrollToBottom();
+    setLoading(true);
+
+    try {
+      const res = await post("/api/ai/global/ask", { question: val });
+      if (res && res.success) {
+        appendBubble("ASSISTANT", res.data.answer, res.data.sourceChunks, new Date().toISOString());
+        if (res.data.remainingQuestions !== undefined) {
+          quotaDisplay.textContent = `Remaining Quota: ${res.data.remainingQuestions} Q&A today`;
+        }
+      } else {
+        appendBubble("ASSISTANT", "Xin lỗi, đã xảy ra lỗi trong quá trình kết nối với AI.", null, new Date().toISOString());
+      }
+    } catch (error) {
+      const msg = error.message || "Failed to contact AI Assistant.";
+      appendBubble("ASSISTANT", `Đã xảy ra lỗi: ${msg}`, null, new Date().toISOString());
+    } finally {
+      setLoading(false);
+      scrollToBottom();
+      textInput.focus();
+    }
+  }
+
+  async function clearConversation() {
+    if (!confirm("Are you sure you want to clear this conversation?")) return;
+    try {
+      const res = await del("/api/ai/global/chats");
+      if (res && res.success) {
+        messagesContainer.innerHTML = `
+          <div class="floating-message-bubble assistant">
+            <div class="floating-message-content">
+              Đã xóa cuộc hội thoại thành công. Tôi có thể giúp gì thêm cho bạn?
+            </div>
+            <span class="floating-message-time">System</span>
+          </div>
+        `;
+        isHistoryLoaded = false;
+      }
+    } catch (e) {
+      console.warn("Failed to clear chat", e);
+    }
+  }
+
+  function setLoading(isLoading) {
+    textInput.disabled = isLoading;
+    sendBtn.disabled = isLoading;
+  }
+
+  function scrollToBottom() {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  function appendBubble(role, content, sourceChunks, timestamp) {
+    const isUser = (role === "USER");
+    const bubble = document.createElement("div");
+    bubble.className = `floating-message-bubble ${isUser ? 'user' : 'assistant'}`;
+
+    const contentEl = document.createElement("div");
+    contentEl.className = "floating-message-content";
+    contentEl.textContent = content;
+
+    if (!isUser && sourceChunks && sourceChunks.length > 0) {
+      const container = document.createElement("div");
+      container.className = "floating-citations-container";
+      
+      const uniqueCitations = [];
+      const seen = new Set();
+      sourceChunks.forEach(chunk => {
+        const key = `${chunk.documentId}-${chunk.sourceLabel}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueCitations.push(chunk);
+        }
+      });
+
+      uniqueCitations.forEach(citation => {
+        const badge = document.createElement("div");
+        badge.className = "floating-citation-badge";
+        const libClass = (citation.sourceLibrary === "My Library") ? "my-library" 
+          : (citation.sourceLibrary === "Community Library") ? "community-library" : "shared-library";
+        
+        badge.innerHTML = `
+          <span class="floating-source-type ${libClass}">${citation.sourceLibrary || 'Library'}</span>
+          <a href="document-detail.html?id=${citation.documentId}" style="text-decoration: none; color: inherit; font-weight: 600;">
+            ${citation.documentTitle || 'Tài liệu'}
+          </a>
+        `;
+        container.appendChild(badge);
+      });
+      contentEl.appendChild(container);
+    }
+
+    bubble.appendChild(contentEl);
+
+    const timeEl = document.createElement("span");
+    timeEl.className = "floating-message-time";
+    timeEl.textContent = formatTime(timestamp);
+    bubble.appendChild(timeEl);
+
+    messagesContainer.appendChild(bubble);
+  }
+
+  function formatTime(isoString) {
+    if (!isoString) return "";
+    try {
+      const date = new Date(isoString);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return "";
+    }
+  }
 }
 // End of layout component manager file.
 // End of layout component manager file.

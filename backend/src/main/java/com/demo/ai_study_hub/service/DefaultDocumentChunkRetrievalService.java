@@ -2,6 +2,9 @@ package com.demo.ai_study_hub.service;
 
 import com.demo.ai_study_hub.dto.DocumentChunkDto;
 import com.demo.ai_study_hub.repository.DocumentChunkRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +31,9 @@ import java.util.stream.Collectors;
 public class DefaultDocumentChunkRetrievalService implements DocumentChunkRetrievalService {
 
     private final DocumentChunkRepository documentChunkRepository;
+
+    @PersistenceContext
+    private final EntityManager entityManager;
 
     private static final Set<String> STOP_WORDS = new HashSet<>(Arrays.asList(
             "a", "an", "the", "is", "it", "in", "on", "at", "to", "for",
@@ -107,6 +113,18 @@ public class DefaultDocumentChunkRetrievalService implements DocumentChunkRetrie
     }
 
     private DocumentChunkDto toDto(com.demo.ai_study_hub.entity.DocumentChunk chunk, double score) {
+        return toDto(chunk, score, null);
+    }
+
+    private DocumentChunkDto toDto(com.demo.ai_study_hub.entity.DocumentChunk chunk, double score, Integer currentUserId) {
+        String sourceLib = "Shared Library";
+        if (chunk.getDocument() != null) {
+            if (chunk.getDocument().getOwner() != null && currentUserId != null && chunk.getDocument().getOwner().getUserId().equals(currentUserId)) {
+                sourceLib = "My Library";
+            } else if ("PUBLIC".equals(chunk.getDocument().getVisibility()) && "APPROVED".equals(chunk.getDocument().getApprovalStatus())) {
+                sourceLib = "Community Library";
+            }
+        }
         return DocumentChunkDto.builder()
                 .chunkId(chunk.getChunkId())
                 .chunkIndex(chunk.getChunkIndex())
@@ -114,7 +132,74 @@ public class DefaultDocumentChunkRetrievalService implements DocumentChunkRetrie
                 .pageNumber(chunk.getPageNumber())
                 .sourceLabel(chunk.getSourceLabel() != null ? chunk.getSourceLabel()
                         : "Chunk " + (chunk.getChunkIndex() + 1))
+                .documentId(chunk.getDocument() != null ? chunk.getDocument().getDocumentId() : null)
+                .documentTitle(chunk.getDocument() != null ? chunk.getDocument().getTitle() : null)
+                .sourceLibrary(sourceLib)
                 .score(score)
                 .build();
+    }
+
+    @Override
+    public List<DocumentChunkDto> retrieveGlobalChunksByKeyword(Integer userId, String question, int topK) {
+        Set<String> keywords = extractKeywords(question);
+        if (keywords.isEmpty()) return Collections.emptyList();
+
+        StringBuilder jpql = new StringBuilder();
+        jpql.append("SELECT dc FROM DocumentChunk dc ");
+        jpql.append("JOIN FETCH dc.document d ");
+        jpql.append("JOIN FETCH d.owner o ");
+        jpql.append("LEFT JOIN d.documentContent dcContent ");
+        jpql.append("WHERE d.status = 'ACTIVE' ");
+        jpql.append("AND dcContent IS NOT NULL ");
+        jpql.append("AND dcContent.processingStatus = 'COMPLETED' ");
+        jpql.append("AND (");
+        jpql.append("  o.userId = :userId ");
+        jpql.append("  OR (d.visibility = 'PUBLIC' AND d.approvalStatus = 'APPROVED' AND o.status = 'ACTIVE') ");
+        jpql.append("  OR EXISTS (SELECT ds FROM DocumentShare ds WHERE ds.document = d AND ds.sharedWith.userId = :userId AND ds.status = 'ACTIVE') ");
+        jpql.append("  OR EXISTS (SELECT gds FROM GroupDocumentShare gds JOIN StudyGroupMember sgm ON gds.group = sgm.group ");
+        jpql.append("             WHERE gds.document = d AND sgm.user.userId = :userId AND gds.status = 'ACTIVE' ");
+        jpql.append("             AND sgm.status = 'ACTIVE' AND gds.group.status = 'ACTIVE') ");
+        jpql.append(") ");
+
+        jpql.append("AND (");
+        int keywordIdx = 0;
+        for (String ignored : keywords) {
+            if (keywordIdx > 0) {
+                jpql.append(" OR ");
+            }
+            jpql.append("LOWER(dc.chunkText) LIKE :keyword_" + keywordIdx);
+            keywordIdx++;
+        }
+        jpql.append(")");
+
+        TypedQuery<com.demo.ai_study_hub.entity.DocumentChunk> query =
+                entityManager.createQuery(jpql.toString(), com.demo.ai_study_hub.entity.DocumentChunk.class);
+        query.setParameter("userId", userId);
+        
+        keywordIdx = 0;
+        for (String keyword : keywords) {
+            query.setParameter("keyword_" + keywordIdx, "%" + keyword.toLowerCase() + "%");
+            keywordIdx++;
+        }
+
+        query.setMaxResults(100);
+        List<com.demo.ai_study_hub.entity.DocumentChunk> candidateChunks = query.getResultList();
+
+        if (candidateChunks.isEmpty()) return Collections.emptyList();
+
+        List<Map.Entry<com.demo.ai_study_hub.entity.DocumentChunk, Double>> scored = new ArrayList<>();
+        for (com.demo.ai_study_hub.entity.DocumentChunk chunk : candidateChunks) {
+            double score = scoreChunk(chunk.getChunkText(), keywords);
+            if (score > 0) {
+                scored.add(Map.entry(chunk, score));
+            }
+        }
+
+        return scored.stream()
+                .sorted(Map.Entry.<com.demo.ai_study_hub.entity.DocumentChunk, Double>comparingByValue()
+                        .reversed())
+                .limit(topK)
+                .map(e -> toDto(e.getKey(), e.getValue(), userId))
+                .collect(Collectors.toList());
     }
 }

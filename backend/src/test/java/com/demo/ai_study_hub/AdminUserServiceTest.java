@@ -48,6 +48,9 @@ class AdminUserServiceTest {
     @Mock
     private PaymentOrderRepository paymentOrderRepository;
 
+    @Mock
+    private com.demo.ai_study_hub.service.UsageService usageService;
+
     @InjectMocks
     private AdminUserService adminUserService;
 
@@ -81,6 +84,8 @@ class AdminUserServiceTest {
                 .thenReturn(Collections.singletonList(payment));
 
         when(documentRepository.countByOwner(user)).thenReturn(5L);
+
+        when(usageService.countAiQuestionsToday(user)).thenReturn(10L);
 
         com.demo.ai_study_hub.dto.TierLimits limits = new com.demo.ai_study_hub.dto.TierLimits(
             100L, 10, 10L, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, "mock", 10, 10, 10, 10, 10, 10

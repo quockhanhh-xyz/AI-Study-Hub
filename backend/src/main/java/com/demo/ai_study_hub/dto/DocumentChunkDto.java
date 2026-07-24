@@ -28,6 +28,10 @@ public class DocumentChunkDto {
 
     /** Full text content of this chunk */
     private String chunkText;
+    
+    private Integer documentId;
+    private String documentTitle;
+    private String sourceLibrary; // "My Library" or "Community Library"
 
     /** Page number if available (PDF), or null */
     private Integer pageNumber;

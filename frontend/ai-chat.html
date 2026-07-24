@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Study Assistant - AI Study Hub</title>
+    <meta name="description" content="Ask the AI central assistant questions across your documents and Community Library." />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        .chat-layout {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 200px);
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #ffffff;
+        }
+
+        .chat-header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-header-title h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .quota-indicator {
+            font-size: 13px;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: #f8fafc;
+        }
+
+        .message-bubble {
+            max-width: 80%;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .message-bubble.user {
+            align-self: flex-end;
+        }
+
+        .message-bubble.assistant {
+            align-self: flex-start;
+        }
+
+        .message-content {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .message-bubble.user .message-content {
+            background: #f05a28;
+            color: #ffffff;
+            border-bottom-right-radius: 2px;
+        }
+
+        .message-bubble.assistant .message-content {
+            background: #ffffff;
+            color: #1e293b;
+            border-bottom-left-radius: 2px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #94a3b8;
+            align-self: flex-end;
+        }
+
+        .message-bubble.assistant .message-time {
+            align-self: flex-start;
+        }
+
+        .citations-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #e2e8f0;
+        }
+
+        .citation-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            background: #f1f5f9;
+            color: #475569;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            width: fit-content;
+        }
+
+        .citation-badge .source-type {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .citation-badge .source-type.my-library {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .citation-badge .source-type.community-library {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .citation-badge .source-type.shared-library {
+            background: #fef9c3;
+            color: #a16207;
+        }
+
+        .chat-input-area {
+            padding: 16px 24px;
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .chat-textarea {
+            flex: 1;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            resize: none;
+            height: 48px;
+            font-family: inherit;
+            line-height: 1.5;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .chat-textarea:focus {
+            border-color: #f05a28;
+        }
+
+        .btn-send {
+            background: #f05a28;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s;
+        }
+
+        .btn-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .quick-suggestions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .suggestion-chip {
+            font-size: 13px;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            padding: 6px 12px;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .suggestion-chip:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <section class="page-header">
+                <div class="header-title-section">
+                    <h1>Study Assistant</h1>
+                    <p class="dashboard-subtitle">Chat with your global library and retrieve facts instantly.</p>
+                </div>
+                <div id="globalHeaderWidgets" class="global-header-widgets"></div>
+            </section>
+
+            <div class="chat-layout">
+                <div class="chat-header">
+                    <div class="chat-header-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" stroke="currentColor" stroke-width="2" style="color: #f05a28;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 21l3.086-6.83M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h2>AI Study Assistant</h2>
+                        <span id="quotaDisplay" class="quota-indicator">Remaining Quota: - Q&A today</span>
+                    </div>
+                    <button class="btn btn-outline" id="clearChatBtn" style="font-size: 13px; padding: 6px 14px;">Clear Conversation</button>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message-bubble assistant">
+                        <div class="message-content">
+                            Xin chào! Tôi là Trợ lý Học tập AI của bạn. Tôi có thể tìm kiếm và trả lời thông tin dựa trên các tài liệu đã xử lý AI trong thư viện của bạn hoặc Community Library. Bạn muốn hỏi điều gì hôm nay?
+                        </div>
+                        <span class="message-time">System</span>
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <div class="quick-suggestions">
+                        <span class="suggestion-chip" onclick="applySuggestion('Tôi muốn học thêm về database normalization')">Tôi muốn học thêm về database normalization</span>
+                        <span class="suggestion-chip" onclick="applySuggestion('Tóm tắt khái niệm OOP')">Tóm tắt khái niệm OOP</span>
+                        <span class="suggestion-chip" onclick="applySuggestion('Phân biệt SQL và NoSQL')">Phân biệt SQL và NoSQL</span>
+                    </div>
+                    <div class="chat-input-wrapper">
+                        <textarea id="chatInput" class="chat-textarea" placeholder="Nhập câu hỏi của bạn tại đây..."></textarea>
+                        <button id="sendBtn" class="btn-send">Gửi</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/account-api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/notification-api.js"></script>
+    <script src="js/notification.js"></script>
+    <script src="js/ai-chat.js"></script>
+</body>
+
+</html>

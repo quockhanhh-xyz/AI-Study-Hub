@@ -22,4 +22,8 @@ public class AiSourceChunk {
 
     /** Human-readable label, e.g. "Chunk 1", "Page 2". */
     private String sourceLabel;
+
+    private Integer documentId;
+    private String documentTitle;
+    private String sourceLibrary; // "My Library" or "Community Library"
 }

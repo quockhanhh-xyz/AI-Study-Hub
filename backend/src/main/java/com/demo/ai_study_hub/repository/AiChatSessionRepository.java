@@ -18,6 +18,11 @@ public interface AiChatSessionRepository extends JpaRepository<AiChatSession, Lo
      */
     Optional<AiChatSession> findByUser_UserIdAndDocument_DocumentIdAndStatus(
             Integer userId, Integer documentId, String status);
+            
+    Optional<AiChatSession> findByUser_UserIdAndDocumentIsNullAndStatus(
+            Integer userId, String status);
+
+    long countByUser_UserIdAndDocumentIsNullAndStatus(Integer userId, String status);
 
     /**
      * Find all sessions (any status) for a user on a specific document.

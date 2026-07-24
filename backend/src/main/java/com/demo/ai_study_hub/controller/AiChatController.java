@@ -86,4 +86,44 @@ public class AiChatController {
         AiUsageSummaryResponse response = aiChatService.getUsageSummary(principal.getName());
         return ResponseEntity.ok(ApiResponse.success(response, "AI usage retrieved successfully"));
     }
+
+    /**
+     * POST /api/ai/global/ask
+     *
+     * Ask the central Study Assistant a question across all documents.
+     */
+    @PostMapping("/global/ask")
+    public ResponseEntity<ApiResponse<AiAskResponse>> askGlobal(
+            @Valid @RequestBody AiAskRequest request,
+            Principal principal
+    ) {
+        AiAskResponse response = aiChatService.askGlobal(request.getQuestion(), principal.getName());
+        return ResponseEntity.ok(ApiResponse.success(response, "AI global answer generated successfully"));
+    }
+
+    /**
+     * GET /api/ai/global/chats
+     *
+     * Retrieve the global chat session messages for the current user.
+     */
+    @GetMapping("/global/chats")
+    public ResponseEntity<ApiResponse<AiChatHistoryResponse>> getGlobalChatHistory(
+            Principal principal
+    ) {
+        AiChatHistoryResponse response = aiChatService.getGlobalChatHistory(principal.getName());
+        return ResponseEntity.ok(ApiResponse.success(response, "Global chat history retrieved successfully"));
+    }
+
+    /**
+     * DELETE /api/ai/global/chats
+     *
+     * Reset/clear the user's active global chat session.
+     */
+    @DeleteMapping("/global/chats")
+    public ResponseEntity<ApiResponse<Void>> deleteGlobalChat(
+            Principal principal
+    ) {
+        aiChatService.deleteGlobalChat(principal.getName());
+        return ResponseEntity.ok(ApiResponse.success(null, "Global chat session cleared successfully"));
+    }
 }

@@ -178,4 +178,72 @@ class AiChatControllerTest {
                 .andExpect(jsonPath("$.data.usedToday").value(1))
                 .andExpect(jsonPath("$.data.remainingQuestions").value(2));
     }
+
+    // =========================================================================
+    // 7. Ask Global successfully -> 200
+    // =========================================================================
+    @Test
+    @WithMockUser(username = "test@gmail.com")
+    void askGlobal_Success_ShouldReturn200() throws Exception {
+        AiAskResponse response = AiAskResponse.builder()
+                .answer("Global answer")
+                .sourceChunks(Collections.emptyList())
+                .provider("mock")
+                .modelName("mock")
+                .inputTokens(15)
+                .outputTokens(25)
+                .totalTokens(40)
+                .tokenUsageEstimated(true)
+                .remainingQuestions(1)
+                .build();
+
+        when(aiChatService.askGlobal(anyString(), anyString())).thenReturn(response);
+
+        AiAskRequest request = new AiAskRequest();
+        request.setQuestion("Global question");
+
+        mockMvc.perform(post("/api/ai/global/ask")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.answer").value("Global answer"));
+    }
+
+    // =========================================================================
+    // 8. Get global chat history -> 200
+    // =========================================================================
+    @Test
+    @WithMockUser(username = "test@gmail.com")
+    void getGlobalChatHistory_Success_ShouldReturn200() throws Exception {
+        AiChatHistoryResponse response = AiChatHistoryResponse.builder()
+                .sessionId(200L)
+                .documentId(null)
+                .messages(Collections.emptyList())
+                .build();
+
+        when(aiChatService.getGlobalChatHistory(anyString())).thenReturn(response);
+
+        mockMvc.perform(get("/api/ai/global/chats"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.sessionId").value(200))
+                .andExpect(jsonPath("$.data.documentId").isEmpty());
+    }
+
+    // =========================================================================
+    // 9. Delete global chat successfully -> 200
+    // =========================================================================
+    @Test
+    @WithMockUser(username = "test@gmail.com")
+    void deleteGlobalChat_Success_ShouldReturn200() throws Exception {
+        doNothing().when(aiChatService).deleteGlobalChat(anyString());
+
+        mockMvc.perform(delete("/api/ai/global/chats")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Global chat session cleared successfully"));
+    }
 }
