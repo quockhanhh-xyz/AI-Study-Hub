@@ -26,6 +26,9 @@
       border-bottom: 2px solid transparent;
       transition: all 0.2s;
       margin-bottom: -1px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .library-tab:hover {
@@ -246,48 +249,71 @@
             <h1>My Library</h1>
             <p class="dashboard-subtitle" id="breadcrumbPath">Your personal workspace.</p>
           </div>
-          <div style="display: flex; gap: 12px; align-items: center;">
-            <button type="button" id="shareFolderBtn" class="btn btn-secondary" style="display: none; align-items: center; gap: 6px;">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" aria-hidden="true">
-                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 100-2.684 3 3 0 000 2.684zm0 9a3 3 0 100-2.684 3 3 0 000 2.684z"/>
-              </svg>
-              Share Folder
-            </button>
-            <button type="button" id="createFolderBtn" class="btn btn-secondary" style="display: none; align-items: center; gap: 6px; white-space: nowrap;">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" aria-hidden="true">
-                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-              </svg>
-              New Folder
-            </button>
-            <button type="button" id="createSubjectBtn" class="btn btn-primary" style="display: none; align-items: center; gap: 6px; white-space: nowrap;" onclick="openModal('createSubjectModal')">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" aria-hidden="true">
-                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-              </svg>
-              Create Subject
-            </button>
-            <button type="button" id="uploadDocumentBtn" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;" onclick="openModal('uploadModal')">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" aria-hidden="true">
-                <path fill="currentColor" d="M6 18h12v-3h2v5H4v-5h2zm11.207 -8.707L15.793 10.707 13 7.914V16h-2V7.914L8.207 10.707 6.793 9.293 12 4.086z"></path>
-              </svg>
-              Upload Document
-            </button>
-          </div>
         </div>
       </section>
       
       <section class="card dashboard-panel">
         <div class="library-tabs">
-          <div class="library-tab active" data-tab="documents">Documents</div>
-          <div class="library-tab" data-tab="folders">Folders</div>
-          <div class="library-tab" data-tab="favorites">Favorites</div>
-          <div class="library-tab" data-tab="my-subjects">My Subjects</div>
+          <div class="library-tab active" data-tab="documents">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex-shrink: 0;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+            <span>Documents</span>
+          </div>
+          <div class="library-tab" data-tab="folders">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex-shrink: 0;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+            </svg>
+            <span>Folders</span>
+          </div>
+          <div class="library-tab" data-tab="favorites">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex-shrink: 0;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499c.172-.376.702-.376.874 0l2.213 4.87 5.385.788c.412.06.578.57.28.868l-3.898 3.805 1.054 5.373c.079.404-.343.711-.706.514l-4.782-2.522-4.783 2.522c-.363.197-.785-.11-.706-.514l1.054-5.373-3.898-3.805c-.298-.298-.132-.808.28-.868l5.385-.788 2.213-4.87z" />
+            </svg>
+            <span>Favorites</span>
+          </div>
+          <div class="library-tab" data-tab="my-subjects">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex-shrink: 0;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-16.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-16.25v14.25" />
+            </svg>
+            <span>My Subjects</span>
+          </div>
         </div>
         
-        <div class="dashboard-search" style="max-width: 480px; margin-bottom: 20px;">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" class="search-icon">
-            <path fill="currentColor" d="M11 2c4.9706 0 9 4.0294 9 9 0 2.125-0.7381 4.0766-1.9697 5.6162l4.1767 4.1768-1.414 1.414-4.1768-4.1767C15.0766 19.2619 13.125 20 11 20c-4.9706 0-9-4.0294-9-9 0-4.9706 4.0294-9 9-9m0 2c-3.866 0-7 3.134-7 7 0 3.866 3.134 7 7 7 3.866 0 7-3.134 7-7 0-3.866-3.134-7-7-7" />
-          </svg>
-          <input type="text" id="searchInput" placeholder="Search documents by title or keyword..." style="padding-left: 40px; width: 100%;" />
+        <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 20px; justify-content: space-between; width: 100%; flex-wrap: wrap;">
+          <div class="dashboard-search" style="width: 100%; max-width: 480px; flex-shrink: 0; margin: 0; position: relative;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" class="search-icon">
+              <path fill="currentColor" d="M11 2c4.9706 0 9 4.0294 9 9 0 2.125-0.7381 4.0766-1.9697 5.6162l4.1767 4.1768-1.414 1.414-4.1768-4.1767C15.0766 19.2619 13.125 20 11 20c-4.9706 0-9-4.0294-9-9 0-4.9706 4.0294-9 9-9m0 2c-3.866 0-7 3.134-7 7 0 3.866 3.134 7 7 7 3.866 0 7-3.134 7-7 0-3.866-3.134-7-7-7" />
+            </svg>
+            <input type="text" id="searchInput" placeholder="Search documents by title or keyword..." style="padding-left: 40px; width: 100%;" />
+          </div>
+          
+          <div class="library-actions" style="display: flex; gap: 12px; align-items: center; flex-wrap: nowrap; margin-left: auto; flex-shrink: 0;">
+            <button type="button" id="shareFolderBtn" class="btn btn-secondary" style="display: none; align-items: center; gap: 6px; white-space: nowrap; height: 42px; padding: 0 16px; border-radius: 8px;">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" aria-hidden="true">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 100-2.684 3 3 0 000 2.684zm0 9a3 3 0 100-2.684 3 3 0 000 2.684z"/>
+              </svg>
+              <span>Share Folder</span>
+            </button>
+            <button type="button" id="createFolderBtn" class="btn btn-secondary" style="display: none; align-items: center; gap: 6px; white-space: nowrap; height: 42px; padding: 0 16px; border-radius: 8px;">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              <span>New Folder</span>
+            </button>
+            <button type="button" id="createSubjectBtn" class="btn btn-primary" style="display: none; align-items: center; gap: 6px; white-space: nowrap; height: 42px; padding: 0 16px; border-radius: 8px;" onclick="openModal('createSubjectModal')">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" width="14" height="14">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              <span>Create Custom Subject</span>
+            </button>
+            <button type="button" id="uploadDocumentBtn" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; height: 42px; padding: 0 16px; border-radius: 8px;" onclick="openModal('uploadModal')">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" aria-hidden="true">
+                <path fill="currentColor" d="M6 18h12v-3h2v5H4v-5h2zm11.207 -8.707L15.793 10.707 13 7.914V16h-2V7.914L8.207 10.707 6.793 9.293 12 4.086z"></path>
+              </svg>
+              <span>Upload Document</span>
+            </button>
+          </div>
         </div>
         
         <div id="libraryToolbar" class="toolbar" style="margin-bottom: 20px; display: flex; gap: 16px; align-items: center; flex-wrap: nowrap; width: 100%;">
@@ -371,14 +397,7 @@
         <div id="my-subjectsTab" class="tab-content">
           <!-- Main Subjects List View -->
           <div id="subjectsListView">
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
-              <button type="button" id="createSubjectBtn" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" aria-hidden="true">
-                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                Create Custom Subject
-              </button>
-            </div>
+
             <div id="subjectGrid" class="subject-grid">
               <div style="text-align: center; padding: 40px; color: var(--muted); width: 100%;">
                 <p>Loading subjects...</p>

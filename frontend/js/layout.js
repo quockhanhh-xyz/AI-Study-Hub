@@ -223,21 +223,30 @@ function renderDynamicSidebar(isAuthenticated) {
       try {
         const user = JSON.parse(userStr);
         if (user.role === 'USER') {
+          // Initialize statistics from cache to prevent jumping/flickering UI layout shifts
+          let cachedStats = { followersCount: 0, publicDocumentCount: 0, upvotesCount: 0 };
+          const cacheStr = localStorage.getItem("sidebarStats");
+          if (cacheStr) {
+            try {
+              cachedStats = JSON.parse(cacheStr);
+            } catch (err) {}
+          }
+
           const statsContainer = document.createElement("div");
           statsContainer.className = "sidebar-user-stats";
           statsContainer.style.cssText = "padding: 0 16px; margin: 6px 0 12px 0; text-align: center;";
           statsContainer.innerHTML = `
             <div style="display: flex; justify-content: space-around; gap: 4px;">
               <div style="flex: 1;">
-                <span id="sidebarFollowers" style="display: block; font-size: 18px; font-weight: 700; color: #1e293b;">0</span>
+                <span id="sidebarFollowers" style="display: block; font-size: 18px; font-weight: 700; color: #1e293b;">${cachedStats.followersCount}</span>
                 <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-top: 4px; letter-spacing: 0.05em;">Followers</span>
               </div>
               <div style="flex: 1; border-left: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9;">
-                <span id="sidebarUploads" style="display: block; font-size: 18px; font-weight: 700; color: #1e293b;">0</span>
+                <span id="sidebarUploads" style="display: block; font-size: 18px; font-weight: 700; color: #1e293b;">${cachedStats.publicDocumentCount}</span>
                 <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-top: 4px; letter-spacing: 0.05em;">Uploads</span>
               </div>
               <div style="flex: 1;">
-                <span id="sidebarUpvotes" style="display: block; font-size: 18px; font-weight: 700; color: #1e293b;">0</span>
+                <span id="sidebarUpvotes" style="display: block; font-size: 18px; font-weight: 700; color: #1e293b;">${cachedStats.upvotesCount}</span>
                 <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-top: 4px; letter-spacing: 0.05em;">Upvotes</span>
               </div>
             </div>
@@ -266,9 +275,17 @@ function renderDynamicSidebar(isAuthenticated) {
                   const sf = document.getElementById("sidebarFollowers");
                   const su = document.getElementById("sidebarUploads");
                   const sv = document.getElementById("sidebarUpvotes");
-                  if (sf) sf.textContent = res.data.followersCount;
-                  if (su) su.textContent = res.data.publicDocumentCount;
-                  if (sv) sv.textContent = res.data.upvotesCount || 0;
+                  
+                  const freshStats = {
+                    followersCount: res.data.followersCount || 0,
+                    publicDocumentCount: res.data.publicDocumentCount || 0,
+                    upvotesCount: res.data.upvotesCount || 0
+                  };
+                  localStorage.setItem("sidebarStats", JSON.stringify(freshStats));
+
+                  if (sf) sf.textContent = freshStats.followersCount;
+                  if (su) su.textContent = freshStats.publicDocumentCount;
+                  if (sv) sv.textContent = freshStats.upvotesCount;
                 }
               }
             } catch (err) {
@@ -381,6 +398,30 @@ function renderDynamicSidebar(isAuthenticated) {
 
   // Delegate calculation back to navigation helper to append .active class
   initializeActiveMenu();
+
+  // Restore sidebar scroll position from sessionStorage
+  if (sidebar) {
+    const savedScroll = sessionStorage.getItem("sidebarScrollTop");
+    
+    // Save scroll position immediately before unloading the page
+    window.addEventListener("beforeunload", () => {
+      sessionStorage.setItem("sidebarScrollTop", sidebar.scrollTop);
+    });
+
+    if (savedScroll) {
+      // Defer scroll recovery to let the DOM layout stabilize and prevent initial browser scroll resets
+      setTimeout(() => {
+        sidebar.scrollTop = parseInt(savedScroll, 10);
+        sidebar.addEventListener("scroll", (e) => {
+          sessionStorage.setItem("sidebarScrollTop", e.target.scrollTop);
+        });
+      }, 100);
+    } else {
+      sidebar.addEventListener("scroll", (e) => {
+        sessionStorage.setItem("sidebarScrollTop", e.target.scrollTop);
+      });
+    }
+  }
 }
 
 
@@ -764,7 +805,7 @@ function initializeQuickProfilePopup() {
 
 function injectFloatingChatbot() {
   const currentPage = getCurrentPageName();
-  if (currentPage.startsWith("admin-") || ["login.html", "register.html", "verify-otp.html"].includes(currentPage)) {
+  if (currentPage.startsWith("admin-") || ["login.html", "register.html", "verify-otp.html", "ai-chat.html"].includes(currentPage)) {
     return;
   }
 

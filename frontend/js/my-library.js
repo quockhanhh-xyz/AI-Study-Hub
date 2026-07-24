@@ -1570,13 +1570,20 @@ document.addEventListener("DOMContentLoaded", async function () {
         kebabBtn.title = "More actions";
         
         const dropdown = document.createElement("div");
-        dropdown.style.cssText = "display:none; position:absolute; right:0; top:100%; background:#ffffff; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); z-index:20; min-width:140px; padding:4px 0;";
+        dropdown.style.cssText = "display:none; position:absolute; right:0; top:36px; background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); z-index:30; min-width:160px; padding:6px; box-sizing:border-box;";
         
         if (s.canEdit) {
           const editItem = document.createElement("button");
           editItem.type = "button";
-          editItem.style.cssText = "display:block; width:100%; padding:8px 14px; text-align:left; background:none; border:none; font-size:13px; color:#111827; cursor:pointer;";
-          editItem.textContent = "Edit Subject";
+          editItem.style.cssText = "display:flex; align-items:center; gap:8px; width:100%; padding:8px 12px; text-align:left; background:none; border:none; font-size:13px; font-weight:500; color:#1e293b; cursor:pointer; border-radius:8px; transition:background 0.2s;";
+          editItem.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+            </svg>
+            <span>Edit Subject</span>
+          `;
+          editItem.addEventListener("mouseenter", () => editItem.style.background = "#f1f5f9");
+          editItem.addEventListener("mouseleave", () => editItem.style.background = "none");
           editItem.addEventListener("click", (e) => {
             e.stopPropagation();
             dropdown.style.display = "none";
@@ -1593,8 +1600,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (s.canDelete) {
           const deleteItem = document.createElement("button");
           deleteItem.type = "button";
-          deleteItem.style.cssText = "display:block; width:100%; padding:8px 14px; text-align:left; background:none; border:none; font-size:13px; color:#dc3545; cursor:pointer;";
-          deleteItem.textContent = "Delete Subject";
+          deleteItem.style.cssText = "display:flex; align-items:center; gap:8px; width:100%; padding:8px 12px; text-align:left; background:none; border:none; font-size:13px; font-weight:500; color:#ef4444; cursor:pointer; border-radius:8px; transition:background 0.2s;";
+          deleteItem.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+            </svg>
+            <span>Delete Subject</span>
+          `;
+          deleteItem.addEventListener("mouseenter", () => deleteItem.style.background = "#fee2e2");
+          deleteItem.addEventListener("mouseleave", () => deleteItem.style.background = "none");
           deleteItem.addEventListener("click", async (e) => {
             e.stopPropagation();
             dropdown.style.display = "none";

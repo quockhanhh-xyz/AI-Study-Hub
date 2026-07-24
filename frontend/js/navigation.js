@@ -28,13 +28,13 @@ const ICON_CHAT = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="
 
 const NAVIGATION_MENU = [
   { name: "Dashboard", icon: ICON_HOME, url: "dashboard.html", requiresAuth: true },
+  { name: "Study Assistant", icon: ICON_CHAT, url: "ai-chat.html", requiresAuth: true },
   { name: "My Library", icon: ICON_DOCS, url: "my-library.html", requiresAuth: true },
   { name: "Shared with Me", icon: ICON_SHARED, url: "shared-with-me.html", requiresAuth: true },
   { name: "Study Groups", icon: ICON_GROUPS, url: "groups.html", requiresAuth: true },
   { name: "Community Library", icon: ICON_COMMUNITY, url: "community.html", requiresAuth: false },
   { name: "Trash Can", icon: ICON_TRASH, url: "trash.html", requiresAuth: true },
   { name: "My Profile", icon: ICON_PROFILE, url: "profile.html", requiresAuth: true },
-  { name: "Study Assistant", icon: ICON_CHAT, url: "ai-chat.html", requiresAuth: true },
 
   // Admin section
   { name: "Dashboard", icon: ICON_ADMIN, url: "admin-dashboard.html", requiresAuth: true, requiresAdmin: true },

@@ -223,15 +223,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function loadSubjects() {
     try {
       const response = await get("/api/subjects/public", { skipUnauthorizedRedirect: true });
+      if (response && response.data) {
         response.data.forEach(sub => {
           const opt = document.createElement("option");
           opt.value = sub.subjectId;
           opt.textContent = sub.subjectCode ? `${sub.subjectCode} - ${sub.subjectName}` : sub.subjectName;
-          docSubject.appendChild(opt);
+          if (docSubject) docSubject.appendChild(opt);
         });
-        if (typeof docSubject !== "undefined" && docSubject) {
-          docSubject.dispatchEvent(new Event("syncCustom"));
-        }
+      }
+      if (typeof docSubject !== "undefined" && docSubject) {
+        docSubject.dispatchEvent(new Event("syncCustom"));
       }
     } catch (e) {
       console.warn("Failed to load subjects dropdown:", e);
