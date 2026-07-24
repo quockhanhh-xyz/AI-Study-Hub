@@ -26,7 +26,7 @@ button, select, input, textarea {
     width: 100%;
     margin: 0;
     box-sizing: border-box;
-    background-color: var(--background, #f4f5f7);
+    background-color: var(--bg, #f4f5f7);
     flex-grow: 1;
 }
 
@@ -215,7 +215,7 @@ button, select, input, textarea {
     letter-spacing: 0.05em !important;
     color: var(--text-main, #1e293b) !important;
     background-color: var(--surface) !important;
-    border-bottom: 2px solid var(--border-light, var(--surface-soft)) !important;
+    border-bottom: 2px solid var(--border-light, var(--surface-muted)) !important;
     padding-top: 16px !important;
     padding-bottom: 16px !important;
     vertical-align: middle !important;
@@ -268,7 +268,7 @@ button, select, input, textarea {
 .admin-badge-neutral,
 .badge-status-inactive,
 .badge-status-unpublished {
-    background-color: var(--surface-soft);
+    background-color: var(--surface-muted);
     color: var(--text-muted);
     border-color: var(--border);
 }
@@ -326,13 +326,13 @@ button, select, input, textarea {
 }
 
 .badge-role-user {
-    background-color: var(--surface-soft);
+    background-color: var(--surface-muted);
     color: var(--text-muted);
     border-color: var(--border);
 }
 
 .badge-tier-free {
-    background-color: var(--surface-soft);
+    background-color: var(--surface-muted);
     color: #4b5563;
     border-color: var(--border);
 }
@@ -370,7 +370,7 @@ button, select, input, textarea {
 
 .admin-stat-card-highlight {
     border: 1px solid rgba(245, 158, 11, 0.5);
-    background: linear-gradient(135deg, rgba(254, 243, 199, 0.35) 0%, rgba(255, 255, 255, 1) 100%);
+    background: linear-gradient(135deg, rgba(254, 243, 199, 0.35) 0%, var(--surface, #ffffff) 100%);
 }
 
 .admin-stat-card-highlight:hover {
@@ -422,17 +422,17 @@ button, select, input, textarea {
 
 .attention-card-danger {
     border-left: 4px solid var(--danger, #dc2626);
-    background: linear-gradient(135deg, rgba(220, 38, 38, 0.03) 0%, rgba(255, 255, 255, 1) 100%);
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.03) 0%, var(--surface, #ffffff) 100%);
 }
 
 .attention-card-warning {
     border-left: 4px solid var(--warning, #f59e0b);
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.03) 0%, rgba(255, 255, 255, 1) 100%);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.03) 0%, var(--surface, #ffffff) 100%);
 }
 
 .attention-card-success {
     border-left: 4px solid var(--success, #16a34a);
-    background: linear-gradient(135deg, rgba(22, 163, 74, 0.03) 0%, rgba(255, 255, 255, 1) 100%);
+    background: linear-gradient(135deg, rgba(22, 163, 74, 0.03) 0%, var(--surface, #ffffff) 100%);
 }
 
 .attention-card-header {
@@ -766,7 +766,7 @@ select.admin-select:hover,
 .admin-filters select:hover,
 #chartDateRange:hover {
     border-color: var(--border-hover, #94a3b8);
-    background-color: var(--surface-soft);
+    background-color: var(--surface-muted);
 }
 
 select.admin-filter-input:focus,
@@ -884,7 +884,7 @@ select.admin-select:focus,
 .admin-tabs {
     display: flex;
     gap: 24px;
-    border-bottom: 1px solid var(--border-light, var(--surface-soft));
+    border-bottom: 1px solid var(--border-light, var(--surface-muted));
     margin-bottom: 24px;
 }
 
@@ -944,8 +944,8 @@ select.admin-select:focus,
     align-items: center;
     margin-top: 0 !important;
     padding: 16px 24px !important;
-    border-top: 1px solid var(--surface-soft) !important;
-    background-color: #fafbfc !important;
+    border-top: 1px solid var(--surface-muted) !important;
+    background-color: var(--surface, #fafbfc) !important;
     border-radius: 0 0 12px 12px;
 }
 
@@ -981,7 +981,7 @@ select.admin-select:focus,
 .admin-pagination-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background-color: var(--background, #f4f5f7);
+    background-color: var(--bg, #f4f5f7);
 }
 
 /* Admin Modal */
@@ -1284,7 +1284,7 @@ select.admin-select:focus,
     border-radius: 6px;
     font-size: 12.5px;
     font-weight: 500;
-    background-color: var(--background, #f4f5f7);
+    background-color: var(--bg, #f4f5f7);
     color: var(--text-main, #172033);
     border: 1px solid var(--border, #eadfdd);
 }
@@ -1347,7 +1347,7 @@ select.admin-select:focus,
     font-weight: 500;
     line-height: 1.4;
     color: var(--text-muted, #64748b);
-    background: var(--surface-light, var(--surface-soft));
+    background: var(--surface-light, var(--surface-muted));
     border-radius: 6px;
     border: 1px solid transparent;
     cursor: default;
@@ -1366,7 +1366,8 @@ select.admin-select:focus,
 
 #chartDateRange {
     border: none !important;
-    background-color: #f4f5f7 !important;
+    background-color: var(--surface-muted, #f4f5f7) !important;
+    color: var(--text-main) !important;
     border-radius: 24px !important;
     height: 42px !important;
     padding-left: 16px !important;
