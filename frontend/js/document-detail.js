@@ -2828,7 +2828,14 @@ function renderContextualTopBar(doc) {
     let backLabel = "← Back";
     let backUrl = "javascript:handleBack()";
 
-    if (fromParam === "community" || currentIsCommunityView) {
+    if (fromParam === "profile") {
+        backLabel = "← Back to Uploads & Upvotes";
+        backUrl = "profile.html?tab=uploads";
+    } else if (fromParam === "public-profile") {
+        backLabel = "← Back to Network";
+        const userId = urlParams.get("userId") || "";
+        backUrl = `public-profile.html${userId ? '?userId=' + userId : ''}`;
+    } else if (fromParam === "community" || currentIsCommunityView) {
         backLabel = "← Back to Community Library";
         backUrl = "community.html";
     } else if (fromParam === "shared") {

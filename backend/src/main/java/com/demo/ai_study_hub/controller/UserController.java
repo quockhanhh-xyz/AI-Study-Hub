@@ -10,6 +10,7 @@ import com.demo.ai_study_hub.service.PublicProfileService;
 import com.demo.ai_study_hub.service.UserFollowService;
 import com.demo.ai_study_hub.repository.UserRepository;
 import com.demo.ai_study_hub.repository.DocumentRepository;
+import com.demo.ai_study_hub.repository.DocumentRatingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +33,7 @@ public class UserController {
     private final UserFollowService userFollowService;
     private final DocumentRepository documentRepository;
     private final UserRepository userRepository;
+    private final DocumentRatingRepository documentRatingRepository;
 
     @GetMapping("/users/{userId}/public-profile")
     public ResponseEntity<ApiResponse<PublicProfileResponse>> getPublicProfile(
@@ -161,6 +163,8 @@ public class UserController {
             m.put("createdAt", d.getCreatedAt());
             m.put("viewCount", d.getViewCount() != null ? d.getViewCount() : 0);
             m.put("downloadCount", d.getDownloadCount() != null ? d.getDownloadCount() : 0);
+            Double avgRating = documentRatingRepository.getAverageRatingByDocument(d);
+            m.put("averageRating", avgRating != null ? avgRating : 0.0);
             return m;
         }).collect(Collectors.toList());
 
