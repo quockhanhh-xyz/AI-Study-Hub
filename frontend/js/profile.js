@@ -368,6 +368,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // Load user data on startup
+  loadUserProfile();
+
   // --- TAB LOGIC ---
   const tabBtns = document.querySelectorAll(".tab-btn");
   const tabContents = document.querySelectorAll(".tab-content");
@@ -416,6 +418,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const initialTab = urlParams.get("tab");
   if (initialTab && ["details", "network", "uploads"].includes(initialTab)) {
     switchTab(initialTab);
+  } else {
+    // Default to details if no tab param or invalid param
+    switchTab("details");
   }
 
   // --- NETWORK TAB LOGIC ---
@@ -462,14 +467,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       let html = "";
       list.forEach(user => {
-        const avatarUrl = user.avatarUrl || "favicon.ico";
         const schoolStr = user.schoolName ? `<span style="font-size: 12px; color: #64748b; margin-right: 8px;">🎓 ${user.schoolName}</span>` : "";
         const majorStr = user.major ? `<span style="font-size: 12px; color: #64748b;">📚 ${user.major}</span>` : "";
+        
+        let avatarHtml = "";
+        if (user.avatarUrl) {
+          avatarHtml = `<img src="${user.avatarUrl}" alt="${user.fullName}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">`;
+        } else {
+          avatarHtml = `<div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #f05a28, #fbbf24); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px;">${getInitials(user.fullName)}</div>`;
+        }
         
         html += `
           <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;">
             <div style="display: flex; align-items: center; gap: 12px;">
-              <img src="${avatarUrl}" onerror="this.src='favicon.ico'" alt="${user.fullName}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+              ${avatarHtml}
               <div>
                 <a href="public-profile.html?userId=${user.userId}" style="font-weight: 600; color: #1e293b; text-decoration: none; font-size: 14px;">${user.fullName}</a>
                 <div style="margin-top: 4px;">${schoolStr}${majorStr}</div>
@@ -505,12 +516,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   };
 
+  // Helper: Format Date String
+  function formatDateUploads(value) {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return "-";
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+  }
+
   // --- UPLOADS TAB LOGIC ---
   const uploadsListContainer = document.getElementById("uploadsListContainer");
   
   async function loadUploadsData() {
     if (!uploadsListContainer) return;
     uploadsListContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #64748b;">Loading...</div>`;
+    
+    // Change container grid style to match public profile
+    uploadsListContainer.style.display = "grid";
+    uploadsListContainer.style.gridTemplateColumns = "repeat(auto-fill, minmax(280px, 1fr))";
+    uploadsListContainer.style.gap = "20px";
     
     try {
       const userStr = localStorage.getItem("currentUser");
@@ -527,28 +555,57 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       let html = "";
       docs.forEach(doc => {
-        const upvotes = doc.upvotesCount || 0;
+        const titleText = doc.title || doc.fileName || "Untitled Document";
+        let iconHtml = "";
+        if (window.getFileTypeIcon) {
+            iconHtml = window.getFileTypeIcon(doc.fileType) || "";
+        }
+        
+        let subjectTagHtml = "";
+        if (doc.subjectName || doc.subjectCode) {
+            const tagText = doc.subjectCode ? `${doc.subjectCode} - ${doc.subjectName}` : doc.subjectName;
+            subjectTagHtml = `
+            <div class="comm-card-subject-tag">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01"/>
+                </svg>
+                <span>${tagText}</span>
+            </div>
+            `;
+        }
         
         html += `
-          <div class="document-card" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #fff; display: flex; flex-direction: column; justify-content: space-between;">
-            <div>
-              <div style="font-size: 11px; font-weight: 600; color: #f05a28; text-transform: uppercase; margin-bottom: 4px;">${doc.subjectCode || 'DOC'}</div>
-              <h3 style="font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">
-                <a href="document-detail.html?id=${doc.documentId}" style="text-decoration: none; color: inherit;">${doc.title}</a>
-              </h3>
-              <div style="font-size: 13px; color: #64748b; margin-bottom: 12px; display: flex; gap: 12px; align-items: center;">
-                <span style="display: flex; align-items: center; gap: 4px;">
-                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21c-2.5 0-4.625-.875-6.375-2.625S3 14.5 3 12s.875-4.625 2.625-6.375S9.5 3 12 3c.133 0 .275.004.425.012.15.008.342.021.575.038-.6.533-1.067 1.192-1.4 1.975-.333.783-.5 1.608-.5 2.475 0 1.5.525 2.775 1.575 3.825 1.05 1.05 2.325 1.575 3.825 1.575.867 0 1.692-.154 2.475-.462S20.417 11.7 20.95 11.15c.017.2.029.362.037.487s.013.238.013.363c0 2.5-.875 4.625-2.625 6.375S14.5 21 12 21z"></path></svg>
-                  ${upvotes} Upvotes
+          <a href="document-detail.html?id=${doc.documentId}&from=profile" class="document-card">
+            <div class="comm-card-header">
+              ${iconHtml}
+              <h3 title="${titleText}">${titleText}</h3>
+            </div>
+            <div class="comm-card-body">
+              ${subjectTagHtml}
+            </div>
+            <div class="comm-card-footer">
+              <span class="comm-card-date">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+                ${formatDateUploads(doc.createdAt)}
+              </span>
+              <div class="comm-card-metrics">
+                <span class="comm-card-metric-item">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21c-2.5 0-4.625-.875-6.375-2.625S3 14.5 3 12s.875-4.625 2.625-6.375S9.5 3 12 3c.133 0 .275.004.425.012.15.008.342.021.575.038-.6.533-1.067 1.192-1.4 1.975-.333.783-.5 1.608-.5 2.475 0 1.5.525 2.775 1.575 3.825 1.05 1.05 2.325 1.575 3.825 1.575.867 0 1.692-.154 2.475-.462S20.417 11.7 20.95 11.15c.017.2.029.362.037.487s.013.238.013.363c0 2.5-.875 4.625-2.625 6.375S14.5 21 12 21z"></path></svg>
+                  <span>${doc.upvotesCount || 0}</span>
                 </span>
-                <span style="display: flex; align-items: center; gap: 4px;">
-                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                  ${doc.viewCount || 0}
+                <span class="comm-card-metric-item">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <span>${doc.viewCount || 0}</span>
                 </span>
               </div>
             </div>
-            <a href="document-detail.html?id=${doc.documentId}" class="btn btn-secondary btn-sm" style="text-align: center; width: 100%;">View Details</a>
-          </div>
+          </a>
         `;
       });
       uploadsListContainer.innerHTML = html;

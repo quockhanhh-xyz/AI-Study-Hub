@@ -290,8 +290,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       const iconWrapper = iconContainer.firstElementChild;
       if (iconWrapper) {
-        iconWrapper.style.width = "20px";
-        iconWrapper.style.height = "20px";
         header.appendChild(iconWrapper);
       }
 
