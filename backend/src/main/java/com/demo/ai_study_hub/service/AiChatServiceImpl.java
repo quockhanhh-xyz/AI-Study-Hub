@@ -478,6 +478,9 @@ public class AiChatServiceImpl implements AiChatService {
                     Map<String, Object> ref = new LinkedHashMap<>();
                     ref.put("chunkIndex", c.getChunkIndex());
                     ref.put("sourceLabel", c.getSourceLabel());
+                    ref.put("documentId", c.getDocumentId());
+                    ref.put("documentTitle", c.getDocumentTitle());
+                    ref.put("sourceLibrary", c.getSourceLibrary());
                     return ref;
                 })
                 .collect(Collectors.toList());
@@ -551,6 +554,222 @@ public class AiChatServiceImpl implements AiChatService {
             this.tier = tier;
             this.dailyLimit = dailyLimit;
             this.usedToday = usedToday;
+        }
+    }
+
+    private AiChatSession findOrCreateGlobalSession(User user, String firstQuestion) {
+        return aiChatSessionRepository
+                .findByUser_UserIdAndDocumentIsNullAndStatus(user.getUserId(), "ACTIVE")
+                .orElseGet(() -> {
+                    com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(user);
+                    long activeSessions = aiChatSessionRepository.countByUser_UserIdAndDocumentIsNullAndStatus(
+                            user.getUserId(), "ACTIVE");
+                    if (activeSessions >= limits.maxAiSessionsPerDocument()) {
+                        throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                                "AI global sessions limit exceeded", "AI_SESSIONS_LIMIT_EXCEEDED");
+                    }
+                    String title = firstQuestion != null
+                            ? (firstQuestion.length() > 100
+                                    ? firstQuestion.substring(0, 100) + "..."
+                                    : firstQuestion)
+                            : "Study Assistant Chat";
+                    AiChatSession session = AiChatSession.builder()
+                            .user(user)
+                            .document(null)
+                            .title(title)
+                            .status("ACTIVE")
+                            .build();
+                    return aiChatSessionRepository.save(session);
+                });
+    }
+
+    @Override
+    public AiAskResponse askGlobal(String question, String userEmail) {
+        String requestId = UUID.randomUUID().toString();
+        TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
+        txTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+
+        AiReservationResult reserveResult = txTemplate.execute(status -> {
+            User user = loadUser(userEmail);
+            user = userRepository.findByIdForUpdate(user.getUserId()).orElse(user);
+
+            String tier = tierPolicyService.getEffectiveTier(user).name();
+            int maxChars = aiModelSelector.getMaxQuestionChars(tier);
+            if (question == null || question.isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Question must not be blank");
+            }
+            if (question.length() > maxChars) {
+                throw new QuotaExceededException(HttpStatus.BAD_REQUEST,
+                        "Question text exceeds maximum tier length", "AI_QUESTION_CHARS_LIMIT_EXCEEDED");
+            }
+
+            AiChatSession session = findOrCreateGlobalSession(user, question);
+            long messageCount = aiChatMessageRepository.countBySession_SessionId(session.getSessionId());
+            com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(user);
+            if (messageCount >= limits.maxMessagesPerSession()) {
+                throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                        "Messages limit per session exceeded", "SESSION_MESSAGES_LIMIT_EXCEEDED");
+            }
+
+            if (!aiProviderRouter.isConfigured()) {
+                saveUsageLog(user, null, "ASK", null, null, 0, 0, 0, false, false, "AI_NOT_CONFIGURED");
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "AI service is not configured");
+            }
+
+            int dailyLimit = aiModelSelector.getDailyQuestionLimit(tier);
+            long usedToday = countUsedToday(user);
+            long activeReservations = aiUsageReservationRepository.countActiveReservations(user, LocalDateTime.now());
+            if (usedToday + activeReservations >= dailyLimit) {
+                saveUsageLog(user, null, "ASK", null, null, 0, 0, 0, false, false, "QUOTA_EXCEEDED");
+                throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                        "Daily AI Q&A question quota exceeded", "AI_QUOTA_EXCEEDED");
+            }
+
+            AiUsageReservation reservation = AiUsageReservation.builder()
+                    .requestId(requestId)
+                    .user(user)
+                    .requestType("QA")
+                    .status("RESERVED")
+                    .reservedAt(LocalDateTime.now())
+                    .expiresAt(LocalDateTime.now().plusSeconds(60))
+                    .build();
+            reservation = aiUsageReservationRepository.save(reservation);
+
+            return new AiReservationResult(user, null, session, reservation, tier, dailyLimit, usedToday);
+        });
+
+        int maxChunks = aiModelSelector.getMaxContextChunks(reserveResult.tier);
+        final List<DocumentChunkDto> chunks = chunkRetrievalService.retrieveGlobalChunksByKeyword(reserveResult.user.getUserId(), question, maxChunks);
+
+        if (chunks.isEmpty()) {
+            txTemplate.executeWithoutResult(status -> {
+                AiUsageReservation res = aiUsageReservationRepository.findByRequestId(requestId).orElseThrow();
+                res.setStatus("RELEASED");
+                res.setReleasedAt(LocalDateTime.now());
+                aiUsageReservationRepository.save(res);
+
+                saveMessage(reserveResult.session, "USER", question, null, null, null, null, null, null, null);
+                saveMessage(reserveResult.session, "ASSISTANT", "Tôi chưa tìm thấy tài liệu phù hợp trong thư viện của bạn hoặc Community Library.", null, null, null, null, null, null, "[]");
+
+                saveUsageLog(reserveResult.user, null, "ASK", null, null, 0, 0, 0,
+                        false, false, "SKIPPED_NO_CONTEXT");
+            });
+
+            long remaining = reserveResult.dailyLimit - reserveResult.usedToday;
+            return AiAskResponse.builder()
+                    .answer("Tôi chưa tìm thấy tài liệu phù hợp trong thư viện của bạn hoặc Community Library.")
+                    .sourceChunks(Collections.emptyList())
+                    .provider(null)
+                    .modelName(null)
+                    .inputTokens(0)
+                    .outputTokens(0)
+                    .totalTokens(0)
+                    .tokenUsageEstimated(false)
+                    .remainingQuestions((int) remaining)
+                    .build();
+        }
+
+        String modelName = aiModelSelector.selectModel(reserveResult.tier);
+        int maxOutputTokens = aiModelSelector.getMaxOutputTokens(reserveResult.tier);
+        String prompt = promptBuilderService.buildGlobalChatPrompt(question, chunks);
+
+        AiAnswer aiAnswer;
+        try {
+            aiAnswer = callProvider(prompt, modelName, maxOutputTokens, reserveResult.user, null);
+
+            txTemplate.executeWithoutResult(status -> {
+                AiUsageReservation res = aiUsageReservationRepository.findByRequestId(requestId).orElseThrow();
+                res.setStatus("CONFIRMED");
+                res.setConfirmedAt(LocalDateTime.now());
+                aiUsageReservationRepository.save(res);
+
+                saveMessage(reserveResult.session, "USER", question, null, null, null, null, null, null, null);
+
+                String sourceChunksJson = buildSourceChunksJson(chunks);
+                saveMessage(reserveResult.session, "ASSISTANT", aiAnswer.getText(),
+                        aiAnswer.getProvider(), aiAnswer.getModelName(),
+                        aiAnswer.getInputTokens(), aiAnswer.getOutputTokens(), aiAnswer.getTotalTokens(),
+                        aiAnswer.isTokenUsageEstimated(), sourceChunksJson);
+
+                saveUsageLog(reserveResult.user, null, "ASK",
+                        aiAnswer.getProvider(), aiAnswer.getModelName(),
+                        aiAnswer.getInputTokens(), aiAnswer.getOutputTokens(), aiAnswer.getTotalTokens(),
+                        aiAnswer.isTokenUsageEstimated(), true, "SUCCESS");
+            });
+        } catch (Exception e) {
+            txTemplate.executeWithoutResult(status -> {
+                AiUsageReservation res = aiUsageReservationRepository.findByRequestId(requestId).orElseThrow();
+                res.setStatus("RELEASED");
+                res.setReleasedAt(LocalDateTime.now());
+                aiUsageReservationRepository.save(res);
+            });
+            throw e;
+        }
+
+        long remaining = reserveResult.dailyLimit - reserveResult.usedToday - 1;
+        List<AiSourceChunk> sourceChunks = chunks.stream()
+                .map(c -> AiSourceChunk.builder()
+                        .chunkIndex(c.getChunkIndex())
+                        .sourceLabel(c.getSourceLabel())
+                        .documentId(c.getDocumentId())
+                        .documentTitle(c.getDocumentTitle())
+                        .sourceLibrary(c.getSourceLibrary())
+                        .build())
+                .collect(Collectors.toList());
+
+        return AiAskResponse.builder()
+                .answer(aiAnswer.getText())
+                .sourceChunks(sourceChunks)
+                .provider(aiAnswer.getProvider())
+                .modelName(aiAnswer.getModelName())
+                .inputTokens(aiAnswer.getInputTokens())
+                .outputTokens(aiAnswer.getOutputTokens())
+                .totalTokens(aiAnswer.getTotalTokens())
+                .tokenUsageEstimated(aiAnswer.isTokenUsageEstimated())
+                .remainingQuestions((int) Math.max(0, remaining))
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AiChatHistoryResponse getGlobalChatHistory(String userEmail) {
+        User user = loadUser(userEmail);
+        Optional<AiChatSession> sessionOpt = aiChatSessionRepository
+                .findByUser_UserIdAndDocumentIsNullAndStatus(user.getUserId(), "ACTIVE");
+
+        if (sessionOpt.isEmpty()) {
+            return AiChatHistoryResponse.builder()
+                    .sessionId(null)
+                    .documentId(null)
+                    .messages(Collections.emptyList())
+                    .build();
+        }
+
+        AiChatSession session = sessionOpt.get();
+        List<AiChatMessageDto> messages = aiChatMessageRepository
+                .findBySession_SessionIdOrderByCreatedAtAsc(session.getSessionId())
+                .stream()
+                .map(this::toMessageDto)
+                .collect(Collectors.toList());
+
+        return AiChatHistoryResponse.builder()
+                .sessionId(session.getSessionId())
+                .documentId(null)
+                .messages(messages)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public void deleteGlobalChat(String userEmail) {
+        User user = loadUser(userEmail);
+        Optional<AiChatSession> sessionOpt = aiChatSessionRepository
+                .findByUser_UserIdAndDocumentIsNullAndStatus(user.getUserId(), "ACTIVE");
+        if (sessionOpt.isPresent()) {
+            AiChatSession session = sessionOpt.get();
+            session.setStatus("DELETED");
+            session.setDeletedAt(LocalDateTime.now());
+            aiChatSessionRepository.save(session);
         }
     }
 }

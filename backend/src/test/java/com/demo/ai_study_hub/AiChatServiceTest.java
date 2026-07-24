@@ -345,4 +345,48 @@ class AiChatServiceTest {
         assertEquals(1, msgDto.getSourceChunks().get(0).getChunkIndex());
         assertEquals("Page 2", msgDto.getSourceChunks().get(0).getSourceLabel());
     }
+
+    @Test
+    void getGlobalChatHistory_Success() {
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(mockUser));
+
+        AiChatSession mockSession = AiChatSession.builder()
+                .sessionId(100L)
+                .user(mockUser)
+                .document(null)
+                .status("ACTIVE")
+                .build();
+        when(aiChatSessionRepository.findByUser_UserIdAndDocumentIsNullAndStatus(1, "ACTIVE"))
+                .thenReturn(Optional.of(mockSession));
+
+        AiChatMessage msg = AiChatMessage.builder()
+                .messageId(200L)
+                .session(mockSession)
+                .role("ASSISTANT")
+                .content("Global Answer")
+                .provider("gemini")
+                .modelName("gemini-2.5-flash-lite")
+                .tokenUsageEstimated(true)
+                .sourceChunks("[{\"chunkIndex\":1,\"sourceLabel\":\"Page 2\",\"documentId\":5,\"documentTitle\":\"Doc Title\",\"sourceLibrary\":\"My Library\"}]")
+                .createdAt(LocalDateTime.now())
+                .build();
+        when(aiChatMessageRepository.findBySession_SessionIdOrderByCreatedAtAsc(100L))
+                .thenReturn(List.of(msg));
+
+        AiChatHistoryResponse response = aiChatService.getGlobalChatHistory("user@test.com");
+
+        assertNotNull(response);
+        assertEquals(100L, response.getSessionId());
+        assertNull(response.getDocumentId());
+        assertEquals(1, response.getMessages().size());
+
+        AiChatMessageDto msgDto = response.getMessages().get(0);
+        assertEquals(200L, msgDto.getMessageId());
+        assertEquals("ASSISTANT", msgDto.getRole());
+        assertEquals("Global Answer", msgDto.getContent());
+        assertNotNull(msgDto.getSourceChunks());
+        assertEquals(5, msgDto.getSourceChunks().get(0).getDocumentId());
+        assertEquals("Doc Title", msgDto.getSourceChunks().get(0).getDocumentTitle());
+        assertEquals("My Library", msgDto.getSourceChunks().get(0).getSourceLibrary());
+    }
 }

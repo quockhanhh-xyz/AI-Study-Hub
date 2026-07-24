@@ -41,6 +41,9 @@ class AdminConsoleServiceTest {
     @Mock
     private SubjectRepository subjectRepository;
 
+    @Mock
+    private UsageService usageService;
+
     @InjectMocks
     private AdminUserService adminUserService;
 
@@ -75,6 +78,7 @@ class AdminConsoleServiceTest {
         Page<User> userPage = new PageImpl<>(List.of(sampleUser));
         when(userRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(userPage);
         when(documentRepository.countByOwner(sampleUser)).thenReturn(5L);
+        when(usageService.countAiQuestionsToday(any(User.class))).thenReturn(5L);
 
         AdminUserListResponse response = adminUserService.getUsers("test", "USER", "FREE", "ACTIVE", PageRequest.of(0, 10));
 
@@ -88,6 +92,7 @@ class AdminConsoleServiceTest {
     void testUpdateUserStatus_Success() {
         when(userRepository.findById(1)).thenReturn(Optional.of(sampleUser));
         when(userRepository.save(any(User.class))).thenReturn(sampleUser);
+        when(usageService.countAiQuestionsToday(any(User.class))).thenReturn(5L);
 
         AdminUserItem result = adminUserService.updateUserStatus(1, "BLOCKED", 999);
 

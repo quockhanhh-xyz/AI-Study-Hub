@@ -72,4 +72,19 @@ public interface AiChatService {
      * @return AiUsageSummaryResponse with tier, limits, and today's usage
      */
     AiUsageSummaryResponse getUsageSummary(String userEmail);
+
+    /**
+     * Process a global AI ask request across all library documents.
+     */
+    AiAskResponse askGlobal(String question, String userEmail);
+
+    /**
+     * Get global chat history for the user.
+     */
+    AiChatHistoryResponse getGlobalChatHistory(String userEmail);
+
+    /**
+     * Clear / soft-delete the user's active global chat session.
+     */
+    void deleteGlobalChat(String userEmail);
 }

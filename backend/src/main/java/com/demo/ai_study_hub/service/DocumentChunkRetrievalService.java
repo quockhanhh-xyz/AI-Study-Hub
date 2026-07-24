@@ -38,4 +38,9 @@ public interface DocumentChunkRetrievalService {
      * @return First topK chunks ordered by chunk_index ascending
      */
     List<DocumentChunkDto> retrieveFirstChunks(Integer documentId, int topK);
+
+    /**
+     * Retrieve relevant chunks across all allowed/public completed documents using keyword scoring.
+     */
+    List<DocumentChunkDto> retrieveGlobalChunksByKeyword(Integer userId, String question, int topK);
 }
