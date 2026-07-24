@@ -74,6 +74,8 @@ class DocumentServiceTest {
     private com.demo.ai_study_hub.repository.DocumentReportRepository documentReportRepository;
     @Mock
     private com.demo.ai_study_hub.service.NotificationService notificationService;
+    @Mock
+    private com.demo.ai_study_hub.repository.SubjectRequestRepository subjectRequestRepository;
 
     @InjectMocks
     private DocumentService documentService;
