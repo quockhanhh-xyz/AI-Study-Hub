@@ -1422,13 +1422,13 @@ document.addEventListener("DOMContentLoaded", async function () {
       newSubjectCodeInput.value = "";
       newSubjectNameInput.value = "";
       newSubjectDescInput.value = "";
-      createSubjectModal.classList.add("active");
+      createSubjectModal.classList.add("open");
     });
   }
 
   if (cancelCreateSubjectBtn) {
     cancelCreateSubjectBtn.addEventListener("click", () => {
-      createSubjectModal.classList.remove("active");
+      createSubjectModal.classList.remove("open");
     });
   }
 
@@ -1447,7 +1447,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       try {
         const res = await createSubject({ subjectCode: code, subjectName: name, description: desc });
         if (res && res.success) {
-          createSubjectModal.classList.remove("active");
+          createSubjectModal.classList.remove("open");
           if (typeof showToast === "function") showToast("Custom subject created successfully.", "success");
           loadMySubjects();
         } else {
@@ -1463,7 +1463,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   if (cancelEditSubjectBtn) {
     cancelEditSubjectBtn.addEventListener("click", () => {
-      editSubjectModal.classList.remove("active");
+      editSubjectModal.classList.remove("open");
     });
   }
 
@@ -1483,7 +1483,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       try {
         const res = await updateCustomSubject(id, { subjectCode: code, subjectName: name, description: desc });
         if (res && res.success) {
-          editSubjectModal.classList.remove("active");
+          editSubjectModal.classList.remove("open");
           if (typeof showToast === "function") showToast("Subject updated successfully.", "success");
           loadMySubjects();
         } else {
@@ -1592,7 +1592,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             editSubjectCodeInput.value = s.code;
             editSubjectNameInput.value = s.name;
             editSubjectDescInput.value = s.description || "";
-            editSubjectModal.classList.add("active");
+            editSubjectModal.classList.add("open");
           });
           dropdown.appendChild(editItem);
         }

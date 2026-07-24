@@ -249,6 +249,7 @@
             <h1>My Library</h1>
             <p class="dashboard-subtitle" id="breadcrumbPath">Your personal workspace.</p>
           </div>
+          <div id="globalHeaderWidgets" class="global-header-widgets"></div>
         </div>
       </section>
       
@@ -338,7 +339,12 @@
               <option value="0">My Folders</option>
             </select>
           </div>
-          <button type="button" id="clearFiltersBtn" style="flex: 1; min-width: 0; padding: 11px 16px; border: 1.5px solid var(--border); border-radius: 12px; background-color: #ffffff; color: var(--text-main); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 2px 8px rgba(23, 32, 51, 0.02); height: 45.5px;">Clear Filters</button>
+          <button type="button" id="clearFiltersBtn" class="btn btn-outline" style="border-radius: 24px !important; height: 42px !important; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 20px; font-weight: 600; font-size: 14px; width: auto; flex: none; flex-shrink: 0; box-shadow: 0 2px 8px rgba(23, 32, 51, 0.02);">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+            Clear
+          </button>
         </div>
 
         <div id="documentsTab" class="tab-content active">
@@ -566,6 +572,8 @@
   <script src="js/group-api.js"></script>
   <script src="js/folder-share-api.js"></script>
   <script src="js/my-library.js"></script>
+  <script src="js/notification-api.js"></script>
+  <script src="js/notification.js"></script>
 </body>
 
 </html>
