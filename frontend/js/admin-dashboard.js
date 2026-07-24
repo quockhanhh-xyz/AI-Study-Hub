@@ -449,15 +449,17 @@ function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, 
                 const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
                 const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
 
+                const isDark = document.documentElement.dataset.theme === 'dark';
+
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
                 
                 ctx.font = "600 11px Inter, sans-serif";
-                ctx.fillStyle = "rgba(100, 116, 139, 0.8)";
+                ctx.fillStyle = isDark ? "#94a3b8" : "rgba(100, 116, 139, 0.8)";
                 ctx.fillText(text1, centerX, centerY - 12);
 
                 ctx.font = "bold 26px Inter, sans-serif";
-                ctx.fillStyle = "#1e293b";
+                ctx.fillStyle = isDark ? "#f8fafc" : "#1e293b";
                 ctx.fillText(text2, centerX, centerY + 10);
 
                 ctx.save();
