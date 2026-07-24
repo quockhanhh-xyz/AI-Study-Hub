@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+    <script src="js/theme.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Document Detail - AI Study Hub</title>
@@ -13,7 +14,7 @@
     .star {
       font-size: 24px;
       cursor: pointer;
-      color: #d1d5db;
+      color: var(--border);
       transition: color 0.15s ease-in-out;
     }
     .star.hover, .star.filled {
@@ -27,8 +28,8 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: #f3f4f6;
-      border: 1px solid #e5e7eb;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
       border-radius: 8px;
       padding: 6px 12px;
       color: #4b5563;
@@ -42,7 +43,7 @@
     }
 
     .btn-back-link:hover {
-      background: #e5e7eb;
+      background: var(--border);
       color: #1f2937;
       text-decoration: none;
     }
@@ -259,9 +260,9 @@
       border-color: #fed7aa;
     }
     .preview-header-badge.ai-failed {
-      background: #f3f4f6;
+      background: var(--surface-soft);
       color: #4b5563;
-      border-color: #d1d5db;
+      border-color: var(--border);
     }
     .preview-header-badge.ai-pending {
       background: #fffbeb;
@@ -269,9 +270,9 @@
       border-color: #fde68a;
     }
     .preview-header-badge.ai-unsupported {
-      background: #f3f4f6;
+      background: var(--surface-soft);
       color: #4b5563;
-      border-color: #d1d5db;
+      border-color: var(--border);
     }
 
     .preview-toolbar-title {
@@ -334,7 +335,7 @@
       height: 100%;
       min-height: 0;
       border: 0;
-      background: #ffffff;
+      background: var(--surface);
     }
 
     .preview-office-wrap {
@@ -830,7 +831,7 @@
       gap: 6px;
       width: auto;
       border-color: #fca5a5 !important;
-      background: #fff !important;
+      background: var(--surface) !important;
       color: #dc2626 !important;
       font-size: 12px;
       font-weight: 700;
@@ -847,7 +848,7 @@
     }
 
     .share-block {
-      background: #fff;
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 16px;
@@ -885,7 +886,7 @@
     }
 
     .visibility-status-card.private {
-      background: #f8fafc;
+      background: var(--surface-soft);
       border: 1px solid var(--border);
       color: var(--text);
     }
@@ -948,7 +949,7 @@
       display: inline-flex !important;
       width: auto;
       border-radius: 999px;
-      background: #fff !important;
+      background: var(--surface) !important;
       border: 1px solid var(--border) !important;
       color: var(--text) !important;
       font-size: 12px;
@@ -998,9 +999,9 @@
     .status-badge.unsupported,
     .status-badge.empty-content,
     .status-badge.pending {
-      background-color: #f3f4f6;
+      background-color: var(--surface-soft);
       color: #374151;
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--border);
     }
 
     .ai-status-spinner {
@@ -1236,8 +1237,8 @@
 
     .ai-qa-message.assistant {
       align-self: flex-start;
-      background: #f3f4f6;
-      color: #000;
+      background: var(--surface-soft);
+      color: var(--text-main);
       border: 1px solid var(--border);
       border-bottom-left-radius: 4px;
       padding: 16px;
@@ -1323,8 +1324,8 @@
     }
 
     .ai-qa-input-row button:disabled {
-      background-color: #E5E7EB !important;
-      border-color: #E5E7EB !important;
+      background-color: var(--border) !important;
+      border-color: var(--border) !important;
       color: #9CA3AF !important;
       cursor: not-allowed !important;
     }
@@ -1337,7 +1338,7 @@
     }
 
     .status-badge.badge-system {
-      background: var(--surface-soft, #f3f4f6);
+      background: var(--surface-soft, var(--surface-soft));
       border: 1px solid transparent;
       font-weight: 600;
       cursor: default;
@@ -1551,9 +1552,9 @@
       display: none !important;
     }
     .ai-processing-section.onboarding-state.is-unsupported {
-      background: #f8fafc;
+      background: var(--surface-soft);
       border-style: solid;
-      border-color: #e2e8f0;
+      border-color: var(--border);
     }
     .ai-processing-icon {
       font-size: 32px;
@@ -1622,7 +1623,7 @@
       gap: 8px;
     }
     .ai-qa-sample-btn {
-      background: #fff;
+      background: var(--surface);
       border: 1px solid var(--border);
       color: var(--text);
       border-radius: 16px;
@@ -1686,7 +1687,7 @@
       color: var(--muted);
     }
     .ai-qa-source-chip {
-      background: #fff;
+      background: var(--surface);
       border: 1px solid var(--border);
       padding: 2px 8px;
       border-radius: 12px;
@@ -1729,14 +1730,14 @@
       font-family: inherit;
       font-size: 13px;
       line-height: 1.35;
-      background: #f9fafb;
+      background: var(--surface-soft);
       box-sizing: border-box;
       overflow: auto;
     }
     .ai-qa-sticky-footer .ai-qa-input-row textarea:focus {
       outline: none;
       border-color: var(--primary);
-      background: #fff;
+      background: var(--surface);
     }
     .ai-qa-sticky-footer #aiQaAskBtn {
       border-radius: 16px;
@@ -1901,7 +1902,7 @@
       box-sizing: border-box;
       border: 1px solid var(--border);
       border-radius: 10px;
-      background: #fff;
+      background: var(--surface);
       color: var(--text);
       font: inherit;
       font-size: 14px;
@@ -1977,8 +1978,8 @@
       transition: all 0.2s;
     }
     .ai-tools-set-item:hover {
-      border-color: #d1d5db;
-      background: #f9fafb;
+      border-color: var(--border);
+      background: var(--surface-soft);
     }
     .ai-tools-set-link {
       display: grid;
@@ -2051,6 +2052,34 @@
       }
     }
   </style>
+<style>
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 16px;
+}
+.theme-toggle-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+</style>
 </head>
 
 <body class="document-detail-page">
@@ -2155,7 +2184,7 @@
             </section>
 
             <!-- Rating & Reporting Section (Step 17A) -->
-            <section id="ratingReportingSection" class="detail-rating-reporting" style="margin-top: 16.5px; padding: 16.5px; background: #f9fafb; border: 1px solid var(--border); border-radius: 12px; display: none; flex-direction: column; gap: 12.5px;">
+            <section id="ratingReportingSection" class="detail-rating-reporting" style="margin-top: 16.5px; padding: 16.5px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 12px; display: none; flex-direction: column; gap: 12.5px;">
               <!-- Rating -->
               <div id="documentRatingBlock" style="display: flex; flex-direction: column; gap: 6.5px;">
                 <label style="font-size: 13.5px; font-weight: 700; color: var(--text-main);">Community Rating</label>
@@ -2629,7 +2658,7 @@
 
           <div class="form-group" style="margin-bottom: 16px;">
               <label style="font-size: 12px; font-weight: 600;">Choose Existing System Subject</label>
-              <select id="reqSelectExistingSubject" style="width: 100%; height: 42px; border-radius: 8px; border: 1.5px solid var(--border); padding: 0 12px; font-weight: 500; font-size: 14px; background-color: #fff; box-sizing: border-box;">
+              <select id="reqSelectExistingSubject" style="width: 100%; height: 42px; border-radius: 8px; border: 1.5px solid var(--border); padding: 0 12px; font-weight: 500; font-size: 14px; background-color: var(--surface); box-sizing: border-box;">
                   <option value="">Or propose a new system subject</option>
               </select>
           </div>
