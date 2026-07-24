@@ -72,8 +72,8 @@ public class SubjectRequestService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "A pending request with this code or name already exists");
         }
 
-        if (subjectRepository.existsBySubjectCodeAndStatus(requestedCode, "ACTIVE")) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "An active subject with this code already exists");
+        if (subjectRepository.existsBySubjectCodeAndScopeAndStatus(requestedCode, "SYSTEM", "ACTIVE")) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An active system subject with this code already exists");
         }
 
         java.util.Optional<Subject> existingByName = subjectRepository.findSystemSubjectByNameIgnoreCase(requestedName);

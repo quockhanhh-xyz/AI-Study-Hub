@@ -20,6 +20,17 @@ public interface SubjectRepository extends JpaRepository<Subject, Integer>, JpaS
 
     boolean existsBySubjectCodeAndStatus(String subjectCode, String status);
 
+    boolean existsBySubjectCodeAndScope(String subjectCode, String scope);
+
+    boolean existsBySubjectCodeAndScopeAndStatus(String subjectCode, String scope, String status);
+
+    @Query("SELECT COUNT(s) > 0 FROM Subject s WHERE LOWER(s.subjectCode) = LOWER(:subjectCode) AND s.scope = :scope AND s.subjectId <> :subjectId")
+    boolean existsBySubjectCodeAndScopeAndSubjectIdNot(
+            @Param("subjectCode") String subjectCode,
+            @Param("scope") String scope,
+            @Param("subjectId") Integer subjectId
+    );
+
     java.util.Optional<Subject> findBySubjectCode(String subjectCode);
 
     @Query("SELECT s FROM Subject s WHERE s.scope = 'SYSTEM' AND LOWER(s.subjectName) = LOWER(:name)")

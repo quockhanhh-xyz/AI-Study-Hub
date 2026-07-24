@@ -35,3 +35,4 @@ uploads/
 .mvn/wrapper/maven-wrapper.jar
 .worktrees/
 .codex-tmp/
+.agents/

@@ -95,6 +95,7 @@ let currentDocCanReprocess = false;
 let currentDocumentForTopBar = null;
 let aiExtractedTextLoaded = false;
 let aiExtractedTextExpanded = true;
+let allSubjectsList = [];
 
 // Step 10 — AI Q&A chat state
 let aiQaChatLoaded = false;
@@ -274,6 +275,7 @@ async function loadPage(id, { isAuthenticated, isCommunityView }) {
         renderDocument(docRes.data);
 
         if (!isCommunityView && subjectsRes) {
+            allSubjectsList = subjectsRes.data || [];
             renderSubjectOptions(
                 subjectsRes.data,
                 docRes.data.subjectId
@@ -580,6 +582,14 @@ function renderDocument(doc) {
             !currentIsCommunityView && doc.canDelete ? "block" : "none";
     }
 
+    const subjectReqCard = document.getElementById("subjectRequestStatusCard");
+    const subjectReqTitle = document.getElementById("subjectRequestStatusTitle");
+    const subjectReqCopy = document.getElementById("subjectRequestStatusCopy");
+
+    if (subjectReqCard) {
+        subjectReqCard.style.display = "none";
+    }
+
     // Publish button
     if (publishBtn) {
         const canRequestSystemSubject = Boolean(doc.canRequestSystemSubject || doc.requiresSystemSubjectRequest);
@@ -591,7 +601,32 @@ function renderDocument(doc) {
                 || canRequestSystemSubject;
 
             if (isPersonalSubject) {
-                const label = "Request System Subject";
+                let label = "Request System Subject";
+                
+                if (doc.subjectRequestStatus) {
+                    label = "Resubmit Subject Request";
+                    if (subjectReqCard && subjectReqTitle && subjectReqCopy) {
+                        subjectReqCard.style.display = "flex";
+                        if (doc.subjectRequestStatus === "PENDING") {
+                            subjectReqCard.style.background = "#eff6ff";
+                            subjectReqCard.style.borderColor = "#bfdbfe";
+                            subjectReqCard.style.color = "#1e40af";
+                            subjectReqTitle.style.color = "#1e40af";
+                            subjectReqTitle.textContent = "Subject Request Pending Approval";
+                            subjectReqCopy.style.color = "#1e3a8a";
+                            subjectReqCopy.textContent = `A request for the system subject code "${doc.subjectCode || (doc.subject ? doc.subject.subjectCode : '')}" has been submitted and is pending admin approval.`;
+                        } else if (doc.subjectRequestStatus === "REJECTED") {
+                            subjectReqCard.style.background = "#fef2f2";
+                            subjectReqCard.style.borderColor = "#fecaca";
+                            subjectReqCard.style.color = "#991b1b";
+                            subjectReqTitle.style.color = "#991b1b";
+                            subjectReqTitle.textContent = "Subject Request Rejected";
+                            subjectReqCopy.style.color = "#7f1d1d";
+                            subjectReqCopy.textContent = `Reason: ${doc.subjectRequestRejectReason || "No reason specified."}. You can click below to resubmit the request.`;
+                        }
+                    }
+                }
+
                 if (btnTextEl) btnTextEl.textContent = label;
                 else publishBtn.textContent = label;
                 publishBtn.onclick = () => openSubjectRequestModalForDoc(doc);
@@ -1137,11 +1172,76 @@ function openSubjectRequestModalForDoc(doc) {
     const nameInput = document.getElementById("reqSubjectName");
     const descInput = document.getElementById("reqSubjectDesc");
     const msgEl = document.getElementById("reqSubjectMsg");
+    const existingSelect = document.getElementById("reqSelectExistingSubject");
 
     if (msgEl) msgEl.style.display = "none";
-    if (codeInput && doc) codeInput.value = doc.subjectCode || (doc.subject ? doc.subject.subjectCode : "") || "";
-    if (nameInput && doc) nameInput.value = doc.subjectName || (doc.subject ? doc.subject.subjectName : "") || "";
+    if (codeInput && doc) {
+        codeInput.value = doc.subjectCode || (doc.subject ? doc.subject.subjectCode : "") || "";
+        codeInput.disabled = false;
+    }
+    if (nameInput && doc) {
+        nameInput.value = doc.subjectName || (doc.subject ? doc.subject.subjectName : "") || "";
+        nameInput.disabled = false;
+    }
     if (descInput && doc) descInput.value = `Request system subject for document: ${doc.title || doc.documentId}`;
+
+    const submitBtn = document.getElementById("submitSubjectReqBtn");
+    if (submitBtn) {
+        submitBtn.textContent = "Submit Request";
+    }
+
+    // Populate existing system subjects select
+    if (existingSelect) {
+        existingSelect.innerHTML = '<option value="">Or propose a new system subject</option>';
+        const systemSubjects = allSubjectsList.filter(s => s.scope === "SYSTEM");
+        systemSubjects.forEach(s => {
+            const opt = document.createElement("option");
+            opt.value = s.subjectId;
+            opt.textContent = `${s.subjectCode} – ${s.subjectName}`;
+            existingSelect.appendChild(opt);
+        });
+
+        if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+            window.UIHelper.convertSelectToCustomDropdown(existingSelect);
+            existingSelect.dispatchEvent(new Event("syncCustom"));
+        }
+
+        existingSelect.onchange = () => {
+            const selectedVal = existingSelect.value;
+            if (selectedVal) {
+                const found = allSubjectsList.find(s => String(s.subjectId) === String(selectedVal));
+                if (found) {
+                    if (codeInput) {
+                        codeInput.value = found.subjectCode;
+                        codeInput.disabled = true;
+                    }
+                    if (nameInput) {
+                        nameInput.value = found.subjectName;
+                        nameInput.disabled = true;
+                    }
+                    if (submitBtn) {
+                        submitBtn.textContent = "Assign & Publish";
+                    }
+                }
+            } else {
+                if (codeInput) {
+                    codeInput.value = doc.subjectCode || (doc.subject ? doc.subject.subjectCode : "") || "";
+                    codeInput.disabled = false;
+                }
+                if (nameInput) {
+                    nameInput.value = doc.subjectName || (doc.subject ? doc.subject.subjectName : "") || "";
+                    nameInput.disabled = false;
+                }
+                if (submitBtn) {
+                    submitBtn.textContent = "Submit Request";
+                }
+            }
+        };
+
+        // Reset select dropdown
+        existingSelect.value = "";
+        existingSelect.dispatchEvent(new Event("change"));
+    }
 
     modal.classList.add("open");
 
@@ -1154,9 +1254,9 @@ function openSubjectRequestModalForDoc(doc) {
         if (e.target === modal) modal.classList.remove("open");
     };
 
-    const submitBtn = document.getElementById("submitSubjectReqBtn");
     if (submitBtn) {
         submitBtn.onclick = async () => {
+            const isExistingSelected = existingSelect ? !!existingSelect.value : false;
             const subjectCode = codeInput ? codeInput.value.trim() : "";
             const subjectName = nameInput ? nameInput.value.trim() : "";
             const description = descInput ? descInput.value.trim() : "";
@@ -1170,14 +1270,31 @@ function openSubjectRequestModalForDoc(doc) {
             }
 
             submitBtn.disabled = true;
-            submitBtn.textContent = "Submitting...";
+            submitBtn.textContent = isExistingSelected ? "Assigning..." : "Submitting...";
 
             try {
-                if (typeof createSubjectRequest === "function") {
-                    await createSubjectRequest({ subjectCode, subjectName, description });
+                if (isExistingSelected) {
+                    const selectedSubjectId = existingSelect.value;
+                    const updatePayload = {
+                        title: doc.title,
+                        description: doc.description,
+                        subjectId: parseInt(selectedSubjectId, 10)
+                    };
+                    const res = await updateDocument(doc.documentId, updatePayload);
+                    renderDocument(res.data);
+                    modal.classList.remove("open");
+                    await handlePublish();
+                } else {
+                    if (typeof createSubjectRequest === "function") {
+                        await createSubjectRequest({
+                            requestedCode: subjectCode,
+                            requestedName: subjectName,
+                            description
+                        });
+                    }
+                    modal.classList.remove("open");
+                    window.showToast("System subject request submitted for admin review.", "success");
                 }
-                modal.classList.remove("open");
-                window.showToast("System subject request submitted for admin review.", "success");
             } catch (err) {
                 if (msgEl) {
                     msgEl.textContent = err.message || "Failed to submit request.";
@@ -1185,7 +1302,7 @@ function openSubjectRequestModalForDoc(doc) {
                 }
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = "Submit Request";
+                submitBtn.textContent = isExistingSelected ? "Assign & Publish" : "Submit Request";
             }
         };
     }
@@ -2895,7 +3012,10 @@ async function initRatingReportingWidget(doc) {
         }
     }
 
-    if (reportedByMe) {
+    if (doc.canEdit) {
+        reportBlock.style.display = "none";
+        alreadyReportedBadge.style.display = "none";
+    } else if (reportedByMe) {
         reportBlock.style.display = "none";
         alreadyReportedBadge.style.display = "block";
     } else {

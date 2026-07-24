@@ -59,6 +59,8 @@ public class DocumentResponse {
     private Boolean requiresSystemSubjectRequest;
     private Boolean canRequestSystemSubject;
     private Boolean favoritedByMe;
+    private String subjectRequestStatus;
+    private String subjectRequestRejectReason;
 
     // Rating & Reporting
     private Double averageRating;

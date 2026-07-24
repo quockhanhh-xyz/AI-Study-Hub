@@ -54,7 +54,7 @@ public class AdminSubjectService {
     }
 
     public AdminSubjectItem createSubject(AdminSubjectRequest request) {
-        if (subjectRepository.existsBySubjectCode(request.getSubjectCode())) {
+        if (subjectRepository.existsBySubjectCodeAndScope(request.getSubjectCode(), "SYSTEM")) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Subject code already exists");
         }
 
@@ -76,7 +76,7 @@ public class AdminSubjectService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot edit custom subjects");
         }
 
-        if (!subject.getSubjectCode().equals(request.getSubjectCode()) && subjectRepository.existsBySubjectCode(request.getSubjectCode())) {
+        if (!subject.getSubjectCode().equals(request.getSubjectCode()) && subjectRepository.existsBySubjectCodeAndScopeAndSubjectIdNot(request.getSubjectCode(), "SYSTEM", id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Subject code already exists");
         }
 
@@ -140,6 +140,11 @@ public class AdminSubjectService {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
+            // Admin subjects should only include SYSTEM scope
+            predicates.add(cb.or(
+                    cb.equal(root.get("scope"), "SYSTEM"),
+                    cb.isNull(root.get("owner"))
+            ));
 
             if (search != null && !search.isEmpty()) {
                 String searchLike = "%" + search.toLowerCase() + "%";

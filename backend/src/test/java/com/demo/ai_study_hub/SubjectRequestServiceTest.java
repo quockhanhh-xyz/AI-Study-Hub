@@ -66,7 +66,7 @@ class SubjectRequestServiceTest {
     void createSubjectRequest_Success() {
         when(subjectRequestRepository.existsByRequestedCodeAndStatus("CS101", "PENDING")).thenReturn(false);
         when(subjectRequestRepository.existsByRequestedNameAndStatus("Computer Science", "PENDING")).thenReturn(false);
-        when(subjectRepository.existsBySubjectCodeAndStatus("CS101", "ACTIVE")).thenReturn(false);
+        when(subjectRepository.existsBySubjectCodeAndScopeAndStatus("CS101", "SYSTEM", "ACTIVE")).thenReturn(false);
         when(subjectRepository.findSystemSubjectByNameIgnoreCase("Computer Science")).thenReturn(Optional.empty());
         when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(testUser));
         when(subjectRequestRepository.save(any(SubjectRequest.class))).thenAnswer(i -> {

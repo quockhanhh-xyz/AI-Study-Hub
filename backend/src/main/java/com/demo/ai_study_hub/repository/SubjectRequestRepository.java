@@ -19,6 +19,9 @@ public interface SubjectRequestRepository extends JpaRepository<SubjectRequest, 
 
     List<SubjectRequest> findByRequestedByUser(User user);
 
+    @Query("SELECT sr FROM SubjectRequest sr WHERE sr.requestedByUser = :user AND sr.requestedCode = :code ORDER BY sr.createdAt DESC")
+    List<SubjectRequest> findByUserAndCodeOrderByCreatedAtDesc(@Param("user") User user, @Param("code") String code);
+
     Page<SubjectRequest> findByRequestedByUser(User user, Pageable pageable);
 
     boolean existsByRequestedCodeAndStatus(String requestedCode, String status);

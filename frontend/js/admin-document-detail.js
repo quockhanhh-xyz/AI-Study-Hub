@@ -68,8 +68,18 @@ function renderDetails(doc) {
     document.getElementById("docSubjectVal").textContent = doc.subjectCode ? `${doc.subjectCode} - ${doc.subjectName}` : '-';
     document.getElementById("docTypeVal").textContent = doc.fileType || '-';
 
-    document.getElementById("docVisVal").innerHTML = `<span class="badge ${doc.visibility === 'PUBLIC' ? 'active' : ''}">${doc.visibility}</span>`;
-    document.getElementById("docApprVal").innerHTML = `<span class="badge ${doc.approvalStatus.toLowerCase()}">${doc.approvalStatus}</span>`;
+    const visClass = doc.visibility === 'PUBLIC' ? 'badge-status-active' : 'badge-status-inactive';
+    document.getElementById("docVisVal").innerHTML = `<span class="badge ${visClass}">${doc.visibility}</span>`;
+
+    let apprClass = 'badge-status-inactive';
+    if (doc.approvalStatus === 'APPROVED') {
+        apprClass = 'badge-status-active';
+    } else if (doc.approvalStatus === 'PENDING') {
+        apprClass = 'badge-status-pending';
+    } else if (doc.approvalStatus === 'REJECTED') {
+        apprClass = 'badge-status-rejected';
+    }
+    document.getElementById("docApprVal").innerHTML = `<span class="badge ${apprClass}">${doc.approvalStatus}</span>`;
     document.getElementById("docProcVal").textContent = doc.processingStatus || '-';
 
     document.getElementById("docDateVal").textContent = doc.createdAt ? new Date(doc.createdAt).toLocaleString() : '-';

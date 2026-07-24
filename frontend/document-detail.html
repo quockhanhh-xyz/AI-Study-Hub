@@ -2286,6 +2286,18 @@
                       </div>
                     </div>
 
+                    <div id="subjectRequestStatusCard" class="visibility-status-card" style="display:none; margin-top: 10px; gap: 8.5px;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0;">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="16" x2="12" y2="12"/>
+                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                      </svg>
+                      <div>
+                        <div class="visibility-status-title" id="subjectRequestStatusTitle" style="font-weight: 600; font-size: 13px;">Subject Request Status</div>
+                        <div class="visibility-status-copy" id="subjectRequestStatusCopy" style="font-size: 12px; margin-top: 2px; line-height: 1.4;">Details of the requested system subject.</div>
+                      </div>
+                    </div>
+
                     <div id="pendingVisibilityNote" class="visibility-status-card pending" style="display:none; background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af;">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                       <div>
@@ -2614,6 +2626,19 @@
       <div class="modal-box" style="max-width: 440px;">
           <h3 style="margin-top:0; font-size:18px; font-weight:700; color:var(--text); margin-bottom:12px;">Request System Subject</h3>
           <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px;">Propose a new system subject for admin approval so it can be used for public documents in the Community Library.</p>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+              <label style="font-size: 12px; font-weight: 600;">Choose Existing System Subject</label>
+              <select id="reqSelectExistingSubject" style="width: 100%; height: 42px; border-radius: 8px; border: 1.5px solid var(--border); padding: 0 12px; font-weight: 500; font-size: 14px; background-color: #fff; box-sizing: border-box;">
+                  <option value="">Or propose a new system subject</option>
+              </select>
+          </div>
+          
+          <div style="display: flex; align-items: center; text-align: center; margin: 16px 0 12px 0; color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; width: 100%;">
+              <span style="flex: 1; border-bottom: 1px dashed var(--border); margin-right: 8px;"></span>
+              OR PROPOSE NEW SUBJECT
+              <span style="flex: 1; border-bottom: 1px dashed var(--border); margin-left: 8px;"></span>
+          </div>
 
           <div class="form-group" style="margin-bottom: 12px;">
               <label style="font-size: 12px; font-weight: 600;">Subject Code <span class="label-required">*</span></label>

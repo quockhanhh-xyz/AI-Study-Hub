@@ -47,6 +47,7 @@ public class DocumentService {
     private final com.demo.ai_study_hub.repository.DocumentRatingRepository documentRatingRepository;
     private final com.demo.ai_study_hub.repository.DocumentReportRepository documentReportRepository;
     private final NotificationService notificationService;
+    private final com.demo.ai_study_hub.repository.SubjectRequestRepository subjectRequestRepository;
 
     public DocumentResponse uploadDocument(MultipartFile file, String title, String description, Integer subjectId, Integer folderId, String email) {
         if (title == null || title.trim().isEmpty()) {
@@ -567,6 +568,17 @@ public class DocumentService {
         }
         Long ratingCount = documentRatingRepository.countRatingsByDocument(doc);
 
+        String subjectReqStatus = null;
+        String subjectReqRejectReason = null;
+        if (doc.getSubject() != null && doc.getSubject().getSubjectCode() != null && requester != null) {
+            List<com.demo.ai_study_hub.entity.SubjectRequest> reqList =
+                    subjectRequestRepository.findByUserAndCodeOrderByCreatedAtDesc(requester, doc.getSubject().getSubjectCode());
+            if (reqList != null && !reqList.isEmpty()) {
+                subjectReqStatus = reqList.get(0).getStatus();
+                subjectReqRejectReason = reqList.get(0).getRejectReason();
+            }
+        }
+
         Integer myRating = null;
         boolean canRateVal = false;
         boolean canReportVal = false;
@@ -635,6 +647,8 @@ public class DocumentService {
                 .requiresSystemSubjectRequest(requiresSystemSubjectRequest)
                 .canRequestSystemSubject(canRequestSystemSubject)
                 .favoritedByMe(favoritedByMe)
+                .subjectRequestStatus(subjectReqStatus)
+                .subjectRequestRejectReason(subjectReqRejectReason)
                 .averageRating(avgRating)
                 .ratingCount(ratingCount)
                 .myRating(myRating)
