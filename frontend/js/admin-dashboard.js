@@ -449,15 +449,17 @@ function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, 
                 const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
                 const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
 
+                const isDark = document.documentElement.dataset.theme === 'dark';
+
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
                 
                 ctx.font = "600 11px Inter, sans-serif";
-                ctx.fillStyle = "rgba(100, 116, 139, 0.8)";
+                ctx.fillStyle = isDark ? "#94a3b8" : "rgba(100, 116, 139, 0.8)";
                 ctx.fillText(text1, centerX, centerY - 12);
 
                 ctx.font = "bold 26px Inter, sans-serif";
-                ctx.fillStyle = "#1e293b";
+                ctx.fillStyle = isDark ? "#f8fafc" : "#1e293b";
                 ctx.fillText(text2, centerX, centerY + 10);
 
                 ctx.save();
@@ -466,4 +468,33 @@ function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, 
     };
 
     chartInstances[canvasId] = new Chart(canvas, config);
+}
+
+
+// Handle Dark Mode for Charts
+window.addEventListener('themeChanged', (e) => {
+    if (typeof Chart === 'undefined' || typeof chartInstances === 'undefined') return;
+    
+    const isDark = e.detail.theme === 'dark';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.04)';
+    const textColor = isDark ? '#94a3b8' : '#64748b';
+    
+    Chart.defaults.color = textColor;
+    Chart.defaults.borderColor = gridColor;
+    
+    for (const id in chartInstances) {
+        const chart = chartInstances[id];
+        if (chart.options.scales && chart.options.scales.x) {
+            if (chart.options.scales.x.ticks) chart.options.scales.x.ticks.color = textColor;
+            if (chart.options.scales.y && chart.options.scales.y.ticks) chart.options.scales.y.ticks.color = textColor;
+            if (chart.options.scales.y && chart.options.scales.y.grid) chart.options.scales.y.grid.color = gridColor;
+        }
+        chart.update();
+    }
+});
+
+// Initial application if loaded in dark mode
+if (document.documentElement.dataset.theme === 'dark' && typeof Chart !== 'undefined') {
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
 }

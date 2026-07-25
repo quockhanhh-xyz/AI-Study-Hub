@@ -339,8 +339,8 @@ document.addEventListener("DOMContentLoaded", async function () {
       } else {
         actionsTd.innerHTML = `
           <div style="font-size: 11px; line-height: 1.35; color: var(--text-muted); display: inline-block; text-align: center;">
-            <div style="font-weight: 500; color: #475569;">Resolved by: <span style="font-weight: 600; color: #0f172a;">${escapeHtml(r.resolvedByName || "Admin")}</span></div>
-            <div style="color: #64748b; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px;" title="${escapeHtml(r.resolutionNote || '')}">
+            <div style="font-weight: 500; color: var(--text-muted);">Resolved by: <span style="font-weight: 600; color: var(--text-main);">${escapeHtml(r.resolvedByName || "Admin")}</span></div>
+            <div style="color: var(--text-muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px;" title="${escapeHtml(r.resolutionNote || '')}">
               Note: ${escapeHtml(r.resolutionNote || 'N/A')}
             </div>
           </div>

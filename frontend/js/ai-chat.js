@@ -210,7 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <a href="document-detail.html?id=${citation.documentId}" style="text-decoration: none; color: inherit; font-weight: 600;">
                         ${citation.documentTitle || 'Tài liệu'}
                     </a>
-                    <span style="color: #94a3b8;">•</span>
+                    <span style="color: var(--text-muted);">•</span>
                     <span>${citation.sourceLabel || 'Chunk'}</span>
                 `;
                 citationsContainer.appendChild(badge);

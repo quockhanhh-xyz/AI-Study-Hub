@@ -2,13 +2,14 @@
 <html lang="en">
 
 <head>
+    <script src="js/theme.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quiz - AI Study Hub</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="stylesheet" href="css/style.css" />
   <style>
-    progress#quizProgressBar::-webkit-progress-bar { background-color: #e5e7eb; border-radius: 4px; }
+    progress#quizProgressBar::-webkit-progress-bar { background-color: var(--border); border-radius: 4px; }
     progress#quizProgressBar::-webkit-progress-value { background-color: var(--primary); border-radius: 4px; }
     progress#quizProgressBar::-moz-progress-bar { background-color: var(--primary); border-radius: 4px; }
 
@@ -51,6 +52,34 @@
       padding: 16px;
     }
   </style>
+<style>
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 16px;
+}
+.theme-toggle-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+</style>
 </head>
 
 <body>
@@ -115,19 +144,19 @@
         <div id="quizSummaryResult" style="display:none;">
           
           <div class="quiz-summary-stats" style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 24px 0;">
-            <div class="quiz-stat-card" style="background:#f9fafb; padding:16px; border-radius:8px; text-align:center; border:1px solid var(--border);">
+            <div class="quiz-stat-card" style="background:var(--surface-soft); padding:16px; border-radius:8px; text-align:center; border:1px solid var(--border);">
               <div id="quizStatScore" style="font-size:24px; font-weight:700; color:var(--primary); margin-bottom:4px;">0%</div>
               <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">Score</div>
             </div>
-            <div class="quiz-stat-card" style="background:#f9fafb; padding:16px; border-radius:8px; text-align:center; border:1px solid var(--border);">
+            <div class="quiz-stat-card" style="background:var(--surface-soft); padding:16px; border-radius:8px; text-align:center; border:1px solid var(--border);">
               <div id="quizStatCorrect" style="font-size:24px; font-weight:700; color:#10b981; margin-bottom:4px;">0</div>
               <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">Correct</div>
             </div>
-            <div class="quiz-stat-card" style="background:#f9fafb; padding:16px; border-radius:8px; text-align:center; border:1px solid var(--border);">
+            <div class="quiz-stat-card" style="background:var(--surface-soft); padding:16px; border-radius:8px; text-align:center; border:1px solid var(--border);">
               <div id="quizStatIncorrect" style="font-size:24px; font-weight:700; color:#ef4444; margin-bottom:4px;">0</div>
               <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">Incorrect</div>
             </div>
-            <div class="quiz-stat-card" style="background:#f9fafb; padding:16px; border-radius:8px; text-align:center; border:1px solid var(--border);">
+            <div class="quiz-stat-card" style="background:var(--surface-soft); padding:16px; border-radius:8px; text-align:center; border:1px solid var(--border);">
               <div id="quizStatSkipped" style="font-size:24px; font-weight:700; color:var(--muted); margin-bottom:4px;">0</div>
               <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">Skipped</div>
             </div>
