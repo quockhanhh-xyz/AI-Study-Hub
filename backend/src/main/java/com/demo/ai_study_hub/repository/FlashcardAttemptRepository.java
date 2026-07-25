@@ -8,7 +8,7 @@ import java.util.List;
 
 @Repository
 public interface FlashcardAttemptRepository extends JpaRepository<FlashcardAttempt, Long> {
-    List<FlashcardAttempt> findByFlashcardSet_SetIdAndUser_UserIdOrderByCompletedAtDesc(Long setId, Integer userId);
+    List<FlashcardAttempt> findByFlashcardSet_FlashcardSetIdAndUser_UserIdOrderByCompletedAtDesc(Long flashcardSetId, Integer userId);
     
-    FlashcardAttempt findFirstByFlashcardSet_SetIdAndUser_UserIdOrderByCompletedAtDesc(Long setId, Integer userId);
+    FlashcardAttempt findFirstByFlashcardSet_FlashcardSetIdAndUser_UserIdOrderByCompletedAtDesc(Long flashcardSetId, Integer userId);
 }

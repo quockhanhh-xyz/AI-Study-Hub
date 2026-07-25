@@ -435,7 +435,7 @@ public class FlashcardService {
         User user = loadUser(email);
         
         return flashcardAttemptRepository
-                .findByFlashcardSet_SetIdAndUser_UserIdOrderByCompletedAtDesc(setId, user.getUserId())
+                .findByFlashcardSet_FlashcardSetIdAndUser_UserIdOrderByCompletedAtDesc(setId, user.getUserId())
                 .stream()
                 .map(this::toAttemptResponse)
                 .collect(Collectors.toList());
