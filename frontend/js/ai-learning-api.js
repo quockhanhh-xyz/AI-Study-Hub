@@ -121,6 +121,25 @@ const AiLearningAPI = {
    */
   getQuizAttemptHistory: async (quizSetId) => {
     return await get(`/api/ai/quiz-sets/${quizSetId}/attempts`);
+  },
+
+  /**
+   * Submit a flashcard study attempt.
+   * @param {number|string} setId 
+   * @param {object} payload { rememberedCount, forgotCount, startedAt, completedAt }
+   * @returns {Promise<object>} response payload
+   */
+  submitFlashcardAttempt: async (setId, payload) => {
+    return await post(`/api/ai/flashcard-sets/${setId}/attempts`, payload);
+  },
+
+  /**
+   * Get the current user's attempt history for a flashcard set.
+   * @param {number|string} setId 
+   * @returns {Promise<object>} response payload with data: Array<attempt>
+   */
+  getFlashcardAttemptHistory: async (setId) => {
+    return await get(`/api/ai/flashcard-sets/${setId}/attempts`);
   }
 };
 

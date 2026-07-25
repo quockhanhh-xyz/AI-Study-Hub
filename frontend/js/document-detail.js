@@ -2749,12 +2749,31 @@ function renderSetList(listEl, emptyEl, sets, detailUrlPrefix, type) {
         contentDiv.appendChild(titleRow);
         contentDiv.appendChild(metaSpan);
 
+        const actionsDiv = document.createElement("div");
+        actionsDiv.style.display = "flex";
+        actionsDiv.style.gap = "8px";
+        actionsDiv.style.alignItems = "center";
+
+        const historyBtn = document.createElement("button");
+        historyBtn.className = "btn btn-outline";
+        historyBtn.style.padding = "4px 10px";
+        historyBtn.style.fontSize = "12px";
+        historyBtn.textContent = "History";
+        historyBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            showHistoryModal(setId, type, set.title || (type === "flashcard" ? "Flashcard set" : "Quiz"));
+        };
+
         const openBtn = document.createElement("span");
         openBtn.className = "ai-tools-set-open";
         openBtn.textContent = "Open";
 
+        actionsDiv.appendChild(historyBtn);
+        actionsDiv.appendChild(openBtn);
+
         link.appendChild(contentDiv);
-        link.appendChild(openBtn);
+        link.appendChild(actionsDiv);
         li.appendChild(link);
         listEl.appendChild(li);
     });
@@ -3139,3 +3158,88 @@ async function initRatingReportingWidget(doc) {
 
 window.initRatingReportingWidget = initRatingReportingWidget;
 
+// History Modal Logic
+async function showHistoryModal(setId, type, title) {
+    const modal = document.getElementById("historyModal");
+    const modalTitle = document.getElementById("historyModalTitle");
+    const list = document.getElementById("historyModalList");
+    const loader = document.getElementById("historyModalLoader");
+    const empty = document.getElementById("historyModalEmpty");
+
+    if (!modal || !list || !loader || !empty) return;
+
+    modalTitle.textContent = `History: ${title}`;
+    list.innerHTML = "";
+    list.style.display = "none";
+    empty.style.display = "none";
+    loader.style.display = "block";
+    
+    // Show modal
+    modal.style.display = "flex";
+    modal.classList.add("show");
+
+    try {
+        let res;
+        if (type === "quiz") {
+            res = await AiLearningAPI.getQuizAttemptHistory(setId);
+        } else {
+            res = await AiLearningAPI.getFlashcardAttemptHistory(setId);
+        }
+
+        const attempts = Array.isArray(res.data) ? res.data : [];
+        loader.style.display = "none";
+
+        if (attempts.length === 0) {
+            empty.style.display = "block";
+            return;
+        }
+
+        const sorted = [...attempts].sort(
+            (a, b) => new Date(b.completedAt) - new Date(a.completedAt)
+        );
+
+        list.style.display = "block";
+        sorted.forEach(attempt => {
+            const li = document.createElement("li");
+            li.style.padding = "12px";
+            li.style.borderBottom = "1px solid var(--border)";
+            li.style.display = "flex";
+            li.style.justifyContent = "space-between";
+
+            const leftDiv = document.createElement("div");
+            const scoreSpan = document.createElement("div");
+            scoreSpan.style.fontWeight = "600";
+            scoreSpan.style.color = "var(--text-main)";
+            
+            if (type === "quiz") {
+                scoreSpan.textContent = `Score: ${attempt.percentage}% (${attempt.correctCount}/${attempt.totalQuestions})`;
+            } else {
+                scoreSpan.textContent = `Remembered: ${attempt.percentage}% (${attempt.rememberedCount}/${attempt.totalCards})`;
+            }
+
+            const dateSpan = document.createElement("div");
+            dateSpan.style.fontSize = "12px";
+            dateSpan.style.color = "var(--muted)";
+            dateSpan.textContent = formatGeneratedAt(attempt.completedAt);
+
+            leftDiv.appendChild(scoreSpan);
+            leftDiv.appendChild(dateSpan);
+            li.appendChild(leftDiv);
+            list.appendChild(li);
+        });
+    } catch (err) {
+        loader.style.display = "none";
+        empty.textContent = mapAiLearningError(err);
+        empty.style.display = "block";
+    }
+}
+
+function closeHistoryModal() {
+    const modal = document.getElementById("historyModal");
+    if (modal) {
+        modal.style.display = "none";
+        modal.classList.remove("show");
+    }
+}
+
+window.closeHistoryModal = closeHistoryModal;

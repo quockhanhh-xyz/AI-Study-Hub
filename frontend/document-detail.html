@@ -2699,7 +2699,28 @@
         <button type="button" class="btn btn-primary" id="confirmReportBtn" style="background-color: var(--danger); border-color: var(--danger);">Submit Report</button>
       </div>
     </div>
+    </div>
   </div>
+
+  <!-- History Modal -->
+  <div class="modal-overlay" id="historyModal">
+    <div class="modal-box" style="max-width: 450px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+        <h3 id="historyModalTitle" style="margin:0; font-size:18px; font-weight:700; color:var(--text);">History</h3>
+        <button type="button" class="btn" style="padding:4px 8px; font-size:20px; line-height:1; background:transparent; color:var(--muted); border:none;" onclick="closeHistoryModal()">&times;</button>
+      </div>
+      <div id="historyModalLoader" style="display:none; text-align:center; padding:20px;">
+        <div class="spinner" style="margin: 0 auto;"></div>
+      </div>
+      <p id="historyModalEmpty" style="display:none; text-align:center; color:var(--muted); font-size:14px; padding:20px 0;">No attempts found.</p>
+      <ul id="historyModalList" style="display:none; list-style:none; padding:0; margin:0; max-height:300px; overflow-y:auto;">
+      </ul>
+      <div class="modal-actions" style="margin-top: 18px;">
+        <button type="button" class="btn btn-secondary" onclick="closeHistoryModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
 
   <script src="js/api.js"></script>
   <script src="js/account-api.js"></script>

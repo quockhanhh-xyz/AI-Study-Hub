@@ -16,6 +16,7 @@ let currentCardIndex = 0;
 let isCardFlipped = false;
 let cardMarks = {};
 let autoNextTimer = null;
+let flashcardStartedAt = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
     const isAuthenticated = window.authReady ? await window.authReady : false;
@@ -92,6 +93,7 @@ function startDeck(indices) {
     deckOrder = indices;
     currentCardIndex = 0;
     isCardFlipped = false;
+    flashcardStartedAt = new Date();
 
     document.getElementById("flashcardSummary").style.display = "none";
     document.getElementById("flashcardViewer").style.display = "block";
@@ -248,6 +250,21 @@ function showFlashcardSummary() {
 
     document.getElementById("flashcardViewer").style.display = "none";
     document.getElementById("flashcardSummary").style.display = "block";
+
+    // Submit attempt to backend
+    if (flashcardStartedAt && deckOrder.length === currentFlashcardSet.flashcards.length) {
+        // Only submit if they studied the full deck (not a review-only pass)
+        try {
+            AiLearningAPI.submitFlashcardAttempt(currentFlashcardSet.flashcardSetId, {
+                rememberedCount: knownCount,
+                forgotCount: unknownCount,
+                startedAt: flashcardStartedAt.toISOString(),
+                completedAt: new Date().toISOString()
+            });
+        } catch (e) {
+            console.error("Failed to submit flashcard attempt", e);
+        }
+    }
 }
 
 function restartFullDeck() {

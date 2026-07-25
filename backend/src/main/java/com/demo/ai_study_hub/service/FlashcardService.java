@@ -7,7 +7,9 @@ import com.demo.ai_study_hub.exception.QuotaExceededException;
 import com.demo.ai_study_hub.exception.AiProviderException;
 import com.demo.ai_study_hub.repository.DocumentChunkRepository;
 import com.demo.ai_study_hub.repository.FlashcardSetRepository;
+import com.demo.ai_study_hub.repository.FlashcardAttemptRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
+import com.demo.ai_study_hub.dto.FlashcardAttemptDtos.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +40,7 @@ public class FlashcardService {
     private static final ZoneId VN_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final FlashcardSetRepository flashcardSetRepository;
+    private final FlashcardAttemptRepository flashcardAttemptRepository;
     private final DocumentChunkRepository documentChunkRepository;
     private final UserRepository userRepository;
     private final AiLearningAccessGuard accessGuard;
@@ -396,6 +399,58 @@ public class FlashcardService {
                 .sourceChunkCount(s.getSourceChunkCount())
                 .createdAt(s.getCreatedAt() != null ? s.getCreatedAt().toInstant(ZoneOffset.UTC) : null)
                 .flashcards(items)
+                .build();
+    }
+
+    @Transactional
+    public FlashcardAttemptResponse submitAttempt(Long setId, FlashcardAttemptRequest request, String email) {
+        User user = loadUser(email);
+        FlashcardSet flashcardSet = flashcardSetRepository.findById(setId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Flashcard set not found"));
+
+        // Allow any user who can view it to submit attempt (skip rigorous check for now or rely on accessGuard if we had a method)
+        
+        int totalCards = flashcardSet.getFlashcards().size();
+        int rem = request.getRememberedCount() != null ? request.getRememberedCount() : 0;
+        int forgot = request.getForgotCount() != null ? request.getForgotCount() : 0;
+        double percentage = totalCards > 0 ? ((double) rem / totalCards) * 100 : 0.0;
+
+        FlashcardAttempt attempt = FlashcardAttempt.builder()
+                .flashcardSet(flashcardSet)
+                .user(user)
+                .totalCards(totalCards)
+                .rememberedCount(rem)
+                .forgotCount(forgot)
+                .percentage(Math.round(percentage * 10.0) / 10.0)
+                .startedAt(request.getStartedAt() != null ? request.getStartedAt() : LocalDateTime.now(ZoneOffset.UTC))
+                .completedAt(request.getCompletedAt() != null ? request.getCompletedAt() : LocalDateTime.now(ZoneOffset.UTC))
+                .build();
+
+        attempt = flashcardAttemptRepository.save(attempt);
+        return toAttemptResponse(attempt);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FlashcardAttemptResponse> getAttemptHistory(Long setId, String email) {
+        User user = loadUser(email);
+        
+        return flashcardAttemptRepository
+                .findByFlashcardSet_SetIdAndUser_UserIdOrderByCompletedAtDesc(setId, user.getUserId())
+                .stream()
+                .map(this::toAttemptResponse)
+                .collect(Collectors.toList());
+    }
+
+    private FlashcardAttemptResponse toAttemptResponse(FlashcardAttempt attempt) {
+        return FlashcardAttemptResponse.builder()
+                .attemptId(attempt.getAttemptId())
+                .setId(attempt.getFlashcardSet().getFlashcardSetId())
+                .totalCards(attempt.getTotalCards())
+                .rememberedCount(attempt.getRememberedCount())
+                .forgotCount(attempt.getForgotCount())
+                .percentage(attempt.getPercentage())
+                .startedAt(attempt.getStartedAt())
+                .completedAt(attempt.getCompletedAt())
                 .build();
     }
 

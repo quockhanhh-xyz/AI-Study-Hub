@@ -40,4 +40,21 @@ public class AiFlashcardController {
         FlashcardSetResponse response = flashcardService.getDetail(setId, principal.getName());
         return ResponseEntity.ok(ApiResponse.success(response, "Flashcard set retrieved successfully"));
     }
+
+    @PostMapping("/flashcard-sets/{setId}/attempts")
+    public ResponseEntity<ApiResponse<com.demo.ai_study_hub.dto.FlashcardAttemptDtos.FlashcardAttemptResponse>> submitAttempt(
+            @PathVariable Long setId,
+            @RequestBody com.demo.ai_study_hub.dto.FlashcardAttemptDtos.FlashcardAttemptRequest request,
+            Principal principal) {
+        var response = flashcardService.submitAttempt(setId, request, principal.getName());
+        return ResponseEntity.ok(ApiResponse.success(response, "Flashcard attempt submitted successfully"));
+    }
+
+    @GetMapping("/flashcard-sets/{setId}/attempts")
+    public ResponseEntity<ApiResponse<List<com.demo.ai_study_hub.dto.FlashcardAttemptDtos.FlashcardAttemptResponse>>> getAttemptHistory(
+            @PathVariable Long setId,
+            Principal principal) {
+        var response = flashcardService.getAttemptHistory(setId, principal.getName());
+        return ResponseEntity.ok(ApiResponse.success(response, "Flashcard attempt history retrieved successfully"));
+    }
 }
