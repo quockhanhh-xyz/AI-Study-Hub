@@ -155,7 +155,7 @@
             <span class="flashcard-summary-stat-value" id="flashcardUnknownCount" style="display: block; font-size: 24px; font-weight: 800; color: #b45309;">0</span>
             <span class="flashcard-summary-stat-label" style="font-size: 12px; font-weight: 600; color: #92400e;">Still learning</span>
           </div>
-          <div class="flashcard-summary-stat unmarked" style="padding: 16px 20px; border-radius: 10px; background: var(--surface-soft); border: 1px solid var(--border); min-width: 110px;">
+          <div class="flashcard-summary-stat unmarked" style="padding: 16px 20px; border-radius: 10px; background: var(--surface-soft, #f8fafc); border: 1px solid var(--border); min-width: 110px;">
             <span class="flashcard-summary-stat-value" id="flashcardUnmarkedCount" style="display: block; font-size: 24px; font-weight: 800; color: var(--muted);">0</span>
             <span class="flashcard-summary-stat-label" style="font-size: 12px; font-weight: 600; color: var(--muted);">Unmarked</span>
           </div>
@@ -167,6 +167,11 @@
           </button>
           <button type="button" class="btn btn-primary" id="flashcardRestartFromSummaryBtn" style="font-weight: 600;">↺ Study again</button>
           <a href="#" class="btn btn-outline" id="flashcardSummaryBackLink" style="font-weight: 600;">← Back to document</a>
+        </div>
+
+        <div class="flashcard-history" id="flashcardHistorySection" style="display:none; margin-top:32px; padding-top:24px; border-top:1px solid var(--border); text-align: left;">
+          <h3 style="font-size: 15px; font-weight: 600; color: var(--text-main); margin: 0 0 12px 0;">Past attempts</h3>
+          <ul class="quiz-history-list" id="flashcardHistoryList" style="list-style: none; padding: 0; margin: 0;"></ul>
         </div>
       </section>
     </main>

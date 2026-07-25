@@ -255,7 +255,7 @@ function showFlashcardSummary() {
     if (flashcardStartedAt && deckOrder.length === currentFlashcardSet.flashcards.length) {
         // Only submit if they studied the full deck (not a review-only pass)
         try {
-            AiLearningAPI.submitFlashcardAttempt(currentFlashcardSet.flashcardSetId, {
+            await AiLearningAPI.submitFlashcardAttempt(currentFlashcardSet.flashcardSetId, {
                 rememberedCount: knownCount,
                 forgotCount: unknownCount,
                 startedAt: flashcardStartedAt.toISOString(),
@@ -264,6 +264,112 @@ function showFlashcardSummary() {
         } catch (e) {
             console.error("Failed to submit flashcard attempt", e);
         }
+    }
+    
+    // Load history after submitting
+    loadAttemptHistory();
+}
+
+async function loadAttemptHistory() {
+    const section = document.getElementById("flashcardHistorySection");
+    const list = document.getElementById("flashcardHistoryList");
+    if (!section || !list) return;
+
+    try {
+        const res = await AiLearningAPI.getFlashcardAttemptHistory(currentFlashcardSet.flashcardSetId);
+        const attempts = Array.isArray(res.data) ? res.data : [];
+
+        if (attempts.length === 0) {
+            section.style.display = "none";
+            return;
+        }
+
+        const sorted = [...attempts].sort(
+            (a, b) => new Date(b.completedAt) - new Date(a.completedAt)
+        );
+
+        const getDurationText = (start, end) => {
+            if (!start || !end) return "";
+            const diffMs = new Date(end) - new Date(start);
+            if (diffMs < 0) return "";
+            const diffSecs = Math.floor(diffMs / 1000);
+            if (diffSecs < 60) return `${diffSecs}s`;
+            const mins = Math.floor(diffSecs / 60);
+            const secs = diffSecs % 60;
+            return `${mins}m ${secs}s`;
+        };
+
+        list.innerHTML = "";
+        sorted.forEach(attempt => {
+            const li = document.createElement("li");
+            li.style.padding = "16px";
+            li.style.border = "1.5px solid var(--border)";
+            li.style.borderRadius = "10px";
+            li.style.marginBottom = "12px";
+            li.style.display = "flex";
+            li.style.justifyContent = "space-between";
+            li.style.alignItems = "center";
+            li.style.background = "var(--surface)";
+
+            const leftDiv = document.createElement("div");
+            
+            const title = document.createElement("div");
+            title.style.fontWeight = "700";
+            title.style.fontSize = "15px";
+            title.style.color = "var(--text-main)";
+            title.style.marginBottom = "8px";
+            title.textContent = `${Math.round(attempt.percentage * 10) / 10}% Remembered`;
+            
+            const stats = document.createElement("div");
+            stats.style.fontSize = "13px";
+            stats.style.color = "var(--muted)";
+            stats.style.display = "flex";
+            stats.style.gap = "12px";
+            stats.style.alignItems = "center";
+            
+            const known = document.createElement("span");
+            known.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; margin-right:4px;"></span>${attempt.rememberedCount} Known`;
+            
+            const review = document.createElement("span");
+            review.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#f59e0b; margin-right:4px;"></span>${attempt.forgotCount} Review`;
+            
+            const unmarkedCount = attempt.totalCards - attempt.rememberedCount - attempt.forgotCount;
+            const unmarked = document.createElement("span");
+            unmarked.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#94a3b8; margin-right:4px;"></span>${unmarkedCount} Unmarked`;
+            
+            stats.appendChild(known);
+            stats.appendChild(review);
+            if (unmarkedCount > 0) stats.appendChild(unmarked);
+            
+            leftDiv.appendChild(title);
+            leftDiv.appendChild(stats);
+            
+            const rightDiv = document.createElement("div");
+            rightDiv.style.textAlign = "right";
+            
+            const date = document.createElement("div");
+            date.style.fontSize = "13px";
+            date.style.color = "var(--muted)";
+            date.style.marginBottom = "8px";
+            date.textContent = formatGeneratedAt(attempt.completedAt);
+            
+            const duration = document.createElement("div");
+            duration.style.fontSize = "13px";
+            duration.style.color = "var(--muted)";
+            duration.innerHTML = `⏱ ${getDurationText(attempt.startedAt, attempt.completedAt)}`;
+            
+            rightDiv.appendChild(date);
+            rightDiv.appendChild(duration);
+            
+            li.appendChild(leftDiv);
+            li.appendChild(rightDiv);
+            
+            list.appendChild(li);
+        });
+
+        section.style.display = "block";
+    } catch (err) {
+        section.style.display = "none";
     }
 }
 
