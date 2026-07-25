@@ -223,7 +223,7 @@ function goToNextCard() {
     renderCurrentCard();
 }
 
-function showFlashcardSummary() {
+async function showFlashcardSummary() {
     if (autoNextTimer) clearTimeout(autoNextTimer);
 
     const knownCount = deckOrder.filter(i => cardMarks[i] === "known").length;
