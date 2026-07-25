@@ -34,6 +34,5 @@ public class FlashcardAttempt {
 
     private LocalDateTime startedAt;
     
-    @CreationTimestamp
     private LocalDateTime completedAt;
 }

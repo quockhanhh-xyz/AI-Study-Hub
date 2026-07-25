@@ -422,8 +422,8 @@ public class FlashcardService {
                 .rememberedCount(rem)
                 .forgotCount(forgot)
                 .percentage(Math.round(percentage * 10.0) / 10.0)
-                .startedAt(request.getStartedAt() != null ? request.getStartedAt() : LocalDateTime.now(ZoneOffset.UTC))
-                .completedAt(request.getCompletedAt() != null ? request.getCompletedAt() : LocalDateTime.now(ZoneOffset.UTC))
+                .startedAt(request.getStartedAt() != null ? LocalDateTime.ofInstant(request.getStartedAt(), ZoneOffset.UTC) : LocalDateTime.now(ZoneOffset.UTC))
+                .completedAt(request.getCompletedAt() != null ? LocalDateTime.ofInstant(request.getCompletedAt(), ZoneOffset.UTC) : LocalDateTime.now(ZoneOffset.UTC))
                 .build();
 
         attempt = flashcardAttemptRepository.save(attempt);
@@ -449,8 +449,8 @@ public class FlashcardService {
                 .rememberedCount(attempt.getRememberedCount())
                 .forgotCount(attempt.getForgotCount())
                 .percentage(attempt.getPercentage())
-                .startedAt(attempt.getStartedAt())
-                .completedAt(attempt.getCompletedAt())
+                .startedAt(attempt.getStartedAt() != null ? attempt.getStartedAt().toInstant(ZoneOffset.UTC) : null)
+                .completedAt(attempt.getCompletedAt() != null ? attempt.getCompletedAt().toInstant(ZoneOffset.UTC) : null)
                 .build();
     }
 

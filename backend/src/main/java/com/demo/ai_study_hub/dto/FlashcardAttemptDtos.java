@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public class FlashcardAttemptDtos {
 
@@ -16,8 +16,8 @@ public class FlashcardAttemptDtos {
     public static class FlashcardAttemptRequest {
         private Integer rememberedCount;
         private Integer forgotCount;
-        private LocalDateTime startedAt;
-        private LocalDateTime completedAt;
+        private Instant startedAt;
+        private Instant completedAt;
     }
 
     @Data
@@ -31,7 +31,7 @@ public class FlashcardAttemptDtos {
         private Integer rememberedCount;
         private Integer forgotCount;
         private Double percentage;
-        private LocalDateTime startedAt;
-        private LocalDateTime completedAt;
+        private Instant startedAt;
+        private Instant completedAt;
     }
 }
