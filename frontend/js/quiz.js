@@ -47,9 +47,21 @@ async function loadQuizSet(setId) {
         document.getElementById("quizSetMeta").textContent =
             `${currentQuizSet.questionCount || currentQuizSet.questions.length} questions · Generated ${formatGeneratedAt(currentQuizSet.createdAt)}`;
 
+        const backUrl = currentQuizSet.documentId 
+            ? `document-detail.html?id=${currentQuizSet.documentId}&tab=tools` 
+            : "documents.html";
+            
         const backLink = document.getElementById("quizBackLink");
-        if (backLink && currentQuizSet.documentId) {
-            backLink.href = `document-detail.html?id=${currentQuizSet.documentId}&tab=tools`;
+        if (backLink) {
+            backLink.href = backUrl;
+            backLink.onclick = (e) => {
+                e.preventDefault();
+                if (document.referrer && document.referrer.includes("document-detail.html")) {
+                    window.history.back();
+                } else {
+                    window.location.replace(backUrl);
+                }
+            };
         }
 
         startNewAttempt();

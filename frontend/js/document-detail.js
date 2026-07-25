@@ -26,10 +26,17 @@ function handleBack() {
     if (document.referrer) {
         try {
             const refUrl = new URL(document.referrer);
-            if (refUrl.origin === window.location.origin && 
-                refUrl.pathname.endsWith(".html") &&
-                !refUrl.pathname.includes("login.html") &&
-                !refUrl.pathname.includes("register.html")) {
+            const path = refUrl.pathname;
+            const validReferrers = [
+                "/documents.html", 
+                "/community.html", 
+                "/profile.html", 
+                "/public-profile.html", 
+                "/group-detail.html"
+            ];
+            const isValidList = validReferrers.some(v => path.endsWith(v));
+
+            if (refUrl.origin === window.location.origin && isValidList) {
                 window.location.href = document.referrer;
                 return;
             }

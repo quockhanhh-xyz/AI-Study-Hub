@@ -54,8 +54,24 @@ async function loadFlashcardSet(setId) {
         const backUrl = currentFlashcardSet.documentId
             ? `document-detail.html?id=${currentFlashcardSet.documentId}&tab=tools`
             : "documents.html";
-        if (backLink) backLink.href = backUrl;
-        if (summaryBackLink) summaryBackLink.href = backUrl;
+            
+        const handleBackClick = (e) => {
+            e.preventDefault();
+            if (document.referrer && document.referrer.includes("document-detail.html")) {
+                window.history.back();
+            } else {
+                window.location.replace(backUrl);
+            }
+        };
+
+        if (backLink) {
+            backLink.href = backUrl;
+            backLink.onclick = handleBackClick;
+        }
+        if (summaryBackLink) {
+            summaryBackLink.href = backUrl;
+            summaryBackLink.onclick = handleBackClick;
+        }
 
         cardMarks = {};
         startDeck(currentFlashcardSet.flashcards.map((_, i) => i));
