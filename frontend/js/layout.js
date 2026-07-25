@@ -79,6 +79,10 @@ function renderAdminTopbar() {
   } else if (pageHeader.children.length > 1) {
     pageHeader.children[1].appendChild(widgets);
   }
+  
+  if (typeof window.injectToggleButton === 'function') {
+    window.injectToggleButton();
+  }
 }
 
 
@@ -241,7 +245,7 @@ function renderDynamicSidebar(isAuthenticated) {
                 <span id="sidebarFollowers" style="display: block; font-size: 18px; font-weight: 700; color: var(--text-main);">${cachedStats.followersCount}</span>
                 <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; letter-spacing: 0.05em;">Followers</span>
               </div>
-              <div style="flex: 1; border-left: 1px solid var(--surface-soft); border-right: 1px solid var(--surface-soft);">
+              <div style="flex: 1; border-left: 1px solid var(--surface-muted); border-right: 1px solid var(--surface-muted);">
                 <span id="sidebarUploads" style="display: block; font-size: 18px; font-weight: 700; color: var(--text-main);">${cachedStats.publicDocumentCount}</span>
                 <span style="display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; letter-spacing: 0.05em;">Uploads</span>
               </div>
@@ -912,7 +916,7 @@ function injectFloatingChatbot() {
       flex: 1;
       padding: 16px;
       overflow-y: auto;
-      background: var(--surface-soft);
+      background: var(--surface-muted);
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -968,7 +972,7 @@ function injectFloatingChatbot() {
       align-items: center;
       gap: 4px;
       font-size: 11px;
-      background: var(--surface-soft);
+      background: var(--surface-muted);
       color: var(--text-muted);
       padding: 3px 6px;
       border-radius: 4px;
@@ -1008,7 +1012,7 @@ function injectFloatingChatbot() {
     }
     .floating-suggestion-chip {
       font-size: 11.5px;
-      background: var(--surface-soft);
+      background: var(--surface-muted);
       color: var(--text-muted);
       border: 1px solid var(--border);
       padding: 4px 10px;
