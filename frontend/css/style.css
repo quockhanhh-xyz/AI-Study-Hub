@@ -34,6 +34,7 @@
   --card-bg: var(--surface);
   --text: var(--text-main);
   --muted: var(--text-muted);
+  --surface-soft: var(--surface-muted);
 
   /* ── FE3 Sidebar & Item Theme Legacy Alias Mapping ── */
   --glass-bg: var(--surface);
@@ -62,6 +63,7 @@
   --primary-border: rgba(255, 122, 92, 0.3);
   --danger-light: rgba(239, 68, 68, 0.15);
   --item-hover: rgba(255, 90, 61, 0.15);
+  --surface-soft: var(--surface-muted);
 }
 
 /* Dark Mode Overrides for Payment Badges */
@@ -4772,6 +4774,7 @@ svg {
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface);
+  color: var(--text-main);
   cursor: pointer;
   font-size: 14px;
 }
@@ -6251,5 +6254,94 @@ input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:f
   display: inline-flex !important;
   align-items: center !important;
   gap: 4px !important;
+}
+
+/* Quiz & Flashcards Dark Mode Overrides */
+[data-theme="dark"] .quiz-option-btn.selected {
+  background-color: rgba(255, 90, 61, 0.15) !important;
+  border-color: var(--primary) !important;
+  color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .quiz-option-btn.correct {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  border-color: var(--success) !important;
+  color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .quiz-option-btn.correct .quiz-option-key {
+  background-color: var(--success) !important;
+  border-color: var(--success) !important;
+  color: #fff !important;
+}
+
+[data-theme="dark"] .quiz-option-btn.incorrect {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  border-color: var(--danger) !important;
+  color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .quiz-option-btn.incorrect .quiz-option-key {
+  background-color: var(--danger) !important;
+  border-color: var(--danger) !important;
+  color: #fff !important;
+}
+
+[data-theme="dark"] .quiz-feedback.correct {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+  color: #4ade80 !important;
+}
+
+[data-theme="dark"] .quiz-feedback.incorrect {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  color: #f87171 !important;
+}
+
+[data-theme="dark"] .flashcard-mark-btn.mark-still-learning {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  color: #fbbf24 !important;
+}
+
+[data-theme="dark"] .flashcard-mark-btn.mark-known {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+  color: #4ade80 !important;
+}
+
+[data-theme="dark"] .flashcard-summary-stat.known {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+}
+
+[data-theme="dark"] .flashcard-summary-stat.known .flashcard-summary-stat-value {
+  color: #4ade80 !important;
+}
+
+[data-theme="dark"] .flashcard-summary-stat.known .flashcard-summary-stat-label {
+  color: #22c55e !important;
+}
+
+[data-theme="dark"] .flashcard-summary-stat.unknown {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+[data-theme="dark"] .flashcard-summary-stat.unknown .flashcard-summary-stat-value {
+  color: #fbbf24 !important;
+}
+
+[data-theme="dark"] .flashcard-summary-stat.unknown .flashcard-summary-stat-label {
+  color: #f59e0b !important;
+}
+
+[data-theme="dark"] .flashcard-face-label {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .flashcard-face p {
+  color: var(--text-main) !important;
 }
 
