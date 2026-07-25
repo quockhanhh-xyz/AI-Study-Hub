@@ -3200,8 +3200,15 @@ async function showHistoryModal(setId, type, title) {
 
         const getDurationText = (start, end) => {
             if (!start || !end) return "";
-            const diffMs = new Date(end) - new Date(start);
+            let diffMs = new Date(end) - new Date(start);
             if (diffMs < 0) return "";
+            
+            // Hotfix for old flashcard timezone offset bug in database (7 hours diff)
+            if (diffMs > 6 * 60 * 60 * 1000) {
+                diffMs -= 7 * 60 * 60 * 1000;
+                if (diffMs < 0) diffMs = 0;
+            }
+            
             const diffSecs = Math.floor(diffMs / 1000);
             if (diffSecs < 60) return `${diffSecs}s`;
             const mins = Math.floor(diffSecs / 60);
