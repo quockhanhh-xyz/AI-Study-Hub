@@ -13,7 +13,7 @@
 }
 
 .profile-card {
-  background: #ffffff;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(23, 32, 51, 0.03);
@@ -208,7 +208,7 @@
   border-radius: 8px;
   font-size: 14px;
   color: var(--text-main);
-  background: #ffffff;
+  background: var(--surface);
   box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -218,7 +218,7 @@
 }
 
 .profile-form-group select option {
-  background-color: #ffffff;
+  background-color: var(--surface);
   color: var(--text-main);
 }
 
@@ -240,8 +240,8 @@
 
 .profile-form-group input:disabled,
 .profile-form-group textarea:disabled {
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: var(--surface-soft);
+  color: var(--text-muted);
   cursor: not-allowed;
 }
 
@@ -265,7 +265,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -300,7 +300,7 @@
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  color: #64748b;
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.2s ease;
   box-sizing: border-box;
@@ -312,8 +312,8 @@
 }
 
 .profile-nav-item:hover {
-  background: #f8fafc;
-  color: #1e293b;
+  background: var(--surface-soft);
+  color: var(--text-main);
 }
 
 .profile-nav-item.active {

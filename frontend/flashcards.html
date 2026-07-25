@@ -2,16 +2,45 @@
 <html lang="en">
 
 <head>
+    <script src="js/theme.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Flashcards - AI Study Hub</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="stylesheet" href="css/style.css" />
   <style>
-    progress#flashcardProgressBar::-webkit-progress-bar { background-color: #e5e7eb; border-radius: 4px; }
+    progress#flashcardProgressBar::-webkit-progress-bar { background-color: var(--border); border-radius: 4px; }
     progress#flashcardProgressBar::-webkit-progress-value { background-color: var(--primary); border-radius: 4px; }
     progress#flashcardProgressBar::-moz-progress-bar { background-color: var(--primary); border-radius: 4px; }
   </style>
+<style>
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 16px;
+}
+.theme-toggle-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+</style>
 </head>
 
 <body>
@@ -67,7 +96,7 @@
                 <p id="flashcardFrontText" style="font-size: 18px; font-weight: 600; color: var(--text); margin: 0; line-height: 1.5; text-align: center; width: 100%;"></p>
               </div>
             </div>
-            <div class="flashcard-face flashcard-face-back" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; min-height: 240px; background: var(--surface-soft, #f9fafb);">
+            <div class="flashcard-face flashcard-face-back" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; min-height: 240px; background: var(--surface-soft, var(--surface-soft));">
               <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <span class="flashcard-face-label" style="font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: var(--muted); text-transform: uppercase;">BACK</span>
                 <span class="flashcard-source-page" id="flashcardSourcePage" style="display:none; font-size: 11px; background: var(--border); padding: 2px 8px; border-radius: 4px; color: var(--muted);"></span>
@@ -126,7 +155,7 @@
             <span class="flashcard-summary-stat-value" id="flashcardUnknownCount" style="display: block; font-size: 24px; font-weight: 800; color: #b45309;">0</span>
             <span class="flashcard-summary-stat-label" style="font-size: 12px; font-weight: 600; color: #92400e;">Still learning</span>
           </div>
-          <div class="flashcard-summary-stat unmarked" style="padding: 16px 20px; border-radius: 10px; background: #f9fafb; border: 1px solid var(--border); min-width: 110px;">
+          <div class="flashcard-summary-stat unmarked" style="padding: 16px 20px; border-radius: 10px; background: var(--surface-soft); border: 1px solid var(--border); min-width: 110px;">
             <span class="flashcard-summary-stat-value" id="flashcardUnmarkedCount" style="display: block; font-size: 24px; font-weight: 800; color: var(--muted);">0</span>
             <span class="flashcard-summary-stat-label" style="font-size: 12px; font-weight: 600; color: var(--muted);">Unmarked</span>
           </div>
