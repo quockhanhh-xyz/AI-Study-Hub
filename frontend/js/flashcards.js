@@ -95,6 +95,9 @@ function startDeck(indices) {
     isCardFlipped = false;
     flashcardStartedAt = new Date();
 
+    const backLink = document.getElementById("flashcardBackLink");
+    if (backLink) backLink.style.display = "inline-block";
+
     document.getElementById("flashcardSummary").style.display = "none";
     document.getElementById("flashcardViewer").style.display = "block";
     renderCurrentCard();
@@ -225,6 +228,9 @@ function goToNextCard() {
 
 async function showFlashcardSummary() {
     if (autoNextTimer) clearTimeout(autoNextTimer);
+
+    const backLink = document.getElementById("flashcardBackLink");
+    if (backLink) backLink.style.display = "none";
 
     const knownCount = deckOrder.filter(i => cardMarks[i] === "known").length;
     const unknownCount = deckOrder.filter(i => cardMarks[i] === "unknown").length;

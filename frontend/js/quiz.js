@@ -44,6 +44,19 @@ async function loadQuizSet(setId) {
         }
 
         document.getElementById("quizSetTitle").textContent = currentQuizSet.title || "Quiz";
+        document.getElementById("quizRetakeBtn")?.addEventListener("click", (e) => {
+            e.preventDefault();
+            startNewAttempt();
+        });
+
+        document.getElementById("quizSummaryBackLink")?.addEventListener("click", (e) => {
+            e.preventDefault();
+            const backUrl = currentQuizSet.documentId 
+                ? `document-detail.html?id=${currentQuizSet.documentId}&tab=tools` 
+                : "documents.html";
+            window.location.href = backUrl;
+        });
+
         document.getElementById("quizSetMeta").textContent =
             `${currentQuizSet.questionCount || currentQuizSet.questions.length} questions · Generated ${formatGeneratedAt(currentQuizSet.createdAt)}`;
 
@@ -86,6 +99,8 @@ function startNewAttempt() {
     currentQuestionIndex = 0;
     userAnswers = {};
     quizStartedAt = new Date();
+    const backLink = document.getElementById("quizBackLink");
+    if (backLink) backLink.style.display = "inline-block";
     isReviewMode = false;
 
     document.getElementById("quizSummary").style.display = "none";
@@ -279,6 +294,9 @@ async function finishQuiz() {
 
     document.getElementById("quizViewer").style.display = "none";
     document.getElementById("quizSummary").style.display = "block";
+    const backLink = document.getElementById("quizBackLink");
+    if (backLink) backLink.style.display = "none";
+    
     document.getElementById("quizSummaryResult").style.display = "none";
     document.getElementById("quizSummaryError").style.display = "none";
     document.getElementById("quizSummarySubmitting").style.display = "block";
@@ -341,6 +359,8 @@ function startReview() {
     currentQuestionIndex = 0;
     document.getElementById("quizSummary").style.display = "none";
     document.getElementById("quizViewer").style.display = "block";
+    const backLink = document.getElementById("quizBackLink");
+    if (backLink) backLink.style.display = "inline-block";
     renderCurrentQuestion();
 }
 
@@ -348,6 +368,8 @@ function backToSummaryFromReview() {
     isReviewMode = false;
     document.getElementById("quizViewer").style.display = "none";
     document.getElementById("quizSummary").style.display = "block";
+    const backLink = document.getElementById("quizBackLink");
+    if (backLink) backLink.style.display = "none";
     renderQuizResult();
 }
 
