@@ -133,6 +133,10 @@ function initGlobalHeader() {
     if (isDocumentDetailPage && typeof window.renderContextualTopBar === "function") {
         window.renderContextualTopBar(window.currentDocumentDetailForTopBar || null);
     }
+
+    if (typeof window.injectToggleButton === 'function') {
+        window.injectToggleButton();
+    }
 }
 
 function getHeaderDisplayName(currentUser = {}) {
