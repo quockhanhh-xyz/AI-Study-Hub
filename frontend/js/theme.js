@@ -32,16 +32,13 @@ window.toggleTheme = toggleTheme;
 
 // Dynamically inject the toggle button into the header
 document.addEventListener("DOMContentLoaded", () => {
-    // Try immediately
     injectToggleButton();
-    
-    // Also try after a short delay to account for layout.js/notification.js async rendering
-    setTimeout(injectToggleButton, 500);
-    setTimeout(injectToggleButton, 1500);
 });
 
+window.injectToggleButton = injectToggleButton;
+
 function injectToggleButton() {
-    if (document.getElementById("themeToggleBtn")) return;
+    let btn = document.getElementById("themeToggleBtn");
     
     let headerWidgets = document.getElementById("globalHeaderWidgets");
     if (!headerWidgets) {
@@ -50,19 +47,20 @@ function injectToggleButton() {
         if (!headerWidgets) return;
     }
     
-    const toggleHtml = `
-      <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-      </svg>
-      <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-      </svg>
-    `;
-    
-    const btn = document.createElement('button');
-    btn.id = "themeToggleBtn";
-    btn.className = "theme-toggle-btn";
-    btn.innerHTML = toggleHtml;
+    if (!btn) {
+        const toggleHtml = `
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        `;
+        
+        btn = document.createElement('button');
+        btn.id = "themeToggleBtn";
+        btn.className = "theme-toggle-btn";
+        btn.innerHTML = toggleHtml;
     btn.onclick = toggleTheme;
     btn.setAttribute("aria-label", "Toggle Theme");
     
@@ -81,14 +79,15 @@ function injectToggleButton() {
         margin-right: 12px;
     `;
     
-    btn.addEventListener('mouseover', () => {
-        btn.style.background = 'var(--border)';
-        btn.style.color = 'var(--primary)';
-    });
-    btn.addEventListener('mouseout', () => {
-        btn.style.background = 'transparent';
-        btn.style.color = 'var(--text-muted)';
-    });
+        btn.addEventListener('mouseover', () => {
+            btn.style.background = 'var(--border)';
+            btn.style.color = 'var(--primary)';
+        });
+        btn.addEventListener('mouseout', () => {
+            btn.style.background = 'transparent';
+            btn.style.color = 'var(--text-muted)';
+        });
+    }
     
     // Find where to insert it
     const notifContainer = headerWidgets.querySelector('.notification-container');
