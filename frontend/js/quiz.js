@@ -323,7 +323,7 @@ function renderQuizResult() {
     const skippedCount = totalQuestions - answeredCount;
 
     const scoreEl = document.getElementById("quizStatScore");
-    if (scoreEl) scoreEl.textContent = `${percentage}%`;
+    if (scoreEl) scoreEl.textContent = `${Math.round(percentage * 10) / 10}%`;
 
     const correctEl = document.getElementById("quizStatCorrect");
     if (correctEl) correctEl.textContent = correctCount;
@@ -381,7 +381,7 @@ async function loadAttemptHistory() {
 
             const scoreSpan = document.createElement("span");
             scoreSpan.className = "quiz-history-score";
-            scoreSpan.textContent = `${attempt.percentage}% · ${attempt.correctCount}/${attempt.totalQuestions} correct · ${formatGeneratedAt(attempt.completedAt)}`;
+            scoreSpan.textContent = `${Math.round(attempt.percentage * 10) / 10}% · ${attempt.correctCount}/${attempt.totalQuestions} correct · ${formatGeneratedAt(attempt.completedAt)}`;
 
             li.appendChild(scoreSpan);
             list.appendChild(li);
