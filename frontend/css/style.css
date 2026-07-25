@@ -244,19 +244,6 @@ select {
   color-scheme: light;
 }
 
-select option {
-  background-color: #ffffff;
-  color: var(--text-main);
-}
-
-select option:checked,
-select option:hover {
-  background-color: var(--primary) !important;
-  color: #ffffff !important;
-  box-shadow: 0 0 10px 100px var(--primary) inset !important;
-  -webkit-text-fill-color: #ffffff !important;
-}
-
 select:hover {
   border-color: var(--primary);
 }
@@ -4224,8 +4211,19 @@ svg {
   padding: 8px 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--background);
+  background-color: var(--background);
   font-size: 14px;
+}
+
+.ai-tools-input-row-flex select {
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
 }
 
 .ai-tools-input-group > label {
