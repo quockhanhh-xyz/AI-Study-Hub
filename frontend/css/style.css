@@ -64,6 +64,43 @@
   --item-hover: rgba(255, 90, 61, 0.15);
 }
 
+/* Dark Mode Overrides for Payment Badges */
+[data-theme="dark"] .payment-status-pending {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+[data-theme="dark"] .payment-status-success {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+[data-theme="dark"] .payment-status-failed {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+[data-theme="dark"] .payment-status-cancelled {
+  background-color: var(--surface-muted);
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+[data-theme="dark"] .payment-status-expired {
+  background-color: var(--surface-muted);
+  color: var(--text-light);
+  border-color: var(--border);
+}
+[data-theme="dark"] .payment-status-review {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+[data-theme="dark"] .payment-status-unknown {
+  background-color: var(--surface-muted);
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+
 
 * {
   box-sizing: border-box;
@@ -310,7 +347,7 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  -webkit-box-shadow: 0 0 0 30px var(--input-bg, var(--surface)) inset !important;
   -webkit-text-fill-color: var(--text-main) !important;
 }
 
