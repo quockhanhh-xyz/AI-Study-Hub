@@ -8,6 +8,7 @@ import com.demo.ai_study_hub.service.JwtUtil;
 import com.demo.ai_study_hub.service.UserDetailsServiceImpl;
 import com.demo.ai_study_hub.repository.UserRepository;
 import com.demo.ai_study_hub.repository.DocumentRepository;
+import com.demo.ai_study_hub.repository.DocumentRatingRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -49,6 +50,9 @@ class UserFollowControllerTest {
 
     @MockBean
     private DocumentRepository documentRepository;
+
+    @MockBean
+    private DocumentRatingRepository documentRatingRepository;
 
     @MockBean
     private JwtUtil jwtUtil;

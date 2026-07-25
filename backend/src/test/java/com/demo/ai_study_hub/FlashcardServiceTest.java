@@ -33,6 +33,7 @@ import static org.mockito.Mockito.*;
 class FlashcardServiceTest {
 
     @Mock private FlashcardSetRepository flashcardSetRepository;
+    @Mock private com.demo.ai_study_hub.repository.FlashcardAttemptRepository flashcardAttemptRepository;
     @Mock private DocumentChunkRepository documentChunkRepository;
     @Mock private UserRepository userRepository;
     @Mock private AiLearningAccessGuard accessGuard;
@@ -73,7 +74,7 @@ class FlashcardServiceTest {
         lenient().when(transactionManager.getTransaction(any())).thenReturn(mockStatus);
 
         flashcardService = new FlashcardService(
-                flashcardSetRepository, documentChunkRepository, userRepository,
+                flashcardSetRepository, flashcardAttemptRepository, documentChunkRepository, userRepository,
                 accessGuard, quotaPolicy, promptBuilder, validator,
                 tierPolicyService, aiProviderRouter, aiModelSelector, objectMapper,
                 aiUsageLogRepository, aiUsageReservationRepository, transactionManager,

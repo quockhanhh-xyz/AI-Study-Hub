@@ -95,12 +95,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     quotaDisplay.textContent = `Remaining Quota: ${res.data.remainingQuestions} Q&A today`;
                 }
             } else {
-                appendMessageBubble("ASSISTANT", "Xin lỗi, đã có lỗi xảy ra khi xử lý câu hỏi của bạn.", null, new Date().toISOString());
+                appendMessageBubble("ASSISTANT", "Sorry, an error occurred while processing your question.", null, new Date().toISOString());
             }
         } catch (error) {
             console.error("Ask AI error", error);
             const msg = error.message || "Failed to contact AI Assistant.";
-            appendMessageBubble("ASSISTANT", `Đã xảy ra lỗi: ${msg}`, null, new Date().toISOString());
+            appendMessageBubble("ASSISTANT", `An error occurred: ${msg}`, null, new Date().toISOString());
             if (typeof window.showToast === "function") {
                 window.showToast(msg, "error");
             }
@@ -131,7 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 chatMessages.innerHTML = `
                     <div class="message-bubble assistant">
                         <div class="message-content">
-                            Đã xóa cuộc hội thoại thành công. Tôi có thể giúp gì thêm cho bạn?
+                            Conversation cleared successfully. How else can I help you?
                         </div>
                         <span class="message-time">System</span>
                     </div>
@@ -154,7 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function setLoadingState(isLoading) {
         chatInput.disabled = isLoading;
         sendBtn.disabled = isLoading;
-        sendBtn.textContent = isLoading ? "..." : "Gửi";
+        sendBtn.textContent = isLoading ? "..." : "Send";
     }
 
     /**
@@ -208,7 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 badge.innerHTML = `
                     <span class="source-type ${libClass}">${citation.sourceLibrary || 'Library'}</span>
                     <a href="document-detail.html?id=${citation.documentId}" style="text-decoration: none; color: inherit; font-weight: 600;">
-                        ${citation.documentTitle || 'Tài liệu'}
+                        ${citation.documentTitle || 'Document'}
                     </a>
                     <span style="color: var(--text-muted);">•</span>
                     <span>${citation.sourceLabel || 'Chunk'}</span>

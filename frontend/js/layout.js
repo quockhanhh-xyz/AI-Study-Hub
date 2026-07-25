@@ -1221,11 +1221,11 @@ function injectFloatingChatbot() {
           quotaDisplay.textContent = `Remaining Quota: ${res.data.remainingQuestions} Q&A today`;
         }
       } else {
-        appendBubble("ASSISTANT", "Xin lỗi, đã xảy ra lỗi trong quá trình kết nối với AI.", null, new Date().toISOString());
+        appendBubble("ASSISTANT", "Sorry, an error occurred while connecting to the AI.", null, new Date().toISOString());
       }
     } catch (error) {
       const msg = error.message || "Failed to contact AI Assistant.";
-      appendBubble("ASSISTANT", `Đã xảy ra lỗi: ${msg}`, null, new Date().toISOString());
+      appendBubble("ASSISTANT", `An error occurred: ${msg}`, null, new Date().toISOString());
     } finally {
       setLoading(false);
       scrollToBottom();
@@ -1249,7 +1249,7 @@ function injectFloatingChatbot() {
         messagesContainer.innerHTML = `
           <div class="floating-message-bubble assistant">
             <div class="floating-message-content">
-              Đã xóa cuộc hội thoại thành công. Tôi có thể giúp gì thêm cho bạn?
+              Conversation cleared successfully. How else can I help you?
             </div>
             <span class="floating-message-time">System</span>
           </div>
@@ -1308,7 +1308,7 @@ function injectFloatingChatbot() {
         badge.innerHTML = `
           <span class="floating-source-type ${libClass}">${citation.sourceLibrary || 'Library'}</span>
           <a href="document-detail.html?id=${citation.documentId}" style="text-decoration: none; color: inherit; font-weight: 600;">
-            ${citation.documentTitle || 'Tài liệu'}
+            ${citation.documentTitle || 'Document'}
           </a>
         `;
         container.appendChild(badge);
