@@ -3198,33 +3198,109 @@ async function showHistoryModal(setId, type, title) {
             (a, b) => new Date(b.completedAt) - new Date(a.completedAt)
         );
 
+        const getDurationText = (start, end) => {
+            if (!start || !end) return "";
+            const diffMs = new Date(end) - new Date(start);
+            if (diffMs < 0) return "";
+            const diffSecs = Math.floor(diffMs / 1000);
+            if (diffSecs < 60) return `${diffSecs}s`;
+            const mins = Math.floor(diffSecs / 60);
+            const secs = diffSecs % 60;
+            return `${mins}m ${secs}s`;
+        };
+
         list.style.display = "block";
+        list.style.padding = "0";
         sorted.forEach(attempt => {
             const li = document.createElement("li");
-            li.style.padding = "12px";
-            li.style.borderBottom = "1px solid var(--border)";
+            li.style.padding = "16px";
+            li.style.border = "1.5px solid var(--border)";
+            li.style.borderRadius = "10px";
+            li.style.marginBottom = "12px";
             li.style.display = "flex";
-            li.style.justifyContent = "space-between";
+            li.style.flexDirection = "column";
+            li.style.gap = "12px";
+            li.style.background = "#fff";
+            li.style.boxShadow = "0 2px 4px rgba(0,0,0,0.02)";
 
-            const leftDiv = document.createElement("div");
-            const scoreSpan = document.createElement("div");
-            scoreSpan.style.fontWeight = "600";
-            scoreSpan.style.color = "var(--text-main)";
+            // Top Row: Score & Date
+            const topDiv = document.createElement("div");
+            topDiv.style.display = "flex";
+            topDiv.style.justifyContent = "space-between";
+            topDiv.style.alignItems = "center";
             
-            if (type === "quiz") {
-                scoreSpan.textContent = `Score: ${attempt.percentage}% (${attempt.correctCount}/${attempt.totalQuestions})`;
-            } else {
-                scoreSpan.textContent = `Remembered: ${attempt.percentage}% (${attempt.rememberedCount}/${attempt.totalCards})`;
-            }
-
+            const scoreBadge = document.createElement("div");
+            scoreBadge.style.fontWeight = "700";
+            scoreBadge.style.fontSize = "16px";
+            scoreBadge.style.color = "var(--primary-color)";
+            
             const dateSpan = document.createElement("div");
             dateSpan.style.fontSize = "12px";
             dateSpan.style.color = "var(--muted)";
+            dateSpan.style.fontWeight = "500";
             dateSpan.textContent = formatGeneratedAt(attempt.completedAt);
-
-            leftDiv.appendChild(scoreSpan);
-            leftDiv.appendChild(dateSpan);
-            li.appendChild(leftDiv);
+            
+            topDiv.appendChild(scoreBadge);
+            topDiv.appendChild(dateSpan);
+            
+            // Bottom Row: Stats & Duration
+            const bottomDiv = document.createElement("div");
+            bottomDiv.style.display = "flex";
+            bottomDiv.style.justifyContent = "space-between";
+            bottomDiv.style.alignItems = "center";
+            bottomDiv.style.fontSize = "13px";
+            bottomDiv.style.color = "var(--text)";
+            bottomDiv.style.flexWrap = "wrap";
+            bottomDiv.style.gap = "8px";
+            
+            const statsDiv = document.createElement("div");
+            statsDiv.style.display = "flex";
+            statsDiv.style.gap = "12px";
+            statsDiv.style.flexWrap = "wrap";
+            
+            const durationText = getDurationText(attempt.startedAt, attempt.completedAt);
+            const durationSpan = document.createElement("div");
+            durationSpan.style.color = "var(--muted)";
+            durationSpan.style.display = "flex";
+            durationSpan.style.alignItems = "center";
+            durationSpan.innerHTML = durationText ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> ${durationText}` : "";
+            
+            if (type === "quiz") {
+                scoreBadge.textContent = `${attempt.percentage}% Score`;
+                
+                const correctCount = attempt.correctCount || 0;
+                const totalQ = attempt.totalQuestions || 0;
+                const incorrectCount = totalQ - correctCount;
+                
+                statsDiv.innerHTML = `
+                    <span style="display:flex; align-items:center; gap:6px; color:#10b981; font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;"></span> ${correctCount} Correct</span>
+                    <span style="display:flex; align-items:center; gap:6px; color:#ef4444; font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#ef4444;"></span> ${incorrectCount} Incorrect</span>
+                `;
+            } else {
+                scoreBadge.textContent = `${attempt.percentage}% Remembered`;
+                
+                const rem = attempt.rememberedCount || 0;
+                const forgot = attempt.forgotCount || 0;
+                const totalC = attempt.totalCards || 0;
+                const unmarked = totalC - rem - forgot;
+                
+                let statsHtml = `
+                    <span style="display:flex; align-items:center; gap:6px; color:#047857; font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#047857;"></span> ${rem} Known</span>
+                    <span style="display:flex; align-items:center; gap:6px; color:#b45309; font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#b45309;"></span> ${forgot} Review</span>
+                `;
+                if (unmarked > 0) {
+                    statsHtml += `<span style="display:flex; align-items:center; gap:6px; color:#6b7280; font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#9ca3af;"></span> ${unmarked} Unmarked</span>`;
+                }
+                statsDiv.innerHTML = statsHtml;
+            }
+            
+            bottomDiv.appendChild(statsDiv);
+            if (durationText) {
+                bottomDiv.appendChild(durationSpan);
+            }
+            
+            li.appendChild(topDiv);
+            li.appendChild(bottomDiv);
             list.appendChild(li);
         });
     } catch (err) {
