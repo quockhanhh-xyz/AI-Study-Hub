@@ -6408,12 +6408,25 @@ input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:f
   font-size: 0.95rem;
 }
 
+.progress-improved svg,
+.progress-regressed svg,
+.progress-same svg,
+.progress-first-attempt svg {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 4px;
+  position: relative;
+  top: -1px;
+}
+
 /* Stats Cards (Quiz & Flashcards) */
 .stat-card {
   padding: 16px 20px;
   border-radius: 10px;
   text-align: center;
-  min-width: 110px;
+  min-width: 100px;
+  flex: 1;
+  box-sizing: border-box;
   border: 1px solid transparent;
 }
 

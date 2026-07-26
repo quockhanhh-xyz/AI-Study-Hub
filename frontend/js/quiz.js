@@ -368,9 +368,8 @@ function renderQuizProgressFeedback(data, containerId, parentEl) {
     progressDiv.id = containerId;
     progressDiv.style.margin = "10px auto 24px auto";
     progressDiv.style.maxWidth = "482px";
-    progressDiv.style.display = "flex";
-    progressDiv.style.alignItems = "center";
-    progressDiv.style.justifyContent = "center";
+    progressDiv.style.display = "block";
+    progressDiv.style.textAlign = "center";
     
     let icon = "";
     let text = "";
@@ -454,8 +453,6 @@ async function loadAttemptHistory() {
             li.style.display = "flex";
             li.style.flexDirection = "column";
             li.style.gap = "4px";
-            li.style.padding = "8px 0";
-            li.style.borderBottom = "1px solid var(--border)";
 
             const scoreSpan = document.createElement("span");
             scoreSpan.className = "quiz-history-score";
@@ -472,14 +469,14 @@ async function loadAttemptHistory() {
                 prog.style.gap = "4px";
 
                 if (attempt.progressStatus === "IMPROVED") {
-                    prog.style.color = "#059669";
+                    prog.style.color = "var(--success)";
                     prog.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg> ${attempt.progressPercentage}%`;
                 } else if (attempt.progressStatus === "REGRESSED") {
-                    prog.style.color = "#dc2626";
+                    prog.style.color = "var(--danger)";
                     prog.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14" style="transform: scaleY(-1);"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg> ${attempt.progressPercentage}%`;
                 } else if (attempt.progressStatus === "SAME") {
                     prog.style.color = "var(--muted)";
-                    prog.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" /></svg> No change`;
+                    prog.textContent = `No change`;
                 }
                 
                 li.appendChild(prog);
