@@ -286,8 +286,8 @@ function renderProgressFeedback(data, containerId, parentEl) {
 
     const progressDiv = document.createElement("div");
     progressDiv.id = containerId;
-    progressDiv.style.marginTop = "10px";
-    progressDiv.style.marginBottom = "24px";
+    progressDiv.style.margin = "10px auto 24px auto";
+    progressDiv.style.maxWidth = "482px";
     progressDiv.style.display = "block";
     progressDiv.style.textAlign = "center";
     
@@ -307,7 +307,7 @@ function renderProgressFeedback(data, containerId, parentEl) {
             break;
         case "SAME":
             progressDiv.className = "progress-same";
-            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" /></svg>`;
+            icon = "";
             text = `You are maintaining your performance! Try to break through next time.`;
             break;
         case "FIRST_ATTEMPT":
