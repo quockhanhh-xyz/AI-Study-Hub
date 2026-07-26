@@ -367,6 +367,7 @@ function renderQuizProgressFeedback(data, containerId, parentEl) {
     const progressDiv = document.createElement("div");
     progressDiv.id = containerId;
     progressDiv.style.marginTop = "10px";
+    progressDiv.style.marginBottom = "24px";
     progressDiv.style.display = "block";
     progressDiv.style.textAlign = "center";
     
