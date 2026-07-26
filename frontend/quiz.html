@@ -135,30 +135,33 @@
         </div>
       </section>
 
-      <section id="quizSummary" class="card quiz-summary" style="display:none;">
-        <h2>Quiz complete</h2>
+      <section id="quizSummary" class="card quiz-summary" style="display:none; text-align: center; padding: 36px 24px; border-radius: 12px;">
+        <h2 class="quiz-summary-heading" style="font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 8px;">
+          🎉 Quiz complete!
+        </h2>
+        <p id="quizSummaryText" style="color: var(--muted); font-size: 14px; margin-bottom: 28px;"></p>
 
         <div id="quizSummarySubmitting" class="helper-text" style="display:none;">Submitting your answers...</div>
         <div id="quizSummaryError" class="status-box status-error" style="display:none;"></div>
 
         <div id="quizSummaryResult" style="display:none;">
           
-          <div class="quiz-summary-stats" style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 24px 0;">
-            <div class="quiz-stat-card" style="background:var(--surface-soft); padding:16px; border-radius:8px; text-align:center; border:1px solid var(--border);">
-              <div id="quizStatScore" style="font-size:24px; font-weight:700; color:var(--primary); margin-bottom:4px;">0%</div>
-              <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">Score</div>
+          <div class="quiz-summary-stats" style="display:flex; justify-content: center; gap: 14px; margin-bottom: 32px; flex-wrap: wrap;">
+            <div class="stat-card stat-card-default">
+              <div id="quizStatScore" class="stat-value" style="font-size:24px; font-weight:800; color:var(--primary); margin-bottom:4px;">0%</div>
+              <div class="stat-label" style="font-size:12px; text-transform:uppercase; font-weight:600;">Score</div>
             </div>
-            <div class="quiz-stat-card" style="background:var(--surface-soft); padding:16px; border-radius:8px; text-align:center; border:1px solid var(--border);">
-              <div id="quizStatCorrect" style="font-size:24px; font-weight:700; color:#10b981; margin-bottom:4px;">0</div>
-              <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">Correct</div>
+            <div class="stat-card stat-card-success">
+              <div id="quizStatCorrect" class="stat-value" style="font-size:24px; font-weight:800; margin-bottom:4px;">0</div>
+              <div class="stat-label" style="font-size:12px; text-transform:uppercase; font-weight:600;">Correct</div>
             </div>
-            <div class="quiz-stat-card" style="background:var(--surface-soft); padding:16px; border-radius:8px; text-align:center; border:1px solid var(--border);">
-              <div id="quizStatIncorrect" style="font-size:24px; font-weight:700; color:#ef4444; margin-bottom:4px;">0</div>
-              <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">Incorrect</div>
+            <div class="stat-card stat-card-warning">
+              <div id="quizStatIncorrect" class="stat-value" style="font-size:24px; font-weight:800; margin-bottom:4px;">0</div>
+              <div class="stat-label" style="font-size:12px; text-transform:uppercase; font-weight:600;">Incorrect</div>
             </div>
-            <div class="quiz-stat-card" style="background:var(--surface-soft); padding:16px; border-radius:8px; text-align:center; border:1px solid var(--border);">
-              <div id="quizStatSkipped" style="font-size:24px; font-weight:700; color:var(--muted); margin-bottom:4px;">0</div>
-              <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">Skipped</div>
+            <div class="stat-card stat-card-default">
+              <div id="quizStatSkipped" class="stat-value" style="font-size:24px; font-weight:800; margin-bottom:4px;">0</div>
+              <div class="stat-label" style="font-size:12px; text-transform:uppercase; font-weight:600;">Skipped</div>
             </div>
           </div>
 

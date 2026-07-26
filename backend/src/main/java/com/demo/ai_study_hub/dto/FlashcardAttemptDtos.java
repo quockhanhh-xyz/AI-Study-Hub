@@ -33,5 +33,8 @@ public class FlashcardAttemptDtos {
         private Double percentage;
         private Instant startedAt;
         private Instant completedAt;
+        private String progressStatus;
+        private Double progressPercentage;
+        private Double previousPercentage;
     }
 }

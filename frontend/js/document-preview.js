@@ -157,3 +157,14 @@ function renderFallback(container, doc) {
     </div>
   `;
 }
+
+// Fix for Office Viewer failing to render when returning via browser "Back" button (bfcache).
+// It reloads the iframe src if the page is restored from memory.
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+        const officeIframe = document.querySelector('.preview-office-frame');
+        if (officeIframe) {
+            officeIframe.src = officeIframe.src;
+        }
+    }
+});

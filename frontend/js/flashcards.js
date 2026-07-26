@@ -93,6 +93,7 @@ function startDeck(indices) {
     deckOrder = indices;
     currentCardIndex = 0;
     isCardFlipped = false;
+    cardMarks = {};
     flashcardStartedAt = new Date();
 
     const backLink = document.getElementById("flashcardBackLink");
@@ -161,12 +162,12 @@ function renderMarkButtons() {
     const unknownBtn = document.getElementById("flashcardUnknownBtn");
     if (knownBtn) {
         knownBtn.classList.toggle("active", mark === "known");
-        knownBtn.style.boxShadow = mark === "known" ? "0 0 0 2px #047857" : "none";
+        knownBtn.style.boxShadow = mark === "known" ? "0 0 0 2px var(--success)" : "none";
         knownBtn.blur();
     }
     if (unknownBtn) {
         unknownBtn.classList.toggle("active", mark === "unknown");
-        unknownBtn.style.boxShadow = mark === "unknown" ? "0 0 0 2px #b45309" : "none";
+        unknownBtn.style.boxShadow = mark === "unknown" ? "0 0 0 2px var(--warning, #f59e0b)" : "none";
         unknownBtn.blur();
     }
 }
@@ -181,10 +182,10 @@ function markCurrentCard(mark) {
     if (toast) {
         if (cardMarks[flashcardIndex] === "known") {
             toast.textContent = "✓ Marked as known";
-            toast.style.color = "#047857";
+            toast.style.color = "var(--success)";
         } else if (cardMarks[flashcardIndex] === "unknown") {
             toast.textContent = "✕ Marked for review";
-            toast.style.color = "#b45309";
+            toast.style.color = "var(--warning, #f59e0b)";
         } else {
             toast.textContent = "";
         }
@@ -261,12 +262,13 @@ async function showFlashcardSummary() {
     if (flashcardStartedAt && deckOrder.length === currentFlashcardSet.flashcards.length) {
         // Only submit if they studied the full deck (not a review-only pass)
         try {
-            await AiLearningAPI.submitFlashcardAttempt(currentFlashcardSet.flashcardSetId, {
+            const res = await AiLearningAPI.submitFlashcardAttempt(currentFlashcardSet.flashcardSetId, {
                 rememberedCount: knownCount,
                 forgotCount: unknownCount,
                 startedAt: flashcardStartedAt.toISOString(),
                 completedAt: new Date().toISOString()
             });
+            renderProgressFeedback(res.data, "flashcardSummaryProgress", document.getElementById("flashcardSummaryText"));
         } catch (e) {
             console.error("Failed to submit flashcard attempt", e);
         }
@@ -274,6 +276,51 @@ async function showFlashcardSummary() {
     
     // Load history after submitting
     loadAttemptHistory();
+}
+
+function renderProgressFeedback(data, containerId, parentEl) {
+    if (!data || !data.progressStatus || !parentEl) return;
+
+    let existing = document.getElementById(containerId);
+    if (existing) existing.remove();
+
+    const progressDiv = document.createElement("div");
+    progressDiv.id = containerId;
+    progressDiv.style.margin = "10px auto 24px auto";
+    progressDiv.style.maxWidth = "482px";
+    progressDiv.style.display = "block";
+    progressDiv.style.textAlign = "center";
+    
+    let icon = "";
+    let text = "";
+    
+    switch (data.progressStatus) {
+        case "IMPROVED":
+            progressDiv.className = "progress-improved";
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="18" width="18" style="vertical-align: middle; margin-right: 6px; margin-bottom: 2px;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg>`;
+            text = `Great! You improved by ${data.progressPercentage}% compared to the last time.`;
+            break;
+        case "REGRESSED":
+            progressDiv.className = "progress-regressed";
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="18" width="18" style="transform: scaleY(-1); vertical-align: middle; margin-right: 6px; margin-bottom: 2px;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg>`;
+            text = `Don't give up! You regressed by ${data.progressPercentage}% compared to the last time. Keep trying!`;
+            break;
+        case "SAME":
+            progressDiv.className = "progress-same";
+            icon = "";
+            text = `You are maintaining your performance! Try to break through next time.`;
+            break;
+        case "FIRST_ATTEMPT":
+            progressDiv.className = "progress-first-attempt";
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>`;
+            text = `Congratulations on completing your first practice session!`;
+            break;
+        default:
+            return;
+    }
+
+    progressDiv.innerHTML = `${icon}<span>${text}</span>`;
+    parentEl.insertAdjacentElement("afterend", progressDiv);
 }
 
 async function loadAttemptHistory() {
@@ -356,6 +403,29 @@ async function loadAttemptHistory() {
             
             leftDiv.appendChild(title);
             leftDiv.appendChild(stats);
+
+            if (attempt.progressStatus && attempt.progressStatus !== "FIRST_ATTEMPT") {
+                const prog = document.createElement("div");
+                prog.style.fontSize = "12px";
+                prog.style.marginTop = "8px";
+                prog.style.fontWeight = "600";
+                prog.style.display = "flex";
+                prog.style.alignItems = "center";
+                prog.style.gap = "4px";
+
+                if (attempt.progressStatus === "IMPROVED") {
+                    prog.style.color = "var(--success)";
+                    prog.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg> ${attempt.progressPercentage}%`;
+                } else if (attempt.progressStatus === "REGRESSED") {
+                    prog.style.color = "var(--danger)";
+                    prog.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14" style="transform: scaleY(-1);"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg> ${attempt.progressPercentage}%`;
+                } else if (attempt.progressStatus === "SAME") {
+                    prog.style.color = "var(--muted)";
+                    prog.textContent = `No change`;
+                }
+                
+                leftDiv.appendChild(prog);
+            }
             
             const rightDiv = document.createElement("div");
             rightDiv.style.textAlign = "right";
