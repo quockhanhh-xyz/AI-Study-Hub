@@ -340,6 +340,15 @@ function renderQuizResult() {
     const incorrectCount = answeredCount - correctCount;
     const skippedCount = totalQuestions - answeredCount;
 
+    const subtitleEl = document.getElementById("quizSummaryText");
+    if (subtitleEl) {
+        if (skippedCount > 0) {
+            subtitleEl.textContent = `You answered ${answeredCount} out of ${totalQuestions} questions. ${skippedCount} question${skippedCount > 1 ? 's' : ''} left skipped.`;
+        } else {
+            subtitleEl.textContent = `You answered all ${totalQuestions} questions.`;
+        }
+    }
+
     const scoreEl = document.getElementById("quizStatScore");
     if (scoreEl) scoreEl.textContent = `${Math.round(percentage * 10) / 10}%`;
 
@@ -478,12 +487,20 @@ async function loadAttemptHistory() {
             const correctSpan = document.createElement("span");
             correctSpan.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; margin-right:4px;"></span>${attempt.correctCount} Correct`;
             
-            const incorrectCount = attempt.totalQuestions - attempt.correctCount;
+            const answeredCount = attempt.answers ? attempt.answers.length : attempt.totalQuestions;
+            const incorrectCount = Math.max(0, answeredCount - attempt.correctCount);
+            const skippedCount = Math.max(0, attempt.totalQuestions - answeredCount);
+            
             const incorrectSpan = document.createElement("span");
-            incorrectSpan.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#ef4444; margin-right:4px;"></span>${incorrectCount} Incorrect`;
+            incorrectSpan.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#f59e0b; margin-right:4px;"></span>${incorrectCount} Incorrect`;
             
             stats.appendChild(correctSpan);
             stats.appendChild(incorrectSpan);
+            if (skippedCount > 0) {
+                const skippedSpan = document.createElement("span");
+                skippedSpan.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#94a3b8; margin-right:4px;"></span>${skippedCount} Skipped`;
+                stats.appendChild(skippedSpan);
+            }
             
             leftDiv.appendChild(title);
             leftDiv.appendChild(stats);
@@ -492,6 +509,7 @@ async function loadAttemptHistory() {
                 const prog = document.createElement("div");
                 prog.style.fontSize = "12px";
                 prog.style.fontWeight = "600";
+                prog.style.marginTop = "8px";
                 prog.style.display = "flex";
                 prog.style.alignItems = "center";
                 prog.style.gap = "4px";

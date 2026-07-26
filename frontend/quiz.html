@@ -135,8 +135,11 @@
         </div>
       </section>
 
-      <section id="quizSummary" class="card quiz-summary" style="display:none;">
-        <h2>Quiz complete</h2>
+      <section id="quizSummary" class="card quiz-summary" style="display:none; text-align: center; padding: 36px 24px; border-radius: 12px;">
+        <h2 class="quiz-summary-heading" style="font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 8px;">
+          🎉 Quiz complete!
+        </h2>
+        <p id="quizSummaryText" style="color: var(--muted); font-size: 14px; margin-bottom: 28px;"></p>
 
         <div id="quizSummarySubmitting" class="helper-text" style="display:none;">Submitting your answers...</div>
         <div id="quizSummaryError" class="status-box status-error" style="display:none;"></div>
