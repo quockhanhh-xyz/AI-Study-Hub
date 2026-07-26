@@ -485,11 +485,17 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         invite.setInvitedAt(LocalDateTime.now(ZoneOffset.UTC));
         groupInvitationRepository.save(invite);
 
+        String messageStr = sender.getFullName() + " invited you to join a study group.\n" +
+                "Group: " + group.getGroupName();
+        if (group.getDescription() != null && !group.getDescription().isEmpty()) {
+            messageStr += "\nDescription: " + group.getDescription();
+        }
+
         notificationService.createNotification(
                 invitee,
                 "GROUP_INVITE",
                 "Study Group Invitation",
-                sender.getFullName() + " invited you to join the study group: " + group.getGroupName(),
+                messageStr,
                 "GROUP_INVITE",
                 invite.getId(),
                 sender.getUserId()
