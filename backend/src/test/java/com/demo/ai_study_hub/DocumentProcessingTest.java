@@ -56,6 +56,8 @@ class DocumentProcessingTest {
     private ApplicationEventPublisher eventPublisher;
     @Mock
     private DocumentTextExtractor documentTextExtractor;
+    @Mock
+    private ChunkEmbeddingService chunkEmbeddingService;
 
     @InjectMocks
     private DocumentProcessingService documentProcessingService;

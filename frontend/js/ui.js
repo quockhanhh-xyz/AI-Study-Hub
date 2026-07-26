@@ -869,3 +869,88 @@ window.mapAiLearningError = mapAiLearningError;
 window.formatGeneratedAt = formatGeneratedAt;
 window.formatDifficulty = formatDifficulty;
 window.setGeneratingState = setGeneratingState;
+
+/**
+ * Render a safe, minimal subset of Markdown produced by the AI into HTML.
+ *
+ * Security: the input is HTML-escaped FIRST, then only our own tags are injected,
+ * so AI/document text can never inject markup (no XSS).
+ *
+ * Supported: **bold**, *italic* / _italic_, `inline code`, bullet lists (`* ` or `- `),
+ * numbered lists (`1. `), paragraphs and line breaks. Everything else renders literally.
+ *
+ * Returns an HTML string. Callers assign it to element.innerHTML for assistant messages only.
+ */
+function renderAiMarkdown(text) {
+  if (text === null || text === undefined) return "";
+
+  const escapeHtml = (s) => String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  // Inline formatting applied AFTER escaping (so the source * and ` are literal chars).
+  const inline = (s) => s
+    .replace(/\*\*([^*]+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/__([^_]+?)__/g, "<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*\s][^*]*?)\*(?!\*)/g, "$1<em>$2</em>")
+    .replace(/`([^`]+?)`/g, "<code>$1</code>");
+
+  // A bullet whose remaining content is only decoration (e.g. a stray "* **") is dropped.
+  const isEmptyItem = (s) => s.replace(/[*_`\s]/g, "").length === 0;
+
+  const lines = escapeHtml(text).replace(/\r\n/g, "\n").split("\n");
+
+  let html = "";
+  let listType = null; // "ul" | "ol" | null
+  let paragraph = [];
+
+  const flushParagraph = () => {
+    if (paragraph.length) {
+      html += `<p>${inline(paragraph.join("<br>"))}</p>`;
+      paragraph = [];
+    }
+  };
+  const closeList = () => {
+    if (listType) {
+      html += `</${listType}>`;
+      listType = null;
+    }
+  };
+  const openList = (type) => {
+    if (listType !== type) {
+      closeList();
+      html += `<${type}>`;
+      listType = type;
+    }
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    const bullet = line.match(/^[-*]\s+(.*)$/);
+    const numbered = line.match(/^\d+[.)]\s+(.*)$/);
+
+    if (bullet) {
+      flushParagraph();
+      if (isEmptyItem(bullet[1])) continue;
+      openList("ul");
+      html += `<li>${inline(bullet[1])}</li>`;
+    } else if (numbered) {
+      flushParagraph();
+      openList("ol");
+      html += `<li>${inline(numbered[1])}</li>`;
+    } else if (line === "") {
+      closeList();
+      flushParagraph();
+    } else {
+      closeList();
+      paragraph.push(line);
+    }
+  }
+  closeList();
+  flushParagraph();
+
+  return html;
+}
+
+window.renderAiMarkdown = renderAiMarkdown;
