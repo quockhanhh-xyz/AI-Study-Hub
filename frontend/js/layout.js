@@ -608,7 +608,7 @@ const quickProfileModalHtml = `
                   </div>
               </div>
 
-              <p id="qpBio" style="color: #334155; font-size: 14px; line-height: 1.5; margin: 0 0 20px 0; max-height: 100px; overflow-y: auto;"></p>
+              <p id="qpBio" style="color: var(--text-muted); font-size: 14px; line-height: 1.5; margin: 0 0 20px 0; max-height: 100px; overflow-y: auto;"></p>
 
               <div style="display: flex; gap: 16px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 12px 0; margin-bottom: 24px; justify-content: space-around; text-align: center;">
                   <div>

@@ -333,7 +333,7 @@ button, select, input, textarea {
 
 .badge-tier-free {
     background-color: var(--surface-muted);
-    color: #4b5563;
+    color: var(--text-main);
     border-color: var(--border);
 }
 
@@ -1315,7 +1315,7 @@ select.admin-select:focus,
 
 .status-badge.status-cancelled {
     background-color: rgba(107, 114, 128, 0.12);
-    color: #4b5563;
+    color: var(--text-muted);
     border: 1px solid rgba(107, 114, 128, 0.25);
 }
 
@@ -1356,7 +1356,7 @@ select.admin-select:focus,
 #filterPlan,
 #filterStatus {
     border: none !important;
-    background-color: #f4f5f7 !important;
+    background-color: var(--surface-muted, #f4f5f7) !important;
     border-radius: 24px !important;
     height: 42px !important;
     padding-left: 16px !important;
