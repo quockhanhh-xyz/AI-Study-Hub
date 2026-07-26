@@ -3229,7 +3229,7 @@ async function showHistoryModal(setId, type, title) {
             li.style.display = "flex";
             li.style.flexDirection = "column";
             li.style.gap = "12px";
-            li.style.background = "#fff";
+            li.style.background = "var(--surface)";
             li.style.boxShadow = "0 2px 4px rgba(0,0,0,0.02)";
 
             // Top Row: Score & Date
@@ -3241,7 +3241,7 @@ async function showHistoryModal(setId, type, title) {
             const scoreBadge = document.createElement("div");
             scoreBadge.style.fontWeight = "700";
             scoreBadge.style.fontSize = "16px";
-            scoreBadge.style.color = "var(--primary-color)";
+            scoreBadge.style.color = "var(--primary)";
             
             const dateSpan = document.createElement("div");
             dateSpan.style.fontSize = "12px";
@@ -3282,8 +3282,8 @@ async function showHistoryModal(setId, type, title) {
                 const incorrectCount = totalQ - correctCount;
                 
                 statsDiv.innerHTML = `
-                    <span style="display:flex; align-items:center; gap:6px; color:#10b981; font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;"></span> ${correctCount} Correct</span>
-                    <span style="display:flex; align-items:center; gap:6px; color:#ef4444; font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#ef4444;"></span> ${incorrectCount} Incorrect</span>
+                    <span style="display:flex; align-items:center; gap:6px; color:var(--success); font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--success);"></span> ${correctCount} Correct</span>
+                    <span style="display:flex; align-items:center; gap:6px; color:var(--danger); font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--danger);"></span> ${incorrectCount} Incorrect</span>
                 `;
             } else {
                 scoreBadge.textContent = `${attempt.percentage}% Remembered`;
@@ -3294,11 +3294,11 @@ async function showHistoryModal(setId, type, title) {
                 const unmarked = totalC - rem - forgot;
                 
                 let statsHtml = `
-                    <span style="display:flex; align-items:center; gap:6px; color:#047857; font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#047857;"></span> ${rem} Known</span>
-                    <span style="display:flex; align-items:center; gap:6px; color:#b45309; font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#b45309;"></span> ${forgot} Review</span>
+                    <span style="display:flex; align-items:center; gap:6px; color:var(--success); font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--success);"></span> ${rem} Known</span>
+                    <span style="display:flex; align-items:center; gap:6px; color:var(--warning); font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--warning);"></span> ${forgot} Review</span>
                 `;
                 if (unmarked > 0) {
-                    statsHtml += `<span style="display:flex; align-items:center; gap:6px; color:#6b7280; font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#9ca3af;"></span> ${unmarked} Unmarked</span>`;
+                    statsHtml += `<span style="display:flex; align-items:center; gap:6px; color:var(--muted); font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--muted);"></span> ${unmarked} Unmarked</span>`;
                 }
                 statsDiv.innerHTML = statsHtml;
             }
@@ -3320,14 +3320,14 @@ async function showHistoryModal(setId, type, title) {
                 progBadge.style.marginBottom = "4px";
 
                 if (attempt.progressStatus === "IMPROVED") {
-                    progBadge.style.color = "#059669";
+                    progBadge.style.color = "var(--success)";
                     progBadge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg> ${attempt.progressPercentage}%`;
                 } else if (attempt.progressStatus === "REGRESSED") {
-                    progBadge.style.color = "#dc2626";
+                    progBadge.style.color = "var(--danger)";
                     progBadge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14" style="transform: scaleY(-1);"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg> ${attempt.progressPercentage}%`;
                 } else if (attempt.progressStatus === "SAME") {
                     progBadge.style.color = "var(--muted)";
-                    progBadge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" /></svg> No change`;
+                    progBadge.textContent = `No change`;
                 }
                 
                 li.appendChild(progBadge);
