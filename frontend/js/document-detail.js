@@ -2042,24 +2042,9 @@ function appendAiQaMessage(role, content, meta = {}) {
     const bubble = document.createElement("div");
     bubble.className = `ai-qa-message ${role}`;
 
-    // Simple markdown-like parser to allow paragraphs and bullets without XSS
-    if (role === "assistant" && content) {
-        // Escape HTML first
-        let html = content
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
-        
-        // Convert basic lists (- item)
-        html = html.replace(/(?:^|\n)- (.*?)(?=\n|$)/g, "<ul><li>$1</li></ul>");
-        html = html.replace(/<\/ul>\n<ul>/g, ""); // merge adjacent lists
-
-        // Wrap remaining text in paragraphs
-        const parts = html.split(/\n\n+/);
-        bubble.innerHTML = parts.map(p => {
-            if (p.startsWith("<ul>")) return p;
-            return `<p>${p.replace(/\n/g, "<br>")}</p>`;
-        }).join("");
+    // Render assistant Markdown (bold, bullets, paragraphs) safely via the shared renderer.
+    if (role === "assistant" && content && typeof window.renderAiMarkdown === "function") {
+        bubble.innerHTML = window.renderAiMarkdown(content);
     } else {
         bubble.textContent = content;
     }

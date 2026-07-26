@@ -174,7 +174,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const msgContent = document.createElement("div");
         msgContent.className = "message-content";
-        msgContent.textContent = content;
+        // Assistant answers may contain Markdown (bold, bullets); render them safely.
+        // User messages stay as plain text.
+        if (!isUser && typeof window.renderAiMarkdown === "function") {
+            msgContent.innerHTML = window.renderAiMarkdown(content);
+        } else {
+            msgContent.textContent = content;
+        }
 
         // Render Citations if available (only for Assistant)
         const isFallback = content && (
