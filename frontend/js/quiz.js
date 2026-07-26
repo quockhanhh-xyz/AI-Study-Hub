@@ -450,15 +450,43 @@ async function loadAttemptHistory() {
         list.innerHTML = "";
         sorted.forEach(attempt => {
             const li = document.createElement("li");
+            li.style.padding = "16px";
+            li.style.border = "1.5px solid var(--border)";
+            li.style.borderRadius = "10px";
+            li.style.marginBottom = "12px";
             li.style.display = "flex";
-            li.style.flexDirection = "column";
-            li.style.gap = "4px";
+            li.style.justifyContent = "space-between";
+            li.style.alignItems = "center";
+            li.style.background = "var(--surface)";
 
-            const scoreSpan = document.createElement("span");
-            scoreSpan.className = "quiz-history-score";
-            scoreSpan.textContent = `${Math.round(attempt.percentage * 10) / 10}% · ${attempt.correctCount}/${attempt.totalQuestions} correct · ${formatGeneratedAt(attempt.completedAt)}`;
-
-            li.appendChild(scoreSpan);
+            const leftDiv = document.createElement("div");
+            
+            const title = document.createElement("div");
+            title.style.fontWeight = "700";
+            title.style.fontSize = "15px";
+            title.style.color = "var(--text-main)";
+            title.style.marginBottom = "8px";
+            title.textContent = `${Math.round(attempt.percentage * 10) / 10}% Score`;
+            
+            const stats = document.createElement("div");
+            stats.style.fontSize = "13px";
+            stats.style.color = "var(--muted)";
+            stats.style.display = "flex";
+            stats.style.gap = "12px";
+            stats.style.alignItems = "center";
+            
+            const correctSpan = document.createElement("span");
+            correctSpan.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; margin-right:4px;"></span>${attempt.correctCount} Correct`;
+            
+            const incorrectCount = attempt.totalQuestions - attempt.correctCount;
+            const incorrectSpan = document.createElement("span");
+            incorrectSpan.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#ef4444; margin-right:4px;"></span>${incorrectCount} Incorrect`;
+            
+            stats.appendChild(correctSpan);
+            stats.appendChild(incorrectSpan);
+            
+            leftDiv.appendChild(title);
+            leftDiv.appendChild(stats);
             
             if (attempt.progressStatus && attempt.progressStatus !== "FIRST_ATTEMPT") {
                 const prog = document.createElement("div");
@@ -479,8 +507,47 @@ async function loadAttemptHistory() {
                     prog.textContent = `No change`;
                 }
                 
-                li.appendChild(prog);
+                leftDiv.appendChild(prog);
             }
+            
+            const rightDiv = document.createElement("div");
+            rightDiv.style.textAlign = "right";
+            
+            const dateSpan = document.createElement("div");
+            dateSpan.style.fontSize = "12px";
+            dateSpan.style.color = "var(--muted)";
+            dateSpan.style.marginBottom = "4px";
+            dateSpan.textContent = formatGeneratedAt(attempt.completedAt);
+            
+            const durSpan = document.createElement("div");
+            durSpan.style.fontSize = "12px";
+            durSpan.style.color = "var(--muted)";
+            
+            // Duration calculation
+            let diffMs = 0;
+            if (attempt.completedAt && attempt.startedAt) {
+                diffMs = new Date(attempt.completedAt) - new Date(attempt.startedAt);
+            }
+            if (diffMs > 6 * 60 * 60 * 1000) {
+                diffMs -= 7 * 60 * 60 * 1000;
+                if (diffMs < 0) diffMs = 0;
+            }
+            const diffSecs = Math.floor(diffMs / 1000);
+            let durText = "";
+            if (diffSecs < 60) {
+                durText = `${diffSecs}s`;
+            } else {
+                const mins = Math.floor(diffSecs / 60);
+                const secs = diffSecs % 60;
+                durText = `${mins}m ${secs}s`;
+            }
+            durSpan.innerHTML = `⏱ ${durText}`;
+            
+            rightDiv.appendChild(dateSpan);
+            rightDiv.appendChild(durSpan);
+            
+            li.appendChild(leftDiv);
+            li.appendChild(rightDiv);
             
             list.appendChild(li);
         });
