@@ -409,7 +409,7 @@ input:-webkit-autofill:active {
 }
 
 .btn-secondary:hover {
-  background-color: #dcd0ce;
+  background-color: var(--surface-muted);
 }
 
 .btn-success {
@@ -760,8 +760,8 @@ textarea.success {
 }
 
 .badge-tier-free {
-  color: #334155 !important;
-  /* High contrast dark grey */
+  color: var(--text-main) !important;
+  /* Theme-aware: readable in both light and dark mode */
 }
 
 .badge-tier-premium {
@@ -2510,7 +2510,7 @@ textarea.success {
 }
 
 .confirm-btn-cancel:hover {
-  background-color: #dcd0ce;
+  background-color: var(--surface-muted);
 }
 
 .confirm-btn-primary {
@@ -3069,7 +3069,7 @@ textarea.success {
 
 .badge-tier-free {
   background-color: var(--surface-muted);
-  color: #1f2937;
+  color: var(--text-main);
   border: 1px solid var(--border);
   padding: 2px 6px;
   border-radius: 4px;
@@ -3773,7 +3773,7 @@ svg {
 
 .processing-status-badge.status-pending {
   background-color: var(--surface-muted);
-  color: #374151;
+  color: var(--text-main);
   border: 1px solid var(--border);
 }
 
@@ -5334,7 +5334,7 @@ svg {
 
 .auth-container .btn-secondary:hover {
   background-color: var(--border);
-  color: #334155;
+  color: var(--text-main);
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }

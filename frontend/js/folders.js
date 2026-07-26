@@ -748,7 +748,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         userShares.forEach(share => {
           const item = document.createElement("div");
           item.className = "share-roster-item";
-          item.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; background: #fafafa;";
+          item.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; background: var(--surface-soft);";
 
           const info = document.createElement("div");
           info.className = "share-roster-info";
@@ -806,7 +806,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         groupShares.forEach(share => {
           const item = document.createElement("div");
           item.className = "share-roster-item";
-          item.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; background: #fafafa;";
+          item.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; background: var(--surface-soft);";
 
           const info = document.createElement("div");
           info.className = "share-roster-info";

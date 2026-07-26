@@ -162,12 +162,12 @@ function renderMarkButtons() {
     const unknownBtn = document.getElementById("flashcardUnknownBtn");
     if (knownBtn) {
         knownBtn.classList.toggle("active", mark === "known");
-        knownBtn.style.boxShadow = mark === "known" ? "0 0 0 2px #047857" : "none";
+        knownBtn.style.boxShadow = mark === "known" ? "0 0 0 2px var(--success)" : "none";
         knownBtn.blur();
     }
     if (unknownBtn) {
         unknownBtn.classList.toggle("active", mark === "unknown");
-        unknownBtn.style.boxShadow = mark === "unknown" ? "0 0 0 2px #b45309" : "none";
+        unknownBtn.style.boxShadow = mark === "unknown" ? "0 0 0 2px var(--warning, #f59e0b)" : "none";
         unknownBtn.blur();
     }
 }
@@ -182,10 +182,10 @@ function markCurrentCard(mark) {
     if (toast) {
         if (cardMarks[flashcardIndex] === "known") {
             toast.textContent = "✓ Marked as known";
-            toast.style.color = "#047857";
+            toast.style.color = "var(--success)";
         } else if (cardMarks[flashcardIndex] === "unknown") {
             toast.textContent = "✕ Marked for review";
-            toast.style.color = "#b45309";
+            toast.style.color = "var(--warning, #f59e0b)";
         } else {
             toast.textContent = "";
         }
