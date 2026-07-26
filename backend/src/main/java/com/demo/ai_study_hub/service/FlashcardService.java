@@ -410,10 +410,14 @@ public class FlashcardService {
 
         // Allow any user who can view it to submit attempt (skip rigorous check for now or rely on accessGuard if we had a method)
         
+        FlashcardAttempt previousAttempt = flashcardAttemptRepository
+                .findFirstByFlashcardSet_FlashcardSetIdAndUser_UserIdOrderByCompletedAtDesc(setId, user.getUserId());
+
         int totalCards = flashcardSet.getFlashcards().size();
         int rem = request.getRememberedCount() != null ? request.getRememberedCount() : 0;
         int forgot = request.getForgotCount() != null ? request.getForgotCount() : 0;
         double percentage = totalCards > 0 ? ((double) rem / totalCards) * 100 : 0.0;
+        percentage = Math.round(percentage * 10.0) / 10.0;
 
         FlashcardAttempt attempt = FlashcardAttempt.builder()
                 .flashcardSet(flashcardSet)
@@ -421,24 +425,71 @@ public class FlashcardService {
                 .totalCards(totalCards)
                 .rememberedCount(rem)
                 .forgotCount(forgot)
-                .percentage(Math.round(percentage * 10.0) / 10.0)
+                .percentage(percentage)
                 .startedAt(request.getStartedAt() != null ? LocalDateTime.ofInstant(request.getStartedAt(), ZoneOffset.UTC) : LocalDateTime.now(ZoneOffset.UTC))
                 .completedAt(request.getCompletedAt() != null ? LocalDateTime.ofInstant(request.getCompletedAt(), ZoneOffset.UTC) : LocalDateTime.now(ZoneOffset.UTC))
                 .build();
 
         attempt = flashcardAttemptRepository.save(attempt);
-        return toAttemptResponse(attempt);
+        FlashcardAttemptResponse response = toAttemptResponse(attempt);
+
+        if (previousAttempt != null) {
+            double prevPercentage = previousAttempt.getPercentage() != null ? previousAttempt.getPercentage() : 0.0;
+            double diff = Math.round((percentage - prevPercentage) * 10.0) / 10.0;
+            response.setPreviousPercentage(prevPercentage);
+            response.setProgressPercentage(Math.abs(diff));
+            if (diff > 0) {
+                response.setProgressStatus("IMPROVED");
+            } else if (diff < 0) {
+                response.setProgressStatus("REGRESSED");
+            } else {
+                response.setProgressStatus("SAME");
+            }
+        } else {
+            response.setProgressStatus("FIRST_ATTEMPT");
+            response.setPreviousPercentage(0.0);
+            response.setProgressPercentage(0.0);
+        }
+
+        return response;
     }
 
     @Transactional(readOnly = true)
     public List<FlashcardAttemptResponse> getAttemptHistory(Long setId, String email) {
         User user = loadUser(email);
         
-        return flashcardAttemptRepository
-                .findByFlashcardSet_FlashcardSetIdAndUser_UserIdOrderByCompletedAtDesc(setId, user.getUserId())
-                .stream()
-                .map(this::toAttemptResponse)
-                .collect(Collectors.toList());
+        List<FlashcardAttempt> attempts = flashcardAttemptRepository
+                .findByFlashcardSet_FlashcardSetIdAndUser_UserIdOrderByCompletedAtDesc(setId, user.getUserId());
+                
+        List<FlashcardAttemptResponse> responses = new java.util.ArrayList<>();
+        for (int i = 0; i < attempts.size(); i++) {
+            FlashcardAttempt attempt = attempts.get(i);
+            FlashcardAttemptResponse response = toAttemptResponse(attempt);
+            
+            FlashcardAttempt previousAttempt = (i + 1 < attempts.size()) ? attempts.get(i + 1) : null;
+            
+            if (previousAttempt != null) {
+                double percentage = attempt.getPercentage() != null ? attempt.getPercentage() : 0.0;
+                double prevPercentage = previousAttempt.getPercentage() != null ? previousAttempt.getPercentage() : 0.0;
+                double diff = Math.round((percentage - prevPercentage) * 10.0) / 10.0;
+                response.setPreviousPercentage(prevPercentage);
+                response.setProgressPercentage(Math.abs(diff));
+                if (diff > 0) {
+                    response.setProgressStatus("IMPROVED");
+                } else if (diff < 0) {
+                    response.setProgressStatus("REGRESSED");
+                } else {
+                    response.setProgressStatus("SAME");
+                }
+            } else {
+                response.setProgressStatus("FIRST_ATTEMPT");
+                response.setPreviousPercentage(0.0);
+                response.setProgressPercentage(0.0);
+            }
+            responses.add(response);
+        }
+        
+        return responses;
     }
 
     private FlashcardAttemptResponse toAttemptResponse(FlashcardAttempt attempt) {

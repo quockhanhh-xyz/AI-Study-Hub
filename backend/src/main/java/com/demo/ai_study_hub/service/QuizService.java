@@ -479,6 +479,10 @@ public class QuizService {
                     "Quiz set has no questions", "QUIZ_SET_NOT_FOUND");
         }
 
+        QuizAttempt previousAttempt = quizAttemptRepository
+                .findFirstByQuizSet_QuizSetIdAndUser_UserIdOrderByCreatedAtDesc(quizSetId, user.getUserId())
+                .orElse(null);
+
         List<QuizAttemptAnswer> attemptAnswers = new ArrayList<>();
         int correctCount = 0;
 
@@ -541,6 +545,7 @@ public class QuizService {
         quizAttemptAnswerRepository.saveAll(attemptAnswers);
 
         double percentage = ((double) correctCount / totalQuestions) * 100.0;
+        percentage = Math.round(percentage * 10.0) / 10.0;
         attempt.setCorrectCount(correctCount);
         attempt.setPercentage(percentage);
         attempt.setScore((double) correctCount);
@@ -549,7 +554,28 @@ public class QuizService {
         // Update attempt with final scores
         attempt = quizAttemptRepository.save(attempt);
 
-        return toAttemptResponse(attempt);
+        QuizAttemptResponse response = toAttemptResponse(attempt);
+
+        if (previousAttempt != null) {
+            double prevPercentage = previousAttempt.getPercentage() != null ? previousAttempt.getPercentage() : 0.0;
+            prevPercentage = Math.round(prevPercentage * 10.0) / 10.0;
+            double diff = Math.round((percentage - prevPercentage) * 10.0) / 10.0;
+            response.setPreviousPercentage(prevPercentage);
+            response.setProgressPercentage(Math.abs(diff));
+            if (diff > 0) {
+                response.setProgressStatus("IMPROVED");
+            } else if (diff < 0) {
+                response.setProgressStatus("REGRESSED");
+            } else {
+                response.setProgressStatus("SAME");
+            }
+        } else {
+            response.setProgressStatus("FIRST_ATTEMPT");
+            response.setPreviousPercentage(0.0);
+            response.setProgressPercentage(0.0);
+        }
+
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -570,9 +596,37 @@ public class QuizService {
         List<QuizAttempt> attempts = quizAttemptRepository
                 .findByQuizSet_QuizSetIdAndUser_UserIdOrderByCreatedAtDesc(quizSetId, user.getUserId());
 
-        return attempts.stream()
-                .map(this::toAttemptResponse)
-                .collect(Collectors.toList());
+        List<QuizAttemptResponse> responses = new java.util.ArrayList<>();
+        for (int i = 0; i < attempts.size(); i++) {
+            QuizAttempt attempt = attempts.get(i);
+            QuizAttemptResponse response = toAttemptResponse(attempt);
+
+            QuizAttempt previousAttempt = (i + 1 < attempts.size()) ? attempts.get(i + 1) : null;
+
+            if (previousAttempt != null) {
+                double percentage = attempt.getPercentage() != null ? attempt.getPercentage() : 0.0;
+                double prevPercentage = previousAttempt.getPercentage() != null ? previousAttempt.getPercentage() : 0.0;
+                percentage = Math.round(percentage * 10.0) / 10.0;
+                prevPercentage = Math.round(prevPercentage * 10.0) / 10.0;
+                double diff = Math.round((percentage - prevPercentage) * 10.0) / 10.0;
+                response.setPreviousPercentage(prevPercentage);
+                response.setProgressPercentage(Math.abs(diff));
+                if (diff > 0) {
+                    response.setProgressStatus("IMPROVED");
+                } else if (diff < 0) {
+                    response.setProgressStatus("REGRESSED");
+                } else {
+                    response.setProgressStatus("SAME");
+                }
+            } else {
+                response.setProgressStatus("FIRST_ATTEMPT");
+                response.setPreviousPercentage(0.0);
+                response.setProgressPercentage(0.0);
+            }
+            responses.add(response);
+        }
+
+        return responses;
     }
 
     @Transactional(readOnly = true)

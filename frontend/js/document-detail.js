@@ -3307,6 +3307,30 @@ async function showHistoryModal(setId, type, title) {
             }
             
             li.appendChild(topDiv);
+            
+            if (attempt.progressStatus && attempt.progressStatus !== "FIRST_ATTEMPT") {
+                const progBadge = document.createElement("div");
+                progBadge.style.fontSize = "12px";
+                progBadge.style.fontWeight = "600";
+                progBadge.style.display = "flex";
+                progBadge.style.alignItems = "center";
+                progBadge.style.gap = "4px";
+                progBadge.style.marginBottom = "4px";
+
+                if (attempt.progressStatus === "IMPROVED") {
+                    progBadge.style.color = "#059669";
+                    progBadge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg> ${attempt.progressPercentage}%`;
+                } else if (attempt.progressStatus === "REGRESSED") {
+                    progBadge.style.color = "#dc2626";
+                    progBadge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14" style="transform: scaleY(-1);"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg> ${attempt.progressPercentage}%`;
+                } else if (attempt.progressStatus === "SAME") {
+                    progBadge.style.color = "var(--muted)";
+                    progBadge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" /></svg> No change`;
+                }
+                
+                li.appendChild(progBadge);
+            }
+            
             li.appendChild(bottomDiv);
             list.appendChild(li);
         });

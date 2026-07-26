@@ -6355,3 +6355,56 @@ input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:f
   color: var(--text-main) !important;
 }
 
+/* Progress Status Classes */
+.progress-improved {
+  color: var(--success-color, #10b981);
+  font-weight: 500;
+  margin-top: 15px;
+  padding: 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.progress-regressed {
+  color: var(--danger-color, #ef4444);
+  font-weight: 500;
+  margin-top: 15px;
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.progress-same {
+  color: var(--text-muted, #6b7280);
+  font-weight: 500;
+  margin-top: 15px;
+  padding: 12px;
+  background: rgba(107, 114, 128, 0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.progress-first-attempt {
+  color: var(--primary-color, #3b82f6);
+  font-weight: 500;
+  margin-top: 15px;
+  padding: 12px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+

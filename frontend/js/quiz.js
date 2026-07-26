@@ -351,6 +351,57 @@ function renderQuizResult() {
 
     const skippedEl = document.getElementById("quizStatSkipped");
     if (skippedEl) skippedEl.textContent = skippedCount;
+
+    const statsGrid = document.querySelector(".quiz-summary-stats");
+    if (statsGrid) {
+        renderQuizProgressFeedback(lastAttemptResult, "quizSummaryProgress", statsGrid);
+    }
+}
+
+function renderQuizProgressFeedback(data, containerId, parentEl) {
+    if (!data || !data.progressStatus || !parentEl) return;
+
+    let existing = document.getElementById(containerId);
+    if (existing) existing.remove();
+
+    const progressDiv = document.createElement("div");
+    progressDiv.id = containerId;
+    progressDiv.style.marginTop = "10px";
+    progressDiv.style.display = "flex";
+    progressDiv.style.alignItems = "center";
+    progressDiv.style.justifyContent = "center";
+    progressDiv.style.gap = "6px";
+    
+    let icon = "";
+    let text = "";
+    
+    switch (data.progressStatus) {
+        case "IMPROVED":
+            progressDiv.className = "progress-improved";
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="18" width="18"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg>`;
+            text = `Great! You improved by ${data.progressPercentage}% compared to the last time.`;
+            break;
+        case "REGRESSED":
+            progressDiv.className = "progress-regressed";
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="18" width="18" style="transform: scaleY(-1);"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg>`;
+            text = `Don't give up! You regressed by ${data.progressPercentage}% compared to the last time. Keep trying!`;
+            break;
+        case "SAME":
+            progressDiv.className = "progress-same";
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" /></svg>`;
+            text = `You are maintaining your performance! Try to break through next time.`;
+            break;
+        case "FIRST_ATTEMPT":
+            progressDiv.className = "progress-first-attempt";
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>`;
+            text = `Congratulations on completing your first quiz!`;
+            break;
+        default:
+            return;
+    }
+
+    progressDiv.innerHTML = `${icon} <span>${text}</span>`;
+    parentEl.insertAdjacentElement("afterend", progressDiv);
 }
 
 function startReview() {
@@ -400,12 +451,40 @@ async function loadAttemptHistory() {
         list.innerHTML = "";
         sorted.forEach(attempt => {
             const li = document.createElement("li");
+            li.style.display = "flex";
+            li.style.flexDirection = "column";
+            li.style.gap = "4px";
+            li.style.padding = "8px 0";
+            li.style.borderBottom = "1px solid var(--border)";
 
             const scoreSpan = document.createElement("span");
             scoreSpan.className = "quiz-history-score";
             scoreSpan.textContent = `${Math.round(attempt.percentage * 10) / 10}% · ${attempt.correctCount}/${attempt.totalQuestions} correct · ${formatGeneratedAt(attempt.completedAt)}`;
 
             li.appendChild(scoreSpan);
+            
+            if (attempt.progressStatus && attempt.progressStatus !== "FIRST_ATTEMPT") {
+                const prog = document.createElement("div");
+                prog.style.fontSize = "12px";
+                prog.style.fontWeight = "600";
+                prog.style.display = "flex";
+                prog.style.alignItems = "center";
+                prog.style.gap = "4px";
+
+                if (attempt.progressStatus === "IMPROVED") {
+                    prog.style.color = "#059669";
+                    prog.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg> ${attempt.progressPercentage}%`;
+                } else if (attempt.progressStatus === "REGRESSED") {
+                    prog.style.color = "#dc2626";
+                    prog.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14" style="transform: scaleY(-1);"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg> ${attempt.progressPercentage}%`;
+                } else if (attempt.progressStatus === "SAME") {
+                    prog.style.color = "var(--muted)";
+                    prog.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" /></svg> No change`;
+                }
+                
+                li.appendChild(prog);
+            }
+            
             list.appendChild(li);
         });
 
