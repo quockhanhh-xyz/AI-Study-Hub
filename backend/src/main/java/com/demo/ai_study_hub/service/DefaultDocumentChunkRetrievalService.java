@@ -36,6 +36,7 @@ public class DefaultDocumentChunkRetrievalService implements DocumentChunkRetrie
     private final EntityManager entityManager;
 
     private static final Set<String> STOP_WORDS = new HashSet<>(Arrays.asList(
+            // English
             "a", "an", "the", "is", "it", "in", "on", "at", "to", "for",
             "of", "and", "or", "but", "this", "that", "be", "are", "was",
             "were", "has", "have", "had", "do", "does", "did", "with",
@@ -43,10 +44,17 @@ public class DefaultDocumentChunkRetrievalService implements DocumentChunkRetrie
             "no", "can", "will", "would", "could", "should", "may", "might",
             "i", "you", "we", "they", "he", "she", "me", "us", "them",
             "my", "your", "our", "their", "its", "about", "what", "how",
-            "when", "where", "who", "which", "there", "here", "been"
+            "when", "where", "who", "which", "there", "here", "been",
+            // Vietnamese common function words (diacritics preserved by the tokenizer)
+            "và", "là", "của", "có", "cho", "trong", "với", "các", "được", "này",
+            "đó", "một", "những", "khi", "đã", "để", "tôi", "bạn", "về", "như",
+            "thì", "mà", "ở", "ra", "nên", "hay", "hoặc", "cũng", "rất", "đến",
+            "từ", "theo", "vì", "nếu", "giúp", "làm", "gì", "nào", "sao", "hãy",
+            "cần", "muốn", "phải", "sẽ", "đang", "bị", "hơn", "vào", "vẫn"
     ));
 
-    private static final Pattern NON_ALPHA = Pattern.compile("[^a-zA-Z0-9\\s]");
+    // Keep Unicode letters/digits (so Vietnamese diacritics survive); strip only punctuation/symbols.
+    private static final Pattern NON_ALPHA = Pattern.compile("[^\\p{L}\\p{N}\\s]");
 
     @Override
     public List<DocumentChunkDto> retrieveByKeyword(Integer documentId, String question, int topK) {
@@ -206,5 +214,45 @@ public class DefaultDocumentChunkRetrievalService implements DocumentChunkRetrie
                 .limit(topK)
                 .map(e -> toDto(e.getKey(), e.getValue(), userId))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Fetch accessible, COMPLETED chunks for a user WITHOUT any keyword filter, capped at {@code cap}.
+     * Uses the exact same access-control predicate as {@link #retrieveGlobalChunksByKeyword} so no
+     * permission is leaked. Used by hybrid global retrieval to build a semantic candidate pool.
+     */
+    public List<com.demo.ai_study_hub.entity.DocumentChunk> findGlobalCandidateChunks(Integer userId, int cap) {
+        String jpql = "SELECT dc FROM DocumentChunk dc "
+                + "JOIN FETCH dc.document d "
+                + "JOIN FETCH d.owner o "
+                + "LEFT JOIN d.documentContent dcContent "
+                + "WHERE d.status = 'ACTIVE' "
+                + "AND dcContent IS NOT NULL "
+                + "AND dcContent.processingStatus = :completedStatus "
+                + "AND ("
+                + "  o.userId = :userId "
+                + "  OR (d.visibility = 'PUBLIC' AND d.approvalStatus = 'APPROVED' AND o.status = 'ACTIVE') "
+                + "  OR EXISTS (SELECT ds FROM DocumentShare ds WHERE ds.document = d AND ds.sharedWith.userId = :userId AND ds.status = 'ACTIVE') "
+                + "  OR EXISTS (SELECT gds FROM GroupDocumentShare gds, StudyGroupMember sgm "
+                + "             WHERE gds.group = sgm.group "
+                + "             AND gds.document = d "
+                + "             AND sgm.user.userId = :userId "
+                + "             AND gds.status = 'ACTIVE' "
+                + "             AND sgm.status = 'ACTIVE' "
+                + "             AND gds.group.status = 'ACTIVE') "
+                + ") "
+                + "ORDER BY dc.chunkId";
+
+        TypedQuery<com.demo.ai_study_hub.entity.DocumentChunk> query =
+                entityManager.createQuery(jpql, com.demo.ai_study_hub.entity.DocumentChunk.class);
+        query.setParameter("userId", userId);
+        query.setParameter("completedStatus", com.demo.ai_study_hub.entity.ProcessingStatus.COMPLETED);
+        query.setMaxResults(Math.max(1, cap));
+        return query.getResultList();
+    }
+
+    /** Build a global-scope DTO (with correct sourceLibrary) for a chunk. Reused by hybrid retrieval. */
+    public DocumentChunkDto buildGlobalDto(com.demo.ai_study_hub.entity.DocumentChunk chunk, double score, Integer userId) {
+        return toDto(chunk, score, userId);
     }
 }
