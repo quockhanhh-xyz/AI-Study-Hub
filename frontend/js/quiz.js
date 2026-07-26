@@ -340,6 +340,15 @@ function renderQuizResult() {
     const incorrectCount = answeredCount - correctCount;
     const skippedCount = totalQuestions - answeredCount;
 
+    const subtitleEl = document.getElementById("quizSummaryText");
+    if (subtitleEl) {
+        if (skippedCount > 0) {
+            subtitleEl.textContent = `You answered ${answeredCount} out of ${totalQuestions} questions. ${skippedCount} question${skippedCount > 1 ? 's' : ''} left skipped.`;
+        } else {
+            subtitleEl.textContent = `You answered all ${totalQuestions} questions.`;
+        }
+    }
+
     const scoreEl = document.getElementById("quizStatScore");
     if (scoreEl) scoreEl.textContent = `${Math.round(percentage * 10) / 10}%`;
 
@@ -351,6 +360,56 @@ function renderQuizResult() {
 
     const skippedEl = document.getElementById("quizStatSkipped");
     if (skippedEl) skippedEl.textContent = skippedCount;
+
+    const statsGrid = document.querySelector(".quiz-summary-stats");
+    if (statsGrid) {
+        renderQuizProgressFeedback(lastAttemptResult, "quizSummaryProgress", statsGrid);
+    }
+}
+
+function renderQuizProgressFeedback(data, containerId, parentEl) {
+    if (!data || !data.progressStatus || !parentEl) return;
+
+    let existing = document.getElementById(containerId);
+    if (existing) existing.remove();
+
+    const progressDiv = document.createElement("div");
+    progressDiv.id = containerId;
+    progressDiv.style.margin = "10px auto 24px auto";
+    progressDiv.style.maxWidth = "482px";
+    progressDiv.style.display = "block";
+    progressDiv.style.textAlign = "center";
+    
+    let icon = "";
+    let text = "";
+    
+    switch (data.progressStatus) {
+        case "IMPROVED":
+            progressDiv.className = "progress-improved";
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="18" width="18" style="vertical-align: middle; margin-right: 6px; margin-bottom: 2px;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg>`;
+            text = `Great! You improved by ${data.progressPercentage}% compared to the last time.`;
+            break;
+        case "REGRESSED":
+            progressDiv.className = "progress-regressed";
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="18" width="18" style="transform: scaleY(-1); vertical-align: middle; margin-right: 6px; margin-bottom: 2px;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg>`;
+            text = `Don't give up! You regressed by ${data.progressPercentage}% compared to the last time. Keep trying!`;
+            break;
+        case "SAME":
+            progressDiv.className = "progress-same";
+            icon = "";
+            text = `You are maintaining your performance! Try to break through next time.`;
+            break;
+        case "FIRST_ATTEMPT":
+            progressDiv.className = "progress-first-attempt";
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>`;
+            text = `Congratulations on completing your first quiz!`;
+            break;
+        default:
+            return;
+    }
+
+    progressDiv.innerHTML = `${icon}<span>${text}</span>`;
+    parentEl.insertAdjacentElement("beforebegin", progressDiv);
 }
 
 function startReview() {
@@ -400,12 +459,117 @@ async function loadAttemptHistory() {
         list.innerHTML = "";
         sorted.forEach(attempt => {
             const li = document.createElement("li");
+            li.style.padding = "16px";
+            li.style.border = "1.5px solid var(--border)";
+            li.style.borderRadius = "10px";
+            li.style.marginBottom = "12px";
+            li.style.display = "flex";
+            li.style.justifyContent = "space-between";
+            li.style.alignItems = "center";
+            li.style.background = "var(--surface)";
 
-            const scoreSpan = document.createElement("span");
-            scoreSpan.className = "quiz-history-score";
-            scoreSpan.textContent = `${Math.round(attempt.percentage * 10) / 10}% · ${attempt.correctCount}/${attempt.totalQuestions} correct · ${formatGeneratedAt(attempt.completedAt)}`;
+            const leftDiv = document.createElement("div");
+            
+            const title = document.createElement("div");
+            title.style.fontWeight = "700";
+            title.style.fontSize = "15px";
+            title.style.color = "var(--text-main)";
+            title.style.marginBottom = "8px";
+            title.textContent = `${Math.round(attempt.percentage * 10) / 10}% Score`;
+            
+            const stats = document.createElement("div");
+            stats.style.fontSize = "13px";
+            stats.style.color = "var(--muted)";
+            stats.style.display = "flex";
+            stats.style.gap = "12px";
+            stats.style.alignItems = "center";
+            
+            const correctSpan = document.createElement("span");
+            correctSpan.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; margin-right:4px;"></span>${attempt.correctCount} Correct`;
+            
+            let answeredCount = attempt.totalQuestions;
+            if (attempt.answers) {
+                answeredCount = attempt.answers.filter(a => !!a.selectedOption).length;
+            }
+            const incorrectCount = Math.max(0, answeredCount - attempt.correctCount);
+            const skippedCount = Math.max(0, attempt.totalQuestions - answeredCount);
+            
+            const incorrectSpan = document.createElement("span");
+            incorrectSpan.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#f59e0b; margin-right:4px;"></span>${incorrectCount} Incorrect`;
+            
+            stats.appendChild(correctSpan);
+            stats.appendChild(incorrectSpan);
+            if (skippedCount > 0) {
+                const skippedSpan = document.createElement("span");
+                skippedSpan.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#94a3b8; margin-right:4px;"></span>${skippedCount} Skipped`;
+                stats.appendChild(skippedSpan);
+            }
+            
+            leftDiv.appendChild(title);
+            leftDiv.appendChild(stats);
+            
+            if (attempt.progressStatus && attempt.progressStatus !== "FIRST_ATTEMPT") {
+                const prog = document.createElement("div");
+                prog.style.fontSize = "12px";
+                prog.style.fontWeight = "600";
+                prog.style.marginTop = "8px";
+                prog.style.display = "flex";
+                prog.style.alignItems = "center";
+                prog.style.gap = "4px";
 
-            li.appendChild(scoreSpan);
+                if (attempt.progressStatus === "IMPROVED") {
+                    prog.style.color = "var(--success)";
+                    prog.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg> ${attempt.progressPercentage}%`;
+                } else if (attempt.progressStatus === "REGRESSED") {
+                    prog.style.color = "var(--danger)";
+                    prog.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14" style="transform: scaleY(-1);"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg> ${attempt.progressPercentage}%`;
+                } else if (attempt.progressStatus === "SAME") {
+                    prog.style.color = "var(--muted)";
+                    prog.textContent = `No change`;
+                }
+                
+                leftDiv.appendChild(prog);
+            }
+            
+            const rightDiv = document.createElement("div");
+            rightDiv.style.textAlign = "right";
+            
+            const dateSpan = document.createElement("div");
+            dateSpan.style.fontSize = "12px";
+            dateSpan.style.color = "var(--muted)";
+            dateSpan.style.marginBottom = "4px";
+            dateSpan.textContent = formatGeneratedAt(attempt.completedAt);
+            
+            const durSpan = document.createElement("div");
+            durSpan.style.fontSize = "12px";
+            durSpan.style.color = "var(--muted)";
+            
+            // Duration calculation
+            let diffMs = 0;
+            if (attempt.completedAt && attempt.startedAt) {
+                diffMs = new Date(attempt.completedAt) - new Date(attempt.startedAt);
+            }
+            if (diffMs > 6 * 60 * 60 * 1000) {
+                diffMs -= 7 * 60 * 60 * 1000;
+                if (diffMs < 0) diffMs = 0;
+            }
+            const diffSecs = Math.floor(diffMs / 1000);
+            let durText = "";
+            if (diffSecs < 60) {
+                durText = `${diffSecs}s`;
+            } else {
+                const mins = Math.floor(diffSecs / 60);
+                const secs = diffSecs % 60;
+                durText = `${mins}m ${secs}s`;
+            }
+            durSpan.innerHTML = `⏱ ${durText}`;
+            
+            rightDiv.appendChild(dateSpan);
+            rightDiv.appendChild(durSpan);
+            
+            li.appendChild(leftDiv);
+            li.appendChild(rightDiv);
+            
             list.appendChild(li);
         });
 
