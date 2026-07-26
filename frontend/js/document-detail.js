@@ -2749,49 +2749,7 @@ function renderSetList(listEl, emptyEl, sets, detailUrlPrefix, type) {
         contentDiv.appendChild(titleRow);
         contentDiv.appendChild(metaSpan);
 
-        const progressContainer = document.createElement("div");
-        progressContainer.style.marginTop = "4px";
-        contentDiv.appendChild(progressContainer);
 
-        const fetchHistory = type === "quiz" ? AiLearningAPI.getQuizAttemptHistory(setId) : AiLearningAPI.getFlashcardAttemptHistory(setId);
-        fetchHistory.then(res => {
-            const attempts = Array.isArray(res.data) ? res.data : [];
-            if (attempts.length === 0) return;
-            
-            const sorted = [...attempts].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
-            const latest = sorted[0];
-            
-            if (latest.progressStatus && latest.progressStatus !== "FIRST_ATTEMPT") {
-                const badge = document.createElement("div");
-                badge.style.fontSize = "12px";
-                badge.style.fontWeight = "600";
-                badge.style.display = "flex";
-                badge.style.alignItems = "center";
-                badge.style.gap = "4px";
-
-                if (latest.progressStatus === "IMPROVED") {
-                    badge.style.color = "#059669";
-                    badge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg> ${latest.progressPercentage}%`;
-                } else if (latest.progressStatus === "REGRESSED") {
-                    badge.style.color = "#dc2626";
-                    badge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14" style="transform: scaleY(-1);"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg> ${latest.progressPercentage}%`;
-                } else if (latest.progressStatus === "SAME") {
-                    badge.style.color = "var(--muted)";
-                    badge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" /></svg> No change`;
-                }
-                
-                progressContainer.appendChild(badge);
-            } else if (latest.progressStatus === "FIRST_ATTEMPT") {
-                const badge = document.createElement("div");
-                badge.style.fontSize = "12px";
-                badge.style.fontWeight = "600";
-                badge.style.color = "var(--muted)";
-                badge.textContent = `Latest score: ${latest.percentage}%`;
-                progressContainer.appendChild(badge);
-            }
-        }).catch(err => {
-            // Ignore API failure silently
-        });
 
         const actionsDiv = document.createElement("div");
         actionsDiv.style.display = "flex";

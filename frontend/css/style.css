@@ -6357,11 +6357,11 @@ input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:f
 
 /* Progress Status Classes */
 .progress-improved {
-  color: var(--success-color, #10b981);
+  color: var(--success);
   font-weight: 500;
   margin-top: 15px;
   padding: 12px;
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(34, 197, 94, 0.1);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -6370,7 +6370,7 @@ input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:f
 }
 
 .progress-regressed {
-  color: var(--danger-color, #ef4444);
+  color: var(--danger);
   font-weight: 500;
   margin-top: 15px;
   padding: 12px;
@@ -6383,7 +6383,7 @@ input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:f
 }
 
 .progress-same {
-  color: var(--text-muted, #6b7280);
+  color: var(--muted);
   font-weight: 500;
   margin-top: 15px;
   padding: 12px;
@@ -6396,11 +6396,11 @@ input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:f
 }
 
 .progress-first-attempt {
-  color: var(--primary-color, #3b82f6);
+  color: var(--primary);
   font-weight: 500;
   margin-top: 15px;
   padding: 12px;
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--primary-light);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -6408,3 +6408,54 @@ input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:f
   font-size: 0.95rem;
 }
 
+/* Stats Cards (Quiz & Flashcards) */
+.stat-card {
+  padding: 16px 20px;
+  border-radius: 10px;
+  text-align: center;
+  min-width: 110px;
+  border: 1px solid transparent;
+}
+
+.stat-card-default {
+  background: var(--surface-soft);
+  border-color: var(--border);
+}
+.stat-card-default .stat-value {
+  color: var(--text);
+}
+.stat-card-default .stat-label {
+  color: var(--muted);
+}
+
+.stat-card-success {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+.stat-card-success .stat-value { color: #047857; }
+.stat-card-success .stat-label { color: #065f46; }
+
+.stat-card-warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+.stat-card-warning .stat-value { color: #b45309; }
+.stat-card-warning .stat-label { color: #92400e; }
+
+[data-theme="dark"] .stat-card-success {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+[data-theme="dark"] .stat-card-success .stat-value,
+[data-theme="dark"] .stat-card-success .stat-label { 
+  color: #4ade80; 
+}
+
+[data-theme="dark"] .stat-card-warning {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+[data-theme="dark"] .stat-card-warning .stat-value,
+[data-theme="dark"] .stat-card-warning .stat-label { 
+  color: #fbbf24; 
+}
