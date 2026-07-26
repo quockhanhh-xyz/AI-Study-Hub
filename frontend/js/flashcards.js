@@ -288,9 +288,8 @@ function renderProgressFeedback(data, containerId, parentEl) {
     progressDiv.id = containerId;
     progressDiv.style.margin = "10px auto 24px auto";
     progressDiv.style.maxWidth = "482px";
-    progressDiv.style.display = "flex";
-    progressDiv.style.alignItems = "center";
-    progressDiv.style.justifyContent = "center";
+    progressDiv.style.display = "block";
+    progressDiv.style.textAlign = "center";
     
     let icon = "";
     let text = "";
