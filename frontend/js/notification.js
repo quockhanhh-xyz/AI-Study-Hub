@@ -395,66 +395,15 @@ function renderNotificationList() {
         contentContainer.appendChild(message);
         
         if (notif.type === "GROUP_INVITE") {
-            const btnContainer = document.createElement("div");
-            btnContainer.style.display = "flex";
-            btnContainer.style.gap = "8px";
-            btnContainer.style.marginTop = "8px";
-            
-            const acceptBtn = document.createElement("button");
-            acceptBtn.className = "btn btn-primary btn-sm";
-            acceptBtn.textContent = "Accept";
-            acceptBtn.style.padding = "4px 8px";
-            acceptBtn.style.fontSize = "12px";
-            
-            const declineBtn = document.createElement("button");
-            declineBtn.className = "btn btn-secondary btn-sm";
-            declineBtn.textContent = "Decline";
-            declineBtn.style.padding = "4px 8px";
-            declineBtn.style.fontSize = "12px";
-            
-            acceptBtn.addEventListener("click", async (e) => {
-                e.stopPropagation();
-                acceptBtn.disabled = true;
-                declineBtn.disabled = true;
-                acceptBtn.textContent = "Accepting...";
-                try {
-                    const response = await post(`/api/group-invites/${notif.targetId}/accept`, {});
-                    if (typeof window.showToast === "function") window.showToast("Group invitation accepted!", "success");
-                    await handleMarkRead(notif.notificationId);
-                    window.location.href = `group-detail.html?id=${response.data}`;
-                } catch (err) {
-                    if (err.message === "Group members limit exceeded") {
-                        if (typeof window.showToast === "function") window.showToast("The group is already full.", "error");
-                    } else {
-                        if (typeof window.showToast === "function") window.showToast(err.message || "Failed to accept invitation.", "error");
-                    }
-                    acceptBtn.disabled = false;
-                    declineBtn.disabled = false;
-                    acceptBtn.textContent = "Accept";
+            item.style.cursor = "pointer";
+            item.addEventListener("click", (e) => {
+                e.stopImmediatePropagation();
+                showGroupInviteModal(notif);
+                if (!notif.read) {
+                    handleMarkRead(notif.notificationId);
                 }
             });
-
-            declineBtn.addEventListener("click", async (e) => {
-                e.stopPropagation();
-                acceptBtn.disabled = true;
-                declineBtn.disabled = true;
-                declineBtn.textContent = "Declining...";
-                try {
-                    await post(`/api/group-invites/${notif.targetId}/decline`, {});
-                    if (typeof window.showToast === "function") window.showToast("Group invitation declined.", "info");
-                    await handleMarkRead(notif.notificationId);
-                    fetchAndRenderNotifications();
-                } catch (err) {
-                    if (typeof window.showToast === "function") window.showToast("Failed to decline invitation.", "error");
-                    acceptBtn.disabled = false;
-                    declineBtn.disabled = false;
-                    declineBtn.textContent = "Decline";
-                }
-            });
-
-            btnContainer.appendChild(acceptBtn);
-            btnContainer.appendChild(declineBtn);
-            contentContainer.appendChild(btnContainer);
+            // We removed inline Accept/Decline buttons to show them in the modal.
         }
 
         contentContainer.appendChild(time);
@@ -518,7 +467,7 @@ function renderNotificationList() {
                 return;
             }
 
-            // User notification: report resolved/dismissed → navigate to the document
+            // User notification: report resolved/dismissed GåÆ navigate to the document
             if (notif.type === "REPORT_RESOLVED" || notif.type === "REPORT_DISMISSED") {
                 if (notif.targetType === "DOCUMENT_REPORT" && notif.targetId) {
                     // Navigate to community library since the document may have been unpublished
@@ -587,3 +536,91 @@ function formatTimeAgo(dateString) {
     if (interval >= 1) return interval + " min" + (interval > 1 ? "s" : "") + " ago";
     return "just now";
 }
+
+// Group Invite Modal Logic
+window.showGroupInviteModal = function(notif) {
+    let modal = document.getElementById("groupInviteModal");
+    if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "groupInviteModal";
+        modal.className = "invite-modal-overlay";
+        document.body.appendChild(modal);
+    }
+
+    const lines = notif.message.split('\n');
+    const mainMessage = lines.length > 0 ? lines[0] : notif.message;
+    const detailMessage = lines.slice(1).join('\n');
+
+    modal.innerHTML = `
+        <div class="invite-modal" style="position: relative;">
+            <button onclick="closeGroupInviteModal()" style="position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 4px;">&times;</button>
+            <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: var(--text-main); padding-right: 24px;">Group Invitation</h3>
+            
+            <div style="font-size: 14px; margin-bottom: 20px;">
+                <p style="margin-bottom: 16px; color: var(--text-main); font-weight: 500; font-size: 15px;">${mainMessage}</p>
+                <div style="background: var(--surface-muted, rgba(255,255,255,0.05)); border: 1px solid var(--border); padding: 16px; border-radius: 8px; color: var(--text-muted); white-space: pre-wrap; line-height: 1.5;">${detailMessage}</div>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border); padding-top: 16px;">
+                <button class="btn btn-secondary" id="declineInviteBtn">Decline</button>
+                <button class="btn btn-primary" id="acceptInviteBtn">Accept</button>
+            </div>
+        </div>
+    `;
+
+    // Small timeout to allow DOM to render before adding active class for animation
+    setTimeout(() => {
+        modal.classList.add("active");
+    }, 10);
+
+    const acceptBtn = document.getElementById("acceptInviteBtn");
+    const declineBtn = document.getElementById("declineInviteBtn");
+
+    acceptBtn.addEventListener("click", async () => {
+        acceptBtn.disabled = true;
+        declineBtn.disabled = true;
+        acceptBtn.textContent = "Accepting...";
+        try {
+            const response = await post(`/api/group-invites/${notif.targetId}/accept`, {});
+            if (typeof window.showToast === "function") window.showToast("Group invitation accepted!", "success");
+            closeGroupInviteModal();
+            window.location.href = `group-detail.html?id=${response.data}`;
+        } catch (err) {
+            if (err.message === "Group members limit exceeded") {
+                if (typeof window.showToast === "function") window.showToast("The group is already full.", "error");
+            } else {
+                if (typeof window.showToast === "function") window.showToast(err.message || "Failed to accept invitation.", "error");
+            }
+            acceptBtn.disabled = false;
+            declineBtn.disabled = false;
+            acceptBtn.textContent = "Accept";
+        }
+    });
+
+    declineBtn.addEventListener("click", async () => {
+        acceptBtn.disabled = true;
+        declineBtn.disabled = true;
+        declineBtn.textContent = "Declining...";
+        try {
+            await post(`/api/group-invites/${notif.targetId}/decline`, {});
+            if (typeof window.showToast === "function") window.showToast("Group invitation declined.", "info");
+            closeGroupInviteModal();
+            if (typeof window.fetchAndRenderNotifications === "function") {
+                window.fetchAndRenderNotifications();
+            }
+        } catch (err) {
+            if (typeof window.showToast === "function") window.showToast("Failed to decline invitation.", "error");
+            acceptBtn.disabled = false;
+            declineBtn.disabled = false;
+            declineBtn.textContent = "Decline";
+        }
+    });
+};
+
+window.closeGroupInviteModal = function() {
+    const modal = document.getElementById("groupInviteModal");
+    if (modal) {
+        modal.classList.remove("active");
+        setTimeout(() => modal.remove(), 200); // Remove after animation
+    }
+};
