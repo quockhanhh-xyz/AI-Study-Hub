@@ -93,6 +93,7 @@ function startDeck(indices) {
     deckOrder = indices;
     currentCardIndex = 0;
     isCardFlipped = false;
+    cardMarks = {};
     flashcardStartedAt = new Date();
 
     const backLink = document.getElementById("flashcardBackLink");
@@ -286,6 +287,7 @@ function renderProgressFeedback(data, containerId, parentEl) {
     const progressDiv = document.createElement("div");
     progressDiv.id = containerId;
     progressDiv.style.marginTop = "10px";
+    progressDiv.style.marginBottom = "24px";
     progressDiv.style.display = "block";
     progressDiv.style.textAlign = "center";
     
