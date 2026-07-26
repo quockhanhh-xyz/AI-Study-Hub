@@ -50,6 +50,21 @@ public class DocumentChunk {
     @Column(name = "end_offset")
     private Integer endOffset;
 
+    /**
+     * Semantic embedding vector stored as a JSON array of floats (e.g. "[0.12,-0.03,...]").
+     * Nullable: chunks created before the embedding feature, or when no embedding
+     * provider is configured, simply leave this null and retrieval falls back to keywords.
+     */
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @Lob
+    @Column(name = "embedding", columnDefinition = "LONGTEXT")
+    private String embedding;
+
+    /** Name of the model that produced {@link #embedding}, used to detect stale vectors. */
+    @Column(name = "embedding_model", length = 100)
+    private String embeddingModel;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

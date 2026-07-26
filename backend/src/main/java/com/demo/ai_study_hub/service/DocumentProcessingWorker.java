@@ -19,6 +19,7 @@ public class DocumentProcessingWorker {
     private final DocumentRepository documentRepository;
     private final DocumentTextExtractor documentTextExtractor;
     private final DocumentProcessingPersister documentProcessingPersister;
+    private final ChunkEmbeddingService chunkEmbeddingService;
 
     @Async("documentProcessingExecutor")
     public void processDocumentAsync(Integer documentId, ProcessingStatus previousStatus) {
@@ -57,6 +58,14 @@ public class DocumentProcessingWorker {
             if (result.getStatus() == ProcessingStatus.COMPLETED) {
                 documentProcessingPersister.saveSuccess(documentId, result);
                 log.info("Document processing completed successfully for documentId={}", documentId);
+                // Best-effort: generate semantic embeddings for hybrid retrieval. A failure here
+                // must never affect processing success — chunks already work with keyword search.
+                try {
+                    chunkEmbeddingService.generateForDocument(documentId);
+                } catch (Exception embeddingError) {
+                    log.warn("Embedding generation skipped for documentId={}: {}",
+                            documentId, embeddingError.getMessage());
+                }
             } else {
                 String error = result.getError() != null ? result.getError() : "Extraction failed";
                 documentProcessingPersister.saveFailure(documentId, result.getStatus(), error, previousStatus);

@@ -532,7 +532,22 @@ public class AiChatServiceImpl implements AiChatService {
                 || normalized.contains("define")
                 || normalized.contains("definition")
                 || normalized.contains("summar")
-                || normalized.contains("key");
+                || normalized.contains("key")
+                // Vietnamese general-learning cues
+                || normalized.contains("giải thích")
+                || normalized.contains("là gì")
+                || normalized.contains("thế nào")
+                || normalized.contains("tại sao")
+                || normalized.contains("khái niệm")
+                || normalized.contains("ví dụ")
+                || normalized.contains("tóm tắt")
+                || normalized.contains("ôn tập")
+                || normalized.contains("định nghĩa")
+                || normalized.contains("so sánh")
+                || normalized.contains("liệt kê")
+                || normalized.contains("trình bày")
+                || normalized.contains("nội dung")
+                || normalized.contains("khái quát");
     }
 
     private static class AiReservationResult {
