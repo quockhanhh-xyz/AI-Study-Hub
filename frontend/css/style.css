@@ -6357,3 +6357,39 @@ input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:f
   color: var(--text-main) !important;
 }
 
+/* Invite Modal */
+.invite-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+.invite-modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+.invite-modal {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow);
+    transform: translateY(20px);
+    transition: transform 0.2s ease;
+}
+.invite-modal-overlay.active .invite-modal {
+    transform: translateY(0);
+}
