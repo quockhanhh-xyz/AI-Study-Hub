@@ -5687,6 +5687,7 @@ svg {
   font-size: 13px;
   color: var(--text);
   line-height: 1.4;
+  white-space: pre-wrap;
 }
 
 .notification-title {
@@ -5984,6 +5985,7 @@ svg {
   font-size: 13px;
   color: var(--text);
   line-height: 1.4;
+  white-space: pre-wrap;
 }
 
 .notification-title {
