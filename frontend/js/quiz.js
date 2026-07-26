@@ -487,7 +487,10 @@ async function loadAttemptHistory() {
             const correctSpan = document.createElement("span");
             correctSpan.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; margin-right:4px;"></span>${attempt.correctCount} Correct`;
             
-            const answeredCount = attempt.answers ? attempt.answers.length : attempt.totalQuestions;
+            let answeredCount = attempt.totalQuestions;
+            if (attempt.answers) {
+                answeredCount = attempt.answers.filter(a => !!a.selectedOption).length;
+            }
             const incorrectCount = Math.max(0, answeredCount - attempt.correctCount);
             const skippedCount = Math.max(0, attempt.totalQuestions - answeredCount);
             
