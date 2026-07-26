@@ -286,10 +286,8 @@ function renderProgressFeedback(data, containerId, parentEl) {
     const progressDiv = document.createElement("div");
     progressDiv.id = containerId;
     progressDiv.style.marginTop = "10px";
-    progressDiv.style.display = "flex";
-    progressDiv.style.alignItems = "center";
-    progressDiv.style.justifyContent = "center";
-    progressDiv.style.gap = "6px";
+    progressDiv.style.display = "block";
+    progressDiv.style.textAlign = "center";
     
     let icon = "";
     let text = "";
@@ -297,12 +295,12 @@ function renderProgressFeedback(data, containerId, parentEl) {
     switch (data.progressStatus) {
         case "IMPROVED":
             progressDiv.className = "progress-improved";
-            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="18" width="18"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg>`;
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="18" width="18" style="vertical-align: middle; margin-right: 6px; margin-bottom: 2px;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg>`;
             text = `Great! You improved by ${data.progressPercentage}% compared to the last time.`;
             break;
         case "REGRESSED":
             progressDiv.className = "progress-regressed";
-            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="18" width="18" style="transform: scaleY(-1);"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg>`;
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="18" width="18" style="transform: scaleY(-1); vertical-align: middle; margin-right: 6px; margin-bottom: 2px;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3.5h4v4" stroke-width="1.5"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.5 7.85 9.15c-0.09346 0.09161 -0.21912 0.14293 -0.35 0.14293 -0.13088 0 -0.25654 -0.05132 -0.35 -0.14293l-2.3 -2.3c-0.09346 -0.09161 -0.21912 -0.14293 -0.35 -0.14293 -0.13088 0 -0.25654 0.05132 -0.35 0.14293L0.5 10.5" stroke-width="1.5"></path></svg>`;
             text = `Don't give up! You regressed by ${data.progressPercentage}% compared to the last time. Keep trying!`;
             break;
         case "SAME":
@@ -319,7 +317,7 @@ function renderProgressFeedback(data, containerId, parentEl) {
             return;
     }
 
-    progressDiv.innerHTML = `${icon} <span>${text}</span>`;
+    progressDiv.innerHTML = `${icon}<span>${text}</span>`;
     parentEl.insertAdjacentElement("afterend", progressDiv);
 }
 
