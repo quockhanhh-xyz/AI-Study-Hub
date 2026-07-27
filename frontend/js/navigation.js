@@ -27,6 +27,12 @@ const ICON_APPEAL = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox
 const ICON_CHAT = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
 
 const NAVIGATION_MENU = [
+  // Guest-only routes
+  { name: "Home", icon: ICON_HOME, url: "index.html", requiresAuth: false, hideWhenAuth: true },
+  { name: "Login", icon: ICON_PROFILE, url: "login.html", requiresAuth: false, hideWhenAuth: true },
+  { name: "Register", icon: ICON_PROFILE, url: "register.html", requiresAuth: false, hideWhenAuth: true },
+
+  // Authenticated user routes
   { name: "Dashboard", icon: ICON_HOME, url: "dashboard.html", requiresAuth: true },
   { name: "Study Assistant", icon: ICON_CHAT, url: "ai-chat.html", requiresAuth: true },
   { name: "My Library", icon: ICON_DOCS, url: "my-library.html", requiresAuth: true },
