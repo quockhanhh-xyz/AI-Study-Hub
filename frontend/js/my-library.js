@@ -386,7 +386,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else {
           userShares.forEach(share => {
             const item = document.createElement("div");
-            item.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; background: #fafafa;";
+            item.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; background: var(--surface-soft);";
 
             const info = document.createElement("div");
             info.style.cssText = "display: flex; align-items: center; gap: 8px;";
@@ -441,7 +441,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else {
           groupShares.forEach(share => {
             const item = document.createElement("div");
-            item.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; background: #fafafa;";
+            item.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; background: var(--surface-soft);";
 
             const info = document.createElement("div");
             info.style.cssText = "display: flex; align-items: center; gap: 8px;";
@@ -1277,7 +1277,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const info = document.createElement("div");
     info.style.cssText = "flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;";
     const nameEl = document.createElement("div");
-    nameEl.style.cssText = "font-size:15px; font-weight:600; color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;";
+    nameEl.style.cssText = "font-size:15px; font-weight:600; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;";
     nameEl.textContent = f.folderName || "Untitled Folder";
     const metaEl = document.createElement("div");
     metaEl.style.cssText = "font-size:12px; color:#9ca3af; display:flex; gap:10px;";
@@ -1300,7 +1300,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     dropdown.style.cssText = "display:none; position:absolute; right:0; top:100%; background: var(--surface); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); z-index:20; min-width:140px; padding:4px 0;";
     const renameItem = document.createElement("button");
     renameItem.type = "button";
-    renameItem.style.cssText = "display:block; width:100%; padding:8px 14px; text-align:left; background:none; border:none; font-size:13px; color:#111827; cursor:pointer;";
+    renameItem.style.cssText = "display:block; width:100%; padding:8px 14px; text-align:left; background:none; border:none; font-size:13px; color:var(--text-main); cursor:pointer;";
     renameItem.textContent = "Rename";
     const trashItem = document.createElement("button");
     trashItem.type = "button";

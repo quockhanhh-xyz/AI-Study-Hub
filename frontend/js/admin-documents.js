@@ -584,13 +584,13 @@ function initAdminDocuments() {
                     `;
                 } else if (doc.approvalStatus === 'APPROVED') {
                     modButtonsHtml = `
-                        <button class="btn" id="modalPendingBtn" style="width: auto !important; min-width: 100px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600; background-color: var(--surface-soft) !important; border-color: var(--border) !important; color: #334155 !important;">Reopen</button>
+                        <button class="btn" id="modalPendingBtn" style="width: auto !important; min-width: 100px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600; background-color: var(--surface-soft) !important; border-color: var(--border) !important; color: var(--text-main) !important;">Reopen</button>
                         <button class="btn btn-danger" id="modalUnpublishBtn" style="width: auto !important; min-width: 110px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600; background-color: var(--danger, #ef4444) !important; border-color: var(--danger, #ef4444) !important; color: #ffffff !important;">Unpublish</button>
                     `;
                 } else if (doc.approvalStatus === 'REJECTED') {
                     modButtonsHtml = `
                         <button class="btn btn-primary" id="modalApproveBtn" style="width: auto !important; min-width: 100px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600; background-color: var(--success, #10b981) !important; border-color: var(--success, #10b981) !important; color: #ffffff !important;">Approve</button>
-                        <button class="btn" id="modalPendingBtn" style="width: auto !important; min-width: 100px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600; background-color: var(--surface-soft) !important; border-color: var(--border) !important; color: #334155 !important;">Reopen</button>
+                        <button class="btn" id="modalPendingBtn" style="width: auto !important; min-width: 100px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600; background-color: var(--surface-soft) !important; border-color: var(--border) !important; color: var(--text-main) !important;">Reopen</button>
                     `;
                 }
                 
