@@ -143,30 +143,30 @@
         <p id="flashcardSummaryText" style="color: var(--muted); font-size: 14px; margin-bottom: 28px;"></p>
 
         <div class="flashcard-summary-stats" style="display: flex; justify-content: center; gap: 14px; margin-bottom: 32px; flex-wrap: wrap;">
-          <div class="flashcard-summary-stat total" style="padding: 16px 20px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); min-width: 110px;">
-            <span class="flashcard-summary-stat-value" id="flashcardTotalCount" style="display: block; font-size: 24px; font-weight: 800; color: var(--text);">0</span>
-            <span class="flashcard-summary-stat-label" style="font-size: 12px; font-weight: 600; color: var(--muted);">Reviewed</span>
+          <div class="stat-card stat-card-default">
+            <span id="flashcardTotalCount" class="stat-value" style="display: block; font-size: 24px; font-weight: 800; margin-bottom: 4px;">0</span>
+            <span class="stat-label" style="font-size: 12px; font-weight: 600; text-transform: uppercase;">Reviewed</span>
           </div>
-          <div class="flashcard-summary-stat known" style="padding: 16px 20px; border-radius: 10px; background: #ecfdf5; border: 1px solid #a7f3d0; min-width: 110px;">
-            <span class="flashcard-summary-stat-value" id="flashcardKnownCount" style="display: block; font-size: 24px; font-weight: 800; color: #047857;">0</span>
-            <span class="flashcard-summary-stat-label" style="font-size: 12px; font-weight: 600; color: #065f46;">Known</span>
+          <div class="stat-card stat-card-success">
+            <span id="flashcardKnownCount" class="stat-value" style="display: block; font-size: 24px; font-weight: 800; margin-bottom: 4px;">0</span>
+            <span class="stat-label" style="font-size: 12px; font-weight: 600; text-transform: uppercase;">Known</span>
           </div>
-          <div class="flashcard-summary-stat unknown" style="padding: 16px 20px; border-radius: 10px; background: #fffbeb; border: 1px solid #fde68a; min-width: 110px;">
-            <span class="flashcard-summary-stat-value" id="flashcardUnknownCount" style="display: block; font-size: 24px; font-weight: 800; color: #b45309;">0</span>
-            <span class="flashcard-summary-stat-label" style="font-size: 12px; font-weight: 600; color: #92400e;">Still learning</span>
+          <div class="stat-card stat-card-warning">
+            <span id="flashcardUnknownCount" class="stat-value" style="display: block; font-size: 24px; font-weight: 800; margin-bottom: 4px;">0</span>
+            <span class="stat-label" style="font-size: 12px; font-weight: 600; text-transform: uppercase;">Still learning</span>
           </div>
-          <div class="flashcard-summary-stat unmarked" style="padding: 16px 20px; border-radius: 10px; background: var(--surface-soft, #f8fafc); border: 1px solid var(--border); min-width: 110px;">
-            <span class="flashcard-summary-stat-value" id="flashcardUnmarkedCount" style="display: block; font-size: 24px; font-weight: 800; color: var(--muted);">0</span>
-            <span class="flashcard-summary-stat-label" style="font-size: 12px; font-weight: 600; color: var(--muted);">Unmarked</span>
+          <div class="stat-card stat-card-default">
+            <span id="flashcardUnmarkedCount" class="stat-value" style="display: block; font-size: 24px; font-weight: 800; margin-bottom: 4px;">0</span>
+            <span class="stat-label" style="font-size: 12px; font-weight: 600; text-transform: uppercase;">Unmarked</span>
           </div>
         </div>
 
-        <div class="flashcard-summary-actions" style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-          <button type="button" class="btn btn-secondary" id="flashcardReviewUnknownBtn" style="display:none; font-weight: 600;">
+        <div class="flashcard-summary-actions" style="display:flex; flex-direction:column; gap:12px; margin-top:32px;">
+          <button type="button" class="btn btn-primary" id="flashcardReviewUnknownBtn" style="display:none; width:100%; padding:12px; font-weight: 600;">
             Review "Still learning" cards
           </button>
-          <button type="button" class="btn btn-primary" id="flashcardRestartFromSummaryBtn" style="font-weight: 600;">↺ Study again</button>
-          <a href="#" class="btn btn-outline" id="flashcardSummaryBackLink" style="font-weight: 600;">← Back to document</a>
+          <button type="button" class="btn btn-secondary" id="flashcardRestartFromSummaryBtn" style="width:100%; padding:12px; font-weight: 600;">↺ Study again</button>
+          <a href="#" class="btn btn-outline" id="flashcardSummaryBackLink" style="width:100%; padding:12px; text-align:center; text-decoration:none; box-sizing:border-box; font-weight: 600;">← Back to document</a>
         </div>
 
         <div class="flashcard-history" id="flashcardHistorySection" style="display:none; margin-top:32px; padding-top:24px; border-top:1px solid var(--border); text-align: left;">

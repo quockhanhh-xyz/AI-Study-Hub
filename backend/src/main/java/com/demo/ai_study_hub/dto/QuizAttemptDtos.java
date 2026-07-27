@@ -34,6 +34,9 @@ public class QuizAttemptDtos {
         private Instant startedAt;
         private Instant completedAt;
         private Instant createdAt;
+        private String progressStatus;
+        private Double progressPercentage;
+        private Double previousPercentage;
         private List<QuizAttemptAnswerResponse> answers;
     }
 
