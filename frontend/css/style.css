@@ -6459,7 +6459,8 @@ input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:f
 }
 
 /* Stats Cards (Quiz & Flashcards) */
-.stat-card {
+.quiz-summary .stat-card,
+.flashcard-summary .stat-card {
   padding: 16px 20px;
   border-radius: 10px;
   text-align: center;
@@ -6469,45 +6470,60 @@ input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:f
   border: 1px solid transparent;
 }
 
-.stat-card-default {
+.quiz-summary .stat-card-default,
+.flashcard-summary .stat-card-default {
   background: var(--surface-soft);
   border-color: var(--border);
 }
-.stat-card-default .stat-value {
+.quiz-summary .stat-card-default .stat-value,
+.flashcard-summary .stat-card-default .stat-value {
   color: var(--text);
 }
-.stat-card-default .stat-label {
+.quiz-summary .stat-card-default .stat-label,
+.flashcard-summary .stat-card-default .stat-label {
   color: var(--muted);
 }
 
-.stat-card-success {
+.quiz-summary .stat-card-success,
+.flashcard-summary .stat-card-success {
   background: #ecfdf5;
   border-color: #a7f3d0;
 }
-.stat-card-success .stat-value { color: #047857; }
-.stat-card-success .stat-label { color: #065f46; }
+.quiz-summary .stat-card-success .stat-value,
+.flashcard-summary .stat-card-success .stat-value { color: #047857; }
+.quiz-summary .stat-card-success .stat-label,
+.flashcard-summary .stat-card-success .stat-label { color: #065f46; }
 
-.stat-card-warning {
+.quiz-summary .stat-card-warning,
+.flashcard-summary .stat-card-warning {
   background: #fffbeb;
   border-color: #fde68a;
 }
-.stat-card-warning .stat-value { color: #b45309; }
-.stat-card-warning .stat-label { color: #92400e; }
+.quiz-summary .stat-card-warning .stat-value,
+.flashcard-summary .stat-card-warning .stat-value { color: #b45309; }
+.quiz-summary .stat-card-warning .stat-label,
+.flashcard-summary .stat-card-warning .stat-label { color: #92400e; }
 
-[data-theme="dark"] .stat-card-success {
+[data-theme="dark"] .quiz-summary .stat-card-success,
+[data-theme="dark"] .flashcard-summary .stat-card-success {
   background: rgba(34, 197, 94, 0.15);
   border-color: rgba(34, 197, 94, 0.3);
 }
-[data-theme="dark"] .stat-card-success .stat-value,
-[data-theme="dark"] .stat-card-success .stat-label { 
+[data-theme="dark"] .quiz-summary .stat-card-success .stat-value,
+[data-theme="dark"] .quiz-summary .stat-card-success .stat-label,
+[data-theme="dark"] .flashcard-summary .stat-card-success .stat-value,
+[data-theme="dark"] .flashcard-summary .stat-card-success .stat-label { 
   color: #4ade80; 
 }
 
-[data-theme="dark"] .stat-card-warning {
+[data-theme="dark"] .quiz-summary .stat-card-warning,
+[data-theme="dark"] .flashcard-summary .stat-card-warning {
   background: rgba(245, 158, 11, 0.15);
   border-color: rgba(245, 158, 11, 0.3);
 }
-[data-theme="dark"] .stat-card-warning .stat-value,
-[data-theme="dark"] .stat-card-warning .stat-label { 
+[data-theme="dark"] .quiz-summary .stat-card-warning .stat-value,
+[data-theme="dark"] .quiz-summary .stat-card-warning .stat-label,
+[data-theme="dark"] .flashcard-summary .stat-card-warning .stat-value,
+[data-theme="dark"] .flashcard-summary .stat-card-warning .stat-label { 
   color: #fbbf24; 
 }

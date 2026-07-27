@@ -67,6 +67,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   const confirmInviteMemberBtn = document.getElementById("confirmInviteMemberBtn");
   const inviteMemberForm = document.getElementById("inviteMemberForm");
   const inviteEmailInput = document.getElementById("inviteEmailInput");
+  const inviteDescriptionInput = document.getElementById("inviteDescriptionInput");
   const inviteMemberError = document.getElementById("inviteMemberError");
   const pendingInvitesSection = document.getElementById("pendingInvitesSection");
   const pendingInvitesLoader = document.getElementById("pendingInvitesLoader");
@@ -1255,6 +1256,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Invite Member logic
   inviteMemberBtn.addEventListener("click", function () {
     inviteEmailInput.value = "";
+    if (inviteDescriptionInput) inviteDescriptionInput.value = "";
     hideError(inviteMemberError);
     openModal(inviteMemberModal);
     inviteEmailInput.focus();
@@ -1266,6 +1268,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   inviteMemberForm.addEventListener("submit", async function (e) {
     e.preventDefault();
     const email = inviteEmailInput.value.trim();
+    const description = inviteDescriptionInput ? inviteDescriptionInput.value.trim() : "";
     if (!email) return;
 
     confirmInviteMemberBtn.disabled = true;
@@ -1273,7 +1276,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     hideError(inviteMemberError);
 
     try {
-      const response = await post(`/api/groups/${groupId}/invites/email`, { email });
+      const response = await post(`/api/groups/${groupId}/invites/email`, { email, description });
       showToast("Invitation sent successfully", "success");
       closeModal(inviteMemberModal);
       await loadGroupDetail();

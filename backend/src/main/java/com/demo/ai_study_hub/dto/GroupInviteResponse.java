@@ -19,5 +19,6 @@ public class GroupInviteResponse {
     private String inviterEmail;
     private String email; // The invitee's email
     private String status;
+    private String description;
     private LocalDateTime invitedAt;
 }
