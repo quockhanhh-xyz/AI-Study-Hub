@@ -34,6 +34,9 @@ public class GroupInvitation {
     @Column(name = "status", nullable = false, length = 20)
     private String status = "PENDING"; // PENDING, ACCEPTED, DECLINED
 
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
     @Column(name = "invited_at", nullable = false)
     private LocalDateTime invitedAt;
 

@@ -483,12 +483,13 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         invite.setInviter(sender);
         invite.setStatus("PENDING");
         invite.setInvitedAt(LocalDateTime.now(ZoneOffset.UTC));
+        invite.setDescription(request.getDescription());
         groupInvitationRepository.save(invite);
 
         String messageStr = sender.getFullName() + " invited you to join a study group.\n" +
                 "Group: " + group.getGroupName();
-        if (group.getDescription() != null && !group.getDescription().isEmpty()) {
-            messageStr += "\nDescription: " + group.getDescription();
+        if (request.getDescription() != null && !request.getDescription().trim().isEmpty()) {
+            messageStr += "\nDescription: " + request.getDescription().trim();
         }
 
         notificationService.createNotification(
@@ -598,6 +599,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .inviterEmail(inv.getInviter() != null ? inv.getInviter().getEmail() : null)
                 .email(inv.getEmail())
                 .status(inv.getStatus())
+                .description(inv.getDescription())
                 .invitedAt(inv.getInvitedAt())
                 .build()).collect(Collectors.toList());
     }
@@ -624,6 +626,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .inviterEmail(inv.getInviter() != null ? inv.getInviter().getEmail() : null)
                 .email(inv.getEmail())
                 .status(inv.getStatus())
+                .description(inv.getDescription())
                 .invitedAt(inv.getInvitedAt())
                 .build()).collect(Collectors.toList());
     }
