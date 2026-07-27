@@ -304,28 +304,7 @@ function renderDynamicSidebar(isAuthenticated) {
   }
 
 
-  // Step 8A Guest Auth Pages Navigation Constraint Rule
-  if (!isAuthenticated && currentRoute && currentRoute.hideWhenAuth) {
-    if (sidebar) {
-      // Preserve or build a minimalist landing container for Guest navigation alternative
-      const oldFooter = sidebar.querySelector(".sidebar-footer");
-      if (oldFooter) oldFooter.remove();
 
-      if (navContainer) {
-        navContainer.innerHTML = `
-          <a href="community.html" class="nav-link">
-            <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg></span>
-            <span class="nav-text" style="font-weight: 500;">Browse Community Library</span>
-          </a>
-        `;
-      }
-
-      // Force collapse layout or hide complex control toggles from login interface shell
-      const toggleBtn = sidebar.querySelector(".sidebar-toggle-btn");
-      if (toggleBtn) toggleBtn.style.display = "none";
-    }
-    return;
-  }
 
 
   if (!navContainer) return;

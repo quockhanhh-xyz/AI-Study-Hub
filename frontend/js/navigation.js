@@ -27,6 +27,12 @@ const ICON_APPEAL = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox
 const ICON_CHAT = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
 
 const NAVIGATION_MENU = [
+  // Guest-only routes
+  { name: "Home", icon: ICON_HOME, url: "index.html", requiresAuth: false, hideWhenAuth: true },
+  { name: "Login", icon: ICON_KEY, url: "login.html", requiresAuth: false, hideWhenAuth: true },
+  { name: "Register", icon: ICON_REGISTER, url: "register.html", requiresAuth: false, hideWhenAuth: true },
+
+  // Authenticated user routes
   { name: "Dashboard", icon: ICON_HOME, url: "dashboard.html", requiresAuth: true },
   { name: "Study Assistant", icon: ICON_CHAT, url: "ai-chat.html", requiresAuth: true },
   { name: "My Library", icon: ICON_DOCS, url: "my-library.html", requiresAuth: true },
@@ -57,12 +63,8 @@ const NAVIGATION_MENU = [
   // Step 13B: Payment Result route — requires auth, hidden from sidebar (reached only via payment redirect)
   { name: "Payment Result", icon: ICON_UPGRADE, url: "payment-result.html", requiresAuth: true, hidden: true },
 
-  // Guest-Only Gateway Routes (Step 8A Guard Target Authentication Sync)
-  { name: "Login", icon: ICON_KEY, url: "login.html", hideWhenAuth: true },
-  { name: "Register", icon: ICON_REGISTER, url: "register.html", hideWhenAuth: true },
-  { name: "Verify OTP", icon: ICON_SHIELD, url: "verify-otp.html", hideWhenAuth: true, hidden: true },
-
   // Hidden Structural Layout Parameter Child Routes
+  { name: "Verify OTP", icon: ICON_SHIELD, url: "verify-otp.html", hideWhenAuth: true, hidden: true },
   { name: "Upload", icon: ICON_UPLOAD, url: "upload.html", requiresAuth: true, hidden: true },
   { name: "Document Detail", icon: ICON_DOCS, url: "document-detail.html", requiresAuth: false, hidden: true },
   { name: "Public Profile", icon: ICON_PROFILE, url: "public-profile.html", requiresAuth: false, hidden: true },
