@@ -6527,3 +6527,22 @@ input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:f
 [data-theme="dark"] .flashcard-summary .stat-card-warning .stat-label { 
   color: #fbbf24; 
 }
+
+/* Custom Select Input specificity fix to override global input styles */
+input:not([type="checkbox"]):not([type="radio"]).custom-select-input {
+  border: none !important;
+  background-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  height: auto !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]).custom-select-input:focus {
+  border: none !important;
+  background-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
