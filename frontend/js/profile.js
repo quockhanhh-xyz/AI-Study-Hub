@@ -493,19 +493,64 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  window.unfollowUser = async function(userId, btnElement) {
-    if (!confirm("Are you sure you want to unfollow this user?")) return;
-    try {
-      btnElement.disabled = true;
-      btnElement.textContent = "Unfollowing...";
-      await del(`/api/users/${userId}/follow`);
-      loadNetworkData(); // reload
-    } catch(err) {
-      console.error(err);
-      alert("Failed to unfollow");
-      btnElement.disabled = false;
-      btnElement.textContent = "Unfollow";
-    }
+  const unfollowConfirmModal = document.getElementById("unfollowConfirmModal");
+  const cancelUnfollowBtn = document.getElementById("cancelUnfollowBtn");
+  const confirmUnfollowBtn = document.getElementById("confirmUnfollowBtn");
+
+  let currentUnfollowUserId = null;
+  let currentUnfollowBtnElement = null;
+
+  function openModal(overlay) {
+    overlay.classList.add("open");
+  }
+  function closeModal(overlay) {
+    overlay.classList.remove("open");
+  }
+
+  if (cancelUnfollowBtn && unfollowConfirmModal) {
+    cancelUnfollowBtn.addEventListener("click", function() {
+      closeModal(unfollowConfirmModal);
+    });
+  }
+
+  if (confirmUnfollowBtn && unfollowConfirmModal) {
+    confirmUnfollowBtn.addEventListener("click", async function() {
+      if (!currentUnfollowUserId || !currentUnfollowBtnElement) return;
+      const userId = currentUnfollowUserId;
+      const btnElement = currentUnfollowBtnElement;
+      
+      closeModal(unfollowConfirmModal);
+      
+      try {
+        btnElement.disabled = true;
+        btnElement.textContent = "Unfollowing...";
+        await del(`/api/users/${userId}/follow`);
+        loadNetworkData(); // reload
+      } catch(err) {
+        console.error(err);
+        alert("Failed to unfollow");
+        btnElement.disabled = false;
+        btnElement.textContent = "Unfollow";
+      } finally {
+        currentUnfollowUserId = null;
+        currentUnfollowBtnElement = null;
+      }
+    });
+  }
+
+  // Handle overlay click to close
+  if (unfollowConfirmModal) {
+    unfollowConfirmModal.addEventListener("click", function(e) {
+      if (e.target === unfollowConfirmModal) {
+        closeModal(unfollowConfirmModal);
+      }
+    });
+  }
+
+  window.unfollowUser = function(userId, btnElement) {
+    currentUnfollowUserId = userId;
+    currentUnfollowBtnElement = btnElement;
+    openModal(unfollowConfirmModal);
   };
 
   // Helper: Format Date String

@@ -18,6 +18,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.demo.ai_study_hub.entity.User;
+import com.demo.ai_study_hub.entity.UserFollow;
+import com.demo.ai_study_hub.repository.UserFollowRepository;
+import com.demo.ai_study_hub.service.NotificationService;
 import com.demo.ai_study_hub.service.DocumentService;
 
 @Service
@@ -31,6 +35,12 @@ public class AdminDocumentService {
     
     @Autowired
     private DocumentPreviewHelper previewHelper;
+
+    @Autowired
+    private UserFollowRepository userFollowRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     public List<PublicDocumentResponse> getAdminPublicDocuments(String keyword, Integer subjectId, String fileType, String approvalStatus) {
         List<Document> documents = documentRepository.findPublicDocumentsForAdminExport(keyword, approvalStatus, fileType, subjectId);
@@ -89,6 +99,27 @@ public class AdminDocumentService {
 
         document.setApprovalStatus("APPROVED");
         document = documentRepository.save(document);
+
+        try {
+            User creator = document.getOwner();
+            if (creator != null) {
+                List<UserFollow> followers = userFollowRepository.findByFollowingAndStatus(creator, "ACTIVE");
+                for (UserFollow follow : followers) {
+                    notificationService.createNotification(
+                            follow.getFollower(),
+                            "FOLLOWED_USER_DOCUMENT_APPROVED",
+                            "New Document Uploaded",
+                            creator.getFullName() + " published a new document: " + document.getTitle(),
+                            "DOCUMENT",
+                            Long.valueOf(document.getDocumentId()),
+                            creator.getUserId()
+                    );
+                }
+            }
+        } catch (Exception e) {
+            // Silently swallow or log to ensure main approval flow completes
+        }
+
         return documentService.mapToPublicResponse(document, null);
     }
 
