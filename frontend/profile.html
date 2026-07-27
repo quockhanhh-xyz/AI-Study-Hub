@@ -225,6 +225,20 @@
         </main>
     </div>
 
+    <!-- Unfollow Confirm Modal -->
+    <div class="modal-overlay" id="unfollowConfirmModal" role="dialog" aria-modal="true">
+        <div class="modal-box" style="max-width: 400px; text-align: center; padding: 32px 24px;">
+            <h3 style="margin: 0 0 16px 0; font-size: 20px;">Unfollow User?</h3>
+            <p style="margin: 0 0 24px 0; color: var(--muted); font-size: 15px; line-height: 1.5;">
+                Are you sure you want to unfollow this user? You will stop seeing their updates.
+            </p>
+            <div class="modal-actions" style="justify-content: center; gap: 12px; margin-top: 0;">
+                <button type="button" class="btn btn-secondary" id="cancelUnfollowBtn" style="padding: 10px 20px; font-weight: 500;">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmUnfollowBtn" style="padding: 10px 20px; font-weight: 500;">Unfollow</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Script imports in correct dependency order -->
     <script src="js/api.js"></script>
     <script src="js/account-api.js"></script>

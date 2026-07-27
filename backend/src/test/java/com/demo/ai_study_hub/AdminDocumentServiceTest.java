@@ -38,6 +38,12 @@ class AdminDocumentServiceTest {
     @Spy
     private com.demo.ai_study_hub.service.DocumentPreviewHelper previewHelper;
 
+    @Mock
+    private com.demo.ai_study_hub.repository.UserFollowRepository userFollowRepository;
+
+    @Mock
+    private com.demo.ai_study_hub.service.NotificationService notificationService;
+
     @InjectMocks
     private AdminDocumentService adminDocumentService;
 
@@ -139,5 +145,43 @@ class AdminDocumentServiceTest {
 
         assertThrows(ResponseStatusException.class, () ->
                 adminDocumentService.getAdminDocumentDownloadInfo(1));
+    }
+
+    @Test
+    void approveDocument_Success_ShouldNotifyFollowers() {
+        com.demo.ai_study_hub.entity.User creator = new com.demo.ai_study_hub.entity.User();
+        creator.setUserId(10);
+        creator.setFullName("Creator Name");
+
+        testDoc.setOwner(creator);
+        testDoc.setApprovalStatus("PENDING");
+
+        com.demo.ai_study_hub.entity.User followerUser = new com.demo.ai_study_hub.entity.User();
+        followerUser.setUserId(20);
+        followerUser.setFullName("Follower Name");
+
+        com.demo.ai_study_hub.entity.UserFollow follow = new com.demo.ai_study_hub.entity.UserFollow();
+        follow.setFollower(followerUser);
+        follow.setFollowing(creator);
+        follow.setStatus("ACTIVE");
+
+        when(documentRepository.findById(1)).thenReturn(Optional.of(testDoc));
+        when(documentRepository.save(any(Document.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userFollowRepository.findByFollowingAndStatus(creator, "ACTIVE")).thenReturn(java.util.List.of(follow));
+        when(documentService.mapToPublicResponse(any(Document.class), eq(null))).thenReturn(mockRes);
+
+        PublicDocumentResponse res = adminDocumentService.approveDocument(1);
+
+        assertNotNull(res);
+        assertEquals("APPROVED", testDoc.getApprovalStatus());
+        org.mockito.Mockito.verify(notificationService).createNotification(
+                eq(followerUser),
+                eq("FOLLOWED_USER_DOCUMENT_APPROVED"),
+                eq("New Document Uploaded"),
+                org.mockito.Mockito.contains("published a new document"),
+                eq("DOCUMENT"),
+                eq(1L),
+                eq(10)
+        );
     }
 }
