@@ -5,6 +5,7 @@
 
 let chartInstances = {};
 let autoRefreshInterval = null;
+let lastSummaryData = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     // Wait for the auth layout system to finish verifying the user
@@ -20,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function loadDashboardData(isManualRefresh = false) {
-    debugger;
     const loadingState = document.getElementById("dashboardLoadingState");
     const errorState = document.getElementById("dashboardErrorState");
     const contentState = document.getElementById("dashboardContent");
@@ -45,6 +45,7 @@ async function loadDashboardData(isManualRefresh = false) {
         ]);
 
         if (summaryResponse && summaryResponse.success && chartsResponse && chartsResponse.success) {
+            lastSummaryData = summaryResponse.data;
             renderDashboardStats(summaryResponse.data);
             renderDashboardCharts(chartsResponse.data, summaryResponse.data);
 
@@ -57,13 +58,13 @@ async function loadDashboardData(isManualRefresh = false) {
             if (!autoRefreshInterval) {
                 autoRefreshInterval = setInterval(() => loadDashboardData(true), 60000);
             }
-            
+
             // Show last updated time
             const now = new Date();
-            const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            const dateString = now.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const dateString = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             document.getElementById("dashboardLastUpdated").textContent = `Last updated: ${dateString}, ${timeString}`;
-            
+
             const autoRefreshText = document.getElementById("dashboardAutoRefreshText");
             if (autoRefreshText) autoRefreshText.style.display = "block";
         } else {
@@ -86,7 +87,7 @@ async function loadDashboardChartsData() {
     try {
         const chartsResponse = await fetchAdminDashboardCharts(days);
         if (chartsResponse && chartsResponse.success) {
-            renderDashboardCharts(chartsResponse.data);
+            renderDashboardCharts(chartsResponse.data, lastSummaryData);
         }
     } catch (e) {
         console.error("Failed to fetch dashboard charts:", e);
@@ -106,12 +107,12 @@ const CHART_COLOR_MAP = {
     "PENDING": "#f59e0b",  // Amber/Orange
     "REJECTED": "#ef4444", // Red
     "PRIVATE": "#64748b",  // Gray
-    
+
     // Account Tiers
     "FREE": "#64748b",     // Gray
     "PREMIUM": "#3b82f6",  // Blue
     "ULTRA": "#8b5cf6",    // Violet
-    
+
     // AI Features
     "AI Q&A": "#6366f1",   // Indigo
     "Summary": "#3b82f6",  // Blue
@@ -133,12 +134,13 @@ function formatAdminRevenue(amount) {
 function renderDashboardStats(data) {
     document.getElementById("statTotalUsers").textContent = (data.totalUsers || 0).toLocaleString();
     document.getElementById("statTotalDocs").textContent = (data.totalDocuments || 0).toLocaleString();
+    debugger;
     document.getElementById("statPendingDocs").textContent = (data.pendingPublicDocuments || 0).toLocaleString();
     document.getElementById("statAiRequests").textContent = (data.aiRequestsToday || 0).toLocaleString();
 
     const revenue = data.lifetimeRevenue || 0;
     document.getElementById("statTotalRevenue").textContent = formatAdminRevenue(revenue);
-    
+
     const successPayments = data.allTimeSuccessfulPayments || 0;
     const successPaymentsEl = document.getElementById("statTotalSuccessPayments");
     if (successPaymentsEl) successPaymentsEl.textContent = `${successPayments.toLocaleString()} successful payments`;
@@ -148,7 +150,7 @@ function renderDashboardStats(data) {
     const needsAttList = document.getElementById("needsAttentionList");
     const needsAttTitle = document.getElementById("needsAttentionTitle");
     needsAttList.innerHTML = "";
-    
+
     const needsInfo = data.needsAttention;
     if (needsInfo) {
         let cardsHtml = "";
@@ -295,7 +297,7 @@ function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, 
     const canvas = document.getElementById(canvasId);
 
     // Fallback state if no data
-    if (!dataArray || dataArray.length === 0 || dataArray.every(item => item[dataKey] === 0)) {
+    if (!dataArray || dataArray.length === 0 || ((type === 'pie' || type === 'doughnut') && dataArray.every(item => item[dataKey] === 0))) {
         canvas.style.display = "none";
         let emptyState = container.querySelector(".admin-chart-empty");
         if (!emptyState) {
@@ -341,7 +343,7 @@ function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, 
                 backgroundColor: (context) => {
                     if (type === 'line') {
                         const chart = context.chart;
-                        const {ctx, chartArea} = chart;
+                        const { ctx, chartArea } = chart;
                         if (!chartArea) return colors[0] + '22';
                         const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
                         gradient.addColorStop(0, colors[0] + '80');
@@ -396,9 +398,9 @@ function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, 
                 y: {
                     border: { display: false },
                     grid: { color: 'rgba(0, 0, 0, 0.04)' },
-                    ticks: { 
+                    ticks: {
                         font: { family: "'Inter', sans-serif" },
-                        callback: function(value) {
+                        callback: function (value) {
                             if (value >= 1000000) {
                                 return (value / 1000000).toFixed(value % 1000000 === 0 ? 0 : 1) + 'M';
                             } else if (value >= 1000) {
@@ -412,14 +414,14 @@ function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, 
         },
         plugins: [{
             id: 'centerText',
-            beforeDraw: function(chart) {
+            beforeDraw: function (chart) {
                 if (chart.config.type !== 'doughnut') return;
                 const ctx = chart.ctx;
                 const width = chart.width;
                 const height = chart.height;
 
                 ctx.restore();
-                
+
                 const dataLabels = chart.config.data.labels || [];
                 const dataValues = chart.config.data.datasets[0].data || [];
                 let total = 0;
@@ -434,7 +436,7 @@ function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, 
                         targetLabel = dataLabels[i].split(' ')[0].toUpperCase();
                     }
                 }
-                
+
                 // If not found, just use the largest
                 if (targetValue === 0 && dataValues.length > 0) {
                     targetValue = Math.max(...dataValues);
@@ -453,7 +455,7 @@ function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, 
 
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
-                
+
                 ctx.font = "600 11px Inter, sans-serif";
                 ctx.fillStyle = isDark ? "#94a3b8" : "rgba(100, 116, 139, 0.8)";
                 ctx.fillText(text1, centerX, centerY - 12);
@@ -474,14 +476,14 @@ function renderChart(canvasId, containerId, type, dataArray, labelKey, dataKey, 
 // Handle Dark Mode for Charts
 window.addEventListener('themeChanged', (e) => {
     if (typeof Chart === 'undefined' || typeof chartInstances === 'undefined') return;
-    
+
     const isDark = e.detail.theme === 'dark';
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.04)';
     const textColor = isDark ? '#94a3b8' : '#64748b';
-    
+
     Chart.defaults.color = textColor;
     Chart.defaults.borderColor = gridColor;
-    
+
     for (const id in chartInstances) {
         const chart = chartInstances[id];
         if (chart.options.scales && chart.options.scales.x) {
