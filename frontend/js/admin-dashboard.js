@@ -159,7 +159,7 @@ function renderDashboardStats(data) {
         if (needsInfo.pendingPublicDocuments > 0) {
             count++;
             cardsHtml += `
-                <div class="attention-card attention-card-danger">
+                <div class="attention-card attention-card-info">
                     <div class="attention-card-header">
                         <span class="attention-card-icon">📄</span>
                         <span class="attention-card-title">Pending public documents</span>
@@ -168,7 +168,7 @@ function renderDashboardStats(data) {
                         <span class="attention-card-count">${needsInfo.pendingPublicDocuments}</span>
                         <span class="attention-card-label">waiting for review</span>
                     </div>
-                    <a href="admin-documents.html?filter=pending" class="attention-card-btn btn-outline-danger">Review now &rarr;</a>
+                    <a href="admin-documents.html?filter=pending" class="attention-card-btn btn-outline-info">Review now &rarr;</a>
                 </div>
             `;
         }
@@ -179,30 +179,13 @@ function renderDashboardStats(data) {
                 <div class="attention-card attention-card-warning">
                     <div class="attention-card-header">
                         <span class="attention-card-icon">🏷️</span>
-                        <span class="attention-card-title">Subject requests</span>
+                        <span class="attention-card-title">Pending subject requests</span>
                     </div>
                     <div class="attention-card-body">
                         <span class="attention-card-count">${needsInfo.pendingSubjectRequests}</span>
-                        <span class="attention-card-label">pending requests</span>
+                        <span class="attention-card-label">waiting for review</span>
                     </div>
-                    <a href="admin-subject-requests.html" class="attention-card-btn btn-outline-warning">View requests &rarr;</a>
-                </div>
-            `;
-        }
-
-        if (needsInfo.failedPayments > 0) {
-            count++;
-            cardsHtml += `
-                <div class="attention-card attention-card-danger">
-                    <div class="attention-card-header">
-                        <span class="attention-card-icon">💳</span>
-                        <span class="attention-card-title">Failed payments</span>
-                    </div>
-                    <div class="attention-card-body">
-                        <span class="attention-card-count">${needsInfo.failedPayments}</span>
-                        <span class="attention-card-label">need checking</span>
-                    </div>
-                    <a href="admin-payments.html?filter=failed" class="attention-card-btn btn-outline-danger">View payments &rarr;</a>
+                    <a href="admin-subject-requests.html" class="attention-card-btn btn-outline-warning">Review requests &rarr;</a>
                 </div>
             `;
         }
