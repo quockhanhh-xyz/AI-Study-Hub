@@ -62,7 +62,30 @@ public class SubjectDataSeeder implements CommandLineRunner {
                 {"HCM202", "Ho Chi Minh Ideology"},
                 {"MLN131", "Scientific socialism"},
                 {"SE_GRA_ELE", "Graduation Elective - Software Engineering"},
-                {"VNR202", "History of Communist Party of Vietnam"}
+                {"VNR202", "History of Communist Party of Vietnam"},
+                {"PFP191", "Programming Fundamentals with Python"},
+                {"SSA101", "Kỹ năng học thuật"},
+                {"AIG202c", "Artificial Intelligence"},
+                {"CSD203", "Data Structures and Algorithm with Python"},
+                {"ADY201m", "AI, DS with Python & SQL"},
+                {"ITE303c", "Ethics in IT"},
+                {"MAI391", "Mathematics for Machine Learning"},
+                {"AIL303m", "Machine Learning"},
+                {"CPV301", "Computer Vision"},
+                {"DAP391m", "AI-DS Project"},
+                {"SSG105", "Kỹ năng giao tiếp và cộng tác"},
+                {"SWE201c", "Introduction to Software Engineering"},
+                {"AIT7_COM+1", "Subject 1 of Combo*"},
+                {"AIT7_COM+2", "Subject 2 of Combo*"},
+                {"DPL302m", "Deep Learning"},
+                {"DWP301c", "Web Development with Python"},
+                {"NLP301c", "Natural Language Processing"},
+                {"AIT7_COM+3", "Subject 3 of Combo*"},
+                {"DAT301m", "AI Development with TensorFlow"},
+                {"AIT7_COM+4", "Subject 4 of Combo*"},
+                {"AIT301c", "AI in Production"},
+                {"REL301m", "Reinforcement Learning"},
+                {"AIT7_GRA_ELE", "Học phần lựa chọn Đồ án tốt nghiệp chuyên ngành Trí Tuệ Nhân Tạo"}
         };
 
         for (String[] s : subjects) {
@@ -70,8 +93,8 @@ public class SubjectDataSeeder implements CommandLineRunner {
             if (subject == null) {
                 subject = new Subject();
                 subject.setSubjectCode(s[0]);
-                subject.setSubjectName(s[1]);
             }
+            subject.setSubjectName(s[1]);
             subject.setStatus("ACTIVE");
             subject.setScope("SYSTEM");
             subject.setOwner(null);
