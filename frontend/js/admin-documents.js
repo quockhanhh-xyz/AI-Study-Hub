@@ -212,7 +212,7 @@ function initAdminDocuments() {
         tableBody.innerHTML = documents.map(doc => {
             const aiInfo = getAIBadgeInfo(doc.processingStatus);
             const ownerDisplay = doc.displayName || doc.ownerName || doc.ownerEmail || doc.fullName || doc.email || doc.uploaderName || 'Unknown owner';
-            const subjectDisplay = doc.subjectCode ? `${doc.subjectCode}${doc.subjectName ? ` - ${doc.subjectName}` : ''}` : (doc.subject?.name || doc.subjectName || 'No subject');
+            const subjectDisplay = doc.subjectCode ? `${doc.subjectCode}${doc.subjectName ? ` - ${doc.subjectName}` : ''}` : (typeof doc.subject === 'string' ? doc.subject : (doc.subject?.name || doc.subjectName || 'No subject'));
             const updatedDisplay = formatDate(doc.updatedAt || doc.createdAt);
             const fileSizeDisplay = doc.fileSize ? formatBytes(doc.fileSize) : '';
             const subtext = [doc.fileType, fileSizeDisplay].filter(Boolean).join(' · ');
@@ -401,7 +401,8 @@ function initAdminDocuments() {
     window.clearFilters = () => {
         searchInput.value = '';
         if (subjectFilter) subjectFilter.value = '';
-        statusFilter.value = '';
+        const activeTab = document.querySelector('.admin-tab.active');
+        statusFilter.value = activeTab && activeTab.dataset.tab !== 'ALL' ? activeTab.dataset.tab : '';
         fileTypeFilter.value = '';
         [subjectFilter, statusFilter, fileTypeFilter].forEach(el => {
             if (el) el.dispatchEvent(new Event('syncCustom'));
@@ -548,7 +549,7 @@ function initAdminDocuments() {
             if (response && response.success && response.data) {
                 const doc = response.data;
                 const ownerDisplay = doc.displayName || doc.ownerName || doc.ownerEmail || doc.fullName || doc.email || doc.uploaderName || 'Unknown owner';
-                const subjectDisplay = doc.subjectCode ? `${doc.subjectCode}${doc.subjectName ? ` - ${doc.subjectName}` : ''}` : (doc.subject?.name || doc.subjectName || 'No subject');
+                const subjectDisplay = doc.subjectCode ? `${doc.subjectCode}${doc.subjectName ? ` - ${doc.subjectName}` : ''}` : (typeof doc.subject === 'string' ? doc.subject : (doc.subject?.name || doc.subjectName || 'No subject'));
                 const dateDisplay = doc.createdAt ? new Date(doc.createdAt).toLocaleString() : 'N/A';
                 
                 body.innerHTML = `
@@ -727,5 +728,9 @@ function initAdminDocuments() {
     }
 
     // Initial Load
+    const activeTabOnLoad = document.querySelector('.admin-tab.active');
+    if (activeTabOnLoad && activeTabOnLoad.dataset.tab !== 'ALL') {
+        statusFilter.value = activeTabOnLoad.dataset.tab;
+    }
     loadDocuments();
 }
