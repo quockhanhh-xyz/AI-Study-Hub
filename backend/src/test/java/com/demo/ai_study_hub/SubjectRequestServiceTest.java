@@ -103,7 +103,7 @@ class SubjectRequestServiceTest {
 
         when(subjectRequestRepository.findById(1)).thenReturn(Optional.of(pendingReq));
         when(userRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(adminUser));
-        when(subjectRepository.findBySubjectCode("CS101")).thenReturn(Optional.empty());
+        when(subjectRepository.findSystemSubjectByCodeIgnoreCase("CS101")).thenReturn(Optional.empty());
         when(subjectRepository.findSystemSubjectByNameIgnoreCase("Comp Sci")).thenReturn(Optional.empty());
         when(subjectRequestRepository.save(any(SubjectRequest.class))).thenAnswer(i -> i.getArgument(0));
 
@@ -132,7 +132,7 @@ class SubjectRequestServiceTest {
 
         when(subjectRequestRepository.findById(1)).thenReturn(Optional.of(pendingReq));
         when(userRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(adminUser));
-        when(subjectRepository.findBySubjectCode("CS101")).thenReturn(Optional.of(existingSubject));
+        when(subjectRepository.findSystemSubjectByCodeIgnoreCase("CS101")).thenReturn(Optional.of(existingSubject));
         when(subjectRequestRepository.save(any(SubjectRequest.class))).thenAnswer(i -> i.getArgument(0));
 
         SubjectRequestResponse approved = subjectRequestService.approveRequest(1, "admin@test.com");
@@ -141,6 +141,33 @@ class SubjectRequestServiceTest {
         assertEquals("ACTIVE", existingSubject.getStatus());
         verify(subjectRepository, times(1)).save(existingSubject);
         verify(adminSubjectService, never()).createSubject(any());
+    }
+
+    @Test
+    void approveRequest_IgnoresUserCustomSubject() {
+        SubjectRequest pendingReq = new SubjectRequest();
+        pendingReq.setRequestId(1);
+        pendingReq.setRequestedCode("WDU20C");
+        pendingReq.setRequestedName("Design Pattern");
+        pendingReq.setStatus("PENDING");
+
+        // Existing USER_CUSTOM subject should NOT be matched
+        when(subjectRequestRepository.findById(1)).thenReturn(Optional.of(pendingReq));
+        when(userRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(adminUser));
+        
+        // Mock that findSystemSubjectByCodeIgnoreCase and Name return empty (no SYSTEM subject exists)
+        when(subjectRepository.findSystemSubjectByCodeIgnoreCase("WDU20C")).thenReturn(Optional.empty());
+        when(subjectRepository.findSystemSubjectByNameIgnoreCase("Design Pattern")).thenReturn(Optional.empty());
+        when(subjectRequestRepository.save(any(SubjectRequest.class))).thenAnswer(i -> i.getArgument(0));
+
+        SubjectRequestResponse approved = subjectRequestService.approveRequest(1, "admin@test.com");
+
+        assertEquals("APPROVED", approved.getStatus());
+        // Verify it tries to create a new SYSTEM subject, ignoring the USER_CUSTOM one
+        ArgumentCaptor<AdminSubjectRequest> adminReqCaptor = ArgumentCaptor.forClass(AdminSubjectRequest.class);
+        verify(adminSubjectService, times(1)).createSubject(adminReqCaptor.capture());
+        assertEquals("WDU20C", adminReqCaptor.getValue().getSubjectCode());
+        assertEquals("Design Pattern", adminReqCaptor.getValue().getSubjectName());
     }
 
     @Test
