@@ -381,7 +381,7 @@
           </div>
           <div class="filter-group" style="flex: 1; min-width: 0;">
             <select id="folderFilter" style="width: 100%; min-width: unset; max-width: none;">
-              <option value="">All Folders</option>
+              <option value="">My Documents</option>
               <option value="0">My Folders</option>
             </select>
           </div>
@@ -417,17 +417,16 @@
             <h4 id="subfoldersHeading" style="font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Subfolders</h4>
             <div id="folderGrid" class="folder-grid"></div>
           </div>
-          <div id="folderDocsSection" style="display: none;">
-            <h4 id="folderDocsHeading" style="font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Documents in this folder</h4>
-            <div id="folderDocsGrid" class="document-grid"></div>
-          </div>
-          <div id="folderEmptyState" class="empty-state" style="display: none;">
+          <div id="folderEmptyState" class="empty-state" style="display: none; margin-bottom: 32px;">
             <div class="empty-state-icon">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted);"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
             </div>
-            <h3>No Subfolders or Documents Found</h3>
-            <p>Create a folder or upload documents to organize your study materials.</p>
-            <button type="button" class="btn btn-primary" style="margin-top: 16px;" onclick="document.getElementById('createFolderBtn').click()">Create Folder</button>
+            <h3 id="folderEmptyTitle">No Subfolders or Documents Found</h3>
+            <p id="folderEmptyDesc">Create a folder or upload documents to organize your study materials.</p>
+          </div>
+          <div id="folderDocsSection" style="display: none;">
+            <h4 id="folderDocsHeading" style="font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 12px; margin-bottom: 12px;">Documents in this folder</h4>
+            <div id="folderDocsGrid" class="document-grid"></div>
           </div>
         </div>
 
