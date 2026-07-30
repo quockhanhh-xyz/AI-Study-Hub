@@ -175,7 +175,7 @@ const UIHelper = {
       inputElement.className = 'form-input';
       inputElement.placeholder = placeholder;
       inputElement.value = defaultValue;
-      inputElement.style.cssText = 'width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--bg); color: var(--text-main); margin-top: 8px; box-sizing: border-box;';
+      inputElement.style.cssText = 'width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--bg); color: var(--text-main); margin-top: 8px; margin-bottom: 24px; box-sizing: border-box;';
       bodyDiv.appendChild(inputElement);
 
       const actionsDiv = document.createElement('div');
