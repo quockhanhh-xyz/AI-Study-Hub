@@ -401,8 +401,7 @@ function initAdminDocuments() {
     window.clearFilters = () => {
         searchInput.value = '';
         if (subjectFilter) subjectFilter.value = '';
-        const activeTab = document.querySelector('.admin-tab.active');
-        statusFilter.value = activeTab && activeTab.dataset.tab !== 'ALL' ? activeTab.dataset.tab : '';
+        statusFilter.value = '';
         fileTypeFilter.value = '';
         [subjectFilter, statusFilter, fileTypeFilter].forEach(el => {
             if (el) el.dispatchEvent(new Event('syncCustom'));
@@ -728,9 +727,5 @@ function initAdminDocuments() {
     }
 
     // Initial Load
-    const activeTabOnLoad = document.querySelector('.admin-tab.active');
-    if (activeTabOnLoad && activeTabOnLoad.dataset.tab !== 'ALL') {
-        statusFilter.value = activeTabOnLoad.dataset.tab;
-    }
     loadDocuments();
 }
