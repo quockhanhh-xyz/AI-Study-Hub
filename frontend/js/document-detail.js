@@ -13,6 +13,20 @@ function handleBack() {
         }
     }
     
+    if (from === 'shared_folder') {
+        const folderId = urlParams.get('folderId');
+        if (folderId) {
+            let backUrl = `shared-folder-detail.html?folderId=${folderId}`;
+            const parentFrom = urlParams.get('parentFrom');
+            const parentGroupId = urlParams.get('parentGroupId');
+            if (parentFrom && parentGroupId) {
+                backUrl += `&from=${parentFrom}&groupId=${parentGroupId}`;
+            }
+            window.location.href = backUrl;
+            return;
+        }
+        }
+    }
     if (from === 'profile') {
         window.location.href = 'profile.html';
         return;
@@ -2875,6 +2889,15 @@ function renderContextualTopBar(doc) {
         const groupId = urlParams.get("groupId") || "";
         const tab = urlParams.get("tab") || "documents";
         backUrl = `group-detail.html?id=${groupId}&tab=${tab}`;
+    } else if (fromParam === "shared_folder") {
+        backLabel = "← Back to Folder";
+        const folderId = urlParams.get("folderId");
+        backUrl = `shared-folder-detail.html?folderId=${folderId}`;
+        const parentFrom = urlParams.get('parentFrom');
+        const parentGroupId = urlParams.get('parentGroupId');
+        if (parentFrom && parentGroupId) {
+            backUrl += `&from=${parentFrom}&groupId=${parentGroupId}`;
+        }
     } else if (fromParam === "profile") {
         backLabel = "← Back to Uploads & Upvotes";
         backUrl = "profile.html?tab=uploads";

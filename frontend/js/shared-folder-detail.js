@@ -180,7 +180,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     const titleEl = document.createElement("h3");
     const titleLink = document.createElement("a");
     
-    let docUrl = `document-detail.html?id=${doc.documentId}`;
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromParam = urlParams.get("from");
+    const groupIdParam = urlParams.get("groupId");
+    
+    let docUrl = `document-detail.html?id=${doc.documentId}&from=shared_folder&folderId=${folderId}`;
+    if (fromParam) docUrl += `&parentFrom=${fromParam}`;
+    if (groupIdParam) docUrl += `&parentGroupId=${groupIdParam}`;
     
     titleLink.href = docUrl;
     titleLink.style.color = "inherit";
