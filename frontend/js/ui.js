@@ -502,20 +502,44 @@ const UIHelper = {
       const options = Array.from(datalist.options);
 
       if (!filterVal) {
-        const clearOpt = document.createElement("div");
-        clearOpt.className = "custom-select-option";
-        clearOpt.textContent = (inputElement.id === "subjectSelect" || inputElement.id === "subjectFilter") ? "Select a subject" : "All Subjects";
-        clearOpt.dataset.value = "";
-        if (inputElement.value === "") clearOpt.classList.add("selected");
-        clearOpt.addEventListener("click", (e) => {
+        if (inputElement.id !== "subjectSelect") {
+          const clearOpt = document.createElement("div");
+          clearOpt.className = "custom-select-option";
+          clearOpt.textContent = inputElement.id === "subjectFilter" ? "All Subjects" : "Clear selection";
+          clearOpt.dataset.value = "";
+          if (inputElement.value === "") clearOpt.classList.add("selected");
+          clearOpt.addEventListener("click", (e) => {
+            e.stopPropagation();
+            inputElement.value = "";
+            searchInput.value = "";
+            container.classList.remove("active");
+            inputElement.dispatchEvent(new Event("change", { bubbles: true }));
+            inputElement.dispatchEvent(new Event("input", { bubbles: true }));
+          });
+          listContainer.appendChild(clearOpt);
+        }
+      }
+
+      // Append create new inline trigger option at top if present
+      const hasCreateNew = options.some(opt => opt.value === createNewValue || opt.dataset.id === createNewValue);
+      if (hasCreateNew && !filterVal) {
+        const matchingOpt = options.find(opt => opt.value === createNewValue || opt.dataset.id === createNewValue);
+        const createOpt = document.createElement("div");
+        createOpt.className = "custom-select-option";
+        createOpt.style.borderBottom = "1px solid var(--border)";
+        createOpt.style.color = "var(--primary)";
+        createOpt.style.fontWeight = "600";
+        createOpt.textContent = matchingOpt.textContent || "+ Create new subject…";
+        createOpt.dataset.value = createNewValue;
+        createOpt.addEventListener("click", (e) => {
           e.stopPropagation();
-          inputElement.value = "";
+          inputElement.value = createNewValue;
           searchInput.value = "";
           container.classList.remove("active");
           inputElement.dispatchEvent(new Event("change", { bubbles: true }));
           inputElement.dispatchEvent(new Event("input", { bubbles: true }));
         });
-        listContainer.appendChild(clearOpt);
+        listContainer.appendChild(createOpt);
       }
 
       options.forEach(opt => {
@@ -550,28 +574,6 @@ const UIHelper = {
 
         listContainer.appendChild(item);
       });
-
-      // Append create new inline trigger option at bottom if present
-      const hasCreateNew = options.some(opt => opt.value === createNewValue || opt.dataset.id === createNewValue);
-      if (hasCreateNew && !filterVal) {
-        const matchingOpt = options.find(opt => opt.value === createNewValue || opt.dataset.id === createNewValue);
-        const createOpt = document.createElement("div");
-        createOpt.className = "custom-select-option";
-        createOpt.style.borderTop = "1px solid var(--border)";
-        createOpt.style.color = "var(--primary)";
-        createOpt.style.fontWeight = "600";
-        createOpt.textContent = matchingOpt.textContent || "+ Create new subject…";
-        createOpt.dataset.value = createNewValue;
-        createOpt.addEventListener("click", (e) => {
-          e.stopPropagation();
-          inputElement.value = createNewValue;
-          searchInput.value = "";
-          container.classList.remove("active");
-          inputElement.dispatchEvent(new Event("change", { bubbles: true }));
-          inputElement.dispatchEvent(new Event("input", { bubbles: true }));
-        });
-        listContainer.appendChild(createOpt);
-      }
 
       if (listContainer.children.length === 0) {
         const noResult = document.createElement("div");
