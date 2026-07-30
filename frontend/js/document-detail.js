@@ -6,8 +6,9 @@ function handleBack() {
     const from = urlParams.get('from');
     if (from === 'group') {
         const groupId = urlParams.get('groupId');
+        const tab = urlParams.get('tab') || 'documents';
         if (groupId) {
-            window.location.href = `group-detail.html?id=${groupId}`;
+            window.location.href = `group-detail.html?id=${groupId}&tab=${tab}`;
             return;
         }
     }
@@ -2869,7 +2870,12 @@ function renderContextualTopBar(doc) {
     let backLabel = "← Back";
     let backUrl = "javascript:handleBack()";
 
-    if (fromParam === "profile") {
+    if (fromParam === "group") {
+        backLabel = "← Back to Group Shared Document";
+        const groupId = urlParams.get("groupId") || "";
+        const tab = urlParams.get("tab") || "documents";
+        backUrl = `group-detail.html?id=${groupId}&tab=${tab}`;
+    } else if (fromParam === "profile") {
         backLabel = "← Back to Uploads & Upvotes";
         backUrl = "profile.html?tab=uploads";
     } else if (fromParam === "public-profile") {

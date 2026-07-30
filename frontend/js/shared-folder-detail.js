@@ -73,8 +73,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     const rootLink = document.createElement("a");
     rootLink.className = "breadcrumb-link";
     if (fromParam === "group" && groupIdParam) {
-      rootLink.href = `group-detail.html?id=${groupIdParam}`;
-      rootLink.textContent = "Back to Group";
+      rootLink.href = `group-detail.html?id=${groupIdParam}&tab=folders`;
+      rootLink.textContent = "Group Shared Document";
     } else {
       rootLink.href = "shared-with-me.html";
       rootLink.textContent = "Shared With Me";
@@ -180,13 +180,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const titleEl = document.createElement("h3");
     const titleLink = document.createElement("a");
     
-    const urlParams = new URLSearchParams(window.location.search);
-    const fromParam = urlParams.get("from");
-    const groupIdParam = urlParams.get("groupId");
     let docUrl = `document-detail.html?id=${doc.documentId}`;
-    if (fromParam === "group" && groupIdParam) {
-      docUrl += `&from=group&groupId=${groupIdParam}`;
-    }
     
     titleLink.href = docUrl;
     titleLink.style.color = "inherit";

@@ -627,7 +627,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const titleEl = document.createElement("h3");
     const titleLink = document.createElement("a");
-    titleLink.href = `document-detail.html?id=${doc.documentId}&from=group&groupId=${groupId}`;
+    titleLink.href = `document-detail.html?id=${doc.documentId}&from=group&groupId=${groupId}&tab=documents`;
     titleLink.textContent = doc.title || doc.originalFileName || "Untitled";
     titleLink.style.color = "inherit";
     titleLink.style.textDecoration = "none";
@@ -798,7 +798,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Clicking anywhere on the card opens the shared folder detail page.
     card.addEventListener("click", function () {
-      window.location.href = `shared-folder-detail.html?folderId=${folder.folderId}`;
+      window.location.href = `shared-folder-detail.html?folderId=${folder.folderId}&from=group&groupId=${groupId}&tab=folders`;
     });
 
     return card;
@@ -1409,6 +1409,12 @@ document.addEventListener("DOMContentLoaded", async function () {
   });
 
   // Init
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialTab = urlParams.get("tab");
+  if (initialTab && ["members", "documents", "folders", "chat"].includes(initialTab)) {
+    switchGroupTab(initialTab);
+  }
+  
   await loadGroupDetail();
   await loadGroupDocuments();
   await loadGroupFolders();
