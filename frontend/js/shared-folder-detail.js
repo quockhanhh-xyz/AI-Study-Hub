@@ -224,6 +224,52 @@ document.addEventListener("DOMContentLoaded", async function () {
     return card;
   }
 
+  function renderContextualTopBar(breadcrumbs) {
+    // Let notification.js create globalTopBar first. Use setTimeout if necessary.
+    setTimeout(() => {
+        let globalHeader = document.getElementById("globalTopBar");
+        if (!globalHeader) return;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const fromParam = urlParams.get("from");
+        const groupIdParam = urlParams.get("groupId");
+
+        let backLabel = "← Back";
+        let backUrl = "shared-with-me.html";
+
+        if (breadcrumbs && breadcrumbs.length > 1) {
+            const parentFolder = breadcrumbs[breadcrumbs.length - 2];
+            backLabel = `← Back to ${parentFolder.folderName}`;
+            backUrl = `shared-folder-detail.html?folderId=${parentFolder.folderId}`;
+            if (fromParam === "group" && groupIdParam) {
+                backUrl += `&from=group&groupId=${groupIdParam}`;
+            }
+        } else {
+            if (fromParam === "group" && groupIdParam) {
+                backLabel = "← Back to Group Shared Folder";
+                backUrl = `group-detail.html?id=${groupIdParam}&tab=folders`;
+            } else {
+                backLabel = "← Back to Shared with Me";
+                backUrl = "shared-with-me.html";
+            }
+        }
+
+        const existingLeft = globalHeader.querySelector(".global-top-bar-left");
+        if (existingLeft) existingLeft.remove();
+
+        const leftContainer = document.createElement("div");
+        leftContainer.className = "global-top-bar-left";
+
+        const backBtn = document.createElement("button");
+        backBtn.className = "detail-back-btn";
+        backBtn.textContent = backLabel;
+        backBtn.onclick = () => window.location.href = backUrl;
+        
+        leftContainer.appendChild(backBtn);
+        globalHeader.insertBefore(leftContainer, globalHeader.firstChild);
+    }, 50); // slight delay to ensure globalTopBar is in DOM
+  }
+
   async function loadSharedFolderContent() {
     sharedFolderLoader.style.display = "flex";
     sharedFolderGrid.style.display = "none";
@@ -245,6 +291,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       // Render breadcrumbs
       renderBreadcrumbs(data.breadcrumb);
+
+      // Render top bar back button
+      renderContextualTopBar(data.breadcrumb);
 
       // Render subfolders
       sharedFolderLoader.style.display = "none";
