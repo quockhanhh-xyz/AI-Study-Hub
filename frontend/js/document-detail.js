@@ -25,7 +25,6 @@ function handleBack() {
             window.location.href = backUrl;
             return;
         }
-        }
     }
     if (from === 'profile') {
         window.location.href = 'profile.html';
