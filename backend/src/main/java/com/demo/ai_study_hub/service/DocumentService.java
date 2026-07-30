@@ -880,6 +880,7 @@ public class DocumentService {
         documentRepository.incrementDownloadCountById(documentId);
     }
 
+    @Transactional
     public DocumentResponse publishDocument(Integer documentId, String email) {
         User owner = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -896,7 +897,14 @@ public class DocumentService {
         }
 
         if (doc.getSubject() != null && "USER_CUSTOM".equalsIgnoreCase(doc.getSubject().getScope())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This subject is personal. Please request it as a system subject before publishing to Community Library.");
+            // Check if there is an active SYSTEM subject with the same code
+            Subject systemSubject = subjectRepository.findSystemSubjectByCodeIgnoreCase(doc.getSubject().getSubjectCode()).orElse(null);
+            if (systemSubject != null && "ACTIVE".equals(systemSubject.getStatus())) {
+                doc.setSubject(systemSubject);
+                doc = documentRepository.save(doc);
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This subject is personal. Please request it as a system subject before publishing to Community Library.");
+            }
         }
 
         doc.setVisibility("PUBLIC");
