@@ -6,12 +6,26 @@ function handleBack() {
     const from = urlParams.get('from');
     if (from === 'group') {
         const groupId = urlParams.get('groupId');
+        const tab = urlParams.get('tab') || 'documents';
         if (groupId) {
-            window.location.href = `group-detail.html?id=${groupId}`;
+            window.location.href = `group-detail.html?id=${groupId}&tab=${tab}`;
             return;
         }
     }
     
+    if (from === 'shared_folder') {
+        const folderId = urlParams.get('folderId');
+        if (folderId) {
+            let backUrl = `shared-folder-detail.html?folderId=${folderId}`;
+            const parentFrom = urlParams.get('parentFrom');
+            const parentGroupId = urlParams.get('parentGroupId');
+            if (parentFrom && parentGroupId) {
+                backUrl += `&from=${parentFrom}&groupId=${parentGroupId}`;
+            }
+            window.location.href = backUrl;
+            return;
+        }
+    }
     if (from === 'profile') {
         window.location.href = 'profile.html';
         return;
@@ -1371,7 +1385,7 @@ function showMoveModal() {
 
     getMyFolders(null, true).then(res => {
         const folders = Array.isArray(res.data) ? res.data : [];
-        select.innerHTML = '<option value="">— My Documents —</option>';
+        select.innerHTML = '<option value="">My Documents</option>';
         folders.forEach(f => {
             const path = [];
             let current = f;
@@ -1506,6 +1520,18 @@ function setActiveTab(tabId, focus = true) {
     // Lazily load chat history the first time the AI Q&A tab is opened
     if (tabId === "ai") {
         loadAiQaChatHistory();
+    }
+    
+    // Toggle floating chatbot visibility to avoid overlap
+    const floatingBtn = document.getElementById("floatingChatToggleBtn");
+    const floatingPanel = document.getElementById("floatingChatPanel");
+    if (tabId === "ai") {
+        if (floatingBtn) floatingBtn.style.display = "none";
+        if (floatingPanel && floatingPanel.classList.contains("active")) {
+            floatingPanel.classList.remove("active");
+        }
+    } else {
+        if (floatingBtn) floatingBtn.style.display = "flex";
     }
 
     // Lazily load Summary/Quiz/Flashcard data the first time AI Tools tab is opened
@@ -2857,7 +2883,21 @@ function renderContextualTopBar(doc) {
     let backLabel = "← Back";
     let backUrl = "javascript:handleBack()";
 
-    if (fromParam === "profile") {
+    if (fromParam === "group") {
+        backLabel = "← Back to Group Shared Document";
+        const groupId = urlParams.get("groupId") || "";
+        const tab = urlParams.get("tab") || "documents";
+        backUrl = `group-detail.html?id=${groupId}&tab=${tab}`;
+    } else if (fromParam === "shared_folder") {
+        backLabel = "← Back to Folder";
+        const folderId = urlParams.get("folderId");
+        backUrl = `shared-folder-detail.html?folderId=${folderId}`;
+        const parentFrom = urlParams.get('parentFrom');
+        const parentGroupId = urlParams.get('parentGroupId');
+        if (parentFrom && parentGroupId) {
+            backUrl += `&from=${parentFrom}&groupId=${parentGroupId}`;
+        }
+    } else if (fromParam === "profile") {
         backLabel = "← Back to Uploads & Upvotes";
         backUrl = "profile.html?tab=uploads";
     } else if (fromParam === "public-profile") {

@@ -170,6 +170,12 @@ async function loadSubjectOptions() {
     const subjects = Array.isArray(result.data) ? result.data : [];
 
     subjectDatalist.innerHTML = "";
+
+    const createOption = document.createElement("option");
+    createOption.value = CREATE_NEW_VALUE;
+    createOption.textContent = "+ Create new subject…";
+    subjectDatalist.appendChild(createOption);
+
     subjects.forEach(function (subject) {
       const option = document.createElement("option");
       const label = subject.subjectCode
@@ -179,11 +185,6 @@ async function loadSubjectOptions() {
       option.dataset.id = subject.subjectId;
       subjectDatalist.appendChild(option);
     });
-
-    const createOption = document.createElement("option");
-    createOption.value = CREATE_NEW_VALUE;
-    createOption.textContent = "+ Create new subject…";
-    subjectDatalist.appendChild(createOption);
 
     subjectSelect.placeholder = "Select a subject";
   } catch (err) {
@@ -346,13 +347,17 @@ function hideProgress() {
   progressFill.style.width = "0%";
 }
 
+let lastAutofilledTitle = "";
+
 // Auto-fill Title from the selected file's name, but only if the user
 // hasn't already typed something into the Title field themselves.
 function autofillTitleFromFile(file) {
   if (!file || !titleInput) return;
-  if (titleInput.value.trim()) return;
+  const currentTitle = titleInput.value.trim();
+  if (currentTitle && currentTitle !== lastAutofilledTitle) return;
   const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
   titleInput.value = nameWithoutExt;
+  lastAutofilledTitle = nameWithoutExt;
 }
 
 // File input change

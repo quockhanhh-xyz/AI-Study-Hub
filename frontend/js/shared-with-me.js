@@ -663,13 +663,14 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   // Tab switching event bindings
-  tabDocsBtn.addEventListener("click", () => {
+  tabDocsBtn.addEventListener("click", async () => {
     tabDocsBtn.classList.add("active");
     tabFoldersBtn.classList.remove("active");
     tabMySharesBtn.classList.remove("active");
     sharedDocsPanel.style.display = "block";
     sharedFoldersPanel.style.display = "none";
     mySharesPanel.style.display = "none";
+    await loadSharedDocuments();
   });
 
   tabFoldersBtn.addEventListener("click", async () => {
@@ -692,7 +693,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     await loadMyShares();
   });
 
-
-
-  await loadSharedDocuments();
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialTab = urlParams.get("tab");
+  if (initialTab === "folders") {
+      tabFoldersBtn.click();
+  } else if (initialTab === "myshares") {
+      tabMySharesBtn.click();
+  } else {
+      tabDocsBtn.click();
+  }
 });

@@ -138,7 +138,98 @@ const UIHelper = {
   },
 
   /**
+   * Prompts the user with a custom modal for text input.
+   * @param {Object} options - Configuration object.
+   * @param {string} options.title - Header text for the modal.
+   * @param {string} options.message - Optional description text.
+   * @param {string} options.placeholder - Input placeholder text.
+   * @param {string} options.defaultValue - Initial input value.
+   * @param {string} options.confirmText - Label text for the action button.
+   * @returns {Promise<string|null>} Resolves to the input string if confirmed, or null if cancelled.
+   */
+  promptAction({ title = 'Enter Value', message = '', placeholder = '', defaultValue = '', confirmText = 'Save' }) {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.className = 'confirm-modal-overlay';
+
+      const modal = document.createElement('div');
+      modal.className = 'confirm-modal-box';
+
+      const headerDiv = document.createElement('div');
+      headerDiv.className = 'confirm-modal-header';
+      const titleElement = document.createElement('h3');
+      titleElement.textContent = title;
+      headerDiv.appendChild(titleElement);
+
+      const bodyDiv = document.createElement('div');
+      bodyDiv.className = 'confirm-modal-body';
+      if (message) {
+        const messageElement = document.createElement('p');
+        messageElement.textContent = message;
+        messageElement.style.marginBottom = '12px';
+        bodyDiv.appendChild(messageElement);
+      }
+      
+      const inputElement = document.createElement('input');
+      inputElement.type = 'text';
+      inputElement.className = 'form-input';
+      inputElement.placeholder = placeholder;
+      inputElement.value = defaultValue;
+      inputElement.style.cssText = 'width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--bg); color: var(--text-main); margin-top: 8px; margin-bottom: 24px; box-sizing: border-box;';
+      bodyDiv.appendChild(inputElement);
+
+      const actionsDiv = document.createElement('div');
+      actionsDiv.className = 'confirm-modal-actions';
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'btn btn-secondary';
+      cancelBtn.textContent = 'Cancel';
+      
+      const actionBtn = document.createElement('button');
+      actionBtn.className = 'btn btn-primary';
+      actionBtn.textContent = confirmText;
+
+      actionsDiv.appendChild(cancelBtn);
+      actionsDiv.appendChild(actionBtn);
+
+      modal.appendChild(headerDiv);
+      modal.appendChild(bodyDiv);
+      modal.appendChild(actionsDiv);
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      inputElement.focus();
+      inputElement.select();
+
+      const closeModal = (result) => {
+        overlay.remove();
+        resolve(result);
+      };
+
+      cancelBtn.addEventListener('click', () => closeModal(null));
+      actionBtn.addEventListener('click', () => {
+        const val = inputElement.value;
+        if (val && val.trim()) closeModal(val.trim());
+        else closeModal(null);
+      });
+      
+      inputElement.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const val = inputElement.value;
+          if (val && val.trim()) closeModal(val.trim());
+        }
+        if (e.key === 'Escape') closeModal(null);
+      });
+
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal(null);
+      });
+    });
+  },
+
+  /**
    * Manages the asynchronous visual loading state of action trigger buttons.
+
    * @param {HTMLButtonElement} button - The DOM target element.
    * @param {boolean} isLoading - State flag determining active loading status.
    * @param {string} loadingText - Text placeholder while the loading animation is active.
@@ -411,20 +502,44 @@ const UIHelper = {
       const options = Array.from(datalist.options);
 
       if (!filterVal) {
-        const clearOpt = document.createElement("div");
-        clearOpt.className = "custom-select-option";
-        clearOpt.textContent = (inputElement.id === "subjectSelect") ? "Select a subject" : "All Subjects";
-        clearOpt.dataset.value = "";
-        if (inputElement.value === "") clearOpt.classList.add("selected");
-        clearOpt.addEventListener("click", (e) => {
+        if (inputElement.id !== "subjectSelect") {
+          const clearOpt = document.createElement("div");
+          clearOpt.className = "custom-select-option";
+          clearOpt.textContent = inputElement.id === "subjectFilter" ? "All Subjects" : "Clear selection";
+          clearOpt.dataset.value = "";
+          if (inputElement.value === "") clearOpt.classList.add("selected");
+          clearOpt.addEventListener("click", (e) => {
+            e.stopPropagation();
+            inputElement.value = "";
+            searchInput.value = "";
+            container.classList.remove("active");
+            inputElement.dispatchEvent(new Event("change", { bubbles: true }));
+            inputElement.dispatchEvent(new Event("input", { bubbles: true }));
+          });
+          listContainer.appendChild(clearOpt);
+        }
+      }
+
+      // Append create new inline trigger option at top if present
+      const hasCreateNew = options.some(opt => opt.value === createNewValue || opt.dataset.id === createNewValue);
+      if (hasCreateNew && !filterVal) {
+        const matchingOpt = options.find(opt => opt.value === createNewValue || opt.dataset.id === createNewValue);
+        const createOpt = document.createElement("div");
+        createOpt.className = "custom-select-option";
+        createOpt.style.borderBottom = "1px solid var(--border)";
+        createOpt.style.color = "var(--primary)";
+        createOpt.style.fontWeight = "600";
+        createOpt.textContent = matchingOpt.textContent || "+ Create new subject…";
+        createOpt.dataset.value = createNewValue;
+        createOpt.addEventListener("click", (e) => {
           e.stopPropagation();
-          inputElement.value = "";
+          inputElement.value = createNewValue;
           searchInput.value = "";
           container.classList.remove("active");
           inputElement.dispatchEvent(new Event("change", { bubbles: true }));
           inputElement.dispatchEvent(new Event("input", { bubbles: true }));
         });
-        listContainer.appendChild(clearOpt);
+        listContainer.appendChild(createOpt);
       }
 
       options.forEach(opt => {
@@ -459,28 +574,6 @@ const UIHelper = {
 
         listContainer.appendChild(item);
       });
-
-      // Append create new inline trigger option at bottom if present
-      const hasCreateNew = options.some(opt => opt.value === createNewValue || opt.dataset.id === createNewValue);
-      if (hasCreateNew && !filterVal) {
-        const matchingOpt = options.find(opt => opt.value === createNewValue || opt.dataset.id === createNewValue);
-        const createOpt = document.createElement("div");
-        createOpt.className = "custom-select-option";
-        createOpt.style.borderTop = "1px solid var(--border)";
-        createOpt.style.color = "var(--primary)";
-        createOpt.style.fontWeight = "600";
-        createOpt.textContent = matchingOpt.textContent || "+ Create new subject…";
-        createOpt.dataset.value = createNewValue;
-        createOpt.addEventListener("click", (e) => {
-          e.stopPropagation();
-          inputElement.value = createNewValue;
-          searchInput.value = "";
-          container.classList.remove("active");
-          inputElement.dispatchEvent(new Event("change", { bubbles: true }));
-          inputElement.dispatchEvent(new Event("input", { bubbles: true }));
-        });
-        listContainer.appendChild(createOpt);
-      }
 
       if (listContainer.children.length === 0) {
         const noResult = document.createElement("div");
