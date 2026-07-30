@@ -663,13 +663,14 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   // Tab switching event bindings
-  tabDocsBtn.addEventListener("click", () => {
+  tabDocsBtn.addEventListener("click", async () => {
     tabDocsBtn.classList.add("active");
     tabFoldersBtn.classList.remove("active");
     tabMySharesBtn.classList.remove("active");
     sharedDocsPanel.style.display = "block";
     sharedFoldersPanel.style.display = "none";
     mySharesPanel.style.display = "none";
+    await loadSharedDocuments();
   });
 
   tabFoldersBtn.addEventListener("click", async () => {
