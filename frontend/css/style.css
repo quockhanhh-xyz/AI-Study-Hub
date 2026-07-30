@@ -1777,7 +1777,7 @@ textarea.success {
 
 .chat-message-mine .chat-doc-mention {
   background: var(--surface);
-  color: #ffffff;
+  color: var(--primary);
 }
 
 .chat-doc-mention:hover {

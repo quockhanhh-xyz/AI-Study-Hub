@@ -1371,7 +1371,7 @@ function showMoveModal() {
 
     getMyFolders(null, true).then(res => {
         const folders = Array.isArray(res.data) ? res.data : [];
-        select.innerHTML = '<option value="">— My Documents —</option>';
+        select.innerHTML = '<option value="">My Documents</option>';
         folders.forEach(f => {
             const path = [];
             let current = f;
@@ -1506,6 +1506,18 @@ function setActiveTab(tabId, focus = true) {
     // Lazily load chat history the first time the AI Q&A tab is opened
     if (tabId === "ai") {
         loadAiQaChatHistory();
+    }
+    
+    // Toggle floating chatbot visibility to avoid overlap
+    const floatingBtn = document.getElementById("floatingChatToggleBtn");
+    const floatingPanel = document.getElementById("floatingChatPanel");
+    if (tabId === "ai") {
+        if (floatingBtn) floatingBtn.style.display = "none";
+        if (floatingPanel && floatingPanel.classList.contains("active")) {
+            floatingPanel.classList.remove("active");
+        }
+    } else {
+        if (floatingBtn) floatingBtn.style.display = "flex";
     }
 
     // Lazily load Summary/Quiz/Flashcard data the first time AI Tools tab is opened

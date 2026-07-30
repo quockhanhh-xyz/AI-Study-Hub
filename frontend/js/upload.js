@@ -346,13 +346,17 @@ function hideProgress() {
   progressFill.style.width = "0%";
 }
 
+let lastAutofilledTitle = "";
+
 // Auto-fill Title from the selected file's name, but only if the user
 // hasn't already typed something into the Title field themselves.
 function autofillTitleFromFile(file) {
   if (!file || !titleInput) return;
-  if (titleInput.value.trim()) return;
+  const currentTitle = titleInput.value.trim();
+  if (currentTitle && currentTitle !== lastAutofilledTitle) return;
   const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
   titleInput.value = nameWithoutExt;
+  lastAutofilledTitle = nameWithoutExt;
 }
 
 // File input change

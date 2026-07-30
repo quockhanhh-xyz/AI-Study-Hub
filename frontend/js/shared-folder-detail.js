@@ -66,10 +66,19 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (!Array.isArray(breadcrumbs)) return;
 
     // Add "Shared With Me" as the prefix of breadcrumbs
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromParam = urlParams.get("from");
+    const groupIdParam = urlParams.get("groupId");
+
     const rootLink = document.createElement("a");
     rootLink.className = "breadcrumb-link";
-    rootLink.href = "shared-with-me.html";
-    rootLink.textContent = "Shared With Me";
+    if (fromParam === "group" && groupIdParam) {
+      rootLink.href = `group-detail.html?id=${groupIdParam}`;
+      rootLink.textContent = "Back to Group";
+    } else {
+      rootLink.href = "shared-with-me.html";
+      rootLink.textContent = "Shared With Me";
+    }
     sharedBreadcrumb.appendChild(rootLink);
 
     if (breadcrumbs.length > 0) {
@@ -92,6 +101,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         const link = document.createElement("a");
         link.className = "breadcrumb-link";
         link.href = `shared-folder-detail.html?folderId=${crumb.folderId}`;
+        if (fromParam === "group" && groupIdParam) {
+          link.href += `&from=group&groupId=${groupIdParam}`;
+        }
         link.textContent = crumb.folderName;
         sharedBreadcrumb.appendChild(link);
 
@@ -135,7 +147,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     card.appendChild(main);
 
     card.addEventListener("click", function () {
-      window.location.href = `shared-folder-detail.html?folderId=${folder.folderId}`;
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromParam = urlParams.get("from");
+      const groupIdParam = urlParams.get("groupId");
+      let url = `shared-folder-detail.html?folderId=${folder.folderId}`;
+      if (fromParam === "group" && groupIdParam) {
+        url += `&from=group&groupId=${groupIdParam}`;
+      }
+      window.location.href = url;
     });
 
     return card;
@@ -160,7 +179,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const titleEl = document.createElement("h3");
     const titleLink = document.createElement("a");
-    titleLink.href = `document-detail.html?id=${doc.documentId}`;
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromParam = urlParams.get("from");
+    const groupIdParam = urlParams.get("groupId");
+    let docUrl = `document-detail.html?id=${doc.documentId}`;
+    if (fromParam === "group" && groupIdParam) {
+      docUrl += `&from=group&groupId=${groupIdParam}`;
+    }
+    
+    titleLink.href = docUrl;
     titleLink.style.color = "inherit";
     titleLink.style.textDecoration = "none";
     titleLink.textContent = doc.title || doc.originalFileName || "Untitled";
@@ -190,7 +218,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       if (e.target.closest("button") || e.target.closest("a")) {
         return;
       }
-      window.location.href = `document-detail.html?id=${doc.documentId}`;
+      window.location.href = docUrl;
     });
 
     return card;

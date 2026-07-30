@@ -699,7 +699,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       if (e.target.closest("button") || e.target.closest("a")) {
         return;
       }
-      window.location.href = `document-detail.html?id=${doc.documentId}`;
+      window.location.href = `document-detail.html?id=${doc.documentId}&from=group&groupId=${groupId}`;
     });
 
     return card;
