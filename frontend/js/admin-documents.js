@@ -224,7 +224,7 @@ function initAdminDocuments() {
                     ${subtext ? `<div style="font-size: 0.75rem; color: var(--text-muted, #64748b); margin-top: 2px;">${escapeHtml(subtext)}</div>` : ''}
                 </td>
                 <td><span class="table-muted-text" style="max-width: 140px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(ownerDisplay)}">${escapeHtml(ownerDisplay)}</span></td>
-                <td><span class="table-muted-text" style="max-width: 130px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(subjectDisplay)}</span></td>
+                <td><span class="table-muted-text" style="max-width: 200px; display: inline-block; white-space: normal; word-wrap: break-word;">${escapeHtml(subjectDisplay)}</span></td>
                 <td><span class="admin-badge ${getTypeBadgeClass(doc.fileType)}">${doc.fileType || '-'}</span></td>
                 <td><span class="admin-badge ${getApprovalBadgeClass(doc.approvalStatus)}">${getApprovalLabel(doc.approvalStatus)}</span></td>
                 <td><span class="admin-badge ${aiInfo.cls}">${aiInfo.text}</span></td>
