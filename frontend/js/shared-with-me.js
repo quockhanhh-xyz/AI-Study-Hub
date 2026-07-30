@@ -692,7 +692,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     await loadMyShares();
   });
 
-
-
-  await loadSharedDocuments();
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialTab = urlParams.get("tab");
+  if (initialTab === "folders") {
+      tabFoldersBtn.click();
+  } else if (initialTab === "myshares") {
+      tabMySharesBtn.click();
+  } else {
+      await loadSharedDocuments();
+  }
 });

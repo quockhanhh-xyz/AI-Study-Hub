@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       rootLink.href = `group-detail.html?id=${groupIdParam}&tab=folders`;
       rootLink.textContent = "← Back to Group Shared Folder";
     } else {
-      rootLink.href = "shared-with-me.html";
+      rootLink.href = "shared-with-me.html?tab=folders";
       rootLink.textContent = "← Back to Shared Folder";
     }
     sharedBreadcrumb.appendChild(rootLink);
