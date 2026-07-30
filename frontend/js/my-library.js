@@ -798,7 +798,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       const res = await getMyFolders(null, true);
       userFolders = Array.isArray(res.data) ? res.data : [];
       if (folderFilter) {
-        folderFilter.innerHTML = `<option value="">All Folders</option><option value="0">My Folders</option>`;
+        folderFilter.innerHTML = `<option value="">My Documents</option><option value="0">My Folders</option>`;
         userFolders.forEach(f => {
           const opt = document.createElement("option");
           opt.value = f.folderId;
@@ -1188,31 +1188,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (folderEmptyState) folderEmptyState.style.display = "none";
         if (foldersSection) foldersSection.style.display = "none"; // hide old static section
 
-        // Build HTML string for all folder cards
-        const cardsHtml = subfolders.map(f => {
-          const subCount = Number(f.subfolderCount ?? 0);
-          const docCount = Number(f.documentCount ?? f.fileCount ?? 0);
-          const dateStr = f.createdAt ? formatDate(f.createdAt) : "";
-          return `
-            <div class="dyn-folder-card"
-              data-folder-id="${f.folderId}"
-              style="display:flex;flex-direction:row;align-items:center;gap:14px;padding:16px 18px;border:1.5px solid var(--border);border-radius:14px;background: var(--surface);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.04);position:relative;min-height:80px;box-sizing:border-box;margin-bottom:0;">
-              <div style="flex-shrink:0;color:#ff5858;display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:rgba(255,88,88,0.08);border-radius:10px;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>
-              </div>
-              <div style="flex:1;min-width:0;">
-                <div style="font-size:15px;font-weight:600;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.folderName || "Untitled Folder"}</div>
-                <div style="font-size:12px;color:var(--text-muted);margin-top:3px;">${subCount} subfolders &bull; ${docCount} documents${dateStr ? " &bull; " + dateStr : ""}</div>
-              </div>
-            </div>`;
-        }).join("");
-
         const dynGrid = document.createElement("div");
         dynGrid.id = "dynamicFolderGrid";
-        dynGrid.style.cssText = "display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:8px;";
-        dynGrid.innerHTML = `
-          ${cardsHtml}
-        `;
+        dynGrid.style.cssText = "display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:8px;margin-bottom:40px;";
+        
+        subfolders.forEach(f => {
+            dynGrid.appendChild(createFolderCard(f));
+        });
 
         // Insert after breadcrumb
         const breadcrumb = document.getElementById("folderBreadcrumb");
@@ -1221,14 +1203,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else {
           foldersTab.appendChild(dynGrid);
         }
-
-        // Add click handlers for each card
-        dynGrid.querySelectorAll(".dyn-folder-card").forEach(cardEl => {
-          const fid = parseInt(cardEl.dataset.folderId);
-          cardEl.addEventListener("mouseenter", () => { cardEl.style.borderColor = "#ff5858"; cardEl.style.transform = "translateY(-2px)"; cardEl.style.boxShadow = "0 8px 20px rgba(255,88,88,0.1)"; });
-          cardEl.addEventListener("mouseleave", () => { cardEl.style.borderColor = "var(--border)"; cardEl.style.transform = ""; cardEl.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)"; });
-          cardEl.addEventListener("click", () => navigateToFolder(fid));
-        });
 
       } else {
         // No subfolders - show empty state
@@ -1280,10 +1254,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     nameEl.style.cssText = "font-size:15px; font-weight:600; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;";
     nameEl.textContent = f.folderName || "Untitled Folder";
     const metaEl = document.createElement("div");
-    metaEl.style.cssText = "font-size:12px; color:#9ca3af; display:flex; gap:10px;";
+    metaEl.style.cssText = "font-size:12px; color:var(--text-muted); margin-top:3px;";
     const subCount = Number(f.subfolderCount ?? 0);
     const docCount = Number(f.documentCount ?? f.fileCount ?? 0);
-    metaEl.innerHTML = `<span>${subCount} subfolders</span><span>${docCount} documents</span>${f.createdAt ? `<span>${formatDate(f.createdAt)}</span>` : ""}`;
+    const dateStr = f.createdAt ? formatDate(f.createdAt) : "";
+    metaEl.innerHTML = `${subCount} subfolders &bull; ${docCount} documents${dateStr ? " &bull; " + dateStr : ""}`;
     info.appendChild(nameEl);
     info.appendChild(metaEl);
     card.appendChild(info);
