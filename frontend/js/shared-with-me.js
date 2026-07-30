@@ -699,6 +699,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   } else if (initialTab === "myshares") {
       tabMySharesBtn.click();
   } else {
-      await loadSharedDocuments();
+      tabDocsBtn.click();
   }
 });

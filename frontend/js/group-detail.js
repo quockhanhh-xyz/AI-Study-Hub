@@ -1412,7 +1412,10 @@ document.addEventListener("DOMContentLoaded", async function () {
   const initialTab = urlParams.get("tab");
   if (initialTab && ["members", "documents", "folders", "chat"].includes(initialTab)) {
     switchGroupTab(initialTab);
+  } else {
+    switchGroupTab("members");
   }
+
   
   await loadGroupDetail();
   await loadGroupDocuments();
