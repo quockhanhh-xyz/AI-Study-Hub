@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     rootLink.className = "breadcrumb-link";
     if (fromParam === "group" && groupIdParam) {
       rootLink.href = `group-detail.html?id=${groupIdParam}&tab=folders`;
-      rootLink.textContent = "Group Shared Document";
+      rootLink.textContent = "Group Shared Folder";
     } else {
       rootLink.href = "shared-with-me.html";
       rootLink.textContent = "Shared With Me";
