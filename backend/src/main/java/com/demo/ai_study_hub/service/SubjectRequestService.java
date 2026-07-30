@@ -125,7 +125,7 @@ public class SubjectRequestService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found"));
 
         // Check if subject already exists but is INACTIVE
-        Subject existing = subjectRepository.findBySubjectCode(request.getRequestedCode()).orElse(null);
+        Subject existing = subjectRepository.findSystemSubjectByCodeIgnoreCase(request.getRequestedCode()).orElse(null);
         if (existing == null) {
              existing = subjectRepository.findSystemSubjectByNameIgnoreCase(request.getRequestedName()).orElse(null);
         }

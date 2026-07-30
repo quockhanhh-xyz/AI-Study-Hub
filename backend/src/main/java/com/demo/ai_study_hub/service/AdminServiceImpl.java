@@ -150,6 +150,12 @@ public class AdminServiceImpl implements AdminService {
                 .map(status -> new com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.ApprovalStatusCountItem(status, docStatusMap.getOrDefault(status, 0L)))
                 .collect(Collectors.toList());
 
+        // Generate all dates in the range
+        List<String> allDates = new java.util.ArrayList<>();
+        for (int i = 0; i <= days; i++) {
+            allDates.add(startDate.plusDays(i).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        }
+
         List<Object[]> payGroupingData = paymentOrderRepository.findSuccessPaymentDatesAndAmounts();
         Map<String, Long> dailyRev = payGroupingData.stream()
                 .filter(row -> {
@@ -164,9 +170,8 @@ public class AdminServiceImpl implements AdminService {
                         Collectors.summingLong(row -> (Long) row[1])
                 ));
 
-        List<com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.RevenueByDayItem> revenueByDay = dailyRev.entrySet().stream()
-                .map(e -> new com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.RevenueByDayItem(e.getKey(), e.getValue()))
-                .sorted(Comparator.comparing(com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.RevenueByDayItem::getDate))
+        List<com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.RevenueByDayItem> revenueByDay = allDates.stream()
+                .map(dateStr -> new com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.RevenueByDayItem(dateStr, dailyRev.getOrDefault(dateStr, 0L)))
                 .collect(Collectors.toList());
 
         List<LocalDateTime> aiLogDates = aiUsageLogRepository.findSuccessLogDates();
@@ -177,9 +182,8 @@ public class AdminServiceImpl implements AdminService {
                         Collectors.counting()
                 ));
 
-        List<com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.AiUsageByDayItem> aiUsageByDay = dailyAi.entrySet().stream()
-                .map(e -> new com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.AiUsageByDayItem(e.getKey(), e.getValue()))
-                .sorted(Comparator.comparing(com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.AiUsageByDayItem::getDate))
+        List<com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.AiUsageByDayItem> aiUsageByDay = allDates.stream()
+                .map(dateStr -> new com.demo.ai_study_hub.dto.AdminDashboardChartsResponse.AiUsageByDayItem(dateStr, dailyAi.getOrDefault(dateStr, 0L)))
                 .collect(Collectors.toList());
 
         return AdminDashboardChartsResponse.builder()
