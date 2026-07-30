@@ -58,13 +58,13 @@ public class SubjectDataSeeder implements CommandLineRunner {
                 {"MLN111", "Philosophy of Marxism - Leninism"},
                 {"MLN122", "Political economics of Marxism - Leninism"},
                 {"PRM393", "Mobile Programming"},
-                {"SE_COM*4_ELE", "Học phần 4 của combo SE"},
+                {"SE_COM*4_ELE", "Elective Subject 4 of SE Combo"},
                 {"HCM202", "Ho Chi Minh Ideology"},
                 {"MLN131", "Scientific socialism"},
                 {"SE_GRA_ELE", "Graduation Elective - Software Engineering"},
                 {"VNR202", "History of Communist Party of Vietnam"},
                 {"PFP191", "Programming Fundamentals with Python"},
-                {"SSA101", "Kỹ năng học thuật"},
+                {"SSA101", "Academic Skills"},
                 {"AIG202c", "Artificial Intelligence"},
                 {"CSD203", "Data Structures and Algorithm with Python"},
                 {"ADY201m", "AI, DS with Python & SQL"},
@@ -73,7 +73,7 @@ public class SubjectDataSeeder implements CommandLineRunner {
                 {"AIL303m", "Machine Learning"},
                 {"CPV301", "Computer Vision"},
                 {"DAP391m", "AI-DS Project"},
-                {"SSG105", "Kỹ năng giao tiếp và cộng tác"},
+                {"SSG105", "Communication and Collaboration Skills"},
                 {"SWE201c", "Introduction to Software Engineering"},
                 {"AIT7_COM+1", "Subject 1 of Combo*"},
                 {"AIT7_COM+2", "Subject 2 of Combo*"},
@@ -85,7 +85,7 @@ public class SubjectDataSeeder implements CommandLineRunner {
                 {"AIT7_COM+4", "Subject 4 of Combo*"},
                 {"AIT301c", "AI in Production"},
                 {"REL301m", "Reinforcement Learning"},
-                {"AIT7_GRA_ELE", "Học phần lựa chọn Đồ án tốt nghiệp chuyên ngành Trí Tuệ Nhân Tạo"}
+                {"AIT7_GRA_ELE", "Graduation Elective - Artificial Intelligence"}
         };
 
         for (String[] s : subjects) {
