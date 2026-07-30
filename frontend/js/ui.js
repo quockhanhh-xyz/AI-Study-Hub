@@ -413,7 +413,7 @@ const UIHelper = {
       if (!filterVal) {
         const clearOpt = document.createElement("div");
         clearOpt.className = "custom-select-option";
-        clearOpt.textContent = (inputElement.id === "subjectSelect" || inputElement.id === "subjectFilter") ? "Select a subject" : "All Subjects";
+        clearOpt.textContent = (inputElement.id === "subjectSelect") ? "Select a subject" : "All Subjects";
         clearOpt.dataset.value = "";
         if (inputElement.value === "") clearOpt.classList.add("selected");
         clearOpt.addEventListener("click", (e) => {
