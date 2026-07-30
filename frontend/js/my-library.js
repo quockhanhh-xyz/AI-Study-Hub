@@ -1232,7 +1232,6 @@ document.addEventListener("DOMContentLoaded", async function () {
           `;
         }
         folderDocsSection.style.display = "block";
-        if (hasDocs && !hasSubfolders && folderEmptyState) folderEmptyState.style.display = "none";
       }
 
 
@@ -1261,7 +1260,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       style.id = "kebabBtnStyles";
       style.textContent = `
         .folder-kebab-btn {
-          font-size:20px; font-weight:bold; width:30px; height:30px; display:flex; align-items:center; justify-content:center; 
+          width:30px; height:30px; display:flex; align-items:center; justify-content:center; 
           background:none; border:none; cursor:pointer; color:var(--text-muted); border-radius:6px; transition: color 0.2s, background 0.2s;
         }
         .folder-kebab-btn:hover, .folder-kebab-btn.active {
@@ -1269,7 +1268,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           background: rgba(255, 90, 61, 0.1) !important;
         }
         .folder-kebab-menu-item {
-          display:block; width:100%; padding:8px 14px; text-align:left; background:none; border:none; font-size:13px; color:var(--text-main); cursor:pointer; transition: background 0.2s, color 0.2s;
+          display:block; width:100%; padding:8px 14px; text-align:left; background:none; border:none; font-size:13px; font-family:inherit; color:var(--text-main); cursor:pointer; transition: background 0.2s, color 0.2s;
         }
         .folder-kebab-menu-item:hover {
           background: rgba(255, 90, 61, 0.1);
@@ -1309,8 +1308,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     kebabBtn.type = "button";
     kebabBtn.title = "More actions";
     kebabBtn.className = "folder-kebab-btn";
-    kebabBtn.textContent = "⋮";
+    kebabBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>';
     const dropdown = document.createElement("div");
+    dropdown.className = "folder-kebab-dropdown";
     dropdown.style.cssText = "display:none; position:absolute; right:0; top:100%; background: var(--surface); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); z-index:20; min-width:140px; padding:4px 0; overflow:hidden;";
     const renameItem = document.createElement("button");
     renameItem.type = "button";
@@ -1328,11 +1328,15 @@ document.addEventListener("DOMContentLoaded", async function () {
       e.stopPropagation();
       document.querySelectorAll(".folder-kebab-dropdown").forEach(d => { if (d !== dropdown) d.style.display = "none"; });
       document.querySelectorAll(".folder-kebab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".folder-card").forEach(c => c.style.zIndex = "");
       
       const isOpen = dropdown.style.display === "block";
       dropdown.style.display = isOpen ? "none" : "block";
       if (!isOpen) {
         kebabBtn.classList.add("active");
+        card.style.zIndex = "100";
+      } else {
+        card.style.zIndex = "";
       }
     });
     
@@ -1341,6 +1345,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       if (dropdown.style.display === "block") {
         dropdown.style.display = "none";
         kebabBtn.classList.remove("active");
+        card.style.zIndex = "";
       }
     });
     renameItem.addEventListener("click", async (e) => {
