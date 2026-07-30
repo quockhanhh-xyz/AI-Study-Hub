@@ -164,4 +164,16 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     long countBySubjectAndStatus(com.demo.ai_study_hub.entity.Subject subject, String status);
     long countBySubjectAndOwnerAndStatus(com.demo.ai_study_hub.entity.Subject subject, User owner, String status);
     org.springframework.data.domain.Page<Document> findBySubjectAndOwnerAndStatus(com.demo.ai_study_hub.entity.Subject subject, User owner, String status, org.springframework.data.domain.Pageable pageable);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Document d " +
+           "SET d.subject = :systemSubject " +
+           "WHERE d.owner = :owner " +
+           "AND d.subject.scope = 'USER_CUSTOM' " +
+           "AND LOWER(d.subject.subjectCode) = LOWER(:code)")
+    int migratePersonalDocumentsToSystemSubject(
+            @Param("owner") User owner,
+            @Param("code") String code,
+            @Param("systemSubject") com.demo.ai_study_hub.entity.Subject systemSubject
+    );
 }

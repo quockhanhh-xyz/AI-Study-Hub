@@ -619,12 +619,16 @@ function renderDocument(doc) {
 
             if (isPersonalSubject) {
                 let label = "Request System Subject";
-                
+                publishBtn.disabled = false;
+                publishBtn.onclick = () => openSubjectRequestModalForDoc(doc);
+
                 if (doc.subjectRequestStatus) {
-                    label = "Resubmit Subject Request";
-                    if (subjectReqCard && subjectReqTitle && subjectReqCopy) {
-                        subjectReqCard.style.display = "flex";
-                        if (doc.subjectRequestStatus === "PENDING") {
+                    if (doc.subjectRequestStatus === "PENDING") {
+                        label = "Pending Approval";
+                        publishBtn.disabled = true;
+                        publishBtn.onclick = null;
+                        if (subjectReqCard && subjectReqTitle && subjectReqCopy) {
+                            subjectReqCard.style.display = "flex";
                             subjectReqCard.style.background = "#eff6ff";
                             subjectReqCard.style.borderColor = "#bfdbfe";
                             subjectReqCard.style.color = "#1e40af";
@@ -632,7 +636,13 @@ function renderDocument(doc) {
                             subjectReqTitle.textContent = "Subject Request Pending Approval";
                             subjectReqCopy.style.color = "#1e3a8a";
                             subjectReqCopy.textContent = `A request for the system subject code "${doc.subjectCode || (doc.subject ? doc.subject.subjectCode : '')}" has been submitted and is pending admin approval.`;
-                        } else if (doc.subjectRequestStatus === "REJECTED") {
+                        }
+                    } else if (doc.subjectRequestStatus === "REJECTED") {
+                        label = "Resubmit Subject Request";
+                        publishBtn.disabled = false;
+                        publishBtn.onclick = () => openSubjectRequestModalForDoc(doc);
+                        if (subjectReqCard && subjectReqTitle && subjectReqCopy) {
+                            subjectReqCard.style.display = "flex";
                             subjectReqCard.style.background = "#fef2f2";
                             subjectReqCard.style.borderColor = "#fecaca";
                             subjectReqCard.style.color = "#991b1b";
@@ -641,12 +651,18 @@ function renderDocument(doc) {
                             subjectReqCopy.style.color = "#7f1d1d";
                             subjectReqCopy.textContent = `Reason: ${doc.subjectRequestRejectReason || "No reason specified."}. You can click below to resubmit the request.`;
                         }
+                    } else if (doc.subjectRequestStatus === "APPROVED") {
+                        label = doc.approvalStatus === "REJECTED" ? "Resubmit for Review" : "Submit for Review";
+                        publishBtn.disabled = false;
+                        publishBtn.onclick = () => handlePublish();
+                        if (subjectReqCard) subjectReqCard.style.display = "none";
                     }
+                } else {
+                    if (subjectReqCard) subjectReqCard.style.display = "none";
                 }
 
                 if (btnTextEl) btnTextEl.textContent = label;
                 else publishBtn.textContent = label;
-                publishBtn.onclick = () => openSubjectRequestModalForDoc(doc);
             } else {
                 const label = doc.approvalStatus === "REJECTED" ? "Resubmit for Review" : "Submit for Review";
                 if (btnTextEl) btnTextEl.textContent = label;

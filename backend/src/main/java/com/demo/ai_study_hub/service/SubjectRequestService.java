@@ -8,6 +8,8 @@ import com.demo.ai_study_hub.dto.SubjectRequestResponse;
 import com.demo.ai_study_hub.repository.SubjectRepository;
 import com.demo.ai_study_hub.repository.SubjectRequestRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
+import com.demo.ai_study_hub.repository.DocumentRepository;
+import org.springframework.transaction.annotation.Transactional;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -45,6 +47,9 @@ public class SubjectRequestService {
 
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private DocumentRepository documentRepository;
 
     public SubjectRequestResponse mapToResponse(SubjectRequest request) {
         SubjectRequestResponse res = new SubjectRequestResponse();
@@ -113,6 +118,7 @@ public class SubjectRequestService {
         return subjectRequestRepository.findAll(buildSpecification(search, status), pageable).map(this::mapToResponse);
     }
 
+    @Transactional
     public SubjectRequestResponse approveRequest(Integer requestId, String adminEmail) {
         SubjectRequest request = subjectRequestRepository.findById(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject request not found"));
@@ -130,12 +136,13 @@ public class SubjectRequestService {
              existing = subjectRepository.findSystemSubjectByNameIgnoreCase(request.getRequestedName()).orElse(null);
         }
 
+        Subject systemSubject;
         if (existing != null) {
             if ("ACTIVE".equals(existing.getStatus())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Subject with this code or name already exists and is active");
+                systemSubject = existing;
             } else {
                 existing.setStatus("ACTIVE");
-                subjectRepository.save(existing);
+                systemSubject = subjectRepository.save(existing);
             }
         } else {
             // Create new system subject
@@ -144,7 +151,16 @@ public class SubjectRequestService {
             createReq.setSubjectName(request.getRequestedName());
             createReq.setDescription(request.getDescription());
             adminSubjectService.createSubject(createReq);
+
+            systemSubject = subjectRepository.findSystemSubjectByCodeIgnoreCase(request.getRequestedCode())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to retrieve the newly created system subject"));
         }
+
+        documentRepository.migratePersonalDocumentsToSystemSubject(
+                request.getRequestedByUser(),
+                request.getRequestedCode(),
+                systemSubject
+        );
 
         request.setStatus("APPROVED");
         request.setReviewedBy(admin);
