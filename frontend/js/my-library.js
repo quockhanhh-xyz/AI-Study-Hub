@@ -1221,7 +1221,15 @@ document.addEventListener("DOMContentLoaded", async function () {
             : { sourceTab: "folders" };
           docs.forEach(doc => folderDocsGrid.appendChild(createDocumentCard(doc, folderOpts)));
         } else {
-          folderDocsGrid.innerHTML = "<p style='color:#9ca3af;font-size:14px;'>No documents here.</p>";
+          folderDocsGrid.innerHTML = `
+            <div class="empty-state" style="padding: 40px; margin-top: 10px; background: var(--surface); border-radius: 12px; border: 1px dashed var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+              <div class="empty-state-icon" style="margin-bottom: 16px;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              </div>
+              <h3 style="font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 8px;">No documents yet</h3>
+              <p style="font-size: 14px; color: var(--text-muted); text-align: center; max-width: 300px;">Upload documents to organize your study materials in this folder.</p>
+            </div>
+          `;
         }
         folderDocsSection.style.display = "block";
         if (hasDocs && !hasSubfolders && folderEmptyState) folderEmptyState.style.display = "none";
@@ -1247,14 +1255,45 @@ document.addEventListener("DOMContentLoaded", async function () {
     iconWrap.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>';
     card.appendChild(iconWrap);
 
+    // Add CSS for Kebab button if not present
+    if (!document.getElementById("kebabBtnStyles")) {
+      const style = document.createElement("style");
+      style.id = "kebabBtnStyles";
+      style.textContent = `
+        .folder-kebab-btn {
+          font-size:20px; font-weight:bold; width:30px; height:30px; display:flex; align-items:center; justify-content:center; 
+          background:none; border:none; cursor:pointer; color:var(--text-muted); border-radius:6px; transition: color 0.2s, background 0.2s;
+        }
+        .folder-kebab-btn:hover, .folder-kebab-btn.active {
+          color: #ff5a3d !important;
+          background: rgba(255, 90, 61, 0.1) !important;
+        }
+        .folder-kebab-menu-item {
+          display:block; width:100%; padding:8px 14px; text-align:left; background:none; border:none; font-size:13px; color:var(--text-main); cursor:pointer; transition: background 0.2s, color 0.2s;
+        }
+        .folder-kebab-menu-item:hover {
+          background: rgba(255, 90, 61, 0.1);
+          color: #ff5a3d;
+        }
+        .folder-kebab-menu-item.danger-item {
+          color: #dc3545;
+        }
+        .folder-kebab-menu-item.danger-item:hover {
+          background: rgba(220, 53, 69, 0.1);
+          color: #dc3545;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
     // Info
     const info = document.createElement("div");
-    info.style.cssText = "flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;";
+    info.style.cssText = "flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; padding-right: 32px;";
     const nameEl = document.createElement("div");
     nameEl.style.cssText = "font-size:15px; font-weight:600; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;";
     nameEl.textContent = f.folderName || "Untitled Folder";
     const metaEl = document.createElement("div");
-    metaEl.style.cssText = "font-size:12px; color:var(--text-muted); margin-top:3px;";
+    metaEl.style.cssText = "font-size:12px; color:var(--text-muted); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;";
     const subCount = Number(f.subfolderCount ?? 0);
     const docCount = Number(f.documentCount ?? f.fileCount ?? 0);
     const dateStr = f.createdAt ? formatDate(f.createdAt) : "";
@@ -1269,17 +1308,17 @@ document.addEventListener("DOMContentLoaded", async function () {
     const kebabBtn = document.createElement("button");
     kebabBtn.type = "button";
     kebabBtn.title = "More actions";
-    kebabBtn.style.cssText = "font-size:20px; font-weight:bold; width:30px; height:30px; display:flex; align-items:center; justify-content:center; background:none; border:none; cursor:pointer; color:#9ca3af; border-radius:6px;";
+    kebabBtn.className = "folder-kebab-btn";
     kebabBtn.textContent = "⋮";
     const dropdown = document.createElement("div");
-    dropdown.style.cssText = "display:none; position:absolute; right:0; top:100%; background: var(--surface); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); z-index:20; min-width:140px; padding:4px 0;";
+    dropdown.style.cssText = "display:none; position:absolute; right:0; top:100%; background: var(--surface); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); z-index:20; min-width:140px; padding:4px 0; overflow:hidden;";
     const renameItem = document.createElement("button");
     renameItem.type = "button";
-    renameItem.style.cssText = "display:block; width:100%; padding:8px 14px; text-align:left; background:none; border:none; font-size:13px; color:var(--text-main); cursor:pointer;";
+    renameItem.className = "folder-kebab-menu-item";
     renameItem.textContent = "Rename";
     const trashItem = document.createElement("button");
     trashItem.type = "button";
-    trashItem.style.cssText = "display:block; width:100%; padding:8px 14px; text-align:left; background:none; border:none; font-size:13px; color:#dc3545; cursor:pointer;";
+    trashItem.className = "folder-kebab-menu-item danger-item";
     trashItem.textContent = "Move to Trash";
     dropdown.append(renameItem, trashItem);
     actions.append(kebabBtn, dropdown);
@@ -1288,12 +1327,28 @@ document.addEventListener("DOMContentLoaded", async function () {
     kebabBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       document.querySelectorAll(".folder-kebab-dropdown").forEach(d => { if (d !== dropdown) d.style.display = "none"; });
-      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+      document.querySelectorAll(".folder-kebab-btn").forEach(b => b.classList.remove("active"));
+      
+      const isOpen = dropdown.style.display === "block";
+      dropdown.style.display = isOpen ? "none" : "block";
+      if (!isOpen) {
+        kebabBtn.classList.add("active");
+      }
+    });
+    
+    // Ensure clicking outside resets color
+    document.addEventListener("click", () => {
+      if (dropdown.style.display === "block") {
+        dropdown.style.display = "none";
+        kebabBtn.classList.remove("active");
+      }
     });
     renameItem.addEventListener("click", async (e) => {
       e.stopPropagation();
       dropdown.style.display = "none";
-      const newName = prompt("Enter new folder name:", f.folderName);
+      const newName = typeof UIHelper !== "undefined"
+        ? await UIHelper.promptAction({ title: "Rename Folder", placeholder: "Enter new folder name", defaultValue: f.folderName })
+        : prompt("Enter new folder name:", f.folderName);
       if (newName && newName.trim() && newName.trim() !== f.folderName) {
         try {
           if (typeof updateFolder === "function") {
