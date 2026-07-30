@@ -1,42 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <script src="js/theme.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <title>Document Moderation - AI Study Hub Admin</title>
     <!-- Include global styles first, then admin styles -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/admin.css">
-<style>
-.theme-toggle-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  border-radius: 50%;
-  transition: background 0.2s, color 0.2s;
-  margin-right: 16px;
-}
-.theme-toggle-btn:hover {
-  background: var(--border);
-  color: var(--primary);
-}
-.theme-toggle-btn .icon-sun {
-  display: none;
-}
-[data-theme="dark"] .theme-toggle-btn .icon-moon {
-  display: none;
-}
-[data-theme="dark"] .theme-toggle-btn .icon-sun {
-  display: block;
-}
-</style>
+    <style>
+        .theme-toggle-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background 0.2s, color 0.2s;
+            margin-right: 16px;
+        }
+
+        .theme-toggle-btn:hover {
+            background: var(--border);
+            color: var(--primary);
+        }
+
+        .theme-toggle-btn .icon-sun {
+            display: none;
+        }
+
+        [data-theme="dark"] .theme-toggle-btn .icon-moon {
+            display: none;
+        }
+
+        [data-theme="dark"] .theme-toggle-btn .icon-sun {
+            display: block;
+        }
+    </style>
 </head>
+
 <body>
     <div class="app-layout">
         <aside class="sidebar">
@@ -47,162 +54,195 @@
         <main class="main-content">
             <div class="admin-layout">
                 <div class="admin-content-wrapper">
-            <header class="admin-page-header">
-                <div class="admin-page-header-text">
-                    <h1 class="admin-page-title">Public Documents</h1>
-                    <p class="admin-page-subtitle" style="color: var(--text-muted); font-size: 0.875rem; margin-top: 4px;">Manage documents submitted to Community Library.</p>
-                </div>
-                <div class="admin-header-actions">
-                    <button id="exportBtn" class="btn btn-secondary" style="height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                        </svg>
-                        <span>Export Excel</span>
-                    </button>
-                </div>
-            </header>
-
-            <div class="admin-state-container" id="docsLoadingState">
-                <div class="admin-state-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                    </svg>
-                </div>
-                <p>Loading documents...</p>
-            </div>
-
-            <div class="admin-state-container" id="docsErrorState" style="display: none;">
-                <div class="admin-state-icon" style="color: var(--danger);">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                </div>
-                <p id="docsErrorMessage">Failed to load documents.</p>
-                <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 16px;">Retry</button>
-            </div>
-
-            <div id="docsContent" style="display: none;">
-
-                <!-- Summary KPI Cards -->
-                <div class="admin-payment-summary-grid" id="docsSummaryCards" style="margin-bottom: 24px; margin-top: 16px;">
-                    <div class="payment-summary-card admin-card">
-                        <div class="payment-summary-info">
-                            <div class="summary-label">Total Documents</div>
-                            <div class="summary-value text-primary" id="cardTotalDocs">0</div>
+                    <header class="admin-page-header">
+                        <div class="admin-page-header-text">
+                            <h1 class="admin-page-title">Public Documents</h1>
+                            <p class="admin-page-subtitle"
+                                style="color: var(--text-muted); font-size: 0.875rem; margin-top: 4px;">Manage documents
+                                submitted to Community Library.</p>
                         </div>
-                    </div>
-                    <div class="payment-summary-card admin-card">
-                        <div class="payment-summary-info">
-                            <div class="summary-label">Pending Review</div>
-                            <div class="summary-value text-warning" id="cardPendingDocs">0</div>
-                        </div>
-                    </div>
-                    <div class="payment-summary-card admin-card">
-                        <div class="payment-summary-info">
-                            <div class="summary-label">Approved</div>
-                            <div class="summary-value text-success" id="cardApprovedDocs">0</div>
-                        </div>
-                    </div>
-                    <div class="payment-summary-card admin-card">
-                        <div class="payment-summary-info">
-                            <div class="summary-label">Rejected</div>
-                            <div class="summary-value text-danger" id="cardRejectedDocs">0</div>
-                        </div>
-                    </div>
-                </div>
+                    </header>
 
-            <!-- Quick Tabs -->
-            <div class="admin-tabs">
-                <button class="admin-tab active" data-tab="ALL">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9s2.015-9 4.5-9M3 9h18M3 15h18" />
-                    </svg>
-                    <span class="tab-text">All Public</span>
-                </button>
-                <button class="admin-tab" data-tab="PENDING">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span class="tab-text">Pending Review</span>
-                </button>
-                <button class="admin-tab" data-tab="APPROVED">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.746 3.746 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-                    </svg>
-                    <span class="tab-text">Approved</span>
-                </button>
-                <button class="admin-tab" data-tab="REJECTED">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span class="tab-text">Rejected</span>
-                </button>
-            </div>
-
-            <!-- White Card Container for Filters and Table -->
-            <div class="admin-card" style="padding: 24px; margin-top: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: none;">
-                <!-- Filters -->
-                <div class="admin-actions-bar" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 24px;">
-                    <div class="admin-search-wrapper" style="flex: 1; min-width: 250px; position: relative;">
-                        <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted);">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                        </svg>
-                        <input type="text" id="searchInput" class="admin-filter-input admin-search-input" placeholder="Search by Title or Owner...">
-                    </div>
-                    <div class="admin-filters" style="display: flex; gap: 12px; align-items: center; flex-wrap: nowrap; justify-content: flex-end; flex: 0 0 auto !important;">
-                        <input type="text" id="subjectFilter" list="subjectDatalist" class="admin-filter-input" placeholder="All Subjects" style="border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 170px !important; max-width: 250px !important; width: auto !important;" />
-                        <datalist id="subjectDatalist"></datalist>
-                        <select id="statusFilter" class="admin-filter-input" style="display: none; border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 130px !important; width: auto !important;">
-                            <option value="">All Statuses</option>
-                            <option value="PENDING">PENDING</option>
-                            <option value="APPROVED">APPROVED</option>
-                            <option value="REJECTED">REJECTED</option>
-                        </select>
-                        <select id="fileTypeFilter" class="admin-filter-input" style="min-width: 130px !important; width: auto !important;">
-                            <option value="">All File Types</option>
-                            <option value="PDF">PDF</option>
-                            <option value="DOCX">Word (.doc, .docx)</option>
-                            <option value="XLSX">Excel (.xls, .xlsx)</option>
-                            <option value="PPTX">PowerPoint (.ppt, .pptx)</option>
-                            <option value="IMAGE">Images (.png, .jpg, .jpeg)</option>
-                            <option value="TXT">Text (.txt)</option>
-                        </select>
-                        <button class="btn btn-outline" onclick="clearFilters()" style="white-space: nowrap; height: 42px; border-radius: 24px; padding: 0 16px; display: inline-flex; align-items: center; font-weight: 600; width: auto;">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                    <div class="admin-state-container" id="docsLoadingState">
+                        <div class="admin-state-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40"
+                                width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                             </svg>
-                            Clear Filters
-                        </button>
+                        </div>
+                        <p>Loading documents...</p>
                     </div>
-                </div>
 
-                <!-- Table -->
-                <div class="admin-table-container">
-                    <table class="admin-table" style="margin-top: 8px; table-layout: fixed; width: 100%;">
-                        <thead>
-                            <tr>
-                                <th style="width: 14%;">Document</th>
-                                <th style="width: 15%;">Owner</th>
-                                <th style="width: 10%;">Subject</th>
-                                <th style="width: 6%;">Type</th>
-                                <th style="width: 9%;" title="Shows whether this document is approved for Community Library.">Approval</th>
-                                <th style="width: 9%;" title="Shows whether document content is ready for AI features.">AI Status</th>
-                                <th style="width: 13%;">Updated</th>
-                                <th style="text-align: center; width: 24%;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="documentsTableBody">
-                            <!-- Populated by JS -->
-                            <tr><td colspan="8" style="text-align: center;">Loading...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+                    <div class="admin-state-container" id="docsErrorState" style="display: none;">
+                        <div class="admin-state-icon" style="color: var(--danger);">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40"
+                                width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <p id="docsErrorMessage">Failed to load documents.</p>
+                        <button class="btn btn-primary" onclick="location.reload()"
+                            style="margin-top: 16px;">Retry</button>
+                    </div>
 
-                <div id="pagination" class="admin-pagination" style="margin-top: 16px; justify-content: space-between;">
-                    <!-- Pagination buttons -->
-                </div>
-            </div>
-            </div>
+                    <div id="docsContent" style="display: none;">
+
+                        <!-- Summary KPI Cards -->
+                        <div class="admin-payment-summary-grid" id="docsSummaryCards"
+                            style="margin-bottom: 24px; margin-top: 16px;">
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Total Documents</div>
+                                    <div class="summary-value text-primary" id="cardTotalDocs">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Pending Review</div>
+                                    <div class="summary-value text-warning" id="cardPendingDocs">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Approved</div>
+                                    <div class="summary-value text-success" id="cardApprovedDocs">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Rejected</div>
+                                    <div class="summary-value text-danger" id="cardRejectedDocs">0</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Tabs -->
+                        <div class="admin-tabs">
+                            <button class="admin-tab active" data-tab="APPROVED">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18"
+                                    width="18" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9s2.015-9 4.5-9M3 9h18M3 15h18" />
+                                </svg>
+                                <span class="tab-text">All Public</span>
+                            </button>
+                            <button class="admin-tab" data-tab="PENDING">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18"
+                                    width="18" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span class="tab-text">Pending Review</span>
+                            </button>
+                            <button class="admin-tab" data-tab="REJECTED">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18"
+                                    width="18" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span class="tab-text">Rejected</span>
+                            </button>
+                            <button id="exportBtn" class="btn btn-secondary"
+                                style="margin-left: auto; width: auto; align-self: center; height: 36px; border-radius: 18px !important; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 16px; font-size: 0.875rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16"
+                                    width="16" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                </svg>
+                                <span>Export Excel</span>
+                            </button>
+                        </div>
+
+                        <!-- White Card Container for Filters and Table -->
+                        <div class="admin-card"
+                            style="padding: 24px; margin-top: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: none;">
+                            <!-- Filters -->
+                            <div class="admin-actions-bar"
+                                style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 24px;">
+                                <div class="admin-search-wrapper"
+                                    style="flex: 1; min-width: 250px; position: relative;">
+                                    <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                        viewBox="0 0 24 24" height="18" width="18" stroke="currentColor"
+                                        stroke-width="2"
+                                        style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted);">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                    </svg>
+                                    <input type="text" id="searchInput" class="admin-filter-input admin-search-input"
+                                        placeholder="Search by Title or Owner...">
+                                </div>
+                                <div class="admin-filters"
+                                    style="display: flex; gap: 12px; align-items: center; flex-wrap: nowrap; justify-content: flex-end; flex: 0 0 auto !important;">
+                                    <input type="text" id="subjectFilter" list="subjectDatalist"
+                                        class="admin-filter-input" placeholder="All Subjects"
+                                        style="border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 170px !important; max-width: 250px !important; width: auto !important;" />
+                                    <datalist id="subjectDatalist"></datalist>
+                                    <select id="statusFilter" class="admin-filter-input"
+                                        style="display: none; border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 130px !important; width: auto !important;">
+                                        <option value="">All Statuses</option>
+                                        <option value="PENDING">PENDING</option>
+                                        <option value="APPROVED">APPROVED</option>
+                                        <option value="REJECTED">REJECTED</option>
+                                    </select>
+                                    <select id="fileTypeFilter" class="admin-filter-input"
+                                        style="min-width: 130px !important; width: auto !important;">
+                                        <option value="">All File Types</option>
+                                        <option value="PDF">PDF</option>
+                                        <option value="DOCX">Word (.doc, .docx)</option>
+                                        <option value="XLSX">Excel (.xls, .xlsx)</option>
+                                        <option value="PPTX">PowerPoint (.ppt, .pptx)</option>
+                                        <option value="IMAGE">Images (.png, .jpg, .jpeg)</option>
+                                        <option value="TXT">Text (.txt)</option>
+                                    </select>
+                                    <button class="btn btn-outline" onclick="clearFilters()"
+                                        style="white-space: nowrap; height: 42px; border-radius: 24px; padding: 0 16px; display: inline-flex; align-items: center; font-weight: 600; width: auto;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            height="18" width="18" stroke="currentColor" stroke-width="2"
+                                            style="margin-right: 6px;">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                        </svg>
+                                        Clear Filters
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Table -->
+                            <div class="admin-table-container">
+                                <table class="admin-table" style="margin-top: 8px; table-layout: fixed; width: 100%;">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 14%;">Document</th>
+                                            <th style="width: 15%;">Owner</th>
+                                            <th style="width: 10%;">Subject</th>
+                                            <th style="width: 6%;">Type</th>
+                                            <th style="width: 9%;"
+                                                title="Shows whether this document is approved for Community Library.">
+                                                Approval</th>
+                                            <th style="width: 9%;"
+                                                title="Shows whether document content is ready for AI features.">AI
+                                                Status</th>
+                                            <th style="width: 13%;">Updated</th>
+                                            <th style="text-align: center; width: 24%;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="documentsTableBody">
+                                        <!-- Populated by JS -->
+                                        <tr>
+                                            <td colspan="8" style="text-align: center;">Loading...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div id="pagination" class="admin-pagination"
+                                style="margin-top: 16px; justify-content: space-between;">
+                                <!-- Pagination buttons -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -228,7 +268,8 @@
         <div class="admin-modal">
             <h3 class="admin-modal-title">Reject this public submission?</h3>
             <div class="admin-modal-body">
-                <p>The document will be removed from Community Library. The owner's original file will not be deleted.</p>
+                <p>The document will be removed from Community Library. The owner's original file will not be deleted.
+                </p>
                 <input type="hidden" id="rejectDocId">
                 <div class="form-group" style="margin-top: 15px;">
                     <label>Reason (Optional):</label>
@@ -276,20 +317,29 @@
     <div class="admin-modal-overlay" id="documentDetailModal">
         <div class="admin-modal" style="max-width: 750px; width: 95%;">
             <h3 class="admin-modal-title" style="margin-bottom: 12px;">Document Details (Moderation)</h3>
-            <div id="detailAlert" style="display: none; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; background: rgba(220, 38, 38, 0.1); color: var(--danger, #dc2626); border: 1px solid rgba(220, 38, 38, 0.2);"></div>
-            
-            <div class="admin-modal-body" id="documentDetailBody" style="font-size: 14px; max-height: 55vh; overflow-y: auto; padding-right: 8px; margin-bottom: 12px;">
+            <div id="detailAlert"
+                style="display: none; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; background: rgba(220, 38, 38, 0.1); color: var(--danger, #dc2626); border: 1px solid rgba(220, 38, 38, 0.2);">
+            </div>
+
+            <div class="admin-modal-body" id="documentDetailBody"
+                style="font-size: 14px; max-height: 55vh; overflow-y: auto; padding-right: 8px; margin-bottom: 12px;">
                 <p>Loading details...</p>
             </div>
-            
-            <div class="admin-modal-actions" id="documentDetailActions" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border, var(--border)); padding-top: 14px; margin-top: 0;">
+
+            <div class="admin-modal-actions" id="documentDetailActions"
+                style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border, var(--border)); padding-top: 14px; margin-top: 0;">
                 <div class="left-actions" style="display: flex; gap: 8px;">
-                    <button class="btn btn-outline" id="modalPreviewBtn" style="width: auto !important; min-width: 140px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600;">Preview Document</button>
-                    <button class="btn btn-outline" id="modalDownloadBtn" style="width: auto !important; min-width: 110px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600;">Download File</button>
+                    <button class="btn btn-outline" id="modalPreviewBtn"
+                        style="width: auto !important; min-width: 140px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600;">Preview
+                        Document</button>
+                    <button class="btn btn-outline" id="modalDownloadBtn"
+                        style="width: auto !important; min-width: 110px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600;">Download
+                        File</button>
                 </div>
                 <div class="right-actions" id="modalModerationActions" style="display: flex; gap: 8px;">
                     <!-- Dynamically populated moderation buttons + Close button -->
-                    <button class="btn btn-outline" onclick="closeDocumentDetailModal()" style="width: auto !important; min-width: 90px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600;">Close</button>
+                    <button class="btn btn-outline" onclick="closeDocumentDetailModal()"
+                        style="width: auto !important; min-width: 90px; padding: 8px 16px; height: 38px; font-size: 14px; font-weight: 600;">Close</button>
                 </div>
             </div>
         </div>
@@ -299,7 +349,8 @@
     <div class="admin-modal-overlay" id="confirmModal" style="z-index: 1050;">
         <div class="admin-modal" style="max-width: 400px;">
             <h3 class="admin-modal-title" id="modalTitle">Confirm Action</h3>
-            <p id="modalBody" style="margin-bottom: 20px; font-size: 14px; color: var(--text-muted, #64748b); line-height: 1.5;"></p>
+            <p id="modalBody"
+                style="margin-bottom: 20px; font-size: 14px; color: var(--text-muted, #64748b); line-height: 1.5;"></p>
             <div class="admin-modal-actions" style="display: flex; gap: 8px; justify-content: flex-end;">
                 <button class="btn btn-outline" onclick="closeConfirmModal()">Cancel</button>
                 <button class="btn btn-primary" id="modalConfirmBtn">Confirm</button>
@@ -319,4 +370,5 @@
     <script src="js/admin-subject-api.js"></script>
     <script src="js/admin-documents.js"></script>
 </body>
+
 </html>
