@@ -170,6 +170,12 @@ async function loadSubjectOptions() {
     const subjects = Array.isArray(result.data) ? result.data : [];
 
     subjectDatalist.innerHTML = "";
+
+    const createOption = document.createElement("option");
+    createOption.value = CREATE_NEW_VALUE;
+    createOption.textContent = "+ Create new subject…";
+    subjectDatalist.appendChild(createOption);
+
     subjects.forEach(function (subject) {
       const option = document.createElement("option");
       const label = subject.subjectCode
@@ -179,11 +185,6 @@ async function loadSubjectOptions() {
       option.dataset.id = subject.subjectId;
       subjectDatalist.appendChild(option);
     });
-
-    const createOption = document.createElement("option");
-    createOption.value = CREATE_NEW_VALUE;
-    createOption.textContent = "+ Create new subject…";
-    subjectDatalist.appendChild(createOption);
 
     subjectSelect.placeholder = "Select a subject";
   } catch (err) {

@@ -14,11 +14,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   // Header CTA toggle
-  const communityUploadBtn = document.getElementById("communityUploadBtn");
   const communityGuestActions = document.getElementById("communityGuestActions");
-  if (communityUploadBtn) {
-    communityUploadBtn.style.display = isAuthenticated ? "inline-flex" : "none";
-  }
   if (communityGuestActions) {
     communityGuestActions.style.display = isAuthenticated ? "none" : "flex";
   }
