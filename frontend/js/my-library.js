@@ -1058,17 +1058,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (subjectTag) {
       meta.innerHTML += `<span class="document-meta-item">${META_ICONS.subject}${subjectTag}</span>`;
     }
+    const schoolMajorParts = [];
     if (doc.schoolCode || doc.schoolName) {
-      const schoolTag = doc.schoolCode
-        ? `${doc.schoolCode} - ${doc.schoolName || ""}`
-        : doc.schoolName;
-      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.school}${schoolTag}</span>`;
+      schoolMajorParts.push(doc.schoolCode || doc.schoolName);
     }
     if (doc.majorCode || doc.majorName) {
-      const majorTag = doc.majorCode
-        ? `${doc.majorCode} - ${doc.majorName || ""}`
-        : doc.majorName;
-      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.major}${majorTag}</span>`;
+      schoolMajorParts.push(doc.majorCode || doc.majorName);
+    }
+    if (schoolMajorParts.length > 0) {
+      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.school}${schoolMajorParts.join(" - ")}</span>`;
     }
 
     // Robust Folder Fallback: folderName -> lookup via folderId -> nested folder object

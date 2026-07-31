@@ -1090,15 +1090,23 @@ async function loadEditSubjects(majorId, currentSubjectId = null) {
 
     select.disabled = true;
     select.innerHTML = '<option value="">Loading subjects...</option>';
+    if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+        window.UIHelper.convertSelectToCustomDropdown(select);
+        select.dispatchEvent(new Event("syncCustom"));
+    }
 
     try {
         const response = await getSubjects(majorId || "");
         allSubjectsList = response?.data || [];
         renderSubjectOptions(allSubjectsList, currentSubjectId);
         select.disabled = false;
+        select.dispatchEvent(new Event("syncCustom"));
     } catch (error) {
         console.error("Failed to load subjects", error);
         select.innerHTML = '<option value="">Failed to load subjects</option>';
+        if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+            select.dispatchEvent(new Event("syncCustom"));
+        }
     }
 }
 
@@ -1117,17 +1125,29 @@ async function initSchoolAndMajorEditFields(schools, doc) {
         }
         schoolSelect.appendChild(opt);
     });
+    if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+        window.UIHelper.convertSelectToCustomDropdown(schoolSelect);
+        schoolSelect.dispatchEvent(new Event("syncCustom"));
+    }
 
     const handleSchoolChange = async (selectedSchoolId, selectedMajorId = null) => {
         if (!selectedSchoolId) {
             majorSelect.innerHTML = '<option value="">— Select Major —</option>';
             majorSelect.disabled = true;
+            if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+                window.UIHelper.convertSelectToCustomDropdown(majorSelect);
+                majorSelect.dispatchEvent(new Event("syncCustom"));
+            }
             await loadEditSubjects("", doc.subjectId);
             return;
         }
 
         majorSelect.disabled = true;
         majorSelect.innerHTML = '<option value="">Loading majors...</option>';
+        if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+            window.UIHelper.convertSelectToCustomDropdown(majorSelect);
+            majorSelect.dispatchEvent(new Event("syncCustom"));
+        }
 
         try {
             const majorsRes = await getActiveMajors(selectedSchoolId);
@@ -1144,6 +1164,11 @@ async function initSchoolAndMajorEditFields(schools, doc) {
                 majorSelect.appendChild(opt);
             });
             majorSelect.disabled = false;
+            if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+                window.UIHelper.convertSelectToCustomDropdown(majorSelect);
+                majorSelect.dispatchEvent(new Event("syncCustom"));
+            }
+
             if (selectedMajorId) {
                 await loadEditSubjects(selectedMajorId, doc.subjectId);
             } else {
@@ -1151,11 +1176,15 @@ async function initSchoolAndMajorEditFields(schools, doc) {
                 if (subjectSelect) {
                     subjectSelect.disabled = true;
                     subjectSelect.innerHTML = '<option value="">Select a Major first</option>';
+                    subjectSelect.dispatchEvent(new Event("syncCustom"));
                 }
             }
         } catch (err) {
             console.error("Failed to load majors", err);
             majorSelect.innerHTML = '<option value="">Failed to load majors</option>';
+            if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+                majorSelect.dispatchEvent(new Event("syncCustom"));
+            }
         }
     };
 

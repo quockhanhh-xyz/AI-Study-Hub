@@ -40,6 +40,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           opt.textContent = `${sch.schoolName} (${sch.shortName})`;
           schoolNameInput.appendChild(opt);
         });
+        if (window.UIHelper) {
+          schoolNameInput.dispatchEvent(new Event("syncCustom"));
+        }
       }
     } catch (err) {
       console.error("Failed to load schools list:", err);
@@ -60,6 +63,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else {
       majorInput.disabled = true;
     }
+    if (window.UIHelper) {
+      majorInput.dispatchEvent(new Event("syncCustom"));
+    }
   }
 
   // School select change listener
@@ -78,6 +84,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else {
         majorInput.innerHTML = '<option value="">Select Major</option>';
         majorInput.disabled = true;
+        if (window.UIHelper) {
+          majorInput.dispatchEvent(new Event("syncCustom"));
+        }
       }
     });
   }
@@ -175,11 +184,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (res && res.success) {
           populateMajorsSelect(res.data);
           majorInput.value = profile.majorId || "";
+          if (window.UIHelper) majorInput.dispatchEvent(new Event("syncCustom"));
         }
       }).catch(err => console.error(err));
     } else {
       majorInput.innerHTML = '<option value="">Select Major</option>';
       majorInput.disabled = true;
+      if (window.UIHelper) majorInput.dispatchEvent(new Event("syncCustom"));
     }
     studentCodeInput.value = profile.studentCode || "";
     graduationYearInput.value = profile.graduationYear || "";

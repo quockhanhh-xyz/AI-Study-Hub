@@ -860,6 +860,11 @@ document.addEventListener("DOMContentLoaded", function () {
           opt.textContent = `${sch.schoolName} (${sch.shortName})`;
           schoolSelect.appendChild(opt);
         });
+        
+        if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+          window.UIHelper.convertSelectToCustomDropdown(schoolSelect);
+          schoolSelect.dispatchEvent(new Event("syncCustom"));
+        }
       }
 
       // 2. Fetch User Profile to get default School and Major
@@ -898,6 +903,11 @@ document.addEventListener("DOMContentLoaded", function () {
       majorSelect.disabled = false;
     } else {
       majorSelect.disabled = true;
+    }
+
+    if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+      window.UIHelper.convertSelectToCustomDropdown(majorSelect);
+      majorSelect.dispatchEvent(new Event("syncCustom"));
     }
   }
 

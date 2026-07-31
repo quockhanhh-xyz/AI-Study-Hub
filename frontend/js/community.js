@@ -186,27 +186,20 @@ document.addEventListener("DOMContentLoaded", async function () {
       body.appendChild(subjectTag);
     }
 
-    if (doc.schoolCode || doc.schoolName) {
-      const schoolTag = document.createElement("div");
-      schoolTag.className = "comm-card-subject-tag";
-      const schoolText = doc.schoolCode
-        ? `${doc.schoolCode} - ${doc.schoolName}`
-        : doc.schoolName;
-      schoolTag.title = `School: ${schoolText}`;
-      schoolTag.textContent = schoolText;
-      body.appendChild(schoolTag);
-    }
-
-    if (doc.majorCode || doc.majorName) {
-      const majorTag = document.createElement("div");
-      majorTag.className = "comm-card-subject-tag";
-      const majorText = doc.majorCode
-        ? `${doc.majorCode} - ${doc.majorName}`
-        : doc.majorName;
-      majorTag.title = `Major: ${majorText}`;
-      majorTag.textContent = majorText;
-      body.appendChild(majorTag);
-    }
+      const schoolMajorParts = [];
+      if (doc.schoolCode || doc.schoolName) {
+        schoolMajorParts.push(doc.schoolCode || doc.schoolName);
+      }
+      if (doc.majorCode || doc.majorName) {
+        schoolMajorParts.push(doc.majorCode || doc.majorName);
+      }
+      if (schoolMajorParts.length > 0) {
+        const smTag = document.createElement("div");
+        smTag.className = "comm-card-subject-tag";
+        smTag.title = `School/Major: ${schoolMajorParts.join(" - ")}`;
+        smTag.textContent = schoolMajorParts.join(" - ");
+        body.appendChild(smTag);
+      }
 
     // C. Footer: Date & Metrics
     const footer = document.createElement("div");
@@ -385,6 +378,9 @@ document.addEventListener("DOMContentLoaded", async function () {
           opt.textContent = `${sch.schoolName} (${sch.shortName})`;
           schoolFilter.appendChild(opt);
         });
+        if (window.UIHelper) {
+          schoolFilter.dispatchEvent(new Event("syncCustom"));
+        }
       }
     } catch (err) {
       console.warn("Failed to load schools for filter:", err);
@@ -396,6 +392,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (!schoolId) {
       majorFilter.innerHTML = '<option value="">All Majors</option>';
       majorFilter.disabled = true;
+      if (window.UIHelper) {
+        majorFilter.dispatchEvent(new Event("syncCustom"));
+      }
       return;
     }
 
@@ -410,6 +409,9 @@ document.addEventListener("DOMContentLoaded", async function () {
           majorFilter.appendChild(opt);
         });
         majorFilter.disabled = false;
+        if (window.UIHelper) {
+          majorFilter.dispatchEvent(new Event("syncCustom"));
+        }
       }
     } catch (err) {
       console.warn("Failed to load majors for filter:", err);
@@ -477,11 +479,13 @@ document.addEventListener("DOMContentLoaded", async function () {
       }
       if (schoolFilter) {
         schoolFilter.value = "";
+        if (window.UIHelper) schoolFilter.dispatchEvent(new Event("syncCustom"));
       }
       if (majorFilter) {
         majorFilter.innerHTML = '<option value="">All Majors</option>';
         majorFilter.value = "";
         majorFilter.disabled = true;
+        if (window.UIHelper) majorFilter.dispatchEvent(new Event("syncCustom"));
       }
       await loadSubjects();
       if (fileTypeFilter) {
