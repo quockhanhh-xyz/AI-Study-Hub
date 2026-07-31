@@ -12,11 +12,13 @@
     <style>
         .feedback-grid {
             display: grid;
-            grid-template-columns: 1.2fr 1fr;
+            grid-template-columns: 1.5fr 1fr;
             gap: 24px;
             padding: 24px;
-            max-width: 1200px;
+            max-width: 1400px;
+            width: 100%;
             margin: 0 auto;
+            box-sizing: border-box;
         }
 
         @media (max-width: 992px) {
@@ -243,6 +245,29 @@
             text-align: center;
             color: var(--text-muted, #64748b);
         }
+
+        /* Dark Mode CSS Fixes */
+        [data-theme="dark"] label,
+        [data-theme="dark"] .form-group label,
+        [data-theme="dark"] .feedback-card label {
+            color: var(--text-primary, #f8fafc) !important;
+        }
+        [data-theme="dark"] .feedback-title,
+        [data-theme="dark"] .feedback-title span {
+            color: var(--text-primary, #f8fafc) !important;
+        }
+        [data-theme="dark"] .rating-description {
+            color: var(--text-muted, #94a3b8) !important;
+        }
+        [data-theme="dark"] .star-rating-container label {
+            color: var(--text-primary, #f8fafc) !important;
+        }
+        [data-theme="dark"] .feedback-card .form-control {
+            color: var(--text-primary, #f8fafc) !important;
+        }
+        [data-theme="dark"] .chat-container input {
+            color: var(--text-primary, #f8fafc) !important;
+        }
     </style>
 </head>
 
@@ -328,7 +353,7 @@
                         <!-- Actions -->
                         <div style="display: flex; gap: 12px; margin-top: 24px;">
                             <button type="submit" class="btn btn-primary" style="flex: 1;" id="btnSubmitFeedback">Submit Review</button>
-                            <button type="button" class="btn btn-danger-outline" style="display: none;" id="btnDeleteFeedback">Delete Review</button>
+                            <button type="button" class="btn btn-danger-outline" style="flex: 1; display: none;" id="btnDeleteFeedback">Delete Review</button>
                         </div>
                     </form>
                 </div>

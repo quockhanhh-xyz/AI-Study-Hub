@@ -20,6 +20,7 @@
             grid-template-columns: 1.5fr 1fr;
             gap: 24px;
             margin-bottom: 24px;
+            align-items: start;
         }
 
         @media (max-width: 992px) {
@@ -158,6 +159,229 @@
         .status-responded { background: #f0fdf4; color: #166534; }
         .status-resolved { background: #e0f2fe; color: #0369a1; }
         .status-archived { background: #f1f5f9; color: #475569; }
+
+        /* Filter grid alignment fix */
+        .admin-filter-grid {
+            display: grid;
+            grid-template-columns: 2fr 1.2fr 1.5fr 1.2fr;
+            gap: 16px;
+            width: 100%;
+            align-items: flex-end;
+        }
+
+        @media (max-width: 992px) {
+            .admin-filter-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .admin-filter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-group label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted, #64748b);
+        }
+
+        .stats-and-distribution .admin-payment-summary-grid {
+            grid-template-columns: repeat(3, 1fr) !important;
+        }
+
+        /* The shared admin-card rule uses height: 100%. Feedback sections must
+           size to their content so short tables do not fill the viewport. */
+        #feedbackStatsSection,
+        #feedbackFilterSection,
+        #feedbackTableSection,
+        #feedbackStatsSection .admin-card {
+            height: auto;
+            min-height: 0;
+        }
+
+        #feedbackFilterSection {
+            padding: 20px;
+        }
+
+        #feedbackTableSection {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #feedbackTableSection .admin-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        #feedbackTableSection .admin-table {
+            min-width: 920px;
+        }
+
+        #feedbackTableSection .admin-pagination {
+            min-height: 62px;
+        }
+
+        .feedback-detail-button {
+            min-width: 76px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .feedback-modal {
+            width: min(760px, calc(100vw - 32px));
+            max-height: min(88vh, 820px);
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .feedback-modal .admin-modal-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 22px 24px 18px;
+            border-bottom: 1px solid var(--border-color, #e2e8f0);
+            flex: 0 0 auto;
+        }
+
+        .feedback-modal .admin-modal-title {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        .feedback-modal .admin-modal-subtitle {
+            margin: 6px 0 0;
+            color: var(--text-muted, #64748b);
+            overflow-wrap: anywhere;
+        }
+
+        .feedback-modal .admin-modal-header .btn-close-modal {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border: 1px solid var(--border-color, #e2e8f0);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-color, #0f172a);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex: 0 0 36px;
+        }
+
+        .feedback-modal .admin-modal-header .btn-close-modal:hover {
+            background: var(--bg-color, #f8fafc);
+            border-color: var(--text-muted, #94a3b8);
+        }
+
+        .feedback-modal .admin-modal-body {
+            margin: 0;
+            padding: 20px 24px 24px;
+            min-height: 0;
+            overflow-y: auto;
+        }
+
+        .feedback-review-summary {
+            margin-bottom: 18px;
+            padding: 16px;
+            border: 1px solid var(--border-color, #e2e8f0);
+            border-radius: 10px;
+            background: var(--bg-color, #f8fafc);
+        }
+
+        .feedback-review-summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .feedback-modal .admin-chat-messages {
+            height: auto;
+            min-height: 120px;
+            max-height: 240px;
+        }
+
+        .admin-chat-empty,
+        .admin-chat-loading {
+            margin: auto;
+            padding: 24px 12px;
+            color: var(--text-muted, #64748b);
+            text-align: center;
+        }
+
+        .feedback-modal #adminReplyContent {
+            min-height: 104px;
+            resize: vertical;
+        }
+
+        .feedback-modal .modal-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin: 0;
+        }
+
+        .feedback-modal .modal-actions .btn {
+            width: 100%;
+            min-height: 44px;
+        }
+
+        body.feedback-modal-open {
+            overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+            .stats-and-distribution .admin-payment-summary-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .feedback-review-summary-header,
+            #feedbackTableSection .admin-pagination {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .feedback-modal .modal-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Dark Mode Text Visibility Fixes */
+        .user-name {
+            color: var(--text-color, #0f172a);
+        }
+        .user-email-text {
+            color: var(--text-muted, #64748b);
+        }
+
+        [data-theme="dark"] .distribution-title {
+            color: var(--text-primary, #f8fafc) !important;
+        }
+        [data-theme="dark"] .distribution-label {
+            color: var(--text-primary, #f8fafc) !important;
+        }
+        [data-theme="dark"] .distribution-count {
+            color: var(--text-muted, #94a3b8) !important;
+        }
+        [data-theme="dark"] .user-name {
+            color: var(--text-primary, #f8fafc) !important;
+        }
+        [data-theme="dark"] .user-email-text {
+            color: var(--text-muted, #94a3b8) !important;
+        }
     </style>
 </head>
 
@@ -334,24 +558,24 @@
     </div>
 
     <!-- Review Details Modal/Drawer -->
-    <div class="admin-modal" id="reviewDetailModal" style="display: none;">
-        <div class="admin-modal-content" style="max-width: 750px;">
+    <div class="admin-modal-overlay" id="reviewDetailModalOverlay">
+        <div class="admin-modal feedback-modal" id="reviewDetailModal" role="dialog" aria-modal="true" aria-labelledby="reviewDetailModalTitle">
             <header class="admin-modal-header">
                 <div>
-                    <h2 class="admin-modal-title">Feedback Conversation</h2>
+                    <h2 class="admin-modal-title" id="reviewDetailModalTitle">Feedback Conversation</h2>
                     <p class="admin-modal-subtitle" id="modalReviewUser">From: user@email.com</p>
                 </div>
-                <button class="btn-close-modal" aria-label="Close modal">
+                <button type="button" class="btn-close-modal" aria-label="Close feedback details">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="1.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </header>
             
-            <div class="admin-modal-body" style="padding: 20px 24px;">
+            <div class="admin-modal-body">
                 <!-- Review Summary -->
-                <div class="admin-card" style="margin-bottom: 20px; background: var(--bg-color, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); padding: 16px;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <div class="feedback-review-summary">
+                    <div class="feedback-review-summary-header">
                         <div>
                             <span class="status-badge" id="modalReviewCategory">AI Quality</span>
                             <span id="modalReviewRatingStars" style="margin-left: 10px;"></span>

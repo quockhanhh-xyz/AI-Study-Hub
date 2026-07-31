@@ -9,6 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     initStarRating();
+    const feedbackCategory = document.getElementById('feedbackCategory');
+    if (feedbackCategory && window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+        window.UIHelper.convertSelectToCustomDropdown(feedbackCategory);
+    }
     loadUserFeedback();
 
     const form = document.getElementById('feedbackForm');
@@ -90,13 +94,18 @@ async function loadUserFeedback() {
             highlightStars(review.rating, false);
             document.getElementById('ratingText').textContent = ratingTexts[review.rating];
             document.getElementById('feedbackCategory').value = review.category;
+            const categorySelect = document.getElementById('feedbackCategory');
+            if (categorySelect) {
+                categorySelect.dispatchEvent(new Event("syncCustom"));
+            }
             document.getElementById('feedbackTitle').value = review.title;
             document.getElementById('feedbackContent').value = review.content;
 
             // Update UI elements
             document.getElementById('formCardTitle').firstElementChild.textContent = 'Update System Review';
             document.getElementById('btnSubmitFeedback').textContent = 'Update Review';
-            document.getElementById('btnDeleteFeedback').style.display = 'block';
+            document.getElementById('btnDeleteFeedback').style.display = 'inline-block';
+            document.getElementById('feedbackFormActions').classList.add('has-existing-review');
 
             // Show status badge
             const badge = document.getElementById('reviewStatusBadge');
@@ -116,12 +125,17 @@ async function loadUserFeedback() {
             highlightStars(0, false);
             document.getElementById('ratingText').textContent = 'Select rating';
             document.getElementById('feedbackCategory').value = '';
+            const categorySelect = document.getElementById('feedbackCategory');
+            if (categorySelect) {
+                categorySelect.dispatchEvent(new Event("syncCustom"));
+            }
             document.getElementById('feedbackTitle').value = '';
             document.getElementById('feedbackContent').value = '';
 
             document.getElementById('formCardTitle').firstElementChild.textContent = 'Submit System Review';
             document.getElementById('btnSubmitFeedback').textContent = 'Submit Review';
             document.getElementById('btnDeleteFeedback').style.display = 'none';
+            document.getElementById('feedbackFormActions').classList.remove('has-existing-review');
             document.getElementById('reviewStatusBadge').style.display = 'none';
 
             document.getElementById('noConversationState').style.display = 'flex';

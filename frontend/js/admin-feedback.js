@@ -36,12 +36,12 @@ document.addEventListener('DOMContentLoaded', () => {
     loadPageData();
 
     // Modal close hooks
-    const modals = document.querySelectorAll('.admin-modal');
-    modals.forEach(modal => {
-        const closeBtns = modal.querySelectorAll('.btn-close-modal');
+    const overlays = document.querySelectorAll('.admin-modal-overlay');
+    overlays.forEach(overlay => {
+        const closeBtns = overlay.querySelectorAll('.btn-close-modal');
         closeBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                modal.style.display = 'none';
+                overlay.classList.remove('active');
                 activeReviewId = null;
             });
         });
@@ -206,8 +206,8 @@ function renderTable(reviews) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>
-                <div style="font-weight: 600; color: var(--text-color, #0f172a);">${escapeHTML(r.userFullName || 'Anonymous')}</div>
-                <div style="font-size: 0.75rem; color: var(--text-muted, #64748b);">${escapeHTML(r.userEmail)}</div>
+                <div class="user-name" style="font-weight: 600;">${escapeHTML(r.userFullName || 'Anonymous')}</div>
+                <div class="user-email-text" style="font-size: 0.75rem;">${escapeHTML(r.userEmail)}</div>
             </td>
             <td>
                 <div style="display: flex; gap: 2px;">
@@ -277,7 +277,7 @@ async function openReviewDetailsModal(reviewId) {
             document.getElementById('adminReplyContent').value = '';
 
             // Show Modal
-            document.getElementById('reviewDetailModal').style.display = 'flex';
+            document.getElementById('reviewDetailModalOverlay').classList.add('active');
         }
     } catch (error) {
         console.error('Failed to load review detail modal:', error);
