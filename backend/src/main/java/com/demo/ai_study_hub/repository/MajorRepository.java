@@ -18,4 +18,5 @@ public interface MajorRepository extends JpaRepository<Major, Integer>, JpaSpeci
     boolean existsBySchoolAndMajorCodeIgnoreCaseAndMajorIdNot(School school, String majorCode, Integer majorId);
     boolean existsBySchoolAndMajorNameIgnoreCase(School school, String majorName);
     boolean existsBySchoolAndMajorNameIgnoreCaseAndMajorIdNot(School school, String majorName, Integer majorId);
+    boolean existsBySchoolSchoolId(Integer schoolId);
 }

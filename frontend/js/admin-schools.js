@@ -49,6 +49,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const schoolName = document.getElementById("schoolName");
   const schoolShortName = document.getElementById("schoolShortName");
   const schoolDesc = document.getElementById("schoolDesc");
+  const schoolStatusGroup = document.getElementById("schoolStatusGroup");
+  const schoolStatusField = document.getElementById("schoolStatusField");
 
   // Majors list DOM elements
   const majorSchoolFilter = document.getElementById("majorSchoolFilter");
@@ -63,6 +65,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const majorCode = document.getElementById("majorCode");
   const majorName = document.getElementById("majorName");
   const majorDesc = document.getElementById("majorDesc");
+  const majorStatusGroup = document.getElementById("majorStatusGroup");
+  const majorStatusField = document.getElementById("majorStatusField");
+  const majorSchoolField = document.getElementById("majorSchoolField");
 
   // --- Initial Data Load ---
   async function init() {
@@ -127,8 +132,36 @@ document.addEventListener("DOMContentLoaded", async () => {
       schoolsList = res.data || [];
       renderSchools(schoolsList);
       populateSchoolFilterOptions(schoolsList);
+      await updateStatistics();
     } else {
       throw new Error(res?.message || "Failed to retrieve schools list.");
+    }
+  }
+
+  async function updateStatistics() {
+    try {
+      const totalSchools = schoolsList.length;
+      const activeSchools = schoolsList.filter(s => s.status === "ACTIVE").length;
+
+      document.getElementById("cardTotalSchools").textContent = totalSchools;
+      document.getElementById("cardActiveSchools").textContent = activeSchools;
+
+      // Fetch majors for all schools in parallel
+      const majorsPromises = schoolsList.map(s => getAdminMajors(s.schoolId).catch(() => ({ data: [] })));
+      const majorsResults = await Promise.all(majorsPromises);
+
+      let totalMajors = 0;
+      let activeMajors = 0;
+      majorsResults.forEach(res => {
+        const list = res?.data || [];
+        totalMajors += list.length;
+        activeMajors += list.filter(m => m.status === "ACTIVE").length;
+      });
+
+      document.getElementById("cardTotalMajors").textContent = totalMajors;
+      document.getElementById("cardActiveMajors").textContent = activeMajors;
+    } catch (e) {
+      console.error("Failed to update statistics:", e);
     }
   }
 
@@ -149,11 +182,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       const tr = document.createElement("tr");
 
       const statusBadge = sch.status === "ACTIVE"
-        ? `<span class="badge badge-success">Active</span>`
-        : `<span class="badge badge-secondary">Inactive</span>`;
-
-      const toggleActionText = sch.status === "ACTIVE" ? "Deactivate" : "Activate";
-      const toggleActionClass = sch.status === "ACTIVE" ? "text-danger" : "text-success";
+        ? `<span class="badge badge-success" style="background-color: rgba(16, 185, 129, 0.15) !important; color: var(--success) !important;">Active</span>`
+        : `<span class="badge badge-secondary" style="background-color: var(--surface-muted) !important; color: var(--text-muted) !important; border: 1px solid var(--border) !important;">Inactive</span>`;
 
       tr.innerHTML = `
         <td><strong>#${sch.schoolId}</strong></td>
@@ -162,10 +192,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         <td>${escapeHTML(sch.shortName)}</td>
         <td>${statusBadge}</td>
         <td>
-          <div class="table-actions">
-            <button class="btn-table-action text-primary btn-edit-school" data-id="${sch.schoolId}">Edit</button>
-            <button class="btn-table-action ${toggleActionClass} btn-toggle-school" data-id="${sch.schoolId}" data-status="${sch.status}">
-              ${toggleActionText}
+          <div class="table-actions" style="display: flex; gap: 8px; justify-content: center;">
+            <button class="btn btn-sm btn-outline btn-edit-school" data-id="${sch.schoolId}">Edit</button>
+            <button class="btn btn-sm btn-outline-danger btn-delete-school" data-id="${sch.schoolId}">
+              Delete
             </button>
           </div>
         </td>
@@ -181,34 +211,57 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     });
 
-    document.querySelectorAll(".btn-toggle-school").forEach(btn => {
+    document.querySelectorAll(".btn-delete-school").forEach(btn => {
       btn.addEventListener("click", async () => {
         const id = parseInt(btn.dataset.id, 10);
-        const currentStatus = btn.dataset.status;
-        const nextStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+        const sch = schoolsList.find(s => s.schoolId === id);
+        const name = sch ? sch.schoolName : "this school";
+
+        const confirmed = await window.confirmAction({
+          title: "Delete School",
+          message: `Are you sure you want to delete ${escapeHTML(name)}? This action cannot be undone.`,
+          confirmText: "Delete",
+          danger: true
+        });
+
+        if (!confirmed) return;
 
         try {
-          await updateAdminSchoolStatus(id, nextStatus);
-          window.showToast("School status updated successfully", "success");
+          await deleteAdminSchool(id);
+          window.showToast("School deleted successfully", "success");
           await loadSchools();
         } catch (err) {
-          window.showToast(err.message || "Failed to update school status", "error");
+          window.showToast(err.message || "Failed to delete school", "error");
         }
       });
     });
   }
 
   function populateSchoolFilterOptions(schools) {
-    const activeFilterValue = majorSchoolFilter.value;
-    majorSchoolFilter.innerHTML = '<option value="">-- Choose a School --</option>';
+    const activeFilterValue = majorSchoolFilter ? majorSchoolFilter.value : "";
+    if (majorSchoolFilter) {
+      majorSchoolFilter.innerHTML = '<option value="">Choose a School</option>';
+    }
+    if (majorSchoolField) {
+      majorSchoolField.innerHTML = '<option value="">Choose a School</option>';
+    }
     schools.forEach(sch => {
-      const opt = document.createElement("option");
-      opt.value = sch.schoolId;
-      opt.textContent = `${sch.schoolName} (${sch.shortName})`;
-      majorSchoolFilter.appendChild(opt);
+      if (majorSchoolFilter) {
+        const opt = document.createElement("option");
+        opt.value = sch.schoolId;
+        opt.textContent = `${sch.schoolName} (${sch.shortName})`;
+        majorSchoolFilter.appendChild(opt);
+      }
+
+      if (majorSchoolField) {
+        const optModal = document.createElement("option");
+        optModal.value = sch.schoolId;
+        optModal.textContent = `${sch.schoolName} (${sch.shortName})`;
+        majorSchoolField.appendChild(optModal);
+      }
     });
     // Restore selected value if exists
-    if (activeFilterValue) {
+    if (activeFilterValue && majorSchoolFilter) {
       majorSchoolFilter.value = activeFilterValue;
     }
   }
@@ -245,9 +298,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         schoolName.value = sch.schoolName;
         schoolShortName.value = sch.shortName;
         schoolDesc.value = sch.description || "";
+        schoolStatusField.value = sch.status;
+        schoolStatusGroup.style.display = "block";
       }
     } else {
       schoolModalTitle.textContent = "Add New School";
+      schoolStatusGroup.style.display = "none";
     }
     openModal(schoolModal);
   }
@@ -263,6 +319,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       shortName: schoolShortName.value.trim(),
       description: schoolDesc.value.trim() || null
     };
+
+    if (id) {
+      payload.status = schoolStatusField.value;
+    }
 
     try {
       if (id) {
@@ -287,11 +347,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (currentSchoolIdForMajors) {
       majorSearch.disabled = false;
-      btnCreateMajor.disabled = false;
       await loadMajors(currentSchoolIdForMajors);
     } else {
       majorSearch.disabled = true;
-      btnCreateMajor.disabled = true;
       majorsTableBody.innerHTML = `
         <tr>
           <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 40px 20px;">
@@ -334,11 +392,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       const tr = document.createElement("tr");
 
       const statusBadge = maj.status === "ACTIVE"
-        ? `<span class="badge badge-success">Active</span>`
-        : `<span class="badge badge-secondary">Inactive</span>`;
-
-      const toggleActionText = maj.status === "ACTIVE" ? "Deactivate" : "Activate";
-      const toggleActionClass = maj.status === "ACTIVE" ? "text-danger" : "text-success";
+        ? `<span class="badge badge-success" style="background-color: rgba(16, 185, 129, 0.15) !important; color: var(--success) !important;">Active</span>`
+        : `<span class="badge badge-secondary" style="background-color: var(--surface-muted) !important; color: var(--text-muted) !important; border: 1px solid var(--border) !important;">Inactive</span>`;
 
       tr.innerHTML = `
         <td><strong>#${maj.majorId}</strong></td>
@@ -346,10 +401,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         <td>${escapeHTML(maj.majorName)}</td>
         <td>${statusBadge}</td>
         <td>
-          <div class="table-actions">
-            <button class="btn-table-action text-primary btn-edit-major" data-id="${maj.majorId}">Edit</button>
-            <button class="btn-table-action ${toggleActionClass} btn-toggle-major" data-id="${maj.majorId}" data-status="${maj.status}">
-              ${toggleActionText}
+          <div class="table-actions" style="display: flex; gap: 8px; justify-content: center;">
+            <button class="btn btn-sm btn-outline btn-edit-major" data-id="${maj.majorId}">Edit</button>
+            <button class="btn btn-sm btn-outline-danger btn-delete-major" data-id="${maj.majorId}">
+              Delete
             </button>
           </div>
         </td>
@@ -365,18 +420,28 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     });
 
-    document.querySelectorAll(".btn-toggle-major").forEach(btn => {
+    document.querySelectorAll(".btn-delete-major").forEach(btn => {
       btn.addEventListener("click", async () => {
         const id = parseInt(btn.dataset.id, 10);
-        const currentStatus = btn.dataset.status;
-        const nextStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+        const maj = majorsList.find(m => m.majorId === id);
+        const name = maj ? maj.majorName : "this major";
+
+        const confirmed = await window.confirmAction({
+          title: "Delete Major",
+          message: `Are you sure you want to delete ${escapeHTML(name)}? This action cannot be undone.`,
+          confirmText: "Delete",
+          danger: true
+        });
+
+        if (!confirmed) return;
 
         try {
-          await updateAdminMajorStatus(currentSchoolIdForMajors, id, nextStatus);
-          window.showToast("Major status updated successfully", "success");
+          await deleteAdminMajor(currentSchoolIdForMajors, id);
+          window.showToast("Major deleted successfully", "success");
           await loadMajors(currentSchoolIdForMajors);
+          await updateStatistics();
         } catch (err) {
-          window.showToast(err.message || "Failed to update major status", "error");
+          window.showToast(err.message || "Failed to delete major", "error");
         }
       });
     });
@@ -412,9 +477,24 @@ document.addEventListener("DOMContentLoaded", async () => {
         majorCode.value = maj.majorCode;
         majorName.value = maj.majorName;
         majorDesc.value = maj.description || "";
+        majorStatusField.value = maj.status;
+        majorStatusGroup.style.display = "block";
+        if (majorSchoolField) {
+          majorSchoolField.value = maj.schoolId;
+          majorSchoolField.disabled = true;
+        }
       }
     } else {
       majorModalTitle.textContent = "Add New Major";
+      majorStatusGroup.style.display = "none";
+      if (majorSchoolField) {
+        majorSchoolField.disabled = false;
+        if (currentSchoolIdForMajors) {
+          majorSchoolField.value = currentSchoolIdForMajors;
+        } else {
+          majorSchoolField.value = "";
+        }
+      }
     }
     openModal(majorModal);
   }
@@ -423,6 +503,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   majorForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const id = majorIdField.value;
+    const schoolId = majorSchoolField ? parseInt(majorSchoolField.value, 10) : (currentSchoolIdForMajors ? parseInt(currentSchoolIdForMajors, 10) : 0);
 
     const payload = {
       majorCode: majorCode.value.trim(),
@@ -430,16 +511,29 @@ document.addEventListener("DOMContentLoaded", async () => {
       description: majorDesc.value.trim() || null
     };
 
+    if (id) {
+      payload.status = majorStatusField.value;
+    }
+
     try {
       if (id) {
-        await updateAdminMajor(currentSchoolIdForMajors, parseInt(id, 10), payload);
+        await updateAdminMajor(schoolId, parseInt(id, 10), payload);
         window.showToast("Major updated successfully", "success");
       } else {
-        await createAdminMajor(currentSchoolIdForMajors, payload);
+        await createAdminMajor(schoolId, payload);
         window.showToast("Major created successfully", "success");
       }
       closeModal(majorModal);
-      await loadMajors(currentSchoolIdForMajors);
+
+      // Auto update filters to the target school of major
+      if (!currentSchoolIdForMajors || currentSchoolIdForMajors !== schoolId) {
+        majorSchoolFilter.value = schoolId;
+        currentSchoolIdForMajors = schoolId;
+        majorSearch.disabled = false;
+      }
+
+      await loadMajors(schoolId);
+      await updateStatistics();
     } catch (err) {
       window.showToast(err.message || "Failed to save major.", "error");
     }
@@ -457,13 +551,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Close modals on close button or cancel click
   document.querySelectorAll(".modal-close, .btn-close-modal").forEach(el => {
     el.addEventListener("click", () => {
-      const modal = el.closest(".modal");
+      const modal = el.closest(".modal-overlay");
       closeModal(modal);
     });
   });
 
   // Close modal when clicking on overlay
-  document.querySelectorAll(".modal").forEach(modal => {
+  document.querySelectorAll(".modal-overlay").forEach(modal => {
     modal.addEventListener("click", (e) => {
       if (e.target === modal) {
         closeModal(modal);
@@ -471,6 +565,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // --- Run Initialization ---
-  await init();
+  // --- Initialize Page ---
+  init();
 });

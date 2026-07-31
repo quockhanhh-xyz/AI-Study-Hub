@@ -39,3 +39,11 @@ function updateAdminMajorStatus(schoolId, majorId, status) {
     const endpoint = `/api/admin/schools/${schoolId}/majors/${majorId}/status?status=${encodeURIComponent(status)}`;
     return patch(endpoint);
 }
+
+function deleteAdminSchool(schoolId) {
+    return del(`/api/admin/schools/${schoolId}`);
+}
+
+function deleteAdminMajor(schoolId, majorId) {
+    return del(`/api/admin/schools/${schoolId}/majors/${majorId}`);
+}

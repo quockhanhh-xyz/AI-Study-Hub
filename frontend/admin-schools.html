@@ -95,6 +95,26 @@
                         <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 16px;">Retry</button>
                     </div>
 
+                    <!-- Summary KPI Cards -->
+                    <div class="admin-payment-summary-grid" id="schoolSummaryCards" style="margin-bottom: 24px;">
+                        <div class="payment-summary-card">
+                            <span class="summary-label">Total Schools</span>
+                            <span class="summary-value" id="cardTotalSchools">0</span>
+                        </div>
+                        <div class="payment-summary-card">
+                            <span class="summary-label">Active Schools</span>
+                            <span class="summary-value" id="cardActiveSchools">0</span>
+                        </div>
+                        <div class="payment-summary-card">
+                            <span class="summary-label">Total Majors</span>
+                            <span class="summary-value" id="cardTotalMajors">0</span>
+                        </div>
+                        <div class="payment-summary-card">
+                            <span class="summary-label">Active Majors</span>
+                            <span class="summary-value" id="cardActiveMajors">0</span>
+                        </div>
+                    </div>
+
                     <!-- Navigation Tabs -->
                     <div class="admin-tabs" style="margin-top: 16px;">
                         <button class="admin-tab active" id="tabSchoolsBtn">
@@ -109,10 +129,13 @@
                     <div id="schoolsContent" style="display: block; margin-top: 20px;">
                         <div class="admin-card">
                             <div class="admin-card-header flex-header" style="padding: 16px 20px;">
-                                <div class="admin-search-wrapper" style="flex: 1 1 300px; max-width: 400px;">
-                                    <input type="text" id="schoolSearch" class="admin-search-input" placeholder="Search schools..." />
+                                <div class="admin-search-wrapper" style="flex: 1 1 300px; max-width: 400px; position: relative;">
+                                    <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                    </svg>
+                                    <input type="text" id="schoolSearch" class="admin-search-input" placeholder="Search schools..." style="padding-left: 42px !important;" />
                                 </div>
-                                <button type="button" class="btn btn-primary" id="btnCreateSchool">
+                                <button type="button" class="btn btn-primary" id="btnCreateSchool" style="margin: 0; white-space: nowrap; height: 42px; border-radius: 24px !important; flex: 0 0 auto; width: auto; padding: 0 24px;">
                                     + Add New School
                                 </button>
                             </div>
@@ -125,7 +148,7 @@
                                             <th>Name</th>
                                             <th>Short Name</th>
                                             <th>Status</th>
-                                            <th>Actions</th>
+                                            <th style="text-align: center;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="schoolsTableBody">
@@ -138,19 +161,22 @@
 
                     <!-- Majors Management View -->
                     <div id="majorsContent" style="display: none; margin-top: 20px;">
-                        <div class="major-filter-container">
-                            <label for="majorSchoolFilter" style="font-weight: 600; color: var(--text-color);">Select Institution:</label>
-                            <select id="majorSchoolFilter">
-                                <option value="">-- Choose a School --</option>
+                        <div class="major-filter-container" style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+                            <label for="majorSchoolFilter" style="font-weight: 600; color: var(--text-main); font-size: 14px; white-space: nowrap;">Select Institution:</label>
+                            <select id="majorSchoolFilter" class="admin-filter-input admin-select" style="max-width: 300px; margin: 0; height: 42px; border-radius: 24px !important;">
+                                <option value="">Choose a School</option>
                             </select>
                         </div>
 
                         <div class="admin-card">
                             <div class="admin-card-header flex-header" style="padding: 16px 20px;">
-                                <div class="admin-search-wrapper" style="flex: 1 1 300px; max-width: 400px;">
-                                    <input type="text" id="majorSearch" class="admin-search-input" placeholder="Search majors..." disabled />
+                                <div class="admin-search-wrapper" style="flex: 1 1 300px; max-width: 400px; position: relative;">
+                                    <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                    </svg>
+                                    <input type="text" id="majorSearch" class="admin-search-input" placeholder="Search majors..." disabled style="padding-left: 42px !important;" />
                                 </div>
-                                <button type="button" class="btn btn-primary" id="btnCreateMajor" disabled>
+                                <button type="button" class="btn btn-primary" id="btnCreateMajor" style="margin: 0; white-space: nowrap; height: 42px; border-radius: 24px !important; flex: 0 0 auto; width: auto; padding: 0 24px;">
                                     + Add New Major
                                 </button>
                             </div>
@@ -162,7 +188,7 @@
                                             <th>Code</th>
                                             <th>Name</th>
                                             <th>Status</th>
-                                            <th>Actions</th>
+                                            <th style="text-align: center;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="majorsTableBody">
@@ -182,11 +208,11 @@
     </div>
 
     <!-- Create/Edit School Modal -->
-    <div class="modal" id="schoolModal" role="dialog" aria-modal="true">
-        <div class="modal-box" style="max-width: 500px;">
-            <div class="modal-header">
-                <h3 id="schoolModalTitle">Add New School</h3>
-                <button type="button" class="modal-close" aria-label="Close modal">&times;</button>
+    <div class="modal-overlay" id="schoolModal" role="dialog" aria-modal="true">
+        <div class="modal-box" style="max-width: 500px; position: relative;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 20px;">
+                <h3 id="schoolModalTitle" style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text-main);">Add New School</h3>
+                <button type="button" class="modal-close" aria-label="Close modal" style="position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 4px;">&times;</button>
             </div>
             <form id="schoolForm">
                 <input type="hidden" id="schoolIdField" />
@@ -206,6 +232,13 @@
                     <label for="schoolDesc">Description</label>
                     <textarea id="schoolDesc" placeholder="Optional details..." rows="3"></textarea>
                 </div>
+                <div class="form-group" style="margin-bottom: 20px; display: none;" id="schoolStatusGroup">
+                    <label for="schoolStatusField">Status</label>
+                    <select id="schoolStatusField" class="admin-filter-input admin-select" style="width: 100%;">
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                    </select>
+                </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="btnSaveSchool">Save School</button>
@@ -215,14 +248,20 @@
     </div>
 
     <!-- Create/Edit Major Modal -->
-    <div class="modal" id="majorModal" role="dialog" aria-modal="true">
-        <div class="modal-box" style="max-width: 500px;">
-            <div class="modal-header">
-                <h3 id="majorModalTitle">Add New Major</h3>
-                <button type="button" class="modal-close" aria-label="Close modal">&times;</button>
+    <div class="modal-overlay" id="majorModal" role="dialog" aria-modal="true">
+        <div class="modal-box" style="max-width: 500px; position: relative;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 20px;">
+                <h3 id="majorModalTitle" style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text-main);">Add New Major</h3>
+                <button type="button" class="modal-close" aria-label="Close modal" style="position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 4px;">&times;</button>
             </div>
             <form id="majorForm">
                 <input type="hidden" id="majorIdField" />
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="majorSchoolField">School / Institution <span style="color: var(--danger);">*</span></label>
+                    <select id="majorSchoolField" class="admin-filter-input admin-select" style="width: 100%;" required>
+                        <option value="">Choose a School</option>
+                    </select>
+                </div>
                 <div class="form-group" style="margin-bottom: 16px;">
                     <label for="majorCode">Major Code <span style="color: var(--danger);">*</span></label>
                     <input type="text" id="majorCode" required placeholder="E.g: SE" autocomplete="off" />
@@ -234,6 +273,13 @@
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label for="majorDesc">Description</label>
                     <textarea id="majorDesc" placeholder="Optional details..." rows="3"></textarea>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px; display: none;" id="majorStatusGroup">
+                    <label for="majorStatusField">Status</label>
+                    <select id="majorStatusField" class="admin-filter-input admin-select" style="width: 100%;">
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                    </select>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>

@@ -84,11 +84,26 @@ public class AdminSchoolController {
 
     @PatchMapping("/schools/{schoolId}/majors/{majorId}/status")
     public ResponseEntity<ApiResponse<MajorDto>> patchMajorStatus(
-            @PathVariable Integer schoolId,
-            @PathVariable Integer majorId,
-            @RequestParam("status") String status
+        @PathVariable Integer schoolId,
+        @PathVariable Integer majorId,
+        @RequestParam("status") String status
     ) {
         MajorDto updated = schoolService.patchMajorStatus(schoolId, majorId, status);
         return ResponseEntity.ok(ApiResponse.success(updated, "Major status updated successfully"));
+    }
+
+    @DeleteMapping("/schools/{schoolId}")
+    public ResponseEntity<ApiResponse<Void>> deleteSchool(@PathVariable Integer schoolId) {
+        schoolService.deleteSchool(schoolId);
+        return ResponseEntity.ok(ApiResponse.success(null, "School deleted successfully"));
+    }
+
+    @DeleteMapping("/schools/{schoolId}/majors/{majorId}")
+    public ResponseEntity<ApiResponse<Void>> deleteMajor(
+        @PathVariable Integer schoolId,
+        @PathVariable Integer majorId
+    ) {
+        schoolService.deleteMajor(schoolId, majorId);
+        return ResponseEntity.ok(ApiResponse.success(null, "Major deleted successfully"));
     }
 }

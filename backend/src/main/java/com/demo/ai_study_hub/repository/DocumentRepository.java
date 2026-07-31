@@ -16,6 +16,8 @@ import java.util.List;
 
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Integer> {
+    boolean existsBySchoolSchoolId(Integer schoolId);
+    boolean existsByMajorMajorId(Integer majorId);
 
     @Query("SELECT d FROM Document d LEFT JOIN d.subject s " +
             "WHERE d.owner = :owner " +

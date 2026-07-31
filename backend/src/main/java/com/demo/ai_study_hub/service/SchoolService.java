@@ -273,6 +273,49 @@ public class SchoolService {
                 .build();
     }
 
+    @Transactional
+    public void deleteSchool(Integer schoolId) {
+        School school = schoolRepository.findById(schoolId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "School not found"));
+
+        if (userRepository.existsBySchoolSchoolId(schoolId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete school as there are users associated with it");
+        }
+
+        if (documentRepository.existsBySchoolSchoolId(schoolId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete school as there are documents associated with it");
+        }
+
+        if (majorRepository.existsBySchoolSchoolId(schoolId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete school as there are majors associated with it");
+        }
+
+        schoolRepository.delete(school);
+    }
+
+    @Transactional
+    public void deleteMajor(Integer schoolId, Integer majorId) {
+        School school = schoolRepository.findById(schoolId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "School not found"));
+
+        Major major = majorRepository.findById(majorId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Major not found"));
+
+        if (!major.getSchool().getSchoolId().equals(schoolId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Major does not belong to the specified school");
+        }
+
+        if (userRepository.existsByMajorMajorId(majorId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete major as there are users associated with it");
+        }
+
+        if (documentRepository.existsByMajorMajorId(majorId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete major as there are documents associated with it");
+        }
+
+        majorRepository.delete(major);
+    }
+
     private MajorDto mapToMajorDto(Major major) {
         return MajorDto.builder()
                 .majorId(major.getMajorId())
