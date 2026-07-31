@@ -35,3 +35,7 @@ function exportAdminSubjects(params = {}) {
 
     return exportAdminData(endpoint, `Subjects_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
+
+function deleteAdminSubject(subjectId) {
+    return apiRequest(`/api/admin/subjects/${subjectId}`, { method: "DELETE" });
+}

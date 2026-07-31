@@ -53,4 +53,6 @@ public interface SubjectRequestRepository extends JpaRepository<SubjectRequest, 
            "LOWER(sr.requestedCode) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            "LOWER(sr.requestedName) LIKE LOWER(CONCAT('%', :search, '%')))")
     long countFilteredRequestsByStatus(@Param("status") String status, @Param("search") String search);
+
+    long countByRequestedCode(String requestedCode);
 }

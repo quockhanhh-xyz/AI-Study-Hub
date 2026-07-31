@@ -14,6 +14,10 @@ button, select, input, textarea {
     min-height: 100vh;
 }
 
+.admin-topbar {
+    display: none !important;
+}
+
 .main-content:has(.admin-layout),
 .main-content:has(.admin-content-wrapper) {
     padding-top: 35px !important;

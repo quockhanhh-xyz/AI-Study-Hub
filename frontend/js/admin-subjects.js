@@ -303,8 +303,9 @@ function initAdminSubjects() {
                 <td style="text-align: center;">${renderMappingChips(item.mappings, 'major', 'Not mapped')}</td>
                 <td style="color: var(--text-muted); text-align: center;">${docCount}</td>
                 <td style="text-align: center; vertical-align: middle;">
-                    <div class="admin-action-group">
-                        <button class="btn btn-sm btn-secondary" onclick='openSubjectModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Edit</button>
+                    <div class="table-actions" style="display: flex; gap: 8px; justify-content: center; align-items: center;">
+                        <button class="btn btn-sm btn-outline" onclick='openSubjectModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Edit</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="window.deleteSubject(${item.subjectId}, '${escapeHtml(item.subjectCode)}')">Delete</button>
                     </div>
                 </td>
             </tr>
@@ -490,6 +491,35 @@ function initAdminSubjects() {
         syncSelectedMajorSummary();
         await loadMajorsForModal(preferredSchoolId);
         subjectModal.classList.add('active');
+    };
+
+    window.deleteSubject = async (id, code) => {
+        const confirmed = await window.confirmAction({
+            title: "Delete Subject",
+            message: `Are you sure you want to delete subject ${code}? This action cannot be undone.`,
+            confirmText: "Delete",
+            danger: true
+        });
+
+        if (!confirmed) return;
+
+        try {
+            const res = await deleteAdminSubject(id);
+            if (res && res.success) {
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Subject deleted successfully', 'success');
+                }
+                loadSubjects();
+            } else {
+                throw new Error(res?.message || 'Failed to delete subject');
+            }
+        } catch (error) {
+            if (typeof window.showToast === 'function') {
+                window.showToast(error.message || 'Failed to delete subject', 'error');
+            } else {
+                alert(error.message || 'Failed to delete subject');
+            }
+        }
     };
 
     window.openToggleModal = (id, newStatus, code) => {
