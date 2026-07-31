@@ -265,4 +265,24 @@ public class AdminSubjectService {
         stats.put("pendingRequests", pendingRequests);
         return stats;
     }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteSubject(Integer id) {
+        Subject subject = getSystemSubject(id);
+
+        long docsCount = documentRepository.countBySubject(subject);
+        if (docsCount > 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, 
+                "Cannot delete subject: It is linked to " + docsCount + " documents");
+        }
+
+        long requestsCount = subjectRequestRepository.countByRequestedCode(subject.getSubjectCode());
+        if (requestsCount > 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                "Cannot delete subject: It has pending or linked user requests");
+        }
+
+        subjectMajorMappingRepository.deleteBySubject_SubjectId(id);
+        subjectRepository.delete(subject);
+    }
 }
