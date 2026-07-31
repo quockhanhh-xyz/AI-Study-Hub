@@ -170,12 +170,25 @@ document.addEventListener("DOMContentLoaded", async function () {
     authorDiv.append(avatarDiv, authorNameSpan);
     body.appendChild(authorDiv);
 
+    // B2. Metadata Grid (Date, Subject, School, Major)
+    const metaContainer = document.createElement("div");
+    metaContainer.className = "document-meta";
+
+    const dateSpan = document.createElement("span");
+    dateSpan.className = "document-meta-item";
+    dateSpan.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 6v6l4 2"/>
+      </svg>
+      <span>${formatDate(doc.publishedAt || doc.createdAt)}</span>
+    `;
+    metaContainer.appendChild(dateSpan);
+
     if (doc.subjectCode || doc.subjectName) {
-      const subjectTag = document.createElement("div");
-      subjectTag.className = "comm-card-subject-tag";
-      const tagText = doc.subjectCode
-        ? `${doc.subjectCode} - ${doc.subjectName}`
-        : doc.subjectName;
+      const tagText = doc.subjectCode ? `${doc.subjectCode} - ${doc.subjectName}` : doc.subjectName;
+      const subjectTag = document.createElement("span");
+      subjectTag.className = "document-meta-item";
       subjectTag.title = tagText;
       subjectTag.innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;">
@@ -183,50 +196,43 @@ document.addEventListener("DOMContentLoaded", async function () {
         </svg>
         <span>${tagText}</span>
       `;
-      body.appendChild(subjectTag);
+      metaContainer.appendChild(subjectTag);
     }
 
-      if (doc.schoolCode || doc.schoolName) {
-        const schoolTagText = doc.schoolCode || doc.schoolName;
-        const schoolTag = document.createElement("div");
-        schoolTag.className = "comm-card-subject-tag";
-        schoolTag.title = `School: ${schoolTagText}`;
-        schoolTag.innerHTML = `
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;">
-            <path d="M3 21h18M5 21V9l7-4 7 4v12M9 21v-6h6v6"/>
-          </svg>
-          <span>${schoolTagText}</span>
-        `;
-        body.appendChild(schoolTag);
-      }
+    if (doc.schoolCode || doc.schoolName) {
+      const schoolTagText = doc.schoolCode || doc.schoolName;
+      const schoolTag = document.createElement("span");
+      schoolTag.className = "document-meta-item";
+      schoolTag.title = `School: ${schoolTagText}`;
+      schoolTag.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;">
+          <path d="M3 21h18M5 21V9l7-4 7 4v12M9 21v-6h6v6"/>
+        </svg>
+        <span>${schoolTagText}</span>
+      `;
+      metaContainer.appendChild(schoolTag);
+    }
 
-      if (doc.majorCode || doc.majorName) {
-        const majorTagText = doc.majorCode || doc.majorName;
-        const majorTag = document.createElement("div");
-        majorTag.className = "comm-card-subject-tag";
-        majorTag.title = `Major: ${majorTagText}`;
-        majorTag.innerHTML = `
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;">
-            <path d="M2 10l10-5 10 5-10 5L2 10z"/><path d="M6 12.5V17c3.5 2.5 8.5 2.5 12 0v-4.5"/>
-          </svg>
-          <span>${majorTagText}</span>
-        `;
-        body.appendChild(majorTag);
-      }
+    if (doc.majorCode || doc.majorName) {
+      const majorTagText = doc.majorCode || doc.majorName;
+      const majorTag = document.createElement("span");
+      majorTag.className = "document-meta-item";
+      majorTag.title = `Major: ${majorTagText}`;
+      majorTag.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;">
+          <path d="M2 10l10-5 10 5-10 5L2 10z"/><path d="M6 12.5V17c3.5 2.5 8.5 2.5 12 0v-4.5"/>
+        </svg>
+        <span>${majorTagText}</span>
+      `;
+      metaContainer.appendChild(majorTag);
+    }
 
-    // C. Footer: Date & Metrics
+    body.appendChild(metaContainer);
+
+    // C. Footer: Metrics
     const footer = document.createElement("div");
     footer.className = "comm-card-footer";
-
-    const dateSpan = document.createElement("span");
-    dateSpan.className = "comm-card-date";
-    dateSpan.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="12" width="12" stroke="currentColor" stroke-width="2.5">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M12 6v6l4 2"/>
-      </svg>
-      ${formatDate(doc.publishedAt || doc.createdAt)}
-    `;
+    footer.style.justifyContent = "flex-end";
 
     const metricsDiv = document.createElement("div");
     metricsDiv.className = "comm-card-metrics";
@@ -262,7 +268,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     `;
 
     metricsDiv.append(ratingSpan, viewsSpan, downloadsSpan);
-    footer.append(dateSpan, metricsDiv);
+    footer.append(metricsDiv);
 
     card.append(header, body, footer);
     return card;
