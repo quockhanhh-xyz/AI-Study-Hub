@@ -12,10 +12,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import org.springframework.core.annotation.Order;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Order(1)
 public class SchoolMajorDataSeeder implements CommandLineRunner {
 
     private final SchoolRepository schoolRepository;
