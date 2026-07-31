@@ -345,8 +345,24 @@ const UIHelper = {
     optionsMenu.className = "custom-select-options";
     container.appendChild(optionsMenu);
 
+    const searchWrapper = document.createElement("div");
+    searchWrapper.className = "custom-select-search-wrapper";
+
+    const searchInput = document.createElement("input");
+    searchInput.type = "text";
+    searchInput.className = "custom-select-search-input";
+    searchInput.placeholder = "Type to search...";
+    searchInput.autocomplete = "off";
+
+    searchWrapper.appendChild(searchInput);
+    optionsMenu.appendChild(searchWrapper);
+
+    const listContainer = document.createElement("div");
+    listContainer.className = "custom-select-list-container";
+    optionsMenu.appendChild(listContainer);
+
     const rebuildSelectOptions = () => {
-      optionsMenu.innerHTML = "";
+      listContainer.innerHTML = "";
 
       const updateLabel = () => {
         const activeOpt = selectElement.options[selectElement.selectedIndex];
@@ -355,55 +371,74 @@ const UIHelper = {
 
       updateLabel();
 
+      const filterVal = searchInput.value.toLowerCase().trim();
+
       Array.from(selectElement.children).forEach(child => {
         if (child.tagName === 'OPTGROUP') {
-          const groupHeader = document.createElement("div");
-          groupHeader.className = "custom-select-group-header";
-          groupHeader.textContent = child.label;
-          optionsMenu.appendChild(groupHeader);
+          const matchingOptions = Array.from(child.children).filter(option =>
+            !filterVal || option.textContent.toLowerCase().includes(filterVal) || option.value.toLowerCase().includes(filterVal)
+          );
 
-          Array.from(child.children).forEach(option => {
+          if (matchingOptions.length > 0) {
+            const groupHeader = document.createElement("div");
+            groupHeader.className = "custom-select-group-header";
+            groupHeader.textContent = child.label;
+            listContainer.appendChild(groupHeader);
+
+            matchingOptions.forEach(option => {
+              const item = document.createElement("div");
+              item.className = "custom-select-option indented";
+              item.textContent = option.textContent;
+              item.dataset.value = option.value;
+              if (option.selected) {
+                item.classList.add("selected");
+              }
+
+              item.addEventListener("click", (e) => {
+                e.stopPropagation();
+                selectElement.value = option.value;
+                searchInput.value = "";
+                updateLabel();
+                rebuildSelectOptions();
+                container.classList.remove("active");
+                selectElement.dispatchEvent(new Event("change", { bubbles: true }));
+              });
+              listContainer.appendChild(item);
+            });
+          }
+        } else if (child.tagName === 'OPTION') {
+          if (!filterVal || child.textContent.toLowerCase().includes(filterVal) || child.value.toLowerCase().includes(filterVal)) {
             const item = document.createElement("div");
-            item.className = "custom-select-option indented";
-            item.textContent = option.textContent;
-            item.dataset.value = option.value;
-            if (option.selected) {
+            item.className = "custom-select-option";
+            item.textContent = child.textContent;
+            item.dataset.value = child.value;
+            if (child.selected) {
               item.classList.add("selected");
             }
 
             item.addEventListener("click", (e) => {
               e.stopPropagation();
-              selectElement.value = option.value;
+              selectElement.value = child.value;
+              searchInput.value = "";
               updateLabel();
-              optionsMenu.querySelectorAll(".custom-select-option").forEach(opt => opt.classList.remove("selected"));
-              item.classList.add("selected");
+              rebuildSelectOptions();
               container.classList.remove("active");
               selectElement.dispatchEvent(new Event("change", { bubbles: true }));
             });
-            optionsMenu.appendChild(item);
-          });
-        } else if (child.tagName === 'OPTION') {
-          const item = document.createElement("div");
-          item.className = "custom-select-option";
-          item.textContent = child.textContent;
-          item.dataset.value = child.value;
-          if (child.selected) {
-            item.classList.add("selected");
+            listContainer.appendChild(item);
           }
-
-          item.addEventListener("click", (e) => {
-            e.stopPropagation();
-            selectElement.value = child.value;
-            updateLabel();
-            optionsMenu.querySelectorAll(".custom-select-option").forEach(opt => opt.classList.remove("selected"));
-            item.classList.add("selected");
-            container.classList.remove("active");
-            selectElement.dispatchEvent(new Event("change", { bubbles: true }));
-          });
-          optionsMenu.appendChild(item);
         }
       });
     };
+
+    searchInput.addEventListener("input", (e) => {
+      e.stopPropagation();
+      rebuildSelectOptions();
+    });
+
+    searchInput.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
 
     rebuildSelectOptions();
 
