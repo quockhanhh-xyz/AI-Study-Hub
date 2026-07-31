@@ -1058,15 +1058,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (subjectTag) {
       meta.innerHTML += `<span class="document-meta-item">${META_ICONS.subject}${subjectTag}</span>`;
     }
-    const schoolMajorParts = [];
     if (doc.schoolCode || doc.schoolName) {
-      schoolMajorParts.push(doc.schoolCode || doc.schoolName);
+      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.school}${doc.schoolCode || doc.schoolName}</span>`;
     }
     if (doc.majorCode || doc.majorName) {
-      schoolMajorParts.push(doc.majorCode || doc.majorName);
-    }
-    if (schoolMajorParts.length > 0) {
-      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.school}${schoolMajorParts.join(" - ")}</span>`;
+      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.major}${doc.majorCode || doc.majorName}</span>`;
     }
 
     // Robust Folder Fallback: folderName -> lookup via folderId -> nested folder object
@@ -1079,7 +1075,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       folderTag = doc.folder.folderName || doc.folder.name || "";
     }
     if (folderTag) {
-      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.folder}${folderTag}</span>`;
+      meta.innerHTML += `<span class="document-meta-item meta-folder">${META_ICONS.folder}${folderTag}</span>`;
     }
 
     content.appendChild(meta);

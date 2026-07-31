@@ -1096,7 +1096,7 @@ async function loadEditSubjects(majorId, currentSubjectId = null) {
     }
 
     try {
-        const response = await getSubjects(majorId || "");
+        const response = await getSubjects("");
         allSubjectsList = response?.data || [];
         renderSubjectOptions(allSubjectsList, currentSubjectId);
         select.disabled = false;
@@ -1251,8 +1251,8 @@ async function handleSave() {
         showEditMessage("Title is required.", "error");
         return;
     }
-    if ((schoolId && !majorId) || (!schoolId && majorId)) {
-        showEditMessage("School and Major must be selected together.", "error");
+    if (!schoolId || !majorId) {
+        showEditMessage("School and Major are required.", "error");
         return;
     }
 
@@ -1396,36 +1396,41 @@ function openSubjectRequestModalForDoc(doc) {
     // Populate existing system subjects select
     if (existingSelect) {
         existingSelect.innerHTML = '<option value="">Or propose a new system subject</option>';
-        const systemSubjects = allSubjectsList.filter(s => s.scope === "SYSTEM");
-        systemSubjects.forEach(s => {
-            const opt = document.createElement("option");
-            opt.value = s.subjectId;
-            opt.textContent = `${s.subjectCode} – ${s.subjectName}`;
-            existingSelect.appendChild(opt);
-        });
-
-        if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
-            window.UIHelper.convertSelectToCustomDropdown(existingSelect);
-            existingSelect.dispatchEvent(new Event("syncCustom"));
-        }
+        getSubjects("").then(sysSubjRes => {
+            const allSys = sysSubjRes?.data || [];
+            const systemSubjects = allSys.filter(s => s.scope === "SYSTEM");
+            systemSubjects.forEach(s => {
+                const opt = document.createElement("option");
+                opt.value = s.subjectId;
+                opt.textContent = `${s.subjectCode} – ${s.subjectName}`;
+                existingSelect.appendChild(opt);
+            });
+            if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+                window.UIHelper.convertSelectToCustomDropdown(existingSelect);
+                existingSelect.dispatchEvent(new Event("syncCustom"));
+            }
+        }).catch(err => console.error("Failed to load system subjects", err));
 
         existingSelect.onchange = () => {
             const selectedVal = existingSelect.value;
             if (selectedVal) {
-                const found = allSubjectsList.find(s => String(s.subjectId) === String(selectedVal));
-                if (found) {
-                    if (codeInput) {
-                        codeInput.value = found.subjectCode;
-                        codeInput.disabled = true;
+                getSubjects("").then(res => {
+                    const allSys = res?.data || [];
+                    const found = allSys.find(s => String(s.subjectId) === String(selectedVal));
+                    if (found) {
+                        if (codeInput) {
+                            codeInput.value = found.subjectCode;
+                            codeInput.disabled = true;
+                        }
+                        if (nameInput) {
+                            nameInput.value = found.subjectName;
+                            nameInput.disabled = true;
+                        }
+                        if (submitBtn) {
+                            submitBtn.textContent = "Assign & Publish";
+                        }
                     }
-                    if (nameInput) {
-                        nameInput.value = found.subjectName;
-                        nameInput.disabled = true;
-                    }
-                    if (submitBtn) {
-                        submitBtn.textContent = "Assign & Publish";
-                    }
-                }
+                });
             } else {
                 if (codeInput) {
                     codeInput.value = doc.subjectCode || (doc.subject ? doc.subject.subjectCode : "") || "";

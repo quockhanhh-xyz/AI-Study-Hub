@@ -186,19 +186,32 @@ document.addEventListener("DOMContentLoaded", async function () {
       body.appendChild(subjectTag);
     }
 
-      const schoolMajorParts = [];
       if (doc.schoolCode || doc.schoolName) {
-        schoolMajorParts.push(doc.schoolCode || doc.schoolName);
+        const schoolTagText = doc.schoolCode || doc.schoolName;
+        const schoolTag = document.createElement("div");
+        schoolTag.className = "comm-card-subject-tag";
+        schoolTag.title = `School: ${schoolTagText}`;
+        schoolTag.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;">
+            <path d="M3 21h18M5 21V9l7-4 7 4v12M9 21v-6h6v6"/>
+          </svg>
+          <span>${schoolTagText}</span>
+        `;
+        body.appendChild(schoolTag);
       }
+
       if (doc.majorCode || doc.majorName) {
-        schoolMajorParts.push(doc.majorCode || doc.majorName);
-      }
-      if (schoolMajorParts.length > 0) {
-        const smTag = document.createElement("div");
-        smTag.className = "comm-card-subject-tag";
-        smTag.title = `School/Major: ${schoolMajorParts.join(" - ")}`;
-        smTag.textContent = schoolMajorParts.join(" - ");
-        body.appendChild(smTag);
+        const majorTagText = doc.majorCode || doc.majorName;
+        const majorTag = document.createElement("div");
+        majorTag.className = "comm-card-subject-tag";
+        majorTag.title = `Major: ${majorTagText}`;
+        majorTag.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;">
+            <path d="M2 10l10-5 10 5-10 5L2 10z"/><path d="M6 12.5V17c3.5 2.5 8.5 2.5 12 0v-4.5"/>
+          </svg>
+          <span>${majorTagText}</span>
+        `;
+        body.appendChild(majorTag);
       }
 
     // C. Footer: Date & Metrics

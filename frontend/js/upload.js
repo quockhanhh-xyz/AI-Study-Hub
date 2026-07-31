@@ -168,7 +168,7 @@ async function loadSubjectOptions(majorId = "") {
   subjectSelect.disabled = true;
 
   try {
-    const result = await getSubjects(majorId);
+    const result = await getSubjects("");
     const subjects = Array.isArray(result.data) ? result.data : [];
 
     subjectDatalist.innerHTML = "";
@@ -649,8 +649,8 @@ uploadForm.addEventListener("submit", async (e) => {
 
   const selectedSchoolId = schoolSelect ? schoolSelect.value : "";
   const selectedMajorId = majorSelect ? majorSelect.value : "";
-  if ((selectedSchoolId && !selectedMajorId) || (!selectedSchoolId && selectedMajorId)) {
-    showMessage("School and major must be selected together.", "error");
+  if (!selectedSchoolId || !selectedMajorId) {
+    showMessage("School and major are required.", "error");
     return;
   }
 

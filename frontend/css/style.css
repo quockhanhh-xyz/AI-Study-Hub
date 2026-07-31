@@ -1160,10 +1160,11 @@ textarea.success {
 
 
 .document-meta {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  row-gap: 10px;
+  column-gap: 12px;
   align-items: center;
-  gap: 12px;
   color: var(--text-muted);
   font-size: 12px;
 }
@@ -1173,7 +1174,6 @@ textarea.success {
   align-items: center;
   gap: 6px;
   color: var(--text-muted);
-  max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1182,6 +1182,11 @@ textarea.success {
 .document-meta-item svg {
   color: var(--text-light);
   flex-shrink: 0;
+}
+
+.meta-folder,
+.document-folder-path {
+  grid-column: 1 / -1;
 }
 
 .document-folder-path {
@@ -3614,9 +3619,7 @@ svg {
 }
 
 .meta-folder {
-  background: var(--surface-muted);
   color: var(--text-muted);
-  border: 1px solid var(--border);
 }
 
 .meta-separator {
