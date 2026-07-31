@@ -515,12 +515,12 @@ function renderNotificationList() {
                 } else if (notif.targetType === "DOCUMENT") {
                     window.location.href = `document-detail.html?id=${notif.targetId}`;
                 } else if (notif.targetType === "SYSTEM_REVIEW") {
-                    const userJson = localStorage.getItem('user');
+                    const userJson = localStorage.getItem('currentUser');
                     let isAdmin = false;
                     if (userJson) {
                         try {
                             const user = JSON.parse(userJson);
-                            isAdmin = user.role === 'ADMIN';
+                            isAdmin = user.role === 'ADMIN' || user.role === 'ROLE_ADMIN';
                         } catch (e) {}
                     }
                     if (isAdmin) {

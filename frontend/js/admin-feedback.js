@@ -18,11 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
         checkAuth();
     }
     // Verify admin role explicitly
-    const userJson = localStorage.getItem('user');
+    const userJson = localStorage.getItem('currentUser');
     if (userJson) {
         try {
             const user = JSON.parse(userJson);
-            if (user.role !== 'ADMIN') {
+            if (user.role !== 'ADMIN' && user.role !== 'ROLE_ADMIN') {
                 window.location.href = 'dashboard.html';
                 return;
             }
