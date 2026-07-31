@@ -22,6 +22,7 @@ public interface AiUsageLogRepository extends JpaRepository<AiUsageLog, Long>, J
     @Query("SELECT COUNT(l) FROM AiUsageLog l " +
            "WHERE l.user.userId = :userId " +
            "AND l.countedAsQuestion = true " +
+           "AND l.requestType IN ('ASK', 'QA', 'AI_QA') " +
            "AND l.status = 'SUCCESS' " +
            "AND l.createdAt >= :since")
     long countSuccessfulQuestionsAfter(

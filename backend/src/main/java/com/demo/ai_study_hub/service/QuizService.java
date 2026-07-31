@@ -149,7 +149,7 @@ public class QuizService {
 
                 saveUsageLog(reserveResult.user, reserveResult.doc, "QUIZ",
                         aiProviderRouter.route().getProviderName(), model,
-                        0, 0, 0, false, true, "SUCCESS");
+                        0, 0, 0, false, false, "SUCCESS");
 
                 return toResponse(entity);
             });

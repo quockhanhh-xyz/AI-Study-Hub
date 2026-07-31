@@ -112,7 +112,7 @@ public class AiChatServiceImpl implements AiChatService {
 
             int dailyLimit = aiModelSelector.getDailyQuestionLimit(tier);
             long usedToday = countUsedToday(user);
-            long activeReservations = aiUsageReservationRepository.countActiveReservations(user, LocalDateTime.now());
+            long activeReservations = aiUsageReservationRepository.countActiveReservationsByType(user, "QA", LocalDateTime.now());
             if (usedToday + activeReservations >= dailyLimit) {
                 saveUsageLog(user, doc, "ASK", null, null, 0, 0, 0, false, false, "QUOTA_EXCEEDED");
                 throw new QuotaExceededException(HttpStatus.FORBIDDEN,
@@ -633,7 +633,7 @@ public class AiChatServiceImpl implements AiChatService {
 
             int dailyLimit = aiModelSelector.getDailyQuestionLimit(tier);
             long usedToday = countUsedToday(user);
-            long activeReservations = aiUsageReservationRepository.countActiveReservations(user, LocalDateTime.now());
+            long activeReservations = aiUsageReservationRepository.countActiveReservationsByType(user, "QA", LocalDateTime.now());
             if (usedToday + activeReservations >= dailyLimit) {
                 saveUsageLog(user, null, "ASK", null, null, 0, 0, 0, false, false, "QUOTA_EXCEEDED");
                 throw new QuotaExceededException(HttpStatus.FORBIDDEN,
