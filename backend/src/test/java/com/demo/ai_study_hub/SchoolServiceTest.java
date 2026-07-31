@@ -145,7 +145,30 @@ class SchoolServiceTest {
                 .build();
 
         when(majorRepository.findById(1)).thenReturn(Optional.of(ai));
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> schoolService.updateMajor(1, dto));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> schoolService.updateMajor(1, 1, dto));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void testCreateMajor_WhenSchoolInactive_ShouldThrowBadRequest() {
+        fpt.setStatus("INACTIVE");
+        MajorDto dto = MajorDto.builder()
+                .majorCode("AI")
+                .majorName("Artificial Intelligence")
+                .build();
+
+        when(schoolRepository.findById(1)).thenReturn(Optional.of(fpt));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> schoolService.createMajor(1, dto));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void testPatchMajorStatus_WhenSchoolInactiveAndActivating_ShouldThrowBadRequest() {
+        fpt.setStatus("INACTIVE");
+        ai.setStatus("INACTIVE");
+
+        when(majorRepository.findById(1)).thenReturn(Optional.of(ai));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> schoolService.patchMajorStatus(1, 1, "ACTIVE"));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 }

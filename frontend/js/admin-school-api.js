@@ -31,11 +31,11 @@ function createAdminMajor(schoolId, data) {
     return post(`/api/admin/schools/${schoolId}/majors`, data);
 }
 
-function updateAdminMajor(majorId, data) {
-    return put(`/api/admin/majors/${majorId}`, data);
+function updateAdminMajor(schoolId, majorId, data) {
+    return put(`/api/admin/schools/${schoolId}/majors/${majorId}`, data);
 }
 
-function updateAdminMajorStatus(majorId, status) {
-    const endpoint = `/api/admin/majors/${majorId}/status?status=${encodeURIComponent(status)}`;
+function updateAdminMajorStatus(schoolId, majorId, status) {
+    const endpoint = `/api/admin/schools/${schoolId}/majors/${majorId}/status?status=${encodeURIComponent(status)}`;
     return patch(endpoint);
 }

@@ -372,7 +372,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const nextStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
         
         try {
-          await updateAdminMajorStatus(id, nextStatus);
+          await updateAdminMajorStatus(currentSchoolIdForMajors, id, nextStatus);
           window.showToast("Major status updated successfully", "success");
           await loadMajors(currentSchoolIdForMajors);
         } catch (err) {
@@ -432,7 +432,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
       if (id) {
-        await updateAdminMajor(parseInt(id, 10), payload);
+        await updateAdminMajor(currentSchoolIdForMajors, parseInt(id, 10), payload);
         window.showToast("Major updated successfully", "success");
       } else {
         await createAdminMajor(currentSchoolIdForMajors, payload);

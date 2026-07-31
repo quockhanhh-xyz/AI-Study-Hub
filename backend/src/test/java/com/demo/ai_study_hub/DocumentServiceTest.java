@@ -76,6 +76,10 @@ class DocumentServiceTest {
     private com.demo.ai_study_hub.service.NotificationService notificationService;
     @Mock
     private com.demo.ai_study_hub.repository.SubjectRequestRepository subjectRequestRepository;
+    @Mock
+    private com.demo.ai_study_hub.repository.SchoolRepository schoolRepository;
+    @Mock
+    private com.demo.ai_study_hub.repository.MajorRepository majorRepository;
 
     @InjectMocks
     private DocumentService documentService;
@@ -946,5 +950,131 @@ class DocumentServiceTest {
 
         assertDoesNotThrow(() ->
             documentService.uploadDocument(mockFile, "Report", null, 1, null, "doantam785@gmail.com"));
+    }
+
+    @Test
+    void testUpdateDocument_WhenSchoolChangedAndMajorNotSelected_ShouldClearMajor() {
+        School oldSchool = new School();
+        oldSchool.setSchoolId(1);
+        oldSchool.setStatus("ACTIVE");
+
+        Major oldMajor = new Major();
+        oldMajor.setMajorId(10);
+        oldMajor.setStatus("ACTIVE");
+        oldMajor.setSchool(oldSchool);
+
+        mockDocument.setSchool(oldSchool);
+        mockDocument.setMajor(oldMajor);
+
+        School newSchool = new School();
+        newSchool.setSchoolId(2);
+        newSchool.setStatus("ACTIVE");
+
+        DocumentUpdateDTO dto = new DocumentUpdateDTO();
+        dto.setTitle("Updated Title");
+        dto.setSchoolId(2);
+        dto.setMajorId(-1); // FE sends -1 to clear
+
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
+        when(schoolRepository.findById(2)).thenReturn(Optional.of(newSchool));
+        when(documentRepository.save(any(Document.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        DocumentResponse res = documentService.updateDocument(4, dto, "doantam785@gmail.com");
+        assertNotNull(res);
+        assertNull(mockDocument.getMajor());
+        assertEquals(2, mockDocument.getSchool().getSchoolId());
+    }
+
+    @Test
+    void testUpdateDocument_WhenMajorDoesNotBelongToSchool_ShouldThrowBadRequest() {
+        School school = new School();
+        school.setSchoolId(1);
+        school.setStatus("ACTIVE");
+
+        School otherSchool = new School();
+        otherSchool.setSchoolId(2);
+        otherSchool.setStatus("ACTIVE");
+
+        Major major = new Major();
+        major.setMajorId(10);
+        major.setStatus("ACTIVE");
+        major.setSchool(otherSchool); // belongs to other school
+
+        mockDocument.setSchool(school);
+
+        DocumentUpdateDTO dto = new DocumentUpdateDTO();
+        dto.setTitle("Updated Title");
+        dto.setSchoolId(1);
+        dto.setMajorId(10);
+
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
+        when(schoolRepository.findById(1)).thenReturn(Optional.of(school));
+        when(majorRepository.findById(10)).thenReturn(Optional.of(major));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+            documentService.updateDocument(4, dto, "doantam785@gmail.com")
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertTrue(ex.getReason().contains("belong"));
+    }
+
+    @Test
+    void testPublishDocument_WhenSchoolOrMajorInactive_ShouldThrowBadRequest() {
+        School school = new School();
+        school.setSchoolId(1);
+        school.setStatus("INACTIVE"); // INACTIVE
+
+        Major major = new Major();
+        major.setMajorId(10);
+        major.setStatus("ACTIVE");
+        major.setSchool(school);
+
+        mockDocument.setSchool(school);
+        mockDocument.setMajor(major);
+
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(documentRepository.findById(4)).thenReturn(Optional.of(mockDocument));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+            documentService.publishDocument(4, "doantam785@gmail.com")
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void testGetMyDocumentsWithFilters_WithSchoolAndMajor_ShouldCallRepositoryWithSchoolMajor() {
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(documentRepository.findMyDocumentsWithFiltersAndSchoolMajor(mockOwner, "Report", null, null, null, 1, 2))
+                .thenReturn(java.util.Collections.singletonList(mockDocument));
+
+        List<DocumentResponse> res = documentService.getMyDocumentsWithFilters(
+                "doantam785@gmail.com", "Report", null, null, null, false, 1, 2
+        );
+        assertNotNull(res);
+        assertEquals(1, res.size());
+        verify(documentRepository, times(1))
+                .findMyDocumentsWithFiltersAndSchoolMajor(mockOwner, "Report", null, null, null, 1, 2);
+    }
+
+    @Test
+    void testGetMyDocumentsWithFilters_WithFolderAndIncludeSubfoldersAndSchoolMajor_ShouldCallSubfolderAndSchoolMajorRepository() {
+        List<Integer> subfolderIds = java.util.Arrays.asList(10, 11, 12);
+        when(userRepository.findByEmail("doantam785@gmail.com")).thenReturn(Optional.of(mockOwner));
+        when(folderRepository.findSubFolderIdsByParentId(10)).thenReturn(java.util.Arrays.asList(11, 12));
+        when(folderRepository.findSubFolderIdsByParentId(11)).thenReturn(java.util.Collections.emptyList());
+        when(folderRepository.findSubFolderIdsByParentId(12)).thenReturn(java.util.Collections.emptyList());
+
+        when(documentRepository.findByOwnerAndFolderIdsAndSchoolMajor(eq(mockOwner), any(), eq("Report"), any(), any(), eq(1), eq(2)))
+                .thenReturn(java.util.Collections.singletonList(mockDocument));
+
+        List<DocumentResponse> res = documentService.getMyDocumentsWithFilters(
+                "doantam785@gmail.com", "Report", null, null, 10, true, 1, 2
+        );
+        assertNotNull(res);
+        assertEquals(1, res.size());
+        verify(documentRepository, times(1))
+                .findByOwnerAndFolderIdsAndSchoolMajor(eq(mockOwner), any(), eq("Report"), any(), any(), eq(1), eq(2));
     }
 }

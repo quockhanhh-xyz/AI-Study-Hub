@@ -65,7 +65,7 @@ public class SchoolMajorDataSeeder implements CommandLineRunner {
             log.info("Seeded Major: Software Engineering for FPT");
         }
 
-        // 4. Java-based migration seeder using JdbcTemplate
+        // 4. Java-based migration seeder using JdbcTemplate - User Migration
         try {
             List<Map<String, Object>> usersToMigrate = jdbcTemplate.queryForList(
                 "SELECT user_id, school_name, major FROM users WHERE school_id IS NULL OR major_id IS NULL"
@@ -106,8 +106,12 @@ public class SchoolMajorDataSeeder implements CommandLineRunner {
                 }
                 log.info("Completed migration of users to School & Major master data.");
             }
+        } catch (Exception e) {
+            log.warn("School/Major user migration warning: {}", e.getMessage());
+        }
 
-            // 5. Backfill legacy documents using owner profile's school_id & major_id
+        // 5. Java-based migration seeder using JdbcTemplate - Document Migration
+        try {
             int updatedDocs = jdbcTemplate.update(
                 "UPDATE documents d SET " +
                 "d.school_id = (SELECT u.school_id FROM users u WHERE u.user_id = d.owner_id), " +
@@ -119,7 +123,7 @@ public class SchoolMajorDataSeeder implements CommandLineRunner {
                 log.info("Backfilled school_id and major_id for {} legacy documents based on owner profile.", updatedDocs);
             }
         } catch (Exception e) {
-            log.warn("School/Major user and document migration warning: {}", e.getMessage());
+            log.warn("School/Major document migration warning: {}", e.getMessage());
         }
     }
 }

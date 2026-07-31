@@ -166,6 +166,10 @@ public class SchoolService {
         School school = schoolRepository.findById(schoolId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "School not found"));
 
+        if (!"ACTIVE".equals(school.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create major for inactive school");
+        }
+
         if (dto.getMajorCode() == null || dto.getMajorCode().trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Major code is required");
         }
@@ -192,9 +196,13 @@ public class SchoolService {
     }
 
     @Transactional
-    public MajorDto updateMajor(Integer id, MajorDto dto) {
+    public MajorDto updateMajor(Integer schoolId, Integer id, MajorDto dto) {
         Major major = majorRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Major not found"));
+
+        if (!major.getSchool().getSchoolId().equals(schoolId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Major does not belong to this school");
+        }
 
         if (dto.getMajorCode() == null || dto.getMajorCode().trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Major code is required");
@@ -213,9 +221,13 @@ public class SchoolService {
         major.setMajorCode(dto.getMajorCode().trim().toUpperCase());
         major.setMajorName(dto.getMajorName().trim());
         major.setDescription(dto.getDescription());
+        
         if (dto.getStatus() != null) {
             if (!"ACTIVE".equals(dto.getStatus()) && !"INACTIVE".equals(dto.getStatus())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status. Use ACTIVE or INACTIVE");
+            }
+            if ("ACTIVE".equals(dto.getStatus()) && !"ACTIVE".equals(major.getSchool().getStatus())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot activate major when its school is inactive");
             }
             major.setStatus(dto.getStatus());
         }
@@ -225,12 +237,20 @@ public class SchoolService {
     }
 
     @Transactional
-    public MajorDto patchMajorStatus(Integer id, String status) {
+    public MajorDto patchMajorStatus(Integer schoolId, Integer id, String status) {
         Major major = majorRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Major not found"));
 
+        if (!major.getSchool().getSchoolId().equals(schoolId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Major does not belong to this school");
+        }
+
         if (!"ACTIVE".equals(status) && !"INACTIVE".equals(status)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status. Use ACTIVE or INACTIVE");
+        }
+
+        if ("ACTIVE".equals(status) && !"ACTIVE".equals(major.getSchool().getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot activate major when its school is inactive");
         }
 
         major.setStatus(status);
