@@ -11,6 +11,8 @@ import com.demo.ai_study_hub.repository.SubjectRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
 import com.demo.ai_study_hub.service.DocumentService;
 import com.demo.ai_study_hub.service.SubjectService;
+import com.demo.ai_study_hub.service.SubjectMappingService;
+import com.demo.ai_study_hub.repository.SubjectMajorMappingRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +44,10 @@ class SubjectServiceMyLibraryTest {
     private DocumentRepository documentRepository;
     @Mock
     private DocumentService documentService;
+    @Mock
+    private SubjectMajorMappingRepository subjectMajorMappingRepository;
+    @Mock
+    private SubjectMappingService subjectMappingService;
 
     @InjectMocks
     private SubjectService subjectService;
@@ -79,6 +85,7 @@ class SubjectServiceMyLibraryTest {
         when(documentRepository.countBySubjectAndOwnerAndStatus(systemSubject, user, "ACTIVE")).thenReturn(2L);
         when(documentRepository.countBySubjectAndOwnerAndStatus(customSubject, user, "ACTIVE")).thenReturn(5L);
         when(documentRepository.countBySubjectAndStatus(customSubject, "ACTIVE")).thenReturn(5L);
+        when(subjectMappingService.getMappings(anyInt())).thenReturn(java.util.Collections.emptyList());
 
         List<SubjectMyLibraryResponse> responses = subjectService.getMyLibrarySubjects(user.getEmail());
 
@@ -146,6 +153,7 @@ class SubjectServiceMyLibraryTest {
         when(subjectRepository.findById(customSubject.getSubjectId())).thenReturn(Optional.of(customSubject));
         when(subjectRepository.existsDuplicateCodeForUpdate("NEWCODE", user, customSubject.getSubjectId())).thenReturn(false);
         when(subjectRepository.save(any(Subject.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(subjectMappingService.getMappings(anyInt())).thenReturn(java.util.Collections.emptyList());
 
         SubjectMyLibraryResponse result = subjectService.updateCustomSubject(customSubject.getSubjectId(), req, user.getEmail());
 
