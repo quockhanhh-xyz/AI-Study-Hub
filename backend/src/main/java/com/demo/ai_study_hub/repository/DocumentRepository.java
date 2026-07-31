@@ -33,6 +33,26 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
             @Param("folderId") Integer folderId
     );
 
+    @Query("SELECT d FROM Document d LEFT JOIN d.subject s " +
+            "WHERE d.owner = :owner " +
+            "AND d.status = 'ACTIVE' " +
+            "AND (:keyword IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(d.originalFileName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:subjectId IS NULL OR s.subjectId = :subjectId) " +
+            "AND (:fileType IS NULL OR d.fileType = :fileType) " +
+            "AND (:folderId IS NULL OR (:folderId = 0 AND d.folder IS NULL) OR (d.folder.folderId = :folderId)) " +
+            "AND (:schoolId IS NULL OR d.school.schoolId = :schoolId) " +
+            "AND (:majorId IS NULL OR d.major.majorId = :majorId) " +
+            "ORDER BY d.createdAt DESC")
+    List<Document> findMyDocumentsWithFiltersAndSchoolMajor(
+            @Param("owner") User owner,
+            @Param("keyword") String keyword,
+            @Param("subjectId") Integer subjectId,
+            @Param("fileType") String fileType,
+            @Param("folderId") Integer folderId,
+            @Param("schoolId") Integer schoolId,
+            @Param("majorId") Integer majorId
+    );
+
     @Query("SELECT COUNT(d) > 0 FROM Document d " +
         "WHERE d.owner = :owner " +
         "AND d.originalFileName = :originalFileName " +
@@ -61,6 +81,26 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
             @Param("keyword") String keyword,
             @Param("subjectId") Integer subjectId,
             @Param("fileType") String fileType
+    );
+
+    @Query("SELECT d FROM Document d LEFT JOIN d.subject s " +
+            "WHERE d.owner = :owner " +
+            "AND d.status = 'ACTIVE' " +
+            "AND d.folder.folderId IN :folderIds " +
+            "AND (:keyword IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(d.originalFileName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:subjectId IS NULL OR s.subjectId = :subjectId) " +
+            "AND (:fileType IS NULL OR d.fileType = :fileType) " +
+            "AND (:schoolId IS NULL OR d.school.schoolId = :schoolId) " +
+            "AND (:majorId IS NULL OR d.major.majorId = :majorId) " +
+            "ORDER BY d.createdAt DESC")
+    List<Document> findByOwnerAndFolderIdsAndSchoolMajor(
+            @Param("owner") User owner,
+            @Param("folderIds") List<Integer> folderIds,
+            @Param("keyword") String keyword,
+            @Param("subjectId") Integer subjectId,
+            @Param("fileType") String fileType,
+            @Param("schoolId") Integer schoolId,
+            @Param("majorId") Integer majorId
     );
 
     long countByFolderAndStatus(Folder folder, String status);
@@ -106,6 +146,25 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
             @Param("keyword") String keyword,
             @Param("subjectId") Integer subjectId,
             @Param("fileType") String fileType,
+            Sort sort
+    );
+
+    @Query("SELECT d FROM Document d LEFT JOIN d.subject s " +
+            "WHERE d.status = 'ACTIVE' " +
+            "AND d.visibility = 'PUBLIC' " +
+            "AND d.approvalStatus = 'APPROVED' " +
+            "AND d.owner.status = 'ACTIVE' " +
+            "AND (:keyword IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(d.originalFileName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:subjectId IS NULL OR s.subjectId = :subjectId) " +
+            "AND (:fileType IS NULL OR d.fileType = :fileType) " +
+            "AND (:schoolId IS NULL OR d.school.schoolId = :schoolId) " +
+            "AND (:majorId IS NULL OR d.major.majorId = :majorId)")
+    List<Document> findPublicDocumentsWithFiltersAndSchoolMajor(
+            @Param("keyword") String keyword,
+            @Param("subjectId") Integer subjectId,
+            @Param("fileType") String fileType,
+            @Param("schoolId") Integer schoolId,
+            @Param("majorId") Integer majorId,
             Sort sort
     );
 

@@ -50,6 +50,14 @@ public class Document {
     @JoinColumn(name = "folder_id", referencedColumnName = "folder_id")
     private Folder folder;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "school_id")
+    private School school;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "major_id")
+    private Major major;
+
     @Column(name = "status", nullable = false, length = 30)
     private String status = "ACTIVE";
 

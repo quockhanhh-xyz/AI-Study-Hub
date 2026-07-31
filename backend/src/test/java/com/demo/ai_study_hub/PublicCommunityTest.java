@@ -39,6 +39,8 @@ class PublicCommunityTest {
     private UserRepository userRepository;
     @Mock
     private DocumentFavoriteRepository documentFavoriteRepository;
+    @Mock
+    private SubjectRequestRepository subjectRequestRepository;
 
     @Mock
     private TierPolicyService tierPolicyService;
@@ -99,6 +101,28 @@ class PublicCommunityTest {
         mockDoc.setApprovalStatus("PENDING");
         mockDoc.setViewCount(0L);
         mockDoc.setDownloadCount(0L);
+
+        Subject dummySubject = new Subject();
+        dummySubject.setSubjectId(100);
+        dummySubject.setSubjectCode("CSD201");
+        dummySubject.setSubjectName("Data Structures");
+        dummySubject.setScope("SYSTEM");
+        dummySubject.setStatus("ACTIVE");
+
+        School dummySchool = new School();
+        dummySchool.setSchoolId(1);
+        dummySchool.setSchoolName("FPT University");
+        dummySchool.setStatus("ACTIVE");
+
+        Major dummyMajor = new Major();
+        dummyMajor.setMajorId(1);
+        dummyMajor.setMajorName("Software Engineering");
+        dummyMajor.setStatus("ACTIVE");
+        dummyMajor.setSchool(dummySchool);
+
+        mockDoc.setSubject(dummySubject);
+        mockDoc.setSchool(dummySchool);
+        mockDoc.setMajor(dummyMajor);
     }
 
     @Test

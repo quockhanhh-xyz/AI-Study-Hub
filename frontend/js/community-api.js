@@ -27,6 +27,14 @@ async function getPublicDocuments(params = {}) {
       queryParts.push(`fileType=${encodeURIComponent(params.fileType)}`);
     }
 
+    if (params.schoolId) {
+      queryParts.push(`schoolId=${encodeURIComponent(params.schoolId)}`);
+    }
+
+    if (params.majorId) {
+      queryParts.push(`majorId=${encodeURIComponent(params.majorId)}`);
+    }
+
     if (params.sort) {
       queryParts.push(`sort=${encodeURIComponent(params.sort)}`);
     }

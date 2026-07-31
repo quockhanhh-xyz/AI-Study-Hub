@@ -48,8 +48,14 @@ public class DocumentService {
     private final com.demo.ai_study_hub.repository.DocumentReportRepository documentReportRepository;
     private final NotificationService notificationService;
     private final com.demo.ai_study_hub.repository.SubjectRequestRepository subjectRequestRepository;
+    private final com.demo.ai_study_hub.repository.SchoolRepository schoolRepository;
+    private final com.demo.ai_study_hub.repository.MajorRepository majorRepository;
 
     public DocumentResponse uploadDocument(MultipartFile file, String title, String description, Integer subjectId, Integer folderId, String email) {
+        return uploadDocument(file, title, description, subjectId, folderId, null, null, email);
+    }
+
+    public DocumentResponse uploadDocument(MultipartFile file, String title, String description, Integer subjectId, Integer folderId, Integer schoolId, Integer majorId, String email) {
         if (title == null || title.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Title is required");
         }
@@ -81,6 +87,33 @@ public class DocumentService {
             if (!folder.getOwner().getUserId().equals(owner.getUserId())) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found");
             }
+        }
+
+        // Validate School
+        final com.demo.ai_study_hub.entity.School school;
+        if (schoolId != null) {
+            school = schoolRepository.findById(schoolId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "School not found"));
+            if (!"ACTIVE".equals(school.getStatus())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "School is inactive");
+            }
+        } else {
+            school = null;
+        }
+
+        // Validate Major
+        final com.demo.ai_study_hub.entity.Major major;
+        if (majorId != null) {
+            major = majorRepository.findById(majorId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Major not found"));
+            if (!"ACTIVE".equals(major.getStatus())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Major is inactive");
+            }
+            if (school == null || !major.getSchool().getSchoolId().equals(school.getSchoolId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Major does not belong to the selected school");
+            }
+        } else {
+            major = null;
         }
 
         // Check file size limits initially
@@ -169,6 +202,8 @@ public class DocumentService {
                 doc.setStatus("ACTIVE");
                 doc.setSubject(txSubject);
                 doc.setFolder(txFolder);
+                doc.setSchool(school);
+                doc.setMajor(major);
 
                 Document savedDoc = documentRepository.saveAndFlush(doc);
                 DocumentContent content = DocumentContent.builder()
@@ -219,6 +254,13 @@ public class DocumentService {
     public List<DocumentResponse> getMyDocumentsWithFilters(
             String email, String keyword, Integer subjectId,
             String fileType, Integer folderId, Boolean includeSubfolders) {
+        return getMyDocumentsWithFilters(email, keyword, subjectId, fileType, folderId, includeSubfolders, null, null);
+    }
+
+    public List<DocumentResponse> getMyDocumentsWithFilters(
+            String email, String keyword, Integer subjectId,
+            String fileType, Integer folderId, Boolean includeSubfolders,
+            Integer schoolId, Integer majorId) {
 
         User owner = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -227,11 +269,22 @@ public class DocumentService {
             List<Integer> allFolderIds = new ArrayList<>();
             allFolderIds.add(folderId);
             collectSubFolderIds(folderId, allFolderIds);
-            List<Document> docs = documentRepository.findByOwnerAndFolderIds(owner, allFolderIds, keyword, subjectId, fileType);
+            
+            List<Document> docs;
+            if (schoolId == null && majorId == null) {
+                docs = documentRepository.findByOwnerAndFolderIds(owner, allFolderIds, keyword, subjectId, fileType);
+            } else {
+                docs = documentRepository.findByOwnerAndFolderIdsAndSchoolMajor(owner, allFolderIds, keyword, subjectId, fileType, schoolId, majorId);
+            }
             return mapToResponseList(docs, owner);
         }
 
-        List<Document> docs = documentRepository.findMyDocumentsWithFilters(owner, keyword, subjectId, fileType, folderId);
+        List<Document> docs;
+        if (schoolId == null && majorId == null) {
+            docs = documentRepository.findMyDocumentsWithFilters(owner, keyword, subjectId, fileType, folderId);
+        } else {
+            docs = documentRepository.findMyDocumentsWithFiltersAndSchoolMajor(owner, keyword, subjectId, fileType, folderId, schoolId, majorId);
+        }
         return mapToResponseList(docs, owner);
     }
 
@@ -379,6 +432,48 @@ public class DocumentService {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this subject");
             }
             doc.setSubject(subject);
+        }
+        Integer currentSchoolId = doc.getSchool() != null ? doc.getSchool().getSchoolId() : null;
+
+        if (dto.getSchoolId() != null) {
+            if (dto.getSchoolId() <= 0) {
+                doc.setSchool(null);
+                doc.setMajor(null);
+            } else {
+                School school = schoolRepository.findById(dto.getSchoolId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "School not found"));
+                if (!"ACTIVE".equals(school.getStatus())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "School is inactive");
+                }
+                doc.setSchool(school);
+                
+                // Nếu School thay đổi và không truyền majorId mới, xóa Major hiện tại
+                if (!dto.getSchoolId().equals(currentSchoolId) && dto.getMajorId() == null) {
+                    doc.setMajor(null);
+                }
+            }
+        }
+
+        if (dto.getMajorId() != null) {
+            if (dto.getMajorId() <= 0) {
+                doc.setMajor(null);
+            } else {
+                Major major = majorRepository.findById(dto.getMajorId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Major not found"));
+                if (!"ACTIVE".equals(major.getStatus())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Major is inactive");
+                }
+                doc.setMajor(major);
+            }
+        }
+
+        // Sanity Check sau cùng
+        if (doc.getSchool() != null && doc.getMajor() != null) {
+            if (!doc.getMajor().getSchool().getSchoolId().equals(doc.getSchool().getSchoolId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Major does not belong to the selected school");
+            }
+        } else if (doc.getSchool() == null && doc.getMajor() != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot set major without a school");
         }
 
         Document updatedDoc = documentRepository.save(doc);
@@ -603,6 +698,11 @@ public class DocumentService {
             canReportVal = isActivePublicApproved && !isOwner && !hasPendingReport;
         }
 
+        Integer schoolId = doc.getSchool() != null ? doc.getSchool().getSchoolId() : null;
+        String schoolName = doc.getSchool() != null ? doc.getSchool().getSchoolName() : null;
+        Integer majorId = doc.getMajor() != null ? doc.getMajor().getMajorId() : null;
+        String majorName = doc.getMajor() != null ? doc.getMajor().getMajorName() : null;
+
         return DocumentResponse.builder()
                 .documentId(doc.getDocumentId())
                 .title(doc.getTitle())
@@ -611,6 +711,10 @@ public class DocumentService {
                 .subjectCode(doc.getSubject() != null ? doc.getSubject().getSubjectCode() : null)
                 .subjectName(doc.getSubject() != null ? doc.getSubject().getSubjectName() : null)
                 .subjectScope(subjectScope)
+                .schoolId(schoolId)
+                .schoolName(schoolName)
+                .majorId(majorId)
+                .majorName(majorName)
                 .originalFileName(doc.getOriginalFileName())
                 .fileType(doc.getFileType())
                 .fileSize(doc.getFileSize())
@@ -624,7 +728,7 @@ public class DocumentService {
                 .folderId(doc.getFolder() != null ? doc.getFolder().getFolderId() : null)
                 .folderName(doc.getFolder() != null ? doc.getFolder().getName() : null)
                 .uploadedBy(null)
-                .uploadedByName(doc.getOwner().getFullName())
+                .uploadedByName(doc.getOwner() != null ? doc.getOwner().getFullName() : "Unknown owner")
                 .uploadedByUserId(doc.getOwner() != null ? doc.getOwner().getUserId() : null)
                 .status(doc.getStatus())
                 .visibility(doc.getVisibility())
@@ -733,6 +837,11 @@ public class DocumentService {
             }
         }
 
+        Integer schoolId = doc.getSchool() != null ? doc.getSchool().getSchoolId() : null;
+        String schoolName = doc.getSchool() != null ? doc.getSchool().getSchoolName() : null;
+        Integer majorId = doc.getMajor() != null ? doc.getMajor().getMajorId() : null;
+        String majorName = doc.getMajor() != null ? doc.getMajor().getMajorName() : null;
+
         return PublicDocumentResponse.builder()
                 .documentId(doc.getDocumentId())
                 .title(doc.getTitle())
@@ -740,6 +849,10 @@ public class DocumentService {
                 .subjectId(doc.getSubject() != null ? doc.getSubject().getSubjectId() : null)
                 .subjectCode(doc.getSubject() != null ? doc.getSubject().getSubjectCode() : null)
                 .subjectName(doc.getSubject() != null ? doc.getSubject().getSubjectName() : null)
+                .schoolId(schoolId)
+                .schoolName(schoolName)
+                .majorId(majorId)
+                .majorName(majorName)
                 .fileType(doc.getFileType())
                 .fileSize(doc.getFileSize())
                 .fileUrl(doc.getFileUrl())
@@ -827,6 +940,24 @@ public class DocumentService {
                 .collect(Collectors.toList());
     }
 
+    public List<PublicDocumentResponse> getPublicDocuments(String keyword, Integer subjectId, String fileType, String sortType, Integer schoolId, Integer majorId, String requesterEmail) {
+        if (schoolId == null && majorId == null) {
+            return getPublicDocuments(keyword, subjectId, fileType, sortType, requesterEmail);
+        }
+
+        Sort sort = Sort.by(Sort.Order.desc("publishedAt"), Sort.Order.desc("createdAt"));
+        if ("mostViewed".equalsIgnoreCase(sortType)) {
+            sort = Sort.by(Sort.Order.desc("viewCount"), Sort.Order.desc("publishedAt"));
+        } else if ("mostDownloaded".equalsIgnoreCase(sortType)) {
+            sort = Sort.by(Sort.Order.desc("downloadCount"), Sort.Order.desc("publishedAt"));
+        }
+
+        return documentRepository.findPublicDocumentsWithFiltersAndSchoolMajor(keyword, subjectId, fileType, schoolId, majorId, sort)
+                .stream()
+                .map(doc -> mapToPublicResponse(doc, requesterEmail))
+                .collect(Collectors.toList());
+    }
+
     public PublicDocumentResponse getPublicDocumentDetail(Integer documentId, String requesterEmail) {
         Document doc = documentRepository.findById(documentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
@@ -905,6 +1036,22 @@ public class DocumentService {
             } else {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This subject is personal. Please request it as a system subject before publishing to Community Library.");
             }
+        }
+
+        if (doc.getSubject() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Document must have a subject before publishing.");
+        }
+        if (doc.getSchool() == null || doc.getMajor() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Document must have a school and major before publishing to Community Library.");
+        }
+        if (!"ACTIVE".equals(doc.getSchool().getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The school associated with this document is inactive.");
+        }
+        if (!"ACTIVE".equals(doc.getMajor().getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The major associated with this document is inactive.");
+        }
+        if (!doc.getMajor().getSchool().getSchoolId().equals(doc.getSchool().getSchoolId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The major does not belong to the selected school.");
         }
 
         doc.setVisibility("PUBLIC");

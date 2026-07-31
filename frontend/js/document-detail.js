@@ -296,11 +296,17 @@ async function loadPage(id, { isAuthenticated, isCommunityView }) {
         } else {
             const results = await Promise.all([
                 getDocumentById(id),
-                getSubjects()
+                getSubjects(),
+                typeof getActiveSchools === "function" ? getActiveSchools() : Promise.resolve({ data: [] })
             ]);
 
             docRes = results[0];
             subjectsRes = results[1];
+            const schoolsRes = results[2];
+
+            if (schoolsRes && schoolsRes.data) {
+                initSchoolAndMajorEditFields(schoolsRes.data, docRes.data);
+            }
         }
 
         renderDocument(docRes.data);
@@ -1067,6 +1073,63 @@ function renderSubjectOptions(subjects, currentSubjectId) {
     }
 }
 
+// Khởi tạo các trường chỉnh sửa trường học và ngành học
+async function initSchoolAndMajorEditFields(schools, doc) {
+    const schoolSelect = document.getElementById("editSchool");
+    const majorSelect = document.getElementById("editMajor");
+    if (!schoolSelect || !majorSelect) return;
+
+    schoolSelect.innerHTML = '<option value="">— Select School —</option>';
+    schools.forEach(sch => {
+        const opt = document.createElement("option");
+        opt.value = sch.schoolId;
+        opt.textContent = `${sch.schoolCode} – ${sch.schoolName}`;
+        if (doc.schoolId && sch.schoolId === doc.schoolId) {
+            opt.selected = true;
+        }
+        schoolSelect.appendChild(opt);
+    });
+
+    const handleSchoolChange = async (selectedSchoolId, selectedMajorId = null) => {
+        if (!selectedSchoolId) {
+            majorSelect.innerHTML = '<option value="">— Select Major —</option>';
+            majorSelect.disabled = true;
+            return;
+        }
+
+        majorSelect.disabled = true;
+        majorSelect.innerHTML = '<option value="">Loading majors...</option>';
+
+        try {
+            const majorsRes = await getActiveMajors(selectedSchoolId);
+            const majors = (majorsRes && majorsRes.data) || [];
+            majorSelect.innerHTML = '<option value="">— Select Major —</option>';
+            
+            majors.forEach(maj => {
+                const opt = document.createElement("option");
+                opt.value = maj.majorId;
+                opt.textContent = `${maj.majorCode} – ${maj.majorName}`;
+                if (selectedMajorId && maj.majorId === selectedMajorId) {
+                    opt.selected = true;
+                }
+                majorSelect.appendChild(opt);
+            });
+            majorSelect.disabled = false;
+        } catch (err) {
+            console.error("Failed to load majors", err);
+            majorSelect.innerHTML = '<option value="">Failed to load majors</option>';
+        }
+    };
+
+    schoolSelect.addEventListener("change", () => {
+        handleSchoolChange(schoolSelect.value);
+    });
+
+    if (doc.schoolId) {
+        await handleSchoolChange(doc.schoolId, doc.majorId);
+    }
+}
+
 // ── View/Edit Mode ────────────────────────────────────────────────────────────
 window.toggleEditMode = function(isEdit) {
     const viewSec = document.getElementById("detailsViewSection");
@@ -1086,6 +1149,8 @@ function initEditFormListeners() {
     const titleIn = document.getElementById("editTitle");
     const descIn = document.getElementById("editDescription");
     const subjIn = document.getElementById("editSubject");
+    const schoolIn = document.getElementById("editSchool");
+    const majorIn = document.getElementById("editMajor");
     const saveBtn = document.getElementById("saveBtn");
     
     function checkChanges() {
@@ -1095,6 +1160,8 @@ function initEditFormListeners() {
     if (titleIn) titleIn.addEventListener("input", checkChanges);
     if (descIn) descIn.addEventListener("input", checkChanges);
     if (subjIn) subjIn.addEventListener("change", checkChanges);
+    if (schoolIn) schoolIn.addEventListener("change", checkChanges);
+    if (majorIn) majorIn.addEventListener("change", checkChanges);
 }
 
 // ── Save changes ──────────────────────────────────────────────────────────────
@@ -1102,6 +1169,10 @@ async function handleSave() {
     const title = document.getElementById("editTitle").value.trim();
     const description = document.getElementById("editDescription").value.trim();
     const subjectId = document.getElementById("editSubject").value;
+    const schoolSelect = document.getElementById("editSchool");
+    const majorSelect = document.getElementById("editMajor");
+    const schoolId = schoolSelect ? schoolSelect.value : "";
+    const majorId = majorSelect ? majorSelect.value : "";
 
     if (!title) {
         showEditMessage("Title is required.", "error");
@@ -1115,6 +1186,14 @@ async function handleSave() {
     try {
         const payload = { title, description };
         if (subjectId) payload.subjectId = parseInt(subjectId, 10);
+        
+        if (schoolId) {
+            payload.schoolId = parseInt(schoolId, 10);
+            payload.majorId = majorId ? parseInt(majorId, 10) : -1;
+        } else {
+            payload.schoolId = -1;
+            payload.majorId = -1;
+        }
 
         const res = await updateDocument(currentDocumentId, payload);
 

@@ -35,8 +35,9 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/documents/public", "/api/documents/public/**").permitAll()
+                         .requestMatchers("/api/documents/public", "/api/documents/public/**").permitAll()
                         .requestMatchers("/api/subjects/public").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/schools", "/api/schools/*/majors").permitAll()
                         .requestMatchers("/api/users/*/public-profile", "/api/users/*/public-documents").permitAll()
                         .requestMatchers("/api/payments/plans/**").permitAll()
                         // Step 13B: only these VNPay endpoints are public — never /vnpay/** wholesale.

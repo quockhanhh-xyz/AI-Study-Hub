@@ -51,11 +51,13 @@ public class User {
     @Column(name = "phone", length = 20)
     private String phone;
 
-    @Column(name = "school_name", length = 100)
-    private String schoolName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "school_id")
+    private School school;
 
-    @Column(name = "major", length = 100)
-    private String major;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "major_id")
+    private Major major;
 
     @Column(name = "student_code", length = 100)
     private String studentCode;
@@ -91,4 +93,12 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public String getSchoolName() {
+        return school != null ? school.getSchoolName() : null;
+    }
+
+    public String getMajorName() {
+        return major != null ? major.getMajorName() : null;
+    }
 }

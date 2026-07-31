@@ -152,11 +152,15 @@
                                 </div>
                                 <div class="profile-form-group">
                                     <label for="profileSchoolName">School Name</label>
-                                    <input type="text" id="profileSchoolName" placeholder="Your school or university" maxlength="100" />
+                                    <select id="profileSchoolName">
+                                        <option value="">Select School</option>
+                                    </select>
                                 </div>
                                 <div class="profile-form-group">
                                     <label for="profileMajor">Major / Field of Study</label>
-                                    <input type="text" id="profileMajor" placeholder="Your study field" maxlength="100" />
+                                    <select id="profileMajor" disabled>
+                                        <option value="">Select Major</option>
+                                    </select>
                                 </div>
                                 <div class="profile-form-group">
                                     <label for="profileStudentCode">Student ID / Code</label>
@@ -242,6 +246,7 @@
     <!-- Script imports in correct dependency order -->
     <script src="js/api.js"></script>
     <script src="js/account-api.js"></script>
+    <script src="js/school-api.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/navigation.js"></script>
     <script src="js/layout.js"></script>

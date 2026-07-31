@@ -28,6 +28,60 @@ document.addEventListener("DOMContentLoaded", async () => {
   const resetBtn = document.getElementById("profileResetBtn");
   const formOverlay = document.getElementById("profileFormOverlay");
 
+  // Fetch and populate schools dropdown
+  async function initSchoolAndMajorDropdowns() {
+    try {
+      const schoolRes = await getActiveSchools();
+      if (schoolRes && schoolRes.success) {
+        schoolNameInput.innerHTML = '<option value="">Select School</option>';
+        schoolRes.data.forEach(sch => {
+          const opt = document.createElement("option");
+          opt.value = sch.schoolId;
+          opt.textContent = `${sch.schoolName} (${sch.shortName})`;
+          schoolNameInput.appendChild(opt);
+        });
+      }
+    } catch (err) {
+      console.error("Failed to load schools list:", err);
+    }
+  }
+
+  // Populate majors dropdown
+  function populateMajorsSelect(majors) {
+    majorInput.innerHTML = '<option value="">Select Major</option>';
+    if (majors && majors.length > 0) {
+      majors.forEach(maj => {
+        const opt = document.createElement("option");
+        opt.value = maj.majorId;
+        opt.textContent = `${maj.majorName} (${maj.majorCode})`;
+        majorInput.appendChild(opt);
+      });
+      majorInput.disabled = false;
+    } else {
+      majorInput.disabled = true;
+    }
+  }
+
+  // School select change listener
+  if (schoolNameInput) {
+    schoolNameInput.addEventListener("change", async () => {
+      const schoolId = schoolNameInput.value;
+      if (schoolId) {
+        try {
+          const res = await getActiveMajors(schoolId);
+          if (res && res.success) {
+            populateMajorsSelect(res.data);
+          }
+        } catch (err) {
+          console.error("Failed to load majors list:", err);
+        }
+      } else {
+        majorInput.innerHTML = '<option value="">Select Major</option>';
+        majorInput.disabled = true;
+      }
+    });
+  }
+
   // DOM Elements - System read-only params
   const systemEmail = document.getElementById("systemEmail");
   const systemRole = document.getElementById("systemRole");
@@ -114,8 +168,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   function populateProfileForm(profile) {
     fullNameInput.value = profile.fullName || "";
     phoneInput.value = profile.phone || "";
-    schoolNameInput.value = profile.schoolName || "";
-    majorInput.value = profile.major || "";
+    schoolNameInput.value = profile.schoolId || "";
+    
+    if (profile.schoolId) {
+      getActiveMajors(profile.schoolId).then(res => {
+        if (res && res.success) {
+          populateMajorsSelect(res.data);
+          majorInput.value = profile.majorId || "";
+        }
+      }).catch(err => console.error(err));
+    } else {
+      majorInput.innerHTML = '<option value="">Select Major</option>';
+      majorInput.disabled = true;
+    }
     studentCodeInput.value = profile.studentCode || "";
     graduationYearInput.value = profile.graduationYear || "";
     educationLevelInput.value = profile.educationLevel || "";
@@ -195,8 +260,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       const profilePayload = {
         fullName: fullNameVal,
         phone: phoneInput.value.trim() || null,
-        schoolName: schoolNameInput.value.trim() || null,
-        major: majorInput.value.trim() || null,
+        schoolId: schoolNameInput.value ? parseInt(schoolNameInput.value, 10) : null,
+        majorId: majorInput.value ? parseInt(majorInput.value, 10) : null,
         studentCode: studentCodeInput.value.trim() || null,
         graduationYear: gradYearVal,
         educationLevel: educationLevelInput.value || null,
@@ -368,7 +433,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // Load user data on startup
-  loadUserProfile();
+  initSchoolAndMajorDropdowns().then(() => {
+    loadUserProfile();
+  });
 
   // --- TAB LOGIC ---
   const tabBtns = document.querySelectorAll(".tab-btn");

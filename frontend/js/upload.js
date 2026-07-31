@@ -10,6 +10,8 @@ const uploadMessage = document.getElementById("uploadMessage");
 const uploadProgress = document.getElementById("uploadProgress");
 const folderSelect = document.getElementById("folderSelect");
 const subjectSelect = document.getElementById("subjectSelect");
+const schoolSelect = document.getElementById("schoolSelect");
+const majorSelect = document.getElementById("majorSelect");
 const subjectError = document.getElementById("subjectError");
 const progressFill = document.getElementById("progressFill");
 const progressText = document.getElementById("progressText");
@@ -733,10 +735,18 @@ uploadForm.addEventListener("submit", async (e) => {
     if (folderId) formData.append("folderId", folderId);
     formData.append("subjectId", subjectId);
 
+    const schId = schoolSelect ? schoolSelect.value : "";
+    const majId = majorSelect ? majorSelect.value : "";
+    if (schId) formData.append("schoolId", schId);
+    if (majId) formData.append("majorId", majId);
+
     const result = await uploadDocument(formData, { signal });
     completeProgress(progressInterval);
     window.showToast(`Upload successful: "${result.data.title}"`, "success");
     uploadForm.reset();
+    if (typeof loadSchoolAndMajorOptions === "function") {
+      loadSchoolAndMajorOptions();
+    }
     updateDropZone(null);
     newSubjectRow.style.display = "none";
     newFolderRow.style.display = "none";
@@ -827,6 +837,80 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  async function loadSchoolAndMajorOptions() {
+    if (!schoolSelect || !majorSelect) return;
+
+    try {
+      // 1. Load Schools
+      const schoolRes = await getActiveSchools();
+      if (schoolRes && schoolRes.success) {
+        schoolSelect.innerHTML = '<option value="">Select School</option>';
+        schoolRes.data.forEach(sch => {
+          const opt = document.createElement("option");
+          opt.value = sch.schoolId;
+          opt.textContent = `${sch.schoolName} (${sch.shortName})`;
+          schoolSelect.appendChild(opt);
+        });
+      }
+
+      // 2. Fetch User Profile to get default School and Major
+      const profileRes = await getProfile();
+      if (profileRes && profileRes.data) {
+        const profile = profileRes.data;
+        if (profile.schoolId) {
+          schoolSelect.value = profile.schoolId;
+          
+          // Load majors for this school
+          const majorRes = await getActiveMajors(profile.schoolId);
+          if (majorRes && majorRes.success) {
+            populateUploadMajors(majorRes.data);
+            if (profile.majorId) {
+              majorSelect.value = profile.majorId;
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to initialize School/Major selections in upload:", err);
+    }
+  }
+
+  function populateUploadMajors(majors) {
+    if (!majorSelect) return;
+    majorSelect.innerHTML = '<option value="">Select Major</option>';
+    if (majors && majors.length > 0) {
+      majors.forEach(maj => {
+        const opt = document.createElement("option");
+        opt.value = maj.majorId;
+        opt.textContent = `${maj.majorName} (${maj.majorCode})`;
+        majorSelect.appendChild(opt);
+      });
+      majorSelect.disabled = false;
+    } else {
+      majorSelect.disabled = true;
+    }
+  }
+
+  // School Select change listener in upload page
+  if (schoolSelect) {
+    schoolSelect.addEventListener("change", async () => {
+      const schoolId = schoolSelect.value;
+      if (schoolId) {
+        try {
+          const res = await getActiveMajors(schoolId);
+          if (res && res.success) {
+            populateUploadMajors(res.data);
+          }
+        } catch (err) {
+          console.error("Failed to load majors:", err);
+        }
+      } else {
+        majorSelect.innerHTML = '<option value="">Select Major</option>';
+        majorSelect.disabled = true;
+      }
+    });
+  }
+
   // ── Subject Request Modal Bindings ──
   const openReqLink = document.getElementById("openSubjectReqLink");
   const reqModal = document.getElementById("subjectReqModal");
@@ -914,3 +998,4 @@ document.addEventListener("DOMContentLoaded", function () {
 loadFolderOptions();
 loadSubjectOptions();
 loadUploadLimits();
+loadSchoolAndMajorOptions();

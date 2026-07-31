@@ -22,6 +22,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Filter UI elements
   const searchInput = document.getElementById("searchInput");
   const subjectFilter = document.getElementById("subjectFilter");
+  const schoolFilter = document.getElementById("schoolFilter");
+  const majorFilter = document.getElementById("majorFilter");
   const fileTypeFilter = document.getElementById("fileTypeFilter");
   const sortFilter = document.getElementById("sortFilter");
   const clearFiltersBtn = document.getElementById("clearFiltersBtn");
@@ -287,10 +289,12 @@ document.addEventListener("DOMContentLoaded", async function () {
       keyword: searchInput ? searchInput.value.trim() : "",
       subjectId: getSelectedSubjectId(),
       fileType: fileTypeFilter ? fileTypeFilter.value : "",
+      schoolId: schoolFilter ? schoolFilter.value : "",
+      majorId: majorFilter ? majorFilter.value : "",
       sort: sortFilter ? sortFilter.value : "newest"
     };
 
-    const isFiltering = params.keyword || params.subjectId || params.fileType;
+    const isFiltering = params.keyword || params.subjectId || params.fileType || params.schoolId || params.majorId;
 
     try {
       const result = await getPublicDocuments(params);
@@ -343,8 +347,52 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  async function loadSchools() {
+    if (!schoolFilter) return;
+    try {
+      const res = await getActiveSchools();
+      if (res && res.success) {
+        schoolFilter.innerHTML = '<option value="">All Schools</option>';
+        res.data.forEach(sch => {
+          const opt = document.createElement("option");
+          opt.value = sch.schoolId;
+          opt.textContent = `${sch.schoolName} (${sch.shortName})`;
+          schoolFilter.appendChild(opt);
+        });
+      }
+    } catch (err) {
+      console.warn("Failed to load schools for filter:", err);
+    }
+  }
+
+  async function loadMajors(schoolId) {
+    if (!majorFilter) return;
+    if (!schoolId) {
+      majorFilter.innerHTML = '<option value="">All Majors</option>';
+      majorFilter.disabled = true;
+      return;
+    }
+
+    try {
+      const res = await getActiveMajors(schoolId);
+      if (res && res.success) {
+        majorFilter.innerHTML = '<option value="">All Majors</option>';
+        res.data.forEach(maj => {
+          const opt = document.createElement("option");
+          opt.value = maj.majorId;
+          opt.textContent = `${maj.majorName} (${maj.majorCode})`;
+          majorFilter.appendChild(opt);
+        });
+        majorFilter.disabled = false;
+      }
+    } catch (err) {
+      console.warn("Failed to load majors for filter:", err);
+    }
+  }
+
   // Initial load
   await loadSubjects();
+  await loadSchools();
   await loadCommunityDocuments();
 
   // Bind filter events
@@ -372,15 +420,38 @@ document.addEventListener("DOMContentLoaded", async function () {
       }
     });
   }
+  if (schoolFilter) {
+    schoolFilter.addEventListener("change", async () => {
+      const schoolId = schoolFilter.value;
+      if (majorFilter) {
+        majorFilter.value = "";
+      }
+      await loadMajors(schoolId);
+      await loadCommunityDocuments();
+    });
+  }
+
+  if (majorFilter) {
+    majorFilter.addEventListener("change", loadCommunityDocuments);
+  }
+
   if (fileTypeFilter) fileTypeFilter.addEventListener("change", loadCommunityDocuments);
   if (sortFilter) sortFilter.addEventListener("change", loadCommunityDocuments);
-
+ 
   if (clearFiltersBtn) {
     clearFiltersBtn.addEventListener("click", async function () {
       if (searchInput) searchInput.value = "";
       if (subjectFilter) {
         subjectFilter.value = "";
         subjectFilter.dispatchEvent(new Event("syncCustom"));
+      }
+      if (schoolFilter) {
+        schoolFilter.value = "";
+      }
+      if (majorFilter) {
+        majorFilter.innerHTML = '<option value="">All Majors</option>';
+        majorFilter.value = "";
+        majorFilter.disabled = true;
       }
       if (fileTypeFilter) {
         fileTypeFilter.value = "";

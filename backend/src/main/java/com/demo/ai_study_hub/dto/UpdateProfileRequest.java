@@ -16,8 +16,12 @@ public class UpdateProfileRequest {
     @Size(max = 100, message = "School name must be at most 100 characters")
     private String schoolName;
 
+    private Integer schoolId;
+
     @Size(max = 100, message = "Major must be at most 100 characters")
     private String major;
+
+    private Integer majorId;
 
     @Size(max = 100, message = "Student code must be at most 100 characters")
     private String studentCode;
