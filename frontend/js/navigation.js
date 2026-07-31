@@ -26,6 +26,7 @@ const ICON_PROFILE = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBo
 const ICON_SETTINGS = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06-.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
 const ICON_APPEAL = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>';
 const ICON_CHAT = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+const ICON_FEEDBACK = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/></svg>';
 
 const NAVIGATION_MENU = [
   // Guest-only routes
@@ -42,6 +43,7 @@ const NAVIGATION_MENU = [
   { name: "Community Library", icon: ICON_COMMUNITY, url: "community.html", requiresAuth: false },
   { name: "Trash Can", icon: ICON_TRASH, url: "trash.html", requiresAuth: true },
   { name: "My Profile", icon: ICON_PROFILE, url: "profile.html", requiresAuth: true },
+  { name: "Send Feedback", icon: ICON_FEEDBACK, url: "feedback.html", requiresAuth: true },
 
   // Admin section
   { name: "Dashboard", icon: ICON_ADMIN, url: "admin-dashboard.html", requiresAuth: true, requiresAdmin: true },
@@ -56,6 +58,7 @@ const NAVIGATION_MENU = [
   { name: "Reports", icon: ICON_INFO, url: "admin-reports.html", requiresAuth: true, requiresAdmin: true },
   { name: "Plans", icon: ICON_SHIELD, url: "admin-plans.html", requiresAuth: true, requiresAdmin: true },
   { name: "Appeals", icon: ICON_APPEAL, url: "admin-appeals.html", requiresAuth: true, requiresAdmin: true },
+  { name: "Feedback", icon: ICON_FEEDBACK, url: "admin-feedback.html", requiresAuth: true, requiresAdmin: true },
   { name: "Profile", icon: ICON_PROFILE, url: "admin-profile.html", requiresAuth: true, requiresAdmin: true },
 
   // Step 11: Upgrade route — requires auth; guest redirected to login?redirect=upgrade.html

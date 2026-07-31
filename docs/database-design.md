@@ -954,3 +954,51 @@ Stores educational majors associated with schools.
 - A major must belong to an active school.
 - Major code and name must be unique within a single school.
 - If a major or its parent school is marked as `INACTIVE`, users cannot associate documents with it.
+
+---
+
+## 28. Table `system_reviews`
+
+Stores system-wide user reviews and ratings.
+
+| Column Name | Data Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `review_id` | INT | PRIMARY KEY, AUTO_INCREMENT, NOT NULL | Unique review ID |
+| `user_id` | INT | FOREIGN KEY REFERENCES users(user_id), UNIQUE, NOT NULL | User who posted the review |
+| `rating` | INT | NOT NULL | Rating from 1 to 5 |
+| `category` | VARCHAR(50) | NOT NULL | Category (e.g. `AI_QUALITY`, `BUG_REPORT`) |
+| `title` | VARCHAR(150) | NOT NULL | Title of the review |
+| `content` | VARCHAR(2000) | NOT NULL | Content of the review |
+| `status` | VARCHAR(50) | DEFAULT 'NEW', NOT NULL | Status: `NEW`, `IN_REVIEW`, `RESPONDED`, `RESOLVED`, `ARCHIVED` |
+| `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Creation timestamp |
+| `updated_at` | TIMESTAMP | NULLABLE | Last update timestamp |
+| `deleted_at` | TIMESTAMP | NULLABLE | Soft delete timestamp |
+
+### Business Rules
+
+- A user can only have one active system review. Subsequent submissions will update the existing review.
+- Ratings must be between 1 and 5.
+- Deletion is handled as a soft delete (`deleted_at` is set).
+
+---
+
+## 29. Table `system_review_replies`
+
+Stores replies exchanged between user and admin regarding a system review.
+
+| Column Name | Data Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `reply_id` | INT | PRIMARY KEY, AUTO_INCREMENT, NOT NULL | Unique reply ID |
+| `review_id` | INT | FOREIGN KEY REFERENCES system_reviews(review_id), NOT NULL | Linked system review |
+| `sender_id` | INT | FOREIGN KEY REFERENCES users(user_id), NOT NULL | Sender (User or Admin) |
+| `content` | TEXT | NOT NULL | Reply content |
+| `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Creation timestamp |
+| `updated_at` | TIMESTAMP | NULLABLE | Last update timestamp |
+| `deleted_at` | TIMESTAMP | NULLABLE | Soft delete timestamp |
+
+### Business Rules
+
+- Only the author of the review and admin roles are allowed to access and reply within the review conversation.
+- Admin replies automatically mark the review status as `RESPONDED`.
+- User replies automatically mark the review status as `IN_REVIEW`.
+
