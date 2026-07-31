@@ -1161,9 +1161,9 @@ textarea.success {
 
 .document-meta {
   display: grid;
-  grid-template-columns: 110px 1fr;
-  row-gap: 10px;
-  column-gap: 12px;
+  grid-template-columns: 96px 1fr;
+  row-gap: 8px;
+  column-gap: 6px;
   align-items: center;
   color: var(--text-muted);
   font-size: 12px;
@@ -1172,8 +1172,9 @@ textarea.success {
 .document-meta-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   color: var(--text-muted);
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
