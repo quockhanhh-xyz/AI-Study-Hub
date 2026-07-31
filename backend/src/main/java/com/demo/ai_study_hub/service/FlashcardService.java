@@ -144,7 +144,7 @@ public class FlashcardService {
 
                 saveUsageLog(reserveResult.user, reserveResult.doc, "FLASHCARD",
                         aiProviderRouter.route().getProviderName(), model,
-                        0, 0, 0, false, true, "SUCCESS");
+                        0, 0, 0, false, false, "SUCCESS");
 
                 return toResponse(entity);
             });

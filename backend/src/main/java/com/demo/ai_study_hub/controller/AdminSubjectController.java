@@ -120,4 +120,16 @@ public class AdminSubjectController {
         headers.setContentDispositionFormData("attachment", "subjects.xlsx");
         return ResponseEntity.ok().headers(headers).body(data);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteSubject(@PathVariable Integer id) {
+        try {
+            adminSubjectService.deleteSubject(id);
+            return ResponseEntity.ok(ApiResponse.success(null, "Subject deleted successfully"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(e.getMessage()));
+        }
+    }
 }
