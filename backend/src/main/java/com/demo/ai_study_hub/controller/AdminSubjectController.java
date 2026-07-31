@@ -7,6 +7,8 @@ import com.demo.ai_study_hub.dto.ApiResponse;
 import com.demo.ai_study_hub.dto.AdminSubjectListResponse;
 import com.demo.ai_study_hub.dto.AdminSubjectItem;
 import com.demo.ai_study_hub.dto.AdminSubjectRequest;
+import com.demo.ai_study_hub.dto.SubjectMappingResponse;
+import com.demo.ai_study_hub.dto.SubjectMappingUpdateRequest;
 import com.demo.ai_study_hub.service.AdminSubjectService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/subjects")
@@ -31,10 +34,12 @@ public class AdminSubjectController {
     public ResponseEntity<ApiResponse<AdminSubjectListResponse>> getSubjects(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) Integer schoolId,
+            @RequestParam(required = false) Integer majorId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction
+            @RequestParam(defaultValue = "subjectCode") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction
     ) {
         page = Math.max(0, page);
         size = Math.min(Math.max(1, size), 100);
@@ -44,7 +49,8 @@ public class AdminSubjectController {
         }
         Sort sort = direction.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        AdminSubjectListResponse response = adminSubjectService.getSystemSubjects(search, status, pageable);
+        AdminSubjectListResponse response = adminSubjectService.getSystemSubjects(
+                search, status, schoolId, majorId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response, "Subjects retrieved successfully"));
     }
 
@@ -74,6 +80,25 @@ public class AdminSubjectController {
         return ResponseEntity.ok(ApiResponse.success(updated, "Subject status updated successfully"));
     }
 
+    @GetMapping("/{id}/mappings")
+    public ResponseEntity<ApiResponse<List<SubjectMappingResponse>>> getMappings(@PathVariable Integer id) {
+        return ResponseEntity.ok(ApiResponse.success(
+                adminSubjectService.getMappings(id),
+                "Subject mappings retrieved successfully"
+        ));
+    }
+
+    @PutMapping("/{id}/mappings")
+    public ResponseEntity<ApiResponse<List<SubjectMappingResponse>>> replaceMappings(
+            @PathVariable Integer id,
+            @Valid @RequestBody SubjectMappingUpdateRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                adminSubjectService.replaceMappings(id, request.getMajorIds()),
+                "Subject mappings updated successfully"
+        ));
+    }
+
     @GetMapping("/stats")
     public ResponseEntity<ApiResponse<Map<String, Long>>> getSubjectStats(
             @RequestParam(required = false) String search
@@ -85,9 +110,11 @@ public class AdminSubjectController {
     @GetMapping("/export")
     public ResponseEntity<byte[]> exportSubjects(
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) String status
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Integer schoolId,
+            @RequestParam(required = false) Integer majorId
     ) {
-        byte[] data = adminSubjectService.exportSubjects(search, status);
+        byte[] data = adminSubjectService.exportSubjects(search, status, schoolId, majorId);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
         headers.setContentDispositionFormData("attachment", "subjects.xlsx");

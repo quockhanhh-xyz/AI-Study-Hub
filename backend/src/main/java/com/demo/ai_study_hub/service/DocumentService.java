@@ -50,6 +50,7 @@ public class DocumentService {
     private final com.demo.ai_study_hub.repository.SubjectRequestRepository subjectRequestRepository;
     private final com.demo.ai_study_hub.repository.SchoolRepository schoolRepository;
     private final com.demo.ai_study_hub.repository.MajorRepository majorRepository;
+    private final SubjectMappingService subjectMappingService;
 
     public DocumentResponse uploadDocument(MultipartFile file, String title, String description, Integer subjectId, Integer folderId, String email) {
         return uploadDocument(file, title, description, subjectId, folderId, null, null, email);
@@ -115,6 +116,7 @@ public class DocumentService {
         } else {
             major = null;
         }
+        subjectMappingService.validateSystemSubjectMapping(subject, major);
 
         // Check file size limits initially
         com.demo.ai_study_hub.dto.TierLimits initialLimits = tierPolicyService.getLimitsForUser(owner);
@@ -475,6 +477,7 @@ public class DocumentService {
         } else if (doc.getSchool() == null && doc.getMajor() != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot set major without a school");
         }
+        subjectMappingService.validateSystemSubjectMapping(doc.getSubject(), doc.getMajor());
 
         Document updatedDoc = documentRepository.save(doc);
         return mapToResponse(updatedDoc);
@@ -699,8 +702,10 @@ public class DocumentService {
         }
 
         Integer schoolId = doc.getSchool() != null ? doc.getSchool().getSchoolId() : null;
+        String schoolCode = doc.getSchool() != null ? doc.getSchool().getSchoolCode() : null;
         String schoolName = doc.getSchool() != null ? doc.getSchool().getSchoolName() : null;
         Integer majorId = doc.getMajor() != null ? doc.getMajor().getMajorId() : null;
+        String majorCode = doc.getMajor() != null ? doc.getMajor().getMajorCode() : null;
         String majorName = doc.getMajor() != null ? doc.getMajor().getMajorName() : null;
 
         return DocumentResponse.builder()
@@ -712,8 +717,10 @@ public class DocumentService {
                 .subjectName(doc.getSubject() != null ? doc.getSubject().getSubjectName() : null)
                 .subjectScope(subjectScope)
                 .schoolId(schoolId)
+                .schoolCode(schoolCode)
                 .schoolName(schoolName)
                 .majorId(majorId)
+                .majorCode(majorCode)
                 .majorName(majorName)
                 .originalFileName(doc.getOriginalFileName())
                 .fileType(doc.getFileType())
@@ -838,8 +845,10 @@ public class DocumentService {
         }
 
         Integer schoolId = doc.getSchool() != null ? doc.getSchool().getSchoolId() : null;
+        String schoolCode = doc.getSchool() != null ? doc.getSchool().getSchoolCode() : null;
         String schoolName = doc.getSchool() != null ? doc.getSchool().getSchoolName() : null;
         Integer majorId = doc.getMajor() != null ? doc.getMajor().getMajorId() : null;
+        String majorCode = doc.getMajor() != null ? doc.getMajor().getMajorCode() : null;
         String majorName = doc.getMajor() != null ? doc.getMajor().getMajorName() : null;
 
         return PublicDocumentResponse.builder()
@@ -850,8 +859,10 @@ public class DocumentService {
                 .subjectCode(doc.getSubject() != null ? doc.getSubject().getSubjectCode() : null)
                 .subjectName(doc.getSubject() != null ? doc.getSubject().getSubjectName() : null)
                 .schoolId(schoolId)
+                .schoolCode(schoolCode)
                 .schoolName(schoolName)
                 .majorId(majorId)
+                .majorCode(majorCode)
                 .majorName(majorName)
                 .fileType(doc.getFileType())
                 .fileSize(doc.getFileSize())
@@ -1041,6 +1052,11 @@ public class DocumentService {
         if (doc.getSubject() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Document must have a subject before publishing.");
         }
+        if (!"ACTIVE".equals(doc.getSubject().getStatus())
+                || !"SYSTEM".equalsIgnoreCase(doc.getSubject().getScope())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Document must use an active system subject before publishing.");
+        }
         if (doc.getSchool() == null || doc.getMajor() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Document must have a school and major before publishing to Community Library.");
         }
@@ -1053,6 +1069,7 @@ public class DocumentService {
         if (!doc.getMajor().getSchool().getSchoolId().equals(doc.getSchool().getSchoolId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The major does not belong to the selected school.");
         }
+        subjectMappingService.validateSystemSubjectMapping(doc.getSubject(), doc.getMajor());
 
         doc.setVisibility("PUBLIC");
         doc.setApprovalStatus("PENDING");

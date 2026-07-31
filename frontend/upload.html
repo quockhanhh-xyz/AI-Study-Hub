@@ -71,6 +71,20 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="schoolSelect">School <span class="label-optional">— Optional for private documents</span></label>
+                            <select id="schoolSelect">
+                                <option value="">Select School</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="majorSelect">Major / Study Program <span class="label-optional">— Optional for private documents</span></label>
+                            <select id="majorSelect" disabled>
+                                <option value="">Select Major</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
                             <label for="subjectSelect">Subject <span class="label-required">*</span></label>
                             <input type="text" id="subjectSelect" list="subjectDatalist" placeholder="Select a subject" required autocomplete="off" />
                             <datalist id="subjectDatalist"></datalist>
@@ -92,20 +106,6 @@
                             <div style="margin-top: 6px; font-size: 12px; color: var(--muted);">
                                 Need a subject for the entire system? <a href="#" id="openSubjectReqLink" style="color: var(--primary); font-weight: 600; text-decoration: underline;">Request system subject</a>
                             </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="schoolSelect">School <span class="label-optional">— Optional</span></label>
-                            <select id="schoolSelect">
-                                <option value="">Select School</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="majorSelect">Major / Study Program <span class="label-optional">— Optional</span></label>
-                            <select id="majorSelect" disabled>
-                                <option value="">Select Major</option>
-                            </select>
                         </div>
 
                         <div class="form-group">

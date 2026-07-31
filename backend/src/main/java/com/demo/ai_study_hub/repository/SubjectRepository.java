@@ -16,6 +16,10 @@ public interface SubjectRepository extends JpaRepository<Subject, Integer>, JpaS
 
     List<Subject> findByStatus(String status);
 
+    @Query("SELECT s FROM Subject s WHERE s.status = 'ACTIVE' AND s.scope = 'USER_CUSTOM' AND s.owner = :owner " +
+           "ORDER BY s.subjectCode ASC, s.subjectName ASC")
+    List<Subject> findActiveCustomSubjectsByOwner(@Param("owner") User owner);
+
     boolean existsBySubjectCode(String subjectCode);
 
     boolean existsBySubjectCodeAndStatus(String subjectCode, String status);

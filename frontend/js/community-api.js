@@ -119,9 +119,10 @@ function downloadPublicDocument(documentOrId) {
  * Fetches the list of subjects linked to public documents.
  * @returns {Promise<Object>} List of public subjects.
  */
-async function getPublicSubjects() {
+async function getPublicSubjects(majorId = "") {
   try {
-    return await get("/api/subjects/public", { skipUnauthorizedRedirect: true });
+    const query = majorId ? `?majorId=${encodeURIComponent(majorId)}` : "";
+    return await get(`/api/subjects/public${query}`, { skipUnauthorizedRedirect: true });
   } catch (error) {
     console.error("Failed to retrieve public subjects:", error);
     throw error;

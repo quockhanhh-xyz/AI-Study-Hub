@@ -42,6 +42,9 @@ class AdminConsoleServiceTest {
     private SubjectRepository subjectRepository;
 
     @Mock
+    private SubjectMappingService subjectMappingService;
+
+    @Mock
     private UsageService usageService;
 
     @InjectMocks

@@ -9,6 +9,7 @@ import com.demo.ai_study_hub.repository.*;
 import com.demo.ai_study_hub.service.CloudinaryStorageService;
 import com.demo.ai_study_hub.service.DocumentService;
 import com.demo.ai_study_hub.service.FolderShareService;
+import com.demo.ai_study_hub.service.SubjectMappingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -80,6 +81,8 @@ class DocumentServiceTest {
     private com.demo.ai_study_hub.repository.SchoolRepository schoolRepository;
     @Mock
     private com.demo.ai_study_hub.repository.MajorRepository majorRepository;
+    @Mock
+    private SubjectMappingService subjectMappingService;
 
     @InjectMocks
     private DocumentService documentService;

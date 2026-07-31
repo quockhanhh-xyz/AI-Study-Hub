@@ -9,6 +9,7 @@ import com.demo.ai_study_hub.entity.Subject;
 import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.repository.DocumentRepository;
 import com.demo.ai_study_hub.repository.SubjectRepository;
+import com.demo.ai_study_hub.repository.SubjectMajorMappingRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,12 +30,25 @@ public class SubjectService {
     private final UserRepository userRepository;
     private final DocumentRepository documentRepository;
     private final DocumentService documentService;
+    private final SubjectMajorMappingRepository subjectMajorMappingRepository;
+    private final SubjectMappingService subjectMappingService;
 
     public List<SubjectResponse> getActiveSubjects(String email) {
-        User user = getUser(email);
+        return getActiveSubjects(email, null);
+    }
 
-        return subjectRepository.findVisibleSubjects(user)
-                .stream()
+    public List<SubjectResponse> getActiveSubjects(String email, Integer majorId) {
+        User user = getUser(email);
+        List<Subject> subjects;
+        if (majorId == null) {
+            subjects = subjectRepository.findVisibleSubjects(user);
+        } else {
+            subjects = new java.util.ArrayList<>(
+                    subjectMajorMappingRepository.findActiveSystemSubjectsByMajor(majorId));
+            subjects.addAll(subjectRepository.findActiveCustomSubjectsByOwner(user));
+        }
+
+        return subjects.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -177,7 +191,14 @@ public class SubjectService {
     }
 
     public List<SubjectResponse> getPublicSubjects() {
-        return subjectRepository.findActiveSystemSubjects()
+        return getPublicSubjects(null);
+    }
+
+    public List<SubjectResponse> getPublicSubjects(Integer majorId) {
+        List<Subject> subjects = majorId == null
+                ? subjectRepository.findActiveSystemSubjects()
+                : subjectMajorMappingRepository.findActiveSystemSubjectsByMajor(majorId);
+        return subjects
                 .stream()
                 .map(s -> SubjectResponse.builder()
                          .subjectId(s.getSubjectId())
@@ -186,6 +207,7 @@ public class SubjectService {
                          .description(s.getDescription())
                          .scope(s.getScope())
                          .ownerId(null)
+                         .mappings(subjectMappingService.getMappings(s.getSubjectId()))
                          .build())
                 .collect(Collectors.toList());
     }
@@ -203,6 +225,9 @@ public class SubjectService {
                 .description(s.getDescription())
                 .scope(s.getScope())
                 .ownerId(s.getOwner() != null ? s.getOwner().getUserId() : null)
+                .mappings("SYSTEM".equalsIgnoreCase(s.getScope())
+                        ? subjectMappingService.getMappings(s.getSubjectId())
+                        : List.of())
                 .build();
     }
 

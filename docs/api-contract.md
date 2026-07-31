@@ -747,7 +747,13 @@ These APIs support retrieving subject master data and creating user-owned custom
 
 ## GET `/api/subjects`
 
-Returns all active SYSTEM subjects plus the current user's own active USER_CUSTOM subjects. A user never sees another user's custom subjects.
+Returns active SYSTEM subjects available for the selected major plus the current user's own active USER_CUSTOM subjects. Without `majorId`, all active SYSTEM subjects and the current user's custom subjects are returned. A user never sees another user's custom subjects.
+
+### Query Parameters
+
+| Field | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `majorId` | Integer | No | Restricts SYSTEM subjects to mappings for this major |
 
 ### Request Headers
 
@@ -766,7 +772,17 @@ Returns all active SYSTEM subjects plus the current user's own active USER_CUSTO
       "subjectName": "Software Project",
       "description": "Software project management and development course",
       "scope": "SYSTEM",
-      "ownerId": null
+      "ownerId": null,
+      "mappings": [
+        {
+          "schoolId": 1,
+          "schoolCode": "FPT",
+          "schoolName": "FPT University",
+          "majorId": 2,
+          "majorCode": "SE",
+          "majorName": "Software Engineering"
+        }
+      ]
     },
     {
       "subjectId": 2,
@@ -871,7 +887,7 @@ Returned if `subjectCode` or `subjectName` already matches any SYSTEM subject, o
 
 ## GET `/api/subjects/public`
 
-Allows guest and authenticated users to fetch only subjects that are currently used by active, public, and approved documents. The response hides the `ownerId` field to protect privacy.
+Allows guest and authenticated users to fetch active SYSTEM subjects. Optional `majorId` restricts the result to mapped subjects for that major. The response hides `ownerId`.
 
 ### Success Response (200 OK)
 
@@ -897,6 +913,36 @@ Allows guest and authenticated users to fetch only subjects that are currently u
   ]
 }
 ```
+
+---
+
+## 4.4. Create Subject Request API
+
+## POST `/api/subject-requests`
+
+Creates a request for a SYSTEM subject in a specific School-Major context.
+
+```json
+{
+  "requestedCode": "SWP391",
+  "requestedName": "Software Project",
+  "description": "Optional",
+  "schoolId": 1,
+  "majorId": 2
+}
+```
+
+Both `schoolId` and `majorId` are required. The backend rejects inactive schools/majors and rejects a major that does not belong to the submitted school. Approval creates or reuses the SYSTEM subject and adds the requested Subject-Major mapping. If the SYSTEM subject already exists but is not mapped to the selected major, the request is allowed; if the same mapping already exists, the API returns `409 Conflict`.
+
+## 4.5. Admin Subject Mapping APIs
+
+- `GET /api/admin/subjects?schoolId=&majorId=` filters SYSTEM subjects by explicit mappings.
+- `POST /api/admin/subjects` accepts `subjectCode`, `subjectName`, optional `description`, and `majorIds`.
+- `PUT /api/admin/subjects/{id}` updates metadata and replaces mappings when `majorIds` is present.
+- `GET /api/admin/subjects/{id}/mappings` returns School/Major mapping metadata.
+- `PUT /api/admin/subjects/{id}/mappings` accepts `{ "majorIds": [2, 4] }` and atomically replaces mappings.
+
+`majorIds = null` preserves existing mappings for compatibility. An empty list explicitly removes all mappings. Only active majors under active schools may be added.
 
 ---
 

@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schools & Majors Management - Admin - AI Study Hub</title>
-    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -98,29 +98,29 @@
                     </div>
 
                     <!-- Summary KPI Cards -->
-                    <div class="admin-payment-summary-grid" id="schoolSummaryCards" style="margin-bottom: 24px;">
-                        <div class="payment-summary-card">
+                    <div class="admin-payment-summary-grid" id="schoolSummaryCards" style="margin: 16px 0 24px;">
+                        <div class="payment-summary-card admin-card">
                             <div class="payment-summary-info">
-                                <span class="summary-label">Total Schools</span>
-                                <span class="summary-value" id="cardTotalSchools">0</span>
+                                <div class="summary-label">Total Schools</div>
+                                <div class="summary-value text-primary" id="cardTotalSchools">0</div>
                             </div>
                         </div>
-                        <div class="payment-summary-card">
+                        <div class="payment-summary-card admin-card">
                             <div class="payment-summary-info">
-                                <span class="summary-label">Active Schools</span>
-                                <span class="summary-value" id="cardActiveSchools">0</span>
+                                <div class="summary-label">Active Schools</div>
+                                <div class="summary-value text-success" id="cardActiveSchools">0</div>
                             </div>
                         </div>
-                        <div class="payment-summary-card">
+                        <div class="payment-summary-card admin-card">
                             <div class="payment-summary-info">
-                                <span class="summary-label">Total Majors</span>
-                                <span class="summary-value" id="cardTotalMajors">0</span>
+                                <div class="summary-label">Total Majors</div>
+                                <div class="summary-value text-primary" id="cardTotalMajors">0</div>
                             </div>
                         </div>
-                        <div class="payment-summary-card">
+                        <div class="payment-summary-card admin-card">
                             <div class="payment-summary-info">
-                                <span class="summary-label">Active Majors</span>
-                                <span class="summary-value" id="cardActiveMajors">0</span>
+                                <div class="summary-label">Active Majors</div>
+                                <div class="summary-value text-success" id="cardActiveMajors">0</div>
                             </div>
                         </div>
                     </div>
@@ -128,10 +128,16 @@
                     <!-- Navigation Tabs -->
                     <div class="admin-tabs" style="margin-top: 16px;">
                         <button class="admin-tab active" id="tabSchoolsBtn">
-                            <span>Schools List</span>
+                            <svg class="school-major-tab-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V9l7-4 7 4v12M9 13h.01M12 13h.01M15 13h.01M9 17h.01M12 17h.01M15 17h.01" />
+                            </svg>
+                            <span class="tab-text">Schools List</span>
                         </button>
                         <button class="admin-tab" id="tabMajorsBtn">
-                            <span>Majors List</span>
+                            <svg class="school-major-tab-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM4.5 7.8L12 12l7.5-4.2M12 12v9" />
+                            </svg>
+                            <span class="tab-text">Majors List</span>
                         </button>
                     </div>
 
@@ -139,15 +145,18 @@
                     <div id="schoolsContent" style="display: block; margin-top: 20px;">
                         <div class="admin-card" style="padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: none; background: var(--surface, #ffffff); border-radius: 12px;">
                             <!-- Filters & Actions -->
-                            <div class="admin-actions-bar" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
-                                <div class="admin-search-wrapper" style="flex: 1 1 300px; max-width: 400px; position: relative; margin: 0;">
+                            <div class="school-major-actions">
+                                <div class="admin-search-wrapper">
                                     <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                     </svg>
-                                    <input type="text" id="schoolSearch" class="admin-filter-input" placeholder="Search schools..." style="padding-left: 42px !important; width: 100%; border: none !important; background-color: var(--surface-muted, #f4f5f7) !important; border-radius: 24px !important; height: 42px !important; font-size: 14px; margin-bottom: 0;" />
+                                    <input type="text" id="schoolSearch" class="admin-filter-input" placeholder="Search schools..." />
                                 </div>
-                                <button type="button" class="btn btn-primary" id="btnCreateSchool" style="margin: 0; white-space: nowrap; height: 42px; border-radius: 24px !important; flex: 0 0 auto; width: auto; padding: 0 24px;">
-                                    + Add New School
+                                <button type="button" class="btn btn-primary school-major-create-button" id="btnCreateSchool">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <path stroke-linecap="round" d="M12 5v14M5 12h14" />
+                                    </svg>
+                                    <span>Add New School</span>
                                 </button>
                             </div>
                             <div class="admin-table-container">
@@ -181,15 +190,18 @@
 
                         <div class="admin-card" style="padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: none; background: var(--surface, #ffffff); border-radius: 12px;">
                             <!-- Filters & Actions -->
-                            <div class="admin-actions-bar" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
-                                <div class="admin-search-wrapper" style="flex: 1 1 300px; max-width: 400px; position: relative; margin: 0;">
+                            <div class="school-major-actions">
+                                <div class="admin-search-wrapper">
                                     <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                     </svg>
-                                    <input type="text" id="majorSearch" class="admin-filter-input" placeholder="Search majors..." disabled style="padding-left: 42px !important; width: 100%; border: none !important; background-color: var(--surface-muted, #f4f5f7) !important; border-radius: 24px !important; height: 42px !important; font-size: 14px; margin-bottom: 0;" />
+                                    <input type="text" id="majorSearch" class="admin-filter-input" placeholder="Search majors..." disabled />
                                 </div>
-                                <button type="button" class="btn btn-primary" id="btnCreateMajor" style="margin: 0; white-space: nowrap; height: 42px; border-radius: 24px !important; flex: 0 0 auto; width: auto; padding: 0 24px;">
-                                    + Add New Major
+                                <button type="button" class="btn btn-primary school-major-create-button" id="btnCreateMajor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <path stroke-linecap="round" d="M12 5v14M5 12h14" />
+                                    </svg>
+                                    <span>Add New Major</span>
                                 </button>
                             </div>
                             <div class="admin-table-container">

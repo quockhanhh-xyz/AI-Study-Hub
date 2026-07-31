@@ -160,7 +160,7 @@ async function loadFolderOptions() {
   }
 }
 
-async function loadSubjectOptions() {
+async function loadSubjectOptions(majorId = "") {
   const subjectDatalist = document.getElementById("subjectDatalist");
   if (!subjectDatalist) return;
 
@@ -168,7 +168,7 @@ async function loadSubjectOptions() {
   subjectSelect.disabled = true;
 
   try {
-    const result = await getSubjects();
+    const result = await getSubjects(majorId);
     const subjects = Array.isArray(result.data) ? result.data : [];
 
     subjectDatalist.innerHTML = "";
@@ -188,6 +188,8 @@ async function loadSubjectOptions() {
       subjectDatalist.appendChild(option);
     });
 
+    subjectSelect.value = "";
+    subjectSelect.dispatchEvent(new Event("syncCustom"));
     subjectSelect.placeholder = "Select a subject";
   } catch (err) {
     console.warn("Could not load subjects:", err);
@@ -645,6 +647,13 @@ uploadForm.addEventListener("submit", async (e) => {
     subjectError.style.display = "none";
   }
 
+  const selectedSchoolId = schoolSelect ? schoolSelect.value : "";
+  const selectedMajorId = majorSelect ? majorSelect.value : "";
+  if ((selectedSchoolId && !selectedMajorId) || (!selectedSchoolId && selectedMajorId)) {
+    showMessage("School and major must be selected together.", "error");
+    return;
+  }
+
   // 2. Check if we need to create a new Folder
   const isCreatingFolder = (newFolderRow.style.display === "flex");
   let folderNameVal = "";
@@ -735,8 +744,8 @@ uploadForm.addEventListener("submit", async (e) => {
     if (folderId) formData.append("folderId", folderId);
     formData.append("subjectId", subjectId);
 
-    const schId = schoolSelect ? schoolSelect.value : "";
-    const majId = majorSelect ? majorSelect.value : "";
+    const schId = selectedSchoolId;
+    const majId = selectedMajorId;
     if (schId) formData.append("schoolId", schId);
     if (majId) formData.append("majorId", majId);
 
@@ -866,6 +875,7 @@ document.addEventListener("DOMContentLoaded", function () {
             populateUploadMajors(majorRes.data);
             if (profile.majorId) {
               majorSelect.value = profile.majorId;
+              await loadSubjectOptions(profile.majorId);
             }
           }
         }
@@ -895,6 +905,8 @@ document.addEventListener("DOMContentLoaded", function () {
   if (schoolSelect) {
     schoolSelect.addEventListener("change", async () => {
       const schoolId = schoolSelect.value;
+      subjectSelect.value = "";
+      subjectSelect.dispatchEvent(new Event("syncCustom"));
       if (schoolId) {
         try {
           const res = await getActiveMajors(schoolId);
@@ -907,7 +919,14 @@ document.addEventListener("DOMContentLoaded", function () {
       } else {
         majorSelect.innerHTML = '<option value="">Select Major</option>';
         majorSelect.disabled = true;
+        await loadSubjectOptions();
       }
+    });
+  }
+
+  if (majorSelect) {
+    majorSelect.addEventListener("change", async () => {
+      await loadSubjectOptions(majorSelect.value);
     });
   }
 
@@ -923,6 +942,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function openReqModal() {
     if (!reqModal) return;
+    const schoolId = schoolSelect ? schoolSelect.value : "";
+    const majorId = majorSelect ? majorSelect.value : "";
+    if (!schoolId || !majorId) {
+      if (window.showToast) {
+        window.showToast("Select a school and major before requesting a system subject.", "error");
+      }
+      return;
+    }
     if (reqCodeInput) reqCodeInput.value = "";
     if (reqNameInput) reqNameInput.value = "";
     if (reqDescInput) reqDescInput.value = "";
@@ -957,10 +984,12 @@ document.addEventListener("DOMContentLoaded", function () {
       const code = reqCodeInput ? reqCodeInput.value.trim() : "";
       const name = reqNameInput ? reqNameInput.value.trim() : "";
       const desc = reqDescInput ? reqDescInput.value.trim() : "";
+      const schoolId = schoolSelect ? schoolSelect.value : "";
+      const majorId = majorSelect ? majorSelect.value : "";
 
-      if (!code || !name) {
+      if (!code || !name || !schoolId || !majorId) {
         if (reqMsg) {
-          reqMsg.textContent = "Subject Code and Subject Name are required.";
+          reqMsg.textContent = "Subject code, name, school, and major are required.";
           reqMsg.className = "helper-text error";
           reqMsg.style.display = "block";
         }
@@ -975,7 +1004,9 @@ document.addEventListener("DOMContentLoaded", function () {
         await createSubjectRequest({
           requestedCode: code,
           requestedName: name,
-          description: desc
+          description: desc,
+          schoolId: Number(schoolId),
+          majorId: Number(majorId)
         });
         if (window.showToast) {
           window.showToast("Your subject request has been submitted for admin review.", "success");

@@ -19,6 +19,15 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     boolean existsBySchoolSchoolId(Integer schoolId);
     boolean existsByMajorMajorId(Integer majorId);
 
+    @Query("""
+            SELECT DISTINCT d.subject.subjectId, d.major.majorId
+            FROM Document d
+            WHERE d.subject IS NOT NULL
+              AND d.subject.scope = 'SYSTEM'
+              AND d.major IS NOT NULL
+            """)
+    List<Object[]> findDistinctSystemSubjectMajorPairs();
+
     @Query("SELECT d FROM Document d LEFT JOIN d.subject s " +
             "WHERE d.owner = :owner " +
             "AND d.status = 'ACTIVE' " +
@@ -235,6 +244,20 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     int migratePersonalDocumentsToSystemSubject(
             @Param("owner") User owner,
             @Param("code") String code,
+            @Param("systemSubject") com.demo.ai_study_hub.entity.Subject systemSubject
+    );
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Document d " +
+           "SET d.subject = :systemSubject " +
+           "WHERE d.owner = :owner " +
+           "AND d.subject.scope = 'USER_CUSTOM' " +
+           "AND LOWER(d.subject.subjectCode) = LOWER(:code) " +
+           "AND d.major.majorId = :majorId")
+    int migratePersonalDocumentsToSystemSubjectForMajor(
+            @Param("owner") User owner,
+            @Param("code") String code,
+            @Param("majorId") Integer majorId,
             @Param("systemSubject") com.demo.ai_study_hub.entity.Subject systemSubject
     );
 }

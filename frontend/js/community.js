@@ -186,6 +186,28 @@ document.addEventListener("DOMContentLoaded", async function () {
       body.appendChild(subjectTag);
     }
 
+    if (doc.schoolCode || doc.schoolName) {
+      const schoolTag = document.createElement("div");
+      schoolTag.className = "comm-card-subject-tag";
+      const schoolText = doc.schoolCode
+        ? `${doc.schoolCode} - ${doc.schoolName}`
+        : doc.schoolName;
+      schoolTag.title = `School: ${schoolText}`;
+      schoolTag.textContent = schoolText;
+      body.appendChild(schoolTag);
+    }
+
+    if (doc.majorCode || doc.majorName) {
+      const majorTag = document.createElement("div");
+      majorTag.className = "comm-card-subject-tag";
+      const majorText = doc.majorCode
+        ? `${doc.majorCode} - ${doc.majorName}`
+        : doc.majorName;
+      majorTag.title = `Major: ${majorText}`;
+      majorTag.textContent = majorText;
+      body.appendChild(majorTag);
+    }
+
     // C. Footer: Date & Metrics
     const footer = document.createElement("div");
     footer.className = "comm-card-footer";
@@ -240,9 +262,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     return card;
   }
 
-  async function loadSubjects() {
+  async function loadSubjects(majorId = "") {
     try {
-      const result = await getPublicSubjects();
+      const result = await getPublicSubjects(majorId);
       const subjects = Array.isArray(result.data) ? result.data : [];
       const subjectDatalist = document.getElementById("subjectDatalist");
       if (subjectDatalist) {
@@ -257,6 +279,10 @@ document.addEventListener("DOMContentLoaded", async function () {
           subjectDatalist.appendChild(option);
         });
         if (subjectFilter) subjectFilter.dispatchEvent(new Event("syncCustom"));
+      }
+      if (subjectFilter) {
+        subjectFilter.value = "";
+        subjectFilter.dispatchEvent(new Event("syncCustom"));
       }
     } catch (error) {
       // Non-fatal: community list still works without the subject dropdown.
@@ -427,12 +453,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         majorFilter.value = "";
       }
       await loadMajors(schoolId);
+      await loadSubjects();
       await loadCommunityDocuments();
     });
   }
 
   if (majorFilter) {
-    majorFilter.addEventListener("change", loadCommunityDocuments);
+    majorFilter.addEventListener("change", async () => {
+      await loadSubjects(majorFilter.value);
+      await loadCommunityDocuments();
+    });
   }
 
   if (fileTypeFilter) fileTypeFilter.addEventListener("change", loadCommunityDocuments);
@@ -453,6 +483,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         majorFilter.value = "";
         majorFilter.disabled = true;
       }
+      await loadSubjects();
       if (fileTypeFilter) {
         fileTypeFilter.value = "";
         fileTypeFilter.dispatchEvent(new Event("syncCustom"));

@@ -141,10 +141,11 @@
                                     </svg>
                                     <input type="text" id="searchInput" class="admin-filter-input" placeholder="Search by Code or Name..." style="width: 100%; border: none !important; background-color: var(--surface-muted, #f4f5f7) !important; border-radius: 24px !important; padding-left: 44px !important; height: 42px !important; font-size: 14px; margin-bottom: 0;">
                                 </div>
-                                <select id="statusFilter" class="admin-filter-input admin-select" style="border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 160px !important; width: auto !important; margin-bottom: 0;">
-                                    <option value="">All Statuses</option>
-                                    <option value="ACTIVE">ACTIVE</option>
-                                    <option value="INACTIVE">INACTIVE</option>
+                                <select id="schoolFilter" class="admin-filter-input admin-select" style="border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 190px !important; width: auto !important; margin-bottom: 0;">
+                                    <option value="">All Schools</option>
+                                </select>
+                                <select id="majorFilter" class="admin-filter-input admin-select" disabled style="border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 190px !important; width: auto !important; margin-bottom: 0;">
+                                    <option value="">All Majors</option>
                                 </select>
                                 <button class="btn btn-outline" id="clearFiltersBtn" onclick="clearFilters()" style="white-space: nowrap; height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center;">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
@@ -171,15 +172,14 @@
                                     <tr>
                                         <th style="text-align: center;">Code</th>
                                         <th style="text-align: center;">Name</th>
-                                        <th style="text-align: center;">Description</th>
+                                        <th style="text-align: center;">Schools</th>
+                                        <th style="text-align: center;">Majors</th>
                                         <th style="text-align: center;">Documents</th>
-                                        <th style="text-align: center;">Status</th>
-                                        <th style="text-align: center;">Created At</th>
                                         <th style="text-align: center;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="subjectsTableBody">
-                                    <tr><td colspan="7" style="text-align: center;">Loading...</td></tr>
+                                    <tr><td colspan="6" style="text-align: center;">Loading...</td></tr>
                                 </tbody>
                             </table>
                             <div class="admin-pagination" id="pagination" style="margin-top: 16px; justify-content: space-between;">
@@ -231,6 +231,8 @@
                                     <tr>
                                         <th style="text-align: center;">Code</th>
                                         <th style="text-align: center;">Name</th>
+                                        <th style="text-align: center;">School</th>
+                                        <th style="text-align: center;">Major</th>
                                         <th style="text-align: center;">Requested By</th>
                                         <th style="text-align: center;">Status</th>
                                         <th style="text-align: center;">Requested At</th>
@@ -238,7 +240,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="reqTableBody">
-                                    <tr><td colspan="6" style="text-align: center;">Loading...</td></tr>
+                                    <tr><td colspan="8" style="text-align: center;">Loading...</td></tr>
                                 </tbody>
                             </table>
                             <div class="admin-pagination" id="reqPagination" style="margin-top: 16px; justify-content: space-between;">
@@ -277,6 +279,24 @@
                     <div class="form-group">
                         <label>Description</label>
                         <textarea id="subjectDesc" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="subjectSchoolSelect">School</label>
+                        <select id="subjectSchoolSelect">
+                            <option value="">Choose a school</option>
+                        </select>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                            Choose a school to select one or more majors. You may switch schools without losing previous selections.
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label>Majors <span style="color: var(--danger);">*</span></label>
+                        <div id="subjectMajorOptions" class="subject-major-options">
+                            <p style="color: var(--text-muted); margin: 0;">Choose a school first.</p>
+                        </div>
+                        <div id="selectedMajorSummary" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">
+                            No majors selected.
+                        </div>
                     </div>
                 </form>
             </div>
@@ -358,6 +378,7 @@
     <script src="js/notification.js"></script>
     <script src="js/admin-subject-api.js"></script>
     <script src="js/admin-subject-request-api.js"></script>
+    <script src="js/school-api.js"></script>
     <script src="js/admin-subjects.js"></script>
 </body>
 </html>

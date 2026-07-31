@@ -22,8 +22,10 @@ public class DocumentResponse {
     private String subjectName;
     private String subjectScope;
     private Integer schoolId;
+    private String schoolCode;
     private String schoolName;
     private Integer majorId;
+    private String majorCode;
     private String majorName;
     private String originalFileName;
     private String fileType;

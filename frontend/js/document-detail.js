@@ -289,35 +289,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function loadPage(id, { isAuthenticated, isCommunityView }) {
     try {
         let docRes;
-        let subjectsRes = null;
 
         if (isCommunityView) {
             docRes = await getPublicDocumentById(id);
         } else {
             const results = await Promise.all([
                 getDocumentById(id),
-                getSubjects(),
                 typeof getActiveSchools === "function" ? getActiveSchools() : Promise.resolve({ data: [] })
             ]);
 
             docRes = results[0];
-            subjectsRes = results[1];
-            const schoolsRes = results[2];
+            const schoolsRes = results[1];
 
             if (schoolsRes && schoolsRes.data) {
-                initSchoolAndMajorEditFields(schoolsRes.data, docRes.data);
+                await initSchoolAndMajorEditFields(schoolsRes.data, docRes.data);
             }
         }
 
         renderDocument(docRes.data);
-
-        if (!isCommunityView && subjectsRes) {
-            allSubjectsList = subjectsRes.data || [];
-            renderSubjectOptions(
-                subjectsRes.data,
-                docRes.data.subjectId
-            );
-        }
 
         detailLoader.style.display = "none";
         detailContent.hidden = false;
@@ -510,6 +499,8 @@ function renderDocument(doc) {
 
     const viewTitleText = document.getElementById("viewTitleText");
     const viewDescriptionText = document.getElementById("viewDescriptionText");
+    const viewSchoolText = document.getElementById("viewSchoolText");
+    const viewMajorText = document.getElementById("viewMajorText");
     const viewSubjectText = document.getElementById("viewSubjectText");
     if (viewTitleText) viewTitleText.textContent = doc.title || "–";
     if (viewDescriptionText) {
@@ -519,6 +510,24 @@ function renderDocument(doc) {
         } else {
             viewDescriptionText.textContent = "No description added.";
             viewDescriptionText.classList.add("empty");
+        }
+    }
+    if (viewSchoolText) {
+        if (doc.schoolName || doc.schoolCode) {
+            viewSchoolText.textContent = [doc.schoolCode, doc.schoolName].filter(Boolean).join(" – ");
+            viewSchoolText.classList.remove("empty");
+        } else {
+            viewSchoolText.textContent = "No school";
+            viewSchoolText.classList.add("empty");
+        }
+    }
+    if (viewMajorText) {
+        if (doc.majorName || doc.majorCode) {
+            viewMajorText.textContent = [doc.majorCode, doc.majorName].filter(Boolean).join(" – ");
+            viewMajorText.classList.remove("empty");
+        } else {
+            viewMajorText.textContent = "No major";
+            viewMajorText.classList.add("empty");
         }
     }
     if (viewSubjectText) {
@@ -1048,6 +1057,7 @@ function startAIPolling() {
 // ── Render subject dropdown ───────────────────────────────────────────────────
 function renderSubjectOptions(subjects, currentSubjectId) {
     const select = document.getElementById("editSubject");
+    if (!select) return;
     select.innerHTML = "";
 
     subjects.forEach(s => {
@@ -1074,6 +1084,24 @@ function renderSubjectOptions(subjects, currentSubjectId) {
 }
 
 // Khởi tạo các trường chỉnh sửa trường học và ngành học
+async function loadEditSubjects(majorId, currentSubjectId = null) {
+    const select = document.getElementById("editSubject");
+    if (!select) return;
+
+    select.disabled = true;
+    select.innerHTML = '<option value="">Loading subjects...</option>';
+
+    try {
+        const response = await getSubjects(majorId || "");
+        allSubjectsList = response?.data || [];
+        renderSubjectOptions(allSubjectsList, currentSubjectId);
+        select.disabled = false;
+    } catch (error) {
+        console.error("Failed to load subjects", error);
+        select.innerHTML = '<option value="">Failed to load subjects</option>';
+    }
+}
+
 async function initSchoolAndMajorEditFields(schools, doc) {
     const schoolSelect = document.getElementById("editSchool");
     const majorSelect = document.getElementById("editMajor");
@@ -1094,6 +1122,7 @@ async function initSchoolAndMajorEditFields(schools, doc) {
         if (!selectedSchoolId) {
             majorSelect.innerHTML = '<option value="">— Select Major —</option>';
             majorSelect.disabled = true;
+            await loadEditSubjects("", doc.subjectId);
             return;
         }
 
@@ -1115,18 +1144,33 @@ async function initSchoolAndMajorEditFields(schools, doc) {
                 majorSelect.appendChild(opt);
             });
             majorSelect.disabled = false;
+            if (selectedMajorId) {
+                await loadEditSubjects(selectedMajorId, doc.subjectId);
+            } else {
+                const subjectSelect = document.getElementById("editSubject");
+                if (subjectSelect) {
+                    subjectSelect.disabled = true;
+                    subjectSelect.innerHTML = '<option value="">Select a Major first</option>';
+                }
+            }
         } catch (err) {
             console.error("Failed to load majors", err);
             majorSelect.innerHTML = '<option value="">Failed to load majors</option>';
         }
     };
 
-    schoolSelect.addEventListener("change", () => {
-        handleSchoolChange(schoolSelect.value);
+    schoolSelect.addEventListener("change", async () => {
+        await handleSchoolChange(schoolSelect.value);
+    });
+
+    majorSelect.addEventListener("change", async () => {
+        await loadEditSubjects(majorSelect.value);
     });
 
     if (doc.schoolId) {
         await handleSchoolChange(doc.schoolId, doc.majorId);
+    } else {
+        await loadEditSubjects("", doc.subjectId);
     }
 }
 
@@ -1176,6 +1220,10 @@ async function handleSave() {
 
     if (!title) {
         showEditMessage("Title is required.", "error");
+        return;
+    }
+    if ((schoolId && !majorId) || (!schoolId && majorId)) {
+        showEditMessage("School and Major must be selected together.", "error");
         return;
     }
 
@@ -1404,7 +1452,9 @@ function openSubjectRequestModalForDoc(doc) {
                     const updatePayload = {
                         title: doc.title,
                         description: doc.description,
-                        subjectId: parseInt(selectedSubjectId, 10)
+                        subjectId: parseInt(selectedSubjectId, 10),
+                        schoolId: doc.schoolId,
+                        majorId: doc.majorId
                     };
                     const res = await updateDocument(doc.documentId, updatePayload);
                     renderDocument(res.data);
@@ -1415,7 +1465,9 @@ function openSubjectRequestModalForDoc(doc) {
                         await createSubjectRequest({
                             requestedCode: subjectCode,
                             requestedName: subjectName,
-                            description
+                            description,
+                            schoolId: doc.schoolId,
+                            majorId: doc.majorId
                         });
                     }
                     modal.classList.remove("open");

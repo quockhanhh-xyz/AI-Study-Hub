@@ -10,6 +10,7 @@ import com.demo.ai_study_hub.service.TierPolicyService;
 import com.demo.ai_study_hub.service.CloudinaryStorageService;
 import com.demo.ai_study_hub.service.FolderShareService;
 import com.demo.ai_study_hub.service.UsageService;
+import com.demo.ai_study_hub.service.SubjectMappingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -74,6 +75,8 @@ class PublicCommunityTest {
     private com.demo.ai_study_hub.service.NotificationService notificationService;
     @Mock
     private org.springframework.transaction.PlatformTransactionManager transactionManager;
+    @Mock
+    private SubjectMappingService subjectMappingService;
 
     @InjectMocks
     private DocumentService documentService;

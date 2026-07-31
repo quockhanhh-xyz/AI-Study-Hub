@@ -363,7 +363,17 @@
           </div>
         </div>
         
-        <div id="libraryToolbar" class="toolbar" style="margin-bottom: 20px; display: flex; gap: 16px; align-items: center; flex-wrap: nowrap; width: 100%;">
+        <div id="libraryToolbar" class="toolbar" style="margin-bottom: 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; width: 100%;">
+          <div class="filter-group" style="flex: 1; min-width: 180px;">
+            <select id="schoolFilter" style="width: 100%; min-width: unset; max-width: none;">
+              <option value="">All Schools</option>
+            </select>
+          </div>
+          <div class="filter-group" style="flex: 1; min-width: 180px;">
+            <select id="majorFilter" disabled style="width: 100%; min-width: unset; max-width: none;">
+              <option value="">All Majors</option>
+            </select>
+          </div>
           <div class="filter-group" style="flex: 1; min-width: 0;">
             <input type="text" id="subjectFilter" list="subjectDatalist" placeholder="Filter by Subject..." style="width: 100%; min-width: unset; max-width: none;" />
             <datalist id="subjectDatalist"></datalist>
@@ -613,6 +623,7 @@
   <script src="js/navigation.js"></script>
   <script src="js/layout.js"></script>
   <script src="js/folder-api.js"></script>
+  <script src="js/school-api.js"></script>
   <script src="js/subject-api.js"></script>
   <script src="js/document-api.js"></script>
   <script src="js/group-api.js"></script>

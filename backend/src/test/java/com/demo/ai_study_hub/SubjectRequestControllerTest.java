@@ -1,6 +1,7 @@
 package com.demo.ai_study_hub;
 
 import com.demo.ai_study_hub.entity.SubjectRequest;
+import com.demo.ai_study_hub.dto.CreateSubjectRequest;
 import com.demo.ai_study_hub.dto.SubjectRequestResponse;
 import com.demo.ai_study_hub.controller.SubjectRequestController;
 import com.demo.ai_study_hub.service.SubjectRequestService;
@@ -16,9 +17,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.security.Principal;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -49,17 +49,19 @@ class SubjectRequestControllerTest {
 
     @Test
     void createRequest_Success() throws Exception {
-        Map<String, String> body = new HashMap<>();
-        body.put("requestedCode", "CS101");
-        body.put("requestedName", "Comp Sci");
-        body.put("description", "Desc");
+        CreateSubjectRequest body = new CreateSubjectRequest();
+        body.setRequestedCode("CS101");
+        body.setRequestedName("Comp Sci");
+        body.setDescription("Desc");
+        body.setSchoolId(1);
+        body.setMajorId(2);
 
         SubjectRequestResponse req = new SubjectRequestResponse();
         req.setRequestId(1);
         req.setRequestedCode("CS101");
         req.setStatus("PENDING");
 
-        when(subjectRequestService.createSubjectRequest("CS101", "Comp Sci", "Desc", "user@test.com")).thenReturn(req);
+        when(subjectRequestService.createSubjectRequest(any(CreateSubjectRequest.class), eq("user@test.com"))).thenReturn(req);
 
         mockMvc.perform(post("/api/subject-requests")
                 .principal(mockPrincipal)

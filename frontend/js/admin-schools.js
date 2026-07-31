@@ -69,6 +69,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   const majorStatusField = document.getElementById("majorStatusField");
   const majorSchoolField = document.getElementById("majorSchoolField");
 
+  function syncCustomSelect(selectElement) {
+    if (selectElement) {
+      selectElement.dispatchEvent(new Event("syncCustom"));
+    }
+  }
+
   // --- Initial Data Load ---
   async function init() {
     showLoading(true);
@@ -264,6 +270,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (activeFilterValue && majorSchoolFilter) {
       majorSchoolFilter.value = activeFilterValue;
     }
+    syncCustomSelect(majorSchoolFilter);
+    syncCustomSelect(majorSchoolField);
   }
 
   // Search Schools
@@ -482,6 +490,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (majorSchoolField) {
           majorSchoolField.value = maj.schoolId;
           majorSchoolField.disabled = true;
+          syncCustomSelect(majorSchoolField);
         }
       }
     } else {
@@ -494,6 +503,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else {
           majorSchoolField.value = "";
         }
+        syncCustomSelect(majorSchoolField);
       }
     }
     openModal(majorModal);
@@ -528,6 +538,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Auto update filters to the target school of major
       if (!currentSchoolIdForMajors || currentSchoolIdForMajors !== schoolId) {
         majorSchoolFilter.value = schoolId;
+        syncCustomSelect(majorSchoolFilter);
         currentSchoolIdForMajors = schoolId;
         majorSearch.disabled = false;
       }

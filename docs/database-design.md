@@ -172,6 +172,34 @@ Stores subject or category information.
 - A subject's `subject_code` and `subject_name` must not duplicate another subject (SYSTEM or the same user's USER_CUSTOM subjects) — checked at the application level, not by a unique DB constraint, since custom subjects from different users may share the same code/name.
 - Only subjects with status `'ACTIVE'` will be returned by default in the list API.
 - Document upload and update only accept a SYSTEM subject or a USER_CUSTOM subject owned by the current user. Using another user's custom subject is rejected with `403 Forbidden`.
+- SYSTEM subjects are assigned to majors through `subject_major_mappings`. School is derived from `majors.school_id`; it is not duplicated in the mapping table.
+- A SYSTEM subject may belong to multiple majors and may therefore be available at multiple schools.
+- When a document has a major, upload/update/publish must reject a SYSTEM subject that is not mapped to that major.
+
+---
+
+## 5.1. Table `subject_major_mappings`
+
+Stores the explicit many-to-many relationship between SYSTEM subjects and majors.
+
+| Column Name | Data Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `mapping_id` | INT | PRIMARY KEY, AUTO_INCREMENT, NOT NULL | Unique mapping ID |
+| `subject_id` | INT | FOREIGN KEY REFERENCES subjects(subject_id), NOT NULL | Mapped SYSTEM subject |
+| `major_id` | INT | FOREIGN KEY REFERENCES majors(major_id), NOT NULL | Major where the subject is available |
+| `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP, NOT NULL | Mapping creation time |
+
+### Business Rules
+
+- `(subject_id, major_id)` is unique.
+- Only `scope = SYSTEM` subjects may be mapped.
+- New mappings require an ACTIVE major whose parent school is ACTIVE.
+- Removing a mapping does not rewrite or delete existing documents. It blocks new upload, edit, and publish operations that use that invalid tuple.
+- Existing SYSTEM subject-major pairs stored on documents are backfilled by `docs/sql/V21__subject_school_major_mapping.sql` and by the idempotent startup backfill.
+
+## 5.2. Subject request classification
+
+`subject_requests` additionally stores nullable `school_id` and `major_id` foreign keys. New requests require both values. Legacy rows may remain null. Approval creates or reuses the SYSTEM subject, adds the requested Subject-Major mapping, and migrates only matching personal documents in that major.
 
 ---
 
