@@ -105,7 +105,10 @@ async function loadUserFeedback() {
             document.getElementById('formCardTitle').firstElementChild.textContent = 'Update System Review';
             document.getElementById('btnSubmitFeedback').textContent = 'Update Review';
             document.getElementById('btnDeleteFeedback').style.display = 'inline-block';
-            document.getElementById('feedbackFormActions').classList.add('has-existing-review');
+            const formActions = document.getElementById('feedbackFormActions');
+            if (formActions) {
+                formActions.classList.add('has-existing-review');
+            }
 
             // Show status badge
             const badge = document.getElementById('reviewStatusBadge');
@@ -135,7 +138,10 @@ async function loadUserFeedback() {
             document.getElementById('formCardTitle').firstElementChild.textContent = 'Submit System Review';
             document.getElementById('btnSubmitFeedback').textContent = 'Submit Review';
             document.getElementById('btnDeleteFeedback').style.display = 'none';
-            document.getElementById('feedbackFormActions').classList.remove('has-existing-review');
+            const formActions = document.getElementById('feedbackFormActions');
+            if (formActions) {
+                formActions.classList.remove('has-existing-review');
+            }
             document.getElementById('reviewStatusBadge').style.display = 'none';
 
             document.getElementById('noConversationState').style.display = 'flex';
