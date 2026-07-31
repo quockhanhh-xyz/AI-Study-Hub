@@ -1391,3 +1391,61 @@ select.admin-select:focus,
     min-width: 140px !important;
     box-sizing: border-box !important;
 }
+
+/* ==========================================================================
+   Admin Search Wrapper & Icon Utilities
+   ========================================================================== */
+
+.admin-search-wrapper {
+    position: relative;
+    flex: 1 1 300px;
+    max-width: 400px;
+}
+
+.admin-search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted, #64748b);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.admin-search-wrapper input {
+    width: 100%;
+    padding-left: 42px !important;
+    border: none !important;
+    background-color: var(--surface-muted, #f4f5f7) !important;
+    border-radius: 24px !important;
+    height: 42px !important;
+    font-size: 14px;
+    margin-bottom: 0;
+    box-sizing: border-box;
+}
+
+/* Card Header with flex layout for search + action button */
+.admin-card-header.flex-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border, #e2e8f0);
+    margin-bottom: 0;
+}
+
+.admin-card-header.flex-header .admin-search-wrapper {
+    flex: 1 1 260px;
+    max-width: 420px;
+    margin: 0;
+}
+
+/* School / Major table action buttons centering */
+.admin-table td .table-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+}

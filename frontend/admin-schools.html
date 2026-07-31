@@ -98,20 +98,28 @@
                     <!-- Summary KPI Cards -->
                     <div class="admin-payment-summary-grid" id="schoolSummaryCards" style="margin-bottom: 24px;">
                         <div class="payment-summary-card">
-                            <span class="summary-label">Total Schools</span>
-                            <span class="summary-value" id="cardTotalSchools">0</span>
+                            <div class="payment-summary-info">
+                                <span class="summary-label">Total Schools</span>
+                                <span class="summary-value" id="cardTotalSchools">0</span>
+                            </div>
                         </div>
                         <div class="payment-summary-card">
-                            <span class="summary-label">Active Schools</span>
-                            <span class="summary-value" id="cardActiveSchools">0</span>
+                            <div class="payment-summary-info">
+                                <span class="summary-label">Active Schools</span>
+                                <span class="summary-value" id="cardActiveSchools">0</span>
+                            </div>
                         </div>
                         <div class="payment-summary-card">
-                            <span class="summary-label">Total Majors</span>
-                            <span class="summary-value" id="cardTotalMajors">0</span>
+                            <div class="payment-summary-info">
+                                <span class="summary-label">Total Majors</span>
+                                <span class="summary-value" id="cardTotalMajors">0</span>
+                            </div>
                         </div>
                         <div class="payment-summary-card">
-                            <span class="summary-label">Active Majors</span>
-                            <span class="summary-value" id="cardActiveMajors">0</span>
+                            <div class="payment-summary-info">
+                                <span class="summary-label">Active Majors</span>
+                                <span class="summary-value" id="cardActiveMajors">0</span>
+                            </div>
                         </div>
                     </div>
 
@@ -127,13 +135,14 @@
 
                     <!-- Schools Management View -->
                     <div id="schoolsContent" style="display: block; margin-top: 20px;">
-                        <div class="admin-card">
-                            <div class="admin-card-header flex-header" style="padding: 16px 20px;">
-                                <div class="admin-search-wrapper" style="flex: 1 1 300px; max-width: 400px; position: relative;">
+                        <div class="admin-card" style="padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: none; background: var(--surface, #ffffff); border-radius: 12px;">
+                            <!-- Filters & Actions -->
+                            <div class="admin-actions-bar" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
+                                <div class="admin-search-wrapper" style="flex: 1 1 300px; max-width: 400px; position: relative; margin: 0;">
                                     <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                     </svg>
-                                    <input type="text" id="schoolSearch" class="admin-search-input" placeholder="Search schools..." style="padding-left: 42px !important;" />
+                                    <input type="text" id="schoolSearch" class="admin-filter-input" placeholder="Search schools..." style="padding-left: 42px !important; width: 100%; border: none !important; background-color: var(--surface-muted, #f4f5f7) !important; border-radius: 24px !important; height: 42px !important; font-size: 14px; margin-bottom: 0;" />
                                 </div>
                                 <button type="button" class="btn btn-primary" id="btnCreateSchool" style="margin: 0; white-space: nowrap; height: 42px; border-radius: 24px !important; flex: 0 0 auto; width: auto; padding: 0 24px;">
                                     + Add New School
@@ -161,20 +170,21 @@
 
                     <!-- Majors Management View -->
                     <div id="majorsContent" style="display: none; margin-top: 20px;">
-                        <div class="major-filter-container" style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
-                            <label for="majorSchoolFilter" style="font-weight: 600; color: var(--text-main); font-size: 14px; white-space: nowrap;">Select Institution:</label>
-                            <select id="majorSchoolFilter" class="admin-filter-input admin-select" style="max-width: 300px; margin: 0; height: 42px; border-radius: 24px !important;">
+                        <div class="major-filter-container" style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 16px; background: var(--surface, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0);">
+                            <label for="majorSchoolFilter" style="font-weight: 600; color: var(--text-main); font-size: 14px; white-space: nowrap; margin-bottom: 0;">Select Institution:</label>
+                            <select id="majorSchoolFilter" class="admin-filter-input admin-select" style="max-width: 300px; margin: 0; height: 42px; border-radius: 24px !important; padding-left: 16px !important;">
                                 <option value="">Choose a School</option>
                             </select>
                         </div>
 
-                        <div class="admin-card">
-                            <div class="admin-card-header flex-header" style="padding: 16px 20px;">
-                                <div class="admin-search-wrapper" style="flex: 1 1 300px; max-width: 400px; position: relative;">
+                        <div class="admin-card" style="padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: none; background: var(--surface, #ffffff); border-radius: 12px;">
+                            <!-- Filters & Actions -->
+                            <div class="admin-actions-bar" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
+                                <div class="admin-search-wrapper" style="flex: 1 1 300px; max-width: 400px; position: relative; margin: 0;">
                                     <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                     </svg>
-                                    <input type="text" id="majorSearch" class="admin-search-input" placeholder="Search majors..." disabled style="padding-left: 42px !important;" />
+                                    <input type="text" id="majorSearch" class="admin-filter-input" placeholder="Search majors..." disabled style="padding-left: 42px !important; width: 100%; border: none !important; background-color: var(--surface-muted, #f4f5f7) !important; border-radius: 24px !important; height: 42px !important; font-size: 14px; margin-bottom: 0;" />
                                 </div>
                                 <button type="button" class="btn btn-primary" id="btnCreateMajor" style="margin: 0; white-space: nowrap; height: 42px; border-radius: 24px !important; flex: 0 0 auto; width: auto; padding: 0 24px;">
                                     + Add New Major
