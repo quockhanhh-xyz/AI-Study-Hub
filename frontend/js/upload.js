@@ -168,7 +168,7 @@ async function loadSubjectOptions(majorId = "") {
   subjectSelect.disabled = true;
 
   try {
-    const result = await getSubjects("");
+    const result = await getSubjects(majorId);
     const subjects = Array.isArray(result.data) ? result.data : [];
 
     subjectDatalist.innerHTML = "";
@@ -873,6 +873,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const profile = profileRes.data;
         if (profile.schoolId) {
           schoolSelect.value = profile.schoolId;
+          schoolSelect.dispatchEvent(new Event("syncCustom"));
 
           // Load majors for this school
           const majorRes = await getActiveMajors(profile.schoolId);
@@ -880,6 +881,7 @@ document.addEventListener("DOMContentLoaded", function () {
             populateUploadMajors(majorRes.data);
             if (profile.majorId) {
               majorSelect.value = profile.majorId;
+              majorSelect.dispatchEvent(new Event("syncCustom"));
               await loadSubjectOptions(profile.majorId);
             }
           }
@@ -909,6 +911,12 @@ document.addEventListener("DOMContentLoaded", function () {
       window.UIHelper.convertSelectToCustomDropdown(majorSelect);
       majorSelect.dispatchEvent(new Event("syncCustom"));
     }
+    
+    if (subjectSelect) {
+      subjectSelect.disabled = true;
+      subjectSelect.innerHTML = '<option value="">Select a Major first</option>';
+      subjectSelect.dispatchEvent(new Event("syncCustom"));
+    }
   }
 
   // School Select change listener in upload page
@@ -929,14 +937,25 @@ document.addEventListener("DOMContentLoaded", function () {
       } else {
         majorSelect.innerHTML = '<option value="">Select Major</option>';
         majorSelect.disabled = true;
-        await loadSubjectOptions();
+        majorSelect.dispatchEvent(new Event("syncCustom"));
+        
+        subjectSelect.disabled = true;
+        subjectSelect.innerHTML = '<option value="">Select a Major first</option>';
+        subjectSelect.dispatchEvent(new Event("syncCustom"));
       }
     });
   }
 
   if (majorSelect) {
     majorSelect.addEventListener("change", async () => {
-      await loadSubjectOptions(majorSelect.value);
+      const selectedMajor = majorSelect.value;
+      if (selectedMajor) {
+        await loadSubjectOptions(selectedMajor);
+      } else {
+        subjectSelect.disabled = true;
+        subjectSelect.innerHTML = '<option value="">Select a Major first</option>';
+        subjectSelect.dispatchEvent(new Event("syncCustom"));
+      }
     });
   }
 
@@ -1039,5 +1058,4 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 loadFolderOptions();
-loadSubjectOptions();
 loadUploadLimits();

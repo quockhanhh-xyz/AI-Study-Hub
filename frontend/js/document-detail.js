@@ -1096,7 +1096,7 @@ async function loadEditSubjects(majorId, currentSubjectId = null) {
     }
 
     try {
-        const response = await getSubjects("");
+        const response = await getSubjects(majorId);
         allSubjectsList = response?.data || [];
         renderSubjectOptions(allSubjectsList, currentSubjectId);
         select.disabled = false;
@@ -1396,7 +1396,7 @@ function openSubjectRequestModalForDoc(doc) {
     // Populate existing system subjects select
     if (existingSelect) {
         existingSelect.innerHTML = '<option value="">Or propose a new system subject</option>';
-        getSubjects("").then(sysSubjRes => {
+        getSubjects(doc.majorId).then(sysSubjRes => {
             const allSys = sysSubjRes?.data || [];
             const systemSubjects = allSys.filter(s => s.scope === "SYSTEM");
             systemSubjects.forEach(s => {
@@ -1414,7 +1414,7 @@ function openSubjectRequestModalForDoc(doc) {
         existingSelect.onchange = () => {
             const selectedVal = existingSelect.value;
             if (selectedVal) {
-                getSubjects("").then(res => {
+                getSubjects(doc.majorId).then(res => {
                     const allSys = res?.data || [];
                     const found = allSys.find(s => String(s.subjectId) === String(selectedVal));
                     if (found) {

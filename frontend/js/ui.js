@@ -408,16 +408,19 @@ const UIHelper = {
             if (option.selected) {
               item.classList.add("selected");
             }
-
-            item.addEventListener("click", (e) => {
-              e.stopPropagation();
-              selectElement.value = option.value;
-              updateLabel();
-              optionsMenu.querySelectorAll(".custom-select-option").forEach(opt => opt.classList.remove("selected"));
-              item.classList.add("selected");
-              container.classList.remove("active");
-              selectElement.dispatchEvent(new Event("change", { bubbles: true }));
-            });
+            if (option.disabled) {
+              item.classList.add("disabled");
+            } else {
+              item.addEventListener("click", (e) => {
+                e.stopPropagation();
+                selectElement.value = option.value;
+                updateLabel();
+                optionsMenu.querySelectorAll(".custom-select-option").forEach(opt => opt.classList.remove("selected"));
+                item.classList.add("selected");
+                container.classList.remove("active");
+                selectElement.dispatchEvent(new Event("change", { bubbles: true }));
+              });
+            }
             optionsMenu.appendChild(item);
           });
         } else if (child.tagName === 'OPTION') {
@@ -428,16 +431,19 @@ const UIHelper = {
           if (child.selected) {
             item.classList.add("selected");
           }
-
-          item.addEventListener("click", (e) => {
-            e.stopPropagation();
-            selectElement.value = child.value;
-            updateLabel();
-            optionsMenu.querySelectorAll(".custom-select-option").forEach(opt => opt.classList.remove("selected"));
-            item.classList.add("selected");
-            container.classList.remove("active");
-            selectElement.dispatchEvent(new Event("change", { bubbles: true }));
-          });
+          if (child.disabled) {
+            item.classList.add("disabled");
+          } else {
+            item.addEventListener("click", (e) => {
+              e.stopPropagation();
+              selectElement.value = child.value;
+              updateLabel();
+              optionsMenu.querySelectorAll(".custom-select-option").forEach(opt => opt.classList.remove("selected"));
+              item.classList.add("selected");
+              container.classList.remove("active");
+              selectElement.dispatchEvent(new Event("change", { bubbles: true }));
+            });
+          }
           optionsMenu.appendChild(item);
         }
       });
