@@ -7,12 +7,24 @@
 async function initializeLayout() {
   bootstrapSidebarCollapseState();
 
+  // Optimistically render sidebar using cached user data to prevent UI flicker
+  const cachedUserStr = localStorage.getItem("currentUser");
+  let isOptimisticallyAuthenticated = false;
+  if (cachedUserStr) {
+    try {
+      const user = JSON.parse(cachedUserStr);
+      isOptimisticallyAuthenticated = !!user;
+    } catch (e) {}
+  }
+  renderDynamicSidebar(isOptimisticallyAuthenticated);
+
   // 1. EXECUTE AUTH GUARD SYSTEM BY CALLING /api/auth/me ENDPOINT
   const isAuthenticated = await checkAuthenticationStatus();
 
-
-  // 2. REFINE SIDEBAR MENU BASED ON AUTH STATUS
-  renderDynamicSidebar(isAuthenticated);
+  // 2. REFINE SIDEBAR MENU BASED ON AUTH STATUS (If changed)
+  if (isAuthenticated !== isOptimisticallyAuthenticated) {
+      renderDynamicSidebar(isAuthenticated);
+  }
 
   // 3. RENDER SHARED ADMIN TOPBAR IF ON ADMIN PAGE
   const currentPage = getCurrentPageName();

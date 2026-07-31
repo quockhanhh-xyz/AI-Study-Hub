@@ -183,7 +183,6 @@ a {
   flex-direction: column;
   overflow-y: auto;
   background-color: var(--bg);
-  animation: fadeIn 0.2s ease-out forwards;
 }
 
 
