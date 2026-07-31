@@ -1,16 +1,27 @@
 package com.demo.ai_study_hub.config;
 
 import com.demo.ai_study_hub.entity.Subject;
+import com.demo.ai_study_hub.entity.Major;
+import com.demo.ai_study_hub.entity.SubjectMajorMapping;
 import com.demo.ai_study_hub.repository.SubjectRepository;
+import com.demo.ai_study_hub.repository.MajorRepository;
+import com.demo.ai_study_hub.repository.SubjectMajorMappingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.core.annotation.Order;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Order(2)
 public class SubjectDataSeeder implements CommandLineRunner {
 
     private final SubjectRepository subjectRepository;
+    private final MajorRepository majorRepository;
+    private final SubjectMajorMappingRepository mappingRepository;
 
     @Override
     public void run(String... args) {
@@ -85,7 +96,9 @@ public class SubjectDataSeeder implements CommandLineRunner {
                 {"AIT7_COM+4", "Subject 4 of Combo*"},
                 {"AIT301c", "AI in Production"},
                 {"REL301m", "Reinforcement Learning"},
-                {"AIT7_GRA_ELE", "Graduation Elective - Artificial Intelligence"}
+                {"AIT7_GRA_ELE", "Graduation Elective - Artificial Intelligence"},
+                {"CSI101", "CHuctureaion"},
+                {"SCX112", "SCX112"}
         };
 
         for (String[] s : subjects) {
@@ -116,6 +129,58 @@ public class SubjectDataSeeder implements CommandLineRunner {
                 if (updated) {
                     subjectRepository.save(subject);
                 }
+            }
+        }
+
+        // Map Subjects to Majors (SE and AI)
+        List<String> seSubjects = Arrays.asList(
+                "OTP101", "PEN", "PHE_COM*1", "TMI_ELE", "CEA201", "CSI106", "MAE101", "PHE_COM*2", "PRF192", "SSL101c",
+                "MAD101", "NWC204", "OSG202", "PHE_COM*3", "PRO192", "WED201c", "CSD201", "DBI202", "JPD113", "LAB211",
+                "MAS291", "IOT102", "JPD123", "PRJ301", "SSG104", "SWE202c", "SE_COM*1", "SWP391", "SWR302", "SWT301",
+                "WDU203c", "ENW493c", "OJT202", "EXE101", "PMG201c", "SE_COM*2", "SE_COM*3", "SWD392", "EXE201", "ITE302c",
+                "MLN111", "MLN122", "PRM393", "SE_COM*4_ELE", "HCM202", "MLN131", "SE_GRA_ELE", "VNR202"
+        );
+
+        List<String> aiSubjects = Arrays.asList(
+                "OTP101", "PEN", "PHE_COM*1", "TMI_ELE", "CSI106", "MAD101", "MAE101", "PFP191", "PHE_COM*2", "SSA101",
+                "AIG202c", "CEA201", "CSD203", "DBI202", "JPD113", "PHE_COM*3", "ADY201m", "ITE303c", "JPD123", "MAI391",
+                "MAS291", "AIL303m", "CPV301", "DAP391m", "SSG105", "SWE201c", "AIT7_COM+1", "AIT7_COM+2", "DPL302m", "DWP301c",
+                "NLP301c", "OJT202", "AIT7_COM+3", "DAT301m", "ENW493c", "EXE101", "PMG201c", "AIT7_COM+4", "AIT301c", "EXE201",
+                "MLN111", "MLN122", "REL301m", "AIT7_GRA_ELE", "HCM202", "MLN131", "VNR202", "CSI101", "SCX112"
+        );
+
+        Major seMajor = majorRepository.findBySchool_SchoolIdAndMajorCodeIgnoreCase(1, "SE").orElse(null);
+        if (seMajor == null) {
+            // Find by code globally if schoolId=1 is not guaranteed
+            seMajor = majorRepository.findAll().stream().filter(m -> "SE".equalsIgnoreCase(m.getMajorCode())).findFirst().orElse(null);
+        }
+
+        Major aiMajor = majorRepository.findBySchool_SchoolIdAndMajorCodeIgnoreCase(1, "AI").orElse(null);
+        if (aiMajor == null) {
+            aiMajor = majorRepository.findAll().stream().filter(m -> "AI".equalsIgnoreCase(m.getMajorCode())).findFirst().orElse(null);
+        }
+
+        if (seMajor != null) {
+            for (String code : seSubjects) {
+                mapSubjectToMajor(code, seMajor);
+            }
+        }
+        
+        if (aiMajor != null) {
+            for (String code : aiSubjects) {
+                mapSubjectToMajor(code, aiMajor);
+            }
+        }
+    }
+
+    private void mapSubjectToMajor(String subjectCode, Major major) {
+        Subject subject = subjectRepository.findBySubjectCode(subjectCode).orElse(null);
+        if (subject != null) {
+            if (!mappingRepository.existsBySubject_SubjectIdAndMajor_MajorId(subject.getSubjectId(), major.getMajorId())) {
+                SubjectMajorMapping mapping = new SubjectMajorMapping();
+                mapping.setSubject(subject);
+                mapping.setMajor(major);
+                mappingRepository.save(mapping);
             }
         }
     }
