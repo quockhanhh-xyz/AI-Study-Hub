@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="js/theme.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <title>Violation Reports - AI Study Hub Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <style>
+        .badge-pending {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+        .badge-resolved {
+            background-color: #d1fae5;
+            color: #059669;
+        }
+        .badge-dismissed {
+            background-color: var(--surface-soft);
+            color: #6b7280;
+        }
+        .reason-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .reason-spam {
+            background-color: #fee2e2;
+            color: #ef4444;
+        }
+        .reason-copyright {
+            background-color: #fef3c7;
+            color: #b45309;
+        }
+        .reason-inappropriate {
+            background-color: #f3e8ff;
+            color: #7e22ce;
+        }
+        .reason-duplicate {
+            background-color: #dbeafe;
+            color: #1d4ed8;
+        }
+        .reason-other {
+            background-color: var(--surface-soft);
+            color: #4b5563;
+        }
+    </style>
+<style>
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 16px;
+}
+.theme-toggle-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+</style>
+</head>
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="admin-topbar">
+                <div class="admin-topbar-left">
+                    <button class="menu-toggle-btn" aria-label="Toggle Sidebar Navigation">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18"></path></svg>
+                    </button>
+                    <span class="admin-topbar-brand">AI Study Hub Admin</span>
+                </div>
+                <div class="admin-topbar-right" id="globalHeaderWidgets"></div>
+            </header>
+
+            <div class="admin-layout">
+                <div class="admin-content-wrapper">
+                    <header class="admin-page-header">
+                        <div>
+                            <h1 class="admin-page-title">Violation Reports</h1>
+                            <p class="admin-page-subtitle" style="margin-top: 4px; color: var(--text-muted); font-size: 0.875rem;">Review and resolve violation reports submitted by the community for public documents.</p>
+                        </div>
+                    </header>
+
+                    <div class="admin-state-container" id="reportsLoadingState">
+                        <div class="admin-state-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                        </div>
+                        <p>Loading violation reports...</p>
+                    </div>
+
+                    <div class="admin-state-container" id="reportsErrorState" style="display: none;">
+                        <div class="admin-state-icon" style="color: var(--danger);">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <p id="reportsErrorMessage">Failed to load reports.</p>
+                        <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 16px;">Retry</button>
+                    </div>
+
+                    <div id="reportsContent" style="display: none;">
+                        <!-- Summary KPI Cards -->
+                        <div class="admin-payment-summary-grid" id="reportSummaryCards" style="margin-bottom: 24px;">
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Total Reports</div>
+                                    <div class="summary-value text-primary" id="cardTotalReports">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Pending Reports</div>
+                                    <div class="summary-value text-warning" id="cardPendingReports">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Resolved Reports</div>
+                                    <div class="summary-value text-success" id="cardResolvedReports">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Dismissed Reports</div>
+                                    <div class="summary-value text-danger" id="cardDismissedReports">0</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="admin-card" style="padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: none; background: var(--surface); border-radius: 12px;">
+                            <!-- Filters & Actions -->
+                            <div class="admin-actions-bar" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;">
+                                <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; flex: 1;">
+                                    <div class="admin-search-wrapper" style="position: relative; max-width: 360px; width: 100%;">
+                                        <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted);">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                        </svg>
+                                        <input type="text" id="searchInput" class="admin-filter-input" placeholder="Search by Document, Reporter, or Description..." style="width: 100%; border: none !important; background-color: var(--surface-muted, #f4f5f7) !important; border-radius: 24px !important; padding-left: 44px !important; height: 42px !important; font-size: 14px; margin-bottom: 0;">
+                                    </div>
+                                    <select id="statusFilter" class="admin-filter-input admin-select" style="border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 150px !important; width: auto !important; margin-bottom: 0;">
+                                        <option value="">All Statuses</option>
+                                        <option value="PENDING">PENDING</option>
+                                        <option value="RESOLVED">RESOLVED</option>
+                                        <option value="DISMISSED">DISMISSED</option>
+                                    </select>
+                                    <select id="reasonFilter" class="admin-filter-input admin-select" style="border-radius: 24px !important; height: 42px !important; padding-left: 16px !important; min-width: 160px !important; width: auto !important; margin-bottom: 0;">
+                                        <option value="">All Reasons</option>
+                                        <option value="SPAM">SPAM</option>
+                                        <option value="COPYRIGHT">COPYRIGHT</option>
+                                        <option value="INAPPROPRIATE_CONTENT">INAPPROPRIATE</option>
+                                        <option value="DUPLICATE_CONTENT">DUPLICATE</option>
+                                        <option value="OTHER">OTHER</option>
+                                    </select>
+                                    <button class="btn btn-outline" id="clearFiltersBtn" onclick="clearFilters()" style="white-space: nowrap; height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center; display: none;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                        </svg>
+                                        Clear Filters
+                                    </button>
+                                </div>
+                                <div class="admin-header-actions" style="display: flex; gap: 12px; align-items: center;">
+                                    <button id="exportBtn" class="btn btn-secondary" style="height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                        </svg>
+                                        <span id="exportBtnText">Export all reports</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Table -->
+                            <div class="admin-table-container" style="padding: 0; overflow-x: auto; border: none; box-shadow: none;">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align: center; width: 80px;">ID</th>
+                                            <th style="text-align: center;">Document</th>
+                                            <th style="text-align: center;">Reporter</th>
+                                            <th style="text-align: center; width: 150px;">Reason</th>
+                                            <th style="text-align: center;">Description</th>
+                                            <th style="text-align: center; width: 120px;">Status</th>
+                                            <th style="text-align: center; width: 125px;">Created</th>
+                                            <th style="text-align: center; width: 220px;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="reportsTableBody">
+                                        <!-- Rendered dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                             <!-- Pagination -->
+                             <div class="admin-pagination" id="pagination" style="margin-top: 16px; justify-content: space-between;">
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Action Modal (Resolve / Dismiss) -->
+    <div class="admin-modal-overlay" id="actionReportModal">
+        <div class="admin-modal" style="max-width: 450px;">
+            <h3 id="actionModalTitle" style="margin-top:0; font-size:18px; font-weight:700; color:var(--text); margin-bottom:12px;">Resolve Report</h3>
+            <p id="actionModalSubtitle" style="font-size: 13px; color: var(--muted); margin-bottom: 16.5px;">
+                Provide a resolution note for this action.
+            </p>
+            <input type="hidden" id="actionReportId" />
+            <input type="hidden" id="actionType" />
+            <div class="form-group" style="margin-bottom: 16.5px;">
+                <label style="font-size: 12px; font-weight: 600;">Resolution Note <span class="label-required">*</span></label>
+                <textarea id="resolutionNoteInput" placeholder="Enter resolution details..." style="width: 100%; height: 100px; resize: vertical; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; box-sizing: border-box;" required></textarea>
+            </div>
+            <p id="actionModalError" class="helper-text error" role="alert" style="display:none; color: var(--danger); font-size: 12px; margin-bottom: 8.5px;"></p>
+            <div class="modal-actions" style="margin-top: 18px;">
+                <button type="button" class="btn btn-secondary" id="cancelActionBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmActionBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Admin API scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/account-api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/notification-api.js"></script>
+    <script src="js/notification.js"></script>
+    <script src="js/community-api.js"></script>
+    <script src="js/admin-core-api.js"></script>
+    <script src="js/admin-reports.js"></script>
+</body>
+</html>

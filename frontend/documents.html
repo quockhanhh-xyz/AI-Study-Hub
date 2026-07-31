@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="js/theme.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Documents - AI Study Hub</title>
+    <meta name="description" content="Search, filter, and manage all the documents you own in one place." />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="css/style.css" />
+<style>
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 16px;
+}
+.theme-toggle-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+</style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <section class="page-header dashboard-header">
+                <div class="dashboard-header-content">
+                    <div>
+                        <h1>My Documents</h1>
+                        <p class="dashboard-subtitle">Search, filter, and manage every document you own.</p>
+                    </div>
+                    <button type="button" id="uploadDocumentBtn" class="btn btn-primary upload-link-btn"
+                        style="display: inline-flex; align-items: center; gap: 6px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16"
+                            aria-hidden="true" focusable="false">
+                            <path fill="currentColor"
+                                d="M6 18h12v-3h2v5H4v-5h2zm11.207 -8.70703L15.793 10.707 13 7.91406V16h-2V7.91406L8.20703 10.707 6.79297 9.29297 12 4.08594z">
+                            </path>
+                        </svg>
+                        Upload Document
+                    </button>
+                </div>
+            </section>
+
+            <section class="card document-panel dashboard-panel">
+                <div class="dashboard-panel-header">
+                    <div>
+                        <h2>All Documents</h2>
+                        <p id="docPanelSubtitle">Documents you currently own.</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-search" style="max-width: 480px; margin-bottom: 20px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24"
+                        class="search-icon" aria-hidden="true" focusable="false">
+                        <g id="Search">
+                            <path id="Union" fill="currentColor"
+                                d="M11 2c4.9706 0 9 4.02944 9 9 0 2.125 -0.7381 4.0766 -1.9697 5.6162l4.1767 4.1768 -1.414 1.414 -4.1768 -4.1767C15.0766 19.2619 13.125 20 11 20c-4.97056 0 -9 -4.0294 -9 -9 0 -4.97056 4.02944 -9 9 -9m0 2c-3.86599 0 -7 3.13401 -7 7 0 3.866 3.13401 7 7 7 3.866 0 7 -3.134 7 -7 0 -3.86599 -3.134 -7 -7 -7"
+                                stroke-width="1"></path>
+                        </g>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Search your documents by title or keyword..."
+                        style="padding-left: 40px; width: 100%;" />
+                </div>
+
+                <div class="toolbar">
+                    <div class="filter-group">
+                        <input type="text" id="subjectFilter" list="subjectDatalist" placeholder="Filter by Subject..."
+                            style="min-width: 180px; max-width: 250px;" />
+                        <datalist id="subjectDatalist"></datalist>
+                    </div>
+                    <div class="filter-group">
+                        <select id="fileTypeFilter">
+                            <option value="">All File Types</option>
+                            <optgroup label="PDF Documents">
+                                <option value="PDF">PDF</option>
+                            </optgroup>
+                            <optgroup label="Word Documents">
+                                <option value="DOC">DOC</option>
+                                <option value="DOCX">DOCX</option>
+                            </optgroup>
+                            <optgroup label="Presentations">
+                                <option value="PPT">PPT</option>
+                                <option value="PPTX">PPTX</option>
+                            </optgroup>
+                            <optgroup label="Spreadsheets">
+                                <option value="XLS">XLS</option>
+                                <option value="XLSX">XLSX</option>
+                            </optgroup>
+                            <optgroup label="Images">
+                                <option value="JPG">JPG</option>
+                                <option value="JPEG">JPEG</option>
+                                <option value="PNG">PNG</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <select id="folderFilter">
+                            <option value="">All Folders</option>
+                            <option value="0">My Documents</option>
+                        </select>
+                    </div>
+                    <button type="button" id="favoritesFilterBtn" class="btn btn-secondary favorites-filter-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path
+                                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z" />
+                        </svg>
+                        Favorites
+                    </button>
+                    <button type="button" id="clearFiltersBtn" class="btn btn-secondary clear-filters-btn">Clear
+                        Filters</button>
+                </div>
+
+                <div id="documentLoader" class="document-state">
+                    <span>Loading documents...</span>
+                </div>
+
+                <div id="documentErrorMessage" class="status-box status-error dashboard-document-error"
+                    style="display: none;"></div>
+
+                <div id="documentGrid" class="document-grid" style="display: none;"></div>
+
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"
+                            id="New-File--Streamline-Core" height="24" width="24" aria-hidden="true" focusable="false">
+                            <desc>New File Streamline Icon: https://streamlinehq.com</desc>
+                            <g id="new-file--empty-common-file-content">
+                                <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12.5 12.5c0 0.2652 -0.1054 0.5196 -0.2929 0.7071s-0.4419 0.2929 -0.7071 0.2929h-9c-0.26522 0 -0.51957 -0.1054 -0.70711 -0.2929C1.60536 13.0196 1.5 12.7652 1.5 12.5v-11c0 -0.26522 0.10536 -0.51957 0.29289 -0.707107C1.98043 0.605357 2.23478 0.5 2.5 0.5H9L12.5 4v8.5Z"
+                                    stroke-width="1"></path>
+                                <path id="Vector 2529" stroke="currentColor" stroke-linecap="round"
+                                    stroke-linejoin="round" d="M8.5 0.5v4h4" stroke-width="1"></path>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="empty-title">No matching documents</div>
+                    <p>Upload your first study document or try adjusting your search filters.</p>
+                    <button type="button" id="emptyUploadBtn" class="btn btn-primary empty-action">Upload
+                        document</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+
+    <script src="js/folder-api.js"></script>
+    <script src="js/subject-api.js"></script>
+    <script src="js/document-api.js"></script>
+    <script src="js/processing-api.js"></script>
+    <script src="js/documents.js"></script>
+<script src="js/notification-api.js"></script>
+    <script src="js/notification.js"></script>
+</body>
+
+</html>

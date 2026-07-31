@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="js/theme.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Plans - AI Study Hub</title>
+    <meta name="description" content="Manage Subscription Plans and Tiers." />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+<style>
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 16px;
+}
+.theme-toggle-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+</style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="admin-topbar">
+                <div class="admin-topbar-left">
+                    <button class="menu-toggle-btn" aria-label="Toggle Sidebar Navigation">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18"></path></svg>
+                    </button>
+                    <span class="admin-topbar-brand">AI Study Hub Admin</span>
+                </div>
+                <div class="admin-topbar-right" id="globalHeaderWidgets"></div>
+            </header>
+
+            <div class="admin-layout">
+                <div class="admin-content-wrapper">
+                    <header class="admin-page-header" style="margin-bottom: 24px;">
+                        <div>
+                            <h1 class="admin-page-title" style="margin-bottom: 4px;">Admin Plans</h1>
+                            <p style="color: var(--text-muted, #64748b); margin: 0; font-size: 0.95rem;">Manage subscription plans, configure pricing tiers, system limits, and review update history.</p>
+                        </div>
+                    </header>
+
+                    <div class="admin-state-container" id="plansLoadingState">
+                        <div class="admin-state-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                        </div>
+                        <p>Loading plans configuration...</p>
+                    </div>
+
+                    <div class="admin-state-container" id="plansErrorState" style="display: none;">
+                        <div class="admin-state-icon" style="color: var(--danger);">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <p id="plansErrorMessage">Failed to load plans.</p>
+                        <button class="btn btn-primary" onclick="loadPlansData()" style="margin-top: 16px;">Retry</button>
+                    </div>
+
+                    <div id="plansContent" style="display: none;">
+                        <!-- Summary KPI Cards -->
+                        <div class="admin-payment-summary-grid" id="plansSummaryCards" style="margin-bottom: 24px;">
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Total Plans</div>
+                                    <div class="summary-value text-primary" id="totalPlansCount">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Active Plans</div>
+                                    <div class="summary-value text-success" id="activePlansCount">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Inactive Plans</div>
+                                    <div class="summary-value text-danger" id="inactivePlansCount">0</div>
+                                </div>
+                            </div>
+                            <!-- Export Button Slot (occupies 4th column) -->
+                            <div class="admin-header-actions" id="plansHeaderActions" style="display: none; align-items: flex-end; justify-content: flex-end; padding-bottom: 4px; height: 100%;">
+                                <button class="btn btn-secondary" onclick="exportAdminPlansData()" style="height: 42px; border-radius: 24px !important; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; padding: 0 16px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                    </svg>
+                                    Export
+                                </button>
+                            </div>
+                        </div>
+                        <div class="admin-card">
+                            <div class="admin-table-container">
+                                <table class="admin-table table">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align: center;">Plan Code</th>
+                                            <th style="text-align: center;">Name</th>
+                                            <th style="text-align: center;">Price (đ)</th>
+                                            <th style="text-align: center;">Duration (Months)</th>
+                                            <th style="text-align: center;">AI Requests</th>
+                                            <th style="text-align: center;">Status</th>
+                                            <th style="text-align: center;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="plansTableBody">
+                                        <!-- Plans will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Change History Section -->
+                        <div class="admin-card" style="margin-top: 24px;">
+                            <div style="padding: 20px 24px; border-bottom: 1px solid var(--border-light, var(--surface-soft));">
+                                <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-main, #1e293b);">Plan Configuration Change History</h3>
+                                <p style="margin: 4px 0 0; font-size: 13px; color: var(--text-muted, #64748b);">View logs of edits and status updates for plan configurations.</p>
+                            </div>
+                            <div class="admin-table-container">
+                                <table class="admin-table table">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align: center; width: 150px;">Plan Code</th>
+                                            <th style="text-align: center; width: 120px;">Action</th>
+                                            <th style="text-align: center;">Details</th>
+                                            <th style="text-align: center; width: 180px;">Changed By</th>
+                                            <th style="text-align: center; width: 180px;">Changed At</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="historyTableBody">
+                                        <tr>
+                                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading history...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Edit Plan Modal -->
+    <div class="admin-modal-overlay" id="editPlanModal">
+        <div class="admin-modal">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; width: 100%;">
+                <h3 class="admin-modal-title" style="margin: 0; white-space: nowrap;">Edit Plan</h3>
+                <button type="button" style="background: transparent; color: var(--text-muted); padding: 0; margin: 0; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="closeEditPlanModal()" aria-label="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+            <div class="admin-modal-body">
+                <form id="editPlanForm">
+                    <input type="hidden" id="editPlanCode" />
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <!-- Basic Info -->
+                        <div class="form-group">
+                            <label for="editPlanName" style="display: block; margin-bottom: 8px; font-weight: 500;">Plan Name</label>
+                            <input type="text" id="editPlanName" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanPrice" style="display: block; margin-bottom: 8px; font-weight: 500;">Price (đ)</label>
+                            <input type="number" id="editPlanPrice" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="0" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanDuration" style="display: block; margin-bottom: 8px; font-weight: 500;">Duration (Months)</label>
+                            <input type="number" id="editPlanDuration" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="0" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanBillingLabel" style="display: block; margin-bottom: 8px; font-weight: 500;">Billing Label</label>
+                            <input type="text" id="editPlanBillingLabel" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanPurchasable" style="display: block; margin-bottom: 8px; font-weight: 500;">Purchasable</label>
+                            <select id="editPlanPurchasable" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+
+                        <!-- AI Limits -->
+                        <div class="form-group">
+                            <label for="editPlanAiLimit" style="display: block; margin-bottom: 8px; font-weight: 500;">AI Request Limit</label>
+                            <input type="number" id="editPlanAiLimit" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxAiSessions" style="display: block; margin-bottom: 8px; font-weight: 500;">Max AI Sessions / Doc</label>
+                            <input type="number" id="editPlanMaxAiSessions" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxMessages" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Messages / Session</label>
+                            <input type="number" id="editPlanMaxMessages" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxQuestionChars" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Question Chars</label>
+                            <input type="number" id="editPlanMaxQuestionChars" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxContextChunks" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Context Chunks</label>
+                            <input type="number" id="editPlanMaxContextChunks" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxOutputTokens" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Output Tokens</label>
+                            <input type="number" id="editPlanMaxOutputTokens" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+
+                        <!-- Storage & Documents -->
+                        <div class="form-group">
+                            <label for="editPlanStorageLimit" style="display: block; margin-bottom: 8px; font-weight: 500;">Storage Limit (Bytes)</label>
+                            <input type="number" id="editPlanStorageLimit" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxFileSize" style="display: block; margin-bottom: 8px; font-weight: 500;">Max File Size (Bytes)</label>
+                            <input type="number" id="editPlanMaxFileSize" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxDocumentCount" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Documents</label>
+                            <input type="number" id="editPlanMaxDocumentCount" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxFolderCount" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Folders</label>
+                            <input type="number" id="editPlanMaxFolderCount" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxFolderDepth" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Folder Depth</label>
+                            <input type="number" id="editPlanMaxFolderDepth" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+
+                        <!-- Groups & Sharing -->
+                        <div class="form-group">
+                            <label for="editPlanMaxGroupCount" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Groups</label>
+                            <input type="number" id="editPlanMaxGroupCount" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxMembers" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Members / Group</label>
+                            <input type="number" id="editPlanMaxMembers" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxActiveShares" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Active Shares</label>
+                            <input type="number" id="editPlanMaxActiveShares" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+
+                        <!-- Daily Limits & Others -->
+                        <div class="form-group">
+                            <label for="editPlanSummaryDailyLimit" style="display: block; margin-bottom: 8px; font-weight: 500;">Summary Daily Limit</label>
+                            <input type="number" id="editPlanSummaryDailyLimit" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanFlashcardDailyLimit" style="display: block; margin-bottom: 8px; font-weight: 500;">Flashcard Daily Limit</label>
+                            <input type="number" id="editPlanFlashcardDailyLimit" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanQuizDailyLimit" style="display: block; margin-bottom: 8px; font-weight: 500;">Quiz Daily Limit</label>
+                            <input type="number" id="editPlanQuizDailyLimit" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanItemsPerSet" style="display: block; margin-bottom: 8px; font-weight: 500;">Items / Set</label>
+                            <input type="number" id="editPlanItemsPerSet" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxFlashcards" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Flashcards / Set</label>
+                            <input type="number" id="editPlanMaxFlashcards" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlanMaxQuizQuestions" style="display: block; margin-bottom: 8px; font-weight: 500;">Max Quiz Qs / Set</label>
+                            <input type="number" id="editPlanMaxQuizQuestions" class="admin-filter-input" style="width: 100%; box-sizing: border-box;" required min="-1" />
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="admin-modal-actions">
+                <button class="btn admin-pagination-btn" onclick="closeEditPlanModal()" style="margin: 0; width: auto;">Cancel</button>
+                <button class="btn btn-primary" id="btnSavePlan" onclick="savePlanChanges()" style="margin: 0; width: auto;">Save Changes</button>
+            </div>
+        </div>
+    </div>
+    <!-- Confirm Modal -->
+    <div class="admin-modal-overlay" id="confirmModal" style="z-index: 1100;">
+        <div class="admin-modal" style="max-width: 450px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; width: 100%;">
+                <h3 class="admin-modal-title" id="modalTitle" style="margin: 0; white-space: nowrap;">Confirm Action</h3>
+                <button type="button" style="background: transparent; color: var(--text-muted); padding: 0; margin: 0; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="closeConfirmModal()" aria-label="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+            <div class="admin-modal-body" id="modalBody" style="font-size: 14px; margin-bottom: 24px; color: var(--text-main, #0f172a);">
+                Are you sure you want to perform this action?
+            </div>
+            <div class="admin-modal-actions" style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px;">
+                <button class="btn admin-pagination-btn" onclick="closeConfirmModal()" style="margin: 0; width: auto;">Cancel</button>
+                <button class="btn btn-primary" id="modalConfirmBtn" style="margin: 0; width: auto;">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/admin-core-api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/notification-api.js"></script>
+    <script src="js/notification.js"></script>
+
+    <!-- Page Specific Scripts -->
+    <script src="js/admin-plans-api.js"></script>
+    <script src="js/admin-plans.js"></script>
+</body>
+
+</html>

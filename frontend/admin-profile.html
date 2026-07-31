@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="js/theme.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Profile - AI Study Hub</title>
+    <meta name="description" content="Manage your AI Study Hub Admin profile, upload your avatar, and change your password." />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+    <link rel="stylesheet" href="css/profile.css" />
+<style>
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 16px;
+}
+.theme-toggle-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+</style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="admin-topbar">
+                <div class="admin-topbar-left">
+                    <button class="menu-toggle-btn" aria-label="Toggle Sidebar Navigation">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18"></path></svg>
+                    </button>
+                    <span class="admin-topbar-brand">AI Study Hub Admin</span>
+                </div>
+                <div class="admin-topbar-right" id="globalHeaderWidgets"></div>
+            </header>
+            <div class="admin-layout">
+                <div class="admin-content-wrapper">
+                    <header class="admin-page-header">
+                        <div class="admin-page-header-text">
+                            <h1 class="admin-page-title">Admin Profile</h1>
+                            <p style="color: var(--text-muted); margin: 0; font-size: 0.95rem; margin-top: 4px;">Manage your administrator details, avatar, and security settings.</p>
+                        </div>
+                    </header>
+
+            <div id="profileStatusBar" class="profile-status-bar"></div>
+
+            <div class="profile-layout-grid">
+                <!-- Left Column: Avatar & System Stats -->
+                <div class="profile-left-col">
+                    <!-- Avatar Upload Card -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <h2>Profile Picture</h2>
+                            <p>PNG, JPG, JPEG, or WEBP (Max 5MB)</p>
+                        </div>
+                        <div class="avatar-preview-container">
+                            <div class="avatar-preview-wrapper" id="avatarPreviewWrapper">
+                                <div class="avatar-initials-large" id="avatarInitials">-</div>
+                            </div>
+                            <div class="avatar-actions">
+                                <label for="avatarInput" class="btn btn-secondary btn-sm avatar-btn-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                                    </svg>
+                                    <span>Upload Photo</span>
+                                </label>
+                                <input type="file" id="avatarInput" class="avatar-input-hidden" accept=".png,.jpg,.jpeg,.webp" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Info Card -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <h2>Admin Information</h2>
+                            <p>System settings and status parameters.</p>
+                        </div>
+                        <div class="system-info-list">
+                            <div class="system-info-item">
+                                <span class="system-info-label">Email</span>
+                                <span id="systemEmail" class="system-info-value">-</span>
+                            </div>
+                            <div class="system-info-item">
+                                <span class="system-info-label">Role</span>
+                                <span id="systemRole" class="system-info-value">-</span>
+                            </div>
+                            <div class="system-info-item">
+                                <span class="system-info-label">Status</span>
+                                <span id="systemStatus" class="system-info-value">-</span>
+                            </div>
+                            <div class="system-info-item">
+                                <span class="system-info-label">Joined Date</span>
+                                <span id="systemJoinedDate" class="system-info-value">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Profile Form & Password Security -->
+                <div class="profile-right-col">
+                    <!-- Update Profile Form -->
+                    <div class="profile-card" style="position: relative;">
+                        <div id="profileFormOverlay" class="profile-loading-overlay" style="display: none;">
+                            <span>Saving profile...</span>
+                        </div>
+                        <div class="profile-card-header">
+                            <h2>Profile Details</h2>
+                            <p>Update your personal administrator details.</p>
+                        </div>
+                        <form id="profileDetailsForm">
+                            <div class="profile-form-grid">
+                                <div class="profile-form-group">
+                                    <label for="profileFullName">Full Name</label>
+                                    <input type="text" id="profileFullName" placeholder="Your full name" required minlength="2" maxlength="100" />
+                                </div>
+                                <div class="profile-form-group">
+                                    <label for="profilePhone">Phone Number</label>
+                                    <input type="tel" id="profilePhone" placeholder="Your phone number" maxlength="20" />
+                                </div>
+                                <div class="profile-form-group full-width">
+                                    <label for="profileBio">Bio / Description</label>
+                                    <textarea id="profileBio" placeholder="Tell us about yourself..." maxlength="500"></textarea>
+                                </div>
+                            </div>
+                            <div style="margin-top: 24px; display: flex; gap: 12px;">
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                                <button type="button" id="profileResetBtn" class="btn btn-secondary">Reset Fields</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Change Password Card -->
+                    <div class="profile-card" style="position: relative;">
+                        <div id="passwordOverlay" class="profile-loading-overlay" style="display: none;">
+                            <span>Updating password...</span>
+                        </div>
+                        <div class="profile-card-header">
+                            <h2>Change Password</h2>
+                            <p>Enhance your account security. Password must contain at least 8 characters, 1 letter, and 1 number.</p>
+                        </div>
+                        <form id="changePasswordForm">
+                            <div class="password-form-grid">
+                                <div class="profile-form-group">
+                                    <label for="currentPassword">Current Password</label>
+                                    <input type="password" id="currentPassword" placeholder="Enter current password" required />
+                                </div>
+                                <div class="profile-form-group">
+                                    <label for="newPassword">New Password</label>
+                                    <input type="password" id="newPassword" placeholder="Enter new password" required minlength="8" maxlength="72" />
+                                </div>
+                                <div class="profile-form-group">
+                                    <label for="confirmPassword">Confirm New Password</label>
+                                    <input type="password" id="confirmPassword" placeholder="Confirm new password" required minlength="8" maxlength="72" />
+                                </div>
+                            </div>
+                            <div style="margin-top: 24px;">
+                                <button type="submit" class="btn btn-primary">Update Password</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+                        </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Script imports in correct dependency order -->
+    <script src="js/api.js"></script>
+    <script src="js/account-api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/admin-profile.js"></script>
+    <script src="js/notification-api.js"></script>
+    <script src="js/notification.js"></script>
+</body>
+
+</html>

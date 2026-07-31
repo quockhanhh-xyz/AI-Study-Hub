@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="js/theme.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Study Groups - AI Study Hub</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="css/style.css" />
+<style>
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 16px;
+}
+.theme-toggle-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+</style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+
+            <section class="page-header dashboard-header" style="margin-top: 15px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <h1 style="margin: 0; font-size: 28px; font-weight: 800; color: var(--text);">My Study Groups</h1>
+                    <div id="globalHeaderWidgets" class="global-header-widgets" style="display: flex; align-items: center; gap: 16px;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 12px;">
+                    <p class="dashboard-subtitle" style="margin: 0; color: var(--muted); font-size: 14px;">Click a group to view members and shared documents.</p>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <button type="button" id="joinGroupBtn" class="btn btn-secondary" style="width: auto !important; padding: 10px 16px;">
+                            Join Group
+                        </button>
+                        <button type="button" id="createGroupBtn" class="btn btn-primary upload-link-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; width: auto !important;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Add-1--Streamline-Core" height="14" width="14" aria-hidden="true" focusable="false">
+                              <g id="add-1--expand-cross-buttons-button-more-remove-plus-add-+-mathematics-math">
+                                <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 0.5v13" stroke-width="1"></path>
+                                <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 6.95996h13" stroke-width="1"></path>
+                              </g>
+                            </svg>
+                            New Group
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <div id="groupListView" class="dashboard-panel">
+                <div id="groupLoader" class="document-state" style="display: none; justify-content: center; padding: 24px;">
+                    <span>Loading groups...</span>
+                </div>
+
+                <p id="groupError" class="helper-text error" role="alert" style="display: none;"></p>
+
+                <div id="groupGrid" class="folder-grid" style="display: none;"></div>
+
+                <div id="groupEmpty" class="empty-state" style="display: none;">
+                    <div class="empty-title">No study groups yet</div>
+                    <p>Create your first group or join one using an invite code. Use the buttons above.</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="createModal" role="dialog" aria-modal="true" aria-labelledby="createModalTitle">
+        <div class="modal-box">
+            <h3 id="createModalTitle">New Study Group</h3>
+            <div class="form-group">
+                <label for="createGroupName">Group name <span class="label-required">*</span></label>
+                <input type="text" id="createGroupName" placeholder="E.g: Calculus Study Group" autocomplete="off" />
+            </div>
+            <div class="form-group">
+                <label for="createGroupDescription">Description</label>
+                <input type="text" id="createGroupDescription" placeholder="Optional description" autocomplete="off" />
+            </div>
+            <div class="form-group checkbox-group" style="display: flex; align-items: center; gap: 8px; margin-top: 16px;">
+                <input type="checkbox" id="createRequiresApproval" style="width: auto; margin: 0;" />
+                <label for="createRequiresApproval" style="margin: 0; font-weight: normal; cursor: pointer;">Require approval to join</label>
+            </div>
+            <p id="createError" class="modal-error" role="alert" aria-live="polite"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="createCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="createConfirmBtn">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="joinModal" role="dialog" aria-modal="true" aria-labelledby="joinModalTitle">
+        <div class="modal-box">
+            <h3 id="joinModalTitle">Join Study Group</h3>
+            <div class="form-group">
+                <label for="joinInviteCode">Invite code <span class="label-required">*</span></label>
+                <input type="text" id="joinInviteCode" placeholder="E.g: ABCD1234" autocomplete="off" />
+            </div>
+            <p id="joinError" class="modal-error" role="alert" aria-live="polite"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="joinCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="joinConfirmBtn">Join</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/account-api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/group-api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/groups.js"></script>
+<script src="js/notification-api.js"></script>
+    <script src="js/notification.js"></script>
+</body>
+
+</html>

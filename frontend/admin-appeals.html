@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="js/theme.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Appeals - AI Study Hub</title>
+    <meta name="description" content="Admin Appeals Management." />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+<style>
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 16px;
+}
+.theme-toggle-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+</style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="admin-layout">
+                <div class="admin-content-wrapper">
+                    <header class="admin-page-header" style="margin-bottom: 24px;">
+                        <div>
+                            <h1 class="admin-page-title" style="margin-bottom: 4px;">Blocked Users Appeals</h1>
+                            <p style="color: var(--text-muted, #64748b); margin: 0; font-size: 0.95rem;">Review ban appeals submitted by blocked accounts, and respond to their registered email directly.</p>
+                        </div>
+                    </header>
+
+                    <div class="admin-state-container" id="appealsLoadingState">
+                        <div class="admin-state-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                        </div>
+                        <p>Loading appeals...</p>
+                    </div>
+
+                    <div class="admin-state-container" id="appealsErrorState" style="display: none;">
+                        <div class="admin-state-icon" style="color: var(--danger);">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <p id="appealsErrorMessage">Failed to load appeals.</p>
+                        <button class="btn btn-primary" onclick="loadAppeals()" style="margin-top: 16px;">Retry</button>
+                    </div>
+
+                    <div id="appealsContent" style="display: none;">
+                        <!-- Summary KPI Cards -->
+                        <div class="admin-payment-summary-grid" id="appealsSummaryStrip" style="margin-bottom: 24px;">
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Total Appeals</div>
+                                    <div class="summary-value text-primary" id="summaryTotalAppeals" style="color: var(--primary, #ff5a3d);">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Pending Review</div>
+                                    <div class="summary-value" id="summaryPendingAppeals" style="color: #f59e0b;">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Resolved Appeals</div>
+                                    <div class="summary-value text-success" id="summaryResolvedAppeals" style="color: var(--success, #10b981);">0</div>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card admin-card">
+                                <div class="payment-summary-info">
+                                    <div class="summary-label">Resolution Rate</div>
+                                    <div class="summary-value" id="summaryResolveRate" style="color: #3b82f6;">0%</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Appeals Table -->
+                        <div class="admin-card table-card" style="overflow-x: auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date Submitted</th>
+                                        <th>Sender Name</th>
+                                        <th>Email Address</th>
+                                        <th>Appeal Message</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="appealsTableBody">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                            <div id="appealsEmptyState" class="admin-empty-state-card" style="display: none; padding: 48px; text-align: center; color: var(--text-muted);">
+                                No appeals found.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Respond Modal -->
+    <div id="respondModal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 16px;">
+        <div class="modal-content card" style="width: 100%; max-width: 520px; background: var(--surface); border-radius: 16px; padding: 28px; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); position: relative; color: var(--text-main); text-align: left;">
+            <button type="button" id="closeRespondModalBtn" style="position: absolute; right: 20px; top: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); line-height: 1;">&times;</button>
+            <h3 style="font-size: 18px; font-weight: 700; color: var(--text-main); margin: 0 0 16px;">Respond to Appeal</h3>
+            <div style="background: var(--surface-soft); border-radius: 8px; padding: 14px; margin-bottom: 18px; font-size: 14px;">
+                <p style="margin: 0 0 6px;"><strong>From:</strong> <span id="modalSenderName"></span> (<span id="modalSenderEmail"></span>)</p>
+                <p style="margin: 0;"><strong>Message:</strong> <span id="modalSenderMessage" style="color: var(--text-muted); font-style: italic;"></span></p>
+            </div>
+            <form id="respondForm">
+                <div class="form-group" style="margin-bottom: 18px;">
+                    <label for="adminReplyText" style="font-size: 13px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">Your Reply / Decision (Will be sent to their email)</label>
+                    <textarea id="adminReplyText" rows="5" placeholder="Type your response here..." required style="width:100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" id="cancelRespondBtn" class="btn btn-secondary" style="width: auto; padding: 8px 16px;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="width: auto; padding: 8px 20px;">Send Email Response</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/notification-api.js"></script>
+    <script src="js/notification.js"></script>
+    <script src="js/admin-appeals.js"></script>
+</body>
+
+</html>

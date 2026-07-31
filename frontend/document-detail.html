@@ -1,0 +1,2811 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="js/theme.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document Detail - AI Study Hub</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="stylesheet" href="css/style.css?v=3" />
+
+  <style>
+    /* ===== INTERACTIVE RATING STARS ===== */
+    .star {
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--border);
+      transition: color 0.15s ease-in-out;
+    }
+    .star.hover, .star.filled {
+      color: #fbbf24;
+    }
+    .star.disabled {
+      cursor: default;
+    }
+
+    .btn-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface-muted);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      color: #4b5563;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: 16px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      width: fit-content;
+    }
+
+    .btn-back-link:hover {
+      background: var(--border);
+      color: #1f2937;
+      text-decoration: none;
+    }
+
+    .document-action-row .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-icon {
+      flex-shrink: 0;
+      color: currentColor;
+    }
+
+    .document-detail-page {
+      overflow: hidden;
+    }
+
+    .document-detail-page .app-layout {
+      height: 100vh;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .detail-main {
+      position: relative;
+      height: 100vh;
+      min-width: 0;
+      min-height: 0;
+      padding: 68px 20px 20px 20px;
+      overflow: hidden;
+    }
+
+    .detail-main .global-top-bar-floating {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      height: 60px !important;
+      background: var(--surface) !important;
+      border-bottom: 1px solid var(--border) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      padding: 0 24px !important;
+      z-index: 99 !important;
+      box-shadow: none !important;
+    }
+
+    .detail-main .global-top-bar-floating .global-top-bar-right {
+      margin-left: auto;
+    }
+
+    .top-bar-search-form {
+      flex: 1;
+      max-width: 520px;
+      margin-right: 24px;
+    }
+
+    .detail-main .global-top-bar-floating .top-bar-search-form {
+      display: none !important;
+    }
+
+    .top-bar-contextual {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+      padding-right: 16px;
+    }
+
+    .top-bar-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: color 0.2s ease;
+    }
+
+    .top-bar-back-link:hover {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .top-bar-separator {
+      color: var(--border-strong, var(--border));
+      font-size: 12px;
+    }
+
+    .top-bar-breadcrumb {
+      min-width: 0;
+      max-width: 560px;
+      overflow: hidden;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    #detailLoader {
+      display: grid;
+      flex: 1;
+      place-items: center;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .detail-workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(340px, 1fr);
+      gap: 18px;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .detail-workspace[hidden] {
+      display: none !important;
+    }
+
+    .preview-workspace {
+      display: flex;
+      min-width: 0;
+      min-height: 0;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .preview-toolbar {
+      display: flex;
+      min-height: 48px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 6px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .preview-header-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+      flex: 1;
+    }
+    
+    .preview-header-top-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .preview-header-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+
+    .preview-header-title {
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 450px;
+    }
+
+    .preview-header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+      margin-left: 4px;
+    }
+    .preview-header-badge:hover {
+      opacity: 0.85;
+    }
+    .preview-header-badge.ai-completed {
+      background: #ecfdf5;
+      color: #065f46;
+      border-color: #a7f3d0;
+    }
+    .preview-header-badge.ai-processing {
+      background: #fff7ed;
+      color: #c2410c;
+      border-color: #fed7aa;
+    }
+    .preview-header-badge.ai-failed {
+      background: var(--surface-muted);
+      color: #4b5563;
+      border-color: var(--border);
+    }
+    .preview-header-badge.ai-pending {
+      background: #fffbeb;
+      color: #b45309;
+      border-color: #fde68a;
+    }
+    .preview-header-badge.ai-unsupported {
+      background: var(--surface-muted);
+      color: #4b5563;
+      border-color: var(--border);
+    }
+
+    .preview-toolbar-title {
+      min-width: 0;
+    }
+
+    .preview-toolbar-title strong,
+    .preview-toolbar-title span {
+      display: block;
+    }
+
+    .preview-toolbar-title strong {
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .preview-toolbar-title span {
+      margin-top: 2px;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .preview-toolbar-actions,
+    .document-action-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .preview-toolbar .btn,
+    .document-action-row .btn {
+      width: auto;
+      min-height: 38px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .preview-toolbar .btn-primary {
+      border-color: var(--primary);
+    }
+
+    #previewArea {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      background: #eef0f3;
+    }
+
+    .preview-iframe {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      border: 0;
+      background: var(--surface);
+    }
+
+    .preview-office-wrap {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      background: #eef0f3;
+    }
+
+    .preview-office-frame {
+      flex: 1 1 auto;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .preview-image-wrap {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      padding: 24px;
+    }
+
+    .preview-image {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .preview-fallback {
+      display: flex;
+      width: 100%;
+      min-height: 100%;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
+      padding: 32px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .preview-fallback-title {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .preview-fallback-desc {
+      max-width: 440px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .detail-right-inspector {
+      display: flex;
+      min-width: 0;
+      min-height: 0;
+      flex-direction: column;
+      overflow-y: auto;
+      scrollbar-gutter: stable;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .inspector-inner {
+      display: flex;
+      min-height: 100%;
+      flex-direction: column;
+      padding: 20px;
+    }
+
+    .detail-back-btn {
+      width: fit-content;
+      min-height: 36px;
+      margin: 0 0 18px;
+      padding: 7px 10px;
+      gap: 7px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .detail-back-btn:hover {
+      color: var(--text);
+      background: var(--surface-muted);
+      border-color: var(--border);
+    }
+
+    .document-badge-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .detail-type-badge,
+    .status-badge {
+      display: inline-flex;
+      min-height: 24px;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .detail-type-badge {
+      color: var(--primary-hover);
+      background: var(--primary-light);
+      border: 1px solid var(--primary-border);
+    }
+
+    .status-badge {
+      color: var(--muted);
+      background: var(--bg);
+      border: 1px solid var(--border);
+    }
+
+    #favoriteDetailBtn {
+      width: 24px;
+      height: 24px;
+      margin-left: 2px;
+    }
+
+    #favoriteDetailBtn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .inspector-document-header h1 {
+      margin: 0;
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .detail-uploaded-by {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .document-action-row {
+      margin-top: 18px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .document-action-row .btn-secondary {
+      background: var(--surface);
+    }
+
+    .document-action-row .btn-primary {
+      border-color: var(--primary);
+    }
+
+    .detail-summary {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .detail-meta-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+    }
+
+    .detail-meta-row {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr);
+      gap: 12px;
+      align-items: baseline;
+      font-size: 13px;
+    }
+
+    .detail-meta-row dt {
+      color: var(--muted);
+    }
+
+    .detail-meta-row dd {
+      margin: 0;
+      color: var(--text);
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+
+    .detail-description {
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+
+    .inspector-tabs-container {
+      display: flex;
+      gap: 18px;
+      margin-top: 4px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .inspector-tab-btn {
+      padding: 14px 2px 11px;
+      background: transparent;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .inspector-tab-btn:hover {
+      color: var(--text);
+    }
+
+    .inspector-tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .inspector-panes {
+      flex: 0 0 auto;
+      padding-top: 18px;
+    }
+
+    .inspector-panes:has(#inspectorPaneAI.active),
+    .inspector-panes:has(#inspectorPaneTools.active) {
+      flex: 1;
+      min-height: 0;
+    }
+
+    .inspector-tab-pane {
+      display: none;
+    }
+
+    .inspector-tab-pane.active {
+      display: block;
+    }
+
+    .edit-section h2,
+    .shares-panel h2 {
+      margin: 0 0 16px;
+      font-size: 16px;
+    }
+
+    .edit-section {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+      min-height: 0;
+      padding-bottom: 24px;
+    }
+
+    .edit-section .form-group {
+      margin: 0;
+    }
+
+    .edit-section textarea {
+      min-height: 48px;
+      max-height: 96px;
+      resize: vertical;
+    }
+
+    .edit-section select,
+    .edit-section input,
+    .edit-section textarea {
+      box-sizing: border-box;
+    }
+
+    #editMessage {
+      display: none;
+      margin: 0;
+      min-height: 0 !important;
+    }
+
+    #editMessage:not(:empty) {
+      display: block;
+      margin: 2px 0 0;
+    }
+
+    .edit-actions {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px !important;
+      margin-top: 4px;
+      position: static;
+    }
+
+    .edit-actions .btn {
+      width: 100%;
+      min-height: 44px;
+      margin: 0;
+    }
+
+    #detailsEditSection #editSubject {
+      margin-bottom: 0;
+    }
+
+    /* AI Status inline row */
+    .ai-status-inline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .ai-status-inline svg {
+      flex-shrink: 0;
+    }
+    .ai-status-inline .ai-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+    }
+    .ai-status-dot.completed { background: #10b981; }
+    .ai-status-dot.processing { background: #f59e0b; animation: ai-spin-pulse 1s ease infinite; }
+    .ai-status-dot.failed { background: #ef4444; }
+    .ai-status-dot.unsupported,
+    .ai-status-dot.pending { background: #9ca3af; }
+    @keyframes ai-spin-pulse {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+    }
+    /* Unpublish warning button */
+    .btn-unpublish {
+      background: #fffbeb !important;
+      border-color: #fde68a !important;
+      color: #92400e !important;
+    }
+    .btn-unpublish:hover {
+      background: #fef3c7 !important;
+      border-color: #f59e0b !important;
+    }
+    /* Danger Zone — collapsible, subtle */
+    .danger-zone-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: none;
+      padding: 6px 0;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      font-family: inherit;
+      transition: color 0.2s;
+    }
+
+    .danger-zone-toggle:hover {
+      color: #b91c1c;
+    }
+
+    .danger-zone-toggle svg {
+      transition: transform 0.2s;
+    }
+
+    .danger-zone-toggle.open #dangerChevron {
+      transform: rotate(180deg);
+    }
+
+    .danger-zone-body {
+      display: none;
+      margin-top: 10px;
+      padding: 14px 16px;
+      background-color: #fff5f5;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+    }
+
+    .danger-zone-body.open {
+      display: block;
+    }
+
+    .danger-zone-label {
+      display: block;
+      margin-bottom: 4px;
+      color: #991B1B;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .danger-zone-copy {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .danger-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid #fca5a5;
+      background: transparent;
+      color: #b91c1c;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .danger-link:hover {
+      background: #fee2e2;
+      border-color: #f87171;
+    }
+
+    .danger-zone-wrapper {
+      margin-top: 24px;
+    }
+
+    .danger-zone-box {
+      border: 1px solid #fecaca;
+      background: #fff1f2;
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .danger-zone-toggle {
+      width: 100%;
+      justify-content: space-between;
+      padding: 0;
+      color: #991b1b;
+      text-align: left;
+    }
+
+    .danger-zone-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #991b1b;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .danger-zone-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: #fee2e2;
+      color: #dc2626;
+      flex-shrink: 0;
+    }
+
+    .danger-zone-summary {
+      margin-top: 6px;
+      color: #7f1d1d;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .danger-zone-body {
+      padding: 12px 0 0;
+      background: transparent;
+      border: 0;
+      border-top: 1px solid #fca5a5;
+      border-radius: 0;
+    }
+
+    .danger-zone-action {
+      display: inline-flex !important;
+      align-items: center;
+      gap: 6px;
+      width: auto;
+      border-color: #fca5a5 !important;
+      background: var(--surface) !important;
+      color: #dc2626 !important;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 14px;
+    }
+
+    .danger-zone-action:hover {
+      background: #fee2e2 !important;
+      border-color: #f87171 !important;
+    }
+
+    .shares-panel {
+      padding: 4px 0;
+    }
+
+    .share-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .share-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .share-block-title {
+      margin: 0;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .visibility-status-card {
+      display: none;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 10px;
+      line-height: 1.4;
+    }
+
+    .visibility-status-card.public {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #166534;
+    }
+
+    .visibility-status-card.private {
+      background: var(--surface-muted);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .visibility-status-card svg {
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .visibility-status-title {
+      margin-bottom: 2px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .visibility-status-copy {
+      color: inherit;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .visibility-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .visibility-actions .btn {
+      width: auto;
+      justify-content: center;
+    }
+
+    .share-empty-state {
+      display: none;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      min-height: 88px;
+      margin-top: 6px;
+      padding: 14px;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      background: var(--surface-muted);
+    }
+
+    .share-empty-state p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .share-empty-title {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .share-empty-action {
+      display: inline-flex !important;
+      width: auto;
+      border-radius: 999px;
+      background: var(--surface) !important;
+      border: 1px solid var(--border) !important;
+      color: var(--text) !important;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 12px;
+    }
+
+    .ai-processing-section {
+      margin-top: 32px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .ai-processing-heading {
+      margin: 0 0 12px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .ai-processing-status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .status-badge.processing {
+      background-color: #fff7ed;
+      color: #c2410c;
+      border: 1px solid #fed7aa;
+    }
+
+    .status-badge.completed {
+      background-color: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .status-badge.failed {
+      background-color: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .status-badge.unsupported,
+    .status-badge.empty-content,
+    .status-badge.pending {
+      background-color: var(--surface-muted);
+      color: #374151;
+      border: 1px solid var(--border);
+    }
+
+    .ai-status-spinner {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid #fed7aa;
+      border-top-color: #c2410c;
+      animation: ai-spin 0.8s linear infinite;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+
+    @keyframes ai-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .ai-processing-meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .ai-processing-message {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .ai-processing-message.error {
+      color: var(--danger-text);
+    }
+
+    .ai-processing-warning {
+      margin: 0 0 10px;
+      padding: 8px 10px;
+      background-color: #fffbeb;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .ai-processing-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .ai-processing-actions .btn {
+      width: auto;
+      min-width: 0;
+      padding: 6px 14px;
+      font-size: 12px;
+    }
+
+    .ai-extracted-text-box {
+      margin-top: 14px;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+
+    .ai-extracted-text-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .ai-extracted-text-header span {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .ai-text-toggle-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 11px;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .ai-text-toggle-btn:hover {
+      background: var(--surface-muted);
+    }
+
+    .ai-extracted-text-content {
+      max-height: 260px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: inherit;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin: 0;
+    }
+
+    .share-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .share-block h3 {
+      margin: 0;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .modal-box.detail-modal {
+      max-width: 460px;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .ai-qa-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .ai-qa-panel .ai-processing-section {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+      padding-bottom: 8px;
+    }
+
+    .ai-qa-divider {
+      border: 0;
+      border-top: 1px solid var(--border);
+      margin: 4px 0;
+      opacity: 0.5;
+    }
+
+    .ai-qa-usage-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 5px 2px 12px 2px;
+      font-size: 11px;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .ai-qa-model-badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      opacity: 0.7;
+      white-space: nowrap;
+    }
+
+    .ai-qa-sample-questions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .ai-qa-sample-btn {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .ai-qa-sample-btn:hover {
+      background: var(--surface-muted);
+      border-color: var(--primary-border);
+    }
+
+    .ai-qa-sample-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .ai-qa-messages {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 4px 2px;
+    }
+
+    .ai-qa-empty-state {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      padding: 24px 0;
+    }
+
+    .ai-qa-message {
+      max-width: 88%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .ai-qa-message.user {
+      align-self: flex-end;
+      background: var(--primary);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .ai-qa-message.assistant {
+      align-self: flex-start;
+      background: var(--surface-muted);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+      padding: 16px;
+    }
+
+    .ai-qa-message.loading {
+      align-self: flex-start;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .ai-qa-message-sources {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .ai-qa-message-meta {
+      margin-top: 4px;
+      font-size: 10px;
+      color: var(--muted);
+      opacity: 0.8;
+    }
+
+    .ai-qa-status-banner {
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .ai-qa-status-banner.info {
+      background-color: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+
+    .ai-qa-status-banner.warning {
+      background-color: #fffbeb;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+
+    .ai-qa-status-banner.error {
+      background-color: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .ai-qa-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .ai-qa-input-row textarea {
+      flex: 1;
+      resize: vertical;
+      min-height: 44px;
+      max-height: 120px;
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font: inherit;
+      font-size: 13px;
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    .ai-qa-input-row textarea:disabled {
+      background: var(--bg);
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    .ai-qa-input-row button {
+      width: auto;
+      min-width: 72px;
+      min-height: 40px;
+      padding: 8px 16px;
+    }
+
+    .ai-qa-input-row button:disabled {
+      background-color: var(--border) !important;
+      border-color: var(--border) !important;
+      color: #9CA3AF !important;
+      cursor: not-allowed !important;
+    }
+
+    .ai-qa-input-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .status-badge.badge-system {
+      background: var(--surface-muted, var(--surface-muted));
+      border: 1px solid transparent;
+      font-weight: 600;
+      cursor: default;
+    }
+    
+    /* Details view polish */
+    .details-view-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .details-view-field {
+      margin-bottom: 14px;
+    }
+    .details-view-field:last-child {
+      margin-bottom: 0;
+    }
+    .details-view-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .details-view-value {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .details-view-value.empty {
+      color: var(--muted);
+      font-style: italic;
+    }
+    /* Ghost Edit button */
+    .btn-edit-details {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-edit-details:hover {
+      background: var(--surface-muted);
+      border-color: var(--primary-border);
+      color: var(--primary);
+    }
+    /* Sharing empty state */
+    .shares-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 0;
+    }
+    .shares-empty-text {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .btn-ghost-sm {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-ghost-sm:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+    /* Public document soft box */
+    .public-doc-info {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      background: #f8faff;
+      border: 1px solid #dbeafe;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      color: #2563eb;
+    }
+    .public-doc-info svg {
+      flex-shrink: 0;
+      margin-top: 1px;
+      color: #3b82f6;
+    }
+    .public-doc-info strong {
+      display: block;
+      margin-bottom: 2px;
+      color: #1d4ed8;
+      font-size: 12px;
+    }
+    .public-doc-info p {
+      margin: 0;
+      color: #3b82f6;
+      line-height: 1.4;
+    }
+    /* Danger zone wrapper */
+    .danger-zone-wrapper {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 1180px) {
+      .detail-workspace {
+        grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr);
+      }
+
+      .detail-main {
+        padding: 14px;
+      }
+    }
+
+    @media (max-width: 980px) {
+
+      .document-detail-page,
+      .document-detail-page .app-layout,
+      .detail-main {
+        height: auto;
+        overflow: visible;
+      }
+
+      .detail-main {
+        min-height: 100vh;
+      }
+
+      .detail-workspace {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+
+      .preview-workspace {
+        min-height: 68vh;
+      }
+
+      .detail-right-inspector {
+        overflow: visible;
+      }
+    }
+    /* --- AI QA Layout Overhaul --- */
+    .detail-right-inspector,
+    .inspector-tab-pane,
+    .ai-qa-panel,
+    .ai-tools-panel {
+      min-width: 0;
+      box-sizing: border-box;
+    }
+    .ai-qa-panel,
+    .ai-tools-panel {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+    }
+    .ai-qa-header {
+      margin-bottom: 16px;
+    }
+    .ai-qa-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0 0 4px 0;
+    }
+    .ai-qa-header p {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    /* Onboarding State */
+    .ai-processing-section.onboarding-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: clamp(20px, 4vw, 32px) 16px;
+      text-align: center;
+      margin-bottom: 24px;
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      gap: 12px;
+    }
+    .ai-processing-section.onboarding-state[style*="display: none"] {
+      display: none !important;
+    }
+    .ai-processing-section.onboarding-state.is-unsupported {
+      background: var(--surface-muted);
+      border-style: solid;
+      border-color: var(--border);
+    }
+    .ai-processing-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+      color: var(--primary);
+      display: flex;
+      justify-content: center;
+    }
+    .ai-processing-section.onboarding-state.is-unsupported .ai-processing-icon {
+      color: var(--muted);
+    }
+    .onboarding-state h3,
+    .ai-processing-section.onboarding-state .ai-processing-heading {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0 0 8px 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .onboarding-state p,
+    .ai-processing-section.onboarding-state .ai-processing-message {
+      max-width: 100%;
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0 0 16px 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .ai-processing-section.onboarding-state .ai-processing-actions {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    .ai-processing-spinner {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(249,115,22,0.2);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 1s ease-in-out infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Try Asking Chips */
+    .ai-qa-sample-questions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .ai-qa-sample-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .ai-qa-sample-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .ai-qa-sample-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 16px;
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .ai-qa-sample-btn:hover {
+      background: #fff7ed; /* light orange hover */
+      border-color: #ffedd5;
+      color: var(--primary);
+    }
+    .ai-qa-sample-btn:active {
+      background: #ffedd5;
+    }
+    .ai-qa-sample-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Messages container */
+    .ai-qa-messages {
+      flex: 1;
+      padding-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Formatted AI Answer */
+    .ai-qa-message {
+      line-height: 1.5;
+      font-size: 14px;
+    }
+    .ai-qa-message.assistant p {
+      margin: 0 0 8px 0;
+    }
+    .ai-qa-message.assistant p:last-child {
+      margin-bottom: 0;
+    }
+    .ai-qa-message.assistant ul {
+      margin: 0 0 12px 0;
+      padding-left: 20px;
+    }
+    .ai-qa-message.assistant li {
+      margin-bottom: 4px;
+    }
+    .ai-qa-message.assistant ol {
+      margin: 0 0 12px 0;
+      padding-left: 20px;
+    }
+    .ai-qa-message.assistant strong {
+      font-weight: 600;
+    }
+    .ai-qa-message.assistant code {
+      background: rgba(127, 127, 127, 0.15);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+
+    /* Source Chips */
+    .ai-qa-message-sources {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      padding: 8px;
+      background: rgba(0,0,0,0.03);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .ai-qa-source-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    /* Sticky Footer */
+    .ai-qa-sticky-footer {
+      position: sticky;
+      bottom: 0;
+      background: var(--surface);
+      display: grid !important;
+      gap: 10px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      margin-top: auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .ai-qa-sticky-footer .ai-qa-input-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 52px;
+      gap: 10px;
+      align-items: end;
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+    .ai-qa-sticky-footer .ai-qa-input-row textarea {
+      width: 100%;
+      min-width: 0;
+      min-height: 52px;
+      max-height: 118px;
+      resize: none;
+      border-radius: 14px;
+      padding: 13px 14px;
+      border: 1px solid var(--border);
+      font-family: inherit;
+      font-size: 13px;
+      line-height: 1.35;
+      background: var(--surface-muted);
+      box-sizing: border-box;
+      overflow: auto;
+    }
+    .ai-qa-sticky-footer .ai-qa-input-row textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--surface);
+    }
+    .ai-qa-sticky-footer #aiQaAskBtn {
+      border-radius: 16px;
+      width: 52px;
+      height: 52px;
+      min-width: 52px;
+      padding: 0;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ai-qa-footer-meta {
+      display: flex !important;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      align-items: center;
+      width: 100%;
+      margin: 0;
+      font-size: 11.5px;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+    .ai-qa-usage-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+
+    .ai-qa-input-meta {
+      display: block;
+      width: auto;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    /* --- AI Tools Layout Overhaul --- */
+    .ai-tools-panel {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-width: 0;
+    }
+    .ai-tools-header {
+      margin-bottom: 14px;
+    }
+    .ai-tools-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0 0 4px 0;
+    }
+    .ai-tools-header p {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0;
+    }
+    #aiToolsContent {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    /* Tool Blocks */
+    .ai-tools-tool-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 0;
+      display: grid;
+      gap: 14px;
+      min-width: 0;
+    }
+    .ai-tools-tool-header {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr);
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 0;
+      min-width: 0;
+    }
+    .ai-tools-tool-icon {
+      color: var(--primary);
+      background: var(--primary-light);
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      border: 1px solid var(--primary-border);
+      flex-shrink: 0;
+      overflow: hidden;
+      line-height: 0;
+    }
+
+    .ai-tools-tool-icon svg {
+      width: 22px;
+      height: 22px;
+      display: block;
+      stroke: currentColor;
+    }
+
+    .ai-tools-tool-header > div:last-child {
+      min-width: 0;
+    }
+
+    .ai-tools-tool-header h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.25;
+    }
+    .ai-tools-tool-header p {
+      margin: 3px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    /* Inputs */
+    .ai-tools-input-group {
+      margin-bottom: 0;
+    }
+    .ai-tools-input-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .ai-tools-input-group label span {
+      color: var(--muted);
+      font-weight: normal;
+    }
+    .helper-text-inline {
+      display: block;
+      font-size: 11px !important;
+      color: var(--muted) !important;
+      margin-top: 4px;
+    }
+    .ai-tools-input-row-flex {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 150px;
+      align-items: center;
+      gap: 12px;
+    }
+    .ai-tools-input-row-flex label {
+      margin-bottom: 0;
+    }
+    .ai-tools-input-row-flex input,
+    .ai-tools-input-row-flex select,
+    .ai-tools-input-row-flex .custom-select-trigger {
+      width: 100%;
+      height: 44px;
+      min-width: 0;
+      box-sizing: border-box;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      font-size: 14px;
+      padding: 0 14px;
+    }
+    .ai-tools-input-row-flex input[type="number"]::-webkit-inner-spin-button,
+    .ai-tools-input-row-flex input[type="number"]::-webkit-outer-spin-button {
+      opacity: 0.45;
+    }
+    .ai-tools-input-row-flex select {
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, #667085 50%),
+        linear-gradient(135deg, #667085 50%, transparent 50%);
+      background-position: calc(100% - 18px) 19px, calc(100% - 12px) 19px;
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+      padding-right: 36px;
+    }
+    .ai-tools-input-row-flex .custom-select {
+      min-width: 0;
+      width: 100%;
+    }
+    .ai-tools-limit-hint {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .ai-tools-generate-btn {
+      width: 100%;
+      min-height: 50px;
+      padding: 12px;
+      font-size: 14px;
+      margin: 2px 0 0;
+      border-radius: 10px;
+    }
+    .ai-tools-focus-toggle {
+      justify-self: start;
+      width: max-content;
+      display: inline-flex;
+      align-items: center;
+      border: 0;
+      background: transparent;
+      color: var(--primary);
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 0;
+      cursor: pointer;
+      text-decoration: underline;
+      line-height: 1.3;
+    }
+    .ai-tools-focus-panel {
+      display: none;
+    }
+    .ai-tools-focus-panel.open {
+      display: block;
+    }
+    .ai-tools-input-group textarea {
+      width: 100%;
+      min-height: 76px;
+      max-height: 132px;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+
+    /* Generated Sets */
+    .ai-tools-set-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .ai-tools-set-item {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: var(--bg);
+      transition: all 0.2s;
+    }
+    .ai-tools-set-item:hover {
+      border-color: var(--border);
+      background: var(--surface-muted);
+    }
+    .ai-tools-set-link {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .ai-tools-set-content {
+      flex: 1;
+      min-width: 0; /* for truncation */
+    }
+    .ai-tools-set-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+      min-width: 0;
+    }
+    .ai-tools-set-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ai-tools-set-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--surface-muted);
+      border: 1px solid var(--border);
+      text-transform: uppercase;
+    }
+    .ai-tools-set-meta {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ai-tools-set-open {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      padding: 5px 12px;
+      background: #fff7ed;
+      border-radius: 16px;
+      flex-shrink: 0;
+    }
+    @media (max-width: 1280px) {
+      .ai-qa-sticky-footer .ai-qa-input-row {
+        grid-template-columns: minmax(0, 1fr) 48px;
+      }
+
+      .ai-qa-sticky-footer #aiQaAskBtn {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+      }
+    }
+    @media (max-width: 1080px) {
+      .ai-tools-input-row-flex {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+<style>
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 16px;
+}
+.theme-toggle-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+</style>
+</head>
+
+<body class="document-detail-page">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="logo">AI Study Hub</div>
+      <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <main class="main-content detail-main">
+      <div id="detailLoader">Loading document...</div>
+
+      <div id="detailContent" class="detail-workspace" hidden>
+        <section class="preview-workspace" aria-label="Document preview">
+          <header class="preview-toolbar">
+            <div class="preview-header-info" id="previewHeaderInfo">
+              <div class="preview-header-top-row">
+                <span id="previewHeaderTopLabel">Document Preview</span>
+              </div>
+              <div class="preview-header-meta-row">
+                <span class="preview-header-title" id="previewHeaderTitle">Document</span>
+                <span class="preview-header-separator">&middot;</span>
+                <span id="previewHeaderMetaText">Loading...</span>
+                <span class="preview-header-badge" id="previewHeaderAiBadge" style="display:none;"></span>
+              </div>
+            </div>
+            <div class="preview-toolbar-actions">
+              <button id="openFileBtn" class="btn btn-secondary" style="display:none;">
+                Open fullscreen <span aria-hidden="true">&#8599;</span>
+              </button>
+              <button id="downloadFileBtn" class="btn btn-secondary" style="display:none;">
+                Download <span aria-hidden="true">&#8595;</span>
+              </button>
+            </div>
+          </header>
+
+          <div id="previewArea">
+            <div class="preview-fallback">
+              <div class="preview-fallback-desc">Loading preview...</div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="detail-right-inspector" aria-label="Document information and actions">
+          <div class="inspector-inner" style="padding-top: 18px;">
+
+            <header class="inspector-document-header">
+              <div class="document-badge-row">
+                <span class="detail-type-badge" id="fileTypeBadge">FILE</span>
+                <span id="visibilityBadge" class="status-badge" style="display:none;"></span>
+                <span id="approvalBadge" class="status-badge badge-system" style="display:none;"></span>
+                <button type="button" id="favoriteDetailBtn" class="favorite-star-btn" style="display:none;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z" />
+                  </svg>
+                </button>
+              </div>
+              <h1 id="docTitle">Document</h1>
+              <span class="detail-uploaded-by" id="docUploadedBy"></span>
+              <div class="ai-status-inline" id="aiStatusInlineRow" style="display:none;">
+                <span class="ai-status-dot" id="aiStatusInlineDot"></span>
+                <span id="processingStatusBadge"></span>
+              </div>
+            </header>
+
+            <div class="document-action-row" id="documentActionRow" aria-label="Document actions" style="margin-top: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+              <button id="shareBtn" class="btn btn-primary" style="display:none; padding: 10px 16px; font-weight: 600;">
+                <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                  <polyline points="16 6 12 2 8 6"></polyline>
+                  <line x1="12" y1="2" x2="12" y2="15"></line>
+                </svg>
+                <span class="btn-text">Share document</span>
+              </button>
+              <button id="moveBtn" class="btn btn-outline" style="display:none;" onclick="showMoveModal()">
+                <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span class="btn-text">Move</span>
+              </button>
+            </div>
+            
+            <p class="action-row-desc" id="actionRowDesc" style="display:none; font-size: 12px; color: var(--muted); margin-top: 8px; margin-bottom: 0; line-height: 1.4;">
+              Share with classmates, groups, or make it available in Community Library.
+            </p>
+
+            <section class="detail-summary" aria-label="Document metadata">
+              <dl class="detail-meta-list">
+                <!-- Subject moved to Edit details section -->
+                <div class="detail-meta-row">
+                  <dt>File size</dt>
+                  <dd id="docFileSize">-</dd>
+                </div>
+                <div class="detail-meta-row">
+                  <dt>Uploaded</dt>
+                  <dd id="docCreatedAt">-</dd>
+                </div>
+              </dl>
+              <p class="detail-description" id="docDescription" style="display:none;">No description provided.</p>
+            </section>
+
+            <!-- Rating & Reporting Section (Step 17A) -->
+            <section id="ratingReportingSection" class="detail-rating-reporting" style="margin-top: 16.5px; padding: 16.5px; background: var(--surface-muted); border: 1px solid var(--border); border-radius: 12px; display: none; flex-direction: column; gap: 12.5px;">
+              <!-- Rating -->
+              <div id="documentRatingBlock" style="display: flex; flex-direction: column; gap: 6.5px;">
+                <label style="font-size: 13.5px; font-weight: 700; color: var(--text-main);">Community Rating</label>
+                <div style="display: flex; align-items: center; gap: 8.5px;">
+                  <div class="interactive-stars" id="interactiveStars" style="display: flex; gap: 4.5px;">
+                    <!-- Stars will be injected by JS -->
+                  </div>
+                  <span id="averageRatingText" style="font-size: 14.5px; font-weight: 600; color: var(--text-main);">0.0</span>
+                  <span id="ratingCountText" style="font-size: 12.5px; color: var(--muted);">(0 ratings)</span>
+                </div>
+              </div>
+              
+              <!-- Report -->
+              <div id="documentReportBlock" style="border-top: 1px solid var(--border); padding-top: 12.5px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 12px; color: var(--muted);">Found a violation?</span>
+                <button type="button" id="openReportModalBtn" class="btn btn-outline btn-sm" style="padding: 6px 12.5px; font-size: 12px; border-color: var(--danger); color: var(--danger); background: transparent;">
+                  Report Document
+                </button>
+              </div>
+              <div id="alreadyReportedBadge" style="display: none; border-top: 1px solid var(--border); padding-top: 12.5px; font-size: 12px; color: var(--danger); font-weight: 500; text-align: center;">
+                ⚠️ You have reported this document.
+              </div>
+            </section>
+
+            <div class="inspector-tabs-container" id="inspectorTabs" role="tablist">
+              <button type="button" id="inspectorTabDetails" class="inspector-tab-btn active">Details</button>
+              <button type="button" id="inspectorTabSharing" class="inspector-tab-btn">Sharing</button>
+              <button type="button" id="inspectorTabAI" class="inspector-tab-btn">AI Q&amp;A</button>
+              <button type="button" id="inspectorTabTools" class="inspector-tab-btn">AI Tools</button>
+            </div>
+
+            <div class="inspector-panes">
+              <div id="inspectorPaneDetails" class="inspector-tab-pane active">
+                <section class="view-section" id="detailsViewSection">
+                  <div class="details-view-card">
+                    <div class="details-view-field">
+                      <div class="details-view-label">Title</div>
+                      <div class="details-view-value" id="viewTitleText"></div>
+                    </div>
+                    <div class="details-view-field">
+                      <div class="details-view-label">Description</div>
+                      <div class="details-view-value" id="viewDescriptionText"></div>
+                    </div>
+                    <div class="details-view-field">
+                      <div class="details-view-label">School</div>
+                      <div class="details-view-value" id="viewSchoolText"></div>
+                    </div>
+                    <div class="details-view-field">
+                      <div class="details-view-label">Major</div>
+                      <div class="details-view-value" id="viewMajorText"></div>
+                    </div>
+                    <div class="details-view-field">
+                      <div class="details-view-label">Subject</div>
+                      <div class="details-view-value" id="viewSubjectText"></div>
+                    </div>
+                  </div>
+                  <button type="button" class="btn-edit-details" id="enableEditBtn" onclick="toggleEditMode(true)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Edit details
+                  </button>
+                  <div class="danger-zone-wrapper" id="detailsDangerZone" style="display:none;">
+                    <div class="danger-zone-box">
+                      <button type="button" class="danger-zone-toggle" id="dangerZoneToggle" onclick="toggleDangerZone()" aria-expanded="false">
+                        <div class="danger-zone-title">
+                          <span class="danger-zone-icon" aria-hidden="true">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                          </span>
+                          <span>Danger zone</span>
+                        </div>
+                        <svg id="dangerChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#991b1b" stroke-width="2" stroke-linecap="round" style="transition: transform 0.2s;"><path d="M6 9l6 6 6-6"/></svg>
+                      </button>
+                      <div class="danger-zone-summary">Destructive actions for this document.</div>
+                      <div class="danger-zone-body" id="dangerZoneBody">
+                        <p class="danger-zone-copy">Move this document to Trash. You can restore it later from the Trash folder.</p>
+                        <button class="btn btn-outline danger-zone-action" id="deleteBtn" onclick="handleDelete()">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                          Move to Trash
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="edit-section" id="detailsEditSection" style="display:none;">
+                  <h2>Edit details</h2>
+
+                  <div class="form-group">
+                    <label for="editTitle">Title <span class="label-required">*</span></label>
+                    <input type="text" id="editTitle" placeholder="Document title" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="editDescription">Description</label>
+                    <textarea id="editDescription" rows="2" placeholder="Optional description"></textarea>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="editSchool">School <span class="label-required">*</span></label>
+                    <select id="editSchool">
+                      <option value="">— Select School —</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="editMajor">Major / Study Program <span class="label-required">*</span></label>
+                    <select id="editMajor" disabled>
+                      <option value="">— Select Major —</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="editSubject">Subject</label>
+                    <select id="editSubject">
+                      <option value="" disabled selected>Loading subjects...</option>
+                    </select>
+                  </div>
+
+                  <div id="editMessage" class="helper-text" aria-live="polite"></div>
+
+                  <div class="edit-actions">
+                    <button class="btn btn-secondary" type="button" onclick="toggleEditMode(false)">Cancel</button>
+                    <button class="btn btn-primary" id="saveBtn" onclick="handleSave()" disabled>Save changes</button>
+                  </div>
+                </section>
+              </div>
+
+              <div id="inspectorPaneSharing" class="inspector-tab-pane">
+                <section id="sharesPanel" class="shares-panel" style="display:block;">
+                  <!-- Visibility & Public status block -->
+                  <div class="share-block" id="visibilityShareBlock">
+                    <div class="share-block-header">
+                      <h3 class="share-block-title">Visibility</h3>
+                    </div>
+                    <div id="visibilityStatusContent" class="visibility-status-card public">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 0 20"/><path d="M12 2a15.3 15.3 0 0 0 0 20"/></svg>
+                      <div>
+                        <div class="visibility-status-title">Public in Community Library</div>
+                        <div class="visibility-status-copy">People in Community Library can open and download this document.</div>
+                      </div>
+                    </div>
+                    <div id="privateVisibilityNote" class="visibility-status-card private">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      <div>
+                        <div class="visibility-status-title">Private Document</div>
+                        <div class="visibility-status-copy">Only you and people you directly share with can access this document.</div>
+                      </div>
+                    </div>
+
+                    <div id="subjectRequestStatusCard" class="visibility-status-card" style="display:none; margin-top: 10px; gap: 8.5px;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0;">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="16" x2="12" y2="12"/>
+                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                      </svg>
+                      <div>
+                        <div class="visibility-status-title" id="subjectRequestStatusTitle" style="font-weight: 600; font-size: 13px;">Subject Request Status</div>
+                        <div class="visibility-status-copy" id="subjectRequestStatusCopy" style="font-size: 12px; margin-top: 2px; line-height: 1.4;">Details of the requested system subject.</div>
+                      </div>
+                    </div>
+
+                    <div id="pendingVisibilityNote" class="visibility-status-card pending" style="display:none; background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      <div>
+                        <div class="visibility-status-title" style="color:#1e40af;">Pending Admin Review</div>
+                        <div class="visibility-status-copy" style="color:#1e3a8a;">This document has been submitted and is waiting for admin approval before appearing in the Community Library.</div>
+                      </div>
+                    </div>
+
+                    <div id="rejectedVisibilityNote" class="visibility-status-card rejected" style="display:none; background:#fef2f2; border:1px solid #fecaca; color:#991b1b;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                      <div>
+                        <div class="visibility-status-title" style="color:#991b1b;">Review Rejected</div>
+                        <div id="rejectedVisibilityCopy" class="visibility-status-copy" style="color:#7f1d1d;">This document submission was rejected by the admin. You can edit and resubmit for review.</div>
+                      </div>
+                    </div>
+                    
+                    <div class="visibility-actions">
+                      <button id="sharingPublishBtn" class="btn btn-secondary" type="button" style="display:none; padding: 7px 14px; font-size: 12px; font-weight: 600;">
+                        Submit for Review
+                      </button>
+                      <button id="sharingUnpublishBtn" class="btn btn-outline" type="button" style="display:none; padding: 7px 14px; font-size: 12px; font-weight: 600; color: #b45309; border-color: #fde68a; background: #fffbeb;">
+                        Cancel Review Submission
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Direct user shares block -->
+                  <div class="share-block">
+                    <div class="share-block-header">
+                      <h3 class="share-block-title">Direct user shares</h3>
+                      <button type="button" class="btn-ghost-sm" id="addShareUserLink" style="display: none; padding: 4px 10px; font-size: 11px; gap: 4px;">
+                        + Share with user
+                      </button>
+                    </div>
+                    <div id="directSharesList" class="member-list"></div>
+                    <div id="noDirectShares" class="share-empty-state" style="display:none;">
+                      <div class="share-empty-title">No direct shares yet.</div>
+                      <p>Share this document with specific users to collaborate.</p>
+                      <button type="button" class="btn share-empty-action" id="emptyShareUserLink">
+                        Share with user
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Group shares block -->
+                  <div class="share-block">
+                    <div class="share-block-header">
+                      <h3 class="share-block-title">Group shares</h3>
+                      <button type="button" class="btn-ghost-sm" id="addShareGroupLink" style="display: none; padding: 4px 10px; font-size: 11px; gap: 4px;">
+                        + Share with group
+                      </button>
+                    </div>
+                    <div id="groupSharesList" class="member-list"></div>
+                    <div id="noGroupShares" class="share-empty-state" style="display:none;">
+                      <div class="share-empty-title">Not shared with any groups yet.</div>
+                      <p>Share with study groups so classmates can open and download it.</p>
+                      <button type="button" class="btn share-empty-action" id="emptyShareGroupLink">
+                        Share with group
+                      </button>
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              <div id="inspectorPaneAI" class="inspector-tab-pane">
+                <section class="ai-qa-panel" aria-label="AI Document Q&A">
+                  <div class="ai-qa-header">
+                    <h3>Ask this document</h3>
+                    <p>Ask questions and get answers grounded in this document.</p>
+                  </div>
+
+                  <section class="ai-processing-section onboarding-state" id="aiProcessingSection"
+                    aria-label="AI document processing status" style="display:none;">
+                    <div class="ai-processing-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24">
+                        <g id="Sparkle">
+                          <path id="Vector" fill="currentColor" d="m8.24536 15.7542 1.70215 0.8515 1.78909 0.8945 -1.78909 0.8946 -1.70215 0.8506 -0.85058 1.7021 -0.89454 1.7891 -0.89453 -1.7891 -0.85156 -1.7021 -3.49023 -1.7452 1.78906 -0.8945 1.70117 -0.8515 0.85156 -1.7012 0.89453 -1.7891zM18.2454 9.25415l2.7021 1.35155 1.7891 0.8945 -1.7891 0.8946 -2.7021 1.3506 -1.3506 2.7021 -0.8946 1.7891 -0.8945 -1.7891 -1.3515 -2.7021 -4.49028 -2.2452 1.78908 -0.8945 2.7012 -1.35155 1.3515 -2.70117 0.8945 -1.78906zm-2.8506 1.19335 -0.1494 0.2979 -0.2979 0.1494 -1.2109 0.6054 1.2109 0.6055 0.2979 0.1494 0.1494 0.2979 0.6054 1.2109 0.6055 -1.2109 0.1494 -0.2979 0.2979 -0.1494 1.2109 -0.6055 -1.2109 -0.6054 -0.2979 -0.1494 -0.1494 -0.2979 -0.6055 -1.21093zM8.24536 4.75415l1.70215 0.85156 1.78909 0.89453 -1.78909 0.89454 -1.70215 0.85058 -0.85058 1.70215 -0.89454 1.78909 -0.89453 -1.78909 -0.85156 -1.70215 -3.49023 -1.74512 1.78906 -0.89453 1.70117 -0.85156 0.85156 -1.70117 0.89453 -1.78906z" stroke-width="1"></path>
+                        </g>
+                      </svg>
+                    </div>
+                    <h3 class="ai-processing-heading">Prepare this document for AI Q&A</h3>
+                    <p class="ai-processing-message" id="aiProcessingMessage">We’ll extract the content so AI can answer questions from this document.</p>
+                    <div class="ai-processing-actions" id="aiProcessingActions"></div>
+                    <p class="ai-processing-warning" id="aiProcessingWarning"></p>
+                  </section>
+
+                  <div class="ai-qa-sample-questions" id="aiQaSampleQuestions" style="display:none;">
+                    <span class="ai-qa-sample-label">Try asking</span>
+                    <div class="ai-qa-sample-chips">
+                      <button type="button" class="ai-qa-sample-btn" data-question="Summarize this document">Summarize this document</button>
+                      <button type="button" class="ai-qa-sample-btn" data-question="What are the key points?">What are the key points?</button>
+                      <button type="button" class="ai-qa-sample-btn" data-question="Give me examples">Give me examples</button>
+                      <button type="button" class="ai-qa-sample-btn" data-question="Create review questions">Create review questions</button>
+                      <button type="button" class="ai-qa-sample-btn" data-question="Explain simply">Explain simply</button>
+                    </div>
+                  </div>
+
+                  <div class="ai-qa-messages" id="aiQaMessages">
+                    <div class="ai-qa-empty-state" id="aiQaEmptyState">Ask a question about this document to get started.</div>
+                  </div>
+
+                  <div class="ai-qa-status-banner" id="aiQaStatusBanner" style="display:none;"></div>
+
+                  <div class="ai-qa-sticky-footer">
+                    <div class="ai-qa-footer-meta">
+                      <div class="ai-qa-usage-row" id="aiQaUsageRow" style="display:none;">
+                        <span id="aiQaUsageText">-</span>
+                        <span id="aiQaModelLabel" class="ai-qa-model-badge" style="display:none;"></span>
+                      </div>
+                      <div class="ai-qa-input-meta" id="aiQaInputMeta"></div>
+                    </div>
+
+                    <form class="ai-qa-input-row" id="aiQaInputForm">
+                      <textarea id="aiQaQuestionInput" placeholder="Ask about this document..." rows="1"
+                        maxlength="2000" disabled></textarea>
+                      <button type="submit" class="btn btn-primary btn-icon" id="aiQaAskBtn" disabled aria-label="Send">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm-3.611-1.63 4.338 2.76 7.494-7.493-11.832 4.732Z"/></svg>
+                      </button>
+                    </form>
+                  </div>
+                </section>
+              </div>
+
+              <div id="inspectorPaneTools" class="inspector-tab-pane">
+                <section class="ai-tools-panel" aria-label="AI Learning Tools">
+                  <div class="ai-tools-header">
+                    <h3>Create study materials</h3>
+                    <p>Generate flashcards and quizzes from this document.</p>
+                  </div>
+
+                  <section class="ai-processing-section onboarding-state" id="aiToolsNotReadySection"
+                    aria-label="AI document processing status" style="display:none;">
+                    <div class="ai-processing-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24">
+                        <g id="Sparkle">
+                          <path id="Vector" fill="currentColor" d="m8.24536 15.7542 1.70215 0.8515 1.78909 0.8945 -1.78909 0.8946 -1.70215 0.8506 -0.85058 1.7021 -0.89454 1.7891 -0.89453 -1.7891 -0.85156 -1.7021 -3.49023 -1.7452 1.78906 -0.8945 1.70117 -0.8515 0.85156 -1.7012 0.89453 -1.7891zM18.2454 9.25415l2.7021 1.35155 1.7891 0.8945 -1.7891 0.8946 -2.7021 1.3506 -1.3506 2.7021 -0.8946 1.7891 -0.8945 -1.7891 -1.3515 -2.7021 -4.49028 -2.2452 1.78908 -0.8945 2.7012 -1.35155 1.3515 -2.70117 0.8945 -1.78906zm-2.8506 1.19335 -0.1494 0.2979 -0.2979 0.1494 -1.2109 0.6054 1.2109 0.6055 0.2979 0.1494 0.1494 0.2979 0.6054 1.2109 0.6055 -1.2109 0.1494 -0.2979 0.2979 -0.1494 1.2109 -0.6055 -1.2109 -0.6054 -0.2979 -0.1494 -0.1494 -0.2979 -0.6055 -1.21093zM8.24536 4.75415l1.70215 0.85156 1.78909 0.89453 -1.78909 0.89454 -1.70215 0.85058 -0.85058 1.70215 -0.89454 1.78909 -0.89453 -1.78909 -0.85156 -1.70215 -3.49023 -1.74512 1.78906 -0.89453 1.70117 -0.85156 0.85156 -1.70117 0.89453 -1.78906z" stroke-width="1"></path>
+                        </g>
+                      </svg>
+                    </div>
+                    <h3 class="ai-processing-heading">Prepare this document for AI tools</h3>
+                    <p class="ai-processing-message" id="aiToolsProcessingMessage">
+                      This document has not been processed for AI yet.
+                    </p>
+                  </section>
+                  <div id="aiToolsContent">
+                    <section class="ai-tools-tool-block" id="flashcardSection">
+                      <div class="ai-tools-tool-header">
+                        <div class="ai-tools-tool-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="4" y="6" width="14" height="11" rx="2"></rect>
+                            <path d="M8 10h6"></path>
+                            <path d="M8 13h4"></path>
+                            <path d="M7 4h11a2 2 0 0 1 2 2v9"></path>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3>AI Flashcards</h3>
+                          <p>Generate key concepts review cards.</p>
+                        </div>
+                      </div>
+
+                      <div class="ai-tools-input-group">
+                        <div class="ai-tools-input-row-flex">
+                          <label for="flashcardCountInput">Number of cards</label>
+                          <input type="number" id="flashcardCountInput" min="3" placeholder="Default" />
+                        </div>
+                        <small class="ai-tools-limit-hint" id="flashcardCountHint"></small>
+                      </div>
+
+                      <button type="button" class="ai-tools-focus-toggle" id="flashcardFocusToggle"
+                        aria-expanded="false" aria-controls="flashcardFocusContainer">+ Add focus topic</button>
+                      <div id="flashcardFocusContainer" class="ai-tools-input-group ai-tools-focus-panel">
+                        <label for="flashcardFocusInput">Focus <span>(optional)</span>
+                          <span class="helper-text-inline">Tell AI what part of the document to focus on.</span>
+                        </label>
+                        <textarea id="flashcardFocusInput" rows="2" maxlength="300" placeholder="e.g. Focus on definitions, formulas, or exam questions"></textarea>
+                        <small class="ai-tools-char-count" id="flashcardFocusCount">0/300</small>
+                      </div>
+                      
+                      <button type="button" class="btn btn-primary ai-tools-generate-btn" id="flashcardGenerateBtn" disabled>Generate Flashcards</button>
+                      <div class="ai-tools-error" id="flashcardError" style="display:none;"></div>
+
+                      <div id="flashcardSetsLoader" class="helper-text">Loading flashcard sets...</div>
+                      <div id="flashcardSetsEmpty" class="helper-text" style="display:none;">No flashcard sets yet.</div>
+                      <ul class="ai-tools-set-list" id="flashcardSetsList"></ul>
+                    </section>
+
+                    <section class="ai-tools-tool-block" id="quizSection">
+                      <div class="ai-tools-tool-header">
+                        <div class="ai-tools-tool-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M9 7h8"></path>
+                            <path d="M9 12h8"></path>
+                            <path d="M9 17h5"></path>
+                            <path d="m4 7 1 1 2-2"></path>
+                            <path d="m4 12 1 1 2-2"></path>
+                            <path d="m4 17 1 1 2-2"></path>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3>AI Quiz</h3>
+                          <p>Practice with multiple-choice questions generated from this document.</p>
+                        </div>
+                      </div>
+                      
+                      <div class="ai-tools-input-group">
+                        <div class="ai-tools-input-row-flex">
+                          <label for="quizCountInput">Number of questions</label>
+                          <input type="number" id="quizCountInput" min="3" placeholder="Default" />
+                        </div>
+                        <small class="ai-tools-limit-hint" id="quizCountHint"></small>
+                      </div>
+
+                      <div class="ai-tools-input-group">
+                        <div class="ai-tools-input-row-flex">
+                          <label for="quizDifficultySelect">Difficulty</label>
+                          <select id="quizDifficultySelect">
+                            <option value="MIXED">Mixed</option>
+                            <option value="EASY">Easy</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HARD">Hard</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <button type="button" class="ai-tools-focus-toggle" id="quizFocusToggle"
+                        aria-expanded="false" aria-controls="quizFocusContainer">+ Add focus topic</button>
+                      <div id="quizFocusContainer" class="ai-tools-input-group ai-tools-focus-panel">
+                        <label for="quizFocusInput">Focus <span>(optional)</span>
+                          <span class="helper-text-inline">Tell AI what part of the document to focus on.</span>
+                        </label>
+                        <textarea id="quizFocusInput" rows="2" maxlength="300"
+                          placeholder="e.g. Focus on chapter 3 definitions, formulas, or exam questions"></textarea>
+                        <small class="ai-tools-char-count" id="quizFocusCount">0/300</small>
+                      </div>
+                      
+                      <button type="button" class="btn btn-primary ai-tools-generate-btn" id="quizGenerateBtn" disabled>Generate Quiz</button>
+                      <div class="ai-tools-error" id="quizError" style="display:none;"></div>
+
+                      <div id="quizSetsLoader" class="helper-text">Loading quiz sets...</div>
+                      <div id="quizSetsEmpty" class="helper-text" style="display:none;">No quiz sets yet.</div>
+                      <ul class="ai-tools-set-list" id="quizSetsList"></ul>
+                    </section>
+                  </div>
+                </section>
+              </div>
+            </div>
+
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="moveModal">
+    <div class="modal-box detail-modal">
+      <h3>Move document</h3>
+      <div class="form-group" style="margin-top:16px;">
+        <label for="moveFolderSelect">Destination folder</label>
+        <select id="moveFolderSelect">
+          <option value="">My Documents</option>
+        </select>
+      </div>
+      <p id="moveError" class="modal-error" role="alert" aria-live="polite" style="display:none;"></p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="hideMoveModal()">Cancel</button>
+        <button class="btn btn-primary" id="moveConfirmBtn" onclick="handleMove()">Move</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="shareModal" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
+    <div class="modal-box detail-modal">
+      <h3 id="shareModalTitle">Share document</h3>
+
+      <div class="tab-header" style="display:flex;border-bottom:1px solid var(--border);margin-bottom:20px;">
+        <button type="button" class="tab-btn active" id="tabUserBtn"
+          style="flex:1;padding:10px;background:transparent;border:0;border-bottom:2px solid var(--primary);color:var(--primary);font-weight:600;cursor:pointer;">Share
+          with user</button>
+        <button type="button" class="tab-btn" id="tabGroupBtn"
+          style="flex:1;padding:10px;background:transparent;border:0;border-bottom:2px solid transparent;color:var(--muted);font-weight:600;cursor:pointer;">Share
+          with group</button>
+      </div>
+
+      <div id="tabUserContent">
+        <div class="form-group">
+          <label for="shareUserEmail">Recipient email <span class="label-required">*</span></label>
+          <input type="email" id="shareUserEmail" placeholder="student@gmail.com" autocomplete="off" />
+        </div>
+        <p id="shareUserError" class="modal-error" role="alert" aria-live="polite" style="display:none;"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="shareUserCancelBtn">Cancel</button>
+          <button type="button" class="btn btn-primary" id="shareUserConfirmBtn">Share</button>
+        </div>
+      </div>
+
+      <div id="tabGroupContent" style="display:none;">
+        <div class="form-group">
+          <label for="shareGroupSelect">Study group <span class="label-required">*</span></label>
+          <select id="shareGroupSelect">
+            <option value="" disabled selected>Loading groups...</option>
+          </select>
+        </div>
+        <p id="shareGroupError" class="modal-error" role="alert" aria-live="polite" style="display:none;"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="shareGroupCancelBtn">Cancel</button>
+          <button type="button" class="btn btn-primary" id="shareGroupConfirmBtn">Share to group</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+    <div class="modal-box detail-modal">
+      <h3 id="deleteModalTitle" class="modal-title-danger">Move Document to Trash?</h3>
+      <p style="margin-top: 16px; color: var(--text); font-size: 14px;">Are you sure you want to move this document to Trash? You can restore it later from the Trash folder.</p>
+      <div class="modal-actions" style="margin-top: 24px;">
+        <button class="btn btn-secondary" onclick="hideDeleteModal()">Cancel</button>
+        <button class="btn btn-danger" id="deleteConfirmBtn" onclick="handleDelete()">Move to Trash</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subject Request Modal -->
+  <div class="modal-overlay" id="subjectReqModal">
+      <div class="modal-box" style="max-width: 440px;">
+          <h3 style="margin-top:0; font-size:18px; font-weight:700; color:var(--text); margin-bottom:12px;">Request System Subject</h3>
+          <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px;">Propose a new system subject for admin approval so it can be used for public documents in the Community Library.</p>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+              <label style="font-size: 12px; font-weight: 600;">Choose Existing System Subject</label>
+              <select id="reqSelectExistingSubject" data-search="true" style="width: 100%; height: 42px; border-radius: 8px; border: 1.5px solid var(--border); padding: 0 12px; font-weight: 500; font-size: 14px; background-color: var(--surface); box-sizing: border-box;">
+                  <option value="">Or propose a new system subject</option>
+              </select>
+          </div>
+          
+          <div style="display: flex; align-items: center; text-align: center; margin: 16px 0 12px 0; color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; width: 100%;">
+              <span style="flex: 1; border-bottom: 1px dashed var(--border); margin-right: 8px;"></span>
+              OR PROPOSE NEW SUBJECT
+              <span style="flex: 1; border-bottom: 1px dashed var(--border); margin-left: 8px;"></span>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+              <label style="font-size: 12px; font-weight: 600;">Subject Code <span class="label-required">*</span></label>
+              <input type="text" id="reqSubjectCode" placeholder="E.g: CS101" autocomplete="off" style="width: 100%;" required />
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+              <label style="font-size: 12px; font-weight: 600;">Subject Name <span class="label-required">*</span></label>
+              <input type="text" id="reqSubjectName" placeholder="E.g: Introduction to Computer Science" autocomplete="off" style="width: 100%;" required />
+          </div>
+          <div class="form-group" style="margin-bottom: 14px;">
+              <label style="font-size: 12px; font-weight: 600;">Description <span class="label-optional">(optional)</span></label>
+              <textarea id="reqSubjectDesc" rows="2" placeholder="Brief description or course code detail..." style="width: 100%; min-height: 60px;"></textarea>
+          </div>
+          <p id="reqSubjectMsg" class="helper-text" role="alert" style="display:none;"></p>
+
+          <div class="modal-actions" style="margin-top: 18px;">
+              <button type="button" class="btn btn-secondary" id="cancelSubjectReqBtn">Cancel</button>
+              <button type="button" class="btn btn-primary" id="submitSubjectReqBtn">Submit Request</button>
+          </div>
+      </div>
+  </div>
+
+  <!-- Document Report Modal (Step 17A) -->
+  <div class="modal-overlay" id="documentReportModal">
+    <div class="modal-box" style="max-width: 450px;">
+      <h3 style="margin-top:0; font-size:18px; font-weight:700; color:var(--text); margin-bottom:12px;">Report Violation</h3>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 16.5px;">
+        Please provide details about the violation in this document. The admin will review it.
+      </p>
+      <div class="form-group" style="margin-bottom: 16.5px;">
+        <label style="font-size: 12px; font-weight: 600;">Reason <span class="label-required">*</span></label>
+        <select id="reportReasonSelect" style="width: 100%;" required>
+          <option value="">-- Choose a Reason --</option>
+          <option value="SPAM">Spam / Advertising</option>
+          <option value="COPYRIGHT">Copyright Infringement</option>
+          <option value="INAPPROPRIATE_CONTENT">Inappropriate Content</option>
+          <option value="MISLEADING_INFORMATION">Incorrect / Misleading Content</option>
+          <option value="DUPLICATE_CONTENT">Duplicate Content</option>
+          <option value="MALWARE_OR_UNSAFE_FILE">Malware / Unsafe File</option>
+          <option value="OTHER">Other</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom: 16.5px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6.5px;">
+          <label style="font-size: 12px; font-weight: 600; margin-bottom: 0;">Description (Optional)</label>
+          <span id="reportCharCount" style="font-size: 11px; color: var(--muted);">0/500</span>
+        </div>
+        <textarea id="reportDescriptionInput" placeholder="Describe the violation in detail..." style="width: 100%; height: 100px; resize: vertical; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; box-sizing: border-box;" maxlength="500"></textarea>
+      </div>
+      <p id="reportModalError" class="helper-text error" role="alert" style="display:none; color: var(--danger); font-size: 12px; margin-bottom: 8.5px;"></p>
+      <div class="modal-actions" style="margin-top: 18px;">
+        <button type="button" class="btn btn-secondary" id="cancelReportBtn">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmReportBtn" style="background-color: var(--danger); border-color: var(--danger);">Submit Report</button>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- History Modal -->
+  <div class="modal-overlay" id="historyModal">
+    <div class="modal-box" style="max-width: 450px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 16px; gap: 12px;">
+        <h3 id="historyModalTitle" style="margin:0; font-size:18px; font-weight:700; color:var(--text); line-height:1.4;">History</h3>
+        <button type="button" style="width:auto; height:auto; padding:0 4px; font-size:24px; line-height:1; background:transparent; color:var(--muted); border:none; margin-top:-2px; cursor:pointer;" onclick="closeHistoryModal()">&times;</button>
+      </div>
+      <div id="historyModalLoader" style="display:none; text-align:center; padding:20px;">
+        <div class="spinner" style="margin: 0 auto;"></div>
+      </div>
+      <p id="historyModalEmpty" style="display:none; text-align:center; color:var(--muted); font-size:14px; padding:20px 0;">No attempts found.</p>
+      <ul id="historyModalList" style="display:none; list-style:none; padding:0; margin:0; max-height:300px; overflow-y:auto;">
+      </ul>
+      <div class="modal-actions" style="margin-top: 18px;">
+        <button type="button" class="btn btn-secondary" onclick="closeHistoryModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script src="js/api.js"></script>
+  <script src="js/account-api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/subject-api.js"></script>
+  <script src="js/subject-request-api.js"></script>
+  <script src="js/document-api.js"></script>
+  <script src="js/processing-api.js"></script>
+  <script src="js/community-api.js"></script>
+  <script src="js/group-api.js"></script>
+  <script src="js/share-api.js"></script>
+  <script src="js/folder-api.js"></script>
+  <script src="js/document-preview.js"></script>
+  <script src="js/ai-api.js"></script>
+  <script src="js/ai-learning-api.js"></script>
+  <script src="js/school-api.js"></script>
+  <script src="js/document-detail.js"></script>
+  <script src="js/notification-api.js"></script>
+  <script src="js/notification.js"></script>
+</body>
+
+</html>

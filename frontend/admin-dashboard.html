@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="js/theme.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard - AI Study Hub</title>
+    <meta name="description" content="Admin Dashboard for system overview and analytics." />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+<style>
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 16px;
+}
+.theme-toggle-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+</style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="admin-topbar">
+                <div class="admin-topbar-left">
+                    <button class="menu-toggle-btn" aria-label="Toggle Sidebar Navigation">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18"></path></svg>
+                    </button>
+                    <span class="admin-topbar-brand">AI Study Hub Admin</span>
+                </div>
+                <div class="admin-topbar-right" id="globalHeaderWidgets"></div>
+            </header>
+
+            <div class="admin-layout">
+                <div class="admin-content-wrapper">
+                    <header class="admin-page-header" style="justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <div>
+                            <h1 class="admin-page-title" style="margin-bottom: 4px;">Admin Dashboard</h1>
+                            <p style="color: var(--text-muted); margin: 0; font-size: 0.95rem;">Overview of users, documents, payments, and AI activity.</p>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <span id="dashboardLastUpdated" style="font-size: 0.85rem; color: var(--text-muted);"></span>
+                            <button class="btn btn-outline" id="btnRefreshDashboard" onclick="loadDashboardData(true)" style="width: auto; padding: 6px 12px; font-size: 0.9rem;">
+                                Refresh
+                            </button>
+                        </div>
+                    </header>
+                    <div id="dashboardAutoRefreshText" style="text-align: right; font-size: 0.8rem; color: var(--text-muted); margin-top: -16px; margin-bottom: 16px; display: none;">Auto refresh: 60s</div>
+                    <div class="admin-state-container" id="dashboardLoadingState">
+                        <div class="admin-state-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                        </div>
+                        <p>Loading dashboard statistics...</p>
+                    </div>
+
+                    <div class="admin-state-container" id="dashboardErrorState" style="display: none;">
+                        <div class="admin-state-icon" style="color: var(--danger);">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <p id="dashboardErrorMessage">Failed to load dashboard data.</p>
+                        <button class="btn btn-primary" onclick="loadDashboardData()" style="margin-top: 16px;">Retry</button>
+                    </div>
+
+                    <div id="dashboardContent" style="display: none;">
+                        
+                        <div class="admin-card" id="needsAttentionSection" style="margin-bottom: 28px; display: none;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20" stroke="var(--danger, #dc2626)" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                                </svg>
+                                <h3 id="needsAttentionTitle" style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--danger, #dc2626);">Needs Attention</h3>
+                            </div>
+                            <div id="needsAttentionList" class="needs-attention-grid">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+
+                        <div class="admin-stats-grid">
+                            <div class="admin-card admin-stat-card" onclick="window.location.href='admin-users.html'" title="View Users">
+                                <div class="stat-title">Users</div>
+                                <div class="stat-value" id="statTotalUsers">0</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Registered accounts</div>
+                            </div>
+                            <div class="admin-card admin-stat-card" onclick="window.location.href='admin-documents.html'" title="View Documents">
+                                <div class="stat-title">Documents</div>
+                                <div class="stat-value" id="statTotalDocs">0</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Total active docs</div>
+                            </div>
+                            <div class="admin-card admin-stat-card admin-stat-card-highlight" onclick="window.location.href='admin-documents.html?filter=pending'" title="Review Pending Public Documents">
+                                <div class="stat-title" style="color: var(--warning, #d97706); display: flex; align-items: center; justify-content: space-between;">
+                                    <span>Pending Public Docs</span>
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--warning, #f59e0b);"></span>
+                                </div>
+                                <div class="stat-value" id="statPendingDocs" style="color: var(--warning, #d97706);">0</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Waiting for review &rarr;</div>
+                            </div>
+                            <div class="admin-card admin-stat-card" onclick="window.location.href='admin-payments.html'" title="View Payments">
+                                <div class="stat-title">Lifetime Revenue</div>
+                                <div class="stat-value" id="statTotalRevenue">0 ₫</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;" id="statTotalSuccessPayments">0 successful payments</div>
+                            </div>
+                            <div class="admin-card admin-stat-card" onclick="window.location.href='admin-ai-usage.html'" title="View AI Usage Logs">
+                                <div class="stat-title">Successful AI Requests Today</div>
+                                <div class="stat-value" id="statAiRequests">0</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Successful executions today</div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 32px; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                            <div>
+                                <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main, #172033); margin: 0;">Analytics Overview</h2>
+                                <p style="font-size: 0.85rem; color: var(--text-muted, #64748b); margin: 2px 0 0 0;">System breakdown and daily metrics</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label for="chartDateRange" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #64748b); white-space: nowrap; margin: 0;">Chart range:</label>
+                                <select id="chartDateRange" class="admin-filter-input admin-select" onchange="loadDashboardChartsData()">
+                                    <option value="7">Last 7 days</option>
+                                    <option value="30" selected>Last 30 days</option>
+                                    <option value="31">This month</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="admin-charts-grid">
+                            <div class="admin-card">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+                                    <div class="admin-chart-title" style="margin-bottom: 0; line-height: 1.3;">Account Tiers</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; padding-top: 2px;">Doughnut Chart</div>
+                                </div>
+                                <div class="admin-chart-container" id="chartUsersByTierContainer">
+                                    <canvas id="chartUsersByTier"></canvas>
+                                </div>
+                            </div>
+                            <div class="admin-card">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+                                    <div class="admin-chart-title" style="margin-bottom: 0; line-height: 1.3;">Document Approval Status</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; padding-top: 2px;">Pie Chart</div>
+                                </div>
+                                <div class="admin-chart-container" id="chartDocsByStatusContainer">
+                                    <canvas id="chartDocsByStatus"></canvas>
+                                </div>
+                            </div>
+                            <div class="admin-card">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+                                    <div class="admin-chart-title" style="margin-bottom: 0; line-height: 1.3;">Revenue by Day</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; padding-top: 2px;">Area Chart</div>
+                                </div>
+                                <div class="admin-chart-container" id="chartRevenueContainer">
+                                    <canvas id="chartRevenue"></canvas>
+                                </div>
+                            </div>
+                            <div class="admin-card">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+                                    <div class="admin-chart-title" style="margin-bottom: 0; line-height: 1.3;">AI Usage by Day</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; padding-top: 2px;">Bar Chart</div>
+                                </div>
+                                <div class="admin-chart-container" id="chartAiUsageContainer">
+                                    <canvas id="chartAiUsage"></canvas>
+                                </div>
+                            </div>
+                            <div class="admin-card admin-card-span-2">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+                                    <div class="admin-chart-title" style="margin-bottom: 0; line-height: 1.3;">AI Feature Distribution</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; padding-top: 2px;">Doughnut Chart</div>
+                                </div>
+                                <div class="admin-chart-container" id="chartAiFeatureContainer">
+                                    <canvas id="chartAiFeature"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/admin-core-api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/notification-api.js"></script>
+    <script src="js/notification.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Page Specific Scripts -->
+    <script src="js/admin-dashboard-api.js"></script>
+    <script src="js/admin-dashboard.js"></script>
+</body>
+
+</html>

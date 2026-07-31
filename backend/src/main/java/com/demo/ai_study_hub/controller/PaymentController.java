@@ -1,0 +1,126 @@
+package com.demo.ai_study_hub.controller;
+
+import com.demo.ai_study_hub.dto.*;
+import com.demo.ai_study_hub.entity.User;
+import com.demo.ai_study_hub.exception.PaymentException;
+import com.demo.ai_study_hub.repository.UserRepository;
+import com.demo.ai_study_hub.service.PaymentService;
+import com.demo.ai_study_hub.service.PlanService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.security.Principal;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/payments")
+@RequiredArgsConstructor
+public class PaymentController {
+
+    private final PaymentService paymentService;
+    private final PlanService planService;
+    private final UserRepository userRepository;
+
+    @org.springframework.beans.factory.annotation.Value("${payment.mock-enabled:false}")
+    private boolean mockEnabled;
+
+    private void checkMockEnabled() {
+        if (!mockEnabled) {
+            throw new PaymentException(org.springframework.http.HttpStatus.BAD_REQUEST, 
+                "MOCK_PAYMENT_DISABLED", "Mock payment is disabled in this environment.");
+        }
+    }
+
+    @GetMapping("/plans")
+    public ResponseEntity<ApiResponse<List<PlanResponse>>> getPlans() {
+        return ResponseEntity.ok(ApiResponse.success(
+                planService.getAllPlans(), "Billing plans retrieved successfully"));
+    }
+
+    @GetMapping("/plans/entitlements")
+    public ResponseEntity<ApiResponse<Map<String, Map<String, Object>>>> getPlanEntitlements() {
+        return ResponseEntity.ok(ApiResponse.success(
+                planService.getPlanEntitlements(), "Billing plan entitlements retrieved successfully"));
+    }
+
+    @GetMapping("/config")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPaymentConfig() {
+        return ResponseEntity.ok(ApiResponse.success(
+                Map.of("mockPaymentEnabled", mockEnabled), "Payment config retrieved"));
+    }
+
+    @PostMapping("/mock/create")
+    public ResponseEntity<ApiResponse<PaymentResponse>> createPayment(
+            @Valid @RequestBody CreatePaymentRequest request,
+            Principal principal) {
+        checkMockEnabled();
+        User user = getUser(principal);
+        PaymentResponse response = paymentService.createMockPayment(user, request.getPlanCode());
+        return ResponseEntity.ok(ApiResponse.success(response, "Payment order created successfully"));
+    }
+
+    @PostMapping({"/mock/{paymentId}/success", "/mock/{paymentId}/confirm"})
+    public ResponseEntity<ApiResponse<PaymentResponse>> confirmSuccess(
+            @PathVariable Long paymentId,
+            Principal principal) {
+        checkMockEnabled();
+        User user = getUser(principal);
+        PaymentResponse response = paymentService.markPaymentSuccess(user, paymentId);
+        return ResponseEntity.ok(ApiResponse.success(response, "Payment confirmed successfully"));
+    }
+
+    @PostMapping("/mock/{paymentId}/fail")
+    public ResponseEntity<ApiResponse<PaymentResponse>> confirmFail(
+            @PathVariable Long paymentId,
+            Principal principal) {
+        checkMockEnabled();
+        User user = getUser(principal);
+        PaymentResponse response = paymentService.markPaymentFailed(user, paymentId);
+        return ResponseEntity.ok(ApiResponse.success(response, "Payment marked as failed"));
+    }
+
+    @PostMapping("/mock/{paymentId}/cancel")
+    public ResponseEntity<ApiResponse<PaymentResponse>> cancelPayment(
+            @PathVariable Long paymentId,
+            Principal principal) {
+        checkMockEnabled();
+        User user = getUser(principal);
+        PaymentResponse response = paymentService.cancelPayment(user, paymentId);
+        return ResponseEntity.ok(ApiResponse.success(response, "Payment cancelled successfully"));
+    }
+
+    @PostMapping("/{paymentId}/cancel")
+    public ResponseEntity<ApiResponse<PaymentResponse>> cancelPendingPayment(
+            @PathVariable Long paymentId,
+            Principal principal) {
+        User user = getUser(principal);
+        PaymentResponse response = paymentService.cancelPendingPayment(user, paymentId);
+        return ResponseEntity.ok(ApiResponse.success(response, "Payment cancelled successfully"));
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<List<PaymentResponse>>> getMyPayments(Principal principal) {
+        User user = getUser(principal);
+        List<PaymentResponse> response = paymentService.getMyPayments(user);
+        return ResponseEntity.ok(ApiResponse.success(response, "Payments retrieved successfully"));
+    }
+
+    @GetMapping("/{paymentId}")
+    public ResponseEntity<ApiResponse<PaymentResponse>> getPaymentDetail(
+            @PathVariable Long paymentId,
+            Principal principal) {
+        User user = getUser(principal);
+        PaymentResponse response = paymentService.getPaymentDetail(user, paymentId);
+        return ResponseEntity.ok(ApiResponse.success(response, "Payment retrieved successfully"));
+    }
+
+    private User getUser(Principal principal) {
+        return userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "User not found"));
+    }
+}

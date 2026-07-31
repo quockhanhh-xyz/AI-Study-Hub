@@ -1,0 +1,95 @@
+package com.demo.ai_study_hub.controller;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.demo.ai_study_hub.dto.ApiResponse;
+import com.demo.ai_study_hub.dto.AdminUserListResponse;
+import com.demo.ai_study_hub.dto.AdminUserItem;
+import com.demo.ai_study_hub.dto.AdminUserDetail;
+import com.demo.ai_study_hub.entity.User;
+import com.demo.ai_study_hub.service.AdminUserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/admin/users")
+public class AdminUserController {
+
+    @Autowired
+    private AdminUserService adminUserService;
+
+    @Autowired
+    private com.demo.ai_study_hub.repository.UserRepository userRepository;
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<AdminUserListResponse>> getUsers(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String tier,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction
+    ) {
+        page = Math.max(0, page);
+        size = Math.min(Math.max(1, size), 100);
+        java.util.List<String> validSorts = java.util.Arrays.asList("userId", "email", "fullName", "createdAt", "role", "status", "tier");
+        if (!validSorts.contains(sortBy)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sort field");
+        }
+        Sort sort = direction.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        AdminUserListResponse response = adminUserService.getUsers(search, role, tier, status, pageable);
+        return ResponseEntity.ok(ApiResponse.success(response, "Users retrieved successfully"));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<AdminUserDetail>> getUserById(@PathVariable Integer id) {
+        AdminUserDetail user = adminUserService.getUserById(id);
+        return ResponseEntity.ok(ApiResponse.success(user, "User retrieved successfully"));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<AdminUserItem>> updateUserStatus(
+            @PathVariable Integer id,
+            @RequestBody Map<String, String> body,
+            java.security.Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized"));
+        }
+        User currentAdmin = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Admin user not found"));
+
+        String newStatus = body.get("status");
+        if (newStatus == null || newStatus.isEmpty()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Status is required"));
+        }
+        AdminUserItem updated = adminUserService.updateUserStatus(id, newStatus, currentAdmin.getUserId());
+        return ResponseEntity.ok(ApiResponse.success(updated, "User status updated successfully"));
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportUsers(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String tier,
+            @RequestParam(required = false) String status
+    ) {
+        byte[] data = adminUserService.exportUsers(search, role, tier, status);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.setContentDispositionFormData("attachment", "users.xlsx");
+        return ResponseEntity.ok().headers(headers).body(data);
+    }
+}

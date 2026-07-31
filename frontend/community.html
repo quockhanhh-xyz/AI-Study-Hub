@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="js/theme.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Community Library - AI Study Hub</title>
+    <meta name="description" content="Browse, search, and discover public study documents shared by the community." />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      /* Overrides for Community Page: Document Card 3-Part Anatomy */
+      #communityGrid .document-card {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 14px !important;
+        padding: 20px !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 16px !important;
+        background: var(--surface) !important;
+        box-shadow: 0 4px 20px rgba(23, 32, 51, 0.02) !important;
+        transition: all 0.3s ease !important;
+        text-decoration: none !important;
+        color: inherit !important;
+        min-height: 200px !important;
+        justify-content: space-between !important;
+        position: relative !important;
+      }
+      #communityGrid .document-card:hover {
+        border-color: var(--primary) !important;
+        transform: translateY(-4px) !important;
+        box-shadow: 0 12px 24px rgba(255, 88, 88, 0.06) !important;
+      }
+
+      /* Part A: Header */
+      .comm-card-header {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        margin-bottom: 4px !important;
+      }
+      .comm-card-header h3 {
+        margin: 0 !important;
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        color: var(--text-main) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        flex: 1 !important;
+      }
+      .comm-card-header svg {
+        flex-shrink: 0 !important;
+        color: var(--primary) !important;
+        width: 20px !important;
+        height: 20px !important;
+      }
+
+      /* Part B: Body */
+      .comm-card-body {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+        flex-grow: 1 !important;
+        margin-bottom: 6px !important;
+      }
+      .comm-card-author {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+      }
+      .comm-card-avatar {
+        width: 24px !important;
+        height: 24px !important;
+        border-radius: 50% !important;
+        background-color: var(--primary-light) !important;
+        color: var(--primary) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        border: 1px solid var(--primary-border) !important;
+        flex-shrink: 0 !important;
+      }
+      .comm-card-author-name {
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        color: var(--text-main) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+      .comm-card-subject-tag {
+        align-self: flex-start !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        background-color: var(--background) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 6px !important;
+        padding: 4px 8px !important;
+        font-size: 12px !important;
+        font-weight: 500 !important;
+        color: var(--text-muted) !important;
+        max-width: 100% !important;
+      }
+      .comm-card-subject-tag span {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+
+      /* Part C: Footer */
+      .comm-card-footer {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        border-top: 1px solid var(--border) !important;
+        padding-top: 12px !important;
+        margin-top: auto !important;
+        font-size: 12px !important;
+        color: var(--text-light) !important;
+      }
+      .comm-card-date {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+      }
+      .comm-card-metrics {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+      }
+      .comm-card-metric-item {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+      }
+
+      /* Fix custom select input sizing in toolbar */
+      .custom-select-trigger input.custom-select-input {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        outline: none !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+    </style>
+<style>
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 16px;
+}
+.theme-toggle-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+</style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <section class="page-header dashboard-header" style="margin-top: 15px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <h1 style="margin: 0; font-size: 28px; font-weight: 800; color: var(--text);">Community Library</h1>
+                    <div id="globalHeaderWidgets" class="global-header-widgets" style="display: flex; align-items: center; gap: 16px;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <p class="dashboard-subtitle" style="margin: 0; color: var(--muted); font-size: 14px;">Discover study documents shared publicly by the community.</p>
+                </div>
+            </section>
+
+            <div id="communityListView" class="dashboard-panel">
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 16px; width: 100%;">
+                    <div class="dashboard-search" style="max-width: 480px; width: 100%; margin: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24"
+                            class="search-icon" aria-hidden="true" focusable="false">
+                            <g id="Search">
+                                <path id="Union" fill="currentColor"
+                                    d="M11 2c4.9706 0 9 4.02944 9 9 0 2.125 -0.7381 4.0766 -1.9697 5.6162l4.1767 4.1768 -1.414 1.414 -4.1768 -4.1767C15.0766 19.2619 13.125 20 11 20c-4.97056 0 -9 -4.0294 -9 -9 0 -4.97056 4.02944 -9 9 -9m0 2c-3.86599 0 -7 3.13401 -7 7 0 3.866 3.13401 7 7 7 3.866 0 7 -3.134 7 -7 0 -3.86599 -3.134 -7 -7 -7"
+                                    stroke-width="1"></path>
+                            </g>
+                        </svg>
+                        <input type="text" id="searchInput" placeholder="Search public documents by title or keyword..."
+                            style="padding-left: 40px; width: 100%;" />
+                    </div>
+                    <div id="communityHeaderActions" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 0;">
+                        <!-- If guest: compact login prompt -->
+                        <div id="communityGuestActions" style="display: none; align-items: center; gap: 12px; background: rgba(79, 70, 229, 0.05); padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(79, 70, 229, 0.1);">
+                            <span style="font-size: 13px; color: var(--text); font-weight: 500;">Sign in to upload, save favorites, and study with AI.</span>
+                            <a href="login.html?redirect=community.html" class="btn btn-primary btn-sm" style="width: auto !important; padding: 6px 12px; text-decoration: none; font-size: 13px;">Login</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="toolbar">
+                    <div class="filter-group">
+                        <input type="text" id="subjectFilter" list="subjectDatalist" placeholder="Filter by Subject..." style="min-width: 180px; max-width: 250px;" />
+                        <datalist id="subjectDatalist"></datalist>
+                    </div>
+                    <div class="filter-group">
+                        <select id="schoolFilter">
+                            <option value="">All Schools</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <select id="majorFilter" disabled>
+                            <option value="">All Majors</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <select id="fileTypeFilter">
+                            <option value="">All File Types</option>
+                            <optgroup label="PDF Documents">
+                                <option value="PDF">PDF</option>
+                            </optgroup>
+                            <optgroup label="Word Documents">
+                                <option value="DOC">DOC</option>
+                                <option value="DOCX">DOCX</option>
+                            </optgroup>
+                            <optgroup label="Presentations">
+                                <option value="PPT">PPT</option>
+                                <option value="PPTX">PPTX</option>
+                            </optgroup>
+                            <optgroup label="Spreadsheets">
+                                <option value="XLS">XLS</option>
+                                <option value="XLSX">XLSX</option>
+                            </optgroup>
+                            <optgroup label="Images">
+                                <option value="JPG">JPG</option>
+                                <option value="JPEG">JPEG</option>
+                                <option value="PNG">PNG</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <select id="sortFilter">
+                            <option value="newest">Newest</option>
+                            <option value="mostViewed">Most Viewed</option>
+                            <option value="mostDownloaded">Most Downloaded</option>
+                        </select>
+                    </div>
+                    <button type="button" id="clearFiltersBtn" class="btn btn-secondary clear-filters-btn">Clear
+                        Filters</button>
+                </div>
+
+                <p id="communityResultsCount" style="margin: 0 0 16px; font-size: 14px; color: var(--muted); font-weight: 500; display: none;"></p>
+
+                <div id="communityLoader" class="document-state">
+                    <span>Loading public documents...</span>
+                </div>
+
+                <div id="communityErrorMessage" class="status-box status-error dashboard-document-error"
+                    style="display: none;"></div>
+
+                <div id="communityGrid" class="document-grid" style="display: none;"></div>
+
+                <div id="communityEmptyState" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="24" width="24"
+                            aria-hidden="true" focusable="false">
+                            <g>
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12.5 12.5c0 0.2652 -0.1054 0.5196 -0.2929 0.7071s-0.4419 0.2929 -0.7071 0.2929h-9c-0.26522 0 -0.51957 -0.1054 -0.70711 -0.2929C1.60536 13.0196 1.5 12.7652 1.5 12.5v-11c0 -0.26522 0.10536 -0.51957 0.29289 -0.707107C1.98043 0.605357 2.23478 0.5 2.5 0.5H9L12.5 4v8.5Z"
+                                    stroke-width="1"></path>
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                    d="M8.5 0.5v4h4" stroke-width="1"></path>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="empty-title">No public documents found</div>
+                    <p>Try adjusting your search or filters, or check back later.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/school-api.js"></script>
+    <script src="js/subject-api.js"></script>
+    <script src="js/document-api.js"></script>
+    <script src="js/community-api.js"></script>
+    <script src="js/community.js"></script>
+<script src="js/notification-api.js"></script>
+    <script src="js/notification.js"></script>
+</body>
+
+</html>

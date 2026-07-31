@@ -1,0 +1,368 @@
+package com.demo.ai_study_hub.service;
+
+import com.demo.ai_study_hub.dto.AdminSubjectRequest;
+import com.demo.ai_study_hub.dto.CreateSubjectRequest;
+import com.demo.ai_study_hub.entity.Subject;
+import com.demo.ai_study_hub.entity.SubjectRequest;
+import com.demo.ai_study_hub.entity.User;
+import com.demo.ai_study_hub.entity.School;
+import com.demo.ai_study_hub.entity.Major;
+import com.demo.ai_study_hub.dto.SubjectRequestResponse;
+import com.demo.ai_study_hub.repository.SubjectRepository;
+import com.demo.ai_study_hub.repository.SubjectRequestRepository;
+import com.demo.ai_study_hub.repository.UserRepository;
+import com.demo.ai_study_hub.repository.DocumentRepository;
+import com.demo.ai_study_hub.repository.SchoolRepository;
+import com.demo.ai_study_hub.repository.MajorRepository;
+import org.springframework.transaction.annotation.Transactional;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import com.demo.ai_study_hub.service.AdminSubjectService;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class SubjectRequestService {
+
+    @Autowired
+    private SubjectRequestRepository subjectRequestRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private SubjectRepository subjectRepository;
+
+    @Autowired
+    private AdminSubjectService adminSubjectService;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private DocumentRepository documentRepository;
+
+    @Autowired
+    private SchoolRepository schoolRepository;
+
+    @Autowired
+    private MajorRepository majorRepository;
+
+    @Autowired
+    private SubjectMappingService subjectMappingService;
+
+    public SubjectRequestResponse mapToResponse(SubjectRequest request) {
+        SubjectRequestResponse res = new SubjectRequestResponse();
+        res.setRequestId(request.getRequestId());
+        res.setRequestedCode(request.getRequestedCode());
+        res.setRequestedName(request.getRequestedName());
+        res.setDescription(request.getDescription());
+        res.setStatus(request.getStatus());
+        res.setRejectReason(request.getRejectReason());
+        res.setCreatedAt(request.getCreatedAt());
+        if (request.getRequestedByUser() != null) {
+            res.setRequestedByEmail(request.getRequestedByUser().getEmail());
+            res.setRequestedByName(request.getRequestedByUser().getFullName());
+        }
+        if (request.getSchool() != null) {
+            res.setSchoolId(request.getSchool().getSchoolId());
+            res.setSchoolCode(request.getSchool().getSchoolCode());
+            res.setSchoolName(request.getSchool().getSchoolName());
+        }
+        if (request.getMajor() != null) {
+            res.setMajorId(request.getMajor().getMajorId());
+            res.setMajorCode(request.getMajor().getMajorCode());
+            res.setMajorName(request.getMajor().getMajorName());
+        }
+        if (request.getReviewedBy() != null) {
+            res.setReviewedByEmail(request.getReviewedBy().getEmail());
+            res.setReviewedAt(request.getReviewedAt());
+        }
+        return res;
+    }
+
+    public SubjectRequestResponse createSubjectRequest(String requestedCode, String requestedName, String description, String email) {
+        return createSubjectRequest(requestedCode, requestedName, description, null, null, email);
+    }
+
+    public SubjectRequestResponse createSubjectRequest(CreateSubjectRequest request, String email) {
+        return createSubjectRequest(
+                request.getRequestedCode(),
+                request.getRequestedName(),
+                request.getDescription(),
+                request.getSchoolId(),
+                request.getMajorId(),
+                email
+        );
+    }
+
+    private SubjectRequestResponse createSubjectRequest(
+            String requestedCode,
+            String requestedName,
+            String description,
+            Integer schoolId,
+            Integer majorId,
+            String email
+    ) {
+        requestedCode = requestedCode.trim().toUpperCase();
+        requestedName = requestedName.trim();
+
+        School school = null;
+        Major major = null;
+        if (schoolId != null || majorId != null) {
+            if (schoolId == null || majorId == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "School and major must be selected together");
+            }
+            school = schoolRepository.findById(schoolId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "School not found"));
+            major = majorRepository.findById(majorId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Major not found"));
+            subjectMappingService.validateActiveMajor(major);
+            if (!major.getSchool().getSchoolId().equals(school.getSchoolId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Major does not belong to the selected school");
+            }
+        }
+
+        boolean pendingExists = major == null
+                ? subjectRequestRepository.existsByRequestedCodeAndStatus(requestedCode, "PENDING")
+                    || subjectRequestRepository.existsByRequestedNameAndStatus(requestedName, "PENDING")
+                : subjectRequestRepository.existsPendingForMajor(
+                        requestedCode,
+                        requestedName,
+                        major.getMajorId(),
+                        "PENDING"
+                );
+        if (pendingExists) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A pending request with this code or name already exists for the selected major");
+        }
+
+        Subject existingByCode = subjectRepository.findSystemSubjectByCodeIgnoreCase(requestedCode).orElse(null);
+        Subject existingByName = subjectRepository.findSystemSubjectByNameIgnoreCase(requestedName).orElse(null);
+        if (existingByCode != null && existingByName != null
+                && !existingByCode.getSubjectId().equals(existingByName.getSubjectId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Subject code and name belong to different system subjects");
+        }
+
+        Subject existingSystemSubject = existingByCode != null ? existingByCode : existingByName;
+        if (existingSystemSubject != null && "ACTIVE".equals(existingSystemSubject.getStatus())) {
+            if (major == null) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "An active system subject with this code or name already exists");
+            }
+            if (subjectMappingService.isMapped(existingSystemSubject.getSubjectId(), major.getMajorId())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "This subject is already available for the selected major");
+            }
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        SubjectRequest request = new SubjectRequest();
+        request.setRequestedCode(requestedCode);
+        request.setRequestedName(requestedName);
+        request.setDescription(description);
+        request.setRequestedByUser(user);
+        request.setSchool(school);
+        request.setMajor(major);
+        
+        SubjectRequest savedRequest = subjectRequestRepository.save(request);
+
+        notificationService.notifyAllAdmins(
+            "SUBJECT_REQUEST_PENDING",
+            "New Subject Request",
+            "User " + user.getFullName() + " has requested system subject: " + requestedCode + " - " + requestedName,
+            "SUBJECT_REQUEST",
+            (long) savedRequest.getRequestId()
+        );
+
+        return mapToResponse(savedRequest);
+    }
+
+    public List<SubjectRequestResponse> getMySubjectRequests(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        return subjectRequestRepository.findByRequestedByUser(user).stream().map(this::mapToResponse).toList();
+    }
+
+    public Page<SubjectRequestResponse> getAllSubjectRequests(String search, String status, Pageable pageable) {
+        return subjectRequestRepository.findAll(buildSpecification(search, status), pageable).map(this::mapToResponse);
+    }
+
+    @Transactional
+    public SubjectRequestResponse approveRequest(Integer requestId, String adminEmail) {
+        SubjectRequest request = subjectRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject request not found"));
+
+        if (!"PENDING".equals(request.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only pending requests can be approved");
+        }
+
+        User admin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found"));
+
+        // Check if subject already exists but is INACTIVE
+        Subject existing = subjectRepository.findSystemSubjectByCodeIgnoreCase(request.getRequestedCode()).orElse(null);
+        if (existing == null) {
+             existing = subjectRepository.findSystemSubjectByNameIgnoreCase(request.getRequestedName()).orElse(null);
+        }
+
+        Subject systemSubject;
+        if (existing != null) {
+            if ("ACTIVE".equals(existing.getStatus())) {
+                systemSubject = existing;
+            } else {
+                existing.setStatus("ACTIVE");
+                systemSubject = subjectRepository.save(existing);
+            }
+        } else {
+            // Create new system subject
+            AdminSubjectRequest createReq = new AdminSubjectRequest();
+            createReq.setSubjectCode(request.getRequestedCode());
+            createReq.setSubjectName(request.getRequestedName());
+            createReq.setDescription(request.getDescription());
+            if (request.getMajor() != null) {
+                createReq.setMajorIds(List.of(request.getMajor().getMajorId()));
+            }
+            adminSubjectService.createSubject(createReq);
+
+            systemSubject = subjectRepository.findSystemSubjectByCodeIgnoreCase(request.getRequestedCode())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to retrieve the newly created system subject"));
+        }
+
+        if (request.getMajor() != null) {
+            subjectMappingService.addMapping(systemSubject, request.getMajor());
+            documentRepository.migratePersonalDocumentsToSystemSubjectForMajor(
+                    request.getRequestedByUser(),
+                    request.getRequestedCode(),
+                    request.getMajor().getMajorId(),
+                    systemSubject
+            );
+        } else {
+            documentRepository.migratePersonalDocumentsToSystemSubject(
+                    request.getRequestedByUser(),
+                    request.getRequestedCode(),
+                    systemSubject
+            );
+        }
+
+        request.setStatus("APPROVED");
+        request.setReviewedBy(admin);
+        request.setReviewedAt(LocalDateTime.now());
+        SubjectRequest saved = subjectRequestRepository.save(request);
+
+        notificationService.createNotification(
+            request.getRequestedByUser(),
+            "SUBJECT_REQUEST_APPROVED",
+            "Subject Request Approved",
+            "Your request for subject '" + request.getRequestedName() + "' has been approved by Admin.",
+            "SUBJECT_REQUEST",
+            (long) saved.getRequestId()
+        );
+
+        return mapToResponse(saved);
+    }
+
+    public SubjectRequestResponse rejectRequest(Integer requestId, String rejectReason, String adminEmail) {
+        SubjectRequest request = subjectRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject request not found"));
+
+        if (!"PENDING".equals(request.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only pending requests can be rejected");
+        }
+
+        User admin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found"));
+
+        request.setStatus("REJECTED");
+        request.setRejectReason(rejectReason);
+        request.setReviewedBy(admin);
+        request.setReviewedAt(LocalDateTime.now());
+        SubjectRequest saved = subjectRequestRepository.save(request);
+
+        notificationService.createNotification(
+            request.getRequestedByUser(),
+            "SUBJECT_REQUEST_REJECTED",
+            "Subject Request Rejected",
+            "Your request for subject '" + request.getRequestedName() + "' has been rejected. Reason: " + rejectReason,
+            "SUBJECT_REQUEST",
+            (long) saved.getRequestId()
+        );
+
+        return mapToResponse(saved);
+    }
+
+    public byte[] exportSubjectRequests(String search, String status) {
+        List<SubjectRequest> requests = subjectRequestRepository.findAll(buildSpecification(search, status));
+
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Subject Requests");
+            Row headerRow = sheet.createRow(0);
+            headerRow.createCell(0).setCellValue("Request ID");
+            headerRow.createCell(1).setCellValue("Requested Code");
+            headerRow.createCell(2).setCellValue("Requested Name");
+            headerRow.createCell(3).setCellValue("Description");
+            headerRow.createCell(4).setCellValue("Requested By");
+            headerRow.createCell(5).setCellValue("Status");
+            headerRow.createCell(6).setCellValue("Created At");
+            headerRow.createCell(7).setCellValue("Reviewed By");
+            headerRow.createCell(8).setCellValue("Reviewed At");
+            headerRow.createCell(9).setCellValue("Reject Reason");
+
+            int rowIdx = 1;
+            for (SubjectRequest req : requests) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(req.getRequestId());
+                row.createCell(1).setCellValue(req.getRequestedCode());
+                row.createCell(2).setCellValue(req.getRequestedName());
+                row.createCell(3).setCellValue(req.getDescription());
+                row.createCell(4).setCellValue(req.getRequestedByUser() != null ? req.getRequestedByUser().getEmail() : "");
+                row.createCell(5).setCellValue(req.getStatus());
+                row.createCell(6).setCellValue(req.getCreatedAt() != null ? req.getCreatedAt().toString() : "");
+                row.createCell(7).setCellValue(req.getReviewedBy() != null ? req.getReviewedBy().getEmail() : "");
+                row.createCell(8).setCellValue(req.getReviewedAt() != null ? req.getReviewedAt().toString() : "");
+                row.createCell(9).setCellValue(req.getRejectReason());
+            }
+
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to export subject requests");
+        }
+    }
+
+    private Specification<SubjectRequest> buildSpecification(String search, String status) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (search != null && !search.isEmpty()) {
+                String searchLike = "%" + search.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("requestedCode")), searchLike),
+                        cb.like(cb.lower(root.get("requestedName")), searchLike)
+                ));
+            }
+            if (status != null && !status.isEmpty()) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+}

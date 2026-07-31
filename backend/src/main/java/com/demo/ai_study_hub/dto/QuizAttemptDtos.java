@@ -1,0 +1,55 @@
+package com.demo.ai_study_hub.dto;
+
+import lombok.*;
+import java.time.Instant;
+import java.util.List;
+
+public class QuizAttemptDtos {
+
+    @Data
+    public static class QuizAttemptRequest {
+        private Instant startedAt;
+        private Instant completedAt;
+        private List<AnswerInput> answers;
+
+        @Data
+        public static class AnswerInput {
+            private Long questionId;
+            private String selectedOption;
+        }
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class QuizAttemptResponse {
+        private Long attemptId;
+        private Long quizSetId;
+        private Integer userId;
+        private Double score;
+        private Integer totalQuestions;
+        private Integer correctCount;
+        private Double percentage;
+        private Instant startedAt;
+        private Instant completedAt;
+        private Instant createdAt;
+        private String progressStatus;
+        private Double progressPercentage;
+        private Double previousPercentage;
+        private List<QuizAttemptAnswerResponse> answers;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class QuizAttemptAnswerResponse {
+        private Long attemptAnswerId;
+        private Long questionId;
+        private String selectedOption;
+        private String correctOption;
+        private Boolean isCorrect;
+        private Instant answeredAt;
+    }
+}

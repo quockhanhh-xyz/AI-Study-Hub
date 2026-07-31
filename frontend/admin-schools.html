@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <script src="js/theme.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schools & Majors Management - Admin - AI Study Hub</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- CSS styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <style>
+        .major-filter-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: var(--card-bg, #ffffff);
+            border-radius: 12px;
+            border: 1px solid var(--border-color, #e2e8f0);
+        }
+        .major-filter-container select {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color, #e2e8f0);
+            background: var(--bg-color, #f8fafc);
+            color: var(--text-color, #0f172a);
+            font-size: 14px;
+            font-weight: 500;
+            outline: none;
+            min-width: 250px;
+        }
+        .theme-toggle-btn .icon-sun {
+          display: none;
+        }
+        [data-theme="dark"] .theme-toggle-btn .icon-moon {
+          display: none;
+        }
+        [data-theme="dark"] .theme-toggle-btn .icon-sun {
+          display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="admin-topbar">
+                <div class="admin-topbar-left">
+                    <button class="menu-toggle-btn" aria-label="Toggle Sidebar Navigation">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" aria-hidden="true" focusable="false">
+                            <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18"></path>
+                        </svg>
+                    </button>
+                    <span class="admin-topbar-brand">AI Study Hub Admin</span>
+                </div>
+                <div class="admin-topbar-right" id="globalHeaderWidgets"></div>
+            </header>
+
+            <div class="admin-layout">
+                <div class="admin-content-wrapper">
+                    <header class="admin-page-header">
+                        <div>
+                            <h1 class="admin-page-title">Schools & Majors Master Data</h1>
+                            <p class="admin-page-subtitle" style="margin-top: 4px; color: var(--text-muted); font-size: 0.875rem;">Manage institution lists and their study majors for user registration and document classification.</p>
+                        </div>
+                    </header>
+
+                    <!-- Loading / Error States -->
+                    <div class="admin-state-container" id="adminLoadingState">
+                        <div class="admin-state-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                        </div>
+                        <p>Loading master data...</p>
+                    </div>
+
+                    <div class="admin-state-container" id="adminErrorState" style="display: none;">
+                        <div class="admin-state-icon" style="color: var(--danger);">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="40" width="40" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <p id="adminErrorMessage">Failed to load school data.</p>
+                        <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 16px;">Retry</button>
+                    </div>
+
+                    <!-- Summary KPI Cards -->
+                    <div class="admin-payment-summary-grid" id="schoolSummaryCards" style="margin: 16px 0 24px;">
+                        <div class="payment-summary-card admin-card">
+                            <div class="payment-summary-info">
+                                <div class="summary-label">Total Schools</div>
+                                <div class="summary-value text-primary" id="cardTotalSchools">0</div>
+                            </div>
+                        </div>
+                        <div class="payment-summary-card admin-card">
+                            <div class="payment-summary-info">
+                                <div class="summary-label">Active Schools</div>
+                                <div class="summary-value text-success" id="cardActiveSchools">0</div>
+                            </div>
+                        </div>
+                        <div class="payment-summary-card admin-card">
+                            <div class="payment-summary-info">
+                                <div class="summary-label">Total Majors</div>
+                                <div class="summary-value text-primary" id="cardTotalMajors">0</div>
+                            </div>
+                        </div>
+                        <div class="payment-summary-card admin-card">
+                            <div class="payment-summary-info">
+                                <div class="summary-label">Active Majors</div>
+                                <div class="summary-value text-success" id="cardActiveMajors">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Tabs -->
+                    <div class="admin-tabs" style="margin-top: 16px;">
+                        <button class="admin-tab active" id="tabSchoolsBtn">
+                            <svg class="school-major-tab-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V9l7-4 7 4v12M9 13h.01M12 13h.01M15 13h.01M9 17h.01M12 17h.01M15 17h.01" />
+                            </svg>
+                            <span class="tab-text">Schools List</span>
+                        </button>
+                        <button class="admin-tab" id="tabMajorsBtn">
+                            <svg class="school-major-tab-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM4.5 7.8L12 12l7.5-4.2M12 12v9" />
+                            </svg>
+                            <span class="tab-text">Majors List</span>
+                        </button>
+                    </div>
+
+                    <!-- Schools Management View -->
+                    <div id="schoolsContent" style="display: block; margin-top: 20px;">
+                        <div class="admin-card" style="padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: none; background: var(--surface, #ffffff); border-radius: 12px;">
+                            <!-- Filters & Actions -->
+                            <div class="school-major-actions">
+                                <div class="admin-search-wrapper">
+                                    <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                    </svg>
+                                    <input type="text" id="schoolSearch" class="admin-filter-input" placeholder="Search schools..." />
+                                </div>
+                                <button type="button" class="btn btn-primary school-major-create-button" id="btnCreateSchool">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <path stroke-linecap="round" d="M12 5v14M5 12h14" />
+                                    </svg>
+                                    <span>Add New School</span>
+                                </button>
+                            </div>
+                            <div class="admin-table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>School ID</th>
+                                            <th>Code</th>
+                                            <th>Name</th>
+                                            <th>Short Name</th>
+                                            <th>Status</th>
+                                            <th style="text-align: center;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="schoolsTableBody">
+                                        <!-- Dynamic school rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Majors Management View -->
+                    <div id="majorsContent" style="display: none; margin-top: 20px;">
+                        <div class="major-filter-container" style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 16px; background: var(--surface, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0);">
+                            <label for="majorSchoolFilter" style="font-weight: 600; color: var(--text-main); font-size: 14px; white-space: nowrap; margin-bottom: 0;">Select Institution:</label>
+                            <select id="majorSchoolFilter" class="admin-filter-input admin-select" style="max-width: 300px; margin: 0; height: 42px; border-radius: 24px !important; padding-left: 16px !important;">
+                                <option value="">Choose a School</option>
+                            </select>
+                        </div>
+
+                        <div class="admin-card" style="padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: none; background: var(--surface, #ffffff); border-radius: 12px;">
+                            <!-- Filters & Actions -->
+                            <div class="school-major-actions">
+                                <div class="admin-search-wrapper">
+                                    <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="18" width="18" stroke="currentColor" stroke-width="2" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                    </svg>
+                                    <input type="text" id="majorSearch" class="admin-filter-input" placeholder="Search majors..." disabled />
+                                </div>
+                                <button type="button" class="btn btn-primary school-major-create-button" id="btnCreateMajor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <path stroke-linecap="round" d="M12 5v14M5 12h14" />
+                                    </svg>
+                                    <span>Add New Major</span>
+                                </button>
+                            </div>
+                            <div class="admin-table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Major ID</th>
+                                            <th>Code</th>
+                                            <th>Name</th>
+                                            <th>Status</th>
+                                            <th style="text-align: center;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="majorsTableBody">
+                                        <tr>
+                                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 40px 20px;">
+                                                Please select a school first to see its majors.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create/Edit School Modal -->
+    <div class="modal-overlay" id="schoolModal" role="dialog" aria-modal="true">
+        <div class="modal-box" style="max-width: 500px; position: relative;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 20px;">
+                <h3 id="schoolModalTitle" style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text-main);">Add New School</h3>
+                <button type="button" class="modal-close" aria-label="Close modal" style="position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 4px;">&times;</button>
+            </div>
+            <form id="schoolForm">
+                <input type="hidden" id="schoolIdField" />
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="schoolCode">School Code <span style="color: var(--danger);">*</span></label>
+                    <input type="text" id="schoolCode" required placeholder="E.g: FPT" autocomplete="off" />
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="schoolName">School Name <span style="color: var(--danger);">*</span></label>
+                    <input type="text" id="schoolName" required placeholder="E.g: FPT University" autocomplete="off" />
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="schoolShortName">Short Name / Abbreviation <span style="color: var(--danger);">*</span></label>
+                    <input type="text" id="schoolShortName" required placeholder="E.g: FPTU" autocomplete="off" />
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="schoolDesc">Description</label>
+                    <textarea id="schoolDesc" placeholder="Optional details..." rows="3"></textarea>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px; display: none;" id="schoolStatusGroup">
+                    <label for="schoolStatusField">Status</label>
+                    <select id="schoolStatusField" class="admin-filter-input admin-select" style="width: 100%;">
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btnSaveSchool">Save School</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create/Edit Major Modal -->
+    <div class="modal-overlay" id="majorModal" role="dialog" aria-modal="true">
+        <div class="modal-box" style="max-width: 500px; position: relative;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 20px;">
+                <h3 id="majorModalTitle" style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text-main);">Add New Major</h3>
+                <button type="button" class="modal-close" aria-label="Close modal" style="position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 4px;">&times;</button>
+            </div>
+            <form id="majorForm">
+                <input type="hidden" id="majorIdField" />
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="majorSchoolField">School / Institution <span style="color: var(--danger);">*</span></label>
+                    <select id="majorSchoolField" class="admin-filter-input admin-select" style="width: 100%;" required>
+                        <option value="">Choose a School</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="majorCode">Major Code <span style="color: var(--danger);">*</span></label>
+                    <input type="text" id="majorCode" required placeholder="E.g: SE" autocomplete="off" />
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="majorName">Major Name <span style="color: var(--danger);">*</span></label>
+                    <input type="text" id="majorName" required placeholder="E.g: Software Engineering" autocomplete="off" />
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="majorDesc">Description</label>
+                    <textarea id="majorDesc" placeholder="Optional details..." rows="3"></textarea>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px; display: none;" id="majorStatusGroup">
+                    <label for="majorStatusField">Status</label>
+                    <select id="majorStatusField" class="admin-filter-input admin-select" style="width: 100%;">
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btnSaveMajor">Save Major</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/admin-core-api.js"></script>
+    <script src="js/admin-school-api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/admin-schools.js"></script>
+    <script src="js/notification-api.js"></script>
+    <script src="js/notification.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,288 @@
+package com.demo.ai_study_hub.service;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.demo.ai_study_hub.dto.AdminSubjectItem;
+import com.demo.ai_study_hub.dto.AdminSubjectListResponse;
+import com.demo.ai_study_hub.dto.AdminSubjectRequest;
+import com.demo.ai_study_hub.dto.SubjectMappingResponse;
+import com.demo.ai_study_hub.entity.Subject;
+import com.demo.ai_study_hub.repository.DocumentRepository;
+import com.demo.ai_study_hub.repository.SubjectMajorMappingRepository;
+import com.demo.ai_study_hub.repository.SubjectRepository;
+import com.demo.ai_study_hub.repository.SubjectRequestRepository;
+import jakarta.persistence.criteria.Predicate;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class AdminSubjectService {
+
+    @Autowired
+    private SubjectRepository subjectRepository;
+
+    @Autowired
+    private DocumentRepository documentRepository;
+
+    @Autowired
+    private SubjectRequestRepository subjectRequestRepository;
+
+    @Autowired
+    private SubjectMajorMappingRepository subjectMajorMappingRepository;
+
+    @Autowired
+    private SubjectMappingService subjectMappingService;
+
+    public AdminSubjectListResponse getSystemSubjects(String search, String status, Pageable pageable) {
+        return getSystemSubjects(search, status, null, null, pageable);
+    }
+
+    public AdminSubjectListResponse getSystemSubjects(
+            String search,
+            String status,
+            Integer schoolId,
+            Integer majorId,
+            Pageable pageable
+    ) {
+        Specification<Subject> spec = buildSpecification(search, status, schoolId, majorId);
+        Page<Subject> page = subjectRepository.findAll(spec, pageable);
+
+        List<AdminSubjectItem> items = page.getContent().stream().map(this::mapToItem).collect(Collectors.toList());
+
+        AdminSubjectListResponse response = new AdminSubjectListResponse();
+        response.setSubjects(items);
+        response.setTotalPages(page.getTotalPages());
+        response.setTotalElements(page.getTotalElements());
+        response.setCurrentPage(page.getNumber());
+        return response;
+    }
+
+    public AdminSubjectItem createSubject(AdminSubjectRequest request) {
+        if (subjectRepository.existsBySubjectCodeAndScope(request.getSubjectCode(), "SYSTEM")) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Subject code already exists");
+        }
+
+        Subject subject = new Subject();
+        subject.setSubjectCode(request.getSubjectCode());
+        subject.setSubjectName(request.getSubjectName());
+        subject.setDescription(request.getDescription());
+        subject.setScope("SYSTEM");
+        subject.setStatus("ACTIVE");
+        
+        subject = subjectRepository.save(subject);
+        if (request.getMajorIds() != null) {
+            subjectMappingService.replaceMappings(subject, request.getMajorIds());
+        }
+        return mapToItem(subject);
+    }
+
+    public AdminSubjectItem updateSubject(Integer id, AdminSubjectRequest request) {
+        Subject subject = subjectRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
+        
+        if (!isSystemSubject(subject)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot edit custom subjects");
+        }
+
+        if (!subject.getSubjectCode().equals(request.getSubjectCode()) && subjectRepository.existsBySubjectCodeAndScopeAndSubjectIdNot(request.getSubjectCode(), "SYSTEM", id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Subject code already exists");
+        }
+
+        subject.setSubjectCode(request.getSubjectCode());
+        subject.setSubjectName(request.getSubjectName());
+        subject.setDescription(request.getDescription());
+
+        subject = subjectRepository.save(subject);
+        if (request.getMajorIds() != null) {
+            subjectMappingService.replaceMappings(subject, request.getMajorIds());
+        }
+        return mapToItem(subject);
+    }
+
+    public AdminSubjectItem updateSubjectStatus(Integer id, String status) {
+        if (!"ACTIVE".equals(status) && !"INACTIVE".equals(status)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status");
+        }
+
+        Subject subject = subjectRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
+
+        if (!isSystemSubject(subject)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot edit custom subjects");
+        }
+
+        subject.setStatus(status);
+        subject = subjectRepository.save(subject);
+        return mapToItem(subject);
+    }
+
+    public byte[] exportSubjects(String search, String status) {
+        return exportSubjects(search, status, null, null);
+    }
+
+    public byte[] exportSubjects(String search, String status, Integer schoolId, Integer majorId) {
+        Specification<Subject> spec = buildSpecification(search, status, schoolId, majorId);
+        List<Subject> subjects = subjectRepository.findAll(spec);
+
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("System Subjects");
+            Row headerRow = sheet.createRow(0);
+            headerRow.createCell(0).setCellValue("Subject ID");
+            headerRow.createCell(1).setCellValue("Code");
+            headerRow.createCell(2).setCellValue("Name");
+            headerRow.createCell(3).setCellValue("Description");
+            headerRow.createCell(4).setCellValue("Status");
+            headerRow.createCell(5).setCellValue("Created At");
+            headerRow.createCell(6).setCellValue("Schools");
+            headerRow.createCell(7).setCellValue("Majors");
+
+            int rowIdx = 1;
+            for (Subject subject : subjects) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(subject.getSubjectId());
+                row.createCell(1).setCellValue(subject.getSubjectCode());
+                row.createCell(2).setCellValue(subject.getSubjectName());
+                row.createCell(3).setCellValue(subject.getDescription());
+                row.createCell(4).setCellValue(subject.getStatus());
+                row.createCell(5).setCellValue(subject.getCreatedAt() != null ? subject.getCreatedAt().toString() : "");
+                List<SubjectMappingResponse> mappings = subjectMappingService.getMappings(subject.getSubjectId());
+                row.createCell(6).setCellValue(mappings.stream()
+                        .map(m -> m.getSchoolCode() + " - " + m.getSchoolName())
+                        .distinct()
+                        .collect(Collectors.joining(", ")));
+                row.createCell(7).setCellValue(mappings.stream()
+                        .map(m -> m.getMajorCode() + " - " + m.getMajorName())
+                        .distinct()
+                        .collect(Collectors.joining(", ")));
+            }
+
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error exporting subjects to Excel", e);
+        }
+    }
+
+    private Specification<Subject> buildSpecification(
+            String search,
+            String status,
+            Integer schoolId,
+            Integer majorId
+    ) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // Admin subjects should only include SYSTEM scope
+            predicates.add(cb.or(
+                    cb.equal(root.get("scope"), "SYSTEM"),
+                    cb.isNull(root.get("owner"))
+            ));
+
+            if (search != null && !search.isEmpty()) {
+                String searchLike = "%" + search.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("subjectCode")), searchLike),
+                        cb.like(cb.lower(root.get("subjectName")), searchLike)
+                ));
+            }
+            if (status != null && !status.isEmpty()) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (schoolId != null || majorId != null) {
+                List<Integer> subjectIds = subjectMajorMappingRepository
+                        .findSubjectIdsBySchoolAndMajor(schoolId, majorId);
+                if (subjectIds.isEmpty()) {
+                    predicates.add(cb.disjunction());
+                } else {
+                    predicates.add(root.get("subjectId").in(subjectIds));
+                }
+            }
+            
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    private boolean isSystemSubject(Subject subject) {
+        return "SYSTEM".equals(subject.getScope()) || subject.getOwner() == null;
+    }
+
+    private AdminSubjectItem mapToItem(Subject subject) {
+        AdminSubjectItem item = new AdminSubjectItem();
+        item.setSubjectId(subject.getSubjectId());
+        item.setSubjectCode(subject.getSubjectCode());
+        item.setSubjectName(subject.getSubjectName());
+        item.setDescription(subject.getDescription());
+        item.setStatus(subject.getStatus());
+        item.setCreatedAt(subject.getCreatedAt());
+        item.setUpdatedAt(subject.getUpdatedAt());
+        item.setDocumentsCount(documentRepository.countBySubject(subject));
+        item.setMappings(subjectMappingService.getMappings(subject.getSubjectId()));
+        return item;
+    }
+
+    public List<SubjectMappingResponse> getMappings(Integer subjectId) {
+        Subject subject = getSystemSubject(subjectId);
+        return subjectMappingService.getMappings(subject.getSubjectId());
+    }
+
+    public List<SubjectMappingResponse> replaceMappings(Integer subjectId, List<Integer> majorIds) {
+        Subject subject = getSystemSubject(subjectId);
+        return subjectMappingService.replaceMappings(subject, majorIds);
+    }
+
+    private Subject getSystemSubject(Integer subjectId) {
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
+        if (!isSystemSubject(subject)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot map custom subjects");
+        }
+        return subject;
+    }
+
+    public java.util.Map<String, Long> getSubjectStats(String search) {
+        String cleanSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+        long total = subjectRepository.countSystemSubjectsFiltered(cleanSearch);
+        long active = subjectRepository.countSystemSubjectsFilteredByStatus("ACTIVE", cleanSearch);
+        long inactive = subjectRepository.countSystemSubjectsFilteredByStatus("INACTIVE", cleanSearch);
+        long pendingRequests = subjectRequestRepository.countFilteredRequestsByStatus("PENDING", cleanSearch);
+
+        java.util.Map<String, Long> stats = new java.util.HashMap<>();
+        stats.put("total", total);
+        stats.put("active", active);
+        stats.put("inactive", inactive);
+        stats.put("pendingRequests", pendingRequests);
+        return stats;
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteSubject(Integer id) {
+        Subject subject = getSystemSubject(id);
+
+        long docsCount = documentRepository.countBySubject(subject);
+        if (docsCount > 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, 
+                "Cannot delete subject: It is linked to " + docsCount + " documents");
+        }
+
+        long requestsCount = subjectRequestRepository.countByRequestedCode(subject.getSubjectCode());
+        if (requestsCount > 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                "Cannot delete subject: It has pending or linked user requests");
+        }
+
+        subjectMajorMappingRepository.deleteBySubject_SubjectId(id);
+        subjectRepository.delete(subject);
+    }
+}

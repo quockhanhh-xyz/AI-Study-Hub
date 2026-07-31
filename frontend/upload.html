@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="js/theme.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upload Document - AI Study Hub</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="css/style.css" />
+<style>
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 16px;
+}
+.theme-toggle-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+</style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content" style="display: flex; flex-direction: column; align-items: center; width: 100%; padding-top: 24px;">
+            <div style="width: 100%; max-width: 680px; display: flex; flex-direction: column; align-items: stretch; gap: 24px;">
+                <a href="documents.html" class="back-link" id="uploadBackLink" style="margin: 0;">
+                    ← Back to My Documents
+                </a>
+
+                <section class="page-header" style="margin: 0; text-align: left; padding-bottom: 0;">
+                    <h1>Upload Document</h1>
+                </section>
+
+                <div class="card" style="margin: 0;">
+                    <form id="uploadForm" novalidate>
+
+                        <div class="form-group">
+                            <label for="title">Title <span class="label-required">*</span></label>
+                            <input type="text" id="title" name="title" placeholder="E.g: SWR Lecture 1 - Week 1 Notes"
+                                required autocomplete="off" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description">Description <span class="label-optional">(optional)</span></label>
+                            <textarea id="description" name="description"
+                                placeholder="E.g: Summary of Week 1 SWR lecture..." rows="3" style="min-height: 80px; height: 80px; resize: vertical;"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="schoolSelect">School <span class="label-required">*</span></label>
+                            <select id="schoolSelect" required>
+                                <option value="">Select School</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="majorSelect">Major / Study Program <span class="label-required">*</span></label>
+                            <select id="majorSelect" disabled required>
+                                <option value="">Select Major</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subjectSelect">Subject <span class="label-required">*</span></label>
+                            <input type="text" id="subjectSelect" list="subjectDatalist" placeholder="Select a subject" required autocomplete="off" />
+                            <datalist id="subjectDatalist"></datalist>
+
+                            <div id="newSubjectRow" class="inline-create-row" style="display:none; flex-direction:column; gap:4px;">
+                                <div style="font-size:11px; color:var(--muted); font-weight:500;">Create personal subject (only visible to you)</div>
+                                <div style="display:flex; gap:8px; flex-wrap:wrap; width:100%;">
+                                    <input type="text" id="newSubjectCode" placeholder="Code, e.g: MYSUB" autocomplete="off"
+                                        style="flex:0 0 140px;" />
+                                    <input type="text" id="newSubjectName"
+                                        placeholder="Subject name, e.g: Software Architecture" autocomplete="off"
+                                        style="flex:1 1 200px;" />
+                                    <button type="button" id="inlineCreateSubjectBtn" class="btn btn-secondary" style="padding: 0 16px; height: 38px;">Create</button>
+                                </div>
+                            </div>
+                            <p id="newSubjectError" class="helper-text error" role="alert" style="display:none;"></p>
+
+                            <p id="subjectError" class="helper-text error" role="alert" style="display:none;"></p>
+                            <div style="margin-top: 6px; font-size: 12px; color: var(--muted);">
+                                Need a subject for the entire system? <a href="#" id="openSubjectReqLink" style="color: var(--primary); font-weight: 600; text-decoration: underline;">Request system subject</a>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="folderSelect">Folder <span class="label-optional">— Optional</span></label>
+                            <select id="folderSelect">
+                                <option value="">Upload to My Documents</option>
+                            </select>
+
+                            <div id="newFolderRow" class="inline-create-row" style="display:none; gap:8px;">
+                                <input type="text" id="newFolderName" placeholder="E.g: Math Notes" autocomplete="off" style="flex:1 1 auto;" />
+                                <button type="button" id="inlineCreateFolderBtn" class="btn btn-secondary" style="padding: 0 16px; height: 38px;">Create</button>
+                            </div>
+                            <p id="newFolderError" class="helper-text error" role="alert" style="display:none;"></p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="file">Document File <span class="label-required">*</span></label>
+                            <div class="drop-zone" id="dropZone" role="button" tabindex="0">
+                                <input type="file" id="file" name="file"
+                                    accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.png,.jpg,.jpeg" required />
+                                <div class="drop-zone-content" id="dropZoneContent">
+                                    <div class="drop-zone-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            id="Folder--Streamline-Guidance-Free" height="32" width="32" aria-hidden="true"
+                                            focusable="false">
+                                            <desc>Folder Streamline Icon: https://streamlinehq.com</desc>
+                                            <path stroke="currentColor"
+                                                d="M1.5 10V2.5h5l3 3h11v3m3 0.25V8.5H4.6l-0.15 0.25 -0.234 0.492A28 28 0 0 0 1.5 21.272v0.228h19v-0.128a28 28 0 0 1 2.757 -12.116l0.243 -0.506Z"
+                                                stroke-width="1"></path>
+                                        </svg>
+                                    </div>
+                                    <span class="drop-zone-text" id="dropZoneText">
+                                        Select one file to upload<br />
+                                        <small>(PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG — max file size depends on your plan)</small>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="uploadProgress" class="progress-container" aria-hidden="true">
+                            <div class="progress-bar">
+                                <div id="progressFill" class="progress-fill"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                                <span id="progressText" class="progress-text" style="margin-top: 0;">Uploading...</span>
+                                <button type="button" id="cancelUploadBtn" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 11px;">Cancel</button>
+                            </div>
+                        </div>
+
+                        <div id="uploadMessage" class="upload-message" role="alert"></div>
+
+                        <button type="submit" id="submitBtn" class="btn btn-primary" style="margin-top: 10px;" disabled>
+                            Upload
+                        </button>
+
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Subject Request Modal -->
+    <div class="modal-overlay" id="subjectReqModal">
+        <div class="modal-box" style="max-width: 440px;">
+            <h3 style="margin-top:0; font-size:18px; font-weight:700; color:var(--text); margin-bottom:12px;">Request System Subject</h3>
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px;">Propose a new system subject for admin approval so it can be used for public documents in the Community Library.</p>
+            
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label style="font-size: 12px; font-weight: 600;">Subject Code <span class="label-required">*</span></label>
+                <input type="text" id="reqSubjectCode" placeholder="E.g: CS101" autocomplete="off" style="width: 100%;" required />
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label style="font-size: 12px; font-weight: 600;">Subject Name <span class="label-required">*</span></label>
+                <input type="text" id="reqSubjectName" placeholder="E.g: Introduction to Computer Science" autocomplete="off" style="width: 100%;" required />
+            </div>
+            <div class="form-group" style="margin-bottom: 14px;">
+                <label style="font-size: 12px; font-weight: 600;">Description <span class="label-optional">(optional)</span></label>
+                <textarea id="reqSubjectDesc" rows="2" placeholder="Brief description or course code detail..." style="width: 100%; min-height: 60px;"></textarea>
+            </div>
+            <p id="reqSubjectMsg" class="helper-text" role="alert" style="display:none;"></p>
+
+            <div class="modal-actions" style="margin-top: 18px;">
+                <button type="button" class="btn btn-secondary" id="cancelSubjectReqBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="submitSubjectReqBtn">Submit Request</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/account-api.js"></script>
+    <script src="js/school-api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/folder-api.js"></script>
+    <script src="js/subject-api.js"></script>
+    <script src="js/subject-request-api.js"></script>
+    <script src="js/document-api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/upload.js"></script>
+    <script src="js/notification-api.js"></script>
+    <script src="js/notification.js"></script>
+</body>
+
+</html>

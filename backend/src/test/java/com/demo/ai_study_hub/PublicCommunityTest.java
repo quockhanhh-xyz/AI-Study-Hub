@@ -1,0 +1,287 @@
+package com.demo.ai_study_hub;
+
+import com.demo.ai_study_hub.dto.DocumentResponse;
+import com.demo.ai_study_hub.dto.DocumentDownloadInfo;
+import com.demo.ai_study_hub.dto.PublicDocumentResponse;
+import com.demo.ai_study_hub.entity.*;
+import com.demo.ai_study_hub.repository.*;
+import com.demo.ai_study_hub.service.DocumentService;
+import com.demo.ai_study_hub.service.TierPolicyService;
+import com.demo.ai_study_hub.service.CloudinaryStorageService;
+import com.demo.ai_study_hub.service.FolderShareService;
+import com.demo.ai_study_hub.service.UsageService;
+import com.demo.ai_study_hub.service.SubjectMappingService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+import com.demo.ai_study_hub.repository.DocumentFavoriteRepository;
+
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class PublicCommunityTest {
+
+    @Mock
+    private DocumentRepository documentRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private DocumentFavoriteRepository documentFavoriteRepository;
+    @Mock
+    private SubjectRequestRepository subjectRequestRepository;
+
+    @Mock
+    private TierPolicyService tierPolicyService;
+    @Spy
+    private com.demo.ai_study_hub.service.DocumentPreviewHelper previewHelper;
+    @Mock
+    private com.demo.ai_study_hub.repository.DocumentRatingRepository documentRatingRepository;
+    @Mock
+    private com.demo.ai_study_hub.repository.DocumentReportRepository documentReportRepository;
+    @Mock
+    private SubjectRepository subjectRepository;
+    @Mock
+    private FolderRepository folderRepository;
+    @Mock
+    private DocumentShareRepository documentShareRepository;
+    @Mock
+    private GroupDocumentShareRepository groupDocumentShareRepository;
+    @Mock
+    private StudyGroupMemberRepository studyGroupMemberRepository;
+    @Mock
+    private DocumentContentRepository documentContentRepository;
+    @Mock
+    private DocumentChunkRepository documentChunkRepository;
+    @Mock
+    private CloudinaryStorageService cloudinaryStorageService;
+    @Mock
+    private FolderShareService folderShareService;
+    @Mock
+    private UsageService usageService;
+    @Mock
+    private com.demo.ai_study_hub.service.NotificationService notificationService;
+    @Mock
+    private org.springframework.transaction.PlatformTransactionManager transactionManager;
+    @Mock
+    private SubjectMappingService subjectMappingService;
+
+    @InjectMocks
+    private DocumentService documentService;
+
+    private User mockOwner;
+    private Document mockDoc;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(documentFavoriteRepository.existsByUserAndDocument(any(), any())).thenReturn(false);
+        mockOwner = new User();
+        mockOwner.setUserId(1);
+        mockOwner.setEmail("owner@test.com");
+
+        mockDoc = new Document();
+        mockDoc.setDocumentId(10);
+        mockDoc.setTitle("Study Guide");
+        mockDoc.setOriginalFileName("guide.pdf");
+        mockDoc.setFileType("PDF");
+        mockDoc.setFileSize(2048L);
+        mockDoc.setFileUrl("https://cloudinary.com/guide.pdf");
+        mockDoc.setOwner(mockOwner);
+        mockDoc.setStatus("ACTIVE");
+        mockDoc.setVisibility("PRIVATE");
+        mockDoc.setApprovalStatus("PENDING");
+        mockDoc.setViewCount(0L);
+        mockDoc.setDownloadCount(0L);
+
+        Subject dummySubject = new Subject();
+        dummySubject.setSubjectId(100);
+        dummySubject.setSubjectCode("CSD201");
+        dummySubject.setSubjectName("Data Structures");
+        dummySubject.setScope("SYSTEM");
+        dummySubject.setStatus("ACTIVE");
+
+        School dummySchool = new School();
+        dummySchool.setSchoolId(1);
+        dummySchool.setSchoolName("FPT University");
+        dummySchool.setStatus("ACTIVE");
+
+        Major dummyMajor = new Major();
+        dummyMajor.setMajorId(1);
+        dummyMajor.setMajorName("Software Engineering");
+        dummyMajor.setStatus("ACTIVE");
+        dummyMajor.setSchool(dummySchool);
+
+        mockDoc.setSubject(dummySubject);
+        mockDoc.setSchool(dummySchool);
+        mockDoc.setMajor(dummyMajor);
+    }
+
+    @Test
+    void publishDocument_WhenSuccessful_ShouldSetPublicAndPending() {
+        when(userRepository.findByEmail("owner@test.com")).thenReturn(Optional.of(mockOwner));
+        when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
+        when(documentRepository.save(any(Document.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        DocumentResponse res = documentService.publishDocument(10, "owner@test.com");
+
+        assertEquals("PUBLIC", res.getVisibility());
+        assertEquals("PENDING", res.getApprovalStatus());
+        assertNull(res.getPublishedAt());
+        verify(documentRepository, times(1)).save(mockDoc);
+    }
+
+    @Test
+    void unpublishDocument_WhenSuccessful_ShouldResetToPrivate() {
+        mockDoc.setVisibility("PUBLIC");
+        mockDoc.setApprovalStatus("APPROVED");
+        mockDoc.setPublishedAt(LocalDateTime.now());
+
+        when(userRepository.findByEmail("owner@test.com")).thenReturn(Optional.of(mockOwner));
+        when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
+        when(documentRepository.save(any(Document.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        DocumentResponse res = documentService.unpublishDocument(10, "owner@test.com");
+
+        assertNotNull(res);
+        assertEquals("PRIVATE", res.getVisibility());
+        assertNull(res.getPublishedAt());
+        verify(documentRepository, times(1)).save(mockDoc);
+    }
+
+    @Test
+    void getPublicDocuments_ShouldFilterAndMapGuestPermissions() {
+        mockDoc.setVisibility("PUBLIC");
+        mockDoc.setApprovalStatus("APPROVED");
+        when(documentRepository.findPublicDocumentsWithFilters(eq("physics"), eq(null), eq("PDF"), any(Sort.class)))
+                .thenReturn(Collections.singletonList(mockDoc));
+
+        List<PublicDocumentResponse> res = documentService.getPublicDocuments("physics", null, "PDF", "newest", null);
+
+        assertNotNull(res);
+        assertEquals(1, res.size());
+        PublicDocumentResponse docRes = res.get(0);
+        assertTrue(docRes.getCanPreview());
+        assertTrue(docRes.getCanOpen());
+        assertTrue(docRes.getCanDownload());
+    }
+
+    @Test
+    void getPublicDocuments_WithDifferentSortTypes_ShouldPassCorrectSortToRepository() {
+        mockDoc.setVisibility("PUBLIC");
+        mockDoc.setApprovalStatus("APPROVED");
+
+        // Test newest/default sort
+        documentService.getPublicDocuments("physics", null, "PDF", "newest", null);
+        verify(documentRepository).findPublicDocumentsWithFilters(
+                eq("physics"), eq(null), eq("PDF"),
+                eq(Sort.by(Sort.Order.desc("publishedAt"), Sort.Order.desc("createdAt")))
+        );
+
+        // Test mostViewed sort
+        documentService.getPublicDocuments("physics", null, "PDF", "mostViewed", null);
+        verify(documentRepository).findPublicDocumentsWithFilters(
+                eq("physics"), eq(null), eq("PDF"),
+                eq(Sort.by(Sort.Order.desc("viewCount"), Sort.Order.desc("publishedAt")))
+        );
+
+        // Test mostDownloaded sort
+        documentService.getPublicDocuments("physics", null, "PDF", "mostDownloaded", null);
+        verify(documentRepository).findPublicDocumentsWithFilters(
+                eq("physics"), eq(null), eq("PDF"),
+                eq(Sort.by(Sort.Order.desc("downloadCount"), Sort.Order.desc("publishedAt")))
+        );
+    }
+
+    @Test
+    void getPublicDocumentDetail_WhenPublicApproved_ShouldIncrementViewCount() {
+        mockDoc.setVisibility("PUBLIC");
+        mockDoc.setApprovalStatus("APPROVED");
+        when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
+        when(documentRepository.save(any(Document.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        PublicDocumentResponse res = documentService.getPublicDocumentDetail(10, null);
+
+        assertNotNull(res);
+        assertEquals(1, mockDoc.getViewCount());
+        assertTrue(res.getCanOpen());
+        verify(documentRepository, times(1)).save(mockDoc);
+    }
+
+    @Test
+    void getPublicDocumentDetail_WhenPrivate_ShouldThrowNotFound() {
+        mockDoc.setVisibility("PRIVATE");
+        when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            documentService.getPublicDocumentDetail(10, null);
+        });
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        verify(documentRepository, never()).save(any());
+    }
+
+    @Test
+    void getPublicDocumentDetail_WhenTrashed_ShouldThrowNotFound() {
+        mockDoc.setVisibility("PUBLIC");
+        mockDoc.setApprovalStatus("APPROVED");
+        mockDoc.setStatus("DELETED");
+        when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            documentService.getPublicDocumentDetail(10, null);
+        });
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        verify(documentRepository, never()).save(any());
+    }
+
+    @Test
+    void getPublicDocumentDownloadInfo_WhenPublicApproved_ShouldNotIncrementDownloadCount() {
+        mockDoc.setVisibility("PUBLIC");
+        mockDoc.setApprovalStatus("APPROVED");
+        when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
+
+        DocumentDownloadInfo info = documentService.getPublicDocumentDownloadInfo(10);
+
+        assertNotNull(info);
+        assertEquals(0, mockDoc.getDownloadCount());
+        assertEquals("https://cloudinary.com/guide.pdf", info.getFileUrl());
+        verify(documentRepository, never()).save(any(Document.class));
+    }
+
+    @Test
+    void incrementDownloadCount_ShouldIncrementSuccessfully() {
+        when(documentRepository.existsById(10)).thenReturn(true);
+        doNothing().when(documentRepository).incrementDownloadCountById(10);
+
+        documentService.incrementDownloadCount(10);
+
+        verify(documentRepository, times(1)).existsById(10);
+        verify(documentRepository, times(1)).incrementDownloadCountById(10);
+    }
+
+    @Test
+    void getPublicDocumentDownloadInfo_WhenPrivate_ShouldThrowNotFound() {
+        mockDoc.setVisibility("PRIVATE");
+        when(documentRepository.findById(10)).thenReturn(Optional.of(mockDoc));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            documentService.getPublicDocumentDownloadInfo(10);
+        });
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        verify(documentRepository, never()).save(any());
+    }
+}

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="js/theme.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz - AI Study Hub</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    progress#quizProgressBar::-webkit-progress-bar { background-color: var(--border); border-radius: 4px; }
+    progress#quizProgressBar::-webkit-progress-value { background-color: var(--primary); border-radius: 4px; }
+    progress#quizProgressBar::-moz-progress-bar { background-color: var(--primary); border-radius: 4px; }
+
+    .quiz-option-btn.selected {
+      background-color: #fff7ed;
+      border-color: var(--primary);
+    }
+    .quiz-option-btn.correct {
+      background-color: #ecfdf5 !important;
+      border-color: #10b981 !important;
+    }
+    .quiz-option-btn.correct .quiz-option-key {
+      background-color: #10b981 !important;
+      color: white !important;
+    }
+    .quiz-option-btn.incorrect {
+      background-color: #fef2f2 !important;
+      border-color: #ef4444 !important;
+    }
+    .quiz-option-btn.incorrect .quiz-option-key {
+      background-color: #ef4444 !important;
+      color: white !important;
+    }
+    .quiz-option-btn.muted {
+      opacity: 0.6;
+    }
+    
+    .quiz-feedback.correct {
+      background-color: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .quiz-feedback.incorrect {
+      background-color: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      border-radius: 8px;
+      padding: 16px;
+    }
+  </style>
+<style>
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 16px;
+}
+.theme-toggle-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+</style>
+</head>
+
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <h2 class="logo">AI Study Hub</h2>
+      <nav class="sidebar-nav"></nav>
+    </aside>
+
+    <main class="main-content">
+      <a href="#" class="back-link" id="quizBackLink" style="margin-bottom: 16px; display: inline-block;">← Back to document</a>
+      <section class="page-header">
+        <div>
+          <h1 id="quizSetTitle">Quiz</h1>
+          <p class="dashboard-subtitle" id="quizSetMeta"></p>
+        </div>
+      </section>
+
+      <div id="quizLoader" class="empty-state dashboard-loader">
+        <span>Loading quiz...</span>
+      </div>
+
+      <div id="quizErrorState" class="status-box status-error" style="display:none;"></div>
+
+      <section id="quizViewer" class="card quiz-viewer" style="display:none;">
+        <div class="quiz-review-banner" id="quizReviewBanner" style="display:none;">
+          <span>Reviewing your answers</span>
+          <button type="button" class="btn btn-text" id="quizBackToSummaryBtn">← Back to results</button>
+        </div>
+
+        <div class="quiz-header-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+          <div class="quiz-progress-wrapper" style="flex:1; margin-right: 16px;">
+            <div class="quiz-progress-text" id="quizProgressText" style="font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px;"></div>
+            <progress id="quizProgressBar" value="0" max="100" style="width: 100%; height: 6px; border-radius: 4px; overflow: hidden; appearance: none;"></progress>
+          </div>
+          <span class="status-badge quiz-difficulty-badge" id="quizDifficultyBadge"></span>
+        </div>
+
+        <h2 class="quiz-question-text" id="quizQuestionText"></h2>
+
+        <div class="quiz-options-list" id="quizOptionsList"></div>
+
+        <div class="quiz-feedback" id="quizFeedback" style="display:none;"></div>
+
+        <div class="quiz-controls" style="display:flex; justify-content:space-between; align-items:flex-start; margin-top:24px; gap: 12px;">
+          <div style="flex: 1;">
+            <button type="button" class="btn btn-secondary" id="quizPrevBtn" style="width: 100%;">← Previous</button>
+          </div>
+          <div style="flex: 1; display:flex; flex-direction:column; align-items:stretch;">
+            <button type="button" class="btn btn-primary" id="quizNextBtn" style="width: 100%;">Next →</button>
+            <span id="quizSkipHint" style="font-size:11px; color:var(--muted); margin-top:6px; display:none; text-align:center; line-height:1.2;">Skipping counts as incorrect</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="quizSummary" class="card quiz-summary" style="display:none; text-align: center; padding: 36px 24px; border-radius: 12px;">
+        <h2 class="quiz-summary-heading" style="font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 8px;">
+          🎉 Quiz complete!
+        </h2>
+        <p id="quizSummaryText" style="color: var(--muted); font-size: 14px; margin-bottom: 28px;"></p>
+
+        <div id="quizSummarySubmitting" class="helper-text" style="display:none;">Submitting your answers...</div>
+        <div id="quizSummaryError" class="status-box status-error" style="display:none;"></div>
+
+        <div id="quizSummaryResult" style="display:none;">
+          
+          <div class="quiz-summary-stats" style="display:flex; justify-content: center; gap: 14px; margin-bottom: 32px; flex-wrap: wrap;">
+            <div class="stat-card stat-card-default">
+              <div id="quizStatScore" class="stat-value" style="font-size:24px; font-weight:800; color:var(--primary); margin-bottom:4px;">0%</div>
+              <div class="stat-label" style="font-size:12px; text-transform:uppercase; font-weight:600;">Score</div>
+            </div>
+            <div class="stat-card stat-card-success">
+              <div id="quizStatCorrect" class="stat-value" style="font-size:24px; font-weight:800; margin-bottom:4px;">0</div>
+              <div class="stat-label" style="font-size:12px; text-transform:uppercase; font-weight:600;">Correct</div>
+            </div>
+            <div class="stat-card stat-card-warning">
+              <div id="quizStatIncorrect" class="stat-value" style="font-size:24px; font-weight:800; margin-bottom:4px;">0</div>
+              <div class="stat-label" style="font-size:12px; text-transform:uppercase; font-weight:600;">Incorrect</div>
+            </div>
+            <div class="stat-card stat-card-default">
+              <div id="quizStatSkipped" class="stat-value" style="font-size:24px; font-weight:800; margin-bottom:4px;">0</div>
+              <div class="stat-label" style="font-size:12px; text-transform:uppercase; font-weight:600;">Skipped</div>
+            </div>
+          </div>
+
+          <div class="quiz-summary-actions" style="display:flex; flex-direction:column; gap:12px; margin-top:32px;">
+            <button type="button" class="btn btn-primary" id="quizReviewAnswersBtn" style="width:100%; padding:12px;">Review your answers</button>
+            <button type="button" class="btn btn-secondary" id="quizRetakeBtn" style="width:100%; padding:12px;">Retry quiz</button>
+            <a href="#" class="btn btn-outline" id="quizSummaryBackLink" style="width:100%; padding:12px; text-align:center; text-decoration:none; box-sizing:border-box; font-weight:600;">← Back to document</a>
+          </div>
+
+          <div class="quiz-history" id="quizHistorySection" style="display:none; margin-top:32px; padding-top:24px; border-top:1px solid var(--border);">
+            <h3>Past attempts</h3>
+            <ul class="quiz-history-list" id="quizHistoryList"></ul>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/ai-learning-api.js"></script>
+  <script src="js/quiz.js"></script>
+<script src="js/notification-api.js"></script>
+    <script src="js/notification.js"></script>
+</body>
+
+</html>

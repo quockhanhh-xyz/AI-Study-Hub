@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="js/theme.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trash - AI Study Hub</title>
+    <meta name="description" content="Restore or permanently delete trashed study documents and folders." />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      /* ===== TRASH LIST ROW LAYOUT ===== */
+      .trash-list {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        width: 100% !important;
+        margin-top: 12px !important;
+        margin-bottom: 24px !important;
+      }
+
+      .trash-row {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 12px !important;
+        padding: 14px 20px !important;
+        transition: all 0.2s ease !important;
+        gap: 16px !important;
+        flex-wrap: wrap !important;
+      }
+      .trash-row:hover {
+        border-color: var(--primary-border) !important;
+        box-shadow: 0 4px 12px rgba(23, 32, 51, 0.03) !important;
+      }
+
+      .trash-row-left {
+        display: flex !important;
+        align-items: center !important;
+        gap: 14px !important;
+        flex: 1 !important;
+        min-width: 240px !important;
+      }
+      .trash-row-icon {
+        width: 38px !important;
+        height: 38px !important;
+        border-radius: 8px !important;
+        background: var(--background) !important;
+        color: var(--text-muted) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-shrink: 0 !important;
+      }
+      .trash-row-info {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 2px !important;
+      }
+      .trash-row-title {
+        margin: 0 !important;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        color: var(--text-main) !important;
+        line-height: 1.4 !important;
+      }
+      .trash-row-subtitle {
+        margin: 0 !important;
+        font-size: 12px !important;
+        color: var(--text-muted) !important;
+      }
+
+      .trash-row-center {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        color: var(--text-muted) !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        min-width: 180px !important;
+      }
+
+      .trash-row-right {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+      }
+
+      /* Circular button for actions */
+      .trash-action-btn {
+        width: 32px !important;
+        height: 32px !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        border: 1px solid var(--border) !important;
+        background: var(--surface) !important;
+      }
+      .trash-action-btn:hover {
+        background: var(--background) !important;
+      }
+      .trash-action-btn.btn-restore {
+        color: var(--text-muted) !important;
+      }
+      .trash-action-btn.btn-restore:hover {
+        color: var(--primary) !important;
+        border-color: var(--primary-border) !important;
+        background: var(--primary-light) !important;
+      }
+      .trash-action-btn.btn-delete-perm {
+        color: var(--danger) !important;
+      }
+      .trash-action-btn.btn-delete-perm:hover {
+        background: var(--danger-light) !important;
+        border-color: var(--danger-border) !important;
+        color: var(--danger) !important;
+      }
+      
+      .trash-section-title {
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        color: var(--text-main) !important;
+        margin-top: 16px !important;
+        margin-bottom: 4px !important;
+      }
+      
+      .trash-section-header {
+        margin-bottom: 12px !important;
+      }
+    </style>
+<style>
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 16px;
+}
+.theme-toggle-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+</style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <section class="page-header dashboard-header" style="margin-top: 15px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <h1 style="margin: 0; font-size: 28px; font-weight: 800; color: var(--text);">Trash</h1>
+                    <div id="globalHeaderWidgets" class="global-header-widgets" style="display: flex; align-items: center; gap: 16px;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 12px;">
+                    <p class="dashboard-subtitle" style="margin: 0; color: var(--muted); font-size: 14px;">Items in Trash are permanently deleted after 30 days.</p>
+                    <div class="header-actions">
+                        <button type="button" id="emptyTrashBtn" class="btn" style="display: none; align-items: center; gap: 6px; padding: 10px 16px; width: auto !important; border: 1.5px solid var(--danger); background: transparent; color: var(--danger); font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                            Empty Trash
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <div id="trashListView" class="dashboard-panel">
+
+                <div id="trashLoader" class="document-state">
+                    <span>Loading trash...</span>
+                </div>
+
+                <div id="trashError" class="status-box status-error document-status" role="alert" aria-live="polite" style="display: none;">
+                </div>
+
+                <div id="trashContent" class="trash-content" style="display: none;"></div>
+
+                <div id="trashEmpty" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            id="Bin--Streamline-Guidance-Free" height="32" width="32" aria-hidden="true"
+                            focusable="false">
+                            <desc>Bin Streamline Icon: https://streamlinehq.com</desc>
+                            <path stroke="currentColor"
+                                d="M9.5 9v9m5 -9v9m-6 -13.5h-6v0.25l0.24 1.05A70 70 0 0 1 4.5 21.398V22.5h15v-1.102c0 -5.249 0.59 -10.48 1.76 -15.598l0.24 -1.05V4.5h-6m-7 0V4a3.5 3.5 0 1 1 7 0v0.5m-7 0h7"
+                                stroke-width="1"></path>
+                        </svg>
+                    </div>
+                    <div class="empty-title">Trash is empty</div>
+                    <p>Deleted folders and documents will appear here.</p>
+                    <div style="display: flex; gap: 12px; justify-content: center; margin-top: 16px;">
+                        <a href="documents.html" class="btn btn-secondary" style="width: auto !important; text-decoration: none;">My Documents</a>
+                        <a href="folders.html" class="btn btn-secondary" style="width: auto !important; text-decoration: none;">My Folders</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="confirmModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+        <div class="modal-box">
+            <h3 id="confirmTitle" class="modal-title-danger">Permanently delete item?</h3>
+            <p id="confirmMessage" class="modal-warning-text">This action cannot be undone.</p>
+            <div id="confirmError" class="modal-error" role="alert" aria-live="polite"></div>
+            <div class="modal-actions">
+                <button type="button" id="cancelPermanentDeleteBtn" class="btn btn-secondary">Cancel</button>
+                <button type="button" id="confirmPermanentDeleteBtn" class="btn btn-danger">Delete Permanently</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="emptyTrashModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="emptyTrashTitle">
+        <div class="modal-box">
+            <h3 id="emptyTrashTitle" class="modal-title-danger">Empty Trash?</h3>
+            <p id="emptyTrashMessage" class="modal-warning-text">All items in Trash will be permanently deleted. This action cannot be undone.</p>
+            <div id="emptyTrashError" class="modal-error" role="alert" aria-live="polite"></div>
+            <div class="modal-actions">
+                <button type="button" id="cancelEmptyTrashBtn" class="btn btn-secondary">Cancel</button>
+                <button type="button" id="confirmEmptyTrashBtn" class="btn btn-danger">Empty Trash</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/document-api.js"></script>
+    <script src="js/folder-api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/trash.js"></script>
+<script src="js/notification-api.js"></script>
+    <script src="js/notification.js"></script>
+</body>
+
+</html>

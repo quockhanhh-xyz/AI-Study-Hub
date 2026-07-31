@@ -1,0 +1,146 @@
+/**
+ * AI Learning API Helpers
+ * Requires api.js to be loaded first for `get`, `post` functions.
+ */
+
+const AiLearningAPI = {
+  // --- Summary APIs ---
+
+  /**
+   * Get the latest summary for a document
+   * @param {number|string} documentId
+   * @returns {Promise<object>} response payload
+   */
+  getLatestSummary: async (documentId) => {
+    return await get(`/api/ai/documents/${documentId}/summaries/latest`);
+  },
+
+  /**
+   * Get all summary history for a document
+   * @param {number|string} documentId
+   * @returns {Promise<object>} response payload
+   */
+  getSummaryHistory: async (documentId) => {
+    return await get(`/api/ai/documents/${documentId}/summaries`);
+  },
+
+  /**
+   * Generate a new summary for a document
+   * @param {number|string} documentId
+   * @param {boolean} regenerate
+   * @returns {Promise<object>} response payload
+   */
+  generateSummary: async (documentId, regenerate = false) => {
+    const endpoint = `/api/ai/documents/${documentId}/summaries/generate`;
+    const url = regenerate ? `${endpoint}?regenerate=true` : endpoint;
+    return await post(url, {});
+  },
+
+  // --- Flashcard APIs ---
+
+  /**
+   * Get all flashcard sets for a document
+   * @param {number|string} documentId
+   * @returns {Promise<object>} response payload
+   */
+  getFlashcardSets: async (documentId) => {
+    return await get(`/api/ai/documents/${documentId}/flashcard-sets`);
+  },
+
+  /**
+   * Get a specific flashcard set detail
+   * @param {number|string} setId
+   * @returns {Promise<object>} response payload
+   */
+  getFlashcardSet: async (setId) => {
+    return await get(`/api/ai/flashcard-sets/${setId}`);
+  },
+
+  /**
+   * Generate a new flashcard set
+   * @param {number|string} documentId
+   * @param {number} [count]
+   * @param {string} [focus] - optional focus/topic hint, max 300 chars
+   * @returns {Promise<object>} response payload
+   */
+  generateFlashcardSet: async (documentId, count, focus) => {
+    return await post(`/api/ai/documents/${documentId}/flashcard-sets/generate`, { count, focus });
+  },
+
+  // --- Quiz APIs ---
+
+  /**
+   * Get all quiz sets for a document
+   * @param {number|string} documentId
+   * @returns {Promise<object>} response payload
+   */
+  getQuizSets: async (documentId) => {
+    return await get(`/api/ai/documents/${documentId}/quiz-sets`);
+  },
+
+  /**
+   * Get a specific quiz set detail
+   * @param {number|string} setId
+   * @returns {Promise<object>} response payload
+   */
+  getQuizSet: async (setId) => {
+    return await get(`/api/ai/quiz-sets/${setId}`);
+  },
+
+  /**
+   * Generate a new quiz set
+   * @param {number|string} documentId
+   * @param {number} [questionCount]
+   * @param {string} difficulty - EASY, MEDIUM, HARD
+   * @param {string} [focus] - optional focus/topic hint, max 300 chars
+   * @returns {Promise<object>} response payload
+   */
+  generateQuizSet: async (documentId, questionCount, difficulty, focus) => {
+    return await post(`/api/ai/documents/${documentId}/quiz-sets/generate`, {
+      questionCount,
+      difficulty,
+      focus
+    });
+  },
+
+  /**
+   * Submit a quiz attempt. Backend computes score/correctCount/percentage —
+   * never send a client-computed score.
+   * @param {number|string} quizSetId
+   * @param {{startedAt: string, completedAt: string, answers: Array<{questionId: number, selectedOption: string}>}} payload
+   * @returns {Promise<object>} response payload with data.{attemptId, score, totalQuestions, correctCount, percentage, completedAt}
+   */
+  submitQuizAttempt: async (quizSetId, payload) => {
+    return await post(`/api/ai/quiz-sets/${quizSetId}/attempts`, payload);
+  },
+
+  /**
+   * Get the current user's attempt history for a quiz set.
+   * @param {number|string} quizSetId
+   * @returns {Promise<object>} response payload with data: Array<attempt>
+   */
+  getQuizAttemptHistory: async (quizSetId) => {
+    return await get(`/api/ai/quiz-sets/${quizSetId}/attempts`);
+  },
+
+  /**
+   * Submit a flashcard study attempt.
+   * @param {number|string} setId 
+   * @param {object} payload { rememberedCount, forgotCount, startedAt, completedAt }
+   * @returns {Promise<object>} response payload
+   */
+  submitFlashcardAttempt: async (setId, payload) => {
+    return await post(`/api/ai/flashcard-sets/${setId}/attempts`, payload);
+  },
+
+  /**
+   * Get the current user's attempt history for a flashcard set.
+   * @param {number|string} setId 
+   * @returns {Promise<object>} response payload with data: Array<attempt>
+   */
+  getFlashcardAttemptHistory: async (setId) => {
+    return await get(`/api/ai/flashcard-sets/${setId}/attempts`);
+  }
+};
+
+window.AiLearningAPI = AiLearningAPI;

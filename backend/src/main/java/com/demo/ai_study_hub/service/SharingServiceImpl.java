@@ -1,0 +1,461 @@
+package com.demo.ai_study_hub.service;
+
+import com.demo.ai_study_hub.dto.*;
+import com.demo.ai_study_hub.entity.*;
+import com.demo.ai_study_hub.repository.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import com.demo.ai_study_hub.exception.QuotaExceededException;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class SharingServiceImpl implements SharingService {
+
+    private final DocumentRepository documentRepository;
+    private final UserRepository userRepository;
+    private final DocumentShareRepository documentShareRepository;
+    private final StudyGroupRepository studyGroupRepository;
+    private final StudyGroupMemberRepository studyGroupMemberRepository;
+    private final GroupDocumentShareRepository groupDocumentShareRepository;
+    private final FolderShareRepository folderShareRepository;
+    private final GroupFolderShareRepository groupFolderShareRepository;
+    private final TierPolicyService tierPolicyService;
+    private final UsageService usageService;
+    private final com.demo.ai_study_hub.repository.DocumentFavoriteRepository documentFavoriteRepository;
+    private final NotificationService notificationService;
+    private final DocumentPreviewHelper previewHelper;
+
+    @Override
+    @Transactional
+    public DocumentShareResponse shareDocumentDirect(Integer documentId, DocumentShareRequest request, String email) {
+        User owner = getUser(email);
+        owner = userRepository.findByIdForUpdate(owner.getUserId()).orElse(owner);
+        Document document = getActiveDocument(documentId);
+
+        if (!document.getOwner().getUserId().equals(owner.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+
+        com.demo.ai_study_hub.dto.TierLimits limits = tierPolicyService.getLimitsForUser(owner);
+        long activeShares = usageService.countActiveShares(owner);
+        if (activeShares >= limits.maxActiveShares()) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Active share links limit exceeded", "SHARE_LIMIT_EXCEEDED");
+        }
+
+        User recipient = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (!"ACTIVE".equals(recipient.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not active");
+        }
+
+        if (recipient.getUserId().equals(owner.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot share a document with yourself");
+        }
+
+        DocumentShare existing = documentShareRepository
+                .findByDocumentAndSharedWithAndStatus(document, recipient, "ACTIVE")
+                .orElse(null);
+        if (existing != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Document is already shared with this user");
+        }
+
+        DocumentShare share = documentShareRepository
+                .findByDocumentAndSharedWithAndStatus(document, recipient, "REVOKED")
+                .orElse(null);
+
+        if (share != null) {
+            share.setStatus("ACTIVE");
+            share.setSharedBy(owner);
+        } else {
+            share = new DocumentShare();
+            share.setDocument(document);
+            share.setSharedBy(owner);
+            share.setSharedWith(recipient);
+            share.setPermission("VIEW");
+            share.setStatus("ACTIVE");
+        }
+
+        DocumentShare saved = documentShareRepository.save(share);
+        return mapToDirectResponse(saved, true);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DocumentShareResponse> getSharedWithMe(String email) {
+        User user = getUser(email);
+        List<DocumentShare> activeShares = documentShareRepository.findActiveSharesWithMe(user);
+        return activeShares.stream()
+                .map(share -> {
+                    DocumentShareResponse response = mapToDirectResponse(share, false);
+                    // Scoped enrichment here only — mapToDirectResponse is
+                    // shared with getDocumentShares() (owner viewing their
+                    // own share list) where "favoritedByMe" would mean
+                    // something different (the owner's own favorite state,
+                    // not the recipient's), so it's set here explicitly
+                    // for the recipient's own view instead of inside the
+                    // shared mapper.
+                    response.setFavoritedByMe(
+                            documentFavoriteRepository.existsByUser_UserIdAndDocument_DocumentId(
+                                    user.getUserId(), response.getDocumentId()));
+                    return response;
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DocumentSharingInfoResponse getDocumentShares(Integer documentId, String email) {
+        User owner = getUser(email);
+        Document document = getActiveDocument(documentId);
+
+        if (!document.getOwner().getUserId().equals(owner.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+
+        List<DocumentShare> activeDirectShares = documentShareRepository.findByDocumentAndStatus(document, "ACTIVE");
+        List<GroupDocumentShare> activeGroupShares = groupDocumentShareRepository.findByDocumentAndStatus(document, "ACTIVE");
+
+        List<DocumentShareResponse> directResponses = activeDirectShares.stream()
+                .map(share -> mapToDirectResponse(share, true))
+                .collect(Collectors.toList());
+
+        List<GroupDocumentShareResponse> groupResponses = activeGroupShares.stream()
+                .map(gds -> mapToGroupResponse(gds, true))
+                .collect(Collectors.toList());
+
+        return DocumentSharingInfoResponse.builder()
+                .userShares(directResponses)
+                .groupShares(groupResponses)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public void revokeDirectShare(Integer shareId, String email) {
+        User owner = getUser(email);
+        DocumentShare share = documentShareRepository.findById(shareId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Share record not found"));
+
+        if (!"ACTIVE".equals(share.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Share record not found");
+        }
+
+        if (!share.getDocument().getOwner().getUserId().equals(owner.getUserId()) &&
+            !share.getSharedWith().getUserId().equals(owner.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the document owner or recipient can revoke shares");
+        }
+
+        share.setStatus("REVOKED");
+        documentShareRepository.save(share);
+    }
+
+    @Override
+    @Transactional
+    public GroupDocumentShareResponse shareDocumentToGroup(Integer documentId, GroupDocumentShareRequest request, String email) {
+        User owner = getUser(email);
+        owner = userRepository.findByIdForUpdate(owner.getUserId()).orElse(owner);
+        Document document = getActiveDocument(documentId);
+
+        if (!document.getOwner().getUserId().equals(owner.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
+        }
+        com.demo.ai_study_hub.dto.TierLimits limitsGroup = tierPolicyService.getLimitsForUser(owner);
+        long activeSharesGroup = usageService.countActiveShares(owner);
+        if (activeSharesGroup >= limitsGroup.maxActiveShares()) {
+            throw new QuotaExceededException(HttpStatus.FORBIDDEN,
+                    "Active share links limit exceeded", "SHARE_LIMIT_EXCEEDED");
+        }
+
+        StudyGroup group = studyGroupRepository.findById(request.getGroupId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+
+        if (!"ACTIVE".equals(group.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
+        }
+
+        studyGroupMemberRepository.findByGroupAndUserAndStatus(group, owner, "ACTIVE")
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Group not found"));
+
+        GroupDocumentShare existing = groupDocumentShareRepository
+                .findByDocumentAndGroupAndStatus(document, group, "ACTIVE")
+                .orElse(null);
+        if (existing != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Document is already shared in this group");
+        }
+
+        GroupDocumentShare share = groupDocumentShareRepository
+                .findByDocumentAndGroupAndStatus(document, group, "REVOKED")
+                .orElse(null);
+
+        if (share != null) {
+            share.setStatus("ACTIVE");
+            share.setSharedBy(owner);
+        } else {
+            share = new GroupDocumentShare();
+            share.setDocument(document);
+            share.setGroup(group);
+            share.setSharedBy(owner);
+            share.setPermission("VIEW");
+            share.setStatus("ACTIVE");
+        }
+
+        GroupDocumentShare saved = groupDocumentShareRepository.save(share);
+        return mapToGroupResponse(saved, true);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<GroupDocumentShareResponse> getGroupDocuments(Integer groupId, String email) {
+        User user = getUser(email);
+        StudyGroup group = studyGroupRepository.findById(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+
+        if (!"ACTIVE".equals(group.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
+        }
+
+        StudyGroupMember currentMembership = studyGroupMemberRepository
+                .findByGroupAndUserAndStatus(group, user, "ACTIVE")
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Group not found"));
+
+        List<GroupDocumentShare> activeShares = groupDocumentShareRepository.findActiveSharesForGroup(group);
+
+        return activeShares.stream()
+                .map(s -> {
+                    boolean canRevoke = s.getDocument().getOwner().getUserId().equals(user.getUserId())
+                            || "OWNER".equals(currentMembership.getRole());
+                    return mapToGroupResponse(s, canRevoke);
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void revokeGroupShare(Integer shareId, String email) {
+        User user = getUser(email);
+        GroupDocumentShare share = groupDocumentShareRepository.findById(shareId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group share record not found"));
+
+        if (!"ACTIVE".equals(share.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group share record not found");
+        }
+
+        StudyGroup group = share.getGroup();
+
+        boolean isDocOwner = share.getDocument().getOwner().getUserId().equals(user.getUserId());
+        boolean isGroupOwner = studyGroupMemberRepository
+                .findByGroupAndUserAndStatus(group, user, "ACTIVE")
+                .map(m -> "OWNER".equals(m.getRole()))
+                .orElse(false);
+
+        if (!isDocOwner && !isGroupOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "You do not have permission to revoke this group document share");
+        }
+
+        share.setStatus("REVOKED");
+        groupDocumentShareRepository.save(share);
+
+        // If not revoked by the document owner, notify the document owner
+        if (!share.getDocument().getOwner().getUserId().equals(user.getUserId())) {
+            notificationService.createNotification(
+                    share.getDocument().getOwner(),
+                    "GROUP_DOCUMENT_REMOVED",
+                    "Document removed from group",
+                    "Your document " + share.getDocument().getTitle() + " was removed from group " + group.getGroupName() + ".",
+                    "GROUP_DOCUMENT",
+                    Long.valueOf(group.getGroupId())
+            );
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MySharesResponse getMySharedAndContributedItems(String email) {
+        User user = getUser(email);
+
+        // 1. Direct document shares initiated by me
+        List<DocumentShare> docShares = documentShareRepository.findBySharedByAndStatus(user, "ACTIVE");
+        List<DocumentShareResponse> docShareResponses = docShares.stream()
+                .map(share -> mapToDirectResponse(share, true))
+                .collect(Collectors.toList());
+
+        // 2. Group document shares initiated by me
+        List<GroupDocumentShare> groupDocShares = groupDocumentShareRepository.findBySharedByAndStatus(user, "ACTIVE");
+        List<GroupDocumentShareResponse> groupDocShareResponses = groupDocShares.stream()
+                .map(share -> mapToGroupResponse(share, true))
+                .collect(Collectors.toList());
+
+        // 3. Direct folder shares initiated by me
+        List<FolderShare> folderShares = folderShareRepository.findBySharedByAndStatus(user, "ACTIVE");
+        List<FolderShareResponse> folderShareResponses = folderShares.stream()
+                .map(this::mapFolderShareToResponse)
+                .collect(Collectors.toList());
+
+        // 4. Group folder shares initiated by me
+        List<GroupFolderShare> groupFolderShares = groupFolderShareRepository.findBySharedByAndStatus(user, "ACTIVE");
+        List<FolderShareResponse> groupFolderShareResponses = groupFolderShares.stream()
+                .map(this::mapGroupFolderShareToResponse)
+                .collect(Collectors.toList());
+
+        // 5. Public documents contributed by me
+        List<Document> publicDocs = documentRepository.findMyPublicDocuments(user);
+        List<DocumentResponse> publicDocResponses = publicDocs.stream()
+                .map(this::mapToDocumentResponseSimple)
+                .collect(Collectors.toList());
+
+        return MySharesResponse.builder()
+                .documentShares(docShareResponses)
+                .groupDocumentShares(groupDocShareResponses)
+                .folderShares(folderShareResponses)
+                .groupFolderShares(groupFolderShareResponses)
+                .publicDocuments(publicDocResponses)
+                .build();
+    }
+
+    private FolderShareResponse mapFolderShareToResponse(FolderShare share) {
+        return FolderShareResponse.builder()
+                .shareId(share.getShareId())
+                .folderId(share.getFolder().getFolderId())
+                .folderName(share.getFolder().getName())
+                .parentFolderId(share.getFolder().getParentFolder() != null ? share.getFolder().getParentFolder().getFolderId() : null)
+                .ownerName(share.getFolder().getOwner().getFullName())
+                .ownerEmail(share.getFolder().getOwner().getEmail())
+                .sharedByName(share.getSharedBy().getFullName())
+                .sharedByEmail(share.getSharedBy().getEmail())
+                .sharedWithName(share.getSharedWithUser().getFullName())
+                .sharedWithEmail(share.getSharedWithUser().getEmail())
+                .sharedByUserId(share.getSharedBy().getUserId())
+                .permission(share.getPermission())
+                .status(share.getStatus())
+                .createdAt(share.getCreatedAt())
+                .canRevoke(true)
+                .build();
+    }
+
+    private FolderShareResponse mapGroupFolderShareToResponse(GroupFolderShare share) {
+        return FolderShareResponse.builder()
+                .shareId(share.getShareId())
+                .folderId(share.getFolder().getFolderId())
+                .folderName(share.getFolder().getName())
+                .parentFolderId(share.getFolder().getParentFolder() != null ? share.getFolder().getParentFolder().getFolderId() : null)
+                .ownerName(share.getFolder().getOwner().getFullName())
+                .ownerEmail(share.getFolder().getOwner().getEmail())
+                .sharedByName(share.getSharedBy().getFullName())
+                .sharedByEmail(share.getSharedBy().getEmail())
+                .sharedByUserId(share.getSharedBy().getUserId())
+                .groupId(share.getGroup().getGroupId())
+                .groupName(share.getGroup().getGroupName())
+                .permission(share.getPermission())
+                .status(share.getStatus())
+                .createdAt(share.getCreatedAt())
+                .canRevoke(true)
+                .build();
+    }
+
+    private DocumentResponse mapToDocumentResponseSimple(Document doc) {
+        String normalizedFileType = previewHelper.normalizeFileType(doc.getFileType(), doc.getOriginalFileName());
+        com.demo.ai_study_hub.enums.PreviewMode previewMode = previewHelper.getPreviewMode(normalizedFileType);
+
+        return DocumentResponse.builder()
+                .documentId(doc.getDocumentId())
+                .title(doc.getTitle())
+                .description(doc.getDescription())
+                .originalFileName(doc.getOriginalFileName())
+                .fileType(doc.getFileType())
+                .fileSize(doc.getFileSize())
+                .fileUrl(doc.getFileUrl())
+                .publicId(doc.getPublicId())
+                .folderId(doc.getFolder() != null ? doc.getFolder().getFolderId() : null)
+                .folderName(doc.getFolder() != null ? doc.getFolder().getName() : null)
+                .uploadedBy(null)
+                .uploadedByName(doc.getOwner().getFullName())
+                .status(doc.getStatus())
+                .createdAt(doc.getCreatedAt())
+                .updatedAt(doc.getUpdatedAt())
+                .mimeType(previewHelper.getMimeType(normalizedFileType))
+                .resourceType(previewHelper.getResourceType(normalizedFileType))
+                .previewUrl(previewHelper.getPreviewUrl(doc.getFileUrl(), previewMode))
+                .downloadUrl("/api/documents/" + doc.getDocumentId() + "/download")
+                .previewMode(previewMode)
+                .build();
+    }
+
+    private User getUser(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    }
+
+    private Document getActiveDocument(Integer documentId) {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
+        if (!"ACTIVE".equals(document.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found or in trash");
+        }
+        return document;
+    }
+
+    private DocumentShareResponse mapToDirectResponse(DocumentShare share, boolean isOwnerView) {
+        String normalizedFileType = previewHelper.normalizeFileType(share.getDocument().getFileType(), share.getDocument().getOriginalFileName());
+        com.demo.ai_study_hub.enums.PreviewMode previewMode = previewHelper.getPreviewMode(normalizedFileType);
+
+        return DocumentShareResponse.builder()
+                .shareId(share.getShareId())
+                .documentId(share.getDocument().getDocumentId())
+                .title(share.getDocument().getTitle())
+                .fileType(share.getDocument().getFileType())
+                .fileSize(share.getDocument().getFileSize())
+                .fileUrl(share.getDocument().getFileUrl())
+                .sharedByName(share.getSharedBy().getFullName())
+                .sharedWithName(share.getSharedWith().getFullName())
+                .sharedByEmail(isOwnerView ? share.getSharedBy().getEmail() : null)
+                .sharedWithEmail(isOwnerView ? share.getSharedWith().getEmail() : null)
+                .sharedByUserId(share.getSharedBy().getUserId())
+                .permission(share.getPermission())
+                .status(share.getStatus())
+                .createdAt(share.getCreatedAt())
+                .mimeType(previewHelper.getMimeType(normalizedFileType))
+                .resourceType(previewHelper.getResourceType(normalizedFileType))
+                .previewUrl(previewHelper.getPreviewUrl(share.getDocument().getFileUrl(), previewMode))
+                .downloadUrl("/api/documents/" + share.getDocument().getDocumentId() + "/download")
+                .previewMode(previewMode)
+                .build();
+    }
+
+    private GroupDocumentShareResponse mapToGroupResponse(GroupDocumentShare share, boolean canRevoke) {
+        String normalizedFileType = previewHelper.normalizeFileType(share.getDocument().getFileType(), share.getDocument().getOriginalFileName());
+        com.demo.ai_study_hub.enums.PreviewMode previewMode = previewHelper.getPreviewMode(normalizedFileType);
+
+        return GroupDocumentShareResponse.builder()
+                .shareId(share.getShareId())
+                .documentId(share.getDocument().getDocumentId())
+                .title(share.getDocument().getTitle())
+                .fileType(share.getDocument().getFileType())
+                .fileSize(share.getDocument().getFileSize())
+                .fileUrl(share.getDocument().getFileUrl())
+                .groupId(share.getGroup().getGroupId())
+                .sharedByName(share.getSharedBy().getFullName())
+                .sharedByEmail(null)
+                .sharedByUserId(share.getSharedBy().getUserId())
+                .permission(share.getPermission())
+                .status(share.getStatus())
+                .createdAt(share.getCreatedAt())
+                .canRevoke(canRevoke)
+                .mimeType(previewHelper.getMimeType(normalizedFileType))
+                .resourceType(previewHelper.getResourceType(normalizedFileType))
+                .previewUrl(previewHelper.getPreviewUrl(share.getDocument().getFileUrl(), previewMode))
+                .downloadUrl("/api/documents/" + share.getDocument().getDocumentId() + "/download")
+                .previewMode(previewMode)
+                .build();
+    }
+}

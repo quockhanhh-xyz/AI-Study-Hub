@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="js/theme.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shared With Me - AI Study Hub</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      /* Material Design Full-Width Tab Header and Alignments */
+      .tab-header {
+        border-bottom: 2px solid var(--border) !important;
+        margin-bottom: 24px !important;
+        width: 100% !important;
+        display: flex !important;
+        gap: 16px !important;
+      }
+      .tab-btn {
+        font-weight: 500 !important;
+        color: var(--text-muted) !important;
+        padding: 12px 8px !important;
+        position: relative !important;
+        border-bottom: 2px solid transparent !important;
+        margin-bottom: -2px !important;
+        font-size: 14px !important;
+      }
+      .tab-btn.active {
+        color: var(--primary) !important;
+        font-weight: 700 !important;
+        border-bottom: 2px solid var(--primary) !important;
+      }
+
+      /* Polished Empty States: Loose dashed container layout */
+      .empty-state {
+        border: 2px dashed var(--border) !important;
+        border-radius: 20px !important;
+        padding: 60px 40px !important;
+        text-align: center !important;
+        color: var(--text-muted) !important;
+        background: var(--surface) !important;
+        box-shadow: 0 10px 30px rgba(23, 32, 51, 0.03) !important;
+        display: flex;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        max-width: 640px !important;
+        margin: 40px auto !important;
+      }
+
+      /* Circular backdrop around the empty-state icon */
+      .empty-state-icon {
+        width: 80px !important;
+        height: 80px !important;
+        border-radius: 50% !important;
+        background-color: var(--primary-light) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin-bottom: 20px !important;
+        color: var(--primary) !important;
+      }
+      .empty-state-icon svg {
+        width: 36px !important;
+        height: 36px !important;
+      }
+
+      /* Correct button widths to not stretch */
+      .empty-actions .btn {
+        width: auto !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        white-space: nowrap !important;
+        padding: 10px 20px !important;
+      }
+      
+      .shared-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 8px;
+        transition: all 0.2s;
+        text-decoration: none;
+      }
+      
+      .shared-row:hover {
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      }
+    </style>
+<style>
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 16px;
+}
+.theme-toggle-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+</style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <section class="page-header dashboard-header" style="max-width: none; margin: 0 0 24px 0; text-align: left;">
+                <div class="dashboard-header-content">
+                    <div>
+                        <h1 style="font-size: 26px; font-weight: 800; color: var(--text); margin: 0;">Sharing</h1>
+                        <p style="color: var(--muted); font-size: 15px; margin-top: 8px;">Access documents and folders shared with you, or manage files you have shared with others.</p>
+                    </div>
+                    <div id="globalHeaderWidgets" class="global-header-widgets"></div>
+                </div>
+            </section>
+
+            <div class="dashboard-search" style="width: 100%; max-width: 480px; flex-shrink: 0; margin-bottom: 24px; position: relative;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" class="search-icon">
+                    <path fill="currentColor" d="M11 2c4.9706 0 9 4.0294 9 9 0 2.125-0.7381 4.0766-1.9697 5.6162l4.1767 4.1768-1.414 1.414-4.1768-4.1767C15.0766 19.2619 13.125 20 11 20c-4.9706 0-9-4.0294-9-9 0-4.9706 4.0294-9 9-9m0 2c-3.866 0-7 3.134-7 7 0 3.866 3.134 7 7 7 3.866 0 7-3.134 7-7 0-3.866-3.134-7-7-7" />
+                </svg>
+                <input type="text" id="sharedSearchInput" placeholder="Search shared or contributed items..." style="padding-left: 40px; width: 100%;" autocomplete="off" />
+            </div>
+
+            <div class="tab-header" style="display: flex; gap: 16px; border-bottom: 2px solid var(--border); margin-bottom: 24px;">
+                <button type="button" class="tab-btn" id="tabDocsBtn" style="display: inline-flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    <span>Shared Documents</span>
+                </button>
+                <button type="button" class="tab-btn" id="tabFoldersBtn" style="display: inline-flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                    </svg>
+                    <span>Shared Folders</span>
+                </button>
+                <button type="button" class="tab-btn" id="tabMySharesBtn" style="display: inline-flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="16" width="16" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+                    </svg>
+                    <span>My Shared Items</span>
+                </button>
+            </div>
+
+            <div id="sharedDocsPanel" class="dashboard-panel" style="display: none;">
+
+
+                <div id="sharedLoader" class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <span>Loading shared documents...</span>
+                </div>
+
+                <div id="sharedError" class="error-state" style="display: none;">
+                    <div class="error-state-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" aria-hidden="true" focusable="false">
+                          <g id="error-high">
+                            <path id="Union" fill="currentColor" d="M12 2c5.5228 0 10 4.47715 10 10 0 5.5228 -4.4772 10 -10 10 -5.52285 0 -10 -4.4772 -10 -10C2 6.47715 6.47715 2 12 2m0 2c-4.41828 0 -8 3.58172 -8 8 0 4.4183 3.58172 8 8 8 4.4183 0 8 -3.5817 8 -8 0 -4.41828 -3.5817 -8 -8 -8M9.5 17h-2v-2h2zm3.5 0h-2v-2h2zm3.5 0h-2v-2h2zm-7 -4h-2V7h2zm3.5 0h-2V7h2zm3.5 0h-2V7h2z" stroke-width="1"></path>
+                          </g>
+                        </svg>
+                    </div>
+                    <div class="error-state-title">Error Loading Documents</div>
+                    <div class="error-state-desc" id="sharedErrorMessage"></div>
+                </div>
+
+                <div id="sharedGrid" class="document-grid"></div>
+
+                <div id="sharedEmpty" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="New-File--Streamline-Core" height="24" width="24" aria-hidden="true" focusable="false">
+                          <desc>New File Streamline Icon: https://streamlinehq.com</desc>
+                          <g id="new-file--empty-common-file-content">
+                            <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12.5 12.5c0 0.2652 -0.1054 0.5196 -0.2929 0.7071s-0.4419 0.2929 -0.7071 0.2929h-9c-0.26522 0 -0.51957 -0.1054 -0.70711 -0.2929C1.60536 13.0196 1.5 12.7652 1.5 12.5v-11c0 -0.26522 0.10536 -0.51957 0.29289 -0.707107C1.98043 0.605357 2.23478 0.5 2.5 0.5H9L12.5 4v8.5Z" stroke-width="1"></path>
+                            <path id="Vector 2529" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8.5 0.5v4h4" stroke-width="1"></path>
+                          </g>
+                        </svg>
+                    </div>
+                    <div class="empty-title">No shared documents</div>
+                    <p>When other users share documents directly with you, they will appear here.</p>
+                    <div class="empty-actions" style="margin-top: 16px; display: flex; gap: 12px; justify-content: center;">
+                        <a href="community.html" class="btn btn-primary" style="text-decoration: none;">Explore Community</a>
+                        <a href="groups.html" class="btn btn-secondary" style="text-decoration: none;">View Study Groups</a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sharedFoldersPanel" class="dashboard-panel" style="display: none;">
+
+                <div id="folderLoader" class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <span>Loading shared folders...</span>
+                </div>
+
+                <div id="folderError" class="error-state" style="display: none;">
+                    <div class="error-state-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" aria-hidden="true" focusable="false">
+                          <g id="error-high">
+                            <path id="Union" fill="currentColor" d="M12 2c5.5228 0 10 4.47715 10 10 0 5.5228 -4.4772 10 -10 10 -5.52285 0 -10 -4.4772 -10 -10C2 6.47715 6.47715 2 12 2m0 2c-4.41828 0 -8 3.58172 -8 8 0 4.4183 3.58172 8 8 8 4.4183 0 8 -3.5817 8 -8 0 -4.41828 -3.5817 -8 -8 -8M9.5 17h-2v-2h2zm3.5 0h-2v-2h2zm3.5 0h-2v-2h2zm-7 -4h-2V7h2zm3.5 0h-2V7h2zm3.5 0h-2V7h2z" stroke-width="1"></path>
+                          </g>
+                        </svg>
+                    </div>
+                    <div class="error-state-title">Error Loading Folders</div>
+                    <div class="error-state-desc" id="folderErrorMessage"></div>
+                </div>
+
+                <div id="folderGrid" class="folder-grid"></div>
+
+                <div id="folderEmpty" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="New-Folder--Streamline-Core" height="24" width="24" aria-hidden="true" focusable="false">
+                          <desc>New Folder Streamline Icon: https://streamlinehq.com</desc>
+                          <g id="new-folder--empty-folder">
+                            <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.2499V1.74994c0 -0.26522 0.105357 -0.51957 0.292893 -0.70711C0.98043 0.855293 1.23478 0.749936 1.5 0.749936h3.69c0.22843 -0.006655 0.45226 0.065133 0.63421 0.203414 0.18194 0.13828 0.31104 0.33471 0.36579 0.55659l0.31 1.24h6c0.2652 0 0.5196 0.10535 0.7071 0.29289 0.1875 0.18754 0.2929 0.44189 0.2929 0.70711v8.49996c0 0.2653 -0.1054 0.5196 -0.2929 0.7071 -0.1875 0.1876 -0.4419 0.2929 -0.7071 0.2929h-11c-0.26522 0 -0.51957 -0.1053 -0.707107 -0.2929C0.605357 12.7695 0.5 12.5152 0.5 12.2499Z" stroke-width="1"></path>
+                          </g>
+                        </svg>
+                    </div>
+                    <div class="empty-title">No shared folders</div>
+                    <p>When other users share folders directly with you, they will appear here.</p>
+                    <div class="empty-actions" style="margin-top: 16px; display: flex; gap: 12px; justify-content: center;">
+                        <a href="community.html" class="btn btn-primary" style="text-decoration: none;">Explore Community</a>
+                        <a href="groups.html" class="btn btn-secondary" style="text-decoration: none;">View Study Groups</a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mySharesPanel" class="dashboard-panel" style="display: none;">
+                <div id="mySharesLoader" class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <span>Loading shared and contributed items...</span>
+                </div>
+
+                <div id="mySharesError" class="error-state" style="display: none;">
+                    <div class="error-state-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" aria-hidden="true" focusable="false">
+                          <g id="error-high">
+                            <path id="Union" fill="currentColor" d="M12 2c5.5228 0 10 4.47715 10 10 0 5.5228 -4.4772 10 -10 10 -5.52285 0 -10 -4.4772 -10 -10C2 6.47715 6.47715 2 12 2m0 2c-4.41828 0 -8 3.58172 -8 8 0 4.4183 3.58172 8 8 8 4.4183 0 8 -3.5817 8 -8 0 -4.41828 -3.5817 -8 -8 -8M9.5 17h-2v-2h2zm3.5 0h-2v-2h2zm3.5 0h-2v-2h2zm-7 -4h-2V7h2zm3.5 0h-2V7h2zm3.5 0h-2V7h2z" stroke-width="1"></path>
+                          </g>
+                        </svg>
+                    </div>
+                    <div class="error-state-title">Error Loading Items</div>
+                    <div class="error-state-desc" id="mySharesErrorMessage"></div>
+                </div>
+
+                <div id="mySharesGrid" class="document-grid"></div>
+
+                <div id="mySharesEmpty" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="24" width="24" aria-hidden="true" focusable="false" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+                        </svg>
+                    </div>
+                    <div class="empty-title">No shared items</div>
+                    <p>You haven't shared or contributed any documents or folders yet.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/document-api.js"></script>
+    <script src="js/share-api.js"></script>
+    <script src="js/folder-share-api.js"></script>
+    <script src="js/community-api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/shared-with-me.js"></script>
+<script src="js/notification-api.js"></script>
+    <script src="js/notification.js"></script>
+</body>
+
+</html>

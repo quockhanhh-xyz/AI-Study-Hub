@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="js/theme.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Public Profile - AI Study Hub</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="css/style.css?v=15" />
+    <style>
+        .profile-header-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            display: flex;
+            gap: 28px;
+            align-items: flex-start;
+        }
+
+        .profile-header-avatar {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: var(--primary-light, #fff5f3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            font-weight: 700;
+            color: var(--primary, #ff5a3d);
+            border: 4px solid #ffffff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .profile-header-info {
+            flex-grow: 1;
+        }
+
+        .profile-name-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .profile-fullname {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-main, #1e293b);
+            margin: 0;
+        }
+
+        .profile-meta-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 16px;
+            color: var(--text-muted, #64748b);
+            font-size: 14px;
+        }
+
+        .profile-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .profile-bio {
+            color: var(--text-main, #334155);
+            line-height: 1.6;
+            margin: 0;
+            font-size: 15px;
+            max-width: 720px;
+        }
+
+        .profile-stats-row {
+            display: flex;
+            gap: 32px;
+            margin-top: 24px;
+            border-top: 1px solid var(--border, var(--border));
+            padding-top: 20px;
+        }
+
+        .profile-stat-box {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .profile-stat-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-main, #1e293b);
+        }
+
+        .profile-stat-label {
+            font-size: 13px;
+            color: var(--text-muted, #64748b);
+            font-weight: 500;
+        }
+
+        .documents-section {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .filter-search-wrapper {
+            flex-grow: 1;
+            min-width: 240px;
+            position: relative;
+        }
+
+        .filter-select {
+            min-width: 160px;
+        }
+
+        .documents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+    </style>
+<style>
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 16px;
+}
+.theme-toggle-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+.theme-toggle-btn .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-moon {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle-btn .icon-sun {
+  display: block;
+}
+</style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h2 class="logo">AI Study Hub</h2>
+            <nav class="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main-content">
+            <section class="page-header dashboard-header">
+                <div class="dashboard-header-content">
+                    <div class="header-title-section">
+                        <div style="margin-bottom: 8px;">
+                            <a href="#" onclick="history.back(); return false;" style="color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">
+                                <span>←</span> Back to Network
+                            </a>
+                        </div>
+                        <h1 id="pageTitle">Contributor Profile</h1>
+                        <p class="dashboard-subtitle">Explore documents and contributions from this community member.</p>
+                    </div>
+                    <div class="dashboard-search-and-profile">
+                        <div id="globalHeaderWidgets" class="global-header-widgets"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Profile Details Card -->
+            <div id="profileLoading" style="text-align: center; padding: 48px;">
+                <p style="color: var(--text-muted);">Loading profile details...</p>
+            </div>
+            
+            <div id="profilePrivateAlert" style="display: none; text-align: center; padding: 48px; background: var(--surface); border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <h3 style="color: var(--text-main); margin-bottom: 8px;">Private Profile</h3>
+                <p style="color: var(--text-muted);">This user has set their profile to private.</p>
+            </div>
+
+            <div id="profileContainer" style="display: none;">
+                <div class="profile-header-card">
+                    <div id="profileAvatar" class="profile-header-avatar">-</div>
+                    <div class="profile-header-info">
+                        <div class="profile-name-row">
+                            <div>
+                                <h2 class="profile-fullname" id="profileFullName">-</h2>
+                                <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;" id="profileRoleBadge">Community Member</p>
+                            </div>
+                            <div id="profileActionContainer">
+                                <!-- Button Follow/Unfollow dynamically loaded here -->
+                            </div>
+                        </div>
+
+                        <div class="profile-meta-grid">
+                            <div class="profile-meta-item" id="metaSchoolRow">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.62 48.62 0 0112 20.904a48.62 48.62 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84a50.58 50.58 0 00-2.657.814m-15.482 0l6.29 1.913a17.247 17.247 0 0010.384 0l6.29-1.913M12 13.5v6.25" />
+                                </svg>
+                                <span id="profileSchoolName">-</span>
+                            </div>
+                            <div class="profile-meta-item" id="metaMajorRow">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                                </svg>
+                                <span id="profileMajor">-</span>
+                            </div>
+                            <div class="profile-meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                                </svg>
+                                <span>Joined: <span id="profileJoinedDate">-</span></span>
+                            </div>
+                        </div>
+
+                        <p class="profile-bio" id="profileBio">-</p>
+
+                        <div class="profile-stats-row">
+                            <div class="profile-stat-box">
+                                <span class="profile-stat-value" id="statPublicDocs">-</span>
+                                <span class="profile-stat-label">Uploads</span>
+                            </div>
+                            <div class="profile-stat-box">
+                                <span class="profile-stat-value" id="statFollowers">-</span>
+                                <span class="profile-stat-label">Followers</span>
+                            </div>
+                            <div class="profile-stat-box">
+                                <span class="profile-stat-value" id="statFollowing">-</span>
+                                <span class="profile-stat-label">Following</span>
+                            </div>
+                            <div class="profile-stat-box">
+                                <span class="profile-stat-value" id="statUpvotes">-</span>
+                                <span class="profile-stat-label">Upvotes</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documents Section -->
+                <div class="documents-section" id="profileDocumentsSection">
+                    <h3 style="font-size: 20px; font-weight: 700; color: var(--text-main); margin: 0 0 20px 0;">Public Contributions</h3>
+                    
+                    <div class="filter-row">
+                        <div class="filter-search-wrapper">
+                            <input type="text" id="docSearch" placeholder="Search contributor's public documents..." style="width: 100%;" />
+                        </div>
+                        <select id="docSubject" class="filter-select">
+                            <option value="">All Subjects</option>
+                        </select>
+                        <select id="docFileType" class="filter-select">
+                            <option value="">All Formats</option>
+                            <option value="PDF">PDF Document</option>
+                            <option value="DOCX">Word Document</option>
+                            <option value="PPTX">PowerPoint</option>
+                            <option value="TXT">Plain Text</option>
+                        </select>
+                    </div>
+
+                    <div id="docsLoading" style="text-align: center; padding: 24px; display: none;">
+                        <p style="color: var(--text-muted);">Filtering contributions...</p>
+                    </div>
+
+                    <div class="documents-grid" id="docsGrid">
+                        <!-- Loaded documents cards -->
+                    </div>
+
+                    <div id="docsEmptyState" style="display: none; text-align: center; padding: 48px;">
+                        <p style="color: var(--text-muted); font-size: 15px;">No public documents found for this contributor matching the criteria.</p>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div id="docsPagination" class="pagination" style="margin-top: 32px; display: flex; justify-content: center; gap: 8px;">
+                        <!-- Generated pagination buttons -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Script imports in correct dependency order -->
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/public-profile-api.js"></script>
+    <script src="js/public-profile.js"></script>
+    <script src="js/notification-api.js"></script>
+    <script src="js/notification.js"></script>
+</body>
+
+</html>
