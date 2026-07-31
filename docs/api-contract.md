@@ -5408,7 +5408,7 @@ Exports all plan config parameters to an Excel workbook (.xlsx).
 * **Endpoint:** `GET /api/account/profile`
 * **Description:** Retrieve the current user's profile information.
 * **Authentication:** Required
-* **Response:** ProfileResponse (userId, email, fullName, avatarUrl, phone, schoolId, schoolName, majorId, majorName, studentCode, graduationYear, educationLevel, bio, role, tier, tierExpiresAt, status, createdAt, updatedAt)
+* **Response:** ProfileResponse (userId, email, fullName, avatarUrl, phone, schoolId, schoolName, majorId, major, studentCode, graduationYear, educationLevel, bio, role, tier, tierExpiresAt, status, createdAt, updatedAt)
 
 #### 2.5.2 Update Profile
 * **Endpoint:** `PUT /api/account/profile`
@@ -5488,5 +5488,3 @@ Exports all plan config parameters to an Excel workbook (.xlsx).
 * **Authentication:** Required (Role: `ADMIN`)
 * **Query Parameters:** `status` (String, required: ACTIVE or INACTIVE)
 * **Response:** MajorDto
-
-

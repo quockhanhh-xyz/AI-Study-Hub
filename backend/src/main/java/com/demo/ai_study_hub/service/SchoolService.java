@@ -221,7 +221,7 @@ public class SchoolService {
         major.setMajorCode(dto.getMajorCode().trim().toUpperCase());
         major.setMajorName(dto.getMajorName().trim());
         major.setDescription(dto.getDescription());
-        
+
         if (dto.getStatus() != null) {
             if (!"ACTIVE".equals(dto.getStatus()) && !"INACTIVE".equals(dto.getStatus())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status. Use ACTIVE or INACTIVE");

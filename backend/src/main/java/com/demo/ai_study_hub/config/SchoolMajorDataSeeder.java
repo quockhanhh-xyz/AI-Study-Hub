@@ -89,10 +89,10 @@ public class SchoolMajorDataSeeder implements CommandLineRunner {
                     }
 
                     if (oldMajor != null && targetSchoolId != null) {
-                        String lowerMajor = oldMajor.toLowerCase().trim();
-                        if (lowerMajor.equals("ai") || lowerMajor.equals("artificial intelligence") || lowerMajor.contains("trí tuệ nhân tạo")) {
+                        String normMajor = normalizeString(oldMajor);
+                        if (normMajor.equals("ai") || normMajor.contains("artificial intelligence") || normMajor.contains("tri tue nhan tao")) {
                             targetMajorId = ai.getMajorId();
-                        } else if (lowerMajor.equals("se") || lowerMajor.equals("software engineering") || lowerMajor.contains("kỹ thuật phần mềm") || lowerMajor.contains("công nghệ phần mềm")) {
+                        } else if (normMajor.equals("se") || normMajor.contains("software engineering") || normMajor.contains("ky thuat phan mem") || normMajor.contains("cong nghe phan mem")) {
                             targetMajorId = se.getMajorId();
                         }
                     }
@@ -125,5 +125,12 @@ public class SchoolMajorDataSeeder implements CommandLineRunner {
         } catch (Exception e) {
             log.warn("School/Major document migration warning: {}", e.getMessage());
         }
+    }
+
+    private String normalizeString(String input) {
+        if (input == null) return "";
+        String normalized = java.text.Normalizer.normalize(input, java.text.Normalizer.Form.NFD);
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        return pattern.matcher(normalized).replaceAll("").toLowerCase().trim();
     }
 }

@@ -269,7 +269,7 @@ public class DocumentService {
             List<Integer> allFolderIds = new ArrayList<>();
             allFolderIds.add(folderId);
             collectSubFolderIds(folderId, allFolderIds);
-            
+
             List<Document> docs;
             if (schoolId == null && majorId == null) {
                 docs = documentRepository.findByOwnerAndFolderIds(owner, allFolderIds, keyword, subjectId, fileType);
@@ -446,7 +446,7 @@ public class DocumentService {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "School is inactive");
                 }
                 doc.setSchool(school);
-                
+
                 // Nếu School thay đổi và không truyền majorId mới, xóa Major hiện tại
                 if (!dto.getSchoolId().equals(currentSchoolId) && dto.getMajorId() == null) {
                     doc.setMajor(null);

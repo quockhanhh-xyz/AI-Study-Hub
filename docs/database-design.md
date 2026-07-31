@@ -926,4 +926,3 @@ Stores educational majors associated with schools.
 - A major must belong to an active school.
 - Major code and name must be unique within a single school.
 - If a major or its parent school is marked as `INACTIVE`, users cannot associate documents with it.
-

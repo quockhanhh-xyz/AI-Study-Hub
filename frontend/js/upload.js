@@ -131,12 +131,12 @@ async function loadFolderOptions() {
   const folderNameParam = urlParams.get("folderName");
   const uploadBackLink = document.getElementById("uploadBackLink");
   const uploadContextBanner = document.getElementById("uploadContextBanner");
-  
+
   if (preselectedFolderId) {
     folderSelect.value = preselectedFolderId;
     lastFolderValue = preselectedFolderId;
     folderSelect.disabled = true; // Lock folder selection
-    
+
     if (uploadContextBanner) {
         uploadContextBanner.textContent = folderNameParam ? `Uploading to ${folderNameParam}` : "Uploading to Folder";
     }
@@ -494,27 +494,27 @@ if (inlineCreateSubjectBtn) {
             showRowError(newSubjectError, "Subject code and name are required.");
             return;
         }
-        
+
         inlineCreateSubjectBtn.disabled = true;
         inlineCreateSubjectBtn.textContent = "Creating...";
         showRowError(newSubjectError, "");
-        
+
         try {
             const resultSub = await createSubject({ subjectCode: code, subjectName: name });
             const newId = resultSub.data.subjectId;
             const newLabel = `${code} - ${name}`;
-            
+
             // Add to select
             const opt = document.createElement("option");
             opt.value = newLabel;
             opt.dataset.id = newId;
             opt.textContent = newLabel;
-            
+
             const datalist = document.getElementById("subjectDatalist");
             if (datalist) datalist.appendChild(opt);
-            
+
             subjectSelect.value = newLabel;
-            
+
             newSubjectRow.style.display = "none";
             window.showToast("Subject created successfully!", "success");
             subjectSelect.dispatchEvent(new Event("syncCustom"));
@@ -539,22 +539,22 @@ if (inlineCreateFolderBtn) {
             showRowError(newFolderError, "Folder name is required.");
             return;
         }
-        
+
         inlineCreateFolderBtn.disabled = true;
         inlineCreateFolderBtn.textContent = "Creating...";
         showRowError(newFolderError, "");
-        
+
         try {
             const resultFolder = await createFolder({ folderName: name, parentFolderId: null });
             const newId = resultFolder.data.folderId;
-            
+
             const opt = document.createElement("option");
             opt.value = newId;
             opt.textContent = name;
-            
+
             folderSelect.appendChild(opt);
             folderSelect.value = newId;
-            
+
             newFolderRow.style.display = "none";
             window.showToast("Folder created successfully!", "success");
             folderSelect.dispatchEvent(new Event("syncCustom"));
@@ -575,7 +575,7 @@ if (inlineCreateFolderBtn) {
 function checkFormValidity() {
     const title = titleInput.value.trim();
     const hasFile = fileInput.files && fileInput.files.length > 0;
-    
+
     const isCreatingSubject = (newSubjectRow.style.display === "flex");
     let hasSubject = false;
     if (isCreatingSubject) {
@@ -583,7 +583,7 @@ function checkFormValidity() {
     } else {
         hasSubject = subjectSelect.value.trim() !== "";
     }
-    
+
     if (title && hasFile && hasSubject) {
         submitBtn.disabled = false;
     } else {
@@ -859,7 +859,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const profile = profileRes.data;
         if (profile.schoolId) {
           schoolSelect.value = profile.schoolId;
-          
+
           // Load majors for this school
           const majorRes = await getActiveMajors(profile.schoolId);
           if (majorRes && majorRes.success) {
@@ -993,9 +993,10 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
+
+  loadSchoolAndMajorOptions();
 });
 
 loadFolderOptions();
 loadSubjectOptions();
 loadUploadLimits();
-loadSchoolAndMajorOptions();

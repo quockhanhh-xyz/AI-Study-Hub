@@ -12,7 +12,7 @@ function handleBack() {
             return;
         }
     }
-    
+
     if (from === 'shared_folder') {
         const folderId = urlParams.get('folderId');
         if (folderId) {
@@ -30,7 +30,7 @@ function handleBack() {
         window.location.href = 'profile.html';
         return;
     }
-    
+
     if (from === 'public-profile') {
         const userId = urlParams.get('userId') || '';
         window.location.href = `public-profile.html${userId ? '?userId=' + userId : ''}`;
@@ -42,10 +42,10 @@ function handleBack() {
             const refUrl = new URL(document.referrer);
             const path = refUrl.pathname;
             const validReferrers = [
-                "/documents.html", 
-                "/community.html", 
-                "/profile.html", 
-                "/public-profile.html", 
+                "/documents.html",
+                "/community.html",
+                "/profile.html",
+                "/public-profile.html",
                 "/group-detail.html"
             ];
             const isValidList = validReferrers.some(v => path.endsWith(v));
@@ -354,25 +354,25 @@ function renderDocument(doc) {
     const previewHeaderTitle = document.getElementById("previewHeaderTitle");
     const previewHeaderMetaText = document.getElementById("previewHeaderMetaText");
     const previewHeaderAiBadge = document.getElementById("previewHeaderAiBadge");
-    
+
     if (previewHeaderTitle) {
         previewHeaderTitle.textContent = doc.title || "Document Preview";
         previewHeaderTitle.title = doc.title || "Document Preview";
     }
-    
+
     if (previewHeaderMetaText) {
         const subjectCtx = doc.subject ? doc.subject : (doc.subjectName ? `${doc.subjectCode} - ${doc.subjectName}` : "");
         const sizeStr = formatFileSize(doc.fileSize);
         const typeStr = (doc.fileType || "").toUpperCase();
         previewHeaderMetaText.textContent = `${subjectCtx ? subjectCtx + ' \u00B7 ' : ''}${typeStr} \u00B7 ${sizeStr}`;
     }
-    
+
     if (previewHeaderAiBadge) {
         const pStatus = getEffectiveAiProcessingStatus(doc);
         previewHeaderAiBadge.className = `preview-header-badge ai-${pStatus.toLowerCase()}`;
         previewHeaderAiBadge.textContent = getAiStatusLabel(pStatus);
         previewHeaderAiBadge.style.display = "inline-flex";
-        
+
         previewHeaderAiBadge.onclick = () => {
             setActiveTab("ai", true);
         };
@@ -388,7 +388,7 @@ function renderDocument(doc) {
         if (uploaderName) {
             docUploadedBy.style.display = "inline";
             docUploadedBy.appendChild(document.createTextNode("Uploaded by "));
-            
+
             const linkSpan = document.createElement("span");
             linkSpan.textContent = uploaderName;
             if (uploaderId) {
@@ -532,7 +532,7 @@ function renderDocument(doc) {
             viewSubjectText.classList.add("empty");
         }
     }
-    
+
     // Ensure save button is disabled when initially loading
     const saveBtn = document.getElementById("saveBtn");
     if (saveBtn) saveBtn.disabled = true;
@@ -1104,7 +1104,7 @@ async function initSchoolAndMajorEditFields(schools, doc) {
             const majorsRes = await getActiveMajors(selectedSchoolId);
             const majors = (majorsRes && majorsRes.data) || [];
             majorSelect.innerHTML = '<option value="">— Select Major —</option>';
-            
+
             majors.forEach(maj => {
                 const opt = document.createElement("option");
                 opt.value = maj.majorId;
@@ -1152,11 +1152,11 @@ function initEditFormListeners() {
     const schoolIn = document.getElementById("editSchool");
     const majorIn = document.getElementById("editMajor");
     const saveBtn = document.getElementById("saveBtn");
-    
+
     function checkChanges() {
         if (saveBtn) saveBtn.disabled = false;
     }
-    
+
     if (titleIn) titleIn.addEventListener("input", checkChanges);
     if (descIn) descIn.addEventListener("input", checkChanges);
     if (subjIn) subjIn.addEventListener("change", checkChanges);
@@ -1186,7 +1186,7 @@ async function handleSave() {
     try {
         const payload = { title, description };
         if (subjectId) payload.subjectId = parseInt(subjectId, 10);
-        
+
         if (schoolId) {
             payload.schoolId = parseInt(schoolId, 10);
             payload.majorId = majorId ? parseInt(majorId, 10) : -1;
@@ -1600,7 +1600,7 @@ function setActiveTab(tabId, focus = true) {
     if (tabId === "ai") {
         loadAiQaChatHistory();
     }
-    
+
     // Toggle floating chatbot visibility to avoid overlap
     const floatingBtn = document.getElementById("floatingChatToggleBtn");
     const floatingPanel = document.getElementById("floatingChatPanel");
@@ -1927,7 +1927,7 @@ async function loadSharingInfo(docId) {
                 name.textContent = item.sharedWithName || "Unknown User";
 
                 main.append(name);
-                
+
                 const perm = document.createElement("div");
                 perm.style.fontSize = "11px";
                 perm.style.color = "var(--muted)";
@@ -1978,7 +1978,7 @@ async function loadSharingInfo(docId) {
                 perm.style.marginTop = "2px";
                 perm.textContent = "Can open & download";
                 main.append(perm);
-                
+
                 row.appendChild(main);
 
                 const btn = document.createElement("button");
@@ -2272,7 +2272,7 @@ function updateAskAvailability() {
     if (aiQaProcessingStatus !== "COMPLETED") {
         disabledReason = "Document not ready for AI.";
         if (qaStickyFooter) qaStickyFooter.style.display = "none";
-        
+
         // Handle Onboarding state visibility
         if (processingSection) {
             processingSection.style.display = "flex";
@@ -2281,7 +2281,7 @@ function updateAskAvailability() {
             const headEl = processingSection.querySelector(".ai-processing-heading");
             const iconEl = processingSection.querySelector(".ai-processing-icon");
             const actionsEl = document.getElementById("aiProcessingActions");
-            
+
             if (aiQaProcessingStatus === "PROCESSING") {
                 if (iconEl) iconEl.innerHTML = '<div class="ai-processing-spinner"></div>';
                 if (headEl) headEl.textContent = "Processing document...";
@@ -2319,7 +2319,7 @@ function updateAskAvailability() {
         }
         if (aiQaMessages) aiQaMessages.style.display = "flex";
         if (sampleRow) sampleRow.style.display = "flex";
-        
+
         if (aiQaUsageInfo && aiQaUsageInfo.remainingQuestions <= 0) {
             disabledReason = "You have reached your daily AI question limit.";
         }
@@ -2566,7 +2566,7 @@ function updateAiToolsAvailability() {
             if (iconEl) {
                 iconEl.textContent = aiToolsProcessingStatus === "UNSUPPORTED" ? "!" : "✦";
             }
-            
+
             // Build actions similar to AI Q&A
             const actionsEl = document.getElementById("aiToolsProcessingActions");
             if (actionsEl) {
@@ -2828,7 +2828,7 @@ function renderSetList(listEl, emptyEl, sets, detailUrlPrefix, type) {
 
         const titleRow = document.createElement("div");
         titleRow.className = "ai-tools-set-title-row";
-        
+
         const badgeSpan = document.createElement("span");
         badgeSpan.className = "ai-tools-set-badge";
         badgeSpan.textContent = type === "flashcard" ? "Flashcards" : "Quiz";
@@ -2955,10 +2955,10 @@ window.toggleDangerZone = toggleDangerZone;
 function renderContextualTopBar(doc) {
     let globalHeader = document.getElementById("globalTopBar");
     const topBarDoc = doc || currentDocumentForTopBar || window.currentDocumentDetailForTopBar || null;
-    
+
     const urlParams = new URLSearchParams(window.location.search);
     const fromParam = urlParams.get("from");
-    
+
     let backLabel = "← Back";
     let backUrl = "javascript:handleBack()";
 
@@ -3014,11 +3014,11 @@ function renderContextualTopBar(doc) {
     } else if (document.referrer) {
         try {
             const refUrl = new URL(document.referrer);
-            if (refUrl.origin === window.location.origin && 
+            if (refUrl.origin === window.location.origin &&
                 refUrl.pathname.endsWith(".html") &&
                 !refUrl.pathname.includes("login.html") &&
                 !refUrl.pathname.includes("register.html")) {
-                
+
                 if (refUrl.pathname.includes("profile.html")) {
                     backLabel = "← Back to Profile";
                 } else if (refUrl.pathname.includes("public-profile.html")) {
@@ -3058,11 +3058,11 @@ function renderContextualTopBar(doc) {
             return;
         }
     }
-    
+
     const subjectText = topBarDoc ? (topBarDoc.subject ? topBarDoc.subject : (topBarDoc.subjectName ? `${topBarDoc.subjectCode} - ${topBarDoc.subjectName}` : "")) : "";
     const docTitleText = topBarDoc ? topBarDoc.title : "";
     const breadcrumbText = subjectText ? `${subjectText} / ${docTitleText}` : docTitleText;
-    
+
     let contextualContainer = globalHeader.querySelector(".top-bar-contextual");
     if (!contextualContainer) {
         contextualContainer = document.createElement("div");
@@ -3295,7 +3295,7 @@ async function showHistoryModal(setId, type, title) {
     list.style.display = "none";
     empty.style.display = "none";
     loader.style.display = "block";
-    
+
     // Show modal
     modal.style.display = "flex";
     modal.classList.add("show");
@@ -3324,13 +3324,13 @@ async function showHistoryModal(setId, type, title) {
             if (!start || !end) return "";
             let diffMs = new Date(end) - new Date(start);
             if (diffMs < 0) return "";
-            
+
             // Hotfix for old flashcard timezone offset bug in database (7 hours diff)
             if (diffMs > 6 * 60 * 60 * 1000) {
                 diffMs -= 7 * 60 * 60 * 1000;
                 if (diffMs < 0) diffMs = 0;
             }
-            
+
             const diffSecs = Math.floor(diffMs / 1000);
             if (diffSecs < 60) return `${diffSecs}s`;
             const mins = Math.floor(diffSecs / 60);
@@ -3357,21 +3357,21 @@ async function showHistoryModal(setId, type, title) {
             topDiv.style.display = "flex";
             topDiv.style.justifyContent = "space-between";
             topDiv.style.alignItems = "center";
-            
+
             const scoreBadge = document.createElement("div");
             scoreBadge.style.fontWeight = "700";
             scoreBadge.style.fontSize = "16px";
             scoreBadge.style.color = "var(--primary)";
-            
+
             const dateSpan = document.createElement("div");
             dateSpan.style.fontSize = "12px";
             dateSpan.style.color = "var(--muted)";
             dateSpan.style.fontWeight = "500";
             dateSpan.textContent = formatGeneratedAt(attempt.completedAt);
-            
+
             topDiv.appendChild(scoreBadge);
             topDiv.appendChild(dateSpan);
-            
+
             // Bottom Row: Stats & Duration
             const bottomDiv = document.createElement("div");
             bottomDiv.style.display = "flex";
@@ -3381,38 +3381,38 @@ async function showHistoryModal(setId, type, title) {
             bottomDiv.style.color = "var(--text)";
             bottomDiv.style.flexWrap = "wrap";
             bottomDiv.style.gap = "8px";
-            
+
             const statsDiv = document.createElement("div");
             statsDiv.style.display = "flex";
             statsDiv.style.gap = "12px";
             statsDiv.style.flexWrap = "wrap";
-            
+
             const durationText = getDurationText(attempt.startedAt, attempt.completedAt);
             const durationSpan = document.createElement("div");
             durationSpan.style.color = "var(--muted)";
             durationSpan.style.display = "flex";
             durationSpan.style.alignItems = "center";
             durationSpan.innerHTML = durationText ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> ${durationText}` : "";
-            
+
             if (type === "quiz") {
                 scoreBadge.textContent = `${attempt.percentage}% Score`;
-                
+
                 const correctCount = attempt.correctCount || 0;
                 const totalQ = attempt.totalQuestions || 0;
                 const incorrectCount = totalQ - correctCount;
-                
+
                 statsDiv.innerHTML = `
                     <span style="display:flex; align-items:center; gap:6px; color:var(--success); font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--success);"></span> ${correctCount} Correct</span>
                     <span style="display:flex; align-items:center; gap:6px; color:var(--danger); font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--danger);"></span> ${incorrectCount} Incorrect</span>
                 `;
             } else {
                 scoreBadge.textContent = `${attempt.percentage}% Remembered`;
-                
+
                 const rem = attempt.rememberedCount || 0;
                 const forgot = attempt.forgotCount || 0;
                 const totalC = attempt.totalCards || 0;
                 const unmarked = totalC - rem - forgot;
-                
+
                 let statsHtml = `
                     <span style="display:flex; align-items:center; gap:6px; color:var(--success); font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--success);"></span> ${rem} Known</span>
                     <span style="display:flex; align-items:center; gap:6px; color:var(--warning); font-weight:500;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--warning);"></span> ${forgot} Review</span>
@@ -3422,14 +3422,14 @@ async function showHistoryModal(setId, type, title) {
                 }
                 statsDiv.innerHTML = statsHtml;
             }
-            
+
             bottomDiv.appendChild(statsDiv);
             if (durationText) {
                 bottomDiv.appendChild(durationSpan);
             }
-            
+
             li.appendChild(topDiv);
-            
+
             if (attempt.progressStatus && attempt.progressStatus !== "FIRST_ATTEMPT") {
                 const progBadge = document.createElement("div");
                 progBadge.style.fontSize = "12px";
@@ -3449,10 +3449,10 @@ async function showHistoryModal(setId, type, title) {
                     progBadge.style.color = "var(--muted)";
                     progBadge.textContent = `No change`;
                 }
-                
+
                 li.appendChild(progBadge);
             }
-            
+
             li.appendChild(bottomDiv);
             list.appendChild(li);
         });

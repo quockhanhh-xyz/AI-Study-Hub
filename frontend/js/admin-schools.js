@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const isAuthenticated = await window.authReady;
     if (!isAuthenticated) return;
   }
-  
+
   const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
   if (user.role !== "ADMIN") {
     window.location.href = "dashboard.html";
@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const loadingState = document.getElementById("adminLoadingState");
   const errorState = document.getElementById("adminErrorState");
   const errorMessage = document.getElementById("adminErrorMessage");
-  
+
   const tabSchoolsBtn = document.getElementById("tabSchoolsBtn");
   const tabMajorsBtn = document.getElementById("tabMajorsBtn");
   const schoolsContent = document.getElementById("schoolsContent");
@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const schoolForm = document.getElementById("schoolForm");
   const schoolIdField = document.getElementById("schoolIdField");
   const schoolModalTitle = document.getElementById("schoolModalTitle");
-  
+
   const schoolCode = document.getElementById("schoolCode");
   const schoolName = document.getElementById("schoolName");
   const schoolShortName = document.getElementById("schoolShortName");
@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const majorForm = document.getElementById("majorForm");
   const majorIdField = document.getElementById("majorIdField");
   const majorModalTitle = document.getElementById("majorModalTitle");
-  
+
   const majorCode = document.getElementById("majorCode");
   const majorName = document.getElementById("majorName");
   const majorDesc = document.getElementById("majorDesc");
@@ -147,11 +147,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     schools.forEach(sch => {
       const tr = document.createElement("tr");
-      
-      const statusBadge = sch.status === "ACTIVE" 
+
+      const statusBadge = sch.status === "ACTIVE"
         ? `<span class="badge badge-success">Active</span>`
         : `<span class="badge badge-secondary">Inactive</span>`;
-      
+
       const toggleActionText = sch.status === "ACTIVE" ? "Deactivate" : "Activate";
       const toggleActionClass = sch.status === "ACTIVE" ? "text-danger" : "text-success";
 
@@ -186,7 +186,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const id = parseInt(btn.dataset.id, 10);
         const currentStatus = btn.dataset.status;
         const nextStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-        
+
         try {
           await updateAdminSchoolStatus(id, nextStatus);
           window.showToast("School status updated successfully", "success");
@@ -220,7 +220,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       renderSchools(schoolsList);
       return;
     }
-    const filtered = schoolsList.filter(s => 
+    const filtered = schoolsList.filter(s =>
       s.schoolName.toLowerCase().includes(val) ||
       s.schoolCode.toLowerCase().includes(val) ||
       s.shortName.toLowerCase().includes(val)
@@ -236,7 +236,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function openSchoolModal(id = null) {
     schoolForm.reset();
     schoolIdField.value = id || "";
-    
+
     if (id) {
       schoolModalTitle.textContent = "Edit School";
       const sch = schoolsList.find(s => s.schoolId === id);
@@ -256,7 +256,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   schoolForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const id = schoolIdField.value;
-    
+
     const payload = {
       schoolCode: schoolCode.value.trim(),
       schoolName: schoolName.value.trim(),
@@ -284,7 +284,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   majorSchoolFilter.addEventListener("change", async () => {
     const schoolId = majorSchoolFilter.value;
     currentSchoolIdForMajors = schoolId ? parseInt(schoolId, 10) : null;
-    
+
     if (currentSchoolIdForMajors) {
       majorSearch.disabled = false;
       btnCreateMajor.disabled = false;
@@ -332,11 +332,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     majors.forEach(maj => {
       const tr = document.createElement("tr");
-      
-      const statusBadge = maj.status === "ACTIVE" 
+
+      const statusBadge = maj.status === "ACTIVE"
         ? `<span class="badge badge-success">Active</span>`
         : `<span class="badge badge-secondary">Inactive</span>`;
-      
+
       const toggleActionText = maj.status === "ACTIVE" ? "Deactivate" : "Activate";
       const toggleActionClass = maj.status === "ACTIVE" ? "text-danger" : "text-success";
 
@@ -370,7 +370,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const id = parseInt(btn.dataset.id, 10);
         const currentStatus = btn.dataset.status;
         const nextStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-        
+
         try {
           await updateAdminMajorStatus(currentSchoolIdForMajors, id, nextStatus);
           window.showToast("Major status updated successfully", "success");
@@ -389,7 +389,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       renderMajors(majorsList);
       return;
     }
-    const filtered = majorsList.filter(m => 
+    const filtered = majorsList.filter(m =>
       m.majorName.toLowerCase().includes(val) ||
       m.majorCode.toLowerCase().includes(val)
     );
@@ -404,7 +404,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function openMajorModal(id = null) {
     majorForm.reset();
     majorIdField.value = id || "";
-    
+
     if (id) {
       majorModalTitle.textContent = "Edit Major";
       const maj = majorsList.find(m => m.majorId === id);
@@ -423,7 +423,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   majorForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const id = majorIdField.value;
-    
+
     const payload = {
       majorCode: majorCode.value.trim(),
       majorName: majorName.value.trim(),

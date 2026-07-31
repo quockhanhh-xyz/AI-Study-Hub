@@ -437,7 +437,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   if (fileTypeFilter) fileTypeFilter.addEventListener("change", loadCommunityDocuments);
   if (sortFilter) sortFilter.addEventListener("change", loadCommunityDocuments);
- 
+
   if (clearFiltersBtn) {
     clearFiltersBtn.addEventListener("click", async function () {
       if (searchInput) searchInput.value = "";
