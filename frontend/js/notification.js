@@ -514,6 +514,20 @@ function renderNotificationList() {
                     window.location.href = `group-detail.html?id=${notif.targetId}`;
                 } else if (notif.targetType === "DOCUMENT") {
                     window.location.href = `document-detail.html?id=${notif.targetId}`;
+                } else if (notif.targetType === "SYSTEM_REVIEW") {
+                    const userJson = localStorage.getItem('user');
+                    let isAdmin = false;
+                    if (userJson) {
+                        try {
+                            const user = JSON.parse(userJson);
+                            isAdmin = user.role === 'ADMIN';
+                        } catch (e) {}
+                    }
+                    if (isAdmin) {
+                        window.location.href = notif.targetId ? `admin-feedback.html?reviewId=${notif.targetId}` : 'admin-feedback.html';
+                    } else {
+                        window.location.href = 'feedback.html';
+                    }
                 }
             }
         });

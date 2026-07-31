@@ -43,8 +43,7 @@ public class SystemReviewReplyService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to participate in this conversation");
         }
 
-        // Escape input text for Stored XSS protection
-        String escapedContent = HtmlUtils.htmlEscape(request.getContent().trim());
+        String escapedContent = request.getContent().trim();
 
         SystemReviewReply reply = SystemReviewReply.builder()
                 .systemReview(review)

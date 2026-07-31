@@ -65,6 +65,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Admin Reply form submit
     document.getElementById('adminReplyForm').addEventListener('submit', handleAdminReplySubmit);
+
+    // Check for reviewId in URL query to auto open detail modal
+    const urlParams = new URLSearchParams(window.location.search);
+    const preselectedReviewId = urlParams.get('reviewId');
+    if (preselectedReviewId) {
+        setTimeout(() => {
+            openReviewDetailsModal(parseInt(preselectedReviewId));
+        }, 400);
+    }
 });
 
 function initFilters() {

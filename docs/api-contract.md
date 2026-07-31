@@ -5542,6 +5542,14 @@ Exports all plan config parameters to an Excel workbook (.xlsx).
 ### 2.7.1 Submit/Update System Review
 * **Endpoint:** `POST /api/system-reviews`
 * **Description:** Submit a new system review or update the existing review (if already submitted). Sets status to `NEW` and notifies Admins.
+  Supported categories (case-insensitive, accepts space or underscores):
+  - `General Experience` / `GENERAL_EXPERIENCE`
+  - `Bug Report` / `BUG_REPORT`
+  - `Feature Request` / `FEATURE_REQUEST`
+  - `Performance` / `PERFORMANCE`
+  - `AI Quality` / `AI_QUALITY`
+  - `Payment` / `PAYMENT`
+  - `Other` / `OTHER`
 * **Authentication:** Required (Role: `USER` or `ADMIN`, must be `ACTIVE`)
 * **Request:** CreateSystemReviewRequest
   ```json

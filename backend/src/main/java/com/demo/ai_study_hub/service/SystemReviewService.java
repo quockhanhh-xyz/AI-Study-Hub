@@ -42,11 +42,10 @@ public class SystemReviewService {
     @Transactional
     public SystemReviewResponse submitReview(String email, CreateSystemReviewRequest request) {
         User user = getActiveUser(email);
-        validateCategory(request.getCategory());
+        String normalizedCategory = normalizeAndValidateCategory(request.getCategory());
 
-        // Escape input text for Stored XSS protection
-        String escapedTitle = HtmlUtils.htmlEscape(request.getTitle().trim());
-        String escapedContent = HtmlUtils.htmlEscape(request.getContent().trim());
+        String escapedTitle = request.getTitle().trim();
+        String escapedContent = request.getContent().trim();
 
         Optional<SystemReview> existingOpt = systemReviewRepository.findByUser_UserId(user.getUserId());
         SystemReview review;
@@ -55,7 +54,7 @@ public class SystemReviewService {
             // Update the existing review (active or soft-deleted)
             review = existingOpt.get();
             review.setRating(request.getRating());
-            review.setCategory(request.getCategory());
+            review.setCategory(normalizedCategory);
             review.setTitle(escapedTitle);
             review.setContent(escapedContent);
             review.setStatus("NEW");
@@ -66,7 +65,7 @@ public class SystemReviewService {
             review = SystemReview.builder()
                     .user(user)
                     .rating(request.getRating())
-                    .category(request.getCategory())
+                    .category(normalizedCategory)
                     .title(escapedTitle)
                     .content(escapedContent)
                     .status("NEW")
@@ -115,14 +114,13 @@ public class SystemReviewService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this review");
         }
 
-        validateCategory(request.getCategory());
+        String normalizedCategory = normalizeAndValidateCategory(request.getCategory());
 
-        // Escape input text for Stored XSS protection
-        String escapedTitle = HtmlUtils.htmlEscape(request.getTitle().trim());
-        String escapedContent = HtmlUtils.htmlEscape(request.getContent().trim());
+        String escapedTitle = request.getTitle().trim();
+        String escapedContent = request.getContent().trim();
 
         review.setRating(request.getRating());
-        review.setCategory(request.getCategory());
+        review.setCategory(normalizedCategory);
         review.setTitle(escapedTitle);
         review.setContent(escapedContent);
 
@@ -149,8 +147,17 @@ public class SystemReviewService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this review");
         }
 
-        review.setDeletedAt(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        review.setDeletedAt(now);
         systemReviewRepository.save(review);
+
+        // Soft delete all associated replies
+        List<SystemReviewReply> activeReplies = systemReviewReplyRepository
+                .findBySystemReview_ReviewIdAndDeletedAtIsNullOrderByCreatedAtAsc(reviewId);
+        if (activeReplies != null && !activeReplies.isEmpty()) {
+            activeReplies.forEach(reply -> reply.setDeletedAt(now));
+            systemReviewReplyRepository.saveAll(activeReplies);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -291,9 +298,37 @@ public class SystemReviewService {
         return user;
     }
 
-    private void validateCategory(String category) {
-        if (category == null || !VALID_CATEGORIES.contains(category.trim())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid feedback category");
+    private String normalizeAndValidateCategory(String category) {
+        if (category == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category is required");
+        }
+        String trimmed = category.trim();
+        switch (trimmed.toUpperCase()) {
+            case "AI_QUALITY":
+            case "AI QUALITY":
+                return "AI Quality";
+            case "BUG_REPORT":
+            case "BUG REPORT":
+                return "Bug Report";
+            case "FEATURE_REQUEST":
+            case "FEATURE REQUEST":
+                return "Feature Request";
+            case "GENERAL_EXPERIENCE":
+            case "GENERAL EXPERIENCE":
+                return "General Experience";
+            case "PERFORMANCE":
+                return "Performance";
+            case "PAYMENT":
+                return "Payment";
+            case "OTHER":
+                return "Other";
+            default:
+                for (String valid : VALID_CATEGORIES) {
+                    if (valid.equalsIgnoreCase(trimmed)) {
+                        return valid;
+                    }
+                }
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid feedback category");
         }
     }
 

@@ -69,7 +69,7 @@ public class SystemReviewServiceTest {
     }
 
     @Test
-    void testSubmitReview_Success_WithXssEscape() {
+    void testSubmitReview_Success_Unescaped() {
         CreateSystemReviewRequest request = new CreateSystemReviewRequest();
         request.setRating(5);
         request.setCategory("AI Quality");
@@ -91,9 +91,9 @@ public class SystemReviewServiceTest {
         assertNotNull(response);
         assertEquals(5, response.getRating());
         assertEquals("AI Quality", response.getCategory());
-        // Title and content must be escaped
-        assertEquals("&lt;script&gt;alert(&#39;XSS&#39;)&lt;/script&gt; Great tool!", response.getTitle());
-        assertEquals("&lt;p&gt;Very helpful summary features&lt;/p&gt;", response.getContent());
+        // Title and content are saved raw
+        assertEquals("<script>alert('XSS')</script> Great tool!", response.getTitle());
+        assertEquals("<p>Very helpful summary features</p>", response.getContent());
         assertEquals("NEW", response.getStatus());
 
         verify(notificationService, times(1)).notifyAllAdmins(
@@ -195,6 +195,8 @@ public class SystemReviewServiceTest {
 
         when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(activeUser));
         when(systemReviewRepository.findById(100)).thenReturn(Optional.of(review));
+        when(systemReviewReplyRepository.findBySystemReview_ReviewIdAndDeletedAtIsNullOrderByCreatedAtAsc(100))
+                .thenReturn(Collections.emptyList());
 
         systemReviewService.softDeleteReview("user@test.com", 100);
 

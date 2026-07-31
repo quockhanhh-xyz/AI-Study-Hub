@@ -23,7 +23,7 @@ public interface SystemReviewRepository extends JpaRepository<SystemReview, Inte
     @Query("SELECT COUNT(r) FROM SystemReview r WHERE r.deletedAt IS NULL")
     long countActiveReviews();
 
-    @Query("SELECT COUNT(r) FROM SystemReview r WHERE r.deletedAt IS NULL AND r.status = 'NEW'")
+    @Query("SELECT COUNT(r) FROM SystemReview r WHERE r.deletedAt IS NULL AND r.status IN ('NEW', 'IN_REVIEW')")
     long countUnrespondedReviews();
 
     @Query("SELECT r.rating, COUNT(r) FROM SystemReview r WHERE r.deletedAt IS NULL GROUP BY r.rating")
