@@ -467,6 +467,8 @@ Uploads a document file for the currently authenticated user.
 | `description` | String  | No       | Optional document description                                          |
 | `subjectId`   | Integer | Yes      | Required Subject ID to assign to the document. Must be either a SYSTEM subject or a USER_CUSTOM subject owned by the current user (see Section 4). |
 | `folderId`    | Integer | No       | Optional Folder ID to assign to the document. If null or empty, defaults to the top-level My Documents area. |
+| `schoolId`    | Integer | No       | Optional School ID to assign to the document. |
+| `majorId`     | Integer | No       | Optional Major ID to assign to the document. |
 
 ### Backend & Frontend Integration Rules
 
@@ -669,6 +671,8 @@ Returns documents owned by the currently authenticated user, with optional searc
 | `fileType`          | String  | No       | Filter by file extension type (e.g., PDF, DOCX)                        |
 | `folderId`          | Integer | No       | Filter by folder ID. If omitted, returns all active documents of the current user. |
 | `includeSubfolders` | Boolean | No       | If true, includes documents from subfolders of the folderId recursively. |
+| `schoolId`          | Integer | No       | Filter by school ID                                                    |
+| `majorId`           | Integer | No       | Filter by major ID                                                     |
 
 ### Access & Query Rules
 
@@ -743,7 +747,13 @@ These APIs support retrieving subject master data and creating user-owned custom
 
 ## GET `/api/subjects`
 
-Returns all active SYSTEM subjects plus the current user's own active USER_CUSTOM subjects. A user never sees another user's custom subjects.
+Returns active SYSTEM subjects available for the selected major plus the current user's own active USER_CUSTOM subjects. Without `majorId`, all active SYSTEM subjects and the current user's custom subjects are returned. A user never sees another user's custom subjects.
+
+### Query Parameters
+
+| Field | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `majorId` | Integer | No | Restricts SYSTEM subjects to mappings for this major |
 
 ### Request Headers
 
@@ -762,7 +772,17 @@ Returns all active SYSTEM subjects plus the current user's own active USER_CUSTO
       "subjectName": "Software Project",
       "description": "Software project management and development course",
       "scope": "SYSTEM",
-      "ownerId": null
+      "ownerId": null,
+      "mappings": [
+        {
+          "schoolId": 1,
+          "schoolCode": "FPT",
+          "schoolName": "FPT University",
+          "majorId": 2,
+          "majorCode": "SE",
+          "majorName": "Software Engineering"
+        }
+      ]
     },
     {
       "subjectId": 2,
@@ -867,7 +887,7 @@ Returned if `subjectCode` or `subjectName` already matches any SYSTEM subject, o
 
 ## GET `/api/subjects/public`
 
-Allows guest and authenticated users to fetch only subjects that are currently used by active, public, and approved documents. The response hides the `ownerId` field to protect privacy.
+Allows guest and authenticated users to fetch active SYSTEM subjects. Optional `majorId` restricts the result to mapped subjects for that major. The response hides `ownerId`.
 
 ### Success Response (200 OK)
 
@@ -893,6 +913,36 @@ Allows guest and authenticated users to fetch only subjects that are currently u
   ]
 }
 ```
+
+---
+
+## 4.4. Create Subject Request API
+
+## POST `/api/subject-requests`
+
+Creates a request for a SYSTEM subject in a specific School-Major context.
+
+```json
+{
+  "requestedCode": "SWP391",
+  "requestedName": "Software Project",
+  "description": "Optional",
+  "schoolId": 1,
+  "majorId": 2
+}
+```
+
+Both `schoolId` and `majorId` are required. The backend rejects inactive schools/majors and rejects a major that does not belong to the submitted school. Approval creates or reuses the SYSTEM subject and adds the requested Subject-Major mapping. If the SYSTEM subject already exists but is not mapped to the selected major, the request is allowed; if the same mapping already exists, the API returns `409 Conflict`.
+
+## 4.5. Admin Subject Mapping APIs
+
+- `GET /api/admin/subjects?schoolId=&majorId=` filters SYSTEM subjects by explicit mappings.
+- `POST /api/admin/subjects` accepts `subjectCode`, `subjectName`, optional `description`, and `majorIds`.
+- `PUT /api/admin/subjects/{id}` updates metadata and replaces mappings when `majorIds` is present.
+- `GET /api/admin/subjects/{id}/mappings` returns School/Major mapping metadata.
+- `PUT /api/admin/subjects/{id}/mappings` accepts `{ "majorIds": [2, 4] }` and atomically replaces mappings.
+
+`majorIds = null` preserves existing mappings for compatibility. An empty list explicitly removes all mappings. Only active majors under active schools may be added.
 
 ---
 
@@ -1064,7 +1114,9 @@ Updates the title, description, and subject of a specific document owned by the 
 {
   "title": "New Document Title",
   "description": "Updated document description",
-  "subjectId": 2
+  "subjectId": 2,
+  "schoolId": 1,
+  "majorId": 1
 }
 ```
 
@@ -2915,6 +2967,8 @@ Allows guests and logged-in users to list and search all active public approved 
 - `subjectId` (Integer, optional): Filters by subject.
 - `fileType` (String, optional): Filters by normalized file type (e.g., `'PDF'`).
 - `sort` (String, optional): Sorting criteria. Allowed values: `newest` (default), `mostViewed`, `mostDownloaded`.
+- `schoolId` (Integer, optional): Filters by school.
+- `majorId` (Integer, optional): Filters by major.
 
 ### Success Response (200 OK)
 
@@ -3037,7 +3091,14 @@ Downloads the public approved document as an attachment. Increments `downloadCou
 
 ## PUT `/api/documents/{id}/publish`
 
-Allows the owner of a document to publish it to the Public Community Library. Sets visibility to `'PUBLIC'`, approvalStatus to `'APPROVED'`, and updates publishedAt timestamp.
+Allows the owner of a document to submit it for review to publish in the Community Library. Sets visibility to `'PUBLIC'` and approvalStatus to `'PENDING'`.
+
+**Validation Rules for Publishing**:
+1. The document must be assigned to an active SYSTEM subject.
+2. The document must have both a School and a Major assigned.
+3. The assigned School must have an `ACTIVE` status.
+4. The assigned Major must have an `ACTIVE` status.
+5. The assigned Major must belong to the selected School.
 
 ### Request Headers
 
@@ -5390,30 +5451,86 @@ Exports all plan config parameters to an Excel workbook (.xlsx).
 
 ### 2.5 Account Profile APIs
 #### 2.5.1 Get Profile
-* **Endpoint:** \GET /api/account/profile\
+* **Endpoint:** `GET /api/account/profile`
 * **Description:** Retrieve the current user's profile information.
 * **Authentication:** Required
-* **Response:** ProfileResponse (userId, email, fullName, avatarUrl, phone, schoolName, major, studentCode, graduationYear, educationLevel, bio, role, tier, tierExpiresAt, status, createdAt, updatedAt)
+* **Response:** ProfileResponse (userId, email, fullName, avatarUrl, phone, schoolId, schoolName, majorId, major, studentCode, graduationYear, educationLevel, bio, role, tier, tierExpiresAt, status, createdAt, updatedAt)
 
 #### 2.5.2 Update Profile
-* **Endpoint:** \PUT /api/account/profile\
+* **Endpoint:** `PUT /api/account/profile`
 * **Description:** Update the current user's profile information.
 * **Authentication:** Required
-* **Request:** UpdateProfileRequest (fullName, phone, schoolName, major, studentCode, graduationYear, educationLevel, bio)
+* **Request:** UpdateProfileRequest (fullName, phone, schoolId, majorId, studentCode, graduationYear, educationLevel, bio)
 * **Response:** ProfileResponse
 
 
 #### 2.5.3 Upload Avatar
-* **Endpoint:** \POST /api/account/avatar\
+* **Endpoint:** `POST /api/account/avatar`
 * **Description:** Upload and update the current user's avatar.
 * **Authentication:** Required
-* **Request:** multipart/form-data (\file\ - max 5MB, format: jpg/jpeg/png/webp)
+* **Request:** multipart/form-data (`file` - max 5MB, format: jpg/jpeg/png/webp)
 * **Response:** ProfileResponse
 
 #### 2.5.4 Change Password
-* **Endpoint:** \PUT /api/account/password\
+* **Endpoint:** `PUT /api/account/password`
 * **Description:** Change the current user's password.
 * **Authentication:** Required
 * **Request:** ChangePasswordRequest (currentPassword, newPassword)
 * **Response:** Empty success response
 
+## 2.6 School & Major Master Data APIs
+### 2.6.1 Get Active Schools
+* **Endpoint:** `GET /api/schools`
+* **Description:** Retrieve all active schools.
+* **Authentication:** None (Public)
+* **Query Parameters:**
+  * `keyword` (Optional): Filter schools by code, name, short name.
+* **Response:** List of SchoolDto (schoolId, schoolCode, schoolName, shortName, description, status)
+
+### 2.6.2 Get Active Majors by School
+* **Endpoint:** `GET /api/schools/{schoolId}/majors`
+* **Description:** Retrieve all active majors for a given school.
+* **Authentication:** None (Public)
+* **Response:** List of MajorDto (majorId, majorCode, majorName, description, status)
+
+### 2.6.3 [Admin] Create School
+* **Endpoint:** `POST /api/admin/schools`
+* **Description:** Create a new school.
+* **Authentication:** Required (Role: `ADMIN`)
+* **Request:** SchoolDto (schoolCode, schoolName, shortName, description, status)
+* **Response:** SchoolDto
+
+### 2.6.4 [Admin] Update School
+* **Endpoint:** `PUT /api/admin/schools/{schoolId}`
+* **Description:** Update school details.
+* **Authentication:** Required (Role: `ADMIN`)
+* **Request:** SchoolDto (schoolCode, schoolName, shortName, description, status)
+* **Response:** SchoolDto
+
+### 2.6.5 [Admin] Toggle School Status
+* **Endpoint:** `PATCH /api/admin/schools/{schoolId}/status`
+* **Description:** Update a school status (ACTIVE or INACTIVE).
+* **Authentication:** Required (Role: `ADMIN`)
+* **Query Parameters:** `status` (String, required: ACTIVE or INACTIVE)
+* **Response:** SchoolDto
+
+### 2.6.6 [Admin] Create Major
+* **Endpoint:** `POST /api/admin/schools/{schoolId}/majors`
+* **Description:** Create a new major for a specific school.
+* **Authentication:** Required (Role: `ADMIN`)
+* **Request:** MajorDto (majorCode, majorName, description, status)
+* **Response:** MajorDto
+
+### 2.6.7 [Admin] Update Major
+* **Endpoint:** `PUT /api/admin/schools/{schoolId}/majors/{majorId}`
+* **Description:** Update major details.
+* **Authentication:** Required (Role: `ADMIN`)
+* **Request:** MajorDto (majorCode, majorName, description, status)
+* **Response:** MajorDto
+
+### 2.6.8 [Admin] Toggle Major Status
+* **Endpoint:** `PATCH /api/admin/schools/{schoolId}/majors/{majorId}/status`
+* **Description:** Update a major status (ACTIVE or INACTIVE).
+* **Authentication:** Required (Role: `ADMIN`)
+* **Query Parameters:** `status` (String, required: ACTIVE or INACTIVE)
+* **Response:** MajorDto

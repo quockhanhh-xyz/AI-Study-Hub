@@ -9,6 +9,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   const META_ICONS = {
     calendar: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
     subject: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+    school: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;"><path d="M3 21h18M5 21V9l7-4 7 4v12M9 21v-6h6v6"/></svg>`,
+    major: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;"><path d="M2 10l10-5 10 5-10 5L2 10z"/><path d="M6 12.5V17c3.5 2.5 8.5 2.5 12 0v-4.5"/></svg>`,
     folder: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`
   };
 
@@ -25,6 +27,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   const searchInput = document.getElementById("searchInput");
   const libraryToolbar = document.getElementById("libraryToolbar");
   const subjectFilter = document.getElementById("subjectFilter");
+  const schoolFilter = document.getElementById("schoolFilter");
+  const majorFilter = document.getElementById("majorFilter");
   const subjectDatalist = document.getElementById("subjectDatalist");
   const fileTypeFilter = document.getElementById("fileTypeFilter");
   const folderFilter = document.getElementById("folderFilter");
@@ -60,6 +64,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Load filter options
     await Promise.all([
       loadSubjects(),
+      loadSchools(),
       loadAllFoldersForFilter()
     ]);
 
@@ -198,6 +203,27 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (subjectFilter) {
       subjectFilter.addEventListener("input", triggerReload);
+    }
+    if (schoolFilter) {
+      schoolFilter.addEventListener("change", async () => {
+        if (subjectFilter) {
+          subjectFilter.value = "";
+          subjectFilter.dispatchEvent(new Event("syncCustom"));
+        }
+        await loadMajors(schoolFilter.value);
+        await loadSubjects();
+        triggerReload();
+      });
+    }
+    if (majorFilter) {
+      majorFilter.addEventListener("change", async () => {
+        if (subjectFilter) {
+          subjectFilter.value = "";
+          subjectFilter.dispatchEvent(new Event("syncCustom"));
+        }
+        await loadSubjects(majorFilter.value);
+        triggerReload();
+      });
     }
     if (fileTypeFilter) {
       fileTypeFilter.addEventListener("change", triggerReload);
@@ -641,6 +667,13 @@ document.addEventListener("DOMContentLoaded", async function () {
       clearFiltersBtn.addEventListener("click", () => {
         if (searchInput) searchInput.value = "";
         if (subjectFilter) { subjectFilter.value = ""; subjectFilter.dispatchEvent(new Event("syncCustom")); }
+        if (schoolFilter) { schoolFilter.value = ""; schoolFilter.dispatchEvent(new Event("syncCustom")); }
+        if (majorFilter) {
+          majorFilter.innerHTML = '<option value="">All Majors</option>';
+          majorFilter.value = "";
+          majorFilter.disabled = true;
+          majorFilter.dispatchEvent(new Event("syncCustom"));
+        }
         if (fileTypeFilter) { fileTypeFilter.value = ""; fileTypeFilter.dispatchEvent(new Event("syncCustom")); }
         if (folderFilter) { folderFilter.value = ""; folderFilter.dispatchEvent(new Event("syncCustom")); }
 
@@ -752,10 +785,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // --- API LOADERS ---
   let allSubjects = [];
-  async function loadSubjects() {
+  async function loadSubjects(majorId = "") {
     if (typeof getSubjects !== "function") return;
     try {
-      const res = await getSubjects();
+      const res = await getSubjects(majorId);
       const payload = res?.data;
       allSubjects = Array.isArray(payload)
         ? payload
@@ -789,6 +822,52 @@ document.addEventListener("DOMContentLoaded", async function () {
       }
     } catch (e) {
       console.error("Failed to load subjects:", e);
+    }
+  }
+
+  async function loadSchools() {
+    if (!schoolFilter || typeof getActiveSchools !== "function") return;
+    try {
+      const response = await getActiveSchools();
+      const schools = response && response.success && Array.isArray(response.data)
+        ? response.data
+        : [];
+      schoolFilter.innerHTML = '<option value="">All Schools</option>';
+      schools.forEach(school => {
+        const option = document.createElement("option");
+        option.value = school.schoolId;
+        option.textContent = `${school.schoolCode} - ${school.schoolName}`;
+        schoolFilter.appendChild(option);
+      });
+      schoolFilter.dispatchEvent(new Event("syncCustom"));
+    } catch (error) {
+      console.error("Failed to load schools:", error);
+    }
+  }
+
+  async function loadMajors(schoolId) {
+    if (!majorFilter) return;
+    majorFilter.innerHTML = '<option value="">All Majors</option>';
+    majorFilter.disabled = true;
+    if (!schoolId || typeof getActiveMajors !== "function") {
+      majorFilter.dispatchEvent(new Event("syncCustom"));
+      return;
+    }
+    try {
+      const response = await getActiveMajors(schoolId);
+      const majors = response && response.success && Array.isArray(response.data)
+        ? response.data
+        : [];
+      majors.forEach(major => {
+        const option = document.createElement("option");
+        option.value = major.majorId;
+        option.textContent = `${major.majorCode} - ${major.majorName}`;
+        majorFilter.appendChild(option);
+      });
+      majorFilter.disabled = majors.length === 0;
+      majorFilter.dispatchEvent(new Event("syncCustom"));
+    } catch (error) {
+      console.error("Failed to load majors:", error);
     }
   }
 
@@ -836,7 +915,9 @@ document.addEventListener("DOMContentLoaded", async function () {
       const filterVal = fileTypeFilter ? fileTypeFilter.value : "";
       const params = {
         keyword: searchInput ? searchInput.value.trim() : "",
-        folderId: folderFilter ? folderFilter.value : ""
+        folderId: folderFilter ? folderFilter.value : "",
+        schoolId: schoolFilter ? schoolFilter.value : "",
+        majorId: majorFilter ? majorFilter.value : ""
       };
 
       // Pass single-extension filter directly to API if explicit (e.g. PDF/TXT)
@@ -976,6 +1057,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
     if (subjectTag) {
       meta.innerHTML += `<span class="document-meta-item">${META_ICONS.subject}${subjectTag}</span>`;
+    }
+    if (doc.schoolCode || doc.schoolName) {
+      const schoolTag = doc.schoolCode
+        ? `${doc.schoolCode} - ${doc.schoolName || ""}`
+        : doc.schoolName;
+      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.school}${schoolTag}</span>`;
+    }
+    if (doc.majorCode || doc.majorName) {
+      const majorTag = doc.majorCode
+        ? `${doc.majorCode} - ${doc.majorName || ""}`
+        : doc.majorName;
+      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.major}${majorTag}</span>`;
     }
 
     // Robust Folder Fallback: folderName -> lookup via folderId -> nested folder object

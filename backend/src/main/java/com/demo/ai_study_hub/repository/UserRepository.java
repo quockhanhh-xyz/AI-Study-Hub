@@ -11,6 +11,8 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
     List<User> findByRole(String role);
+    boolean existsBySchoolSchoolId(Integer schoolId);
+    boolean existsByMajorMajorId(Integer majorId);
 
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.userId = :id")

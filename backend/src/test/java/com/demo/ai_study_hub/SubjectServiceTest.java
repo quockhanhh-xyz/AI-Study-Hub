@@ -7,6 +7,7 @@ import com.demo.ai_study_hub.entity.User;
 import com.demo.ai_study_hub.repository.SubjectRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
 import com.demo.ai_study_hub.service.SubjectService;
+import com.demo.ai_study_hub.service.SubjectMappingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +30,8 @@ class SubjectServiceTest {
     private SubjectRepository subjectRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private SubjectMappingService subjectMappingService;
 
     @InjectMocks
     private SubjectService subjectService;

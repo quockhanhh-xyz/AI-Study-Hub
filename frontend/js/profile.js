@@ -28,6 +28,60 @@ document.addEventListener("DOMContentLoaded", async () => {
   const resetBtn = document.getElementById("profileResetBtn");
   const formOverlay = document.getElementById("profileFormOverlay");
 
+  // Fetch and populate schools dropdown
+  async function initSchoolAndMajorDropdowns() {
+    try {
+      const schoolRes = await getActiveSchools();
+      if (schoolRes && schoolRes.success) {
+        schoolNameInput.innerHTML = '<option value="">Select School</option>';
+        schoolRes.data.forEach(sch => {
+          const opt = document.createElement("option");
+          opt.value = sch.schoolId;
+          opt.textContent = `${sch.schoolName} (${sch.shortName})`;
+          schoolNameInput.appendChild(opt);
+        });
+      }
+    } catch (err) {
+      console.error("Failed to load schools list:", err);
+    }
+  }
+
+  // Populate majors dropdown
+  function populateMajorsSelect(majors) {
+    majorInput.innerHTML = '<option value="">Select Major</option>';
+    if (majors && majors.length > 0) {
+      majors.forEach(maj => {
+        const opt = document.createElement("option");
+        opt.value = maj.majorId;
+        opt.textContent = `${maj.majorName} (${maj.majorCode})`;
+        majorInput.appendChild(opt);
+      });
+      majorInput.disabled = false;
+    } else {
+      majorInput.disabled = true;
+    }
+  }
+
+  // School select change listener
+  if (schoolNameInput) {
+    schoolNameInput.addEventListener("change", async () => {
+      const schoolId = schoolNameInput.value;
+      if (schoolId) {
+        try {
+          const res = await getActiveMajors(schoolId);
+          if (res && res.success) {
+            populateMajorsSelect(res.data);
+          }
+        } catch (err) {
+          console.error("Failed to load majors list:", err);
+        }
+      } else {
+        majorInput.innerHTML = '<option value="">Select Major</option>';
+        majorInput.disabled = true;
+      }
+    });
+  }
+
   // DOM Elements - System read-only params
   const systemEmail = document.getElementById("systemEmail");
   const systemRole = document.getElementById("systemRole");
@@ -92,7 +146,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Render User Avatar and Initials Fallback
   function renderAvatar(avatarUrl, fullName) {
     if (!avatarPreviewWrapper) return;
-    
+
     // Clear previous children
     avatarPreviewWrapper.innerHTML = "";
 
@@ -114,8 +168,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   function populateProfileForm(profile) {
     fullNameInput.value = profile.fullName || "";
     phoneInput.value = profile.phone || "";
-    schoolNameInput.value = profile.schoolName || "";
-    majorInput.value = profile.major || "";
+    schoolNameInput.value = profile.schoolId || "";
+
+    if (profile.schoolId) {
+      getActiveMajors(profile.schoolId).then(res => {
+        if (res && res.success) {
+          populateMajorsSelect(res.data);
+          majorInput.value = profile.majorId || "";
+        }
+      }).catch(err => console.error(err));
+    } else {
+      majorInput.innerHTML = '<option value="">Select Major</option>';
+      majorInput.disabled = true;
+    }
     studentCodeInput.value = profile.studentCode || "";
     graduationYearInput.value = profile.graduationYear || "";
     educationLevelInput.value = profile.educationLevel || "";
@@ -140,7 +205,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     systemJoinedDate.textContent = formatJoinedDate(profile.createdAt);
-    
+
     // Render avatar
     renderAvatar(profile.avatarUrl, profile.fullName);
   }
@@ -175,7 +240,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (profileForm) {
     profileForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      
+
       const fullNameVal = fullNameInput.value.trim();
       if (fullNameVal.length < 2 || fullNameVal.length > 100) {
         showStatus("Full Name must be between 2 and 100 characters", "error");
@@ -195,8 +260,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       const profilePayload = {
         fullName: fullNameVal,
         phone: phoneInput.value.trim() || null,
-        schoolName: schoolNameInput.value.trim() || null,
-        major: majorInput.value.trim() || null,
+        schoolId: schoolNameInput.value ? parseInt(schoolNameInput.value, 10) : null,
+        majorId: majorInput.value ? parseInt(majorInput.value, 10) : null,
         studentCode: studentCodeInput.value.trim() || null,
         graduationYear: gradYearVal,
         educationLevel: educationLevelInput.value || null,
@@ -207,7 +272,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const response = await updateProfile(profilePayload);
         if (response && response.data) {
           currentProfileData = response.data;
-          
+
           // Re-populate and render updated stats
           populateProfileForm(currentProfileData);
 
@@ -263,11 +328,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       try {
         showStatus("Uploading profile avatar photo...", "checking");
-        
+
         const response = await uploadAvatar(selectedFile);
         if (response && response.data) {
           currentProfileData = response.data;
-          
+
           // Refresh avatar displays
           populateProfileForm(currentProfileData);
 
@@ -336,7 +401,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       try {
         const response = await changePassword(currentPassword, newPassword);
-        
+
         // Clear password form inputs
         currentPasswordInput.value = "";
         newPasswordInput.value = "";
@@ -368,7 +433,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // Load user data on startup
-  loadUserProfile();
+  initSchoolAndMajorDropdowns().then(() => {
+    loadUserProfile();
+  });
 
   // --- TAB LOGIC ---
   const tabBtns = document.querySelectorAll(".tab-btn");
@@ -431,7 +498,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       loadNetworkData();
     });
   }
-  
+
   if (btnShowFollowing) {
     btnShowFollowing.addEventListener("click", () => {
       currentNetworkView = "following";
@@ -446,29 +513,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function loadNetworkData() {
     if (!networkListContainer) return;
     networkListContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: #64748b;">Loading...</div>`;
-    
+
     try {
       const endpoint = currentNetworkView === "followers" ? "/api/users/me/followers" : "/api/users/me/following";
       const res = await get(endpoint);
       const list = res.data || [];
-      
+
       if (list.length === 0) {
         networkListContainer.innerHTML = `<div style="text-align: center; padding: 40px; color: #64748b;">You have no ${currentNetworkView} yet.</div>`;
         return;
       }
-      
+
       let html = "";
       list.forEach(user => {
         const schoolStr = user.schoolName ? `<span style="font-size: 12px; color: #64748b; margin-right: 8px;">🎓 ${user.schoolName}</span>` : "";
         const majorStr = user.major ? `<span style="font-size: 12px; color: #64748b;">📚 ${user.major}</span>` : "";
-        
+
         let avatarHtml = "";
         if (user.avatarUrl) {
           avatarHtml = `<img src="${user.avatarUrl}" alt="${user.fullName}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">`;
         } else {
           avatarHtml = `<div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #f05a28, #fbbf24); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px;">${getInitials(user.fullName)}</div>`;
         }
-        
+
         html += `
           <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;">
             <div style="display: flex; align-items: center; gap: 12px;">
@@ -478,15 +545,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <div style="margin-top: 4px;">${schoolStr}${majorStr}</div>
               </div>
             </div>
-            ${currentNetworkView === "following" ? 
-              `<button class="btn btn-secondary btn-sm" onclick="unfollowUser(${user.userId}, this)">Unfollow</button>` : 
+            ${currentNetworkView === "following" ?
+              `<button class="btn btn-secondary btn-sm" onclick="unfollowUser(${user.userId}, this)">Unfollow</button>` :
               `<a href="public-profile.html?userId=${user.userId}" class="btn btn-secondary btn-sm">View Profile</a>`
             }
           </div>
         `;
       });
       networkListContainer.innerHTML = html;
-      
+
     } catch (err) {
       console.error("Failed to load network:", err);
       networkListContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: #ef4444;">Failed to load data.</div>`;
@@ -518,9 +585,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!currentUnfollowUserId || !currentUnfollowBtnElement) return;
       const userId = currentUnfollowUserId;
       const btnElement = currentUnfollowBtnElement;
-      
+
       closeModal(unfollowConfirmModal);
-      
+
       try {
         btnElement.disabled = true;
         btnElement.textContent = "Unfollowing...";
@@ -567,29 +634,29 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // --- UPLOADS TAB LOGIC ---
   const uploadsListContainer = document.getElementById("uploadsListContainer");
-  
+
   async function loadUploadsData() {
     if (!uploadsListContainer) return;
     uploadsListContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #64748b;">Loading...</div>`;
-    
+
     // Change container grid style to match public profile
     uploadsListContainer.style.display = "grid";
     uploadsListContainer.style.gridTemplateColumns = "repeat(auto-fill, minmax(280px, 1fr))";
     uploadsListContainer.style.gap = "20px";
-    
+
     try {
       const userStr = localStorage.getItem("currentUser");
       const user = userStr ? JSON.parse(userStr) : null;
       if (!user) return;
-      
+
       const res = await get(`/api/users/${user.userId}/public-documents?size=100`, { skipUnauthorizedRedirect: true });
       const docs = res.data && res.data.content ? res.data.content : [];
-      
+
       if (docs.length === 0) {
         uploadsListContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #64748b;">You have not uploaded any public documents.</div>`;
         return;
       }
-      
+
       let html = "";
       docs.forEach(doc => {
         const titleText = doc.title || doc.fileName || "Untitled Document";
@@ -597,7 +664,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (window.getFileTypeIcon) {
             iconHtml = window.getFileTypeIcon(doc.fileType) || "";
         }
-        
+
         let subjectTagHtml = "";
         if (doc.subjectName || doc.subjectCode) {
             const tagText = doc.subjectCode ? `${doc.subjectCode} - ${doc.subjectName}` : doc.subjectName;
@@ -610,7 +677,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             </div>
             `;
         }
-        
+
         html += `
           <a href="document-detail.html?id=${doc.documentId}&from=profile" class="document-card">
             <div class="comm-card-header">
@@ -646,7 +713,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         `;
       });
       uploadsListContainer.innerHTML = html;
-      
+
     } catch (err) {
       console.error("Failed to load uploads:", err);
       uploadsListContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #ef4444;">Failed to load documents.</div>`;

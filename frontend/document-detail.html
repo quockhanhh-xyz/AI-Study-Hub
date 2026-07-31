@@ -2247,6 +2247,14 @@
                       <div class="details-view-value" id="viewDescriptionText"></div>
                     </div>
                     <div class="details-view-field">
+                      <div class="details-view-label">School</div>
+                      <div class="details-view-value" id="viewSchoolText"></div>
+                    </div>
+                    <div class="details-view-field">
+                      <div class="details-view-label">Major</div>
+                      <div class="details-view-value" id="viewMajorText"></div>
+                    </div>
+                    <div class="details-view-field">
                       <div class="details-view-label">Subject</div>
                       <div class="details-view-value" id="viewSubjectText"></div>
                     </div>
@@ -2293,6 +2301,20 @@
                   <div class="form-group">
                     <label for="editDescription">Description</label>
                     <textarea id="editDescription" rows="2" placeholder="Optional description"></textarea>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="editSchool">School</label>
+                    <select id="editSchool">
+                      <option value="">— Select School —</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="editMajor">Major / Study Program</label>
+                    <select id="editMajor" disabled>
+                      <option value="">— Select Major —</option>
+                    </select>
                   </div>
 
                   <div class="form-group">
@@ -2780,6 +2802,7 @@
   <script src="js/document-preview.js"></script>
   <script src="js/ai-api.js"></script>
   <script src="js/ai-learning-api.js"></script>
+  <script src="js/school-api.js"></script>
   <script src="js/document-detail.js"></script>
   <script src="js/notification-api.js"></script>
   <script src="js/notification.js"></script>

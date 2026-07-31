@@ -13,7 +13,11 @@ public class ProfileResponse {
     private String avatarUrl;
     private String phone;
     private String schoolName;
+    private Integer schoolId;
+    private String schoolCode;
     private String major;
+    private Integer majorId;
+    private String majorCode;
     private String studentCode;
     private Integer graduationYear;
     private String educationLevel;

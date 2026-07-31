@@ -11,4 +11,6 @@ public class DocumentUpdateDTO {
     private String title;
     private String description;
     private Integer subjectId;
+    private Integer schoolId;
+    private Integer majorId;
 }

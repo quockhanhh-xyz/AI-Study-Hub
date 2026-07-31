@@ -28,6 +28,14 @@ public class SubjectRequest {
     @JoinColumn(name = "requested_by", nullable = false)
     private User requestedByUser;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "school_id")
+    private School school;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "major_id")
+    private Major major;
+
     @Column(nullable = false, length = 20)
     private String status = "PENDING"; // PENDING, APPROVED, REJECTED
 

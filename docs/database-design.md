@@ -24,6 +24,8 @@ Stores user account information and account status.
 | `tier`          | VARCHAR(20)  | DEFAULT 'FREE', NOT NULL              | Account tier: FREE, PREMIUM, or ULTRA                                                           |
 | `tier_expires_at`| DATETIME     | NULLABLE                              | Expiration datetime for paid tiers (PREMIUM, ULTRA). Null for FREE users.                        |
 | `status`        | VARCHAR(30)  | DEFAULT 'INACTIVE', NOT NULL          | INACTIVE: not verified by OTP, ACTIVE: verified and allowed to login, BLOCKED: blocked by admin |
+| `school_id`     | INT          | FOREIGN KEY REFERENCES schools(school_id), NULLABLE | User's school reference |
+| `major_id`      | INT          | FOREIGN KEY REFERENCES majors(major_id), NULLABLE | User's major reference |
 | `created_at`    | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP             | Account creation time                                                                           |
 | `updated_at`    | TIMESTAMP    | NULLABLE                              | Last update time                                                                                |
 
@@ -77,6 +79,8 @@ Stores uploaded document metadata. The real file is stored in Cloudinary Storage
 | `owner_id`     | INT          | FOREIGN KEY REFERENCES users(user_id), NOT NULL       | User who owns this document                                            |
 | `subject_id`   | INT          | FOREIGN KEY REFERENCES subjects(subject_id), NULLABLE | Subject this document belongs to                                       |
 | `folder_id`    | INT          | FOREIGN KEY REFERENCES folders(folder_id), NULLABLE   | Folder this document belongs to (added in Step 5)                      |
+| `school_id`    | INT          | FOREIGN KEY REFERENCES schools(school_id), NULLABLE   | School this document is associated with                               |
+| `major_id`     | INT          | FOREIGN KEY REFERENCES majors(major_id), NULLABLE     | Major this document is associated with                                 |
 | `status`       | VARCHAR(30)  | DEFAULT 'ACTIVE', NOT NULL                            | Document status: ACTIVE or DELETED                                     |
 | `visibility`   | VARCHAR(20)  | DEFAULT 'PRIVATE', NOT NULL                            | Document visibility: PRIVATE or PUBLIC                                 |
 | `approval_status`| VARCHAR(20)  | DEFAULT 'PENDING', NOT NULL                            | Approval status for PUBLIC documents: PENDING, APPROVED, REJECTED      |
@@ -168,6 +172,34 @@ Stores subject or category information.
 - A subject's `subject_code` and `subject_name` must not duplicate another subject (SYSTEM or the same user's USER_CUSTOM subjects) — checked at the application level, not by a unique DB constraint, since custom subjects from different users may share the same code/name.
 - Only subjects with status `'ACTIVE'` will be returned by default in the list API.
 - Document upload and update only accept a SYSTEM subject or a USER_CUSTOM subject owned by the current user. Using another user's custom subject is rejected with `403 Forbidden`.
+- SYSTEM subjects are assigned to majors through `subject_major_mappings`. School is derived from `majors.school_id`; it is not duplicated in the mapping table.
+- A SYSTEM subject may belong to multiple majors and may therefore be available at multiple schools.
+- When a document has a major, upload/update/publish must reject a SYSTEM subject that is not mapped to that major.
+
+---
+
+## 5.1. Table `subject_major_mappings`
+
+Stores the explicit many-to-many relationship between SYSTEM subjects and majors.
+
+| Column Name | Data Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `mapping_id` | INT | PRIMARY KEY, AUTO_INCREMENT, NOT NULL | Unique mapping ID |
+| `subject_id` | INT | FOREIGN KEY REFERENCES subjects(subject_id), NOT NULL | Mapped SYSTEM subject |
+| `major_id` | INT | FOREIGN KEY REFERENCES majors(major_id), NOT NULL | Major where the subject is available |
+| `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP, NOT NULL | Mapping creation time |
+
+### Business Rules
+
+- `(subject_id, major_id)` is unique.
+- Only `scope = SYSTEM` subjects may be mapped.
+- New mappings require an ACTIVE major whose parent school is ACTIVE.
+- Removing a mapping does not rewrite or delete existing documents. It blocks new upload, edit, and publish operations that use that invalid tuple.
+- Existing SYSTEM subject-major pairs stored on documents are backfilled by `docs/sql/V21__subject_school_major_mapping.sql` and by the idempotent startup backfill.
+
+## 5.2. Subject request classification
+
+`subject_requests` additionally stores nullable `school_id` and `major_id` foreign keys. New requests require both values. Legacy rows may remain null. Approval creates or reuses the SYSTEM subject, adds the requested Subject-Major mapping, and migrates only matching personal documents in that major.
 
 ---
 
@@ -877,3 +909,48 @@ Options associated with multiple choice questions.
 CREATE INDEX idx_quiz_options_question_position
 ON quiz_options(question_id, position);
 ```
+
+---
+
+## 26. Table `schools`
+
+Stores university metadata for the Master Data module.
+
+| Column Name | Data Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `school_id` | INT | PRIMARY KEY, AUTO_INCREMENT, NOT NULL | Unique school ID |
+| `school_code` | VARCHAR(50) | UNIQUE, NOT NULL | Short code (e.g. `FPT`) |
+| `school_name` | VARCHAR(255) | NOT NULL | Full school name |
+| `short_name` | VARCHAR(50) | NOT NULL | Short name (e.g. `FPTU`) |
+| `description` | TEXT | NULLABLE | School description |
+| `status` | VARCHAR(20) | DEFAULT 'ACTIVE', NOT NULL | Status: `ACTIVE` or `INACTIVE` |
+| `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Creation timestamp |
+| `updated_at` | TIMESTAMP | NULLABLE | Update timestamp |
+
+### Business Rules
+
+- School codes must be unique.
+- If a school is marked as `INACTIVE`, users cannot retrieve its majors or associate documents with it.
+
+---
+
+## 27. Table `majors`
+
+Stores educational majors associated with schools.
+
+| Column Name | Data Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `major_id` | INT | PRIMARY KEY, AUTO_INCREMENT, NOT NULL | Unique major ID |
+| `school_id` | INT | FOREIGN KEY REFERENCES schools(school_id), NOT NULL | Parent school |
+| `major_code` | VARCHAR(50) | NOT NULL | Major code (e.g. `SE`) |
+| `major_name` | VARCHAR(255) | NOT NULL | Major name |
+| `description` | TEXT | NULLABLE | Major description |
+| `status` | VARCHAR(20) | DEFAULT 'ACTIVE', NOT NULL | Status: `ACTIVE` or `INACTIVE` |
+| `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Creation timestamp |
+| `updated_at` | TIMESTAMP | NULLABLE | Update timestamp |
+
+### Business Rules
+
+- A major must belong to an active school.
+- Major code and name must be unique within a single school.
+- If a major or its parent school is marked as `INACTIVE`, users cannot associate documents with it.

@@ -28,6 +28,23 @@ public interface SubjectRequestRepository extends JpaRepository<SubjectRequest, 
 
     boolean existsByRequestedNameAndStatus(String requestedName, String status);
 
+    @Query("""
+           SELECT COUNT(sr) > 0
+           FROM SubjectRequest sr
+           WHERE sr.status = :status
+             AND sr.major.majorId = :majorId
+             AND (
+                 UPPER(sr.requestedCode) = UPPER(:code)
+                 OR LOWER(sr.requestedName) = LOWER(:name)
+             )
+           """)
+    boolean existsPendingForMajor(
+            @Param("code") String code,
+            @Param("name") String name,
+            @Param("majorId") Integer majorId,
+            @Param("status") String status
+    );
+
     long countByStatus(String status);
 
     @Query("SELECT COUNT(sr) FROM SubjectRequest sr WHERE " +

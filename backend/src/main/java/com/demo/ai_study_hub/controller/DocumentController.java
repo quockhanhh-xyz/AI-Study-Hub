@@ -39,10 +39,12 @@ public class DocumentController {
             @RequestParam(value = "description", required = false) String description,
             @RequestParam(value = "subjectId", required = true) Integer subjectId,
             @RequestParam(value = "folderId", required = false) Integer folderId,
+            @RequestParam(value = "schoolId", required = false) Integer schoolId,
+            @RequestParam(value = "majorId", required = false) Integer majorId,
             Principal principal
     ) {
         try {
-            DocumentResponse data = documentService.uploadDocument(file, title, description, subjectId, folderId, principal.getName());
+            DocumentResponse data = documentService.uploadDocument(file, title, description, subjectId, folderId, schoolId, majorId, principal.getName());
             return ResponseEntity.ok(ApiResponse.success(data, "Document uploaded successfully"));
         } catch (ResponseStatusException e) {
             if (e instanceof com.demo.ai_study_hub.exception.QuotaExceededException qe) {
@@ -61,10 +63,18 @@ public class DocumentController {
             @RequestParam(required = false) String fileType,
             @RequestParam(required = false) Integer folderId,
             @RequestParam(required = false) Boolean includeSubfolders,
+            @RequestParam(required = false) Integer schoolId,
+            @RequestParam(required = false) Integer majorId,
             Principal principal) {
         try {
-            List<DocumentResponse> data = documentService.getMyDocumentsWithFilters(
-                    principal.getName(), keyword, subjectId, fileType, folderId, includeSubfolders);
+            List<DocumentResponse> data;
+            if (schoolId == null && majorId == null) {
+                data = documentService.getMyDocumentsWithFilters(
+                        principal.getName(), keyword, subjectId, fileType, folderId, includeSubfolders);
+            } else {
+                data = documentService.getMyDocumentsWithFilters(
+                        principal.getName(), keyword, subjectId, fileType, folderId, includeSubfolders, schoolId, majorId);
+            }
             return ResponseEntity.ok(ApiResponse.success(data, "Documents retrieved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));
@@ -165,10 +175,17 @@ public class DocumentController {
             @RequestParam(required = false) Integer subjectId,
             @RequestParam(required = false) String fileType,
             @RequestParam(required = false) String sort,
+            @RequestParam(required = false) Integer schoolId,
+            @RequestParam(required = false) Integer majorId,
             java.security.Principal principal) {
         try {
             String requesterEmail = principal != null ? principal.getName() : null;
-            List<PublicDocumentResponse> data = documentService.getPublicDocuments(keyword, subjectId, fileType, sort, requesterEmail);
+            List<PublicDocumentResponse> data;
+            if (schoolId == null && majorId == null) {
+                data = documentService.getPublicDocuments(keyword, subjectId, fileType, sort, requesterEmail);
+            } else {
+                data = documentService.getPublicDocuments(keyword, subjectId, fileType, sort, schoolId, majorId, requesterEmail);
+            }
             return ResponseEntity.ok(ApiResponse.success(data, "Public documents retrieved successfully"));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(ApiResponse.error(e.getReason()));

@@ -21,6 +21,14 @@ function updateAdminSubjectStatus(subjectId, status) {
     return apiRequest(endpoint, { method: "PATCH", body: JSON.stringify({ status }) });
 }
 
+function getAdminSubjectMappings(subjectId) {
+    return get(`/api/admin/subjects/${subjectId}/mappings`);
+}
+
+function replaceAdminSubjectMappings(subjectId, majorIds) {
+    return put(`/api/admin/subjects/${subjectId}/mappings`, { majorIds });
+}
+
 function exportAdminSubjects(params = {}) {
     const query = new URLSearchParams(params).toString();
     const endpoint = query ? `/api/admin/subjects/export?${query}` : '/api/admin/subjects/export';

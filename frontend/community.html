@@ -231,6 +231,16 @@
                         <datalist id="subjectDatalist"></datalist>
                     </div>
                     <div class="filter-group">
+                        <select id="schoolFilter">
+                            <option value="">All Schools</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <select id="majorFilter" disabled>
+                            <option value="">All Majors</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
                         <select id="fileTypeFilter">
                             <option value="">All File Types</option>
                             <optgroup label="PDF Documents">
@@ -301,6 +311,7 @@
     <script src="js/ui.js"></script>
     <script src="js/navigation.js"></script>
     <script src="js/layout.js"></script>
+    <script src="js/school-api.js"></script>
     <script src="js/subject-api.js"></script>
     <script src="js/document-api.js"></script>
     <script src="js/community-api.js"></script>

@@ -71,6 +71,20 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="schoolSelect">School <span class="label-optional">— Optional for private documents</span></label>
+                            <select id="schoolSelect">
+                                <option value="">Select School</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="majorSelect">Major / Study Program <span class="label-optional">— Optional for private documents</span></label>
+                            <select id="majorSelect" disabled>
+                                <option value="">Select Major</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
                             <label for="subjectSelect">Subject <span class="label-required">*</span></label>
                             <input type="text" id="subjectSelect" list="subjectDatalist" placeholder="Select a subject" required autocomplete="off" />
                             <datalist id="subjectDatalist"></datalist>
@@ -182,6 +196,7 @@
 
     <script src="js/api.js"></script>
     <script src="js/account-api.js"></script>
+    <script src="js/school-api.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/folder-api.js"></script>
     <script src="js/subject-api.js"></script>

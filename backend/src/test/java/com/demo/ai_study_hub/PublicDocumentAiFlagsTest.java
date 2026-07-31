@@ -34,6 +34,7 @@ class PublicDocumentAiFlagsTest {
     @Mock private DocumentRepository documentRepository;
     @Mock private UserRepository userRepository;
     @Mock private DocumentFavoriteRepository documentFavoriteRepository;
+    @Mock private SubjectRequestRepository subjectRequestRepository;
 
     @Mock
     private TierPolicyService tierPolicyService;
