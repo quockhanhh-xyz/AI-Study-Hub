@@ -122,7 +122,14 @@ public class UITDataSeeder implements CommandLineRunner {
     }
 
     private Major seedMajor(School school, String code, String name) {
+        // First try to find by Code
         Major major = majorRepository.findBySchool_SchoolIdAndMajorCodeIgnoreCase(school.getSchoolId(), code).orElse(null);
+        
+        // If not found by Code, try to find by Name (to handle our KHMT -> CS transition where name remained "Computer Science")
+        if (major == null) {
+            major = majorRepository.findBySchool_SchoolIdAndMajorNameIgnoreCase(school.getSchoolId(), name).orElse(null);
+        }
+
         if (major == null) {
             major = new Major();
             major.setSchool(school);
@@ -133,12 +140,19 @@ public class UITDataSeeder implements CommandLineRunner {
             major = majorRepository.save(major);
             log.info("Seeded Major: {} for {}", code, school.getSchoolCode());
         } else {
-            // Update name if it differs (to fix the Vietnamese to English issue)
+            boolean updated = false;
+            if (!code.equals(major.getMajorCode())) {
+                major.setMajorCode(code);
+                updated = true;
+            }
             if (!name.equals(major.getMajorName())) {
                 major.setMajorName(name);
                 major.setDescription(name);
+                updated = true;
+            }
+            if (updated) {
                 major = majorRepository.save(major);
-                log.info("Updated Major Name: {} for {}", code, school.getSchoolCode());
+                log.info("Updated Major: {} - {} for {}", code, name, school.getSchoolCode());
             }
         }
         return major;
