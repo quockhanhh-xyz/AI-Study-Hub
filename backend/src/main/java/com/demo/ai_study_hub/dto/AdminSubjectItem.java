@@ -2,6 +2,7 @@ package com.demo.ai_study_hub.dto;
 
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class AdminSubjectItem {
@@ -13,4 +14,5 @@ public class AdminSubjectItem {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private long documentsCount;
+    private List<SubjectMappingResponse> mappings;
 }

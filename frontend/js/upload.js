@@ -10,6 +10,8 @@ const uploadMessage = document.getElementById("uploadMessage");
 const uploadProgress = document.getElementById("uploadProgress");
 const folderSelect = document.getElementById("folderSelect");
 const subjectSelect = document.getElementById("subjectSelect");
+const schoolSelect = document.getElementById("schoolSelect");
+const majorSelect = document.getElementById("majorSelect");
 const subjectError = document.getElementById("subjectError");
 const progressFill = document.getElementById("progressFill");
 const progressText = document.getElementById("progressText");
@@ -129,12 +131,12 @@ async function loadFolderOptions() {
   const folderNameParam = urlParams.get("folderName");
   const uploadBackLink = document.getElementById("uploadBackLink");
   const uploadContextBanner = document.getElementById("uploadContextBanner");
-  
+
   if (preselectedFolderId) {
     folderSelect.value = preselectedFolderId;
     lastFolderValue = preselectedFolderId;
     folderSelect.disabled = true; // Lock folder selection
-    
+
     if (uploadContextBanner) {
         uploadContextBanner.textContent = folderNameParam ? `Uploading to ${folderNameParam}` : "Uploading to Folder";
     }
@@ -158,7 +160,7 @@ async function loadFolderOptions() {
   }
 }
 
-async function loadSubjectOptions() {
+async function loadSubjectOptions(majorId = "") {
   const subjectDatalist = document.getElementById("subjectDatalist");
   if (!subjectDatalist) return;
 
@@ -166,10 +168,16 @@ async function loadSubjectOptions() {
   subjectSelect.disabled = true;
 
   try {
-    const result = await getSubjects();
+    const result = await getSubjects(majorId);
     const subjects = Array.isArray(result.data) ? result.data : [];
 
     subjectDatalist.innerHTML = "";
+
+    const createOption = document.createElement("option");
+    createOption.value = CREATE_NEW_VALUE;
+    createOption.textContent = "+ Create new subject…";
+    subjectDatalist.appendChild(createOption);
+
     subjects.forEach(function (subject) {
       const option = document.createElement("option");
       const label = subject.subjectCode
@@ -180,11 +188,8 @@ async function loadSubjectOptions() {
       subjectDatalist.appendChild(option);
     });
 
-    const createOption = document.createElement("option");
-    createOption.value = CREATE_NEW_VALUE;
-    createOption.textContent = "+ Create new subject…";
-    subjectDatalist.appendChild(createOption);
-
+    subjectSelect.value = "";
+    subjectSelect.dispatchEvent(new Event("syncCustom"));
     subjectSelect.placeholder = "Select a subject";
   } catch (err) {
     console.warn("Could not load subjects:", err);
@@ -346,13 +351,17 @@ function hideProgress() {
   progressFill.style.width = "0%";
 }
 
+let lastAutofilledTitle = "";
+
 // Auto-fill Title from the selected file's name, but only if the user
 // hasn't already typed something into the Title field themselves.
 function autofillTitleFromFile(file) {
   if (!file || !titleInput) return;
-  if (titleInput.value.trim()) return;
+  const currentTitle = titleInput.value.trim();
+  if (currentTitle && currentTitle !== lastAutofilledTitle) return;
   const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
   titleInput.value = nameWithoutExt;
+  lastAutofilledTitle = nameWithoutExt;
 }
 
 // File input change
@@ -487,27 +496,27 @@ if (inlineCreateSubjectBtn) {
             showRowError(newSubjectError, "Subject code and name are required.");
             return;
         }
-        
+
         inlineCreateSubjectBtn.disabled = true;
         inlineCreateSubjectBtn.textContent = "Creating...";
         showRowError(newSubjectError, "");
-        
+
         try {
             const resultSub = await createSubject({ subjectCode: code, subjectName: name });
             const newId = resultSub.data.subjectId;
             const newLabel = `${code} - ${name}`;
-            
+
             // Add to select
             const opt = document.createElement("option");
             opt.value = newLabel;
             opt.dataset.id = newId;
             opt.textContent = newLabel;
-            
+
             const datalist = document.getElementById("subjectDatalist");
             if (datalist) datalist.appendChild(opt);
-            
+
             subjectSelect.value = newLabel;
-            
+
             newSubjectRow.style.display = "none";
             window.showToast("Subject created successfully!", "success");
             subjectSelect.dispatchEvent(new Event("syncCustom"));
@@ -532,22 +541,22 @@ if (inlineCreateFolderBtn) {
             showRowError(newFolderError, "Folder name is required.");
             return;
         }
-        
+
         inlineCreateFolderBtn.disabled = true;
         inlineCreateFolderBtn.textContent = "Creating...";
         showRowError(newFolderError, "");
-        
+
         try {
             const resultFolder = await createFolder({ folderName: name, parentFolderId: null });
             const newId = resultFolder.data.folderId;
-            
+
             const opt = document.createElement("option");
             opt.value = newId;
             opt.textContent = name;
-            
+
             folderSelect.appendChild(opt);
             folderSelect.value = newId;
-            
+
             newFolderRow.style.display = "none";
             window.showToast("Folder created successfully!", "success");
             folderSelect.dispatchEvent(new Event("syncCustom"));
@@ -568,7 +577,7 @@ if (inlineCreateFolderBtn) {
 function checkFormValidity() {
     const title = titleInput.value.trim();
     const hasFile = fileInput.files && fileInput.files.length > 0;
-    
+
     const isCreatingSubject = (newSubjectRow.style.display === "flex");
     let hasSubject = false;
     if (isCreatingSubject) {
@@ -576,7 +585,7 @@ function checkFormValidity() {
     } else {
         hasSubject = subjectSelect.value.trim() !== "";
     }
-    
+
     if (title && hasFile && hasSubject) {
         submitBtn.disabled = false;
     } else {
@@ -636,6 +645,13 @@ uploadForm.addEventListener("submit", async (e) => {
       return;
     }
     subjectError.style.display = "none";
+  }
+
+  const selectedSchoolId = schoolSelect ? schoolSelect.value : "";
+  const selectedMajorId = majorSelect ? majorSelect.value : "";
+  if ((selectedSchoolId && !selectedMajorId) || (!selectedSchoolId && selectedMajorId)) {
+    showMessage("School and major must be selected together.", "error");
+    return;
   }
 
   // 2. Check if we need to create a new Folder
@@ -728,10 +744,18 @@ uploadForm.addEventListener("submit", async (e) => {
     if (folderId) formData.append("folderId", folderId);
     formData.append("subjectId", subjectId);
 
+    const schId = selectedSchoolId;
+    const majId = selectedMajorId;
+    if (schId) formData.append("schoolId", schId);
+    if (majId) formData.append("majorId", majId);
+
     const result = await uploadDocument(formData, { signal });
     completeProgress(progressInterval);
     window.showToast(`Upload successful: "${result.data.title}"`, "success");
     uploadForm.reset();
+    if (typeof loadSchoolAndMajorOptions === "function") {
+      loadSchoolAndMajorOptions();
+    }
     updateDropZone(null);
     newSubjectRow.style.display = "none";
     newFolderRow.style.display = "none";
@@ -822,6 +846,90 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  async function loadSchoolAndMajorOptions() {
+    if (!schoolSelect || !majorSelect) return;
+
+    try {
+      // 1. Load Schools
+      const schoolRes = await getActiveSchools();
+      if (schoolRes && schoolRes.success) {
+        schoolSelect.innerHTML = '<option value="">Select School</option>';
+        schoolRes.data.forEach(sch => {
+          const opt = document.createElement("option");
+          opt.value = sch.schoolId;
+          opt.textContent = `${sch.schoolName} (${sch.shortName})`;
+          schoolSelect.appendChild(opt);
+        });
+      }
+
+      // 2. Fetch User Profile to get default School and Major
+      const profileRes = await getProfile();
+      if (profileRes && profileRes.data) {
+        const profile = profileRes.data;
+        if (profile.schoolId) {
+          schoolSelect.value = profile.schoolId;
+
+          // Load majors for this school
+          const majorRes = await getActiveMajors(profile.schoolId);
+          if (majorRes && majorRes.success) {
+            populateUploadMajors(majorRes.data);
+            if (profile.majorId) {
+              majorSelect.value = profile.majorId;
+              await loadSubjectOptions(profile.majorId);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to initialize School/Major selections in upload:", err);
+    }
+  }
+
+  function populateUploadMajors(majors) {
+    if (!majorSelect) return;
+    majorSelect.innerHTML = '<option value="">Select Major</option>';
+    if (majors && majors.length > 0) {
+      majors.forEach(maj => {
+        const opt = document.createElement("option");
+        opt.value = maj.majorId;
+        opt.textContent = `${maj.majorName} (${maj.majorCode})`;
+        majorSelect.appendChild(opt);
+      });
+      majorSelect.disabled = false;
+    } else {
+      majorSelect.disabled = true;
+    }
+  }
+
+  // School Select change listener in upload page
+  if (schoolSelect) {
+    schoolSelect.addEventListener("change", async () => {
+      const schoolId = schoolSelect.value;
+      subjectSelect.value = "";
+      subjectSelect.dispatchEvent(new Event("syncCustom"));
+      if (schoolId) {
+        try {
+          const res = await getActiveMajors(schoolId);
+          if (res && res.success) {
+            populateUploadMajors(res.data);
+          }
+        } catch (err) {
+          console.error("Failed to load majors:", err);
+        }
+      } else {
+        majorSelect.innerHTML = '<option value="">Select Major</option>';
+        majorSelect.disabled = true;
+        await loadSubjectOptions();
+      }
+    });
+  }
+
+  if (majorSelect) {
+    majorSelect.addEventListener("change", async () => {
+      await loadSubjectOptions(majorSelect.value);
+    });
+  }
+
   // ── Subject Request Modal Bindings ──
   const openReqLink = document.getElementById("openSubjectReqLink");
   const reqModal = document.getElementById("subjectReqModal");
@@ -834,6 +942,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function openReqModal() {
     if (!reqModal) return;
+    const schoolId = schoolSelect ? schoolSelect.value : "";
+    const majorId = majorSelect ? majorSelect.value : "";
+    if (!schoolId || !majorId) {
+      if (window.showToast) {
+        window.showToast("Select a school and major before requesting a system subject.", "error");
+      }
+      return;
+    }
     if (reqCodeInput) reqCodeInput.value = "";
     if (reqNameInput) reqNameInput.value = "";
     if (reqDescInput) reqDescInput.value = "";
@@ -868,10 +984,12 @@ document.addEventListener("DOMContentLoaded", function () {
       const code = reqCodeInput ? reqCodeInput.value.trim() : "";
       const name = reqNameInput ? reqNameInput.value.trim() : "";
       const desc = reqDescInput ? reqDescInput.value.trim() : "";
+      const schoolId = schoolSelect ? schoolSelect.value : "";
+      const majorId = majorSelect ? majorSelect.value : "";
 
-      if (!code || !name) {
+      if (!code || !name || !schoolId || !majorId) {
         if (reqMsg) {
-          reqMsg.textContent = "Subject Code and Subject Name are required.";
+          reqMsg.textContent = "Subject code, name, school, and major are required.";
           reqMsg.className = "helper-text error";
           reqMsg.style.display = "block";
         }
@@ -886,7 +1004,9 @@ document.addEventListener("DOMContentLoaded", function () {
         await createSubjectRequest({
           requestedCode: code,
           requestedName: name,
-          description: desc
+          description: desc,
+          schoolId: Number(schoolId),
+          majorId: Number(majorId)
         });
         if (window.showToast) {
           window.showToast("Your subject request has been submitted for admin review.", "success");
@@ -904,6 +1024,8 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
+
+  loadSchoolAndMajorOptions();
 });
 
 loadFolderOptions();

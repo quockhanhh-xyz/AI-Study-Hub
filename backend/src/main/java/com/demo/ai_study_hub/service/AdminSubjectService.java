@@ -6,8 +6,10 @@ import org.springframework.web.server.ResponseStatusException;
 import com.demo.ai_study_hub.dto.AdminSubjectItem;
 import com.demo.ai_study_hub.dto.AdminSubjectListResponse;
 import com.demo.ai_study_hub.dto.AdminSubjectRequest;
+import com.demo.ai_study_hub.dto.SubjectMappingResponse;
 import com.demo.ai_study_hub.entity.Subject;
 import com.demo.ai_study_hub.repository.DocumentRepository;
+import com.demo.ai_study_hub.repository.SubjectMajorMappingRepository;
 import com.demo.ai_study_hub.repository.SubjectRepository;
 import com.demo.ai_study_hub.repository.SubjectRequestRepository;
 import jakarta.persistence.criteria.Predicate;
@@ -39,8 +41,24 @@ public class AdminSubjectService {
     @Autowired
     private SubjectRequestRepository subjectRequestRepository;
 
+    @Autowired
+    private SubjectMajorMappingRepository subjectMajorMappingRepository;
+
+    @Autowired
+    private SubjectMappingService subjectMappingService;
+
     public AdminSubjectListResponse getSystemSubjects(String search, String status, Pageable pageable) {
-        Specification<Subject> spec = buildSpecification(search, status);
+        return getSystemSubjects(search, status, null, null, pageable);
+    }
+
+    public AdminSubjectListResponse getSystemSubjects(
+            String search,
+            String status,
+            Integer schoolId,
+            Integer majorId,
+            Pageable pageable
+    ) {
+        Specification<Subject> spec = buildSpecification(search, status, schoolId, majorId);
         Page<Subject> page = subjectRepository.findAll(spec, pageable);
 
         List<AdminSubjectItem> items = page.getContent().stream().map(this::mapToItem).collect(Collectors.toList());
@@ -66,6 +84,9 @@ public class AdminSubjectService {
         subject.setStatus("ACTIVE");
         
         subject = subjectRepository.save(subject);
+        if (request.getMajorIds() != null) {
+            subjectMappingService.replaceMappings(subject, request.getMajorIds());
+        }
         return mapToItem(subject);
     }
 
@@ -85,6 +106,9 @@ public class AdminSubjectService {
         subject.setDescription(request.getDescription());
 
         subject = subjectRepository.save(subject);
+        if (request.getMajorIds() != null) {
+            subjectMappingService.replaceMappings(subject, request.getMajorIds());
+        }
         return mapToItem(subject);
     }
 
@@ -105,7 +129,11 @@ public class AdminSubjectService {
     }
 
     public byte[] exportSubjects(String search, String status) {
-        Specification<Subject> spec = buildSpecification(search, status);
+        return exportSubjects(search, status, null, null);
+    }
+
+    public byte[] exportSubjects(String search, String status, Integer schoolId, Integer majorId) {
+        Specification<Subject> spec = buildSpecification(search, status, schoolId, majorId);
         List<Subject> subjects = subjectRepository.findAll(spec);
 
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -117,6 +145,8 @@ public class AdminSubjectService {
             headerRow.createCell(3).setCellValue("Description");
             headerRow.createCell(4).setCellValue("Status");
             headerRow.createCell(5).setCellValue("Created At");
+            headerRow.createCell(6).setCellValue("Schools");
+            headerRow.createCell(7).setCellValue("Majors");
 
             int rowIdx = 1;
             for (Subject subject : subjects) {
@@ -127,6 +157,15 @@ public class AdminSubjectService {
                 row.createCell(3).setCellValue(subject.getDescription());
                 row.createCell(4).setCellValue(subject.getStatus());
                 row.createCell(5).setCellValue(subject.getCreatedAt() != null ? subject.getCreatedAt().toString() : "");
+                List<SubjectMappingResponse> mappings = subjectMappingService.getMappings(subject.getSubjectId());
+                row.createCell(6).setCellValue(mappings.stream()
+                        .map(m -> m.getSchoolCode() + " - " + m.getSchoolName())
+                        .distinct()
+                        .collect(Collectors.joining(", ")));
+                row.createCell(7).setCellValue(mappings.stream()
+                        .map(m -> m.getMajorCode() + " - " + m.getMajorName())
+                        .distinct()
+                        .collect(Collectors.joining(", ")));
             }
 
             workbook.write(out);
@@ -136,7 +175,12 @@ public class AdminSubjectService {
         }
     }
 
-    private Specification<Subject> buildSpecification(String search, String status) {
+    private Specification<Subject> buildSpecification(
+            String search,
+            String status,
+            Integer schoolId,
+            Integer majorId
+    ) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -155,6 +199,15 @@ public class AdminSubjectService {
             }
             if (status != null && !status.isEmpty()) {
                 predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (schoolId != null || majorId != null) {
+                List<Integer> subjectIds = subjectMajorMappingRepository
+                        .findSubjectIdsBySchoolAndMajor(schoolId, majorId);
+                if (subjectIds.isEmpty()) {
+                    predicates.add(cb.disjunction());
+                } else {
+                    predicates.add(root.get("subjectId").in(subjectIds));
+                }
             }
             
             return cb.and(predicates.toArray(new Predicate[0]));
@@ -175,7 +228,27 @@ public class AdminSubjectService {
         item.setCreatedAt(subject.getCreatedAt());
         item.setUpdatedAt(subject.getUpdatedAt());
         item.setDocumentsCount(documentRepository.countBySubject(subject));
+        item.setMappings(subjectMappingService.getMappings(subject.getSubjectId()));
         return item;
+    }
+
+    public List<SubjectMappingResponse> getMappings(Integer subjectId) {
+        Subject subject = getSystemSubject(subjectId);
+        return subjectMappingService.getMappings(subject.getSubjectId());
+    }
+
+    public List<SubjectMappingResponse> replaceMappings(Integer subjectId, List<Integer> majorIds) {
+        Subject subject = getSystemSubject(subjectId);
+        return subjectMappingService.replaceMappings(subject, majorIds);
+    }
+
+    private Subject getSystemSubject(Integer subjectId) {
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
+        if (!isSystemSubject(subject)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot map custom subjects");
+        }
+        return subject;
     }
 
     public java.util.Map<String, Long> getSubjectStats(String search) {

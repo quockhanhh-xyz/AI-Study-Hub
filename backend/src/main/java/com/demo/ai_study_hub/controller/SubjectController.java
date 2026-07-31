@@ -26,8 +26,10 @@ public class SubjectController {
     private final SubjectService subjectService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<SubjectResponse>>> getSubjects(Principal principal) {
-        List<SubjectResponse> subjects = subjectService.getActiveSubjects(principal.getName());
+    public ResponseEntity<ApiResponse<List<SubjectResponse>>> getSubjects(
+            @RequestParam(required = false) Integer majorId,
+            Principal principal) {
+        List<SubjectResponse> subjects = subjectService.getActiveSubjects(principal.getName(), majorId);
         return ResponseEntity.ok(ApiResponse.<List<SubjectResponse>>builder()
                 .success(true)
                 .message("Subjects retrieved successfully")
@@ -36,8 +38,9 @@ public class SubjectController {
     }
 
     @GetMapping("/public")
-    public ResponseEntity<ApiResponse<List<SubjectResponse>>> getPublicSubjects() {
-        List<SubjectResponse> subjects = subjectService.getPublicSubjects();
+    public ResponseEntity<ApiResponse<List<SubjectResponse>>> getPublicSubjects(
+            @RequestParam(required = false) Integer majorId) {
+        List<SubjectResponse> subjects = subjectService.getPublicSubjects(majorId);
         return ResponseEntity.ok(ApiResponse.<List<SubjectResponse>>builder()
                 .success(true)
                 .message("Public subjects retrieved successfully")

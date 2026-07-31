@@ -16,6 +16,8 @@ import java.time.Year;
 public class AccountProfileService {
 
     private final UserRepository userRepository;
+    private final com.demo.ai_study_hub.repository.SchoolRepository schoolRepository;
+    private final com.demo.ai_study_hub.repository.MajorRepository majorRepository;
 
     public ProfileResponse getProfile(User user) {
         return mapToResponse(user);
@@ -34,10 +36,33 @@ public class AccountProfileService {
             }
         }
 
+        if (request.getSchoolId() != null) {
+            com.demo.ai_study_hub.entity.School school = schoolRepository.findById(request.getSchoolId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "School not found"));
+            if (!"ACTIVE".equals(school.getStatus())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "School is inactive");
+            }
+            user.setSchool(school);
+        } else {
+            user.setSchool(null);
+        }
+
+        if (request.getMajorId() != null) {
+            com.demo.ai_study_hub.entity.Major major = majorRepository.findById(request.getMajorId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Major not found"));
+            if (!"ACTIVE".equals(major.getStatus())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Major is inactive");
+            }
+            if (user.getSchool() == null || !major.getSchool().getSchoolId().equals(user.getSchool().getSchoolId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Major does not belong to the selected school");
+            }
+            user.setMajor(major);
+        } else {
+            user.setMajor(null);
+        }
+
         user.setFullName(trimToNull(request.getFullName()));
         user.setPhone(trimToNull(request.getPhone()));
-        user.setSchoolName(trimToNull(request.getSchoolName()));
-        user.setMajor(trimToNull(request.getMajor()));
         user.setStudentCode(trimToNull(request.getStudentCode()));
         user.setGraduationYear(request.getGraduationYear());
         user.setEducationLevel(trimToNull(request.getEducationLevel()));
@@ -54,14 +79,26 @@ public class AccountProfileService {
     }
 
     public ProfileResponse mapToResponse(User user) {
+        Integer schoolId = user.getSchool() != null ? user.getSchool().getSchoolId() : null;
+        String schoolCode = user.getSchool() != null ? user.getSchool().getSchoolCode() : null;
+        String schoolName = user.getSchool() != null ? user.getSchool().getSchoolName() : null;
+
+        Integer majorId = user.getMajor() != null ? user.getMajor().getMajorId() : null;
+        String majorCode = user.getMajor() != null ? user.getMajor().getMajorCode() : null;
+        String majorName = user.getMajor() != null ? user.getMajor().getMajorName() : null;
+
         return ProfileResponse.builder()
                 .userId(user.getUserId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .avatarUrl(user.getAvatarUrl())
                 .phone(user.getPhone())
-                .schoolName(user.getSchoolName())
-                .major(user.getMajor())
+                .schoolId(schoolId)
+                .schoolCode(schoolCode)
+                .schoolName(schoolName)
+                .majorId(majorId)
+                .majorCode(majorCode)
+                .major(majorName)
                 .studentCode(user.getStudentCode())
                 .graduationYear(user.getGraduationYear())
                 .educationLevel(user.getEducationLevel())

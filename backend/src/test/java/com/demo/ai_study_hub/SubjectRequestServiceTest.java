@@ -1,6 +1,9 @@
 package com.demo.ai_study_hub;
 
 import com.demo.ai_study_hub.dto.AdminSubjectRequest;
+import com.demo.ai_study_hub.dto.CreateSubjectRequest;
+import com.demo.ai_study_hub.entity.Major;
+import com.demo.ai_study_hub.entity.School;
 import com.demo.ai_study_hub.entity.Subject;
 import com.demo.ai_study_hub.entity.SubjectRequest;
 import com.demo.ai_study_hub.dto.SubjectRequestResponse;
@@ -9,6 +12,7 @@ import com.demo.ai_study_hub.repository.SubjectRepository;
 import com.demo.ai_study_hub.repository.SubjectRequestRepository;
 import com.demo.ai_study_hub.repository.UserRepository;
 import com.demo.ai_study_hub.service.AdminSubjectService;
+import com.demo.ai_study_hub.service.SubjectMappingService;
 import com.demo.ai_study_hub.service.SubjectRequestService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,6 +52,15 @@ class SubjectRequestServiceTest {
     @Mock
     private com.demo.ai_study_hub.repository.DocumentRepository documentRepository;
 
+    @Mock
+    private com.demo.ai_study_hub.repository.SchoolRepository schoolRepository;
+
+    @Mock
+    private com.demo.ai_study_hub.repository.MajorRepository majorRepository;
+
+    @Mock
+    private SubjectMappingService subjectMappingService;
+
     @InjectMocks
     private SubjectRequestService subjectRequestService;
 
@@ -69,7 +82,6 @@ class SubjectRequestServiceTest {
     void createSubjectRequest_Success() {
         when(subjectRequestRepository.existsByRequestedCodeAndStatus("CS101", "PENDING")).thenReturn(false);
         when(subjectRequestRepository.existsByRequestedNameAndStatus("Computer Science", "PENDING")).thenReturn(false);
-        when(subjectRepository.existsBySubjectCodeAndScopeAndStatus("CS101", "SYSTEM", "ACTIVE")).thenReturn(false);
         when(subjectRepository.findSystemSubjectByNameIgnoreCase("Computer Science")).thenReturn(Optional.empty());
         when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(testUser));
         when(subjectRequestRepository.save(any(SubjectRequest.class))).thenAnswer(i -> {
@@ -94,6 +106,93 @@ class SubjectRequestServiceTest {
 
         assertThrows(ResponseStatusException.class, () ->
                 subjectRequestService.createSubjectRequest("CS101", "Computer Science", "Intro", "user@test.com"));
+    }
+
+    @Test
+    void createSubjectRequest_AllowsExistingSystemSubjectForNewMajor() {
+        School school = new School();
+        school.setSchoolId(10);
+        school.setStatus("ACTIVE");
+
+        Major major = new Major();
+        major.setMajorId(20);
+        major.setSchool(school);
+        major.setStatus("ACTIVE");
+
+        Subject existing = new Subject();
+        existing.setSubjectId(30);
+        existing.setSubjectCode("CS101");
+        existing.setSubjectName("Computer Science");
+        existing.setScope("SYSTEM");
+        existing.setStatus("ACTIVE");
+
+        CreateSubjectRequest body = new CreateSubjectRequest();
+        body.setRequestedCode("CS101");
+        body.setRequestedName("Computer Science");
+        body.setDescription("Add CS101 to this major");
+        body.setSchoolId(10);
+        body.setMajorId(20);
+
+        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(testUser));
+        when(schoolRepository.findById(10)).thenReturn(Optional.of(school));
+        when(majorRepository.findById(20)).thenReturn(Optional.of(major));
+        when(subjectRequestRepository.existsPendingForMajor("CS101", "Computer Science", 20, "PENDING"))
+                .thenReturn(false);
+        when(subjectRepository.findSystemSubjectByCodeIgnoreCase("CS101")).thenReturn(Optional.of(existing));
+        when(subjectRepository.findSystemSubjectByNameIgnoreCase("Computer Science")).thenReturn(Optional.of(existing));
+        when(subjectMappingService.isMapped(30, 20)).thenReturn(false);
+        when(subjectRequestRepository.save(any(SubjectRequest.class))).thenAnswer(invocation -> {
+            SubjectRequest request = invocation.getArgument(0);
+            request.setRequestId(101);
+            return request;
+        });
+
+        SubjectRequestResponse response = subjectRequestService.createSubjectRequest(body, "user@test.com");
+
+        assertEquals("PENDING", response.getStatus());
+        assertEquals(10, response.getSchoolId());
+        assertEquals(20, response.getMajorId());
+    }
+
+    @Test
+    void createSubjectRequest_RejectsExistingMappingForSelectedMajor() {
+        School school = new School();
+        school.setSchoolId(10);
+        school.setStatus("ACTIVE");
+
+        Major major = new Major();
+        major.setMajorId(20);
+        major.setSchool(school);
+        major.setStatus("ACTIVE");
+
+        Subject existing = new Subject();
+        existing.setSubjectId(30);
+        existing.setSubjectCode("CS101");
+        existing.setSubjectName("Computer Science");
+        existing.setScope("SYSTEM");
+        existing.setStatus("ACTIVE");
+
+        CreateSubjectRequest body = new CreateSubjectRequest();
+        body.setRequestedCode("CS101");
+        body.setRequestedName("Computer Science");
+        body.setSchoolId(10);
+        body.setMajorId(20);
+
+        when(schoolRepository.findById(10)).thenReturn(Optional.of(school));
+        when(majorRepository.findById(20)).thenReturn(Optional.of(major));
+        when(subjectRequestRepository.existsPendingForMajor("CS101", "Computer Science", 20, "PENDING"))
+                .thenReturn(false);
+        when(subjectRepository.findSystemSubjectByCodeIgnoreCase("CS101")).thenReturn(Optional.of(existing));
+        when(subjectRepository.findSystemSubjectByNameIgnoreCase("Computer Science")).thenReturn(Optional.of(existing));
+        when(subjectMappingService.isMapped(30, 20)).thenReturn(true);
+
+        ResponseStatusException error = assertThrows(
+                ResponseStatusException.class,
+                () -> subjectRequestService.createSubjectRequest(body, "user@test.com")
+        );
+
+        assertEquals(409, error.getStatusCode().value());
+        verify(subjectRequestRepository, never()).save(any());
     }
 
     @Test

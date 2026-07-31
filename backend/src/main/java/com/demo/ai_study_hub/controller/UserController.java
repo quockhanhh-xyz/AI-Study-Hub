@@ -105,7 +105,7 @@ public class UserController {
             m.put("fullName", f.getFollowing().getFullName());
             m.put("avatarUrl", f.getFollowing().getAvatarUrl());
             m.put("schoolName", f.getFollowing().isShowSchool() ? f.getFollowing().getSchoolName() : null);
-            m.put("major", f.getFollowing().isShowMajor() ? f.getFollowing().getMajor() : null);
+            m.put("major", f.getFollowing().isShowMajor() ? f.getFollowing().getMajorName() : null);
             return m;
         }).collect(Collectors.toList());
 
@@ -124,7 +124,7 @@ public class UserController {
             m.put("fullName", f.getFollower().getFullName());
             m.put("avatarUrl", f.getFollower().getAvatarUrl());
             m.put("schoolName", f.getFollower().isShowSchool() ? f.getFollower().getSchoolName() : null);
-            m.put("major", f.getFollower().isShowMajor() ? f.getFollower().getMajor() : null);
+            m.put("major", f.getFollower().isShowMajor() ? f.getFollower().getMajorName() : null);
             return m;
         }).collect(Collectors.toList());
 

@@ -60,7 +60,7 @@ public class PublicProfileService {
         }
 
         String schoolName = (target.isShowSchool() || isMyProfile) ? target.getSchoolName() : null;
-        String major = (target.isShowMajor() || isMyProfile) ? target.getMajor() : null;
+        String major = (target.isShowMajor() || isMyProfile) ? target.getMajorName() : null;
         String bio = (target.isShowBio() || isMyProfile) ? target.getBio() : null;
         long finalPublicDocs = (target.isShowPublicDocuments() || isMyProfile) ? publicDocs : 0L;
 
@@ -115,7 +115,7 @@ public class PublicProfileService {
             map.put("fullName", u.getFullName());
             map.put("avatarUrl", u.getAvatarUrl());
             map.put("schoolName", u.isShowSchool() ? u.getSchoolName() : null);
-            map.put("major", u.isShowMajor() ? u.getMajor() : null);
+            map.put("major", u.isShowMajor() ? u.getMajorName() : null);
             map.put("publicDocumentCount", docCount);
             map.put("followersCount", followers);
             list.add(map);

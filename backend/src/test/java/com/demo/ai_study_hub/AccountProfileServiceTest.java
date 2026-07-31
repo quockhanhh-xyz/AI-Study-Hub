@@ -13,6 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import java.util.Optional;
 
 import java.time.Year;
 
@@ -25,6 +27,11 @@ class AccountProfileServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private com.demo.ai_study_hub.repository.SchoolRepository schoolRepository;
+    @Mock
+    private com.demo.ai_study_hub.repository.MajorRepository majorRepository;
 
     @InjectMocks
     private AccountProfileService accountProfileService;
@@ -82,5 +89,31 @@ class AccountProfileServiceTest {
         updateRequest.setGraduationYear(Year.now().getValue() + 11);
         assertThrows(ResponseStatusException.class, () ->
                 accountProfileService.updateProfile(testUser, updateRequest));
-    }
+     }
+
+     @Test
+     void updateProfile_ThrowsIfMajorDoesNotBelongToSchool() {
+         com.demo.ai_study_hub.entity.School school = new com.demo.ai_study_hub.entity.School();
+         school.setSchoolId(1);
+         school.setStatus("ACTIVE");
+
+         com.demo.ai_study_hub.entity.School otherSchool = new com.demo.ai_study_hub.entity.School();
+         otherSchool.setSchoolId(3);
+         otherSchool.setStatus("ACTIVE");
+
+         com.demo.ai_study_hub.entity.Major major = new com.demo.ai_study_hub.entity.Major();
+         major.setMajorId(2);
+         major.setStatus("ACTIVE");
+         major.setSchool(otherSchool); // Major belongs to school 3, user profile selects school 1
+
+         updateRequest.setSchoolId(1);
+         updateRequest.setMajorId(2);
+
+         when(schoolRepository.findById(1)).thenReturn(Optional.of(school));
+         when(majorRepository.findById(2)).thenReturn(Optional.of(major));
+
+         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                 accountProfileService.updateProfile(testUser, updateRequest));
+         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+     }
 }

@@ -16,6 +16,13 @@ public class SubjectRequestResponse {
     private String requestedByEmail;
     private String requestedByName;
 
+    private Integer schoolId;
+    private String schoolCode;
+    private String schoolName;
+    private Integer majorId;
+    private String majorCode;
+    private String majorName;
+
     private String reviewedByEmail;
     private LocalDateTime reviewedAt;
 }

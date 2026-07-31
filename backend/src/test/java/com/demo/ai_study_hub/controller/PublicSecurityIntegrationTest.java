@@ -134,7 +134,7 @@ class PublicSecurityIntegrationTest {
                 .ownerId(null)
                 .build();
 
-        when(subjectService.getPublicSubjects()).thenReturn(Collections.singletonList(publicSubject));
+        when(subjectService.getPublicSubjects(null)).thenReturn(Collections.singletonList(publicSubject));
 
         mockMvc.perform(get("/api/subjects/public"))
                 .andExpect(status().isOk())

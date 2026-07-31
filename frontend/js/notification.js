@@ -391,7 +391,14 @@ function renderNotificationList() {
 
         const message = document.createElement("p");
         message.className = "notification-message";
-        message.textContent = notif.message;
+        let displayMessage = notif.message || "";
+        if (displayMessage.trim().endsWith("Reason:")) {
+            displayMessage = displayMessage.trim() + " No reason";
+        }
+        message.textContent = displayMessage;
+        
+        // Also update notif.message so the click handler uses the updated one
+        notif.message = displayMessage;
 
         const time = document.createElement("span");
         time.className = "notification-time";
@@ -478,8 +485,14 @@ function renderNotificationList() {
                 window.location.href = "admin-subject-requests.html";
                 return;
             }
-            if (notif.type === "SUBJECT_REQUEST_APPROVED" || notif.type === "SUBJECT_REQUEST_REJECTED") {
-                window.location.href = "my-library.html";
+            if (notif.type === "SUBJECT_REQUEST_APPROVED") {
+                window.location.href = "community.html";
+                return;
+            }
+            if (notif.type === "SUBJECT_REQUEST_REJECTED") {
+                if (typeof window.showToast === "function") {
+                    window.showToast(notif.message || "Your subject request was rejected.", "error");
+                }
                 return;
             }
 

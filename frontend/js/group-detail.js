@@ -627,7 +627,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const titleEl = document.createElement("h3");
     const titleLink = document.createElement("a");
-    titleLink.href = `document-detail.html?id=${doc.documentId}&from=group&groupId=${groupId}`;
+    titleLink.href = `document-detail.html?id=${doc.documentId}&from=group&groupId=${groupId}&tab=documents`;
     titleLink.textContent = doc.title || doc.originalFileName || "Untitled";
     titleLink.style.color = "inherit";
     titleLink.style.textDecoration = "none";
@@ -699,7 +699,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       if (e.target.closest("button") || e.target.closest("a")) {
         return;
       }
-      window.location.href = `document-detail.html?id=${doc.documentId}`;
+      window.location.href = `document-detail.html?id=${doc.documentId}&from=group&groupId=${groupId}`;
     });
 
     return card;
@@ -798,7 +798,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Clicking anywhere on the card opens the shared folder detail page.
     card.addEventListener("click", function () {
-      window.location.href = `shared-folder-detail.html?folderId=${folder.folderId}`;
+      window.location.href = `shared-folder-detail.html?folderId=${folder.folderId}&from=group&groupId=${groupId}&tab=folders`;
     });
 
     return card;
@@ -1113,8 +1113,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       // Create pill anchor
       const anchor = document.createElement("a");
       anchor.className = "chat-doc-mention";
-      anchor.href = `document-detail.html?id=${encodeURIComponent(docId)}`;
-      anchor.target = "_blank"; // open in new tab
+      anchor.href = `document-detail.html?id=${encodeURIComponent(docId)}&from=group&groupId=${groupId}&tab=chat`;
 
       anchor.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="14" width="14" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>`;
       const titleSpan = document.createElement("span");
@@ -1409,6 +1408,15 @@ document.addEventListener("DOMContentLoaded", async function () {
   });
 
   // Init
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialTab = urlParams.get("tab");
+  if (initialTab && ["members", "documents", "folders", "chat"].includes(initialTab)) {
+    switchGroupTab(initialTab);
+  } else {
+    switchGroupTab("members");
+  }
+
+  
   await loadGroupDetail();
   await loadGroupDocuments();
   await loadGroupFolders();

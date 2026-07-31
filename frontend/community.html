@@ -217,16 +217,6 @@
                             style="padding-left: 40px; width: 100%;" />
                     </div>
                     <div id="communityHeaderActions" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 0;">
-                        <!-- If logged in: Upload a document -->
-                        <a href="upload.html?source=community" id="communityUploadBtn" class="btn btn-primary" style="display: none; align-items: center; gap: 6px; padding: 10px 16px; width: auto !important; text-decoration: none;">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" id="Add-1--Streamline-Core" height="14" width="14" aria-hidden="true" focusable="false">
-                              <g id="add-1--expand-cross-buttons-button-more-remove-plus-add-+-mathematics-math">
-                                <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 0.5v13" stroke-width="1"></path>
-                                <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 6.95996h13" stroke-width="1"></path>
-                              </g>
-                            </svg>
-                            Contribute a document
-                        </a>
                         <!-- If guest: compact login prompt -->
                         <div id="communityGuestActions" style="display: none; align-items: center; gap: 12px; background: rgba(79, 70, 229, 0.05); padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(79, 70, 229, 0.1);">
                             <span style="font-size: 13px; color: var(--text); font-weight: 500;">Sign in to upload, save favorites, and study with AI.</span>
@@ -239,6 +229,16 @@
                     <div class="filter-group">
                         <input type="text" id="subjectFilter" list="subjectDatalist" placeholder="Filter by Subject..." style="min-width: 180px; max-width: 250px;" />
                         <datalist id="subjectDatalist"></datalist>
+                    </div>
+                    <div class="filter-group">
+                        <select id="schoolFilter">
+                            <option value="">All Schools</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <select id="majorFilter" disabled>
+                            <option value="">All Majors</option>
+                        </select>
                     </div>
                     <div class="filter-group">
                         <select id="fileTypeFilter">
@@ -311,6 +311,7 @@
     <script src="js/ui.js"></script>
     <script src="js/navigation.js"></script>
     <script src="js/layout.js"></script>
+    <script src="js/school-api.js"></script>
     <script src="js/subject-api.js"></script>
     <script src="js/document-api.js"></script>
     <script src="js/community-api.js"></script>
