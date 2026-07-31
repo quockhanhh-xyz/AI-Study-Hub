@@ -19,4 +19,5 @@ public class SubjectMyLibraryResponse {
     private Long documentCount;
     private Boolean canEdit;
     private Boolean canDelete;
+    private java.util.List<SubjectMappingResponse> mappings;
 }
