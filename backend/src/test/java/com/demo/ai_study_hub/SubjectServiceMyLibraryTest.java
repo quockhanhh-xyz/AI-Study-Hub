@@ -85,7 +85,6 @@ class SubjectServiceMyLibraryTest {
         when(documentRepository.countBySubjectAndOwnerAndStatus(systemSubject, user, "ACTIVE")).thenReturn(2L);
         when(documentRepository.countBySubjectAndOwnerAndStatus(customSubject, user, "ACTIVE")).thenReturn(5L);
         when(documentRepository.countBySubjectAndStatus(customSubject, "ACTIVE")).thenReturn(5L);
-        when(subjectMappingService.getMappings(anyInt())).thenReturn(java.util.Collections.emptyList());
 
         List<SubjectMyLibraryResponse> responses = subjectService.getMyLibrarySubjects(user.getEmail());
 
@@ -153,7 +152,6 @@ class SubjectServiceMyLibraryTest {
         when(subjectRepository.findById(customSubject.getSubjectId())).thenReturn(Optional.of(customSubject));
         when(subjectRepository.existsDuplicateCodeForUpdate("NEWCODE", user, customSubject.getSubjectId())).thenReturn(false);
         when(subjectRepository.save(any(Subject.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(subjectMappingService.getMappings(anyInt())).thenReturn(java.util.Collections.emptyList());
 
         SubjectMyLibraryResponse result = subjectService.updateCustomSubject(customSubject.getSubjectId(), req, user.getEmail());
 
