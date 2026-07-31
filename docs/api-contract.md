@@ -5534,3 +5534,118 @@ Exports all plan config parameters to an Excel workbook (.xlsx).
 * **Authentication:** Required (Role: `ADMIN`)
 * **Query Parameters:** `status` (String, required: ACTIVE or INACTIVE)
 * **Response:** MajorDto
+
+---
+
+## 2.7 System Rating & Feedback APIs
+
+### 2.7.1 Submit/Update System Review
+* **Endpoint:** `POST /api/system-reviews`
+* **Description:** Submit a new system review or update the existing review (if already submitted). Sets status to `NEW` and notifies Admins.
+  Supported categories (case-insensitive, accepts space or underscores):
+  - `General Experience` / `GENERAL_EXPERIENCE`
+  - `Bug Report` / `BUG_REPORT`
+  - `Feature Request` / `FEATURE_REQUEST`
+  - `Performance` / `PERFORMANCE`
+  - `AI Quality` / `AI_QUALITY`
+  - `Payment` / `PAYMENT`
+  - `Other` / `OTHER`
+* **Authentication:** Required (Role: `USER` or `ADMIN`, must be `ACTIVE`)
+* **Request:** CreateSystemReviewRequest
+  ```json
+  {
+    "rating": 4,
+    "category": "AI_QUALITY",
+    "title": "Useful AI features",
+    "content": "The summary feature is useful, but Vietnamese support needs improvement."
+  }
+  ```
+* **Response:** SystemReviewResponse
+
+### 2.7.2 Get My System Review
+* **Endpoint:** `GET /api/system-reviews/me`
+* **Description:** Retrieve the authenticated user's active system review (returns null if none exists).
+* **Authentication:** Required
+* **Response:** SystemReviewResponse
+
+### 2.7.3 Update System Review by ID
+* **Endpoint:** `PUT /api/system-reviews/{reviewId}`
+* **Description:** Update an existing system review. If status was `RESPONDED`, resets to `IN_REVIEW`.
+* **Authentication:** Required (Owner only)
+* **Request:** UpdateSystemReviewRequest
+* **Response:** SystemReviewResponse
+
+### 2.7.4 Delete System Review
+* **Endpoint:** `DELETE /api/system-reviews/{reviewId}`
+* **Description:** Soft-delete the user's review.
+* **Authentication:** Required (Owner only)
+* **Response:** Empty success response
+
+### 2.7.5 Get Review Replies
+* **Endpoint:** `GET /api/system-reviews/{reviewId}/replies`
+* **Description:** Get all replies for a review conversation.
+* **Authentication:** Required (Owner or Admin)
+* **Response:** List of ReviewReplyResponse
+
+### 2.7.6 Add Reply to Review
+* **Endpoint:** `POST /api/system-reviews/{reviewId}/replies`
+* **Description:** User adds a reply to their review conversation. Sets review status to `IN_REVIEW` and notifies Admins.
+* **Authentication:** Required (Owner only)
+* **Request:** CreateReviewReplyRequest (content)
+* **Response:** ReviewReplyResponse
+
+### 2.7.7 [Admin] Get System Reviews List
+* **Endpoint:** `GET /api/admin/system-reviews`
+* **Description:** Retrieve paginated list of reviews with optional search and filters.
+* **Authentication:** Required (Role: `ADMIN`)
+* **Query Parameters:**
+  - `rating` (Optional): Filter by star rating (1-5)
+  - `category` (Optional): Filter by category
+  - `status` (Optional): Filter by status
+  - `search` (Optional): Filter by user email, review title, or content
+  - `page` (Default: 0)
+  - `size` (Default: 10)
+  - `sortBy` (Default: `createdAt`)
+  - `direction` (Default: `desc`)
+* **Response:** Paginated list of SystemReviewResponse
+
+### 2.7.8 [Admin] Get System Review Details
+* **Endpoint:** `GET /api/admin/system-reviews/{reviewId}`
+* **Description:** Get a single system review details with replies list.
+* **Authentication:** Required (Role: `ADMIN`)
+* **Response:** SystemReviewResponse (including replies)
+
+### 2.7.9 [Admin] Get Review Statistics
+* **Endpoint:** `GET /api/admin/system-reviews/statistics`
+* **Description:** Retrieve statistics on point average, active counts, unresponded reviews count, and stars distribution.
+* **Authentication:** Required (Role: `ADMIN`)
+* **Response:** ReviewStatisticsResponse
+  ```json
+  {
+    "totalActiveReviews": 142,
+    "averageRating": 4.25,
+    "unrespondedCount": 18,
+    "ratingDistribution": {
+      "1": 5,
+      "2": 12,
+      "3": 18,
+      "4": 42,
+      "5": 65
+    }
+  }
+  ```
+
+### 2.7.10 [Admin] Update Review Status
+* **Endpoint:** `PATCH /api/admin/system-reviews/{reviewId}/status`
+* **Description:** Change processing status of a review. If status changed to `RESOLVED`, notifies the User.
+* **Authentication:** Required (Role: `ADMIN`)
+* **Request:** `{ "status": "RESOLVED" }`
+* **Response:** SystemReviewResponse
+
+### 2.7.11 [Admin] Reply to Review
+* **Endpoint:** `POST /api/admin/system-reviews/{reviewId}/replies`
+* **Description:** Admin submits an official response to the review conversation. Automatically updates review status to `RESPONDED` and notifies the User.
+* **Authentication:** Required (Role: `ADMIN`)
+* **Request:** CreateReviewReplyRequest (content)
+* **Response:** ReviewReplyResponse
+
