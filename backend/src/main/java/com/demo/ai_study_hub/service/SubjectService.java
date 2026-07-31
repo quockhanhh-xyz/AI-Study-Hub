@@ -82,6 +82,7 @@ public class SubjectService {
                             .documentCount(docCount)
                             .canEdit(canEdit)
                             .canDelete(canDelete)
+                            .mappings(subjectMappingService.getMappings(s.getSubjectId()))
                             .build();
                 })
                 .collect(Collectors.toList());
@@ -247,6 +248,7 @@ public class SubjectService {
                 .documentCount(docCount)
                 .canEdit(true)
                 .canDelete(documentRepository.countBySubjectAndStatus(s, "ACTIVE") == 0)
+                .mappings(subjectMappingService.getMappings(s.getSubjectId()))
                 .build();
     }
 }

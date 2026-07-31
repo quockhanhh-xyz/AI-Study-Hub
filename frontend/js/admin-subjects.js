@@ -90,7 +90,7 @@ function initAdminSubjects() {
         return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
     };
 
-    const renderMappingChips = (mappings, key, emptyText) => {
+    const renderMappings = (mappings, key, emptyText) => {
         const values = [];
         const seen = new Set();
         (mappings || []).forEach(mapping => {
@@ -101,10 +101,10 @@ function initAdminSubjects() {
             seen.add(id);
             const code = key === 'school' ? mapping.schoolCode : mapping.majorCode;
             const name = key === 'school' ? mapping.schoolName : mapping.majorName;
-            values.push(`<span class="subject-mapping-chip" title="${escapeHtml(name || '')}">${escapeHtml(code || name || '-')}</span>`);
+            values.push(escapeHtml(code || name || '-'));
         });
         return values.length
-            ? `<div class="subject-mapping-list">${values.join('')}</div>`
+            ? values.join(', ')
             : `<span style="color: var(--text-muted);">${emptyText}</span>`;
     };
 
@@ -299,8 +299,8 @@ function initAdminSubjects() {
             <tr>
                 <td style="font-weight: 500; text-align: center;">${escapeHtml(item.subjectCode)}</td>
                 <td style="text-align: center;">${escapeHtml(item.subjectName)}</td>
-                <td style="text-align: center;">${renderMappingChips(item.mappings, 'school', 'Not mapped')}</td>
-                <td style="text-align: center;">${renderMappingChips(item.mappings, 'major', 'Not mapped')}</td>
+                <td style="text-align: center;">${renderMappings(item.mappings, 'school', 'Not mapped')}</td>
+                <td style="text-align: center;">${renderMappings(item.mappings, 'major', 'Not mapped')}</td>
                 <td style="color: var(--text-muted); text-align: center;">${docCount}</td>
                 <td style="text-align: center; vertical-align: middle;">
                     <div class="table-actions" style="display: flex; gap: 8px; justify-content: center; align-items: center;">
@@ -777,6 +777,9 @@ function initAdminSubjects() {
         panelRequests.querySelectorAll('.admin-select').forEach(select => {
             window.UIHelper.convertSelectToCustomDropdown(select);
         });
+        
+        if (subjectSchoolSelect) window.UIHelper.convertSelectToCustomDropdown(subjectSchoolSelect);
+        if (typeof schoolFilter !== 'undefined' && schoolFilter) window.UIHelper.convertSelectToCustomDropdown(schoolFilter);
     }
 
     // --- Initial Load ---
