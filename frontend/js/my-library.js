@@ -1059,16 +1059,10 @@ document.addEventListener("DOMContentLoaded", async function () {
       meta.innerHTML += `<span class="document-meta-item">${META_ICONS.subject}${subjectTag}</span>`;
     }
     if (doc.schoolCode || doc.schoolName) {
-      const schoolTag = doc.schoolCode
-        ? `${doc.schoolCode} - ${doc.schoolName || ""}`
-        : doc.schoolName;
-      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.school}${schoolTag}</span>`;
+      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.school}${doc.schoolCode || doc.schoolName}</span>`;
     }
     if (doc.majorCode || doc.majorName) {
-      const majorTag = doc.majorCode
-        ? `${doc.majorCode} - ${doc.majorName || ""}`
-        : doc.majorName;
-      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.major}${majorTag}</span>`;
+      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.major}${doc.majorCode || doc.majorName}</span>`;
     }
 
     // Robust Folder Fallback: folderName -> lookup via folderId -> nested folder object
@@ -1081,7 +1075,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       folderTag = doc.folder.folderName || doc.folder.name || "";
     }
     if (folderTag) {
-      meta.innerHTML += `<span class="document-meta-item">${META_ICONS.folder}${folderTag}</span>`;
+      meta.innerHTML += `<span class="document-meta-item meta-folder">${META_ICONS.folder}${folderTag}</span>`;
     }
 
     content.appendChild(meta);

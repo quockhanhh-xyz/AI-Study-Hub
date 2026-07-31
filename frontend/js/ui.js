@@ -364,6 +364,44 @@ const UIHelper = {
     const rebuildSelectOptions = () => {
       listContainer.innerHTML = "";
 
+      let filterInput = null;
+      if (selectElement.dataset.search === "true") {
+        const searchWrapper = document.createElement("div");
+        searchWrapper.style.padding = "8px";
+        searchWrapper.style.borderBottom = "1px solid var(--border)";
+        searchWrapper.style.position = "sticky";
+        searchWrapper.style.top = "0";
+        searchWrapper.style.backgroundColor = "var(--surface)";
+        searchWrapper.style.zIndex = "10";
+        searchWrapper.addEventListener("click", e => e.stopPropagation());
+        
+        filterInput = document.createElement("input");
+        filterInput.type = "text";
+        filterInput.placeholder = "Search...";
+        filterInput.style.width = "100%";
+        filterInput.style.padding = "6px 10px";
+        filterInput.style.borderRadius = "6px";
+        filterInput.style.border = "1px solid var(--border)";
+        filterInput.style.fontSize = "13px";
+        filterInput.style.outline = "none";
+        
+        searchWrapper.appendChild(filterInput);
+        optionsMenu.appendChild(searchWrapper);
+        
+        filterInput.addEventListener("input", (e) => {
+          const filter = e.target.value.toLowerCase();
+          const optionItems = optionsMenu.querySelectorAll(".custom-select-option, .custom-select-group-header");
+          optionItems.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            if (text.includes(filter)) {
+              item.style.display = "block";
+            } else {
+              item.style.display = "none";
+            }
+          });
+        });
+      }
+
       const updateLabel = () => {
         const activeOpt = selectElement.options[selectElement.selectedIndex];
         label.textContent = activeOpt ? activeOpt.textContent : (selectElement.placeholder || "");
@@ -393,16 +431,19 @@ const UIHelper = {
               if (option.selected) {
                 item.classList.add("selected");
               }
-
-              item.addEventListener("click", (e) => {
-                e.stopPropagation();
-                selectElement.value = option.value;
-                searchInput.value = "";
-                updateLabel();
-                rebuildSelectOptions();
-                container.classList.remove("active");
-                selectElement.dispatchEvent(new Event("change", { bubbles: true }));
-              });
+              if (option.disabled) {
+                item.classList.add("disabled");
+              } else {
+                item.addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  selectElement.value = option.value;
+                  searchInput.value = "";
+                  updateLabel();
+                  rebuildSelectOptions();
+                  container.classList.remove("active");
+                  selectElement.dispatchEvent(new Event("change", { bubbles: true }));
+                });
+              }
               listContainer.appendChild(item);
             });
           }
@@ -415,16 +456,19 @@ const UIHelper = {
             if (child.selected) {
               item.classList.add("selected");
             }
-
-            item.addEventListener("click", (e) => {
-              e.stopPropagation();
-              selectElement.value = child.value;
-              searchInput.value = "";
-              updateLabel();
-              rebuildSelectOptions();
-              container.classList.remove("active");
-              selectElement.dispatchEvent(new Event("change", { bubbles: true }));
-            });
+            if (child.disabled) {
+              item.classList.add("disabled");
+            } else {
+              item.addEventListener("click", (e) => {
+                e.stopPropagation();
+                selectElement.value = child.value;
+                searchInput.value = "";
+                updateLabel();
+                rebuildSelectOptions();
+                container.classList.remove("active");
+                selectElement.dispatchEvent(new Event("change", { bubbles: true }));
+              });
+            }
             listContainer.appendChild(item);
           }
         }
@@ -441,6 +485,11 @@ const UIHelper = {
     });
 
     rebuildSelectOptions();
+    
+    if (selectElement.disabled) {
+      trigger.style.opacity = "0.5";
+      trigger.style.pointerEvents = "none";
+    }
 
     selectElement.parentNode.insertBefore(container, selectElement);
     selectElement.style.display = "none";
@@ -451,11 +500,26 @@ const UIHelper = {
       document.querySelectorAll(".custom-select").forEach(el => el.classList.remove("active"));
       if (!isActive) {
         container.classList.add("active");
+        if (selectElement.dataset.search === "true") {
+            const searchBox = container.querySelector("input");
+            if (searchBox) {
+                searchBox.value = "";
+                searchBox.dispatchEvent(new Event("input"));
+                setTimeout(() => searchBox.focus(), 50);
+            }
+        }
       }
     });
 
     selectElement.addEventListener("syncCustom", () => {
       rebuildSelectOptions();
+      if (selectElement.disabled) {
+        trigger.style.opacity = "0.5";
+        trigger.style.pointerEvents = "none";
+      } else {
+        trigger.style.opacity = "";
+        trigger.style.pointerEvents = "";
+      }
     });
   },
 
@@ -641,7 +705,19 @@ const UIHelper = {
 
     inputElement.addEventListener("syncCustom", () => {
       rebuildOptions();
+      if (inputElement.disabled) {
+        trigger.style.opacity = "0.5";
+        trigger.style.pointerEvents = "none";
+      } else {
+        trigger.style.opacity = "";
+        trigger.style.pointerEvents = "";
+      }
     });
+
+    if (inputElement.disabled) {
+      trigger.style.opacity = "0.5";
+      trigger.style.pointerEvents = "none";
+    }
   },
 
   initCustomDropdowns() {

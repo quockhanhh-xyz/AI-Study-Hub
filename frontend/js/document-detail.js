@@ -1090,15 +1090,23 @@ async function loadEditSubjects(majorId, currentSubjectId = null) {
 
     select.disabled = true;
     select.innerHTML = '<option value="">Loading subjects...</option>';
+    if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+        window.UIHelper.convertSelectToCustomDropdown(select);
+        select.dispatchEvent(new Event("syncCustom"));
+    }
 
     try {
-        const response = await getSubjects(majorId || "");
+        const response = await getSubjects(majorId);
         allSubjectsList = response?.data || [];
         renderSubjectOptions(allSubjectsList, currentSubjectId);
         select.disabled = false;
+        select.dispatchEvent(new Event("syncCustom"));
     } catch (error) {
         console.error("Failed to load subjects", error);
         select.innerHTML = '<option value="">Failed to load subjects</option>';
+        if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+            select.dispatchEvent(new Event("syncCustom"));
+        }
     }
 }
 
@@ -1117,17 +1125,29 @@ async function initSchoolAndMajorEditFields(schools, doc) {
         }
         schoolSelect.appendChild(opt);
     });
+    if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+        window.UIHelper.convertSelectToCustomDropdown(schoolSelect);
+        schoolSelect.dispatchEvent(new Event("syncCustom"));
+    }
 
     const handleSchoolChange = async (selectedSchoolId, selectedMajorId = null) => {
         if (!selectedSchoolId) {
             majorSelect.innerHTML = '<option value="">— Select Major —</option>';
             majorSelect.disabled = true;
+            if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+                window.UIHelper.convertSelectToCustomDropdown(majorSelect);
+                majorSelect.dispatchEvent(new Event("syncCustom"));
+            }
             await loadEditSubjects("", doc.subjectId);
             return;
         }
 
         majorSelect.disabled = true;
         majorSelect.innerHTML = '<option value="">Loading majors...</option>';
+        if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+            window.UIHelper.convertSelectToCustomDropdown(majorSelect);
+            majorSelect.dispatchEvent(new Event("syncCustom"));
+        }
 
         try {
             const majorsRes = await getActiveMajors(selectedSchoolId);
@@ -1144,6 +1164,11 @@ async function initSchoolAndMajorEditFields(schools, doc) {
                 majorSelect.appendChild(opt);
             });
             majorSelect.disabled = false;
+            if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+                window.UIHelper.convertSelectToCustomDropdown(majorSelect);
+                majorSelect.dispatchEvent(new Event("syncCustom"));
+            }
+
             if (selectedMajorId) {
                 await loadEditSubjects(selectedMajorId, doc.subjectId);
             } else {
@@ -1151,11 +1176,15 @@ async function initSchoolAndMajorEditFields(schools, doc) {
                 if (subjectSelect) {
                     subjectSelect.disabled = true;
                     subjectSelect.innerHTML = '<option value="">Select a Major first</option>';
+                    subjectSelect.dispatchEvent(new Event("syncCustom"));
                 }
             }
         } catch (err) {
             console.error("Failed to load majors", err);
             majorSelect.innerHTML = '<option value="">Failed to load majors</option>';
+            if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+                majorSelect.dispatchEvent(new Event("syncCustom"));
+            }
         }
     };
 
@@ -1222,8 +1251,8 @@ async function handleSave() {
         showEditMessage("Title is required.", "error");
         return;
     }
-    if ((schoolId && !majorId) || (!schoolId && majorId)) {
-        showEditMessage("School and Major must be selected together.", "error");
+    if (!schoolId || !majorId) {
+        showEditMessage("School and Major are required.", "error");
         return;
     }
 
@@ -1367,36 +1396,41 @@ function openSubjectRequestModalForDoc(doc) {
     // Populate existing system subjects select
     if (existingSelect) {
         existingSelect.innerHTML = '<option value="">Or propose a new system subject</option>';
-        const systemSubjects = allSubjectsList.filter(s => s.scope === "SYSTEM");
-        systemSubjects.forEach(s => {
-            const opt = document.createElement("option");
-            opt.value = s.subjectId;
-            opt.textContent = `${s.subjectCode} – ${s.subjectName}`;
-            existingSelect.appendChild(opt);
-        });
-
-        if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
-            window.UIHelper.convertSelectToCustomDropdown(existingSelect);
-            existingSelect.dispatchEvent(new Event("syncCustom"));
-        }
+        getSubjects(doc.majorId).then(sysSubjRes => {
+            const allSys = sysSubjRes?.data || [];
+            const systemSubjects = allSys.filter(s => s.scope === "SYSTEM");
+            systemSubjects.forEach(s => {
+                const opt = document.createElement("option");
+                opt.value = s.subjectId;
+                opt.textContent = `${s.subjectCode} – ${s.subjectName}`;
+                existingSelect.appendChild(opt);
+            });
+            if (window.UIHelper && window.UIHelper.convertSelectToCustomDropdown) {
+                window.UIHelper.convertSelectToCustomDropdown(existingSelect);
+                existingSelect.dispatchEvent(new Event("syncCustom"));
+            }
+        }).catch(err => console.error("Failed to load system subjects", err));
 
         existingSelect.onchange = () => {
             const selectedVal = existingSelect.value;
             if (selectedVal) {
-                const found = allSubjectsList.find(s => String(s.subjectId) === String(selectedVal));
-                if (found) {
-                    if (codeInput) {
-                        codeInput.value = found.subjectCode;
-                        codeInput.disabled = true;
+                getSubjects(doc.majorId).then(res => {
+                    const allSys = res?.data || [];
+                    const found = allSys.find(s => String(s.subjectId) === String(selectedVal));
+                    if (found) {
+                        if (codeInput) {
+                            codeInput.value = found.subjectCode;
+                            codeInput.disabled = true;
+                        }
+                        if (nameInput) {
+                            nameInput.value = found.subjectName;
+                            nameInput.disabled = true;
+                        }
+                        if (submitBtn) {
+                            submitBtn.textContent = "Assign & Publish";
+                        }
                     }
-                    if (nameInput) {
-                        nameInput.value = found.subjectName;
-                        nameInput.disabled = true;
-                    }
-                    if (submitBtn) {
-                        submitBtn.textContent = "Assign & Publish";
-                    }
-                }
+                });
             } else {
                 if (codeInput) {
                     codeInput.value = doc.subjectCode || (doc.subject ? doc.subject.subjectCode : "") || "";
