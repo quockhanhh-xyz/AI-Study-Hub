@@ -35,6 +35,20 @@ const CREATE_NEW_VALUE = "__new__";
 let lastSubjectValue = "";
 let lastFolderValue = "";
 let uploadAbortController = null;
+let subjectLoadRequestCounter = 0;
+
+function resetSubjectSelect() {
+  if (subjectSelect) {
+    subjectSelect.disabled = true;
+    subjectSelect.value = "";
+    subjectSelect.placeholder = "Select a Major first";
+    const subjectDatalist = document.getElementById("subjectDatalist");
+    if (subjectDatalist) {
+      subjectDatalist.innerHTML = "";
+    }
+    subjectSelect.dispatchEvent(new Event("syncCustom"));
+  }
+}
 
 function getSelectedSubjectId() {
   if (!subjectSelect) return "";
@@ -164,11 +178,17 @@ async function loadSubjectOptions(majorId = "") {
   const subjectDatalist = document.getElementById("subjectDatalist");
   if (!subjectDatalist) return;
 
+  subjectLoadRequestCounter++;
+  const currentRequestId = subjectLoadRequestCounter;
+
   subjectSelect.placeholder = "Loading subjects...";
   subjectSelect.disabled = true;
+  subjectSelect.dispatchEvent(new Event("syncCustom"));
 
   try {
     const result = await getSubjects(majorId);
+    if (currentRequestId !== subjectLoadRequestCounter) return;
+
     const subjects = Array.isArray(result.data) ? result.data : [];
 
     subjectDatalist.innerHTML = "";
@@ -189,21 +209,24 @@ async function loadSubjectOptions(majorId = "") {
     });
 
     subjectSelect.value = "";
-    subjectSelect.dispatchEvent(new Event("syncCustom"));
     subjectSelect.placeholder = "Select a subject";
+    subjectSelect.disabled = false;
+    subjectSelect.dispatchEvent(new Event("syncCustom"));
+
+    // Initialize the custom dropdown component
+    if (window.UIHelper && window.UIHelper.convertInputToCustomDropdown) {
+      window.UIHelper.convertInputToCustomDropdown(subjectSelect);
+    }
   } catch (err) {
+    if (currentRequestId !== subjectLoadRequestCounter) return;
     console.warn("Could not load subjects:", err);
     subjectSelect.placeholder = "Failed to load subjects — please refresh";
     if (subjectError) {
       subjectError.textContent = "Could not load subjects from the server. Please refresh and try again.";
       subjectError.style.display = "block";
     }
-  } finally {
     subjectSelect.disabled = false;
-    // Initialize the custom dropdown component
-    if (window.UIHelper && window.UIHelper.convertInputToCustomDropdown) {
-      window.UIHelper.convertInputToCustomDropdown(subjectSelect);
-    }
+    subjectSelect.dispatchEvent(new Event("syncCustom"));
   }
 }
 
@@ -912,11 +935,7 @@ document.addEventListener("DOMContentLoaded", function () {
       majorSelect.dispatchEvent(new Event("syncCustom"));
     }
     
-    if (subjectSelect) {
-      subjectSelect.disabled = true;
-      subjectSelect.innerHTML = '<option value="">Select a Major first</option>';
-      subjectSelect.dispatchEvent(new Event("syncCustom"));
-    }
+    resetSubjectSelect();
   }
 
   // School Select change listener in upload page
@@ -939,9 +958,7 @@ document.addEventListener("DOMContentLoaded", function () {
         majorSelect.disabled = true;
         majorSelect.dispatchEvent(new Event("syncCustom"));
         
-        subjectSelect.disabled = true;
-        subjectSelect.innerHTML = '<option value="">Select a Major first</option>';
-        subjectSelect.dispatchEvent(new Event("syncCustom"));
+        resetSubjectSelect();
       }
     });
   }
@@ -952,9 +969,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (selectedMajor) {
         await loadSubjectOptions(selectedMajor);
       } else {
-        subjectSelect.disabled = true;
-        subjectSelect.innerHTML = '<option value="">Select a Major first</option>';
-        subjectSelect.dispatchEvent(new Event("syncCustom"));
+        resetSubjectSelect();
       }
     });
   }

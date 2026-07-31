@@ -1693,10 +1693,30 @@ document.addEventListener("DOMContentLoaded", async function () {
       const card = document.createElement("div");
       card.className = "subject-card";
       
+      let mappingsHtml = "";
+      if (s.mappings && s.mappings.length > 0) {
+        const firstMapping = s.mappings[0];
+        if (firstMapping.schoolCode || firstMapping.majorCode) {
+          mappingsHtml = `
+            <div style="display: flex; justify-content: flex-start; gap: 16px; align-items: center; margin-bottom: 12px; font-size: 12px; color: var(--text-main); font-weight: 500;">
+              ${firstMapping.schoolCode ? `<span style="display: flex; align-items: center; gap: 4px;" title="${firstMapping.schoolName || ''}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" /></svg>
+                ${firstMapping.schoolCode}
+              </span>` : ''}
+              ${firstMapping.majorCode ? `<span style="display: flex; align-items: center; gap: 4px;" title="${firstMapping.majorName || ''}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" /></svg>
+                ${firstMapping.majorCode}
+              </span>` : ''}
+            </div>
+          `;
+        }
+      }
+
       card.innerHTML = `
         <div class="subject-card-code">${s.code}</div>
         <div class="subject-card-name">${s.name}</div>
         <div class="subject-card-desc">${s.description || "No description provided."}</div>
+        ${mappingsHtml}
         <div class="subject-card-footer">
           <span class="subject-card-badge ${s.sourceType === 'PERSONAL' ? 'badge-personal' : 'badge-system'}">${s.sourceType}</span>
           <span style="color: var(--muted); font-weight: 500;">${s.documentCount} docs</span>
